@@ -8,7 +8,7 @@ tags: [bugs, roadmap, open]
 ---
 # Bug Fixes and Code Quality
 
-**Status:** Active — four open items. Fixed work and its root causes live only in
+**Status:** Active — three open items. Fixed work and its root causes live only in
 [`10b-bugs-fixed.md`](10b-bugs-fixed.md).
 
 ## Open items
@@ -60,19 +60,6 @@ captured. Get a screenshot of a specific message before changing the card-displa
 the turn banner, the likeliest suspects given #97 and #101.
 
 Read [events, prompts, and replay](../architecture/events-prompts-and-replay.md).
-
-### K. Card-box right border drifts on rows with an emoji
-
-**Owner:** Web feeds. Found by a browser check on PR #394 (September 2026). Card boxes are
-counted as a 34-column frame in the engine and wrap correctly as stored text. In the web
-feed, the right border steps in and out on rows whose title carries an emoji (`🦄`, and the
-Gladiator's `💪` and `🗡`). The feed renders them with `white-space: pre-wrap` in a monospace
-font where an emoji is wider than one column, so the frame's column count no longer matches.
-Not specific to any card. Likely fixes: measure emoji as two columns when the engine pads
-the frame, or render the frame's border in CSS rather than as characters. Capture a
-screenshot in both themes and at phone width before choosing.
-
-Read [pixel art](../reference/pixel-art.md) and [web workspace](../architecture/web-workspace.md).
 
 ## Historical detail
 

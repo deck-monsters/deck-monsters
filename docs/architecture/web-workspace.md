@@ -116,6 +116,18 @@ corrects `scrollTop` against the gesture (#196). The
 follow-the-bottom re-pin still scrolls the scroller's own `scrollHeight` (#159). The
 fight-log box (`.fight-log-events`) is a separate scroller and does not use this estimate.
 
+## Card frames
+
+A card box is the 34-column character frame from `formatCard`
+(`packages/engine/src/helpers/card.ts`). The web draws that text in a monospace panel
+(`.event-card-block`); it does not replace the characters with a CSS border. Pictographs
+count as two columns and variation selectors as none, because that is the width the feed
+font advances. Counting UTF-16 units instead let a BMP pictograph (`⏳`) paint past the
+`=` border (#197). Astral pictographs (`💪`, `🦄`) are already two units, so they already
+met the frame. Discord receives the same string. Fenced card text is not a place for
+inline sprites: a sprite is wider than the column the emoji was counted as
+(`format-event-text.tsx`).
+
 ## Change checklist
 
 - [ ] Add a surface once in `SURFACES`; tabs, selectors, and shortcuts derive from it.

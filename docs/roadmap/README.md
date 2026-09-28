@@ -13,7 +13,7 @@ completed reasoning belongs in the [archive](../archive/README.md).
 
 | Area | Actionable work |
 |---|---|
-| [10 — Bug fixes](10-bug-fixes.md) | Reward investigation, the `↓ Latest` button, feed spacing, and card-box borders |
+| [10 — Bug fixes](10-bug-fixes.md) | Reward investigation, the `↓ Latest` button, and feed spacing |
 | [11 — Balance and mechanics](11-balance-and-mechanics.md) | Simulation, telemetry, healing prices, crit ticks, fight threads, and combat decisions |
 | [12 — New content](12-new-content-backlog.md) | Dragon follow-ups (counter cards, flavour pass, live check), the mega boss event; concrete cards, monsters, card authoring, equipment, world, and endgame proposals |
 | [Item follow-ups](item-followups.md) | Prompt transport for items that ask a question |

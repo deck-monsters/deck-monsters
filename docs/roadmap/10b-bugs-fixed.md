@@ -4673,3 +4673,29 @@ estimates, and still asserts a recent wheel or touch suppresses the re-pin. The 
 assertion fails if `heightEstimates` is omitted.
 
 **Status**: Fixed.
+
+### 197. Card-box right border drifted when a line held a BMP emoji — FIXED
+
+**Symptom**: the right edge of a card frame stepped on a row whose title carried an emoji.
+Reported for `🦄` and the Gladiator's `💪` and `🗡`.
+
+**Root cause**: `formatCard` wrapped with `word-wrap`, which counts UTF-16 units, while the
+feed's monospace advances a pictograph by two columns. Astral pictographs (`💪`, `🦄`) are
+already two units, and on the feed font they measure 17.5px against a 16.8px pair of
+columns, so those rows already met the 34-column `=` border. A BMP pictograph (`⏳`) is one
+unit and two columns. Two of them on a full line measured 36 columns and painted past the
+border. A variation selector is a unit with no width, so `🗡️` wrapped a column early.
+The CSS panel around `.event-card-block` was already straight; the step was the character
+border. Replacing that border with CSS would have left Discord, which renders the same
+string, unchanged.
+
+**Fix**: strings whose UTF-16 length is not their display width wrap on display columns
+(a pictograph is two, a variation selector is zero). Plain text stays on `word-wrap`, so
+existing card breaks do not move. Measured after the change, the same title's first line
+is 31 columns, inside the 34-column border, in phosphor, amber, and a 375px viewport.
+There is no light theme; phosphor and amber are the two feed themes checked.
+
+**Tests**: `helpers/card-columns.test.ts`. The BMP case fails on the old wrap with the
+line at 36 columns and the border at 34.
+
+**Status**: Fixed.
