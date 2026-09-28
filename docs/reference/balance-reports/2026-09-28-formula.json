@@ -1,0 +1,996 @@
+{
+ "levels": [
+  1,
+  3,
+  6,
+  8,
+  10,
+  12,
+  15,
+  20
+ ],
+ "chassis": {
+  "Basilisk": {
+   "1": {
+    "level": 1,
+    "hp": 35.63,
+    "ac": 8.93,
+    "dexMod": 0,
+    "strMod": 3,
+    "intMod": 2
+   },
+   "3": {
+    "level": 3,
+    "hp": 41.585,
+    "ac": 11.005,
+    "dexMod": 2,
+    "strMod": 5,
+    "intMod": 4
+   },
+   "6": {
+    "level": 6,
+    "hp": 50.755,
+    "ac": 13.95,
+    "dexMod": 5,
+    "strMod": 8,
+    "intMod": 7
+   },
+   "8": {
+    "level": 8,
+    "hp": 56.61,
+    "ac": 15.915,
+    "dexMod": 7,
+    "strMod": 8,
+    "intMod": 9
+   },
+   "10": {
+    "level": 10,
+    "hp": 62.315,
+    "ac": 18.125,
+    "dexMod": 9,
+    "strMod": 8,
+    "intMod": 9
+   },
+   "12": {
+    "level": 12,
+    "hp": 68.38,
+    "ac": 20.04,
+    "dexMod": 9,
+    "strMod": 8,
+    "intMod": 9
+   },
+   "15": {
+    "level": 15,
+    "hp": 77.335,
+    "ac": 19.975,
+    "dexMod": 9,
+    "strMod": 8,
+    "intMod": 9
+   },
+   "20": {
+    "level": 20,
+    "hp": 92.535,
+    "ac": 19.96,
+    "dexMod": 9,
+    "strMod": 8,
+    "intMod": 9
+   }
+  },
+  "Gladiator": {
+   "1": {
+    "level": 1,
+    "hp": 36.515,
+    "ac": 6.985,
+    "dexMod": 2,
+    "strMod": 2,
+    "intMod": 1
+   },
+   "3": {
+    "level": 3,
+    "hp": 42.755,
+    "ac": 9.04,
+    "dexMod": 4,
+    "strMod": 4,
+    "intMod": 3
+   },
+   "6": {
+    "level": 6,
+    "hp": 51.575,
+    "ac": 12.05,
+    "dexMod": 7,
+    "strMod": 7,
+    "intMod": 6
+   },
+   "8": {
+    "level": 8,
+    "hp": 57.33,
+    "ac": 13.965,
+    "dexMod": 9,
+    "strMod": 7,
+    "intMod": 8
+   },
+   "10": {
+    "level": 10,
+    "hp": 63.37,
+    "ac": 16.14,
+    "dexMod": 11,
+    "strMod": 7,
+    "intMod": 8
+   },
+   "12": {
+    "level": 12,
+    "hp": 69.575,
+    "ac": 17.945,
+    "dexMod": 11,
+    "strMod": 7,
+    "intMod": 8
+   },
+   "15": {
+    "level": 15,
+    "hp": 78.495,
+    "ac": 17.93,
+    "dexMod": 11,
+    "strMod": 7,
+    "intMod": 8
+   },
+   "20": {
+    "level": 20,
+    "hp": 93.63,
+    "ac": 18.065,
+    "dexMod": 11,
+    "strMod": 7,
+    "intMod": 8
+   }
+  },
+  "Jinn": {
+   "1": {
+    "level": 1,
+    "hp": 33.51,
+    "ac": 8.99,
+    "dexMod": 2,
+    "strMod": 1,
+    "intMod": 2
+   },
+   "3": {
+    "level": 3,
+    "hp": 39.445,
+    "ac": 10.975,
+    "dexMod": 4,
+    "strMod": 3,
+    "intMod": 4
+   },
+   "6": {
+    "level": 6,
+    "hp": 48.755,
+    "ac": 14.055,
+    "dexMod": 7,
+    "strMod": 6,
+    "intMod": 7
+   },
+   "8": {
+    "level": 8,
+    "hp": 54.435,
+    "ac": 15.965,
+    "dexMod": 9,
+    "strMod": 6,
+    "intMod": 9
+   },
+   "10": {
+    "level": 10,
+    "hp": 60.78,
+    "ac": 17.995,
+    "dexMod": 11,
+    "strMod": 6,
+    "intMod": 9
+   },
+   "12": {
+    "level": 12,
+    "hp": 66.445,
+    "ac": 20.09,
+    "dexMod": 11,
+    "strMod": 6,
+    "intMod": 9
+   },
+   "15": {
+    "level": 15,
+    "hp": 75.565,
+    "ac": 19.955,
+    "dexMod": 11,
+    "strMod": 6,
+    "intMod": 9
+   },
+   "20": {
+    "level": 20,
+    "hp": 90.455,
+    "ac": 20.04,
+    "dexMod": 11,
+    "strMod": 6,
+    "intMod": 9
+   }
+  },
+  "Minotaur": {
+   "1": {
+    "level": 1,
+    "hp": 37.375,
+    "ac": 6.05,
+    "dexMod": 2,
+    "strMod": 3,
+    "intMod": 0
+   },
+   "3": {
+    "level": 3,
+    "hp": 43.42,
+    "ac": 8.025,
+    "dexMod": 4,
+    "strMod": 5,
+    "intMod": 2
+   },
+   "6": {
+    "level": 6,
+    "hp": 52.495,
+    "ac": 10.93,
+    "dexMod": 7,
+    "strMod": 8,
+    "intMod": 5
+   },
+   "8": {
+    "level": 8,
+    "hp": 58.61,
+    "ac": 13.06,
+    "dexMod": 9,
+    "strMod": 8,
+    "intMod": 7
+   },
+   "10": {
+    "level": 10,
+    "hp": 64.54,
+    "ac": 14.99,
+    "dexMod": 11,
+    "strMod": 8,
+    "intMod": 7
+   },
+   "12": {
+    "level": 12,
+    "hp": 70.56,
+    "ac": 17.005,
+    "dexMod": 11,
+    "strMod": 8,
+    "intMod": 7
+   },
+   "15": {
+    "level": 15,
+    "hp": 79.365,
+    "ac": 16.93,
+    "dexMod": 11,
+    "strMod": 8,
+    "intMod": 7
+   },
+   "20": {
+    "level": 20,
+    "hp": 94.465,
+    "ac": 16.975,
+    "dexMod": 11,
+    "strMod": 8,
+    "intMod": 7
+   }
+  },
+  "WeepingAngel": {
+   "1": {
+    "level": 1,
+    "hp": 34.485,
+    "ac": 8.08,
+    "dexMod": 2,
+    "strMod": 0,
+    "intMod": 3
+   },
+   "3": {
+    "level": 3,
+    "hp": 40.565,
+    "ac": 10.03,
+    "dexMod": 4,
+    "strMod": 2,
+    "intMod": 5
+   },
+   "6": {
+    "level": 6,
+    "hp": 49.705,
+    "ac": 12.98,
+    "dexMod": 7,
+    "strMod": 5,
+    "intMod": 8
+   },
+   "8": {
+    "level": 8,
+    "hp": 55.535,
+    "ac": 15.01,
+    "dexMod": 9,
+    "strMod": 5,
+    "intMod": 10
+   },
+   "10": {
+    "level": 10,
+    "hp": 61.485,
+    "ac": 16.85,
+    "dexMod": 11,
+    "strMod": 5,
+    "intMod": 10
+   },
+   "12": {
+    "level": 12,
+    "hp": 67.71,
+    "ac": 18.93,
+    "dexMod": 11,
+    "strMod": 5,
+    "intMod": 10
+   },
+   "15": {
+    "level": 15,
+    "hp": 76.385,
+    "ac": 19.08,
+    "dexMod": 11,
+    "strMod": 5,
+    "intMod": 10
+   },
+   "20": {
+    "level": 20,
+    "hp": 91.595,
+    "ac": 18.99,
+    "dexMod": 11,
+    "strMod": 5,
+    "intMod": 10
+   }
+  },
+  "Unicorn": {
+   "1": {
+    "level": 1,
+    "hp": 34.445,
+    "ac": 8.87,
+    "dexMod": 3,
+    "strMod": 2,
+    "intMod": 0
+   },
+   "3": {
+    "level": 3,
+    "hp": 40.625,
+    "ac": 11,
+    "dexMod": 5,
+    "strMod": 4,
+    "intMod": 2
+   },
+   "6": {
+    "level": 6,
+    "hp": 49.28,
+    "ac": 13.945,
+    "dexMod": 8,
+    "strMod": 7,
+    "intMod": 5
+   },
+   "8": {
+    "level": 8,
+    "hp": 55.45,
+    "ac": 16.025,
+    "dexMod": 10,
+    "strMod": 7,
+    "intMod": 7
+   },
+   "10": {
+    "level": 10,
+    "hp": 61.45,
+    "ac": 18.035,
+    "dexMod": 12,
+    "strMod": 7,
+    "intMod": 7
+   },
+   "12": {
+    "level": 12,
+    "hp": 67.58,
+    "ac": 19.98,
+    "dexMod": 12,
+    "strMod": 7,
+    "intMod": 7
+   },
+   "15": {
+    "level": 15,
+    "hp": 76.42,
+    "ac": 20.01,
+    "dexMod": 12,
+    "strMod": 7,
+    "intMod": 7
+   },
+   "20": {
+    "level": 20,
+    "hp": 91.405,
+    "ac": 20.02,
+    "dexMod": 12,
+    "strMod": 7,
+    "intMod": 7
+   }
+  },
+  "Dragon": {
+   "1": {
+    "level": 1,
+    "hp": 35.595,
+    "ac": 7.955,
+    "dexMod": 2,
+    "strMod": 1,
+    "intMod": 2
+   },
+   "3": {
+    "level": 3,
+    "hp": 41.5,
+    "ac": 10.03,
+    "dexMod": 4,
+    "strMod": 3,
+    "intMod": 4
+   },
+   "6": {
+    "level": 6,
+    "hp": 50.295,
+    "ac": 13.045,
+    "dexMod": 7,
+    "strMod": 6,
+    "intMod": 7
+   },
+   "8": {
+    "level": 8,
+    "hp": 56.515,
+    "ac": 15.05,
+    "dexMod": 9,
+    "strMod": 6,
+    "intMod": 9
+   },
+   "10": {
+    "level": 10,
+    "hp": 62.65,
+    "ac": 16.99,
+    "dexMod": 11,
+    "strMod": 6,
+    "intMod": 9
+   },
+   "12": {
+    "level": 12,
+    "hp": 68.41,
+    "ac": 19.04,
+    "dexMod": 11,
+    "strMod": 6,
+    "intMod": 9
+   },
+   "15": {
+    "level": 15,
+    "hp": 77.735,
+    "ac": 18.945,
+    "dexMod": 11,
+    "strMod": 6,
+    "intMod": 9
+   },
+   "20": {
+    "level": 20,
+    "hp": 92.585,
+    "ac": 19.005,
+    "dexMod": 11,
+    "strMod": 6,
+    "intMod": 9
+   }
+  }
+ },
+ "strikes": {
+  "Basilisk": {
+   "1": {
+    "hitChance": 0.60875,
+    "hitDamagePerPlay": 4.0775,
+    "hitBackfirePerPlay": 0.25575,
+    "hitTurnsToKill": 8.673206621704477,
+    "blastDamagePerTarget": 4,
+    "blastTurnsToKill": 8.84125,
+    "fieldHp": 35.365
+   },
+   "3": {
+    "hitChance": 0.60725,
+    "hitDamagePerPlay": 5.29625,
+    "hitBackfirePerPlay": 0.40475,
+    "hitTurnsToKill": 7.819414005866685,
+    "blastDamagePerTarget": 6,
+    "blastTurnsToKill": 6.902261904761905,
+    "fieldHp": 41.41357142857143
+   },
+   "6": {
+    "hitChance": 0.6065,
+    "hitDamagePerPlay": 7.1325,
+    "hitBackfirePerPlay": 0.4995,
+    "hitTurnsToKill": 7.067447799308997,
+    "blastDamagePerTarget": 9,
+    "blastTurnsToKill": 5.600952380952381,
+    "fieldHp": 50.40857142857143
+   },
+   "8": {
+    "hitChance": 0.606,
+    "hitDamagePerPlay": 7.04,
+    "hitBackfirePerPlay": 0.5245,
+    "hitTurnsToKill": 8.00497159090909,
+    "blastDamagePerTarget": 11,
+    "blastTurnsToKill": 5.123181818181818,
+    "fieldHp": 56.355
+   },
+   "10": {
+    "hitChance": 0.5825,
+    "hitDamagePerPlay": 6.83375,
+    "hitBackfirePerPlay": 0.51325,
+    "hitTurnsToKill": 9.12676056338028,
+    "blastDamagePerTarget": 13,
+    "blastTurnsToKill": 4.797692307692308,
+    "fieldHp": 62.37
+   },
+   "12": {
+    "hitChance": 0.50725,
+    "hitDamagePerPlay": 5.9595,
+    "hitBackfirePerPlay": 0.46325,
+    "hitTurnsToKill": 11.47411695612048,
+    "blastDamagePerTarget": 14,
+    "blastTurnsToKill": 4.884285714285714,
+    "fieldHp": 68.38
+   },
+   "15": {
+    "hitChance": 0.505,
+    "hitDamagePerPlay": 5.907,
+    "hitBackfirePerPlay": 0.5425,
+    "hitTurnsToKill": 13.091005828435994,
+    "blastDamagePerTarget": 15,
+    "blastTurnsToKill": 5.1552380952380945,
+    "fieldHp": 77.32857142857142
+   },
+   "20": {
+    "hitChance": 0.48925,
+    "hitDamagePerPlay": 5.77325,
+    "hitBackfirePerPlay": 0.54375,
+    "hitTurnsToKill": 16.001633147954543,
+    "blastDamagePerTarget": 18,
+    "blastTurnsToKill": 5.132301587301587,
+    "fieldHp": 92.38142857142857
+   }
+  },
+  "Gladiator": {
+   "1": {
+    "hitChance": 0.7005,
+    "hitDamagePerPlay": 3.97525,
+    "hitBackfirePerPlay": 0.2665,
+    "hitTurnsToKill": 8.896295830450915,
+    "blastDamagePerTarget": 4,
+    "blastTurnsToKill": 8.84125,
+    "fieldHp": 35.365
+   },
+   "3": {
+    "hitChance": 0.69925,
+    "hitDamagePerPlay": 5.3305,
+    "hitBackfirePerPlay": 0.33825,
+    "hitTurnsToKill": 7.769172015490373,
+    "blastDamagePerTarget": 6,
+    "blastTurnsToKill": 6.902261904761905,
+    "fieldHp": 41.41357142857143
+   },
+   "6": {
+    "hitChance": 0.702,
+    "hitDamagePerPlay": 7.48525,
+    "hitBackfirePerPlay": 0.501,
+    "hitTurnsToKill": 6.734387151874878,
+    "blastDamagePerTarget": 9,
+    "blastTurnsToKill": 5.600952380952381,
+    "fieldHp": 50.40857142857143
+   },
+   "8": {
+    "hitChance": 0.70475,
+    "hitDamagePerPlay": 7.51125,
+    "hitBackfirePerPlay": 0.50075,
+    "hitTurnsToKill": 7.502745881178232,
+    "blastDamagePerTarget": 11,
+    "blastTurnsToKill": 5.123181818181818,
+    "fieldHp": 56.355
+   },
+   "10": {
+    "hitChance": 0.7,
+    "hitDamagePerPlay": 7.46425,
+    "hitBackfirePerPlay": 0.5135,
+    "hitTurnsToKill": 8.355829453729443,
+    "blastDamagePerTarget": 13,
+    "blastTurnsToKill": 4.797692307692308,
+    "fieldHp": 62.37
+   },
+   "12": {
+    "hitChance": 0.601,
+    "hitDamagePerPlay": 6.452,
+    "hitBackfirePerPlay": 0.53025,
+    "hitTurnsToKill": 10.59826410415375,
+    "blastDamagePerTarget": 14,
+    "blastTurnsToKill": 4.884285714285714,
+    "fieldHp": 68.38
+   },
+   "15": {
+    "hitChance": 0.5985,
+    "hitDamagePerPlay": 6.421,
+    "hitBackfirePerPlay": 0.48375,
+    "hitTurnsToKill": 12.043072952588602,
+    "blastDamagePerTarget": 15,
+    "blastTurnsToKill": 5.1552380952380945,
+    "fieldHp": 77.32857142857142
+   },
+   "20": {
+    "hitChance": 0.599,
+    "hitDamagePerPlay": 6.396,
+    "hitBackfirePerPlay": 0.53,
+    "hitTurnsToKill": 14.443625480210846,
+    "blastDamagePerTarget": 18,
+    "blastTurnsToKill": 5.132301587301587,
+    "fieldHp": 92.38142857142857
+   }
+  },
+  "Jinn": {
+   "1": {
+    "hitChance": 0.70375,
+    "hitDamagePerPlay": 3.2565,
+    "hitBackfirePerPlay": 0.26075,
+    "hitTurnsToKill": 10.85981882389068,
+    "blastDamagePerTarget": 4,
+    "blastTurnsToKill": 8.84125,
+    "fieldHp": 35.365
+   },
+   "3": {
+    "hitChance": 0.7005,
+    "hitDamagePerPlay": 4.66625,
+    "hitBackfirePerPlay": 0.346,
+    "hitTurnsToKill": 8.875129156940034,
+    "blastDamagePerTarget": 6,
+    "blastTurnsToKill": 6.902261904761905,
+    "fieldHp": 41.41357142857143
+   },
+   "6": {
+    "hitChance": 0.7005,
+    "hitDamagePerPlay": 6.80275,
+    "hitBackfirePerPlay": 0.533,
+    "hitTurnsToKill": 7.410028507378843,
+    "blastDamagePerTarget": 9,
+    "blastTurnsToKill": 5.600952380952381,
+    "fieldHp": 50.40857142857143
+   },
+   "8": {
+    "hitChance": 0.708,
+    "hitDamagePerPlay": 6.865,
+    "hitBackfirePerPlay": 0.53475,
+    "hitTurnsToKill": 8.209031318281136,
+    "blastDamagePerTarget": 11,
+    "blastTurnsToKill": 5.123181818181818,
+    "fieldHp": 56.355
+   },
+   "10": {
+    "hitChance": 0.71075,
+    "hitDamagePerPlay": 6.8525,
+    "hitBackfirePerPlay": 0.4595,
+    "hitTurnsToKill": 9.101787668734039,
+    "blastDamagePerTarget": 13,
+    "blastTurnsToKill": 4.797692307692308,
+    "fieldHp": 62.37
+   },
+   "12": {
+    "hitChance": 0.60175,
+    "hitDamagePerPlay": 5.82725,
+    "hitBackfirePerPlay": 0.537,
+    "hitTurnsToKill": 11.734523145566088,
+    "blastDamagePerTarget": 14,
+    "blastTurnsToKill": 4.884285714285714,
+    "fieldHp": 68.38
+   },
+   "15": {
+    "hitChance": 0.58375,
+    "hitDamagePerPlay": 5.68475,
+    "hitBackfirePerPlay": 0.4965,
+    "hitTurnsToKill": 13.602809521715365,
+    "blastDamagePerTarget": 15,
+    "blastTurnsToKill": 5.1552380952380945,
+    "fieldHp": 77.32857142857142
+   },
+   "20": {
+    "hitChance": 0.59725,
+    "hitDamagePerPlay": 5.8165,
+    "hitBackfirePerPlay": 0.53875,
+    "hitTurnsToKill": 15.882649113973795,
+    "blastDamagePerTarget": 18,
+    "blastTurnsToKill": 5.132301587301587,
+    "fieldHp": 92.38142857142857
+   }
+  },
+  "Minotaur": {
+   "1": {
+    "hitChance": 0.68175,
+    "hitDamagePerPlay": 4.58225,
+    "hitBackfirePerPlay": 0.275,
+    "hitTurnsToKill": 7.717824212995799,
+    "blastDamagePerTarget": 4,
+    "blastTurnsToKill": 8.84125,
+    "fieldHp": 35.365
+   },
+   "3": {
+    "hitChance": 0.68175,
+    "hitDamagePerPlay": 5.90425,
+    "hitBackfirePerPlay": 0.38425,
+    "hitTurnsToKill": 7.014196795286688,
+    "blastDamagePerTarget": 6,
+    "blastTurnsToKill": 6.902261904761905,
+    "fieldHp": 41.41357142857143
+   },
+   "6": {
+    "hitChance": 0.71125,
+    "hitDamagePerPlay": 8.29225,
+    "hitBackfirePerPlay": 0.5395,
+    "hitTurnsToKill": 6.078998031724976,
+    "blastDamagePerTarget": 9,
+    "blastTurnsToKill": 5.600952380952381,
+    "fieldHp": 50.40857142857143
+   },
+   "8": {
+    "hitChance": 0.70275,
+    "hitDamagePerPlay": 8.21975,
+    "hitBackfirePerPlay": 0.551,
+    "hitTurnsToKill": 6.856047933331306,
+    "blastDamagePerTarget": 11,
+    "blastTurnsToKill": 5.123181818181818,
+    "fieldHp": 56.355
+   },
+   "10": {
+    "hitChance": 0.7,
+    "hitDamagePerPlay": 8.17125,
+    "hitBackfirePerPlay": 0.51025,
+    "hitTurnsToKill": 7.6328591096833405,
+    "blastDamagePerTarget": 13,
+    "blastTurnsToKill": 4.797692307692308,
+    "fieldHp": 62.37
+   },
+   "12": {
+    "hitChance": 0.603,
+    "hitDamagePerPlay": 7.055,
+    "hitBackfirePerPlay": 0.53025,
+    "hitTurnsToKill": 9.692416725726435,
+    "blastDamagePerTarget": 14,
+    "blastTurnsToKill": 4.884285714285714,
+    "fieldHp": 68.38
+   },
+   "15": {
+    "hitChance": 0.6175,
+    "hitDamagePerPlay": 7.22375,
+    "hitBackfirePerPlay": 0.499,
+    "hitTurnsToKill": 10.704768496774033,
+    "blastDamagePerTarget": 15,
+    "blastTurnsToKill": 5.1552380952380945,
+    "fieldHp": 77.32857142857142
+   },
+   "20": {
+    "hitChance": 0.5865,
+    "hitDamagePerPlay": 6.85025,
+    "hitBackfirePerPlay": 0.54075,
+    "hitTurnsToKill": 13.485847753210258,
+    "blastDamagePerTarget": 18,
+    "blastTurnsToKill": 5.132301587301587,
+    "fieldHp": 92.38142857142857
+   }
+  },
+  "WeepingAngel": {
+   "1": {
+    "hitChance": 0.7035,
+    "hitDamagePerPlay": 2.58525,
+    "hitBackfirePerPlay": 0.27425,
+    "hitTurnsToKill": 13.67952809206073,
+    "blastDamagePerTarget": 4,
+    "blastTurnsToKill": 8.84125,
+    "fieldHp": 35.365
+   },
+   "3": {
+    "hitChance": 0.70325,
+    "hitDamagePerPlay": 3.98775,
+    "hitBackfirePerPlay": 0.3885,
+    "hitTurnsToKill": 10.385197524561828,
+    "blastDamagePerTarget": 6,
+    "blastTurnsToKill": 6.902261904761905,
+    "fieldHp": 41.41357142857143
+   },
+   "6": {
+    "hitChance": 0.696,
+    "hitDamagePerPlay": 6.02575,
+    "hitBackfirePerPlay": 0.50775,
+    "hitTurnsToKill": 8.365526520113086,
+    "blastDamagePerTarget": 9,
+    "blastTurnsToKill": 5.600952380952381,
+    "fieldHp": 50.40857142857143
+   },
+   "8": {
+    "hitChance": 0.712,
+    "hitDamagePerPlay": 6.1885,
+    "hitBackfirePerPlay": 0.53825,
+    "hitTurnsToKill": 9.106407045326007,
+    "blastDamagePerTarget": 11,
+    "blastTurnsToKill": 5.123181818181818,
+    "fieldHp": 56.355
+   },
+   "10": {
+    "hitChance": 0.684,
+    "hitDamagePerPlay": 5.9055,
+    "hitBackfirePerPlay": 0.55075,
+    "hitTurnsToKill": 10.561341122682245,
+    "blastDamagePerTarget": 13,
+    "blastTurnsToKill": 4.797692307692308,
+    "fieldHp": 62.37
+   },
+   "12": {
+    "hitChance": 0.6035,
+    "hitDamagePerPlay": 5.299,
+    "hitBackfirePerPlay": 0.517,
+    "hitTurnsToKill": 12.904321570107566,
+    "blastDamagePerTarget": 14,
+    "blastTurnsToKill": 4.884285714285714,
+    "fieldHp": 68.38
+   },
+   "15": {
+    "hitChance": 0.609,
+    "hitDamagePerPlay": 5.348,
+    "hitBackfirePerPlay": 0.47775,
+    "hitTurnsToKill": 14.459343947002884,
+    "blastDamagePerTarget": 15,
+    "blastTurnsToKill": 5.1552380952380945,
+    "fieldHp": 77.32857142857142
+   },
+   "20": {
+    "hitChance": 0.5905,
+    "hitDamagePerPlay": 5.14075,
+    "hitBackfirePerPlay": 0.51025,
+    "hitTurnsToKill": 17.970418435331144,
+    "blastDamagePerTarget": 18,
+    "blastTurnsToKill": 5.132301587301587,
+    "fieldHp": 92.38142857142857
+   }
+  },
+  "Unicorn": {
+   "1": {
+    "hitChance": 0.75625,
+    "hitDamagePerPlay": 4.274,
+    "hitBackfirePerPlay": 0.2275,
+    "hitTurnsToKill": 8.274450163781001,
+    "blastDamagePerTarget": 4,
+    "blastTurnsToKill": 8.84125,
+    "fieldHp": 35.365
+   },
+   "3": {
+    "hitChance": 0.74475,
+    "hitDamagePerPlay": 5.67675,
+    "hitBackfirePerPlay": 0.33675,
+    "hitTurnsToKill": 7.295295975438663,
+    "blastDamagePerTarget": 6,
+    "blastTurnsToKill": 6.902261904761905,
+    "fieldHp": 41.41357142857143
+   },
+   "6": {
+    "hitChance": 0.76225,
+    "hitDamagePerPlay": 8.145,
+    "hitBackfirePerPlay": 0.5705,
+    "hitTurnsToKill": 6.1888976585109186,
+    "blastDamagePerTarget": 9,
+    "blastTurnsToKill": 5.600952380952381,
+    "fieldHp": 50.40857142857143
+   },
+   "8": {
+    "hitChance": 0.74875,
+    "hitDamagePerPlay": 8.0045,
+    "hitBackfirePerPlay": 0.48275,
+    "hitTurnsToKill": 7.0404147666937344,
+    "blastDamagePerTarget": 11,
+    "blastTurnsToKill": 5.123181818181818,
+    "fieldHp": 56.355
+   },
+   "10": {
+    "hitChance": 0.75125,
+    "hitDamagePerPlay": 8.0195,
+    "hitBackfirePerPlay": 0.52,
+    "hitTurnsToKill": 7.777292848681339,
+    "blastDamagePerTarget": 13,
+    "blastTurnsToKill": 4.797692307692308,
+    "fieldHp": 62.37
+   },
+   "12": {
+    "hitChance": 0.63925,
+    "hitDamagePerPlay": 6.85725,
+    "hitBackfirePerPlay": 0.533,
+    "hitTurnsToKill": 9.971927521965803,
+    "blastDamagePerTarget": 14,
+    "blastTurnsToKill": 4.884285714285714,
+    "fieldHp": 68.38
+   },
+   "15": {
+    "hitChance": 0.65175,
+    "hitDamagePerPlay": 6.98425,
+    "hitBackfirePerPlay": 0.488,
+    "hitTurnsToKill": 11.071850438997949,
+    "blastDamagePerTarget": 15,
+    "blastTurnsToKill": 5.1552380952380945,
+    "fieldHp": 77.32857142857142
+   },
+   "20": {
+    "hitChance": 0.6405,
+    "hitDamagePerPlay": 6.88625,
+    "hitBackfirePerPlay": 0.52525,
+    "hitTurnsToKill": 13.41534631641729,
+    "blastDamagePerTarget": 18,
+    "blastTurnsToKill": 5.132301587301587,
+    "fieldHp": 92.38142857142857
+   }
+  },
+  "Dragon": {
+   "1": {
+    "hitChance": 0.69425,
+    "hitDamagePerPlay": 3.25725,
+    "hitBackfirePerPlay": 0.28275,
+    "hitTurnsToKill": 10.857318289968532,
+    "blastDamagePerTarget": 4,
+    "blastTurnsToKill": 8.84125,
+    "fieldHp": 35.365
+   },
+   "3": {
+    "hitChance": 0.7135,
+    "hitDamagePerPlay": 4.805,
+    "hitBackfirePerPlay": 0.29575,
+    "hitTurnsToKill": 8.618849412814034,
+    "blastDamagePerTarget": 6,
+    "blastTurnsToKill": 6.902261904761905,
+    "fieldHp": 41.41357142857143
+   },
+   "6": {
+    "hitChance": 0.70625,
+    "hitDamagePerPlay": 6.833,
+    "hitBackfirePerPlay": 0.53725,
+    "hitTurnsToKill": 7.3772239760824565,
+    "blastDamagePerTarget": 9,
+    "blastTurnsToKill": 5.600952380952381,
+    "fieldHp": 50.40857142857143
+   },
+   "8": {
+    "hitChance": 0.69625,
+    "hitDamagePerPlay": 6.7055,
+    "hitBackfirePerPlay": 0.56275,
+    "hitTurnsToKill": 8.404294981731415,
+    "blastDamagePerTarget": 11,
+    "blastTurnsToKill": 5.123181818181818,
+    "fieldHp": 56.355
+   },
+   "10": {
+    "hitChance": 0.696,
+    "hitDamagePerPlay": 6.72775,
+    "hitBackfirePerPlay": 0.48,
+    "hitTurnsToKill": 9.27055850767344,
+    "blastDamagePerTarget": 13,
+    "blastTurnsToKill": 4.797692307692308,
+    "fieldHp": 62.37
+   },
+   "12": {
+    "hitChance": 0.6015,
+    "hitDamagePerPlay": 5.821,
+    "hitBackfirePerPlay": 0.4565,
+    "hitTurnsToKill": 11.747122487545095,
+    "blastDamagePerTarget": 14,
+    "blastTurnsToKill": 4.884285714285714,
+    "fieldHp": 68.38
+   },
+   "15": {
+    "hitChance": 0.60425,
+    "hitDamagePerPlay": 5.884,
+    "hitBackfirePerPlay": 0.50975,
+    "hitTurnsToKill": 13.142177333203843,
+    "blastDamagePerTarget": 15,
+    "blastTurnsToKill": 5.1552380952380945,
+    "fieldHp": 77.32857142857142
+   },
+   "20": {
+    "hitChance": 0.5965,
+    "hitDamagePerPlay": 5.79675,
+    "hitBackfirePerPlay": 0.572,
+    "hitTurnsToKill": 15.936762594803739,
+    "blastDamagePerTarget": 18,
+    "blastTurnsToKill": 5.132301587301587,
+    "fieldHp": 92.38142857142857
+   }
+  }
+ }
+}

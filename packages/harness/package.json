@@ -23,6 +23,7 @@
     "sim:batch": "node dist/scripts/sim-batch.js",
     "sim:report": "node dist/scripts/sim-report.js",
     "plan:curves": "node dist/scripts/plan-curves.js",
+    "sim:formula": "node dist/scripts/sim-formula.js",
     "sim:unicorn": "node dist/scripts/sim-monster.js Unicorn"
   },
   "dependencies": {
