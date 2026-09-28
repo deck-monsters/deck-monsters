@@ -40,6 +40,19 @@ function staticBonus(className: string, prop: 'hpVariance' | 'acVariance', amoun
 	};
 }
 
+/** Set a class static for the unit (youthAc). */
+function staticSet(className: string, prop: string, value: number | undefined): Undo {
+	const M = monsterClass(className);
+	const had = Object.prototype.hasOwnProperty.call(M, prop);
+	const before = M[prop];
+	if (value === undefined) delete M[prop];
+	else M[prop] = value;
+	return () => {
+		if (had) M[prop] = before;
+		else delete M[prop];
+	};
+}
+
 /** Wrap a creature getter (ac, strModifier, ...) on one monster class with a level-based bonus. */
 function getterBonus(className: string, prop: string, bonus: (level: number) => number): Undo {
 	const M = monsterClass(className);
@@ -119,6 +132,21 @@ export const VARIANTS: Record<string, Variant> = {
 					return original.apply(this, args);
 				},
 			),
+	},
+	'before-35': {
+		about: 'Undo roadmap 35 tasks 2-3 (Dragon and Gladiator -3 HP and no youth AC; Tsunami always hits the Dragon), for a before/after run from one checkout',
+		apply: () => {
+			const undos = [
+				staticBonus('Dragon', 'hpVariance', -3),
+				staticSet('Dragon', 'youthAc', undefined),
+				staticBonus('Gladiator', 'hpVariance', -3),
+				staticSet('Gladiator', 'youthAc', undefined),
+				cardMethod('Tsunami', 'rideTheWave', () => () => false),
+			];
+			return () => {
+				for (const undo of undos.reverse()) undo();
+			};
+		},
 	},
 	'gladiator-ac+1': { about: 'Gladiator: 1 more AC', apply: () => staticBonus('Gladiator', 'acVariance', 1) },
 	'gladiator-hp+3': { about: 'Gladiator: 3 more HP', apply: () => staticBonus('Gladiator', 'hpVariance', 3) },
