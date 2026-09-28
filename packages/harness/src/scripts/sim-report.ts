@@ -95,7 +95,7 @@ if (ladder.length) {
 		a.fights += r.fights;
 		acc.set(key, a);
 	}
-	const ladderOut: Record<string, Record<string, Interval[]>> = {};
+	const ladderOut: Record<string, Record<string, Array<Interval | null>>> = {};
 	process.stdout.write('\nCalibration ladder: score (%) at rung k (k <= 9: k Hits + (9-k) nulls against 9 Hits; k > 9: 9 Hits against 18-k Hits), reference chassis\n');
 	process.stdout.write(`${'set level'.padEnd(12)}${Array.from({ length: 19 }, (_, k) => `${k}`.padStart(4)).join('')}  monotone\n`);
 	for (const set of [...sets].sort()) {
@@ -104,7 +104,8 @@ if (ladder.length) {
 				const a = acc.get(`${set}|${level}|${k}`);
 				return a ? wilson(a.score, a.fights) : undefined;
 			});
-			((ladderOut[set] ??= {})[`L${level}`] = row.filter((i): i is Interval => !!i));
+			// Index k is rung k: an unfinished rung is null, not dropped (a Codex review of #408).
+			((ladderOut[set] ??= {})[`L${level}`] = row.map(i => i ?? null));
 			const estimates = row.map(i => i?.estimate ?? NaN);
 			// Monotone within noise: no rung's interval lies wholly below the one before.
 			const monotone = row.every((i, k) => k === 0 || !i || !row[k - 1] || i.high >= row[k - 1]!.low);

@@ -23,6 +23,7 @@ type MonsterInstance = {
 	hpVariance: number;
 	acVariance: number;
 	setOptions(options: Record<string, unknown>): void;
+	disposeTimers(): void;
 	constructor: { hpVariance?: number; acVariance?: number };
 };
 
@@ -56,13 +57,19 @@ function computeOffsets(): Offsets {
 	const classes = allMonsters as unknown as Array<new (options?: Record<string, unknown>) => MonsterInstance>;
 	const perType = classes.map(M => new M({ name: 'reference-probe' }));
 	const variances = classes.flatMap(M => Array.from({ length: 50 }, () => new M({ name: 'reference-probe' })));
-	return {
-		dexModifier: median(perType.map(m => Number(m.options.dexModifier ?? 0))),
-		strModifier: median(perType.map(m => Number(m.options.strModifier ?? 0))),
-		intModifier: median(perType.map(m => Number(m.options.intModifier ?? 0))),
-		hpVariance: Math.round(median(variances.map(m => m.hpVariance))),
-		acVariance: Math.round(median(variances.map(m => m.acVariance))),
-	};
+	try {
+		return {
+			dexModifier: median(perType.map(m => Number(m.options.dexModifier ?? 0))),
+			strModifier: median(perType.map(m => Number(m.options.strModifier ?? 0))),
+			intModifier: median(perType.map(m => Number(m.options.intModifier ?? 0))),
+			hpVariance: Math.round(median(variances.map(m => m.hpVariance))),
+			acVariance: Math.round(median(variances.map(m => m.acVariance))),
+		};
+	} finally {
+		// Every creature starts a passive-healing timer; these probes never enter a ring, so
+		// nothing else would stop them (a Codex review of #408).
+		for (const m of [...perType, ...variances]) m.disposeTimers();
+	}
 }
 
 /** Turn a freshly built monster into the reference chassis, in place. */

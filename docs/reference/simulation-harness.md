@@ -239,8 +239,13 @@ node dist/scripts/sim-report.js run/ [--json summary.json]         # works on pa
   dies keeps every finished unit; a torn last line is ignored. `manifest.json` records the
   plan hash and commits; `heartbeat.json` is rewritten every minute.
 - **Resume, chunks, shards.** Rerunning a plan into the same directory skips finished units;
-  a directory holding a different plan is refused. `--max-minutes` stops after the units in
-  flight; `--units a..b` and `--shard i/n` run a slice.
+  a directory holding a different plan is refused, and so is a resume at a different commit
+  from the one the run started at (`--allow-commit-change` overrides; uncommitted edits are
+  not detected, so run long plans from a clean checkout). `--max-minutes` stops after the
+  units in flight; `--units a..b` and `--shard i/n` run a slice.
+- **Cancelled fights fail the unit.** A fight the engine cancels (an internal error
+  `ring.fight()` swallows) would otherwise score as a draw; the unit is recorded as failed
+  and runs again on resume.
 - **Workers.** One engine per worker thread (`balance/worker.ts`), so `simulate()`'s global
   seeded `Math.random` never crosses units. About 100 fights a second on 4 cores with 9-card
   human hands (measured 2026-09-28).
