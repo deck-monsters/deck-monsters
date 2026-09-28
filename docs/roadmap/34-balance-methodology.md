@@ -41,7 +41,7 @@ changes for the owner to choose from. Changes come in the next pass, one decisio
 | Brutes and casters | Brutes (Barbarian, Fighter) stronger early; casters (Cleric, Wizard) stronger late |
 | Skill | A good build and a good card order should pay off a lot; the monster type alone must not decide nearly every fight |
 | Telemetry | **Read-only production queries are always allowed**, for any reason, as often as needed. This pass uses them for the level distribution of active monsters and the hands players actually equip (weights findings by where players are; gives the "typical hand" for skill expression) |
-| Weak cards (owner, after the catalogue) | **Some weak cards are fine.** A card that is situational or just fun is part of the game's joy and does not need raising. The line is the monster: a player who is really trying and making good picks must be able to be competitive with any monster type. So a weak card needs a fix only when its monster has no good picks without it (the Unicorn is the clearest case), not because it ranks low in the catalogue. The owner would like Feline Companion boosted somehow; Bad Batch may be meant as a counter |
+| Weak cards (owner, after the catalogue) | **Some weak cards are fine.** A card that is situational or just fun is part of the game's joy and does not need raising. The line is the monster: a player who is really trying and making good picks must be able to be competitive with any monster type. So a weak card needs a fix only when its monster has no good picks without it (the Unicorn is the clearest case), not because it ranks low in the catalogue. Feline Companion and Bad Batch stay as they are: both turned out to be context cards (see [Value beyond damage](#value-beyond-damage-owner-2026-09-28)) |
 | Excitement | Keep swings, big moments, and natural 20s. A fix should read like a roll (the owner's Sandstorm idea: a d20 per opponent to catch them in the storm), not a flat nerf |
 
 ### Technical decisions (made in planning; the owner can override any)
@@ -238,6 +238,68 @@ opponent never reads INT and so undervalues INT cards (33's Concussion reading).
 Layer 4, the catalogue is rerun against the searched field, and the two passes are compared.
 
 `sim:statcards` and `sim:cardpower` become filters of the catalogue.
+
+### Value beyond damage (owner, 2026-09-28)
+
+> "A damage-producing hit and the impact on hits is not the only aspect of the game that
+> matters." (owner, after the first catalogue)
+
+**What went wrong.** The first catalogue (task 6) measured each card in a hand of 8 Hits,
+against 9 Hits and against the reference field. That context reads damage well. It misreads
+any card whose value comes from something a Hit hand never does. Two cards it flagged as
+near-dead were context cards:
+
+- **Feline Companion** (+2 INT) measured about 0. No card in a Hit hand reads INT. In a
+  caster hand on its real holders it beats a Hit, 56-67%
+  ([numbers](#catalogue-follow-ups-2026-09-28)).
+- **Bad Batch** (turns the next Whiskey Shot or Scotch played into poison) measured about 0.
+  No opponent held a drink. It is a counter, and a counter is worth nothing when its target
+  isn't played.
+
+Neither card changes (owner). The method changes instead, so this does not recur.
+
+**Where a card's value can come from, and the context that shows it:**
+
+| Kind of value | Examples | What must be present to see it |
+|---|---|---|
+| Direct damage | Hit, Pound, Horn Swipe | Nothing: the Hit context reads it |
+| Area damage | Blast, Fire Breath, Sandstorm | More than one opponent (a crowd) for its full value |
+| Own-stat synergy | Feline Companion (INT), Calisthenics (DEX), AC boosts | Cards of your own that read that stat (INT: Blast II, Heal, Brain Drain, the INT contests). AC is read by the opponent's attacks, so AC boosts show in any context |
+| Stat denial (curses) | Brain Drain, Soften, Molasses, Concussion | Opponent cards that read the stat (the reference field exists for this: a Hit-only opponent never reads INT) |
+| Counters | Bad Batch (drinks) | The countered cards in the opponent's hand, at the rate the field plays them |
+| Sustain | Heal, Whiskey Shot, Scotch, Iocane | Fights long enough for healing to matter |
+| Tempo and control | Coil, Constrict, Horn Gore, Entrance, Mesmerize, Enthrall | Opponent turns worth denying, and room to use the time won |
+| Evasion | Cloak of Invisibility, Take Wing, Camouflage Vest | Opponents whose attacks target |
+| Confusion | Sandstorm, Enchanted Faceswap | Opponent cards worth redirecting (their heals and big hits turned on themselves) |
+| Targeting | Fists of Villainy | More than one opponent (in a duel it is exactly a Hit) |
+| Economy | Pick Pocket, Random Play, Blink | Opponent hands worth disrupting |
+| Fun | Prion Disease, joke flavours | Players: excitement (Layer 6), not win rate |
+
+**Rules for the method from here:**
+
+1. **A card's value is a set of numbers, one per context, not one number.** The catalogue
+   reports each card:
+   - in the Hit context (the damage baseline);
+   - against the reference field;
+   - in its **best context** from a fixed list: a caster hand (INT cards), a brute hand
+     (STR and DEX cards), opponents holding the cards it counters, and a four-monster crowd.
+
+   It names which context is best. Catalogue flags use the best-context value.
+2. **A low value in one context is a question, not a finding.** Before a card is called weak,
+   read its code for what it reads and what it answers, and measure it where it is built to
+   work. It is weak only if it is weak there too.
+3. **Weak is allowed** (owner). A situational or fun card can stay weak. A fix is warranted
+   only when a monster has no competitive good picks without it (the monster-level rule
+   above), or when a card is a trap: worse than an empty slot in its own best context.
+4. **Seed the Layer 4 search from best-context values.** A search seeded from Hit-context
+   values would rarely try synergy cards, and its hands would inherit the same blind spot.
+   Its hands are whole hands, so synergy is valued there directly; the risk is only in where
+   it starts.
+5. **Judge counters against the field that is actually played.** That means the searched
+   field (Layer 4), and production hands once telemetry can read them. A counter to a card
+   nobody plays is correctly worth nothing, and that is not a reason to change it.
+6. **Report excitement beside win rate** (Layer 6). A card can earn its slot by making
+   fights memorable.
 
 ### Layer 3: chassis, collections, and inventories
 
@@ -473,6 +535,7 @@ a few), with this table updated in the same commit.
 | 4 | A | Validate HE: stacking linearity on synthetic cards; 30 held-out hands predicted within 5 points | A pass/fail statement, and what HE can and cannot be used for | Done: **at the mark, not under it** (80 held-out synthetic hands, mean absolute error 5.1 against a mark of 5, noise floor 2.1; first reported as 4.9 until a Codex review found the slot weighting applied twice) after two fixes from a first failing run (13.5): a two-sided ladder, and fitted slot weights. Stacking is linear. Slot position is first-order at levels 4-7 (slot 1 worth up to about 4 times slot 9). HE ranks and explains; decisions stay on whole-hand simulation; repeat on real cards in task 6. [Report](../reference/balance-reports/2026-09-28-ladder-and-he.md) | 1fc3cb1, 522e493, this commit |
 | 5 | B | Layer 1 experiments: exchange rates, scaling, crowd factor, profiles, order | The idealized price list, and what order can and cannot do | Planned | |
 | 6 | B | Layer 2: `sim:catalogue` over all 61 cards | Catalogue JSON and tables; outliers flagged | Done (quick profile): 60 cards (Flee excluded) at levels 1, 3, 5, 7, 12, 259,200 fights, 0 failures. Area spells scale with level; Sandstorm and Enchanted Faceswap are about 2 Hits from level 1. The Dragon, Unicorn, and Weeping Angel each hold several cards below 0.5 Hit-equivalents (Tsunami, Mesmerize, Enthrall, and four Unicorn cards), matching their curves. Boost and hide cards rarely pay back in 2-3 round fights. [Report](../reference/balance-reports/2026-09-28-catalogue.md). Still to do: HE validation on real cards, and levels 0-7 at full precision (overnight) | e325797, this commit |
+| 6b | B | Catalogue contexts: each card also measured in its best context (caster hand, brute hand, opponent holding what it counters, crowd), flags on best-context value ([Value beyond damage](#value-beyond-damage-owner-2026-09-28)) | Feline Companion and Bad Batch read correctly in their own contexts; no card flagged weak on the Hit context alone | Planned | |
 | 7 | B | Layer 3: chassis values, collection model, inventories | Per-monster strength decomposed | Done: 161,400 fights plus a fight-free collection model. The Weeping Angel's body is 2.5-5 Hits below the reference (its strength is all cards: Blink 3.3 on it at level 1); the Dragon's is 1-2.5 below and Tsunami is worth nothing on it; the Unicorn's body is the strongest and its own cards the weakest; the Gladiator's body is below par at every level. Collections saturate by level 10 (about 500 fights) except the Jinn's Sandstorm copies; at levels 0-3 typical inventories are within 2 Hits of each other, so early imbalance is bodies and single epics. [Report](../reference/balance-reports/2026-09-28-layer3.md) | 7abcf9f, this commit |
 | 8a | B | Layer 6 tooling: excitement metrics, the win-probability model with its state features, held-out calibration, and the counterfactual fallback, exercised on provisional hands (the likely decks) | Calibration report per action class; tooling tested | Planned | |
 | 9 | C | Layer 4: search with best-response rounds, matrices, skill expression; catalogue rerun against the searched field | The band check per level (realistic and unconstrained) | Planned | |

@@ -42,6 +42,11 @@ the conversion is the two-sided ladder at levels 1, 4, 7, and 12 (see
   - **Type-dependent effects read as a Hit.** Fists of Villainy is exactly 1.00 because in a
     duel it plays exactly like a Hit (its lowest-HP targeting only matters in a ring).
   - **Area and crowd effects are undercounted.** In a duel there is only one opponent.
+  - **Own-hand synergy is absent.** The rest of the hand is Hits, so a card whose value
+    depends on the other cards (Feline Companion's INT) or on what the opponent holds (Bad
+    Batch's drinks) reads near zero here. See
+    [Value beyond damage](../../roadmap/34-balance-methodology.md#value-beyond-damage-owner-2026-09-28):
+    low values in this table are questions until the context rerun (task 6b).
   - **Holder synergy is absent.** A signature card on its own monster's stats (for example,
     Tsunami on a Dragon's INT) is measured on the median chassis. Layer 3 puts each card back
     on its real holders.
@@ -156,8 +161,9 @@ Levels 1, 3, 5 and 7 are the primary levels (owner: tune for levels 0–7); leve
 
    Layer 3 checks this on the real holders, since a type bonus could lift a card like Tsunami.
 3. **Other cards at or below an empty slot:**
-   - Feline Companion is −0.7 to 0.0: a boost that costs its slot and then some.
-   - Bad Batch is −0.03 to 0.36.
+   - Feline Companion is −0.7 to 0.0 and Bad Batch −0.03 to 0.36 here, but both are context
+     cards (INT synergy, and a counter to drinks) that this context cannot see; see the
+     follow-up below.
    - Prion Disease is 0.05–0.3 as an epic.
    - The hide cards: Cloak of Invisibility, Camouflage Vest, and Mood Scales. Take Wing is the
      exception at 1.2–1.9, which makes it the Dragon's best card, flagged against its class at
