@@ -51,8 +51,12 @@ Boss-specific behaviour is applied in `characters/helpers/random.ts` (`randomCha
   while any are standing.
 - `monster.canHold` is wrapped to reject cards with `static noBosses = true`
   (`fight-or-flight`, `flee`, `kalevala`).
-- The deck drops weak card types (`Flee`, `Harden`, `Heal`, `Hit`, `Whiskey Shot`) and every
-  remaining card is `levelUp(random(0, 6))`'d.
+- The deck drops filler by class (`isBossFiller`): the plain `Hit`, and any heal, hide, or
+  boost card not tied to one monster type (Heal, Scotch, Whiskey Shot, Revive, Flee, Harden,
+  Basic Shield, Calisthenics, and the like). Monster-specific powers in those classes stay
+  (Ecdysis, Thick Skin, Gloaming Rest, Horn of Proof). A hand-written list from the original
+  engine let newer basics through (roadmap 33). Every remaining card is
+  `levelUp(random(0, 6))`'d.
 - Level comes from XP: either fully random, or capped via `{ xp: random(0, getXpCapForLevel(cap)) }`.
 
 ### `userId: 'boss'` is a sentinel, and it is not a uuid

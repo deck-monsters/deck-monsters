@@ -20,12 +20,18 @@ Concussion.
 | 2 | Boost and curse cards since #175 (temporary DEX, STR, and INT changes move rolls): measure what each is worth per play and whether any needs a small tweak | Done: ±5 cap on temporary DEX/STR/INT changes, and curse attacks curse only on a hit | f9fbbc5, 9b15e87, this commit |
 | 3 | Baseline class curves after tasks 1-2, random and likely hands; why some monsters seem to always carry their signature card | In progress | |
 | 4 | Rebalance to the owner's band: every monster wins 35-75% at every level (ancient dragons up to 80); brutes stronger early, casters stronger late. Candidates: a per-card copy limit for area spells, level scaling | Planned | |
+| 5 | Bosses drop filler by card class (`isBossFiller`): the plain Hit and any heal, hide, or boost card not tied to one monster type | Done | this commit |
+| 6 | Signature-card catch-up: a winning monster whose owner holds no copy of its signature card very likely wins one | Planned | |
 
 ## Decisions (owner, 2026-09-28)
 
 | Question | Decision |
 |---|---|
 | Heal and an INT penalty | Reads as a bug on a 1d4; fix it. Curse of Loki stays |
+| Band basis | Skilled against skilled: informed (likely) hands on both sides. A good build and card order should pay off a lot, but the monster type alone must not decide nearly every fight |
+| Copy limits | Test whether a lower per-card limit is needed, and for which set |
+| Boss filler | Drop by card class, not a hand-written list |
+| Signature cards | A player whose collection lacks a monster's signature card should very likely win one when that monster wins; normal odds once they own a copy |
 | Boost and curse cards | "Mostly fine", but test for minor tweaks; each play is an automatic stat change |
 | Stacking cap | A temporary DEX, STR, or INT change caps at ±5 (was `level + 1`); AC keeps `level + 1` |
 | Curse attacks | Apply the curse only when the hit lands (owner's suggestion, measured below) |
@@ -120,5 +126,5 @@ arrive through fills.
 
 Bosses drop Flee, Harden, Heal, Hit, and Whiskey Shot from that deck (`randomCharacter`).
 The list dates from the original JavaScript engine with no recorded reason; its effect is
-that a boss holds no filler. It predates newer basics (Scotch, Turkey Thigh, Basic Shield,
-Thick Skin), so a boss can still hold those.
+that a boss holds no filler. It predates newer basics (Scotch, Basic Shield, Calisthenics),
+so a boss could still hold those. Task 5 replaces it with a class rule (owner's choice).

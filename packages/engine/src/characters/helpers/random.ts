@@ -3,6 +3,16 @@ import { XP_PER_VICTORY } from '../../helpers/experience.js';
 import { BOSS_PERSONALITIES } from '../../helpers/boss-personalities.js';
 import Beastmaster from '../beastmaster.js';
 import { RING_PATRON_ICON, RING_PATRON_NAME } from '../../constants/lore.js';
+import { BOOST, HEAL, HIDE } from '../../constants/card-classes.js';
+import {
+	BASILISK,
+	DRAGON,
+	GLADIATOR,
+	JINN,
+	MINOTAUR,
+	UNICORN,
+	WEEPING_ANGEL,
+} from '../../constants/creature-types.js';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyFn = (...args: any[]) => any;
@@ -64,6 +74,23 @@ export interface RandomCharacterOptions {
 	icon?: string;
 	[key: string]: unknown;
 }
+
+/**
+ * A boss holds no filler. This was a hand-written list from the original JavaScript engine
+ * (Flee, Harden, Heal, Hit, Whiskey Shot) that newer basics such as Scotch and Basic Shield
+ * got past. Owner's choice (roadmap 33): drop by card class instead. Filler is
+ * the plain Hit, and any heal, hide, or boost card that is not tied to one monster type, so
+ * signature powers such as Ecdysis, Thick Skin, Gloaming Rest, and Horn of Proof stay.
+ */
+const FILLER_CLASSES = [HEAL, HIDE, BOOST];
+const MONSTER_TYPES = [BASILISK, GLADIATOR, JINN, MINOTAUR, WEEPING_ANGEL, UNICORN, DRAGON];
+export const isBossFiller = (card: any): boolean => {
+	if (card.cardType === 'Hit') return true;
+	const classes: string[] = card.cardClass ?? card.constructor?.cardClass ?? [];
+	if (!classes.some(cardClass => FILLER_CLASSES.includes(cardClass))) return false;
+	const permitted: string[] = card.permittedClassesAndTypes ?? card.constructor?.permittedClassesAndTypes ?? [];
+	return !permitted.some(holder => MONSTER_TYPES.includes(holder));
+};
 
 const randomCharacter = ({
 	battles,
@@ -144,8 +171,7 @@ const randomCharacter = ({
 
 	let cleanBossDeck: (deck: any[]) => any[];
 	if (isBoss) {
-		const weakTypes = ['Flee', 'Harden', 'Heal', 'Hit', 'Whiskey Shot'];
-		cleanBossDeck = deck => deck.filter((card: any) => !weakTypes.includes(card.cardType));
+		cleanBossDeck = deck => deck.filter((card: any) => !isBossFiller(card));
 	} else {
 		cleanBossDeck = deck => deck;
 	}

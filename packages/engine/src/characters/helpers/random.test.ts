@@ -75,3 +75,40 @@ describe('characters/helpers/random', () => {
 		});
 	});
 });
+
+describe('isBossFiller', () => {
+	// Bosses drop filler by class, not a hand-written list that newer basics got past
+	// (roadmap 33). Monster-specific powers in the same classes stay.
+	it('drops the plain Hit and unrestricted heal, hide, and boost cards', async () => {
+		const { isBossFiller } = await import('./random.js');
+		const filler = await Promise.all(
+			[
+				['../../cards/heal.js', 'HealCard'],
+				['../../cards/scotch.js', 'ScotchCard'],
+				['../../cards/whiskey-shot.js', 'WhiskeyShotCard'],
+				['../../cards/flee.js', 'FleeCard'],
+				['../../cards/boost.js', 'BoostCard'],
+				['../../cards/basic-shield.js', 'BasicShieldCard'],
+				['../../cards/hit.js', 'HitCard'],
+			].map(async ([path, name]) => new (await import(path))[name]()),
+		);
+		for (const card of filler) expect(isBossFiller(card), card.cardType).to.equal(true);
+	});
+
+	it('keeps monster-specific powers and every attack but the plain Hit', async () => {
+		const { isBossFiller } = await import('./random.js');
+		const kept = await Promise.all(
+			[
+				['../../cards/ecdysis.js', 'EcdysisCard'],
+				['../../cards/thick-skin.js', 'ThickSkinCard'],
+				['../../cards/gloaming-rest.js', 'GloamingRestCard'],
+				['../../cards/horn-of-proof.js', 'HornOfProofCard'],
+				['../../cards/sandstorm.js', 'SandstormCard'],
+				['../../cards/molasses.js', 'MolassesCard'],
+				// A Survival Knife: an attack that also heals, not a heal.
+				['../../cards/turkey-thigh.js', 'TurkeyThighCard'],
+			].map(async ([path, name]) => new (await import(path))[name]()),
+		);
+		for (const card of kept) expect(isBossFiller(card), card.cardType).to.equal(false);
+	});
+});
