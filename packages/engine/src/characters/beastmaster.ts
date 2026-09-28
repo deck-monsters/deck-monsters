@@ -24,6 +24,7 @@ import type BaseMonster from '../monsters/base.js';
 // probabilities, collection, items/helpers/counts) and never reaches back into
 // monsters/characters, so there is no cycle here for a lazy load to avoid.
 import { resolveChoiceIndex } from '../helpers/choices.js';
+import { MAX_CARD_COPIES_IN_HAND } from '../constants/card-management.js';
 
 // This formatter stays behind the lazy loader only because the loader (and the
 // readiness promise it exports) is a pre-existing pattern shared with
@@ -50,7 +51,6 @@ export const beastmasterReady = loadHelpers().catch((err) => {
 // Raised from 7 to 10 in September 2026.
 export const DEFAULT_MONSTER_SLOTS = 10;
 
-const MAX_CARD_COPIES_IN_HAND = 4;
 
 const normalize = (value: string): string => value.trim().toLowerCase();
 const getCardName = (card: CardInstance): string =>

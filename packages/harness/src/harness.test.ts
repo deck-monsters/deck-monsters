@@ -12,7 +12,7 @@ import { runConcurrentLookMonsters } from './scenarios/concurrent-look-monsters.
 import { EXTRA_BOSS_LABEL, parseMonstersArg, parseMonsterType, SIM_MONSTER_TYPES, simulate, simulateNewPlayerProgression, withoutHarnessExcludedCards } from './simulate.js';
 import { UNICORN_FIXTURE_DECK } from './scripts/monster-reports/unicorn.js';
 import { LIKELY_DECKS } from './likely-decks.js';
-import { allMonsters, COINS_PER_DEFEAT, COINS_PER_VICTORY, engineReady, getCardClassByTypeName, RoomEventBus } from '@deck-monsters/engine';
+import { allMonsters, MAX_CARD_COPIES_IN_HAND, COINS_PER_DEFEAT, COINS_PER_VICTORY, engineReady, getCardClassByTypeName, RoomEventBus } from '@deck-monsters/engine';
 
 describe('@deck-monsters/harness', () => {
 	before(async function () {
@@ -484,6 +484,29 @@ describe('@deck-monsters/harness', () => {
 					expect(permitted.includes(monsterClass) || permitted.includes(creatureType), `${name} for ${type}`).to.equal(true);
 				}
 			}
+		}
+	});
+
+	it('never builds a hand past the copy limit a player\'s equip enforces', async () => {
+		// A likely deck's preferred Hit on top of the starting deck's copies gave a level 0
+		// Basilisk five Hits (a Codex review of PR #405).
+		const hands: string[][] = [];
+		await simulate({
+			monsters: [
+				{ type: 'Basilisk', level: 0, role: 'human', deckStyle: 'likely' },
+				{ type: 'Minotaur', level: 0, role: 'human' },
+			],
+			fights: 12,
+			seed: 4,
+			roomId: 'harness-copy-cap',
+			onContestants: contestants => {
+				for (const c of contestants as any[]) hands.push(c.monster.cards.map((card: any) => card.cardType));
+			},
+		});
+		for (const hand of hands) {
+			const counts = new Map<string, number>();
+			for (const name of hand) counts.set(name, (counts.get(name) ?? 0) + 1);
+			expect(Math.max(...counts.values())).to.be.at.most(MAX_CARD_COPIES_IN_HAND);
 		}
 	});
 

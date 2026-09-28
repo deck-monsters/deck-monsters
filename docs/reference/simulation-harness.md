@@ -225,7 +225,8 @@ player's deck or a real boss. A spec's `role` now says what it is:
 A human's `deckStyle` chooses its hand. `random` (the default) is the floor above. `likely`
 is the other end, a player who knows the monster: `likely-decks.ts` lists each monster's
 signature cards and the handbook's example builds in preference order, the monster keeps the
-ones it may hold at its level, and a random legal fill completes the hand. The lists are
+ones it may hold at its level, and a random legal fill completes the hand. Every human hand
+obeys `MAX_CARD_COPIES_IN_HAND` (four of one card), as a player's equip does. The lists are
 hand-written until equipped-deck telemetry exists, so a report on likely decks measures
 those lists as much as the monsters; read it beside the random-deck report.
 

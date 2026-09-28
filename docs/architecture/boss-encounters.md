@@ -627,6 +627,10 @@ the timer; `Game` owns one `MegaBossEvent` wherever timed bosses run (`ring.spaw
   `Contestant.mega`: exempt from the boss quota and from `dismissExtraBosses`. It has no
   despawn timer, so when the last human withdraws before the fight, `removeMonster` sends the
   whole party away; otherwise a lone newcomer would walk into a fight fitted for a crowd.
+  It brings as much of its party as the ring's twelve slots hold (boss first); with no room
+  even for the boss it is called off and the fight countdown restarts. An armed ring event is
+  cleared when it arrives and none is rolled while its party is in the ring, since Blood Feud
+  would turn off the alliance and a Gauntlet would add bosses to a fitted fight.
 - **Fitting.** `fitMegaBoss` reads the humans in the ring when it arrives: level two above the
   strongest, minions at the weakest human's level at a third of their HP, and HP a share of
   the humans' combined HP, `0.25 + 0.15 × humans + 0.11 × strongest level`

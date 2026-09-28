@@ -118,7 +118,7 @@ export interface MegaBossHost {
 		emit(event: string, ...args: unknown[]): void;
 		publishState(): void;
 		spawnBoss(options?: Record<string, unknown>): Contestant | undefined;
-		addMegaBoss(boss: Contestant, minions: Contestant[]): void;
+		addMegaBoss(boss: Contestant, minions: Contestant[]): boolean;
 		on(event: string, fn: (...args: any[]) => void): (...args: any[]) => void;
 		off(event: string, fn: (...args: any[]) => void): void;
 	};
@@ -229,10 +229,11 @@ export class MegaBossEvent {
 		});
 
 		const relics = MEGA_BOSS_RELICS.map(relic => relic.name).join(' and ');
+		if (!ring.addMegaBoss(boss, minions)) return;
+		const brought = ring.contestants.filter(contestant => contestant.mega && contestant.minion).length;
 		ring.emit('narration', {
-			narration: `👹 THE MEGA BOSS HAS COME. ${boss.monster.givenName} climbs out of the dark, wearing ${relics}, with ${MEGA_BOSS_MINIONS} lesser minions scuttling at its heels. Every challenger stands together until it falls.`,
+			narration: `👹 THE MEGA BOSS HAS COME. ${boss.monster.givenName} climbs out of the dark, wearing ${relics}${brought ? `, with ${brought} lesser ${brought === 1 ? 'minion' : 'minions'} scuttling at its heels` : ''}. Every challenger stands together until it falls.`,
 		});
-		ring.addMegaBoss(boss, minions);
 
 		// Pay out the moment it falls, to every challenger still standing then: after it the
 		// challengers settle it among themselves, which would leave one survivor to collect.

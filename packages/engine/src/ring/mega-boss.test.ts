@@ -4,6 +4,7 @@ import sinon from 'sinon';
 import Game from '../game.js';
 import Basilisk from '../monsters/basilisk.js';
 import Beastmaster from '../characters/beastmaster.js';
+import { RING_EVENTS } from './ring-events.js';
 import {
 	fitMegaBoss,
 	MEGA_BOSS_ANNOUNCE_MS,
@@ -167,6 +168,43 @@ describe('./ring/mega-boss.ts', () => {
 			expect(game.ring.contestants).to.have.length(0);
 		} finally {
 			game.dispose();
+		}
+	});
+
+	it('clears an armed ring event, which would change the fight it was fitted for', () => {
+		// Blood Feud turns off the challengers' alliance (a Codex review of PR #405).
+		const at = Date.now() + MINUTE;
+		const game = new Game({ roomId: 'mega-event', megaBossAt: at }, () => {});
+		try {
+			addPlayer(game, 'user-1');
+			addPlayer(game, 'user-2');
+			addPlayer(game, 'user-3');
+			game.ring.ringEvent = RING_EVENTS.find(event => event.id === 'blood-feud');
+			clock.tick(MINUTE);
+			expect(game.ring.contestants.some(contestant => contestant.mega)).to.equal(true);
+			expect(game.ring.ringEvent).to.equal(undefined);
+		} finally {
+			game.dispose();
+		}
+	});
+
+	it('brings as much of its party as the ring holds, and is called off when it holds none', () => {
+		// addMonster refuses past the ring's twelve, so eleven humans got no minions and twelve
+		// no boss at all, after it was announced (a Codex review of PR #405).
+		const at = Date.now() + MINUTE;
+		const eleven = new Game({ roomId: 'mega-eleven', megaBossAt: at }, () => {});
+		const twelve = new Game({ roomId: 'mega-twelve', megaBossAt: at }, () => {});
+		const lines = narrations(twelve);
+		try {
+			for (let i = 0; i < 11; i += 1) addPlayer(eleven, `user-${i}`);
+			for (let i = 0; i < 12; i += 1) addPlayer(twelve, `user-${i}`);
+			clock.tick(MINUTE);
+			expect(eleven.ring.contestants.filter(contestant => contestant.mega)).to.have.length(1);
+			expect(twelve.ring.contestants.some(contestant => contestant.mega)).to.equal(false);
+			expect(lines.some(line => line.includes('cannot squeeze into a ring this crowded'))).to.equal(true);
+		} finally {
+			eleven.dispose();
+			twelve.dispose();
 		}
 	});
 

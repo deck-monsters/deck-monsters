@@ -17,6 +17,7 @@ import {
 	getXpCapForLevel,
 	randomContestant,
 	RING_EVENT_CHANCE_PERCENT,
+	MAX_CARD_COPIES_IN_HAND,
 	buildRingEventContext,
 	selectRingEvent,
 	type Contestant,
@@ -319,8 +320,24 @@ function buildHuman(
 			if (monster.canHoldCard(card)) preferred.push(card);
 		}
 	}
-	const hand = [...preferred, ...shuffled(pool)].slice(0, monster.cardSlots);
-	while (hand.length < monster.cardSlots) hand.push(drawCard({}, eligible));
+	// A hand obeys the copy limit a player's equip does (MAX_CARD_COPIES_IN_HAND): a likely
+	// deck's preferred Hit on top of the starting deck's copies gave five, a hand no player
+	// could equip (a Codex review of PR #405).
+	const counts = new Map<string, number>();
+	const fits = (card: { cardType?: string }): boolean => (counts.get(card.cardType ?? '') ?? 0) < MAX_CARD_COPIES_IN_HAND;
+	const take = (card: { cardType?: string }): void => {
+		counts.set(card.cardType ?? '', (counts.get(card.cardType ?? '') ?? 0) + 1);
+		hand.push(card);
+	};
+	const hand: Array<{ cardType?: string }> = [];
+	for (const card of [...preferred, ...shuffled(pool)]) {
+		if (hand.length >= monster.cardSlots) break;
+		if (fits(card)) take(card);
+	}
+	for (let tries = 0; hand.length < monster.cardSlots && tries < 200; tries += 1) {
+		const card = drawCard({}, eligible);
+		if (card && fits(card)) take(card);
+	}
 	monster.cards = hand;
 	return contestant;
 }

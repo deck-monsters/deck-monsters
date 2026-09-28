@@ -1788,6 +1788,11 @@ export class Ring extends BaseClass {
 	 * runs before the deterministic/ringEventsEnabled guards so it applies even in test mode.
 	 */
 	private rollRingEvent(): void {
+		// A mega boss fight is fitted without ring events (see addMegaBoss).
+		if (this.contestants.some(contestant => contestant.mega)) {
+			this.ringEvent = undefined;
+			return;
+		}
 		const context = buildRingEventContext(this.contestants);
 
 		// There used to be a forced Common Cause here whenever two or more bosses met two or
@@ -1960,15 +1965,32 @@ export class Ring extends BaseClass {
 	 * and a regular boss beside it would push the fight past the win rate it was fitted to.
 	 * The party ignores the boss quota and is never dismissed as surplus (`Contestant.mega`).
 	 */
-	addMegaBoss(boss: Contestant, minions: Contestant[]): void {
-		if (this.inEncounter) return;
+	addMegaBoss(boss: Contestant, minions: Contestant[]): boolean {
+		if (this.inEncounter) return false;
 		const regular = this.contestants.filter(contestant => contestant.isBoss && !contestant.mega);
 		if (regular.length) {
 			this.sendBossesAway(regular, other =>
 				`${other.monster.givenName} takes one look at what is climbing out of the dark and leaves the ring to it.`);
 		}
+		// Room for the whole party, or as much of it as fits: `addMonster` refuses past
+		// MAX_MONSTERS one at a time, so ten humans got one minion and twelve got no boss at
+		// all, after it was announced (a Codex review of PR #405). With no room even for the
+		// boss it is called off, and the countdown the hold returned is restarted.
+		const room = MAX_MONSTERS - this.contestants.length;
+		if (room < 1) {
+			this.emit('narration', {
+				narration: `👹 ${boss.monster.givenName} cannot squeeze into a ring this crowded, and roars off into the dark.`,
+			});
+			this.startFightTimer();
+			return false;
+		}
+		// An ordinary ring event would change the fight it was fitted for: Blood Feud turns off
+		// the challengers' alliance, a Gauntlet adds bosses. Clear any armed one; rollRingEvent
+		// rolls none while the party is here (the same review).
+		this.ringEvent = undefined;
 		this.addMonster({ ...boss, isBoss: true, mega: true });
-		for (const minion of minions) this.addMonster({ ...minion, isBoss: true, mega: true, minion: true });
+		for (const minion of minions.slice(0, room - 1)) this.addMonster({ ...minion, isBoss: true, mega: true, minion: true });
+		return true;
 	}
 
 	removeBoss(contestant: Contestant): Promise<void> {

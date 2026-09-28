@@ -111,3 +111,18 @@ three faults, fixed before the PR opened:
   now, and both move summaries carry it; a batch move also names each failed card's reason.
 - **A freshly rolled mega boss time waited for an unrelated save**, because the server
   attaches the store after the Game is built. The `stateStore` setter now saves it.
+
+## Codex review of PR #405
+
+Three findings, all fixed with tests that fail without them:
+
+- **Ring events in a mega boss fight.** An armed Blood Feud survived its arrival and turned
+  off the challengers' alliance. `addMegaBoss` clears the armed event and `rollRingEvent`
+  rolls none while the party is in the ring.
+- **A crowded ring.** `addMonster` refuses past twelve, so ten humans got one minion and
+  twelve got no boss, after it was announced. It now brings what fits, boss first, and is
+  called off (restarting the countdown) when the ring holds none.
+- **Harness hands past the copy limit.** A likely deck's preferred card on top of the starting
+  deck gave five of one card. Hands now obey `MAX_CARD_COPIES_IN_HAND`, which moved to
+  `constants/card-management.ts` from its two private copies in equip and Beastmaster.
+  Re-measured: the likely-deck curves match within a point, and `sim:mega` reads 18.2%.

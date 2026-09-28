@@ -62,6 +62,7 @@ export type { RandomContestantOptions } from './helpers/bosses.js';
  */
 export { COINS_PER_VICTORY, COINS_PER_DEFEAT, getUtcDay } from './constants/coins.js';
 export { EARLY_COIN_BONUS_TIERS } from './constants/progression.js';
+export { MAX_CARD_COPIES_IN_HAND } from './constants/card-management.js';
 export { createKeyedPromiseQueue } from './helpers/room-engine-queue.js';
 /** How the engine renders a stored creature name as `givenName` — needed to compare against one. */
 export { startCase } from './helpers/start-case.js';
