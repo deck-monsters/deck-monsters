@@ -59,6 +59,8 @@ interface RingPaneProps {
 interface TimerState {
   nextFightAt: number | null;
   nextBossSpawnAt: number | null;
+  /** Set only once a mega boss is announced (30 minutes out); see ring/mega-boss.ts. */
+  nextMegaBossAt?: number | null;
   monsterCount: number;
   inEncounter?: boolean;
   contestants?: RingContestantSnapshot[];
@@ -250,10 +252,10 @@ export default function RingPane({
   // Tick every second while a fight or boss timer is active, to keep the badge live
   const [, setTick] = useState(0);
   useEffect(() => {
-    if (!timerState.nextFightAt && !timerState.nextBossSpawnAt) return;
+    if (!timerState.nextFightAt && !timerState.nextBossSpawnAt && !timerState.nextMegaBossAt) return;
     const id = setInterval(() => setTick(t => t + 1), 1000);
     return () => clearInterval(id);
-  }, [timerState.nextFightAt, timerState.nextBossSpawnAt]);
+  }, [timerState.nextFightAt, timerState.nextBossSpawnAt, timerState.nextMegaBossAt]);
 
   const onLiveEvent = useCallback((tracked: TrackedRingFeedEvent) => {
     const event = tracked.data;
@@ -287,6 +289,7 @@ export default function RingPane({
       setTimerState({
         nextFightAt: s.nextFightAt,
         nextBossSpawnAt: s.nextBossSpawnAt,
+        nextMegaBossAt: s.nextMegaBossAt ?? null,
         monsterCount: s.monsterCount,
         inEncounter: s.inEncounter,
         contestants: s.contestants ?? [],
@@ -421,6 +424,10 @@ export default function RingPane({
   if (timerState.nextFightAt) {
     const delta = timerState.nextFightAt - Date.now();
     timerBadge = delta <= 0 ? 'fight now!' : `fight in ${formatCountdown(timerState.nextFightAt)}`;
+  } else if (timerState.nextMegaBossAt) {
+    // An announced mega boss outranks the ordinary boss timer: it is the event people are
+    // gathering for, and it only shows in its 30-minute announcement window.
+    timerBadge = `MEGA BOSS in ${formatCountdown(timerState.nextMegaBossAt)}`;
   } else if (timerState.nextBossSpawnAt) {
     timerBadge = `boss in ~${formatCountdown(timerState.nextBossSpawnAt)}`;
   }

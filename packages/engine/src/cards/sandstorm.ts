@@ -1,4 +1,4 @@
-import { BlastCard } from './blast.js';
+import { BlastCard, FULL_SCALING_LEVELS } from './blast.js';
 import { sample } from '../helpers/random.js';
 import { ATTACK_PHASE } from '../constants/phases.js';
 import { EPIC } from '../helpers/probabilities.js';
@@ -55,7 +55,7 @@ export class SandstormCard extends BlastCard {
 	}
 
 	override get stats(): string {
-		return `${this.damage} storm damage +${this.levelDamage} per level of the jinni to everyone in the ring. Temporarily confuses opponents and causes them to mistake their targets.`;
+		return `${this.damage} storm damage +${this.levelDamage} per level of the jinni (per two levels past level ${FULL_SCALING_LEVELS}) to everyone in the ring. Temporarily confuses opponents and causes them to mistake their targets.`;
 	}
 
 	override async effect(sandstormPlayer: any, sandstormTarget: any): Promise<any> {

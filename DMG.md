@@ -370,7 +370,8 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  opponent in the fight.
 
  Blast: 3 base damage +1 per 
- level of the caster
+ level of the caster (per two 
+ levels past level 10)
 
  Level: Beginner
  Usable by: Cleric
@@ -1669,7 +1670,8 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  it.
 
  1 storm damage +1 per level of 
- the jinni to everyone in the 
+ the jinni (per two levels past 
+ level 10) to everyone in the 
  ring. Temporarily confuses 
  opponents and causes them to 
  mistake their targets.
@@ -2533,20 +2535,22 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  🎩  Sorting Hat  •
 ----------------------------------
 
- This enchanted hat that once 
+ An enchanted hat that once 
  belonged to Godric Gryffindor. 
  Put it on and find out where you 
  truly belong, or choose no team 
  at all.
 
- If your character has joined a 
- team but your monster hasn't, 
- that monster will be on your 
- character's team by default. 
- Every shop keeps one in stock, 
- and `leave team` takes you and 
- your monsters off a team for 
- free.
+ Teammates go after everyone else 
+ in the ring first, and only turn 
+ on each other when nobody else 
+ is left. If your character has 
+ joined a team but your monster 
+ hasn't, that monster is on your 
+ character's team. Every shop 
+ keeps one in stock, and `leave 
+ team` takes you and your 
+ monsters off a team for free.
 
  Usable 1 time.
 

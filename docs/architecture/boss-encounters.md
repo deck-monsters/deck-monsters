@@ -520,7 +520,9 @@ two humans who had not arranged a team hit each other while the bosses worked to
 with a boss in it, `Ring.fight()` puts each human with no team of its own on
 `CHALLENGERS_TEAM` (a contestant-level override, like a ring event's). They never target each
 other while any boss is still fighting; the moment the last boss is down the override comes
-off, a line says the alliance is over, and the humans left finish a normal free-for-all. The
+off, a line says the alliance is over, and the humans left finish a normal free-for-all. A
+mega boss's minions are the exception (`holdsChallengersAlliance`): the alliance ends when the
+mega boss itself falls, and the humans then fight each other and any minions left. The
 same two level 1s now win 29% (with boss temperaments), level with a pre-arranged team's
 28%.
 
@@ -600,3 +602,61 @@ death narration; test and harness delay-skip mode remains instantaneous.
 `dm_boss_summons_total` and `dm_ring_events_total` are collected off the ring's own emitter
 (`bossSummoned`, `ringEvent`), the same way boss spawns hang off `add` — see
 `packages/server/src/metrics/collector.ts` and `ring-event-args.ts`.
+
+## 8. The mega boss
+
+A rare, announced boss event (owner, 2026-09-27; built in Pass C,
+[32](../roadmap/32-pass-c-mega-boss-and-balance.md)). `ring/mega-boss.ts` holds the rules and
+the timer; `Game` owns one `MegaBossEvent` wherever timed bosses run (`ring.spawnBosses`).
+
+- **Schedule.** About once a day per room: the next one is 20–28 hours after the last
+  (`MEGA_BOSS_MIN_INTERVAL_MS`..`MAX`). The due time lives in the room's saved state
+  (`options.megaBossAt`), so a restart or deploy picks it up instead of rolling a new day. A
+  time rolled while the Game is built is saved as soon as the server attaches its store (the
+  `stateStore` setter), not at the next unrelated save; a
+  restart more than `MEGA_BOSS_LATE_GRACE_MS` (10 minutes) after it was due reschedules. While
+  it waits out a running fight the saved time moves to now on each retry, so a restart during
+  a long fight still owes it rather than rolling tomorrow. That write is saved at once, not
+  on the debounce, which combat keeps resetting. A restart already past its time brings it at
+  once without announcing it as a minute away. `Game` starts the event last in its
+  constructor, after the narration bridge and the restored ring, so a restart inside the
+  announcement window is heard.
+- **Announcement.** 30 minutes ahead, then reminders at 10 and 2 minutes. `ring.nextMegaBossAt`
+  is set only inside that window and rides `ring.state`, the handshake, and `ringState`; the
+  web ring header shows `MEGA BOSS in mm:ss` over the ordinary boss timer. A restart inside
+  the window announces again.
+- **The hold.** In its last `MEGA_BOSS_HOLD_MS` (2 minutes) no ordinary fight countdown is
+  armed (`Ring.holdForMegaBoss`): challengers gathering for it would otherwise fight each other
+  and leave the ring empty. The check runs before the countdown is armed, and the 2-minute
+  reminder stops one already running, so the ring header never counts down a fight that will
+  not happen and no ring event is rolled for it. Its arrival restarts the countdown.
+- **Arrival.** Due during a fight, it waits for the fight to end (`MEGA_BOSS_RETRY_MS`). With
+  fewer than `MEGA_BOSS_MIN_HUMANS` (2) humans in the ring it is called off with a line of
+  scorn and `spawnBoss()` sends a regular boss instead. Otherwise regular bosses waiting in the
+  ring step aside (refunding any summon) and `Ring.addMegaBoss` brings the party, flagged
+  `Contestant.mega`: exempt from the boss quota and from `dismissExtraBosses`. It has no
+  despawn timer, so when the last human withdraws before the fight, `removeMonster` sends the
+  whole party away; otherwise a lone newcomer would walk into a fight fitted for a crowd.
+  It brings as much of its party as the ring's twelve slots hold (boss first); with no room
+  even for the boss it is called off and the fight countdown restarts; party members left out
+  are disposed, since nothing else would stop their healing timers. The party joins with its
+  countdowns deferred, and the arrival line comes before the one fight countdown it arms
+  (each `addMonster` otherwise told every player a fight was starting). An armed ring event is
+  cleared when it arrives and none is rolled while its party is in the ring, since Blood Feud
+  would turn off the alliance and a Gauntlet would add bosses to a fitted fight.
+- **Fitting.** `fitMegaBoss` reads the humans in the ring when it arrives: level two above the
+  strongest, minions at the weakest human's level at a third of their HP, and HP a share of
+  the humans' combined HP, `0.25 + 0.15 × humans + 0.11 × strongest level`
+  (`megaBossHpShare`). The owner chose "humans win about 20%"; `sim:mega` measures 19% over
+  two to four humans at levels 1–10. A single share left two level 1s near 3% and three level
+  10s near 53%, because more humans and higher levels deal damage faster than HP keeps up.
+- **Relics.** A crown of black iron (+2 AC) and a war-horn of the old kings (+2 STR) on a boss
+  that is discarded after the fight. The crown goes on `acVariance`, because pre-battle AC
+  never reads permanent modifiers (a permanent AC modifier would be narration only); the horn
+  is a permanent STR modifier, which STR does read.
+- **Reward.** When it falls, every challenger still standing then gets
+  `MEGA_BOSS_REWARD_COINS` (25) coins, `MEGA_BOSS_REWARD_XP` (25) monster XP, and a card of
+  rare or scarcer rarity (`Game.rewardMegaBossChallenger`), on top of the fight's own rewards.
+  Who earned it is decided at its death, because the Challengers then settle it among
+  themselves and only one would be left standing at the end; it is paid at `fightConcludes`,
+  because monster XP levels a monster at once and a mid-fight level-up changed live combat.

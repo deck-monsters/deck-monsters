@@ -9,9 +9,10 @@ import { createTestGame } from '@deck-monsters/engine';
 import { capturePublicFeed, formatPublicFeedLines } from './public-feed.js';
 import { runRingTwoBosses } from './scenarios/ring-two-bosses.js';
 import { runConcurrentLookMonsters } from './scenarios/concurrent-look-monsters.js';
-import { parseMonstersArg, parseMonsterType, SIM_MONSTER_TYPES, simulate, simulateNewPlayerProgression, withoutHarnessExcludedCards } from './simulate.js';
+import { EXTRA_BOSS_LABEL, parseMonstersArg, parseMonsterType, SIM_MONSTER_TYPES, simulate, simulateNewPlayerProgression, withoutHarnessExcludedCards } from './simulate.js';
 import { UNICORN_FIXTURE_DECK } from './scripts/monster-reports/unicorn.js';
-import { allMonsters, COINS_PER_DEFEAT, COINS_PER_VICTORY, engineReady, getCardClassByTypeName, RoomEventBus } from '@deck-monsters/engine';
+import { LIKELY_DECKS } from './likely-decks.js';
+import { allMonsters, MAX_CARD_COPIES_IN_HAND, COINS_PER_DEFEAT, COINS_PER_VICTORY, engineReady, getCardClassByTypeName, RoomEventBus } from '@deck-monsters/engine';
 
 describe('@deck-monsters/harness', () => {
 	before(async function () {
@@ -465,6 +466,86 @@ describe('@deck-monsters/harness', () => {
 				.catch((err: Error) => {
 					expect(err.message).to.contain('positive integers');
 				});
+		}
+	});
+	it('has a likely deck for every monster, naming only cards that monster may hold', () => {
+		for (const type of SIM_MONSTER_TYPES) {
+			const deck = LIKELY_DECKS[type];
+			expect(deck, `a likely deck for ${type}`).to.not.equal(undefined);
+			const Monster = allMonsters.find(M => (M as unknown as { name: string }).name === type) as unknown as new () => { canHoldCard(card: unknown): boolean };
+			const monster = new Monster();
+			for (const name of deck!) {
+				const Card = getCardClassByTypeName(name) as unknown as (new () => unknown) | undefined;
+				expect(Card, `card "${name}" in ${type}'s likely deck`).to.not.equal(undefined);
+				// Level aside, the card must be one this monster's class or type may equip.
+				const permitted = (Card as unknown as { permittedClassesAndTypes?: string[] }).permittedClassesAndTypes;
+				if (permitted?.length) {
+					const { class: monsterClass, creatureType } = monster as unknown as { class: string; creatureType: string };
+					expect(permitted.includes(monsterClass) || permitted.includes(creatureType), `${name} for ${type}`).to.equal(true);
+				}
+			}
+		}
+	});
+
+	it('never builds a hand past the copy limit a player\'s equip enforces', async () => {
+		// A likely deck's preferred Hit on top of the starting deck's copies gave a level 0
+		// Basilisk five Hits (a Codex review of PR #405).
+		const hands: string[][] = [];
+		await simulate({
+			monsters: [
+				{ type: 'Basilisk', level: 0, role: 'human', deckStyle: 'likely' },
+				{ type: 'Minotaur', level: 0, role: 'human' },
+			],
+			fights: 12,
+			seed: 4,
+			roomId: 'harness-copy-cap',
+			onContestants: contestants => {
+				for (const c of contestants as any[]) hands.push(c.monster.cards.map((card: any) => card.cardType));
+			},
+		});
+		for (const hand of hands) {
+			const counts = new Map<string, number>();
+			for (const name of hand) counts.set(name, (counts.get(name) ?? 0) + 1);
+			expect(Math.max(...counts.values())).to.be.at.most(MAX_CARD_COPIES_IN_HAND);
+		}
+	});
+
+	it('equips signature cards in a likely deck', async () => {
+		const hands: string[][] = [];
+		await simulate({
+			monsters: [
+				{ type: 'Unicorn', level: 10, role: 'human', deckStyle: 'likely' },
+				{ type: 'Minotaur', level: 10, role: 'human' },
+			],
+			fights: 1,
+			seed: 5,
+			roomId: 'harness-likely',
+			onContestants: contestants => {
+				hands.push((contestants as any[])[0].monster.cards.map((card: any) => card.cardType));
+			},
+		});
+		expect(hands[0]).to.include('Sticketh');
+		expect(hands[0]).to.have.length(9);
+	});
+
+	it('rolls ring events when asked, and counts a Gauntlet boss\'s win apart', async () => {
+		const res = await simulate({
+			monsters: [
+				{ type: 'Gladiator', level: 2, role: 'human' },
+				{ type: 'Jinn', level: 2, role: 'human' },
+				{ type: 'Minotaur', level: 2, role: 'boss' },
+			],
+			fights: 24,
+			seed: 29,
+			roomId: 'harness-ring-events',
+			ringEvents: true,
+		});
+		expect(res.cancelledFights).to.equal(0);
+		const rolled = Object.values(res.ringEvents).reduce((a, b) => a + b, 0);
+		expect(rolled).to.be.above(0);
+		// Every fight's winners are sim slots or an event's extra boss, never unmapped.
+		for (const winners of res.winnersByFight) {
+			for (const label of winners) expect(['Sim 1', 'Sim 2', 'Sim 3', EXTRA_BOSS_LABEL]).to.include(label);
 		}
 	});
 });

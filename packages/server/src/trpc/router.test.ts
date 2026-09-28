@@ -959,6 +959,65 @@ describe('trpc/router card management procedures', () => {
 		});
 	});
 
+	it('names why a batch move stopped short, in its one Console line', async () => {
+		// The engine's own lines carried these reasons until the Console stopped printing
+		// them (10b #195); the Pass C review found partial moves then read as full ones.
+		const moveCard = async ({ cardName, channel }: { cardName: string; channel: (m: { announce: string }) => Promise<unknown> }) => {
+			await channel({ announce: 'engine line' });
+			if (cardName === 'Heal') throw new Error('Stonefang cannot hold Heal.');
+			return { movedCount: 2, fromMonsterName: 'Fang', toMonsterName: 'Stonefang', blockedBy: 'Stonefang has no free slots.' };
+		};
+		const announced: string[] = [];
+		const roomManager = {
+			assertMember: async () => undefined,
+			getGame: async () => ({ characters: { [USER_ID]: { moveCard } } }),
+			getEventBus: async () => ({
+				publish: (event: { type?: string; text?: string }) => {
+					if (event.type === 'announce') announced.push(String(event.text));
+				},
+			}),
+			runSerializedEngineWork: async (_roomId: string, fn: () => Promise<unknown>) => fn(),
+		} as unknown as Parameters<typeof createRouter>[0];
+
+		const caller = createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false });
+		await caller.game.moveMany({
+			roomId: ROOM_ID,
+			fromMonsterName: 'Fang',
+			toMonsterName: 'Stonefang',
+			cards: [{ cardName: 'Hit', count: 3 }, { cardName: 'Heal', count: 1 }],
+		});
+
+		expect(announced).to.deep.equal([
+			'Moved 2 cards from Fang to Stonefang. Could not move: Heal (Stonefang cannot hold Heal). Stonefang has no free slots.',
+		]);
+	});
+
+	it('prints one Console line for a Workshop equip, not the engine\'s line and the summary', async () => {
+		// Both used to reach the Console: "Equipped Stonefang: 1/2." from the engine and the
+		// same summary from the router, and a batch move printed a line per card type plus a
+		// summary. A player read the burst as the game moving cards by itself.
+		const equipCards = async ({ channel }: { channel: (m: { announce: string }) => Promise<unknown> }) => {
+			await channel({ announce: 'Equipped Stonefang: 1/2.' });
+			return { equipped: 1, requested: 2, skippedCards: ['Heal'], monsterName: 'Stonefang' };
+		};
+		const announced: string[] = [];
+		const roomManager = {
+			assertMember: async () => undefined,
+			getGame: async () => ({ characters: { [USER_ID]: { equipCards } } }),
+			getEventBus: async () => ({
+				publish: (event: { type?: string; text?: string }) => {
+					if (event.type === 'announce') announced.push(String(event.text));
+				},
+			}),
+			runSerializedEngineWork: async (_roomId: string, fn: () => Promise<unknown>) => fn(),
+		} as unknown as Parameters<typeof createRouter>[0];
+
+		const caller = createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false });
+		await caller.game.equipCards({ roomId: ROOM_ID, monsterName: 'Stonefang', cardNames: ['Hit', 'Heal'] });
+
+		expect(announced).to.deep.equal(['Equipped Stonefang: 1/2. Skipped: Heal.']);
+	});
+
 	it('routes game.reorderCards through character.reorderCards', async () => {
 		let receivedInput: Record<string, unknown> | undefined;
 		const publishedEvents: Array<{ type?: unknown; payload?: Record<string, unknown> }> = [];

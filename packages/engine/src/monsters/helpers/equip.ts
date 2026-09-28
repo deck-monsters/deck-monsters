@@ -5,6 +5,7 @@ import { matchesCardLookupName } from '../../cards/helpers/matches-lookup-name.j
 import { announceAndThrow } from '../../helpers/announce-and-throw.js';
 import { getArray } from '../../helpers/get-array.js';
 import { PROMPT_CANCELLED } from '../../events/index.js';
+import { MAX_CARD_COPIES_IN_HAND } from '../../constants/card-management.js';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyFn = (...args: any[]) => any;
@@ -44,7 +45,6 @@ export const equipHelpersReady = loadHelpers().catch((err) => {
 	console.error('[engine] equipHelpersReady FAILED — equip helpers will be stubs:', err);
 });
 
-const MAX_CARD_COPIES_IN_HAND = 4;
 const EQUIP_CONTROL_ANSWER = Symbol('equip-control-answer');
 const isFinishAnswer = (answer: unknown): boolean =>
 	/^(done|finished|enough|stop)$/i.test(String(answer ?? '').trim());

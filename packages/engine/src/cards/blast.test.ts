@@ -1,3 +1,4 @@
+import { scaledCasterLevel } from './blast.js';
 import { expect } from 'chai';
 
 import { BlastCard } from './blast.js';
@@ -8,14 +9,14 @@ describe('./cards/blast.ts', () => {
 		const blast = new BlastCard();
 
 		expect(blast).to.be.an.instanceof(BlastCard);
-		expect(blast.stats).to.equal('Blast: 3 base damage +1 per level of the caster');
+		expect(blast.stats).to.equal('Blast: 3 base damage +1 per level of the caster (per two levels past level 10)');
 	});
 
 	it('can be instantiated with options', () => {
 		const blast = new BlastCard({ damage: 10, levelDamage: 2 } as any);
 
 		expect(blast).to.be.an.instanceof(BlastCard);
-		expect(blast.stats).to.equal('Blast: 10 base damage +2 per level of the caster');
+		expect(blast.stats).to.equal('Blast: 10 base damage +2 per level of the caster (per two levels past level 10)');
 	});
 
 	it('can be played', () => {
@@ -115,5 +116,22 @@ describe('./cards/blast.ts', () => {
 		const blast = new BlastCard();
 
 		expect((blast as any).flavors.hits).to.be.an('array');
+	});
+	it('scales by every caster level up to 10, then by one per two levels', () => {
+		// At +1 a level, level 15 Blast out-hit a Hit by 60% to every opponent (Pass C, plan 32).
+		expect(scaledCasterLevel(0)).to.equal(0);
+		expect(scaledCasterLevel(5)).to.equal(5);
+		expect(scaledCasterLevel(10)).to.equal(10);
+		expect(scaledCasterLevel(11)).to.equal(10);
+		expect(scaledCasterLevel(15)).to.equal(12);
+		expect(scaledCasterLevel(20)).to.equal(15);
+	});
+
+	it('deals base damage plus the scaled caster level', async () => {
+		const blast = new BlastCard();
+		let dealt = 0;
+		const target = { hit: (damage: number) => { dealt = damage; return Promise.resolve(true); } };
+		await blast.effect({ level: 15 } as never, target as never);
+		expect(dealt).to.equal(3 + 12);
 	});
 });

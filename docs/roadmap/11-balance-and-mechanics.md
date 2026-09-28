@@ -29,21 +29,22 @@ and fixed defects are in [`10b-bugs-fixed.md`](10b-bugs-fixed.md).
 - [ ] **Realistic harness rings, what is left — owner: Engine.** Pass B
   ([31](../archive/roadmap/31-pass-b-rings-and-bosses.md)) added human contestants with player decks, real
   bosses, `sim:bosses`, and `sim:rings` (per-class curves, and sampled rings of mixed sizes,
-  levels, teams, and bosses). Still to do:
-  - **Likely decks, not random hands.** Humans equip nine legal cards at random from a
-    starting deck plus fills; real players build decks. Seed from equipped-deck telemetry
-    when it exists, and until then from a few hand-written archetypes per class (a Cleric
-    healer, a Cleric Blast deck). Keep the random hand as the control.
-  - **Ring events on.** The harness still turns them off, so Gauntlet, Blood Feud, Common
-    Cause, and The Reckoning are not measured the way players meet them.
+  levels, teams, and bosses). Pass C ([32](32-pass-c-mega-boss-and-balance.md)) added
+  hand-written likely decks (`deckStyle: 'likely'`, `sim:rings --likely`) and ring events
+  (`ringEvents`, `sim:rings --events`). Still to do:
+  - **Likely decks from telemetry.** The likely decks are guesses; seed them from
+    equipped-deck telemetry once it exists.
   - **Telemetry-weighted sampling.** `sim:rings`' ring sizes and levels are guesses (mostly
     two or three monsters, levels 0-6); replace them with the real distribution.
 - [ ] **Class curves from `sim:rings` (September 2026) — owner: Engine.** With player decks,
   each monster against a random other at the same level (share of decisive fights):
   the Weeping Angel climbs 37% → 67% from level 1 to 20 (the caster curve the target asks
   for) and the Barbarians start strong and fade, but the **Unicorn is strong at every level**
-  (56–71%) and the **Gladiator is weak early** (40% at level 1). Look at both against the
-  balance target before changing cards; each cell is 120 fights, so re-run before acting.
+  (56–71%) and the **Gladiator is weak early** (40% at level 1). Pass C
+  ([32](32-pass-c-mega-boss-and-balance.md#task-3-findings)) re-measured with likely decks and
+  both findings reversed (Gladiator 52–70% early, Unicorn 17–38% at levels 5–10), so neither
+  is a card problem the harness can see; no change. What held under both deck models is
+  the Blast item below.
 - [ ] **Economy telemetry — owner: Analytics.** Measure coins earned, spent, and held per
   active player-room; first-purchase time; outcome mix; and unaffordable expired stock.
   The harness has the new-player scenario; a purchase-sink scenario is still open.
@@ -93,6 +94,14 @@ Judge each item below against it.
   - Before changing Blast, measure by level (`sim:levelscaling`, `sim:monster`) and in
     three- and four-monster rings (`SimMonsterSpec.team` or a free-for-all). Check whether
     the Cleric curve runs the right way: modest early, strong late.
+  - **Measured in Pass C** ([32](32-pass-c-mega-boss-and-balance.md#task-3-findings)): at
+    level 15 Blast deals 18.9 a hit and Sandstorm 16 (both `damage + 1 × level`), against
+    11.7 for a Hit, so with likely decks the Weeping Angel (two Blasts) wins 95–99% and the
+    Jinn 82–96% at levels 15–20. Random decks, which rarely hold two, show the Angel at 67%.
+    The owner chose half scaling past level 10 (`scaledCasterLevel`): the Angel fell to 84%
+    at level 15 and 94% at 20. The **Jinn did not move** (96% and 85%): its late strength is
+    Sandstorm's confusion, which makes opponents attack the wrong target, not its damage.
+    Open: whether the confusion needs a limit late (an owner decision).
   - If it does need a change, the choices are a to-hit roll or save, a lower rarity, or less
     level scaling. The first two soften it everywhere. The last one flattens the late-game
     caster payoff the balance target wants to keep.
