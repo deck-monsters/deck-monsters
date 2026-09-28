@@ -15,6 +15,10 @@
  *    against its fair share, and how often humans beat the bosses.
  *
  * `SIM_RINGS_FIGHTS` sets fights per batch (default 20). Run manually (not in CI).
+ *
+ * Flags (Pass C, docs/roadmap/32-pass-c-mega-boss-and-balance.md): `--likely` gives every
+ * human a likely deck (`likely-decks.ts`) instead of a random legal hand, and `--events` rolls
+ * the ring's own events before each fight. Without them the report is the Pass B baseline.
  */
 
 import '../sim-env.js';
@@ -24,6 +28,9 @@ import { sideWinRate, simulate, SIM_MONSTER_TYPES, type SimMonsterSpec } from '.
 import { mulberry32 } from '../rng.js';
 
 const FIGHTS = Number(process.env.SIM_RINGS_FIGHTS ?? 20);
+const LIKELY = process.argv.includes('--likely');
+const EVENTS = process.argv.includes('--events');
+const deckStyle = LIKELY ? ('likely' as const) : ('random' as const);
 const CURVE_LEVELS = [1, 3, 5, 10, 15, 20];
 const CURVE_BATCHES = 6;
 const SAMPLED_RINGS = 120;
@@ -62,10 +69,11 @@ async function classCurves(): Promise<void> {
 				const opponent = others[Math.floor(pick() * others.length)]!;
 				const res = await simulate({
 					monsters: [
-						{ type, level, role: 'human' },
-						{ type: opponent, level, role: 'human' },
+						{ type, level, role: 'human', deckStyle },
+						{ type: opponent, level, role: 'human', deckStyle },
 					],
 					fights: FIGHTS,
+					ringEvents: EVENTS,
 					seed: seed + batch * 7919,
 					roomId: `sim-rings-curve-${type}-${level}-${batch}`,
 				});
@@ -105,6 +113,7 @@ async function sampledRings(): Promise<void> {
 			type: SIM_MONSTER_TYPES[Math.floor(pick() * SIM_MONSTER_TYPES.length)]!,
 			level: weighted(pick, HUMAN_LEVELS),
 			role: 'human' as const,
+			deckStyle,
 		}));
 		// Sometimes two humans came in together and arranged a team.
 		if (humans.length >= 2 && pick() < 0.25) {
@@ -135,7 +144,7 @@ async function sampledRings(): Promise<void> {
 		}
 
 		const monsters = [...humans, ...bosses];
-		const res = await simulate({ monsters, fights: FIGHTS, seed: 9000 + r * 7919, roomId: `sim-rings-${r}` });
+		const res = await simulate({ monsters, fights: FIGHTS, ringEvents: EVENTS, seed: 9000 + r * 7919, roomId: `sim-rings-${r}` });
 
 		const sizeTally = bySize.get(monsters.length) ?? { humanWins: 0, rings: 0 };
 		humans.forEach((human, i) => {
@@ -171,7 +180,8 @@ async function sampledRings(): Promise<void> {
 
 async function main(): Promise<void> {
 	await engineReady;
-	const only = process.argv[2];
+	process.stdout.write(`Decks: ${LIKELY ? 'likely' : 'random'}; ring events: ${EVENTS ? 'on' : 'off'}\n`);
+	const only = process.argv.slice(2).find(arg => !arg.startsWith('--'));
 	if (!only || only === 'curves') await classCurves();
 	if (!only || only === 'rings') await sampledRings();
 	// Same forced exit as the other sim scripts (see simulation-harness.md).

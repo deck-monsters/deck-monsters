@@ -190,7 +190,7 @@ more in their outer `finally`, after the loop, to dispose the last fight's conte
 | `sim:levelscaling` | Same matchup at levels 1/5/10/15/20, to spot scaling drift. | ~20s |
 | `sim:economy` | `coinsByOutcome`/`xpPerMonster` distributions, plus the new-player 1/5/20-fight checkpoint table. | ~10s |
 | `sim:bosses` | Humans against real bosses in the owner's scenarios (a level 1 against one boss, two bosses, a beginner + L1 + L5 pack; two humans with and without a team). Humans carry a player's starting deck; bosses are built and target exactly as the ring spawns them. Monster types are random per batch. Prints how often a human wins. `SIM_BOSSES_FIGHTS` sets fights per batch (8 batches per row, default 25). | ~1.5 min |
-| `sim:rings` | Realistic rings with player decks. `curves`: each monster as a human against a random other at the same level, levels 1-20 (a per-class curve). `rings`: 120 rings sampled the way rooms fill (mostly 2-3 monsters, levels mostly 0-6, some pre-arranged pairs, 40% with bosses spawned by the ring's rules), each monster's wins against its fair share, and how often humans beat bosses. Pass `curves` or `rings` to run one. `SIM_RINGS_FIGHTS` sets fights per batch (default 20). | ~5 min each |
+| `sim:rings` | Realistic rings with player decks. `curves`: each monster as a human against a random other at the same level, levels 1-20 (a per-class curve). `rings`: 120 rings sampled the way rooms fill (mostly 2-3 monsters, levels mostly 0-6, some pre-arranged pairs, 40% with bosses spawned by the ring's rules), each monster's wins against its fair share, and how often humans beat bosses. Pass `curves` or `rings` to run one; `--likely` gives humans likely decks and `--events` rolls ring events. `SIM_RINGS_FIGHTS` sets fights per batch (default 20). | ~5 min each |
 | `sim:monster <type>` | One monster (`pnpm --filter @deck-monsters/harness sim:monster Dragon`; any class name or creature type) against every other monster at levels 1/5/10/15/20 with random decks, and with its thematic fixture deck when its report has one. Then a mirror, a 2v2 team fight, and a crowded free-for-all with every other monster once, where area damage shows. Prints win rate, share of decisive fights, draws, rounds, top damage per card, and the monster's card counters. Flags rows outside 35–65% of decisive fights (fixture rows only, when there is a fixture). `SIM_MONSTER_FIGHTS` sets fights per row (default 100). `sim:unicorn` is `sim:monster Unicorn`. | ~2 min per monster |
 
 Each of these is `node dist/scripts/<name>.js` — run `pnpm --filter @deck-monsters/harness
@@ -220,6 +220,20 @@ player's deck or a real boss. A spec's `role` now says what it is:
   targeting. A floor for how well a human plays, since players build their hands;
 - **`boss`**: a real boss, untouched: the Boss team, a boss deck, and a boss temperament
   (its targeting strategy; see [boss encounters](../architecture/boss-encounters.md#1-what-a-boss-is)).
+
+A human's `deckStyle` chooses its hand. `random` (the default) is the floor above. `likely`
+is the other end, a player who knows the monster: `likely-decks.ts` lists each monster's
+signature cards and the handbook's example builds in preference order, the monster keeps the
+ones it may hold at its level, and a random legal fill completes the hand. The lists are
+hand-written until equipped-deck telemetry exists, so a report on likely decks measures
+those lists as much as the monsters; read it beside the random-deck report.
+
+`SimConfig.ringEvents` rolls the ring's own events before each fight, at
+`RING_EVENT_CHANCE_PERCENT` from the events eligible for that roster, with a seeded pick
+(the ring's own roll stays off under the harness's determinism switch). `SimResult.ringEvents`
+counts them by name. A Gauntlet's extra bosses are no sim slot, so their wins count under
+`EXTRA_BOSS_LABEL` ("Extra boss") in `winnersByFight`. A run with teams in its specs ignores
+the flag, since it already runs under its own team event.
   Bosses only behave realistically beside at least one human.
 
 `SimConfig.onContestants` lets a test inspect each fight's contestants before it starts.

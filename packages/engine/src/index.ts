@@ -67,7 +67,7 @@ export { createKeyedPromiseQueue } from './helpers/room-engine-queue.js';
 export { startCase } from './helpers/start-case.js';
 export { getLevel } from './helpers/levels.js';
 export type { Contestant, RingContestantSnapshot } from './ring/index.js';
-export { getXpCapForLevel } from './ring/index.js';
+export { getXpCapForLevel, RING_EVENT_CHANCE_PERCENT } from './ring/index.js';
 export {
 	BOSS_SUMMON_LIMIT,
 	BOSS_SUMMON_WINDOW_MS,
@@ -75,7 +75,7 @@ export {
 	summonAllowance,
 } from './helpers/boss-summons.js';
 export type { BossSummonLedger, SummonAllowance } from './helpers/boss-summons.js';
-export { RING_EVENTS, getRingEvent, selectRingEvent } from './ring/ring-events.js';
+export { RING_EVENTS, buildRingEventContext, getRingEvent, selectRingEvent } from './ring/ring-events.js';
 export type { RingEventDefinition, RingEventId, VictoryMode } from './ring/ring-events.js';
 export { allMonsters } from './monsters/index.js';
 /** Every item class the engine knows about, for lookup by `itemType` — mirrors `allMonsters`. */

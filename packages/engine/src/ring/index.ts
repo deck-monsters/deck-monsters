@@ -59,7 +59,7 @@ const BOSS_LEVEL_BUDGET_SLACK = 1;
 // Defined beside ALLIANCE_TEAM so the player handbook can name it without loading the ring.
 export { CHALLENGERS_TEAM };
 /** Chance that arming a fight countdown also rolls a ring event. */
-const RING_EVENT_CHANCE_PERCENT = 25;
+export const RING_EVENT_CHANCE_PERCENT = 25;
 
 /** Why the ring is refusing another boss right now. */
 export type BossRefusalReason = 'in_encounter' | 'boss_cap' | 'ring_full' | 'boss_quota';

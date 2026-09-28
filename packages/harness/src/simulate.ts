@@ -16,9 +16,13 @@ import {
 	getUtcDay,
 	getXpCapForLevel,
 	randomContestant,
+	RING_EVENT_CHANCE_PERCENT,
+	buildRingEventContext,
+	selectRingEvent,
 	type Contestant,
 } from '@deck-monsters/engine';
 import { mulberry32 } from './rng.js';
+import { LIKELY_DECKS } from './likely-decks.js';
 
 /**
  * Past this many completed battles, `constants/progression.ts`'s `earlyCoinBonus` is
@@ -80,6 +84,13 @@ export interface SimMonsterSpec {
 	 * Bosses are only realistic beside at least one human.
 	 */
 	role?: 'human' | 'boss';
+	/**
+	 * How a `human` builds its hand. `random` (the default) equips legal cards at random
+	 * from a starting deck plus fills; `likely` prefers its monster's signature cards and
+	 * the handbook's example builds (`likely-decks.ts`), what a player who knows the monster
+	 * equips. Ignored for other roles and when `deck` is given.
+	 */
+	deckStyle?: 'random' | 'likely';
 }
 
 export interface SimConfig {
@@ -90,7 +101,17 @@ export interface SimConfig {
 	roomId?: string;
 	/** Called with each fight's contestants once they are built, before the fight (tests). */
 	onContestants?: (contestants: Contestant[]) => void;
+	/**
+	 * Roll the ring's own events before each fight, at the ring's own chance
+	 * (`RING_EVENT_CHANCE_PERCENT`), from the events eligible for that roster. Off by default:
+	 * every earlier report ran without them. A Gauntlet's extra bosses are not sim slots; their
+	 * wins count under `EXTRA_BOSS_LABEL`. Ignored when any spec sets a team.
+	 */
+	ringEvents?: boolean;
 }
+
+/** The win label for a boss a ring event added (the Gauntlet's extras). */
+export const EXTRA_BOSS_LABEL = 'Extra boss';
 
 /** Per-contestant fight outcome, matching `ring/index.ts`'s private `participantOutcome()`
  * (not exported). The harness reads this straight off `ring.fightResolved`'s `participants[]`
@@ -118,6 +139,8 @@ export interface SimResult {
 	 * PR #403).
 	 */
 	winnersByFight: string[][];
+	/** Ring events rolled, by name, when `SimConfig.ringEvents` is on. */
+	ringEvents: Record<string, number>;
 	drawRate: number;
 	avgRounds: number;
 	avgDamagePerCard: Record<string, number>;
@@ -258,7 +281,12 @@ const HUMAN_EXTRA_CARDS_PER_LEVEL = 2;
  * their hands, so this is still a floor for how well a human plays, not a model of it; Flee
  * stays out, as it does for every harness deck.
  */
-function buildHuman(spec: SimMonsterType, level: number, deckNames: string[] | undefined): Contestant {
+function buildHuman(
+	spec: SimMonsterType,
+	level: number,
+	deckNames: string[] | undefined,
+	deckStyle: 'random' | 'likely' = 'random',
+): Contestant {
 	const MonsterClass = monsterClassFor(spec);
 	const contestant = randomContestant({ isBoss: false, Monsters: [MonsterClass], xp: getXpCapForLevel(level) });
 	const { monster, character } = contestant as unknown as {
@@ -281,7 +309,17 @@ function buildHuman(spec: SimMonsterType, level: number, deckNames: string[] | u
 		...(getInitialDeck({}, character) as Array<{ cardType?: string }>),
 		...Array.from({ length: level * HUMAN_EXTRA_CARDS_PER_LEVEL }, () => drawCard({}, eligible)),
 	].filter(card => !HARNESS_EXCLUDED_CARD_TYPES.includes(card.cardType ?? '') && monster.canHoldCard(card));
-	const hand = shuffled(pool).slice(0, monster.cardSlots);
+	// A likely deck takes the preferred cards the monster can hold at its level, in order,
+	// then fills the rest of its slots from the random pool.
+	const preferred: Array<{ cardType?: string }> = [];
+	if (deckStyle === 'likely') {
+		for (const name of LIKELY_DECKS[spec] ?? []) {
+			if (preferred.length >= monster.cardSlots) break;
+			const card = new (getCardClassByTypeName(name) as CardCtor)();
+			if (monster.canHoldCard(card)) preferred.push(card);
+		}
+	}
+	const hand = [...preferred, ...shuffled(pool)].slice(0, monster.cardSlots);
 	while (hand.length < monster.cardSlots) hand.push(drawCard({}, eligible));
 	monster.cards = hand;
 	return contestant;
@@ -358,6 +396,7 @@ function pushWinCounts(
 	winCounts: Map<string, number>,
 	stableIdToLabel: Map<string, string>,
 	p: FightResolvedPayload,
+	extraBosses = false,
 ): string[] {
 	const winners: string[] = [];
 	const parts = p.participants ?? [];
@@ -365,7 +404,9 @@ function pushWinCounts(
 		if (part.outcome !== 'win') continue;
 		const label =
 			stableIdToLabel.get(part.monsterId) ??
-			(winCounts.has(part.monsterName) ? part.monsterName : undefined);
+			(winCounts.has(part.monsterName) ? part.monsterName : undefined) ??
+			// A boss a ring event added (the Gauntlet) is no sim slot.
+			(extraBosses ? EXTRA_BOSS_LABEL : undefined);
 		if (!label) {
 			throw new Error(
 				`simulate: could not map winner stableId=${part.monsterId} name=${part.monsterName} to a sim slot`,
@@ -420,6 +461,9 @@ export async function simulate(config: SimConfig): Promise<SimResult> {
 	}
 
 	const hasTeams = monsters.some(m => m.team);
+	const rollEvents = !!config.ringEvents && !hasTeams;
+	const eventPick = mulberry32((seed ?? 1) * 104729 + 17);
+	const ringEventCounts: Record<string, number> = {};
 	const names = monsters.map((_, i) => `Sim ${i + 1}`);
 	const winCounts = new Map<string, number>();
 	const winnersByFight: string[][] = [];
@@ -462,7 +506,7 @@ export async function simulate(config: SimConfig): Promise<SimResult> {
 				winnersByFight.push([]);
 				return;
 			}
-			winnersByFight.push(pushWinCounts(winCounts, stableIdToLabel, p));
+			winnersByFight.push(pushWinCounts(winCounts, stableIdToLabel, p, rollEvents));
 		},
 	});
 
@@ -480,7 +524,7 @@ export async function simulate(config: SimConfig): Promise<SimResult> {
 				const type = parseMonsterType(m.type);
 				const c =
 					m.role === 'human'
-						? buildHuman(type, m.level, m.deck)
+						? buildHuman(type, m.level, m.deck, m.deckStyle)
 						: buildContestant(type, m.level, m.deck, m.statSeed, f);
 				const label = names[i]!;
 				c.monster.setOptions({
@@ -551,6 +595,15 @@ export async function simulate(config: SimConfig): Promise<SimResult> {
 				// Set after `addMonster`, which can re-roll a ring event, and before the fight
 				// starts. `clearRing()` at the top of the next iteration removes it again.
 				(ring as unknown as { ringEvent: unknown }).ringEvent = HARNESS_TEAM_EVENT;
+			} else if (rollEvents && eventPick() * 100 < RING_EVENT_CHANCE_PERCENT) {
+				// The ring's own roll is off under the determinism switch this run sets, so roll
+				// here, from its own eligible list, with a seeded pick. `activateRingEvent` spawns
+				// a Gauntlet's extra bosses as the ring would.
+				const event = selectRingEvent(buildRingEventContext(ring.contestants), eventPick());
+				if (event) {
+					ring.activateRingEvent(event);
+					ringEventCounts[event.name] = (ringEventCounts[event.name] ?? 0) + 1;
+				}
 			}
 
 			try {
@@ -638,6 +691,7 @@ export async function simulate(config: SimConfig): Promise<SimResult> {
 		fights,
 		winRates,
 		winnersByFight,
+		ringEvents: ringEventCounts,
 		drawRate: fights > 0 ? (draws / fights) * 100 : 0,
 		avgRounds: fights > 0 ? roundSum / fights : 0,
 		avgDamagePerCard: aggregateDamagePerCard(damageSums),
