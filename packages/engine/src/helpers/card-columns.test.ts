@@ -51,4 +51,20 @@ describe('formatCard emoji columns', () => {
 		expect(card).to.include(' A nimble gladiator, dressed in ');
 		expect(card).to.include(' taupe and hailing from a dusty ');
 	});
+
+	it('keeps authored line breaks, indented, when the text has an emoji', () => {
+		// The display-column path split on all whitespace, so a newline became a space:
+		// the next line lost its indent and a blank line doubled (review of PR #406).
+		const card = formatCard({ title: 'X', description: '⚔ line one\nline two\n\nthird ™' });
+		expect(card).to.include(' ⚔ line one\n line two\n\n third ™');
+	});
+
+	it('gives emoji text the same line budget as plain text', () => {
+		// word-wrap's width excludes the one-space indent, so plain lines run to 33 columns.
+		const plain = formatCard({ title: 'X', description: 'word '.repeat(20).trim() });
+		const emoji = formatCard({ title: 'X', description: `⚔ ${'word '.repeat(20).trim()}` });
+		const body = (card: string) => card.split('\n').filter(line => line.startsWith(' ')).slice(1);
+		expect(body(emoji)).to.have.length(body(plain).length);
+		for (const line of body(emoji)) expect(frameColumns(line), JSON.stringify(line)).to.be.at.most(33);
+	});
 });

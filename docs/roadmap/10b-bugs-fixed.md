@@ -4691,11 +4691,14 @@ string, unchanged.
 
 **Fix**: strings whose UTF-16 length is not their display width wrap on display columns
 (a pictograph is two, a variation selector is zero). Plain text stays on `word-wrap`, so
-existing card breaks do not move. Measured after the change, the same title's first line
+existing card breaks do not move. The display path wraps each authored line on its own,
+with the same 32-column budget after the indent that `word-wrap` gives plain text; the
+first version split on all whitespace, so a newline in emoji text (a stats block) lost its
+indent and doubled a blank line (caught in review). Measured after the change, the same title's first line
 is 31 columns, inside the 34-column border, in phosphor, amber, and a 375px viewport.
 There is no light theme; phosphor and amber are the two feed themes checked.
 
 **Tests**: `helpers/card-columns.test.ts`. The BMP case fails on the old wrap with the
-line at 36 columns and the border at 34.
+line at 36 columns and the border at 34. The line-break case fails on the first display-path wrap.
 
 **Status**: Fixed.

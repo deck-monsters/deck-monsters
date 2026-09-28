@@ -120,13 +120,25 @@ function needsDisplayColumns(text: string): boolean {
 }
 
 /**
- * Word wrap at `FRAME_COLUMNS` display columns, including the leading indent.
- * Plain text stays on `word-wrap`: its breaks are the ones every existing card was
- * written against. Only a string whose UTF-16 length is not its display width comes
- * through here.
+ * Word wrap at `FRAME_COLUMNS` display columns after the one-space indent, the same
+ * budget `word-wrap` gives plain text (its `width` excludes the indent). Plain text stays
+ * on `word-wrap`: its breaks are the ones every existing card was written against. Only a
+ * string whose UTF-16 length is not its display width comes through here.
+ *
+ * Each authored line is wrapped on its own. Splitting the whole string on `\s+` treated a
+ * newline as a space, so a stats block with an emoji lost its line breaks' indent and
+ * doubled a blank line (review of PR #406); `word-wrap` keeps them.
  */
 function wrapDisplayColumns(text: string): string {
+	return text
+		.split('\n')
+		.map(line => (line.trim() === '' ? '' : wrapDisplayLine(line)))
+		.join('\n');
+}
+
+function wrapDisplayLine(text: string): string {
 	const indent = ' ';
+	const limit = indent.length + FRAME_COLUMNS;
 	const tokens = text.split(/(\s+)/).filter((token) => token.length > 0);
 	const lines: string[] = [];
 	let line = indent;
@@ -138,16 +150,16 @@ function wrapDisplayColumns(text: string): string {
 
 	for (const token of tokens) {
 		if (/^\s+$/.test(token)) {
-			if (cardColumnWidth(line + token) <= FRAME_COLUMNS) line += token;
+			if (cardColumnWidth(line + token) <= limit) line += token;
 			else commit();
 			continue;
 		}
-		if (cardColumnWidth(line + token) <= FRAME_COLUMNS) {
+		if (cardColumnWidth(line + token) <= limit) {
 			line += token;
 			continue;
 		}
 		if (line.trim() !== '') commit();
-		if (cardColumnWidth(indent + token) <= FRAME_COLUMNS) {
+		if (cardColumnWidth(indent + token) <= limit) {
 			line = indent + token;
 			continue;
 		}
@@ -155,7 +167,7 @@ function wrapDisplayColumns(text: string): string {
 		while (rest.length > 0) {
 			let take = '';
 			for (const ch of rest) {
-				if (cardColumnWidth(line + take + ch) > FRAME_COLUMNS) break;
+				if (cardColumnWidth(line + take + ch) > limit) break;
 				take += ch;
 			}
 			if (take.length === 0) break;
