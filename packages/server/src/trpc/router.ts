@@ -2232,6 +2232,7 @@ export function createRouter(roomManager: RoomManager) {
 					ringState: {
 						nextFightAt: ring.nextFightAt,
 						nextBossSpawnAt: ring.nextBossSpawnAt,
+						nextMegaBossAt: ring.nextMegaBossAt,
 						monsterCount: ring.contestants.length,
 						inEncounter: Boolean(ring.inEncounter),
 						// Same shape as the `ring.state` broadcast, so the roster renders

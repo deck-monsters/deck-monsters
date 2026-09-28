@@ -533,6 +533,7 @@ export class RoomManager {
 		roomId: string
 	): Promise<{
 		nextBossSpawnAt: number | null;
+		nextMegaBossAt: number | null;
 		nextFightAt: number | null;
 		monsterCount: number;
 		inEncounter: boolean;
@@ -549,6 +550,7 @@ export class RoomManager {
 		const allowance = summonAllowance(game.bossSummons, userId);
 		return {
 			nextBossSpawnAt: ring.nextBossSpawnAt,
+			nextMegaBossAt: ring.nextMegaBossAt,
 			nextFightAt: ring.nextFightAt,
 			monsterCount: ring.contestants.length,
 			inEncounter: ring.inEncounter,

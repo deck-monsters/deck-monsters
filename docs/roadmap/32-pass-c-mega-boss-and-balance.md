@@ -19,9 +19,9 @@ Console, in one new branch and PR.
 | # | Slice | Status | Commit |
 |---|---|---|---|
 | 1 | Workshop actions echo into the Console twice (the engine's lines plus the server's summary); keep one line per action (10b #195) | Done | 1b56fb7 |
-| 2 | Harness: likely-deck archetypes per class beside the random hand (`deckStyle`), and ring events (`ringEvents`), both as `sim:rings` flags | Done | this commit |
+| 2 | Harness: likely-deck archetypes per class beside the random hand (`deckStyle`), and ring events (`ringEvents`), both as `sim:rings` flags | Done | 675f493 |
 | 3 | Balance: the Unicorn strong at every level, the Gladiator weak early, measured with task 2 against the class-curve target | Not started | — |
-| 4 | The mega boss event | Not started | — |
+| 4 | The mega boss event: daily per room, announced 30 minutes ahead with a countdown, a two-minute hold on ordinary fights, fitted to about 20%, relics and minions, rewards, called off below two humans; `sim:mega` | Done | this commit |
 | 5 | Docs close-out, generated references, independent review | Not started | — |
 
 ## Decisions (owner, 2026-09-27)
@@ -52,3 +52,20 @@ The deck model moves the verdict more than any card does: with likely decks the 
 fine early and the Unicorn weak, the reverse of the random-deck finding in 11, and the Dragon
 collapses early while the Weeping Angel and Jinn run away late. The likely decks are guesses,
 so no card changes on this alone; task 3 looks for causes that hold under both.
+
+A larger likely-deck run (360 fights per cell) matched the table above within a few points,
+so the likely-deck curves are stable; what they measure is the hand-written decks.
+
+## Evidence: mega boss difficulty (`sim:mega`, 120 fights per cell)
+
+Humans' win rate against the fitted mega boss and two minions; the owner's target is about 20%.
+
+| HP rule | 2 humans L1 / L3 / L6 / L10 | 3 humans | 4 humans | Overall |
+|---|---|---|---|---|
+| 0.8 × combined HP | 12 / 7 / 17 / 32 | 18 / 29 / 48 / 70 | 29 / 52 / 66 / 62 | 37% |
+| 1.2 × | 3 / 2 / 6 / 32 | 5 / 10 / 24 / 53 | 9 / 28 / 43 / 43 | 21% |
+| 1.6 × | 1 / 0 / 4 / 13 | 1 / 5 / 13 / 37 | 3 / 13 / 22 / 39 | 12% |
+| **0.25 + 0.15 × humans + 0.11 × level** (shipped) | 13 / 4 / 6 / 16 | 15 / 21 / 16 / 33 | 21 / 33 / 31 / 19 | **19%** |
+
+A single share hit the average but not the rooms: more humans and higher levels deal damage
+faster than HP alone keeps up with. The shipped rule grows with both.

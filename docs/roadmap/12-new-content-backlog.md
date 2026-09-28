@@ -97,19 +97,8 @@ Open work:
 
 ## Mega boss event
 
-The owner's idea (2026-09-27), planned as its own pass after Pass B
-([31](../archive/roadmap/31-pass-b-rings-and-bosses.md), which set the boss rules it builds
-on):
-
-- [ ] **Announced in advance**, with a countdown players can see and plan around; rare.
-- [ ] **Unseen until the fight starts**, so its stats are fitted then to the humans actually
-  in the ring: very hard but beatable. Fit its level and HP with `sim:bosses` so the humans,
-  allied as The Challengers, win a target share (for example 30–40%).
-- [ ] **Extra-powered items**, and **weak minions** (the ring's ⅓-HP ambush minion is a
-  start) that are easy to beat but draw fire.
-- [ ] **Cancelled if no more than one human is in the ring** when it is due, with flavour
-  ("The great beast will not be insulted by so pitiful a showing") and a regular boss
-  instead.
+Built in Pass C ([32](32-pass-c-mega-boss-and-balance.md)); its rules are in
+[boss encounters §8](../architecture/boss-encounters.md#8-the-mega-boss). Nothing is open here.
 
 ## World and long-term goals
 

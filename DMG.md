@@ -2533,20 +2533,22 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  🎩  Sorting Hat  •
 ----------------------------------
 
- This enchanted hat that once 
+ An enchanted hat that once 
  belonged to Godric Gryffindor. 
  Put it on and find out where you 
  truly belong, or choose no team 
  at all.
 
- If your character has joined a 
- team but your monster hasn't, 
- that monster will be on your 
- character's team by default. 
- Every shop keeps one in stock, 
- and `leave team` takes you and 
- your monsters off a team for 
- free.
+ Teammates go after everyone else 
+ in the ring first, and only turn 
+ on each other when nobody else 
+ is left. If your character has 
+ joined a team but your monster 
+ hasn't, that monster is on your 
+ character's team. Every shop 
+ keeps one in stock, and `leave 
+ team` takes you and your 
+ monsters off a team for free.
 
  Usable 1 time.
 

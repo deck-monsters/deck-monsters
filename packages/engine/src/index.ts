@@ -69,6 +69,15 @@ export { getLevel } from './helpers/levels.js';
 export type { Contestant, RingContestantSnapshot } from './ring/index.js';
 export { getXpCapForLevel, RING_EVENT_CHANCE_PERCENT } from './ring/index.js';
 export {
+	empowerMegaBoss,
+	fitMegaBoss,
+	megaMinionHp,
+	megaBossHpShare,
+	MEGA_BOSS_LEVEL_BONUS,
+	MEGA_BOSS_MINIONS,
+	type MegaBossFit,
+} from './ring/mega-boss.js';
+export {
 	BOSS_SUMMON_LIMIT,
 	BOSS_SUMMON_WINDOW_MS,
 	recordSummon,

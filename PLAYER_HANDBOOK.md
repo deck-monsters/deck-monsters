@@ -127,6 +127,8 @@ The Editor sends a boss into the ring now and then (the ring warns you two minut
 
 There is one boss for each challenger in the ring, never more than one level above the strongest challenger. Now and then an ambush brings one more, a lesser minion at a third of its health. Each boss says, as it enters, whom it likes to go after.
 
+About once a day a mega boss comes to the ring. You get half an hour's warning and a countdown at the top of the ring. It is fitted to whoever is standing in the ring when it arrives, it wears relics, and it brings minions, so bring friends: with fewer than two challengers it will not fight, and sends a regular boss instead. In its last two minutes nobody starts an ordinary fight. When it falls, every challenger still standing earns bonus coins, XP, and a rare card.
+
 While any boss is still fighting, every challenger without a team stands together as The Challengers and never attacks another challenger. When the last boss falls the alliance ends, and it is every monster for itself.
 
 Some fights bring a ring event that changes the teams for that fight only: Common Cause (every challenger against the bosses, and the survivors win together), House War (two houses, and the last house standing wins together), and Blood Feud (no teams at all).

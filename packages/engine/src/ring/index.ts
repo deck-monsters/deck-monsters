@@ -60,6 +60,11 @@ const BOSS_LEVEL_BUDGET_SLACK = 1;
 export { CHALLENGERS_TEAM };
 /** Chance that arming a fight countdown also rolls a ring event. */
 export const RING_EVENT_CHANCE_PERCENT = 25;
+/**
+ * In a mega boss's last minutes (its last reminder), an ordinary fight waits for it. Here and
+ * not in mega-boss.ts, which imports this module.
+ */
+export const MEGA_BOSS_HOLD_MS = 2 * 60_000;
 
 /** Why the ring is refusing another boss right now. */
 export type BossRefusalReason = 'in_encounter' | 'boss_cap' | 'ring_full' | 'boss_quota';
@@ -171,6 +176,11 @@ export interface Contestant {
 	 * minion could walk in at full health (a Codex review of PR #403).
 	 */
 	minion?: boolean;
+	/**
+	 * Part of a mega boss's party (the boss and its minions). Exempt from the one-boss-per-human
+	 * dismissal, since the mega boss is fitted to the whole room. See ring/mega-boss.ts.
+	 */
+	mega?: boolean;
 }
 
 /** HP an ambush minion fights at. */
@@ -243,6 +253,11 @@ export class Ring extends BaseClass {
 	 */
 	private readonly arrivalOrder = new WeakMap<Contestant, number>();
 	private arrivals = 0;
+	/**
+	 * Epoch ms when an announced mega boss arrives, or null. Set only inside its announcement
+	 * window, so the countdown appears when the room is told and not before. See mega-boss.ts.
+	 */
+	nextMegaBossAt: number | null = null;
 	/** Epoch ms when the next boss will enter the ring (including the 2-min announcement window), or null if no timer is running. */
 	nextBossSpawnAt: number | null = null;
 	/** Epoch ms when the next fight will start, or null if no fight timer is active. */
@@ -463,6 +478,7 @@ export class Ring extends BaseClass {
 		summonedByUserId,
 		summonedAt,
 		minion,
+		mega,
 	}: {
 		monster: any;
 		character: any;
@@ -470,6 +486,8 @@ export class Ring extends BaseClass {
 		isBoss?: boolean;
 		/** An ambush's lesser minion (see `Contestant.minion`). */
 		minion?: boolean;
+		/** Part of a mega boss's party (see `Contestant.mega`). */
+		mega?: boolean;
 		/**
 		 * Skip the `startFightTimer()` call. Only used when the caller is already inside
 		 * `startFightTimer()` (the Gauntlet ring event) — re-entering it there would arm a
@@ -496,6 +514,7 @@ export class Ring extends BaseClass {
 				...(summonedByUserId !== undefined ? { summonedByUserId } : {}),
 				...(summonedAt !== undefined ? { summonedAt } : {}),
 				...(minion ? { minion } : {}),
+				...(mega ? { mega } : {}),
 			};
 
 			this.arrivals += 1;
@@ -724,6 +743,7 @@ export class Ring extends BaseClass {
 			payload: {
 				nextFightAt: this.nextFightAt,
 				nextBossSpawnAt: this.nextBossSpawnAt,
+				nextMegaBossAt: this.nextMegaBossAt,
 				monsterCount: this.contestants.length,
 				inEncounter: this.inEncounter,
 				contestants: this.contestantSnapshots(),
@@ -824,6 +844,17 @@ export class Ring extends BaseClass {
 				this.nextFightAt = null;
 				const { numberOfMonstersInRing: numberOfMonstersStillInRing } =
 					getPlayerContestants();
+
+				// Challengers gathering for an announced mega boss would otherwise fight each
+				// other a minute after the second one joins, and leave the ring empty when it
+				// comes. In its last minutes the ring waits; its arrival restarts the countdown.
+				if (this.nextMegaBossAt !== null && this.nextMegaBossAt - Date.now() <= MEGA_BOSS_HOLD_MS) {
+					this.publishState();
+					this.emit('narration', {
+						narration: 'The ring holds its breath. The mega boss is almost here, and nobody fights before it comes.',
+					});
+					return;
+				}
 
 				if (numberOfMonstersStillInRing >= MIN_MONSTERS) {
 					this.fight();
@@ -1874,7 +1905,7 @@ export class Ring extends BaseClass {
 		if (this.inEncounter) return;
 		const arrival = (contestant: Contestant) => this.arrivalOrder.get(contestant) ?? 0;
 		const bosses = this.contestants
-			.filter(contestant => contestant.isBoss)
+			.filter(contestant => contestant.isBoss && !contestant.mega)
 			.sort((a, b) => arrival(a) - arrival(b));
 		// Full-strength bosses and minions are counted apart: one boss per human (plus an armed
 		// Gauntlet's extras) and one ambush minion. A single count with the ambush slot always
@@ -1890,19 +1921,43 @@ export class Ring extends BaseClass {
 		const extras = bosses.filter(boss => !kept.includes(boss)).reverse();
 		if (extras.length === 0) return;
 
-		this.contestants = this.contestants.filter(contestant => !extras.includes(contestant));
-		for (const boss of extras) {
+		this.sendBossesAway(extras, boss =>
+			`With fewer challengers left in the ring, ${boss.monster.givenName} slips back into the shadows.`);
+	}
+
+	/**
+	 * Take bosses out before a fight: refund a summon, cancel the despawn timer, dispose, and
+	 * say so. Shared by `dismissExtraBosses` and `addMegaBoss`.
+	 */
+	private sendBossesAway(bosses: Contestant[], line: (boss: Contestant) => string): void {
+		this.contestants = this.contestants.filter(contestant => !bosses.includes(contestant));
+		for (const boss of bosses) {
 			if (boss.summonedByUserId !== undefined && boss.summonedAt !== undefined) {
 				this.onSummonedBossRemoved?.(boss.summonedByUserId, boss.summonedAt);
 			}
 			clearTimeout(this.bossDespawnTimers.get(boss.monster));
 			this.bossDespawnTimers.delete(boss.monster);
 			this.disposeTransientContestant(boss);
-			this.emit('narration', {
-				narration: `With fewer challengers left in the ring, ${boss.monster.givenName} slips back into the shadows.`,
-			});
+			this.emit('narration', { narration: line(boss) });
 		}
 		this.publishState();
+	}
+
+	/**
+	 * Bring in a mega boss and its minions (ring/mega-boss.ts). Regular bosses waiting in the
+	 * ring step aside first, refunding any summon: the mega boss is fitted to the humans alone,
+	 * and a regular boss beside it would push the fight past the win rate it was fitted to.
+	 * The party ignores the boss quota and is never dismissed as surplus (`Contestant.mega`).
+	 */
+	addMegaBoss(boss: Contestant, minions: Contestant[]): void {
+		if (this.inEncounter) return;
+		const regular = this.contestants.filter(contestant => contestant.isBoss && !contestant.mega);
+		if (regular.length) {
+			this.sendBossesAway(regular, other =>
+				`${other.monster.givenName} takes one look at what is climbing out of the dark and leaves the ring to it.`);
+		}
+		this.addMonster({ ...boss, isBoss: true, mega: true });
+		for (const minion of minions) this.addMonster({ ...minion, isBoss: true, mega: true, minion: true });
 	}
 
 	removeBoss(contestant: Contestant): Promise<void> {

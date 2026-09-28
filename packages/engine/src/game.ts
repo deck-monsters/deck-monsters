@@ -23,7 +23,9 @@ import { dungeonMasterGuide } from './build/dungeon-master-guide.js';
 import { Exploration } from './exploration/index.js';
 import { monsterManual } from './build/monster-manual.js';
 import { playerHandbook } from './build/player-handbook.js';
-import { Ring } from './ring/index.js';
+import { Ring, type Contestant } from './ring/index.js';
+import { MegaBossEvent, MEGA_BOSS_REWARD_COINS, MEGA_BOSS_REWARD_XP } from './ring/mega-boss.js';
+import { RARE } from './helpers/probabilities.js';
 import { RoomEventBus } from './events/index.js';
 import type { StateStore } from './types/state-store.js';
 import { resolveShop, type Shop } from './items/store/shop.js';
@@ -71,6 +73,8 @@ export class Game extends BaseClass {
 	private _eventBus: RoomEventBus;
 	private _saveDebounce?: ReturnType<typeof setTimeout>;
 	private _disposeListeners: Array<() => void> = [];
+	/** The daily mega boss, where timed bosses run (see ring/mega-boss.ts). */
+	megaBoss?: MegaBossEvent;
 
 	constructor(
 		options: Record<string, unknown> = {},
@@ -101,6 +105,22 @@ export class Game extends BaseClass {
 			this._refundSingleBossSummon(userId, timestamp);
 		};
 		this.exploration = new Exploration(this._eventBus as any, {}, this.log);
+
+		// The mega boss (ring/mega-boss.ts) runs wherever timed bosses do. Its due time is kept
+		// in the room's saved state so a restart or deploy does not push it back a day; written
+		// to optionsStore directly, as the other construction-time state is, then saved.
+		if (this.ring.spawnBosses) {
+			this.megaBoss = new MegaBossEvent({
+				ring: this.ring as any,
+				getScheduledAt: () => (this.options as any).megaBossAt as number | undefined,
+				setScheduledAt: (at) => {
+					this.optionsStore = { ...this.optionsStore, megaBossAt: at } as any;
+					this.scheduleSave();
+				},
+				rewardChallenger: (contestant) => this.rewardMegaBossChallenger(contestant),
+			});
+			this.megaBoss.start();
+		}
 
 		// Refund pending boss summons from before the last restart. Any summon recorded
 		// in the 30–60 s window between `summon a boss` and the fight starting had its
@@ -409,6 +429,7 @@ export class Game extends BaseClass {
 	}
 
 	dispose(): void {
+		this.megaBoss?.dispose();
 		// Cancel pending saves
 		if (this._saveDebounce !== undefined) {
 			clearTimeout(this._saveDebounce);
@@ -456,6 +477,37 @@ export class Game extends BaseClass {
 			coinsGained,
 			reasons,
 		});
+	}
+
+	/**
+	 * A challenger still standing when the mega boss falls: bonus coins, monster XP, and a rare
+	 * card (owner, 2026-09-27; ring/mega-boss.ts). Paid on top of the fight's own rewards.
+	 */
+	rewardMegaBossChallenger(contestant: Contestant): void {
+		const { character, monster } = contestant as any;
+		character.coins += MEGA_BOSS_REWARD_COINS;
+		monster.xp += MEGA_BOSS_REWARD_XP;
+		this.ring.emit('gainedXP', {
+			contestant,
+			creature: monster,
+			xpGained: MEGA_BOSS_REWARD_XP,
+			coinsGained: MEGA_BOSS_REWARD_COINS,
+			reasons: 'For standing until the mega boss fell.',
+		});
+		const card = this.drawRareCard(monster);
+		if (card) {
+			character.addCard(card);
+			this.emit('cardDrop', { contestant, card });
+		}
+	}
+
+	/** A card of rare or scarcer rarity the monster may hold; any card if none turns up. */
+	drawRareCard(monster: any): any {
+		for (let tries = 0; tries < 100; tries += 1) {
+			const card = draw({}, monster);
+			if (card && (card.probability ?? Infinity) <= RARE.probability) return card;
+		}
+		return draw({}, monster);
 	}
 
 	handlePermaDeath(className: string, monster: any, { contestant }: { contestant: any }): void {
