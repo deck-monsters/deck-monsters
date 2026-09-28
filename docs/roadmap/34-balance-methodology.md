@@ -41,6 +41,7 @@ changes for the owner to choose from. Changes come in the next pass, one decisio
 | Brutes and casters | Brutes (Barbarian, Fighter) stronger early; casters (Cleric, Wizard) stronger late |
 | Skill | A good build and a good card order should pay off a lot; the monster type alone must not decide nearly every fight |
 | Telemetry | **Read-only production queries are always allowed**, for any reason, as often as needed. This pass uses them for the level distribution of active monsters and the hands players actually equip (weights findings by where players are; gives the "typical hand" for skill expression) |
+| Weak cards (owner, after the catalogue) | **Some weak cards are fine.** A card that is situational or just fun is part of the game's joy and does not need raising. The line is the monster: a player who is really trying and making good picks must be able to be competitive with any monster type. So a weak card needs a fix only when its monster has no good picks without it (the Unicorn is the clearest case), not because it ranks low in the catalogue. The owner would like Feline Companion boosted somehow; Bad Batch may be meant as a counter |
 | Excitement | Keep swings, big moments, and natural 20s. A fix should read like a roll (the owner's Sandstorm idea: a d20 per opponent to catch them in the storm), not a flat nerf |
 
 ### Technical decisions (made in planning; the owner can override any)
@@ -482,6 +483,29 @@ a few), with this table updated in the same commit.
 Order: 1 → 2 and 3 (in parallel) → 4 → 5, 6, 7, 8a (in parallel, separate scripts) → 9 →
 8b and 10 (in parallel) → 11. Every task gets an independent read-only review of its diff; the statistics module and
 the synthetic-card isolation get the closest look.
+
+## Catalogue follow-ups (2026-09-28)
+
+- **Bad Batch** turns the next Whiskey Shot or Scotch that anyone plays into poison, so it is
+  a counter to drinks (not to Sandstorm or Faceswap). The catalogue's opponents hold no drinks,
+  so its near-zero value there only says it does nothing when there's nothing to counter.
+  Measure it against a hand that drinks before judging it.
+- **Feline Companion is a synergy card the catalogue cannot see.** It gives +2 INT, which a
+  hand of Hits never reads. Swapped for a Hit in an INT hand on its real holders (same seeds,
+  seat-swapped, 1,800 fights a cell, about ±1.2 points):
+
+  | Holder, hand | L3 | L5 | L7 |
+  |---|---|---|---|
+  | Weeping Angel: Blast II, Brain Drain, Heal | 67% | 60% | 56% |
+  | Unicorn: same hand | 64% | 56% | 57% |
+  | Jinn: Brain Drain and Heal only | 92% | 95% | 92% |
+
+  In a caster hand it already beats a Hit: about 1-2 Hit-equivalents at level 3 and 0.6-0.7
+  later. The Jinn row is a degenerate INT war (neither side has real damage), where +2 INT
+  decides the fight. So a flat boost is not obviously needed. If the owner still wants it
+  raised, the smallest change that keeps it a caster card would make it matter outside INT
+  hands. The catalogue gains a caster context (Layer 2 rerun) so synergy cards are measured
+  where they are meant to be played.
 
 ## Production snapshot (2026-09-28, read-only)
 

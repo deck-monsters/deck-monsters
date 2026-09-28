@@ -174,6 +174,13 @@ Levels 1, 3, 5 and 7 are the primary levels (owner: tune for levels 0–7); leve
 6. **Blink falls with level:** 2.2 at level 1, 1.4 at level 3, 0.8–1.0 after. It is the only
    epic that gets weaker as its holder grows.
 
+## Follow-up the same day
+
+Two low values in this table are context, not weakness. Bad Batch counters drinks (Whiskey
+Shot, Scotch), which no opponent here holds. Feline Companion (+2 INT) scores 56-67% against a
+Hit in caster hands on its real holders. Details and numbers are in
+[roadmap 34, catalogue follow-ups](../../roadmap/34-balance-methodology.md#catalogue-follow-ups-2026-09-28).
+
 ## Next steps
 
 - **Layer 3 (task 7).** Put each card on its real holders and rerun the outliers, so a type
