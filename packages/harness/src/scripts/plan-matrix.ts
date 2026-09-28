@@ -7,7 +7,8 @@
  * same, so the difference is the change.
  * `node dist/scripts/plan-matrix.js --hands <search.json> --out plan.json [--fights 200] [--levels 1,3,5]`.
  * `--hands` takes a `sim-search-report --json` file (its `searches`) or a JSON map of
- * `"Type@Ln": [9 cards]`.
+ * `"Type@Ln": [9 cards]`. `--variants a,b` applies experiment variants (`balance/variants.ts`)
+ * to every unit, so a candidate fix can be compared with the same plan without it.
  */
 import { readFileSync, writeFileSync } from 'node:fs';
 import type { Plan, Unit } from '../balance/units.js';
@@ -21,6 +22,7 @@ const handsPath = arg('--hands', '');
 const out = arg('--out', 'plan-matrix.json');
 const fights = Number(arg('--fights', '200'));
 const levels = arg('--levels', '1,3,5').split(',').map(Number);
+const variants = arg('--variants', '').split(',').filter(Boolean);
 if (!handsPath) {
 	process.stderr.write('Usage: plan-matrix --hands <search.json> --out plan.json [--fights 200] [--levels 1,3,5]\n');
 	process.exit(2);
@@ -48,6 +50,7 @@ for (const level of levels) {
 				fights,
 				seed,
 				excitement: true,
+				...(variants.length ? { variants } : {}),
 				tags: { kind: 'matrix', level, a, b },
 			});
 		}

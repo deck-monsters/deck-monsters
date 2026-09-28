@@ -10,6 +10,7 @@
  * So a unit plays every rotation of its sides on the same seed and credits each side by
  * identity: the edge cancels exactly instead of on average (seat-swapped pairs).
  */
+import { applyVariants } from './variants.js';
 import { simulate, type SimMonsterSpec, type SimResult } from '../simulate.js';
 
 export type SideSpec = Omit<SimMonsterSpec, 'team'>;
@@ -29,6 +30,8 @@ export interface Unit {
 	tags?: Record<string, string | number>;
 	/** Record excitement (rounds, rare rolls, turnarounds); see `ExcitementTally`. */
 	excitement?: boolean;
+	/** Experiment variants (`balance/variants.ts`) applied for this unit only. */
+	variants?: string[];
 }
 
 /**
@@ -78,8 +81,17 @@ export interface UnitResult {
 
 const label = (position: number): string => `Sim ${position + 1}`;
 
-/** Run one unit in this process. */
+/** Run one unit in this process, with its experiment variants applied and then undone. */
 export async function runUnit(unit: Unit): Promise<UnitResult> {
+	const undo = applyVariants(unit.variants);
+	try {
+		return await runUnitPlain(unit);
+	} finally {
+		undo();
+	}
+}
+
+async function runUnitPlain(unit: Unit): Promise<UnitResult> {
 	const started = Date.now();
 	const n = unit.sides.length;
 	const rotations = unit.rotate === false ? [0] : Array.from({ length: n }, (_, r) => r);
