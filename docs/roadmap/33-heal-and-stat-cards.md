@@ -128,3 +128,15 @@ Bosses drop Flee, Harden, Heal, Hit, and Whiskey Shot from that deck (`randomCha
 The list dates from the original JavaScript engine with no recorded reason; its effect is
 that a boss holds no filler. It predates newer basics (Scotch, Basic Shield, Calisthenics),
 so a boss could still hold those. Task 5 replaces it with a class rule (owner's choice).
+
+## Why the Jinn wins duels
+
+Sandstorm confuses everyone it hits until their next card. A confused card redraws its
+targets from the active contestants: the Jinn is kept only 30% of the times it is drawn
+(`hitProbability`), and every other contestant, the confused monster included, always. In
+a duel that is the Jinn or the monster itself, so the confused monster's next attack hits
+itself about 77% of the time, and a confused heal goes to the Jinn 70% of the time
+(`healProbability`). In a crowded ring the redraw spreads over many monsters; in a duel one
+Sandstorm usually turns the opponent's next card on itself. A Jinn with its likely hand and
+one Sandstorm won 77-81% at levels 5, 15, and 20 against likely hands, so its late
+strength is this redraw, not the number of copies.
