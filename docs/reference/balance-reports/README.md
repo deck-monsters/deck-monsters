@@ -15,6 +15,7 @@ are not checked in; rerun the plan to reproduce them.
 
 | Report | What it measured |
 |---|---|
+| [2026-09-28 chassis, collections, and holders](2026-09-28-layer3.md) | Layer 3: each monster's body value with a fixed hand, what a typical player owns by level (from the drop code), and restricted cards on their real holders |
 | [2026-09-28 real-card catalogue](2026-09-28-catalogue.md) | Layer 2: every card's value in Hit-equivalents at levels 1-12 on the reference chassis, against Hits and the reference field, with outliers against each action class |
 | [2026-09-28 ladder and HE validation](2026-09-28-ladder-and-he.md) | The two-sided calibration ladder, slot weights, and the value unit validated on synthetic strikes |
 | [2026-09-28 formula tables](2026-09-28-formula.md) | Layer 0: chassis by level, and a Hit's and a Blast's per-play damage and turns to kill (no fights) |
