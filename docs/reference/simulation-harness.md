@@ -192,6 +192,10 @@ more in their outer `finally`, after the loop, to dispose the last fight's conte
 | `sim:bosses` | Humans against real bosses in the owner's scenarios (a level 1 against one boss, two bosses, a beginner + L1 + L5 pack; two humans with and without a team). Humans carry a player's starting deck; bosses are built and target exactly as the ring spawns them. Monster types are random per batch. Prints how often a human wins. `SIM_BOSSES_FIGHTS` sets fights per batch (8 batches per row, default 25). | ~1.5 min |
 | `sim:mega` | The mega boss against two to four humans (half likely decks, half random) at levels 1–10, built with the engine's own `fitMegaBoss`, `empowerMegaBoss`, and `megaMinionHp`. Prints how often a human won, against the owner's 20% target. `SIM_MEGA_HP_SCALE` multiplies the fitted HP to calibrate; `SIM_MEGA_FIGHTS` sets fights per batch (default 20). | ~4 min |
 | `sim:statcards` | What a boost or curse card is worth per play: mirror matches (Minotaur, Gladiator, Weeping Angel at levels 1, 5, 10) where one side swaps a Hit in a four-Hit hand for the card, reported as the swing in decisive win share against four Hits a side. AC cards are a reference. The first-listed monster always moves first, so the rows are comparisons, not absolute rates (roadmap 34). `SIM_STATCARD_FIGHTS` sets fights per cell (default 300). | ~10 min |
+| `sim:batch`, `sim:report`, `plan:curves` | The standalone runner and its report, and the class-curve planner (every pair of monsters at levels 1, 3, 6, 8, 10, 12, 15, 20, likely and random hands, seat-swapped). See the runner section below. | ~5 min for `--fights 40` |
+| `sim:formula` | Layer 0 of the balance methodology: each monster's HP, AC, and stat modifiers by level (from real engine instances), and a Hit's and a Blast's per-play damage and turns to kill against the field, sampled from the cards' own roll methods. No fights. `--json out.json`. | ~7 s |
+| `plan:ladder` | The calibration ladder (roadmap 34 tasks 3-4), two-sided, on the reference chassis: rungs 0-9 are k Hits and 9-k null cards against 9 Hits; rungs 10-18 are 9 Hits against an opponent missing k-9 Hits, so a hand worth more than 9 Hits can be measured. Six shuffles per rung by default (slot position matters). `sim:report` prints the curve per level and whether it is monotone; `balance/ladder.ts` converts scores to Hit-equivalents and back. | ~5 min for four levels |
+| `plan:validate-he`, `sim:validate-he` | Validates the Hit-equivalent on synthetic strikes: slot weights, each strike measured in every slot, stacking, and held-out hands predicted from single values weighted by slot (`--weights raw\|smooth\|uniform`, default smooth). Pass mark: mean absolute error 5 points. `sim-validate-he <ladder-run> <validate-run>`. | ~5 min |
 | `sim:rings` | Realistic rings with player decks. `curves`: each monster as a human against a random other at the same level, levels 1-20 (a per-class curve). `rings`: 120 rings sampled the way rooms fill (mostly 2-3 monsters, levels mostly 0-6, some pre-arranged pairs, 40% with bosses spawned by the ring's rules), each monster's wins against its fair share, and how often humans beat bosses. Pass `curves` or `rings` to run one; `--likely` gives humans likely decks and `--events` rolls ring events. `SIM_RINGS_FIGHTS` sets fights per batch (default 20). | ~5 min each |
 | `sim:monster <type>` | One monster (`pnpm --filter @deck-monsters/harness sim:monster Dragon`; any class name or creature type) against every other monster at levels 1/5/10/15/20 with random decks, and with its thematic fixture deck when its report has one. Then a mirror, a 2v2 team fight, and a crowded free-for-all with every other monster once, where area damage shows. Prints win rate, share of decisive fights, draws, rounds, top damage per card, and the monster's card counters. Flags rows outside 35–65% of decisive fights (fixture rows only, when there is a fixture). `SIM_MONSTER_FIGHTS` sets fights per row (default 100). `sim:unicorn` is `sim:monster Unicorn`. | ~2 min per monster |
 
@@ -208,6 +212,55 @@ this doc's change and hung indefinitely after printing their reports when run as
 `node dist/scripts/…` (rather than under a harness that kills the process after it sees the
 expected output) — they now call `process.exit(0)` (or `process.exitCode ?? 0` for
 `sim:winrates`, which sets a non-zero `exitCode` on a balance warning) too.
+
+## The standalone runner (`sim:batch`) — `packages/harness/src/balance/`
+
+The balance methodology ([roadmap 34](../roadmap/34-balance-methodology.md)) runs on one
+batch runner that needs only raw compute: no network, no model inference, no database. A
+long run is a black box on any machine; a short agent session takes it forward in chunks.
+
+```bash
+cd packages/harness
+node dist/scripts/plan-curves.js --out plan.json --fights 40      # a planner writes work units
+node dist/scripts/sim-batch.js plan.json --out run/ [--max-minutes 25] [--units 0..100] [--shard 0/4] [--workers 4]
+node dist/scripts/sim-report.js run/ [--json summary.json]         # works on partial runs
+```
+
+- **Plans.** A plan (`balance/units.ts`) lists units: sides (`SimMonsterSpec`s), fights per
+  seat order, a seed, and optional `group` and `tags`. Planners only write plans; the runner
+  only runs them.
+- **Seat order.** `simulate()` plays sides in the order listed, and the first mover's edge in
+  Hit mirrors is 51-65%. A unit plays every rotation of its sides on the same seed and
+  credits each side by identity, so the edge cancels exactly. Every curve measured before
+  this (roadmaps 32 and 33, `sim:rings`, `sim:statcards`) listed the monster under test first,
+  so its absolute numbers run high for that monster; comparisons within one table stand.
+- **Output.** `results.jsonl` gets one line per finished unit, written as it completes
+  (wins, draws, losses, and expected score per side, per rotation, and timings). A run that
+  dies keeps every finished unit; a torn last line is ignored. `manifest.json` records the
+  plan hash and commits; `heartbeat.json` is rewritten every minute.
+- **Resume, chunks, shards.** Rerunning a plan into the same directory skips finished units;
+  a directory holding a different plan is refused, and so is a resume at a different commit
+  from the one the run started at (`--allow-commit-change` overrides; uncommitted edits are
+  not detected, so run long plans from a clean checkout). `--max-minutes` stops after the
+  units in flight; `--units a..b` and `--shard i/n` run a slice.
+- **Cancelled fights fail the unit.** A fight the engine cancels (an internal error
+  `ring.fight()` swallows) would otherwise score as a draw; the unit is recorded as failed
+  and runs again on resume.
+- **Workers.** One engine per worker thread (`balance/worker.ts`), so `simulate()`'s global
+  seeded `Math.random` never crosses units. About 100 fights a second on 4 cores with 9-card
+  human hands (measured 2026-09-28).
+- **Statistics** (`balance/stats.ts`): Wilson and mean intervals, sample sizes, Holm, and an
+  SPRT for triage. Tested against textbook values.
+- **Reference chassis** (`balance/reference.ts`): `SimMonsterSpec.chassis: 'reference'` gives
+  a contestant the median stat offsets and median HP and AC variance of the seven real
+  monsters, and no creature type, so no card is strong or weak against it. `type` still picks
+  the class the engine builds. The medians are computed once on their own fixed seed, so a
+  unit's result never depends on what ran before it.
+- **Synthetic cards** (`balance/synthetic-cards.ts`): a hand entry `Ideal:<Kind>` or
+  `Ideal:<Kind>:<JSON options>` builds a harness-only card on the engine's own classes
+  (`Ideal:Null` takes a slot and does nothing; `Ideal:Strike` is a Hit with its dice set by
+  options). They are never registered with the engine, so they cannot drop or be equipped;
+  `balance/synthetic.test.ts` proves it. Every other hand entry is an engine card type.
 
 ## Humans and bosses (`SimMonsterSpec.role`)
 

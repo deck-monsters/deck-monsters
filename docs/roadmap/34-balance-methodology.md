@@ -8,8 +8,8 @@ tags: [roadmap, balance, harness, methodology]
 ---
 # 34 — Balance Methodology: Measure Before Tuning
 
-**Status:** Planned (2026-09-28), picked up after PR #407 merges, on its own branches and
-PRs. Follows [33](../archive/roadmap/33-heal-and-stat-cards.md), whose evidence is the
+**Status:** In progress (2026-09-28): PR A on branch `claude/balance-methodology-a`,
+after PR #407 merged. Follows [33](../archive/roadmap/33-heal-and-stat-cards.md), whose evidence is the
 starting point. Revised the same day after a deeper review of the engine and the owner's
 answers below.
 
@@ -49,8 +49,9 @@ changes for the owner to choose from. Changes come in the next pass, one decisio
 |---|---|---|
 | Primary metric | **Expected score**: win 1, draw ½, loss 0, over all fights; flee counts as a loss for the monster that fled. Draw rate reported beside it | Win share over decisive fights hides a card that turns losses into draws; draws run 8-27% with random hands at levels 1-20 today |
 | Turn order | **Random per fight, as the game does**, and every comparison played in seat-swapped pairs on the same seed. The initiative edge is reported as its own number | The harness fixes turn order (`DECK_MONSTERS_DETERMINISTIC_RING`), so the first-listed monster always acts first. Every curve in 32 and 33 listed the monster under test first; in Hit mirrors that alone gave 51-65% (57-65% for the brutes) |
-| Levels sampled | **1, 3, 6, 8, 10, 12, 15, 20**: the mechanical breakpoints | STR stops growing at level 6, INT at 8, DEX at 10, AC at 12; ancient dragons start at 10; HP grows to 20 |
-| Level weighting | Report every level; **rank findings by where players actually are**, from telemetry | Reaching level 10 takes about 800 fights and level 15 about 9,000 (below), so levels 15-20 are mostly bosses and the most dedicated players |
+| Primary levels (owner, 2026-09-28) | **Levels 0-7 are the primary tuning target**; 8-20 are the long tail, watched so a change does not break them, not tuned toward | Very few players reach level 10, let alone 20: level 10 takes about 800 fights and level 15 about 9,000 (below) |
+| Levels sampled | **Every level 0-7**, plus **10, 12, 15, 20** for the tail | Dense where players are; the tail at its mechanical breakpoints (DEX stops at 10, AC at 12, ancient dragons from 10, HP to 20) |
+| Level weighting | Report every sampled level; **rank findings by where players actually are**, from telemetry (levels 0-7 first by default) | The band is checked at every level, but a problem at levels 0-7 outranks one at 15-20 |
 | Hand size | Test hands are **9 cards**, the real slot count, on both sides. Short hands (3-4) only in Layer 1, and never against a longer hand | Each round every monster plays its whole hand, so slots are action economy: a 4-card hand acts 4 times a round against a 9-card hand's 9 |
 | Scope | **Duels and crowds, not bosses, items, or ring events** for the band. Bosses keep their own targets (`sim:bosses`, the mega boss at about 20%); items are bounded and player-triggered; ring events are checked in Layer 5 only | They have their own tuning and their own targets |
 | Where the band is judged | **Directly, by simulation of whole hands (Layer 4).** The card-value unit explains and ranks; it never gates a decision on its own | A summed card value can miss synergy; the full fight cannot |
@@ -308,8 +309,14 @@ Measured on the Layer 4 hands, so a later change can be checked against them:
 - **Precision.** A 95% interval on an expected score is about ±5 points at 385 fights and ±3
   at 1,067. Anything that gates a decision (Layer 4, candidate changes) is measured to ±3;
   exploration may use ±5.
-- **Common random numbers.** Every A/B comparison runs A and B on the same seeds and reports
-  the paired difference with its interval. Task 1 measures how much variance this removes.
+- **Common random numbers, measured (task 1).** A/B comparisons still run on the same seeds,
+  but the engine draws every roll from one global stream, so two versions stay in step only
+  until they first play a different card. Swapping a Hit for a Heal in the ninth slot, the
+  shared seeds removed 99% of the variance of the difference (ratio 0.01); in the first
+  slot they removed none (ratio 1.00). So budgets assume independent samples, and a paired
+  interval is used only where it is measurably narrower. Per-contestant random streams in
+  the engine's dice helpers (a harness mode, no gameplay change) would restore the pairing;
+  it is an option for later, not part of this pass.
 - **Seat-swapped pairs.** Each seed is played twice with the turn order reversed, so the
   first-mover edge cancels exactly instead of on average.
 - **Sequential stopping is for triage, not for the reported number.** An interval computed
@@ -359,7 +366,7 @@ network, no model inference, no database, no services.
 Task 1 builds this runner first, and every later script is a planner plus a report on top
 of it.
 
-### Compute budget (estimated at about 150 fights a second on 4 workers)
+### Compute budget (estimated at about 150 fights a second on 4 workers; measured 114 in task 1, so scale the times below by 1.3)
 
 | Work | Fights (full) | Full | Quick |
 |---|---:|---:|---:|
@@ -459,10 +466,10 @@ a few), with this table updated in the same commit.
 
 | # | PR | Task | Acceptance | Status | Commit |
 |---|---|---|---|---|---|
-| 1 | A | The standalone runner (plans, append-only results, resume, chunks, shards, report); statistics; seat-swapped pairs with random turn order; worker pool. Measure throughput and chunk sizes an agent session can finish, and the variance common seeds remove; re-baseline the 33 curves without the fixed first mover | A run killed mid-way resumes without losing finished units; stats tests pass against known values; measured budget replaces the estimates; corrected curves checked in | Planned | |
-| 2 | A | Layer 0: `sim:formula` and the chassis table | Tables per level; the flat-strike hypothesis confirmed or refuted | Planned | |
-| 3 | A | Reference chassis, null card, synthetic cards, calibration ladder | Ladder monotone and repeatable across two seed sets; synthetic cards provably absent from the game | Planned | |
-| 4 | A | Validate HE: stacking linearity on synthetic cards; 30 held-out hands predicted within 5 points | A pass/fail statement, and what HE can and cannot be used for | Planned | |
+| 1 | A | The standalone runner (plans, append-only results, resume, chunks, shards, report); statistics; seat-swapped pairs with random turn order; worker pool. Measure throughput and chunk sizes an agent session can finish, and the variance common seeds remove; re-baseline the 33 curves without the fixed first mover | A run killed mid-way resumes without losing finished units; stats tests pass against known values; measured budget replaces the estimates; corrected curves checked in | Done: runner, stats, and corrected curves ([report](../reference/balance-reports/2026-09-28-class-curves.md)); a hard kill after 54 of 168 units lost nothing; 114-195 fights a second on 4 workers, and a 27k-fight plan ran in 4 minutes in an agent session. Common seeds help only while the two versions play the same cards (above). A first taste of order: a Heal in place of the first Hit cost 12.6 points; in place of the ninth, nothing | 98b253b, 5720593, this commit |
+| 2 | A | Layer 0: `sim:formula` and the chassis table | Tables per level; the flat-strike hypothesis confirmed or refuted | Done: confirmed. A Hit's turns to kill doubles from level 10 to 20 (it lands less and hits softer as AC outgrows DEX and STR) while Blast's falls to about 5; [report](../reference/balance-reports/2026-09-28-formula.md) | this commit |
+| 3 | A | Reference chassis, null card, synthetic cards, calibration ladder | Ladder monotone and repeatable across two seed sets; synthetic cards provably absent from the game | Done: reference chassis, `Ideal:Null` and `Ideal:Strike` (the other synthetic classes come with task 5, where they are used); the ladder (96,000 fights) is monotone at every level in both seed sets, mean difference between sets 2.3 points. 6 of 96 interior rungs differ by more than chance, because each unit shuffles where its nulls sit and position matters (task 4), so the full ladder averages more shuffles per rung | 7e40df3, this commit |
+| 4 | A | Validate HE: stacking linearity on synthetic cards; 30 held-out hands predicted within 5 points | A pass/fail statement, and what HE can and cannot be used for | Done: **at the mark, not under it** (80 held-out synthetic hands, mean absolute error 5.1 against a mark of 5, noise floor 2.1; first reported as 4.9 until a Codex review found the slot weighting applied twice) after two fixes from a first failing run (13.5): a two-sided ladder, and fitted slot weights. Stacking is linear. Slot position is first-order at levels 4-7 (slot 1 worth up to about 4 times slot 9). HE ranks and explains; decisions stay on whole-hand simulation; repeat on real cards in task 6. [Report](../reference/balance-reports/2026-09-28-ladder-and-he.md) | 1fc3cb1, 522e493, this commit |
 | 5 | B | Layer 1 experiments: exchange rates, scaling, crowd factor, profiles, order | The idealized price list, and what order can and cannot do | Planned | |
 | 6 | B | Layer 2: `sim:catalogue` over all 61 cards | Catalogue JSON and tables; outliers flagged | Planned | |
 | 7 | B | Layer 3: chassis values, collection model, inventories | Per-monster strength decomposed | Planned | |
@@ -509,6 +516,16 @@ seeds) stand.
 ## Candidate changes to evaluate in the next pass (not this one)
 
 - **Sandstorm as a roll**, and a softer redraw, compared on rate and excitement.
+- **Roll for initiative** (owner, 2026-09-28): in real fights, turn order is a hidden coin
+  flip (the ring shuffles contestants as they join, and the order holds for the whole
+  fight). A visible roll at the start of a fight (d20 + DEX modifier) would make it a moment
+  and give DEX another use. Owner's shape: the lowest-XP monster in the ring rolls with
+  advantage (an underdog's edge); a natural 20 earns a glory announcement only, with no
+  gameplay change; no extra actions, since acting twice would disturb hand order. Measure
+  first: the initiative edge per matchup and level (Layer 6), how much DEX and the
+  underdog's advantage would shift it, and once per fight against each round. Across all pairs with
+  likely and random hands, going first is worth 53% (task 1 baseline), far less than the
+  51-65% of Hit mirrors, so this is mainly for excitement and stat value, not fairness.
 - **Rarity copy limits** (epic 2, or 1) if Layers 2-4 confirm stacking.
 - **Level scaling** of area strikes past level 10, re-measured after the ±5 cap.
 - **Late-game strikes.** If Layer 0 confirms flat strikes against rising HP, a structural fix
