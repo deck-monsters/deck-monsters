@@ -21,7 +21,7 @@ export const FULL_SCALING_LEVELS = 10;
  * levels past it. At +1 per level, level 15 Blast dealt 18.9 a hit against 11.7 for a Hit, to
  * every opponent and undodgeable, and a Weeping Angel with two Blasts won 95–99% at levels
  * 15–20 on likely decks. The owner kept casters strong late but chose to flatten the runaway
- * past level 10, leaving early and mid game untouched (docs/roadmap/32-pass-c-mega-boss-and-balance.md).
+ * past level 10, leaving early and mid game untouched (docs/archive/roadmap/32-pass-c-mega-boss-and-balance.md).
  */
 export const scaledCasterLevel = (level: number): number => {
 	const safe = Math.max(0, level);

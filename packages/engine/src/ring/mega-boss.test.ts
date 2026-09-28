@@ -25,7 +25,7 @@ import {
 const MINUTE = 60_000;
 
 /**
- * The mega boss (owner, 2026-09-27; docs/roadmap/32-pass-c-mega-boss-and-balance.md): about
+ * The mega boss (owner, 2026-09-27; docs/archive/roadmap/32-pass-c-mega-boss-and-balance.md): about
  * once a day, announced 30 minutes ahead, fitted to the humans in the ring when it arrives,
  * called off for a regular boss with fewer than two, and paying the challengers still
  * standing when it falls.

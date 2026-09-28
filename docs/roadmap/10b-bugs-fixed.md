@@ -4643,3 +4643,65 @@ presets, and item use publish no summary of their own and keep the engine's line
 the summary. It fails without the fix.
 
 **Status**: Fixed.
+
+### 196. The ring feed jumped while scrolling up into earlier fights — FIXED
+
+**Symptom**: scrolling up through fight history on The Ring yanked the viewport back toward
+newer events. A probe on Test Room A (2026-09-27) drove the `.event-feed` scroller upward
+in bursts. `scrollHeight` grew from 16145 to 30625 as older rows mounted, and between two
+upward bursts `scrollTop` moved from 12950 to 13391. Pauses left `scrollTop` where the
+burst ended, so this was not the #159 re-pin (that scrolls to `scrollHeight` only when
+there has been no recent upward gesture).
+
+**Root cause**: the ring Virtuoso had no per-row height. It books every unmeasured row at
+the first rendered row's height, and the bottom of a fight feed is a short narration.
+Card boxes are fenced frames tens of lines tall. When one mounted, the size tree grew and
+Virtuoso's anchor correction added that growth to `scrollTop`, against the upward gesture.
+`heightEstimates` is also ignored once the size tree is non-empty, and the empty
+placeholder fills it, so the guesses have to be on the mount that first receives history.
+
+**Fix**: `estimateFeedRowHeight` counts the row's lines at the CSS line box (14px × 1.4)
+and the card-panel chrome the fence becomes. `RingPane` measures the feed width for the
+wrap column count, waits until history is in state, and passes the guesses as
+`heightEstimates` on that first mount. It also waits for a nonzero width: a pane hidden
+under the 1024px breakpoint measured 0 and froze the 48-column fallback into the guesses
+(caught in review), so the list mounts when ResizeObserver reports the shown pane's width. A rounded-up line was tried first; it booked rows
+about 12% tall and the anchor still carried the viewport. Measured heights still replace
+the guess. The #159 re-pin still scrolls the scroller element's own `scrollHeight`.
+
+**Tests**: `utils` coverage in `feed-row-height.test.ts` (a fenced card is far taller than
+a narration line). `ringPane-scroll-behavior.test.tsx` asserts the pane passes those
+estimates, that the list waits for history and for a measured width, and still asserts a
+recent wheel or touch suppresses the re-pin. The component
+assertion fails if `heightEstimates` is omitted.
+
+**Status**: Fixed.
+
+### 197. Card-box right border drifted when a line held a BMP emoji — FIXED
+
+**Symptom**: the right edge of a card frame stepped on a row whose title carried an emoji.
+Reported for `🦄` and the Gladiator's `💪` and `🗡`.
+
+**Root cause**: `formatCard` wrapped with `word-wrap`, which counts UTF-16 units, while the
+feed's monospace advances a pictograph by two columns. Astral pictographs (`💪`, `🦄`) are
+already two units, and on the feed font they measure 17.5px against a 16.8px pair of
+columns, so those rows already met the 34-column `=` border. A BMP pictograph (`⏳`) is one
+unit and two columns. Two of them on a full line measured 36 columns and painted past the
+border. A variation selector is a unit with no width, so `🗡️` wrapped a column early.
+The CSS panel around `.event-card-block` was already straight; the step was the character
+border. Replacing that border with CSS would have left Discord, which renders the same
+string, unchanged.
+
+**Fix**: strings whose UTF-16 length is not their display width wrap on display columns
+(a pictograph is two, a variation selector is zero). Plain text stays on `word-wrap`, so
+existing card breaks do not move. The display path wraps each authored line on its own,
+with the same 32-column budget after the indent that `word-wrap` gives plain text; the
+first version split on all whitespace, so a newline in emoji text (a stats block) lost its
+indent and doubled a blank line (caught in review). Measured after the change, the same title's first line
+is 31 columns, inside the 34-column border, in phosphor, amber, and a 375px viewport.
+There is no light theme; phosphor and amber are the two feed themes checked.
+
+**Tests**: `helpers/card-columns.test.ts`. The BMP case fails on the old wrap with the
+line at 36 columns and the border at 34. The line-break case fails on the first display-path wrap.
+
+**Status**: Fixed.

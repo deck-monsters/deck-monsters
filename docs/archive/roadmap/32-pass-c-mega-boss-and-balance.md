@@ -1,18 +1,24 @@
 ---
-type: Roadmap
+type: Archive
 title: Pass C — Mega Boss, Class Balance, and Harness Decks
-description: Active pass plan for the mega boss event, likely-deck harness rings with ring events, Unicorn and Gladiator balance, and the doubled Workshop console lines.
-status: draft
+description: Closed pass record for the mega boss event, likely-deck harness rings with ring events, Unicorn and Gladiator balance, and the doubled Workshop console lines.
+status: deprecated
 audience: internal
-tags: [roadmap, bosses, balance, harness]
+tags: [archive, bosses, balance, harness]
 ---
 # 32 — Pass C: Mega Boss, Class Balance, and Harness Decks
 
-**Status:** In progress on branch `claude/pass-c-mega-boss-and-balance`, started 2026-09-27,
-after Pass B ([31](../archive/roadmap/31-pass-b-rings-and-bosses.md), PR #403). The owner
-asked for the leftovers in [11](11-balance-and-mechanics.md) and
-[12](12-new-content-backlog.md#mega-boss-event), plus the doubled Workshop lines in the
-Console, in one new branch and PR.
+**Status:** Closed (2026-09-28). Shipped in PR #405 from branch
+`claude/pass-c-mega-boss-and-balance`, after Pass B ([31](31-pass-b-rings-and-bosses.md),
+PR #403). The owner asked for the leftovers in
+[11](../../roadmap/11-balance-and-mechanics.md) and
+[12](../../roadmap/12-new-content-backlog.md#mega-boss-event), plus the doubled Workshop
+lines in the Console, in one branch and PR. Its lasting rules are in
+[boss encounters §8](../../architecture/boss-encounters.md#8-the-mega-boss), the
+[simulation harness](../../reference/simulation-harness.md), and
+[workshop and items](../../architecture/workshop-and-items.md); the Console fix is 10b #195.
+Open work moved to active homes: the Jinn's late strength (Sandstorm's confusion) is an
+owner decision in [11](../../roadmap/11-balance-and-mechanics.md).
 
 ## Tasks
 
@@ -22,7 +28,7 @@ Console, in one new branch and PR.
 | 2 | Harness: likely-deck archetypes per class beside the random hand (`deckStyle`), and ring events (`ringEvents`), both as `sim:rings` flags | Done | 675f493 |
 | 3 | Balance: the Unicorn strong at every level, the Gladiator weak early, measured with task 2 against the class-curve target. Investigated: no Unicorn or Gladiator change the evidence supports; the one robust finding, level-scaled Blast and Sandstorm late, now scales by half past level 10 (owner) | Done | 9634d46, f58489f |
 | 4 | The mega boss event: daily per room, announced 30 minutes ahead with a countdown, a two-minute hold on ordinary fights, fitted to about 20%, relics and minions, rewards, called off below two humans; `sim:mega` | Done | 14f3d89 |
-| 5 | Docs close-out, generated references, independent review and its fixes | Done | this commit |
+| 5 | Docs close-out, generated references, independent review and its fixes, then the Codex and Cursor reviews on the PR | Done | 670e6f5, 0428812, 5bc6c24, d7d5860 |
 
 ## Decisions (owner, 2026-09-27)
 
@@ -33,7 +39,7 @@ Console, in one new branch and PR.
 | Difficulty | Fitted to the humans in the ring when it starts so humans win **about 20%** |
 | Reward | Every surviving challenger gets **bonus coins and XP and a guaranteed rare card** |
 | Blast late (task 3) | **Half scaling past level 10**: Blast and Sandstorm add their level damage for every caster level up to 10, then one per two levels |
-| Cancellation (from [12](12-new-content-backlog.md#mega-boss-event)) | No more than one human in the ring when it is due: cancelled with flavour, and a regular boss instead |
+| Cancellation (from [12](../../roadmap/12-new-content-backlog.md#mega-boss-event)) | No more than one human in the ring when it is due: cancelled with flavour, and a regular boss instead |
 
 ## Evidence: class curves, random against likely decks (`sim:rings curves`, 120 fights per cell)
 

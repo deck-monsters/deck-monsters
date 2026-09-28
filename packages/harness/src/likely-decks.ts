@@ -1,6 +1,6 @@
 /**
  * Likely decks: what a player who knows their monster tends to equip (Pass C,
- * docs/roadmap/32-pass-c-mega-boss-and-balance.md). The random hand (`buildHuman`'s default)
+ * docs/archive/roadmap/32-pass-c-mega-boss-and-balance.md). The random hand (`buildHuman`'s default)
  * is a floor for how well a human plays; these are the other end, a player who picks their
  * monster's signature cards and the handbook's example builds (`BUILD_STRATEGIES` in the
  * engine's player-handbook-content.ts). There is no equipped-deck telemetry yet, so they are

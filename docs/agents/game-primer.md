@@ -223,8 +223,7 @@ Three rules from #159 that are easy to undo by accident:
 re-pins. The hook's return value is memoised because consumers put it in effect dependency
 arrays (#132).
 
-Scrolling up into earlier fights still jumps. Card boxes are far taller than the height
-Virtuoso estimates for an unmeasured row, so `scrollHeight` grows as those rows mount and
-Virtuoso's size-tree correction can move `scrollTop` against the gesture. That is open
-item L in [bug fixes](../roadmap/10-bug-fixes.md). It is a different failure from the
-re-pin above: the pauses in the capture left `scrollTop` where the upward burst ended.
+Scrolling up into earlier fights no longer jumps: the Ring list gives Virtuoso a height
+guess per row on its first mount, so a tall card box is not booked as a narration line
+(#196). How and why is in [web workspace](../architecture/web-workspace.md#ring-feed-row-heights);
+do not point the #159 re-pin at that guess.

@@ -8,7 +8,7 @@ tags: [bugs, roadmap, open]
 ---
 # Bug Fixes and Code Quality
 
-**Status:** Active — five open items. Fixed work and its root causes live only in
+**Status:** Active — three open items. Fixed work and its root causes live only in
 [`10b-bugs-fixed.md`](10b-bugs-fixed.md).
 
 ## Open items
@@ -45,9 +45,20 @@ listeners or reward projections.
 ### A. Intermittent missing `↓ Latest` jump button
 
 **Owner:** Web feeds. `isAtBottom` is edge-driven, so a path that moves the reader away from
-the bottom without a callback can hide the recovery control. The trigger is not reproduced:
-capture whether roster collapse, replay, reconnect, or animation causes it before selecting
-a fix.
+the bottom without a callback can hide the recovery control. Not reproduced on 2026-09-28
+against Test Room A, after the ring list started keeping its row heights (#196):
+
+- Wheel up into history. The button stayed visible with the scroller about 2100px and
+  3200px above the bottom.
+- Collapse and expand the roster while parked there. The button stayed visible. The
+  viewport height changed (686px to 732px and back) and `scrollTop` did not.
+- Narrow the window under the 1024px breakpoint, which hides the ring pane, then select
+  the Ring tab. The list came back pinned to the bottom (`gap` 0), so the button was
+  correctly absent. Widening the window left it at the bottom.
+
+No case showed the button hidden while the reader was actually away from the bottom.
+The #159 re-pin still scrolls to the DOM `scrollHeight` when a resize shows the pane
+without a fresh gesture.
 
 Read [events, prompts, and replay](../architecture/events-prompts-and-replay.md).
 
@@ -55,65 +66,14 @@ Read [events, prompts, and replay](../architecture/events-prompts-and-replay.md)
 
 **Owner:** Web feeds. Players reported extra blank lines and misaligned indentation in some
 feed messages. The one confirmed instance, Delayed Hit narration that opened with a literal
-`\n`, is fixed (#130), and a sweep of `cards/` found no other. No further example has been
-captured. Get a screenshot of a specific message before changing the card-display block or
-the turn banner, the likeliest suspects given #97 and #101.
+`\n`, is fixed (#130), and a sweep of `cards/` found no other. Checked again on 2026-09-28
+while scrolling Test Room A's ring history (239 events). A text scan flagged leading or
+repeated newlines. The ones opened were the blank line `formatCard` puts before a frame,
+and the turn banner, which is authored as `\n🎲  round N, turn N\n\n…` in
+`announcements/nextTurn.ts` (#97, #101). No other mis-indented message turned up, so there
+is still no new example to change the card block or the banner for.
 
 Read [events, prompts, and replay](../architecture/events-prompts-and-replay.md).
-
-### K. Card-box right border drifts on rows with an emoji
-
-**Owner:** Web feeds. Found by a browser check on PR #394 (September 2026). Card boxes are
-counted as a 34-column frame in the engine and wrap correctly as stored text. In the web
-feed, the right border steps in and out on rows whose title carries an emoji (`🦄`, and the
-Gladiator's `💪` and `🗡`). The feed renders them with `white-space: pre-wrap` in a monospace
-font where an emoji is wider than one column, so the frame's column count no longer matches.
-Not specific to any card. Likely fixes: measure emoji as two columns when the engine pads
-the frame, or render the frame's border in CSS rather than as characters. Capture a
-screenshot in both themes and at phone width before choosing.
-
-Read [pixel art](../reference/pixel-art.md) and [web workspace](../architecture/web-workspace.md).
-
-### L. The ring feed jumps while scrolling up into earlier fights
-
-**Owner:** Web feeds. Seen 2026-09-27 on Test Room A's Ring tab, with history already
-loaded. The scroller is the ring `Virtuoso` (`.event-feed`), the list that holds earlier
-fights. A script drove it upward in eight bursts — each burst six `scrollTop -= 400` steps
-plus a wheel `deltaY` of -400 — and paused 1.8s after each burst.
-
-| Sample | scrollTop | scrollHeight | Mounted rows |
-|---|---:|---:|---:|
-| Start | 15386 | 16145 | 7 |
-| After burst 2 | 12950 | 21475 | 2 |
-| After burst 3 | 13391 | 24317 | 7 |
-| End | 10096 | 30625 | 8 |
-
-`clientHeight` stayed 758. Between burst 2 and burst 3 the only input was upward, and
-`scrollTop` still moved 441px back toward newer events while `scrollHeight` grew by 2842px.
-Mounted rows had just collapsed to 2 and then returned. Every pause left `scrollTop` where
-the burst ended. #159's re-pin scrolls the element to `scrollHeight` when Virtuoso reports
-"not at bottom" without a recent upward gesture; that path did not run during the pauses.
-
-**Cause:** `RingPane` gives Virtuoso no default item height. Narration rows are one or two
-lines and card boxes are tall `<pre>` frames, so unmeasured rows are estimated short. As
-the reader scrolls into history those rows mount, the estimate is replaced, and
-`scrollHeight` nearly doubled across the probe (16145 → 30625). Virtuoso then corrects
-`scrollTop` from its size tree. That correction can move the viewport against the gesture.
-The same size-tree estimate is why #159 re-pins from the DOM `scrollHeight` instead of
-`scrollToIndex('LAST')`; this bug is that correction firing while the reader is scrolling
-up, away from the bottom.
-
-The 15rem fight-log box (`.fight-log-events`) is a different scroller. It truncates lines
-and does not load ring history.
-
-- [ ] Reproduce with a human wheel and a touch drag, and confirm the correction is
-  Virtuoso's size-tree anchor.
-- [ ] Keep the viewport on the row the reader is looking at once a card box is measured.
-  Leave the #159 follow rule as it is: a gesture inside
-  `USER_SCROLL_INTENT_WINDOW_MS` must still suppress the re-pin.
-
-Read [events, prompts, and replay](../architecture/events-prompts-and-replay.md) and
-[web workspace](../architecture/web-workspace.md).
 
 ## Historical detail
 

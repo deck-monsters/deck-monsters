@@ -103,6 +103,38 @@ Only the explicitly labelled “Open … as a full page” control uses a surfac
 Entering or bookmarking that route still opens the standalone page. On mobile, reveal
 selects the one visible slot. Returning to the workspace restores the persisted pair.
 
+## Ring feed row heights
+
+The Ring event list is a Virtuoso window. It mounts when ring history has been applied,
+because Virtuoso reads `heightEstimates` only while its size tree is empty and the empty
+placeholder fills that tree. Narration is one or two lines and a card box is a tall fenced
+frame, so the list passes a per-row `heightEstimates` value
+(`apps/web/src/utils/feed-row-height.ts`) until the row is measured. The guess is the
+feed's CSS line box and the pane's measured column width; a taller line still corrects
+`scrollTop` once the row mounts. Without that guess, scrolling up into earlier fights
+corrects `scrollTop` against the gesture (#196). The
+follow-the-bottom re-pin still scrolls the scroller's own `scrollHeight` (#159). The
+fight-log box (`.fight-log-events`) is a separate scroller and does not use this estimate.
+The list also waits for a real width. A pane hidden with `display: none` (the other slot
+under 1024px) measures 0, and Virtuoso reads the guesses only once, so mounting it there
+froze the 48-column `FEED_WRAP_COLUMNS_FALLBACK` into them: on a wider pane, narration was
+booked at up to twice its height. ResizeObserver reports the width when the pane is shown,
+and the list mounts then. Without ResizeObserver the fallback is used.
+
+## Card frames
+
+A card box is the 34-column character frame from `formatCard`
+(`packages/engine/src/helpers/card.ts`). The web draws that text in a monospace panel
+(`.event-card-block`); it does not replace the characters with a CSS border. Pictographs
+count as two columns and variation selectors as none, because that is the width the feed
+font advances. Only text that needs it takes that path; plain text keeps `word-wrap`'s
+breaks. Both give 32 columns after the one-space indent, and each authored line is wrapped
+on its own, so a stats block keeps its line breaks. Counting UTF-16 units instead let a BMP pictograph (`⏳`) paint past the
+`=` border (#197). Astral pictographs (`💪`, `🦄`) are already two units, so they already
+met the frame. Discord receives the same string. Fenced card text is not a place for
+inline sprites: a sprite is wider than the column the emoji was counted as
+(`format-event-text.tsx`).
+
 ## Change checklist
 
 - [ ] Add a surface once in `SURFACES`; tabs, selectors, and shortcuts derive from it.

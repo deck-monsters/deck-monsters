@@ -2,6 +2,7 @@ import {
   lazy,
   Suspense,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   useCallback,
@@ -19,6 +20,11 @@ import { usePixelMonsters } from '../hooks/usePixelMonsters.js';
 import { AT_BOTTOM_THRESHOLD_PX, useFeedAutoScroll } from '../hooks/useFeedAutoScroll.js';
 import { useTimeAgo } from '../hooks/useTimeAgo.js';
 import { formatEventText } from '../utils/format-event-text.js';
+import {
+  estimateFeedRowHeight,
+  FEED_WRAP_COLUMNS_FALLBACK,
+  feedWrapColumns,
+} from '../utils/feed-row-height.js';
 import { rememberMonsters } from '../hooks/useKnownMonsters.js';
 import { loadInlineSprites } from '../hooks/useInlineSprites.js';
 import { useMonsterMentions } from '../hooks/useMonsterMentions.js';
@@ -165,6 +171,56 @@ export default function RingPane({
   const { pixelMonstersEnabled: pixelArtEnabled } = usePixelMonsters();
   const PixelSprites = useMemo(() => lazy(pixelSpritesLoader), [pixelSpritesLoader]);
   const [events, setEvents] = useState<GameEvent[]>([]);
+  // Virtuoso applies `heightEstimates` only while its size tree is empty, and the empty
+  // placeholder is enough to fill that tree. Mounting the list before history arrives
+  // therefore drops the guesses, and scrolling up measures card boxes against a narration
+  // line (10b #196). The list mounts once history has been copied into `events`.
+  const [listReady, setListReady] = useState(false);
+  // The column count has to be known on that first mount: a later `heightEstimates`
+  // array is ignored. This layout measurement runs before the history effect. A pane
+  // hidden with `display: none` (the other slot under 1024px) measures 0, so the list
+  // waits for a real width: mounting on the 48-column fallback booked narration on a
+  // wider pane at up to twice its height, and measuring it moved scroll-back again (a
+  // Codex review of PR #406). ResizeObserver reports the width once the pane is shown.
+  const feedAreaRef = useRef<HTMLDivElement>(null);
+  const [wrapColumns, setWrapColumns] = useState(FEED_WRAP_COLUMNS_FALLBACK);
+  const [widthMeasured, setWidthMeasured] = useState(false);
+  useLayoutEffect(() => {
+    const area = feedAreaRef.current;
+    if (!area) return;
+    const measure = (observed?: number) => {
+      const scroller = area.querySelector('.event-feed');
+      const width =
+        scroller instanceof HTMLElement && scroller.clientWidth > 0
+          ? scroller.clientWidth
+          : area.clientWidth > 0
+            ? area.clientWidth
+            : (observed ?? 0);
+      if (width <= 0) return;
+      const list = area.querySelector('.event-feed-list');
+      let pad = 24;
+      if (list instanceof HTMLElement) {
+        const style = getComputedStyle(list);
+        pad = (parseFloat(style.paddingLeft) || 0) + (parseFloat(style.paddingRight) || 0);
+      }
+      const columns = feedWrapColumns(width - pad);
+      setWrapColumns((prev) => (prev === columns ? prev : columns));
+      setWidthMeasured(true);
+    };
+    measure();
+    // Without ResizeObserver there is no later report to wait for; keep the fallback.
+    if (typeof ResizeObserver === 'undefined') {
+      setWidthMeasured(true);
+      return;
+    }
+    const observer = new ResizeObserver((entries) => measure(entries[0]?.contentRect.width));
+    observer.observe(area);
+    return () => observer.disconnect();
+  }, []);
+  const heightEstimates = useMemo(
+    () => events.map((event) => estimateFeedRowHeight(event.text, wrapColumns)),
+    [events, wrapColumns],
+  );
   const [isAtBottom, setIsAtBottom] = useState(true);
   // Timer state is pushed from the server via ring.state events and the handshake payload.
   // No HTTP polling needed.
@@ -238,7 +294,14 @@ export default function RingPane({
   const reconnectMarkerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Fetch persistent ring history from DB on mount
-  const { data: history } = trpc.game.ringHistory.useQuery({ roomId });
+  const { data: history, isError: historyError } = trpc.game.ringHistory.useQuery({ roomId });
+
+  // A failed history load must still open the list, or live events would sit in state
+  // behind the waiting placeholder. An empty successful load is handled in the effect
+  // that copies history into `events`.
+  useEffect(() => {
+    if (historyError) setListReady(true);
+  }, [historyError]);
 
   const { data: lastFight } = trpc.game.recentFights.useQuery({ roomId, limit: 1 });
 
@@ -369,6 +432,8 @@ export default function RingPane({
     for (const ev of dedupedHistory) {
       seenRef.current.add(ev.id);
     }
+    // Same turn as the events the list will mount with. See `listReady`.
+    setListReady(true);
 
     const visibleHistory = dedupedHistory.filter(shouldRenderRingEvent);
 
@@ -515,7 +580,8 @@ export default function RingPane({
 
       {/* Gesture listeners sit on the wrapper because Virtuoso owns the scroller element;
           wheel/touch/pointer/key events bubble up from it. */}
-      <div className="pane-feed-area" {...autoScroll.gestureHandlers}>
+      <div className="pane-feed-area" ref={feedAreaRef} {...autoScroll.gestureHandlers}>
+      {listReady && widthMeasured ? (
       <Virtuoso
         ref={virtuosoRef}
         scrollerRef={autoScroll.setScroller}
@@ -525,6 +591,11 @@ export default function RingPane({
         aria-label="Ring events"
         tabIndex={0}
         data={events}
+        // Per-row guess so a card box is not booked as a narration line until it mounts.
+        // Virtuoso's size-tree anchor otherwise shoves scrollTop back toward newer events
+        // while the reader is scrolling up into history (10b #196). The #159 re-pin still
+        // uses the DOM scrollHeight, not this guess.
+        heightEstimates={heightEstimates}
         atBottomThreshold={AT_BOTTOM_THRESHOLD_PX}
         followOutput={(atBottom) =>
           autoScroll.shouldFollowRef.current || atBottom ? 'smooth' : false
@@ -571,6 +642,11 @@ export default function RingPane({
         }}
         atBottomStateChange={(atBottom) => setIsAtBottom(autoScroll.onAtBottomChange(atBottom))}
       />
+      ) : (
+        <div className="event-feed" role="log" aria-live="polite" aria-label="Ring events">
+          <p className="event event-system event-feed-empty">Waiting for fight events…</p>
+        </div>
+      )}
       {!isAtBottom && (
         <button
           className="jump-to-bottom"

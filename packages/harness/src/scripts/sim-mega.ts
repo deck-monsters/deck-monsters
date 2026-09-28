@@ -2,7 +2,7 @@
 /**
  * The mega boss against gathered challengers: `node dist/scripts/sim-mega.js`.
  *
- * The owner chose "humans win about 20%" (docs/roadmap/32-pass-c-mega-boss-and-balance.md).
+ * The owner chose "humans win about 20%" (docs/archive/roadmap/32-pass-c-mega-boss-and-balance.md).
  * Each scenario is two to four humans (random monster types, half on likely decks and half on
  * random hands) against a boss and its minions built exactly as the ring builds them: the
  * engine's `fitMegaBoss` from the humans' own levels and HP, `empowerMegaBoss` (fitted HP and

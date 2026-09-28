@@ -1,6 +1,6 @@
 /**
  * The mega boss: a rare, announced boss event (owner, 2026-09-27; plan
- * docs/roadmap/32-pass-c-mega-boss-and-balance.md, rules in
+ * docs/archive/roadmap/32-pass-c-mega-boss-and-balance.md, rules in
  * docs/architecture/boss-encounters.md §8).
  *
  * - About once a day per room, at a random time. The time is kept in the room's saved state

@@ -16,7 +16,7 @@ whose reasoning may explain a current constraint. It is not a planning queue.
 
 | Location | Contents |
 |---|---|
-| [roadmap/](roadmap/) | Shipped roadmap plans, including historical mobile, Slack, graphics, item, workspace, and pixel work, the Unicorn content pack, the Unicorn voice punch-up, the Dragon research and content pack, and Pass B's realistic rings and boss balance |
+| [roadmap/](roadmap/) | Shipped roadmap plans, including historical mobile, Slack, graphics, item, workspace, and pixel work, the Unicorn content pack, the Unicorn voice punch-up, the Dragon research and content pack, Pass B's realistic rings and boss balance, and Pass C's mega boss and class balance |
 | [passes/](passes/) | Completed multi-task pass records, including the documentation lifecycle reset |
 | [retired/](retired/) | Deliberately retired subsystems |
 

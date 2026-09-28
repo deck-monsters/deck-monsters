@@ -606,7 +606,7 @@ death narration; test and harness delay-skip mode remains instantaneous.
 ## 8. The mega boss
 
 A rare, announced boss event (owner, 2026-09-27; built in Pass C,
-[32](../roadmap/32-pass-c-mega-boss-and-balance.md)). `ring/mega-boss.ts` holds the rules and
+[32](../archive/roadmap/32-pass-c-mega-boss-and-balance.md)). `ring/mega-boss.ts` holds the rules and
 the timer; `Game` owns one `MegaBossEvent` wherever timed bosses run (`ring.spawnBosses`).
 
 - **Schedule.** About once a day per room: the next one is 20–28 hours after the last
