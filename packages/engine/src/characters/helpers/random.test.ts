@@ -112,3 +112,19 @@ describe('isBossFiller', () => {
 		for (const card of kept) expect(isBossFiller(card), card.cardType).to.equal(false);
 	});
 });
+
+describe('boss decks and hands', () => {
+	// The last refill of a boss deck, and a hand's extra cards, used to skip the filler
+	// filter, so bosses still held Hits and heals (a Codex review of PR #407).
+	it('never hold filler after the refills', async () => {
+		await helpersReady;
+		const { isBossFiller } = await import('./random.js');
+		for (let i = 0; i < 40; i += 1) {
+			const boss = randomCharacter({ isBoss: true });
+			const held = [...boss.deck, ...boss.monsters.flatMap((monster: any) => monster.cards)];
+			const filler = held.filter((card: any) => isBossFiller(card)).map((card: any) => card.cardType);
+			expect(filler, `boss ${i}`).to.deep.equal([]);
+		}
+	});
+});
+

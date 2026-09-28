@@ -40,6 +40,7 @@ changes for the owner to choose from. Changes come in the next pass, one decisio
 | Rarity | **A modest premium, with copy limits.** Rarer cards may be somewhat stronger per play (epic up to 1.5× its action-class median, rare up to 1.25×) and per-hand copies may scale with rarity (for example epic at most 2), like Hearthstone's one-copy limit on legendaries ([Hearthstone deck rules](https://hearthstone.wiki.gg/wiki/Deck)), so a strong rare card cannot be stacked |
 | Brutes and casters | Brutes (Barbarian, Fighter) stronger early; casters (Cleric, Wizard) stronger late |
 | Skill | A good build and a good card order should pay off a lot; the monster type alone must not decide nearly every fight |
+| Telemetry | **Read-only production queries are always allowed**, for any reason, as often as needed. This pass uses them for the level distribution of active monsters and the hands players actually equip (weights findings by where players are; gives the "typical hand" for skill expression) |
 | Excitement | Keep swings, big moments, and natural 20s. A fix should read like a roll (the owner's Sandstorm idea: a d20 per opponent to catch them in the storm), not a flat nerf |
 
 ### Technical decisions (made in planning; the owner can override any)
@@ -462,9 +463,5 @@ seeds) stand.
 
 ## Open questions
 
-1. **Telemetry.** May the pass read production data (read-only) for the distribution of
-   monster levels among active players and the hands they actually equip? It weights
-   findings by where players are and gives the "typical hand" for skill expression.
-   Without it, the report ranks levels 1-10 first by assumption.
-2. **Scheduled runs.** Once task 1 measures the runtime: a label-triggered quick run on PRs
+1. **Scheduled runs.** Once task 1 measures the runtime: a label-triggered quick run on PRs
    that touch cards, and a weekly full run posting a diff, or manual only?

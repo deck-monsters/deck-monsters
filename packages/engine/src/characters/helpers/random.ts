@@ -92,6 +92,22 @@ export const isBossFiller = (card: any): boolean => {
 	return !permitted.some(holder => MONSTER_TYPES.includes(holder));
 };
 
+/**
+ * `fillDeck` tops a deck up to its minimum; `clean` drops what a boss must not hold (a no-op
+ * for a player). Repeat until a refill adds nothing `clean` removes, with a bound so a pool
+ * made only of filler still returns.
+ */
+const fillWithoutFiller = (deck: any[], creature: any, clean: (deck: any[]) => any[]): any[] => {
+	let current = deck;
+	for (let attempt = 0; attempt < 50; attempt += 1) {
+		const filled = _fillDeck([...current], {}, creature);
+		const kept = clean(filled);
+		if (kept.length === filled.length) return filled;
+		current = kept;
+	}
+	return current;
+};
+
 const randomCharacter = ({
 	battles,
 	isBoss,
@@ -177,9 +193,9 @@ const randomCharacter = ({
 	}
 
 	if (isBoss) {
-		let deck = cleanBossDeck(_getMinimumDeck());
-		deck = cleanBossDeck(_fillDeck(deck, {}, character));
-		character.deck = _fillDeck(deck, {}, character);
+		// Top up and filter until a refill adds no filler. The last refill used to go
+		// unfiltered, so filler came straight back (a Codex review of PR #407).
+		character.deck = fillWithoutFiller(cleanBossDeck(_getMinimumDeck()), character, cleanBossDeck);
 
 		character.deck.forEach((card: any) => {
 			if (typeof card.levelUp === 'function') {
@@ -192,7 +208,7 @@ const randomCharacter = ({
 		const eligibleCards = shuffle(
 			character.deck.filter((card: any) => monster.canHoldCard(card)),
 		);
-		const extraCards = _fillDeck([], {}, monster);
+		const extraCards = fillWithoutFiller([], monster, cleanBossDeck);
 		monster.cards = [...eligibleCards, ...extraCards].slice(0, monster.cardSlots);
 	});
 
