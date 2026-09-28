@@ -14,7 +14,16 @@
  *
  * The inventory is the best 9 cards the monster can hold from that collection, by the
  * catalogue's sHE at the nearest measured level (at most `MAX_CARD_COPIES_IN_HAND` copies of a
- * card), against the unconstrained best: any card it can hold, same copy limit.
+ * card), against the unconstrained best: any card it can hold, same copy limit. Those sums use
+ * the Hit-context sHE, as the Layer 3 report states.
+ *
+ * The typical hand, which `sim-search` starts from, is picked differently (a Codex review of
+ * #409, and rule 4 of "Value beyond damage" in roadmap 34):
+ * - with `--contexts <contexts.json>`, a card the context report flags as a context card is
+ *   ranked by its best duel context, so a synergy card (Feline Companion in a caster hand) is
+ *   not ranked by the Hit context's blind spot;
+ * - with at most 2 heals, since heals do not stack (the first search's level-5 starting hands
+ *   held five, and 14 of its 17 kept moves swapped one out).
  */
 import '../sim-env.js';
 import '../set-env.js';
@@ -23,6 +32,7 @@ import { MAX_CARD_COPIES_IN_HAND, drawCard, engineReady, getInitialDeck, getXpCa
 import { buildHolder, holdableCardTypes } from '../balance/holders.js';
 import { SIM_MONSTER_TYPES } from '../simulate.js';
 import { mulberry32 } from '../rng.js';
+import { CARD_CONTEXTS } from '../balance/contexts.js';
 
 function arg(name: string, fallback: string): string {
 	const i = process.argv.indexOf(name);
@@ -31,8 +41,13 @@ function arg(name: string, fallback: string): string {
 
 interface CatalogueJson {
 	levels: number[];
-	cards: Array<{ cardType: string; label: string; she: Record<string, number> }>;
+	cards: Array<{ cardType: string; label: string; actionClass: string; she: Record<string, number> }>;
 }
+interface ContextsJson {
+	cards: Array<{ cardType: string; means: Record<string, number>; flags: string[] }>;
+}
+/** Heals in a typical hand. */
+const TYPICAL_HAND_MAX_HEALS = 2;
 
 async function main(): Promise<void> {
 	await engineReady;
@@ -49,6 +64,23 @@ async function main(): Promise<void> {
 		// A card not measured at the nearest level (level-gated there): take its lowest measured level.
 		return at ?? card?.she[String(Math.min(...Object.keys(card?.she ?? {}).map(Number)))] ?? 0;
 	};
+	const contextsPath = arg('--contexts', '');
+	const contexts = contextsPath ? (JSON.parse(readFileSync(contextsPath, 'utf8')) as ContextsJson) : undefined;
+	const duelContexts = Object.keys(CARD_CONTEXTS).filter(c => CARD_CONTEXTS[c]!.opponents === 1);
+	/**
+	 * A card's value for picking a typical hand. A card the context report flags as a context
+	 * card uses its best duel context (averaged over the measured levels); every other card
+	 * keeps sHE. Taking the best of four noisy per-level readings for every card put three
+	 * Delayed Hits in every level-5 hand, so only a flagged gain counts.
+	 */
+	const pickValue = (cardType: string, level: number): number => {
+		const she = sheAt(cardType, level);
+		const card = contexts?.cards.find(c => c.cardType === cardType);
+		if (!card?.flags.some(f => f.startsWith('context card'))) return she;
+		const values = duelContexts.map(c => card.means[c]).filter((v): v is number => typeof v === 'number' && Number.isFinite(v));
+		return Math.max(she, ...values);
+	};
+	const isHeal = (cardType: string): boolean => catalogue.cards.find(c => c.cardType === cardType)?.actionClass === 'heal';
 	const label = (cardType: string): string => catalogue.cards.find(c => c.cardType === cardType)?.label ?? cardType;
 	const fightsTo = (level: number): number => (level <= 0 ? 0 : Math.ceil((getXpCapForLevel(level - 1) + 1) / xpPerFight));
 
@@ -78,7 +110,10 @@ async function main(): Promise<void> {
 				const target = fightsTo(level);
 				const m = monster as unknown as { xp: number };
 				for (let f = 0; f < target; f += 1) {
-					m.xp = f * xpPerFight;
+					// The game awards the fight's XP before the winner's card is drawn
+					// (Ring.fightConcludes, then ring.win), so a level-crossing win draws from the new
+					// level's pool (a Codex review of #409).
+					m.xp = (f + 1) * xpPerFight;
 					if (Math.random() < winRate) owned.push(drawCard({}, monster) as { cardType?: string });
 				}
 				monster.disposeTimers();
@@ -94,7 +129,19 @@ async function main(): Promise<void> {
 			const unconstrained = best9(new Map([...holdable].map(c => [c, MAX_CARD_COPIES_IN_HAND])), level);
 			const mean = (xs: number[]): number => xs.reduce((a, b) => a + b, 0) / Math.max(1, xs.length);
 			const perCard = [...copies].map(([card, xs]) => ({ card, meanCopies: mean(xs), share: xs.filter(x => x > 0).length / xs.length, she: sheAt(card, level) }));
-			const typical = best9(new Map(perCard.filter(c => c.share >= 0.5).map(c => [c.card, Math.max(1, Math.round(c.meanCopies))])), level);
+			const typicalPool = perCard.filter(c => c.share >= 0.5).flatMap(c =>
+				Array.from({ length: Math.min(MAX_CARD_COPIES_IN_HAND, Math.max(1, Math.round(c.meanCopies))) }, () => ({ card: c.card, she: pickValue(c.card, level) })),
+			);
+			const typical: Array<{ card: string; she: number }> = [];
+			let heals = 0;
+			for (const slot of typicalPool.sort((a, b) => b.she - a.she)) {
+				if (typical.length >= 9) break;
+				if (isHeal(slot.card)) {
+					if (heals >= TYPICAL_HAND_MAX_HEALS) continue;
+					heals += 1;
+				}
+				typical.push(slot);
+			}
 			output[type]![level] = {
 				fights: fightsTo(level),
 				meanCardsOwned: mean(cardsOwned),

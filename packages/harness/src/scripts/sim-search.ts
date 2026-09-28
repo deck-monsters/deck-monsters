@@ -33,7 +33,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { engineReady } from '@deck-monsters/engine';
 import { runPlan } from '../balance/runner.js';
-import { readResults } from '../balance/results.js';
+import { finishedIds, readResults } from '../balance/results.js';
 import { SIM_MONSTER_TYPES } from '../simulate.js';
 import { mulberry32 } from '../rng.js';
 import type { Plan, Unit, UnitResult } from '../balance/units.js';
@@ -168,7 +168,18 @@ async function runPhase(name: string, units: Unit[]): Promise<UnitResult[]> {
 	const dir = join(out, name);
 	const plan: Plan = { name: `search ${name}`, profile: 'quick', units };
 	await runPlan(plan, { outDir: dir, workers });
-	return readResults(dir).filter(r => !r.error);
+	// Every unit must succeed before the state moves on: a failed unit (a cancelled fight, say)
+	// stays unfinished in this phase's directory, and the phase would never be revisited once
+	// the state advanced, leaving move choices or the matrix on missing samples (a Codex review
+	// of #409). Throwing keeps the state on this phase; a rerun retries only the failed units.
+	const done = finishedIds(dir);
+	const missing = units.filter(u => !done.has(u.id));
+	if (missing.length) {
+		throw new Error(`${missing.length} of ${units.length} units in ${name} did not finish (first: ${missing[0]!.id}); rerun the same command to retry them`);
+	}
+	const results = readResults(dir).filter(r => !r.error);
+	// A unit retried after a failure has two lines; keep the successful one.
+	return [...new Map(results.map(r => [r.id, r])).values()];
 }
 
 async function main(): Promise<void> {

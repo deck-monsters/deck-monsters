@@ -85,12 +85,54 @@ wins, measured before and after on the same seeds.
 | **Fire Breath at level 1** | The search preferred a Delayed Hit on the real Dragon at level 1 | Diagnose first: the dodge difficulty at low INT, the winded give-back, and base damage at level 1. Fix only what the diagnosis shows, and keep the dodge roll (it is the card's excitement) |
 | **Tsunami** (owner: slight) | About 0 everywhere. 5 damage to everyone, the Dragon included, so a duel is a wash | Let the Dragon ride its own wave: a DEX roll to take half or none. Or the wave sparing allies. Keep the damage and the self-risk; ceiling at the area class median |
 | **Gladiator body** | 0.5-1.2 Hits below the reference; low at every primary level | A small early boost that fades by level 7 (brutes strong early, per the owner), or a flat offset if it is low late too |
-| **Unconquerable Horn** | About 0.2; it wards only against holds, which Hit and field opponents rarely play | First measure it against a hand of holds (it is a counter; judge it where its target is played). Candidates: when the ward breaks a hold, the holder is shaken (a turn-it-back counter, in the spirit of [12](12-new-content-backlog.md#cards)); or the ward also blocks the hold's damage |
+| **Unconquerable Horn** (owner's redesign, 2026-09-28) | About 0.2; it wards only against holds, which Hit and field opponents rarely play | **A one-shot counterspell** (owner): until the end of the round, or until it fires, it stops the next negative action aimed at you **that is not damage**. Damage still lands; everything else is warded. See the ward's scope below |
 | **Dissonant Voice** | About 0.2: −2 to one attack roll for each opponent who fails an INT save | A larger penalty (−4), or the penalty lasting until the end of the opponent's next card, or a small sting (1d4) on a failed save |
 | **Gloaming Rest** | About 0-0.4: any damage before your next card cancels the whole heal, and in a duel damage almost always comes | Damage reduces the heal instead of cancelling it; or a smaller heal that always lands, plus the full rest if undisturbed |
 | **Horn of Proof** | 0.3-0.6 in duels (fine in a crowd) | Measure after the others; tweak only if the Unicorn still lacks a usable heal |
 | **Mesmerize, Enthrall** (optional) | About 0.2 in every context; self-mesmerize and the type rules often waste them | Only a simple fix, e.g. less self-mesmerize. It must not raise the Weeping Angel's field average |
 | **Harden** (optional) | 0.4 | Leave unless trivial |
+
+### Unconquerable Horn as a counterspell (owner, 2026-09-28)
+
+The owner's direction: "like a counterspell that lasts for one round or until some sort of
+negative action that is not a damage action is attempted. So a hit or a blast lands but a
+blink may not, or a coil may not, or a soften may not." Once used it is gone, and it does not
+block everything.
+
+**What the ward stops.** The next negative, non-damage effect an opponent aims at the Unicorn:
+- **holds:** Coil, Constrict, Entrance, Enthrall, Mesmerize, and immobilize generally;
+- **stat curses:** the curse part of Soften, Molasses, Concussion, and Brain Drain;
+- **poison and tampering:** Bad Batch's spoiled drink;
+- **removal:** Blink's time-shift;
+- **confusion:** Sandstorm's and Enchanted Faceswap's target redraw.
+
+**What still lands:** damage. A Hit, a Blast, Fire Breath, and the damage part of a
+curse-strike still land. Only the curse, hold, or redirect that comes with them is warded.
+
+**What it does not touch:** Curse of Loki. That is the attacker's own natural 1 turning back
+on them. It is a roll outcome, not an action aimed at the Unicorn, and it is a "please get a
+Loki" hope moment worth keeping (34, Hope). If the owner meant something else by "loki", the
+scope is easy to extend.
+
+**Duration and count.**
+- It lasts until the end of the round, or until it fires, whichever comes first. One block,
+  then it is spent.
+- It keeps the current rule: no second ward in the same fight.
+- A second block at high levels is **not planned**. The owner expects one block to scale
+  naturally, since what it blocks grows stronger with level. Measure the single block at
+  levels 7-12 before adding one.
+
+**The engine work.** Today the ward hooks only `immobilize()`. The counterspell needs one
+generic check before any negative non-damage effect lands on a target, for example
+`target.consumeWard(effect)`. That means a shared tag or hook on the curse, poison, removal,
+and redirect paths. Each warded effect gets a narration line in the Unicorn's voice, from the
+[strings inventory](../reference/strings/unicorn.md).
+
+**Why it matters beyond the Unicorn.** It is the first card of the counter family in
+[12](12-new-content-backlog.md#cards): it answers Sandstorm, Faceswap, and Blink by
+bending them, not by nerfing them. Measure it the way counters are judged (34's rule 5):
+against opponents who play those cards, in the holds context (task 1) and against the
+searched field.
 
 The candidates come from reading each card's code (2026-09-28). Numbers are starting points
 for the measurement.
