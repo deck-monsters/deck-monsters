@@ -43,6 +43,7 @@ changes for the owner to choose from. Changes come in the next pass, one decisio
 | Telemetry | **Read-only production queries are always allowed**, for any reason, as often as needed. This pass uses them for the level distribution of active monsters and the hands players actually equip (weights findings by where players are; gives the "typical hand" for skill expression) |
 | Weak cards (owner, after the catalogue) | **Some weak cards are fine.** A card that is situational or just fun is part of the game's joy and does not need raising. The line is the monster: a player who is really trying and making good picks must be able to be competitive with any monster type. So a weak card needs a fix only when its monster has no good picks without it (the Unicorn is the clearest case), not because it ranks low in the catalogue. Feline Companion and Bad Batch stay as they are: both turned out to be context cards (see [Value beyond damage](#value-beyond-damage-owner-2026-09-28)) |
 | Excitement | Keep swings, big moments, and natural 20s. A fix should read like a roll (the owner's Sandstorm idea: a d20 per opponent to catch them in the storm), not a flat nerf |
+| Hope (owner, 2026-09-28) | **Rare turnarounds are the point, not noise.** In real fights a player being beaten by a boss or a stronger monster says "please get a Loki, please get a Loki": hoping the attacker's natural 1 (Curse of Loki) turns the attack back on them. It rarely pays off, and that is why it is thrilling when it does. The tension while waiting for it is part of the fun too. Balance work must keep a losing side's long-shot outs: rare events (Curse of Loki, natural 20s and strokes of luck) keep their rate and their size, and no change may make a fight that is going badly certain to be lost |
 
 ### Technical decisions (made in planning; the owner can override any)
 
@@ -366,6 +367,17 @@ Measured on the Layer 4 hands, so a later change can be checked against them:
   with that play replaced by a null card) on a sample of fights.
 - **Big moments**: natural 20s, strokes of luck, and Curse of Loki per fight; each card's
   share of plays in the top 5% of per-play value.
+- **Hope** (owner, 2026-09-28): how often a fight that looks lost is turned around, and by
+  what. Take the fights where one side's estimated win chance falls below 20% (and below
+  10%). Report:
+  - the share they still win or draw;
+  - the share that turn on a rare event: a Curse of Loki against the favourite, a natural
+    20 or stroke of luck for the underdog, a confusion or redraw at the right moment;
+  - how many rounds the underdog is still "live" (has a real out).
+
+  The "please get a Loki" moment needs both a real chance and time to hope, so a change
+  that shortens fights can cut hope even if it leaves Loki's rate alone. Per boss fight as
+  well as duels, since bosses are where players say it most.
 
 ## Statistics and experimental design
 
@@ -458,6 +470,7 @@ before they gate a change in the next pass):
 | Skill: choice | A searched hand scores at least 70% against a random legal hand of the same monster and level |
 | Skill: order | A hand's best order scores at least 58% against its random orders (a first guess; Layer 1 will show what order can do) |
 | Excitement | A change may not cut fight-level swing plays or comebacks by more than 20%, or a card's volatility by more than a third, without the owner's agreement |
+| Hope | A change may not lower the rate of rare turnarounds from below 20% win chance, or the rate or size of Curse of Loki, natural 20s, and strokes of luck, without the owner's agreement |
 | Initiative | The first mover's edge in mirrors is measured and reported; a target is set once the baseline is known |
 
 ## Harness plan (packages/harness)
