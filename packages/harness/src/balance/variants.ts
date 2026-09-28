@@ -81,6 +81,17 @@ export const VARIANTS: Record<string, Variant> = {
 		about: 'Dragon: +2 AC to level 3, +1 to level 6 (a hatchling hides in its scales)',
 		apply: () => getterBonus('Dragon', 'ac', level => (level <= 3 ? 2 : level <= 6 ? 1 : 0)),
 	},
+	'dragon-str-for-int': {
+		about: 'Dragon: STR +1 and INT -1 (inside the +2 budget: DEX 1, STR 1, INT 0)',
+		apply: () => {
+			const undoStr = getterBonus('Dragon', 'strModifier', () => 1);
+			const undoInt = getterBonus('Dragon', 'intModifier', () => -1);
+			return () => {
+				undoInt();
+				undoStr();
+			};
+		},
+	},
 	'firebreath-no-wind': { about: 'Fire Breath: no winded AC penalty afterwards', apply: () => cardMethod('Fire Breath', 'wind', () => () => undefined) },
 	'tsunami-ride': {
 		about: 'Tsunami: the Dragon rolls 1d20 + DEX vs 10 to ride its own wave and take no damage',
