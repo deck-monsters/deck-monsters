@@ -601,7 +601,6 @@ export async function simulate(config: SimConfig): Promise<SimResult> {
 				});
 			}
 
-			const removeHitListeners = installHitDamageCapture(contestants, damageSums);
 			// Snapshot before the fight mutates these in place, so the after-read below is a
 			// real diff of what the engine credited (see `SimResult.coinsByOutcome` docblock)
 			// rather than a recomputation from the coins/XP constants.
@@ -622,6 +621,10 @@ export async function simulate(config: SimConfig): Promise<SimResult> {
 					ringEventCounts[event.name] = (ringEventCounts[event.name] ?? 0) + 1;
 				}
 			}
+			// After any ring event, and over the ring's roster rather than the configured monsters:
+			// a Gauntlet's extra bosses join at activation, and their hits were missing from
+			// `avgDamagePerCard` (a Codex review of PR #405).
+			const removeHitListeners = installHitDamageCapture(ring.contestants as unknown as Contestant[], damageSums);
 
 			try {
 				await ring.fight();

@@ -5,6 +5,8 @@ import Game from '../game.js';
 import Basilisk from '../monsters/basilisk.js';
 import Beastmaster from '../characters/beastmaster.js';
 import { RING_EVENTS } from './ring-events.js';
+import zlib from 'node:zlib';
+import { holdsChallengersAlliance } from './index.js';
 import {
 	fitMegaBoss,
 	MEGA_BOSS_ANNOUNCE_MS,
@@ -15,6 +17,8 @@ import {
 	MEGA_BOSS_MINIONS,
 	MEGA_BOSS_REWARD_COINS,
 	MEGA_BOSS_LATE_GRACE_MS,
+	MEGA_BOSS_RETRY_MS,
+	bossAtLevel,
 	empowerMegaBoss,
 } from './mega-boss.js';
 
@@ -249,6 +253,77 @@ describe('./ring/mega-boss.ts', () => {
 			eleven.dispose();
 			twelve.dispose();
 		}
+	});
+
+	it('disposes the party members it has no room for', () => {
+		// They were built and never entered the ring, so their healing timers ran forever (a
+		// Codex review of PR #405).
+		const game = new Game({ roomId: 'mega-leak' }, () => {});
+		try {
+			for (let i = 0; i < 11; i += 1) addPlayer(game, `user-${i}`);
+			const boss = bossAtLevel(3);
+			const minions = [bossAtLevel(1), bossAtLevel(1)];
+			const spies = [boss, ...minions].map(contestant => sinon.spy(contestant.monster as any, 'disposeTimers'));
+			expect(game.ring.addMegaBoss(boss, minions)).to.equal(true);
+			expect(spies.map(spy => spy.called)).to.deep.equal([false, true, true]);
+		} finally {
+			game.dispose();
+		}
+	});
+
+	it('announces its arrival, then arms one fight countdown, not one per party member', () => {
+		const game = new Game({ roomId: 'mega-one-countdown' }, () => {});
+		try {
+			addPlayer(game, 'user-1');
+			addPlayer(game, 'user-2');
+			const order: string[] = [];
+			const timer = sinon.stub(game.ring, 'startFightTimer').callsFake(() => { order.push('countdown'); });
+			game.ring.addMegaBoss(bossAtLevel(3), [bossAtLevel(1), bossAtLevel(1)], brought => order.push(`arrival:${brought}`));
+			timer.restore();
+			expect(order).to.deep.equal(['arrival:2', 'countdown']);
+		} finally {
+			game.dispose();
+		}
+	});
+
+	it('announces to the room on a restart inside the announcement window', () => {
+		// start() ran before the narration bridge was listening, so the line was dropped (a
+		// Codex review of PR #405).
+		const game = new Game({ roomId: 'mega-restart-announce', megaBossAt: Date.now() + 10 * MINUTE }, () => {});
+		try {
+			const events = JSON.stringify(game.eventBus.getRecentEvents(50));
+			expect(events).to.include('The mega boss arrives in');
+		} finally {
+			game.dispose();
+		}
+	});
+
+	it('saves the owed time at once on each retry, not on the debounce', () => {
+		// Every state change in a fight resets the save debounce, so the owed time could miss a
+		// crash and the restart would drop the boss (a Codex review of PR #405).
+		const game = new Game({ roomId: 'mega-retry-save', megaBossAt: Date.now() + MINUTE }, () => {});
+		const saves: string[] = [];
+		try {
+			game.stateStore = { save: (_roomId: string, state: string) => { saves.push(state); return Promise.resolve(); } } as any;
+			game.ring.inEncounter = true;
+			clock.tick(MINUTE + MEGA_BOSS_RETRY_MS - 1);
+			const before = saves.length;
+			clock.tick(1);
+			expect(saves.length).to.equal(before + 1);
+			const saved = zlib.gunzipSync(Buffer.from(saves[saves.length - 1]!, 'base64')).toString();
+			expect(saved).to.include(`"megaBossAt":${Date.now()}`);
+		} finally {
+			game.ring.inEncounter = false;
+			game.dispose();
+		}
+	});
+
+	it("ends the challengers' alliance when the mega boss falls, not its last minion", () => {
+		expect(holdsChallengersAlliance({ isBoss: true, mega: true })).to.equal(true);
+		expect(holdsChallengersAlliance({ isBoss: true, mega: true, minion: true })).to.equal(false);
+		// An ambush's minions still hold it, and humans never do.
+		expect(holdsChallengersAlliance({ isBoss: true, minion: true })).to.equal(true);
+		expect(holdsChallengersAlliance({ isBoss: false })).to.equal(false);
 	});
 
 	it('pays every challenger still standing when it falls', () => {

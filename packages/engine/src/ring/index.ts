@@ -194,6 +194,16 @@ const minionHp = (monster: any): number => Math.max(1, Math.floor(monster.maxHp 
  * Extracted to module level so both `Ring.fight()` (for isLastTeamVictory) and
  * `Ring.fightConcludes()` (for isLastTeamFledWin) can share the exact same logic.
  */
+/**
+ * Whether a boss still in the fight keeps the Challengers' alliance together. A mega boss's
+ * minions do not: the alliance ends when the mega boss itself falls, as its arrival promises,
+ * not when its last minion does (a Codex review of PR #405). Every other boss, an ambush's
+ * minions included, still holds it.
+ */
+export function holdsChallengersAlliance(c: Pick<Contestant, 'isBoss' | 'mega' | 'minion'>): boolean {
+	return Boolean(c.isBoss) && !(c.mega && c.minion);
+}
+
 function factionOf(c: Contestant): string {
 	return (
 		c.team ||
@@ -967,7 +977,8 @@ export class Ring extends BaseClass {
 
 		const endAlliance = (): void => {
 			if (challengers.length === 0) return;
-			if (getAllActiveContestants().some(contestant => contestant.isBoss)) return;
+			const active = getAllActiveContestants();
+			if (active.some(holdsChallengersAlliance)) return;
 			for (const contestant of challengers) {
 				if (contestant.team === CHALLENGERS_TEAM) delete contestant.team;
 			}
@@ -975,7 +986,9 @@ export class Ring extends BaseClass {
 			challengers = [];
 			if (survivors.length > 1) {
 				this.emit('narration', {
-					narration: "The last boss is down. The Challengers' alliance is over: every monster for themselves!",
+					narration: active.some(contestant => contestant.isBoss)
+						? "The mega boss is down. The Challengers' alliance is over: every monster for themselves, minions included!"
+						: "The last boss is down. The Challengers' alliance is over: every monster for themselves!",
 				});
 			}
 		};
@@ -1986,7 +1999,7 @@ export class Ring extends BaseClass {
 	 * and a regular boss beside it would push the fight past the win rate it was fitted to.
 	 * The party ignores the boss quota and is never dismissed as surplus (`Contestant.mega`).
 	 */
-	addMegaBoss(boss: Contestant, minions: Contestant[]): boolean {
+	addMegaBoss(boss: Contestant, minions: Contestant[], announce?: (minionsBrought: number) => void): boolean {
 		if (this.inEncounter) return false;
 		const regular = this.contestants.filter(contestant => contestant.isBoss && !contestant.mega);
 		if (regular.length) {
@@ -1998,6 +2011,10 @@ export class Ring extends BaseClass {
 		// all, after it was announced (a Codex review of PR #405). With no room even for the
 		// boss it is called off, and the countdown the hold returned is restarted.
 		const room = MAX_MONSTERS - this.contestants.length;
+		// Party members that do not fit are built but never enter the ring, so nothing else
+		// would ever stop their healing timers (a Codex review of PR #405).
+		const leftOut = room < 1 ? [boss, ...minions] : minions.slice(Math.max(0, room - 1));
+		for (const contestant of leftOut) this.disposeTransientContestant({ ...contestant, isBoss: true });
 		if (room < 1) {
 			this.emit('narration', {
 				narration: `👹 ${boss.monster.givenName} cannot squeeze into a ring this crowded, and roars off into the dark.`,
@@ -2009,8 +2026,15 @@ export class Ring extends BaseClass {
 		// the challengers' alliance, a Gauntlet adds bosses. Clear any armed one; rollRingEvent
 		// rolls none while the party is here (the same review).
 		this.ringEvent = undefined;
-		this.addMonster({ ...boss, isBoss: true, mega: true });
-		for (const minion of minions.slice(0, room - 1)) this.addMonster({ ...minion, isBoss: true, mega: true, minion: true });
+		// One countdown, after the arrival line: each `addMonster` would otherwise arm (and tell
+		// every player about) a fight of its own, three times before the reveal (the same review).
+		const brought = minions.slice(0, room - 1);
+		this.addMonster({ ...boss, isBoss: true, mega: true, deferFightTimer: true });
+		for (const minion of brought) {
+			this.addMonster({ ...minion, isBoss: true, mega: true, minion: true, deferFightTimer: true });
+		}
+		announce?.(brought.length);
+		this.startFightTimer();
 		return true;
 	}
 

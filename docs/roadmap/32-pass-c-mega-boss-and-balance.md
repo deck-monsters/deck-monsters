@@ -141,3 +141,21 @@ Four findings, fixed with tests:
 - **Retries and restarts.** A long fight's retries kept the original saved time, so a restart
   after the 10-minute grace rolled tomorrow; each retry now saves the current time. A restart
   just past its time announced it "in 1 minute" before arriving; it now arrives unannounced.
+
+## Codex final review of PR #405
+
+Six findings, each fixed; five with a test that fails without the fix, the sixth a harness
+measurement:
+
+- **Left-out party members leaked timers.** A crowded ring's unadmitted boss or minions are
+  disposed.
+- **Restart announcement dropped.** `MegaBossEvent.start()` ran before `initializeEvents()`;
+  it now runs last in the `Game` constructor.
+- **Owed time on the debounce.** Combat keeps resetting the save debounce, so the retry's
+  owed time is saved at once.
+- **Minions held the alliance.** It now ends when the mega boss falls
+  (`holdsChallengersAlliance`).
+- **Three countdowns before the reveal.** The party joins with timers deferred; the arrival
+  line, then one countdown.
+- **Gauntlet hits missing from `avgDamagePerCard`.** The harness installs its damage capture
+  after event activation, over the ring's roster.

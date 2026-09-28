@@ -520,7 +520,9 @@ two humans who had not arranged a team hit each other while the bosses worked to
 with a boss in it, `Ring.fight()` puts each human with no team of its own on
 `CHALLENGERS_TEAM` (a contestant-level override, like a ring event's). They never target each
 other while any boss is still fighting; the moment the last boss is down the override comes
-off, a line says the alliance is over, and the humans left finish a normal free-for-all. The
+off, a line says the alliance is over, and the humans left finish a normal free-for-all. A
+mega boss's minions are the exception (`holdsChallengersAlliance`): the alliance ends when the
+mega boss itself falls, and the humans then fight each other and any minions left. The
 same two level 1s now win 29% (with boss temperaments), level with a pre-arranged team's
 28%.
 
@@ -614,8 +616,11 @@ the timer; `Game` owns one `MegaBossEvent` wherever timed bosses run (`ring.spaw
   `stateStore` setter), not at the next unrelated save; a
   restart more than `MEGA_BOSS_LATE_GRACE_MS` (10 minutes) after it was due reschedules. While
   it waits out a running fight the saved time moves to now on each retry, so a restart during
-  a long fight still owes it rather than rolling tomorrow; a restart already past its time
-  brings it at once without announcing it as a minute away.
+  a long fight still owes it rather than rolling tomorrow. That write is saved at once, not
+  on the debounce, which combat keeps resetting. A restart already past its time brings it at
+  once without announcing it as a minute away. `Game` starts the event last in its
+  constructor, after the narration bridge and the restored ring, so a restart inside the
+  announcement window is heard.
 - **Announcement.** 30 minutes ahead, then reminders at 10 and 2 minutes. `ring.nextMegaBossAt`
   is set only inside that window and rides `ring.state`, the handshake, and `ringState`; the
   web ring header shows `MEGA BOSS in mm:ss` over the ordinary boss timer. A restart inside
@@ -633,7 +638,10 @@ the timer; `Game` owns one `MegaBossEvent` wherever timed bosses run (`ring.spaw
   despawn timer, so when the last human withdraws before the fight, `removeMonster` sends the
   whole party away; otherwise a lone newcomer would walk into a fight fitted for a crowd.
   It brings as much of its party as the ring's twelve slots hold (boss first); with no room
-  even for the boss it is called off and the fight countdown restarts. An armed ring event is
+  even for the boss it is called off and the fight countdown restarts; party members left out
+  are disposed, since nothing else would stop their healing timers. The party joins with its
+  countdowns deferred, and the arrival line comes before the one fight countdown it arms
+  (each `addMonster` otherwise told every player a fight was starting). An armed ring event is
   cleared when it arrives and none is rolled while its party is in the ring, since Blood Feud
   would turn off the alliance and a Gauntlet would add bosses to a fitted fight.
 - **Fitting.** `fitMegaBoss` reads the humans in the ring when it arrives: level two above the

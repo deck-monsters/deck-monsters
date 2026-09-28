@@ -126,7 +126,7 @@ export interface MegaBossHost {
 		publishState(): void;
 		startFightTimer(): void;
 		spawnBoss(options?: Record<string, unknown>): Contestant | undefined;
-		addMegaBoss(boss: Contestant, minions: Contestant[]): boolean;
+		addMegaBoss(boss: Contestant, minions: Contestant[], announce?: (minionsBrought: number) => void): boolean;
 		on(event: string, fn: (...args: any[]) => void): (...args: any[]) => void;
 		off(event: string, fn: (...args: any[]) => void): void;
 	};
@@ -246,11 +246,12 @@ export class MegaBossEvent {
 		});
 
 		const relics = MEGA_BOSS_RELICS.map(relic => relic.name).join(' and ');
-		if (!ring.addMegaBoss(boss, minions)) return;
-		const brought = ring.contestants.filter(contestant => contestant.mega && contestant.minion).length;
-		ring.emit('narration', {
-			narration: `👹 THE MEGA BOSS HAS COME. ${boss.monster.givenName} climbs out of the dark, wearing ${relics}${brought ? `, with ${brought} lesser ${brought === 1 ? 'minion' : 'minions'} scuttling at its heels` : ''}. Every challenger stands together until it falls.`,
+		const arrived = ring.addMegaBoss(boss, minions, brought => {
+			ring.emit('narration', {
+				narration: `👹 THE MEGA BOSS HAS COME. ${boss.monster.givenName} climbs out of the dark, wearing ${relics}${brought ? `, with ${brought} lesser ${brought === 1 ? 'minion' : 'minions'} scuttling at its heels` : ''}. Every challenger stands together until it falls.`,
+			});
 		});
+		if (!arrived) return;
 
 		// Who earns it is settled the moment it falls: every challenger still standing then,
 		// since after it the challengers settle it among themselves and only one would be left.

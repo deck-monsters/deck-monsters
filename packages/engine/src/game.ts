@@ -135,12 +135,18 @@ export class Game extends BaseClass {
 				getScheduledAt: () => (this.options as any).megaBossAt as number | undefined,
 				setScheduledAt: (at) => {
 					this.optionsStore = { ...this.optionsStore, megaBossAt: at } as any;
-					if (!this.stateSaveFunc && !this.stateStore) this._unsavedSinceConstruction = true;
-					this.scheduleSave();
+					if (!this.stateSaveFunc && !this.stateStore) {
+						this._unsavedSinceConstruction = true;
+						return;
+					}
+					// Saved at once, not debounced: during a fight every state change resets the
+					// debounce, so a retry's "still owed" time could miss a crash or deploy and the
+					// restart would drop the boss as stale (a Codex review of PR #405). This runs
+					// about once a day, and every 30 seconds only while it waits out a fight.
+					this.persistState();
 				},
 				rewardChallenger: (contestant) => this.rewardMegaBossChallenger(contestant),
 			});
-			this.megaBoss.start();
 		}
 
 		// Refund pending boss summons from before the last restart. Any summon recorded
@@ -174,6 +180,12 @@ export class Game extends BaseClass {
 				this.ring.startFightTimer();
 			}
 		}
+
+		// Last, once the narration bridge (initializeEvents) is listening and the ring is
+		// restored: a restart inside the announcement window announces at once, and that line
+		// was dropped when this ran first (a Codex review of PR #405). The hold it may start
+		// also needs the restored contestants.
+		this.megaBoss?.start();
 
 		this.emit('initialized');
 	}
