@@ -76,55 +76,56 @@ describe('characters/helpers/random', () => {
 	});
 });
 
-describe('isBossFiller', () => {
-	// Bosses drop filler by class, not a hand-written list that newer basics got past
-	// (roadmap 33). Monster-specific powers in the same classes stay.
-	it('drops the plain Hit and unrestricted heal, hide, and boost cards', async () => {
-		const { isBossFiller } = await import('./random.js');
-		const filler = await Promise.all(
-			[
-				['../../cards/heal.js', 'HealCard'],
-				['../../cards/scotch.js', 'ScotchCard'],
-				['../../cards/whiskey-shot.js', 'WhiskeyShotCard'],
-				['../../cards/flee.js', 'FleeCard'],
-				['../../cards/boost.js', 'BoostCard'],
-				['../../cards/basic-shield.js', 'BasicShieldCard'],
-				['../../cards/hit.js', 'HitCard'],
-			].map(async ([path, name]) => new (await import(path))[name]()),
-		);
-		for (const card of filler) expect(isBossFiller(card), card.cardType).to.equal(true);
-	});
+describe('boss hands', () => {
+	// A boss never runs and never stalls on heals, but still holds basic cards (owner,
+	// roadmap 33): on main about 17% of boss hand slots were basics, a third held a heal.
+	const load = async (path: string, name: string) => new (await import(path))[name]();
 
-	it('keeps monster-specific powers and every attack but the plain Hit', async () => {
-		const { isBossFiller } = await import('./random.js');
-		const kept = await Promise.all(
-			[
-				['../../cards/ecdysis.js', 'EcdysisCard'],
-				['../../cards/thick-skin.js', 'ThickSkinCard'],
-				['../../cards/gloaming-rest.js', 'GloamingRestCard'],
-				['../../cards/horn-of-proof.js', 'HornOfProofCard'],
-				['../../cards/sandstorm.js', 'SandstormCard'],
-				['../../cards/molasses.js', 'MolassesCard'],
-				// A Survival Knife: an attack that also heals, not a heal.
-				['../../cards/turkey-thigh.js', 'TurkeyThighCard'],
-			].map(async ([path, name]) => new (await import(path))[name]()),
-		);
-		for (const card of kept) expect(isBossFiller(card), card.cardType).to.equal(false);
-	});
-});
-
-describe('boss decks and hands', () => {
-	// The last refill of a boss deck, and a hand's extra cards, used to skip the filler
-	// filter, so bosses still held Hits and heals (a Codex review of PR #407).
-	it('never hold filler after the refills', async () => {
-		await helpersReady;
-		const { isBossFiller } = await import('./random.js');
-		for (let i = 0; i < 40; i += 1) {
-			const boss = randomCharacter({ isBoss: true });
-			const held = [...boss.deck, ...boss.monsters.flatMap((monster: any) => monster.cards)];
-			const filler = held.filter((card: any) => isBossFiller(card)).map((card: any) => card.cardType);
-			expect(filler, `boss ${i}`).to.deep.equal([]);
+	it('counts only heals any monster could hold against the cap', async () => {
+		const { isPlainHeal } = await import('./random.js');
+		for (const [path, name] of [
+			['../../cards/heal.js', 'HealCard'],
+			['../../cards/scotch.js', 'ScotchCard'],
+			['../../cards/whiskey-shot.js', 'WhiskeyShotCard'],
+		]) {
+			expect(isPlainHeal(await load(path, name)), name).to.equal(true);
+		}
+		for (const [path, name] of [
+			['../../cards/gloaming-rest.js', 'GloamingRestCard'],
+			['../../cards/horn-of-proof.js', 'HornOfProofCard'],
+			['../../cards/hit.js', 'HitCard'],
+			['../../cards/turkey-thigh.js', 'TurkeyThighCard'],
+		]) {
+			expect(isPlainHeal(await load(path, name)), name).to.equal(false);
 		}
 	});
-});
 
+	it('picks at most one plain heal and never Flee, keeping the order', async () => {
+		const { pickBossHand, BOSS_MAX_HEALS } = await import('./random.js');
+		const heal = () => load('../../cards/heal.js', 'HealCard');
+		const hit = () => load('../../cards/hit.js', 'HitCard');
+		const options = [await heal(), await load('../../cards/flee.js', 'FleeCard'), await hit(), await heal(), await hit()];
+		const hand = pickBossHand(options, 9);
+		expect(hand.map((card: any) => card.cardType)).to.deep.equal(['Heal', 'Hit', 'Hit']);
+		expect(BOSS_MAX_HEALS).to.equal(1);
+	});
+
+	it('holds full hands with at most one plain heal and no Flee, and still some basics', async () => {
+		// Also covers the refills: the last deck refill and a hand's extra cards used to skip
+		// the boss rule (a Codex review of PR #407).
+		await helpersReady;
+		const { isPlainHeal } = await import('./random.js');
+		let basics = 0;
+		for (let i = 0; i < 60; i += 1) {
+			const boss = randomCharacter({ isBoss: true });
+			expect(boss.deck.some((card: any) => card.cardType === 'Flee'), `deck ${i}`).to.equal(false);
+			for (const monster of boss.monsters as any[]) {
+				expect(monster.cards).to.have.length(monster.cardSlots);
+				expect(monster.cards.filter((card: any) => card.cardType === 'Flee')).to.deep.equal([]);
+				expect(monster.cards.filter((card: any) => isPlainHeal(card)).length, `hand ${i}`).to.be.at.most(1);
+				basics += monster.cards.filter((card: any) => card.cardType === 'Hit' || isPlainHeal(card)).length;
+			}
+		}
+		expect(basics).to.be.above(0);
+	});
+});

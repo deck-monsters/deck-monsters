@@ -25,7 +25,7 @@ further card changes; the evidence below is its starting point.
 | 2 | Boost and curse cards since #175 (temporary DEX, STR, and INT changes move rolls): measure what each is worth per play and whether any needs a small tweak | Done: ±5 cap on temporary DEX/STR/INT changes, and curse attacks curse only on a hit | f9fbbc5, 9b15e87, 080ce70 |
 | 3 | Baseline class curves after tasks 1-2, random and likely hands; why some monsters seem to always carry their signature card | Done | d1ebb2e |
 | 4 | Rebalance to the owner's band | Moved to [11](../../roadmap/11-balance-and-mechanics.md): methodology first, no card changes until then | |
-| 5 | Bosses drop filler by card class (`isBossFiller`): the plain Hit and any heal, hide, or boost card not tied to one monster type | Done | f71686d |
+| 5 | Boss filler. First a class rule removing all basics (f71686d); the owner then chose a cap instead: bosses never hold Flee and a hand holds at most one plain heal, with the original weak list keeping basics near main's 17% of hand slots | Done | f71686d, 8059134, this commit |
 | 6 | Signature-card catch-up: a winning monster whose owner holds no copy of its signature card wins it 90% of the time (`SIGNATURE_CATCH_UP_CHANCE`); normal draws after one copy. Covers characters made before a monster pack shipped, whose starting decks never got that pack's card | Done | 13fb3d5 |
 
 ## Decisions (owner, 2026-09-28)
@@ -35,7 +35,7 @@ further card changes; the evidence below is its starting point.
 | Heal and an INT penalty | Reads as a bug on a 1d4; fix it. Curse of Loki stays |
 | Band basis | Skilled against skilled: informed (likely) hands on both sides. A good build and card order should pay off a lot, but the monster type alone must not decide nearly every fight |
 | Copy limits | Test whether a lower per-card limit is needed, and for which set |
-| Boss filler | Drop by card class, not a hand-written list |
+| Boss filler | First "drop by card class"; revised on seeing the numbers to a cap: no Flee, at most one plain heal per hand, basics otherwise as on main (about 17% of slots). Bosses should press the attack, not run or stall, but not lose every basic card |
 | Signature cards | A player whose collection lacks a monster's signature card should very likely win one when that monster wins; normal odds once they own a copy |
 | Boost and curse cards | "Mostly fine", but test for minor tweaks; each play is an automatic stat change |
 | Stacking cap | A temporary DEX, STR, or INT change caps at ±5 (was `level + 1`); AC keeps `level + 1` |
@@ -132,7 +132,7 @@ arrive through fills.
 Bosses drop Flee, Harden, Heal, Hit, and Whiskey Shot from that deck (`randomCharacter`).
 The list dates from the original JavaScript engine with no recorded reason; its effect is
 that a boss holds no filler. It predates newer basics (Scotch, Basic Shield, Calisthenics),
-so a boss could still hold those. Task 5 replaces it with a class rule (owner's choice).
+so a boss could still hold those. Task 5 first replaced it with a class rule, then with the cap the owner chose once the numbers showed the rule removed every basic (main: 17% of boss hand slots basics, a heal in a third of hands, a Hit in 18%, never Flee).
 
 ## Why the Jinn wins duels
 

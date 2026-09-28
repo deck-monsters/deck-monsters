@@ -183,12 +183,18 @@ modelled, and that is a finding.
 
 ### Layer 1: idealized action classes
 
-Harness-only **synthetic cards**, one parameterized class per action class
-(`IdealStrike`, `IdealAreaStrike`, `IdealHeal`, `IdealBoost`, `IdealCurseStrike`,
-`IdealControl`, `IdealConfuse`, `IdealDelayed`), built on the engine's own base classes so
-combat, pacing, and effects are real, with their numbers set by the experiment. They are
-never registered in the card catalogue and cannot drop or be equipped in the game; a test
-proves it.
+Harness-only **synthetic cards**, one parameterized class for each in-fight action class:
+`IdealStrike`, `IdealMultiStrike`, `IdealDelayed`, `IdealAreaStrike`, `IdealHeal`,
+`IdealStrikeHeal`, `IdealBoost`, `IdealCurseStrike`, `IdealControl`, `IdealConfuse`, and
+`IdealHide`. They are built on the engine's own base classes so combat, pacing, and effects
+are real, with their numbers set by the experiment. They are never registered in the card
+catalogue and cannot drop or be equipped in the game; a test proves it.
+
+The twelfth class, **economy / other** (Pick Pocket, Destroy, Random Card, Bad Batch), has
+no idealized model because its value is mostly outside the fight or borrowed from other
+cards. Those cards are judged in Layer 2 against the Hit alone, with their out-of-fight
+value (coins or cards gained, cards destroyed, per play) reported beside their in-fight
+HE, and they have no class median.
 
 1. **Calibration ladder.** On the reference chassis, 9-card hands of *k* Hits and 9−*k*
    null cards (a synthetic card that does nothing) against a 9-Hit reference opponent, *k* =
@@ -249,9 +255,18 @@ Layer 4, the catalogue is rerun against the searched field, and the two passes a
 
 - **Search.** For each monster and level, the best 9-card hand and order from its realistic
   collection (and separately from the unconstrained one): seeded from the inventory, then
-  hill-climbing swaps and reorderings, accepting a change only when its paired improvement
-  clears its confidence interval. Objective: expected score against the field (every other
-  monster's current best hand, equal weight).
+  hill-climbing swaps and reorderings, from several random starting hands. Objective:
+  expected score against the field (every other monster's current best hand, equal weight).
+  A search that tests dozens of moves on the same data will accept some that only looked
+  better by chance, so:
+  - The search runs on **search seeds** only. A move is accepted when its paired lower bound
+    clears zero at 99%, and it is then **confirmed on a fresh batch** of seeds before the
+    search builds on it.
+  - The final hand and the best runners-up from every restart are rescored on **validation
+    seeds** the search never saw, in fixed-size samples. The reported hand and its score come
+    from those seeds only.
+  - If a runner-up beats the chosen hand on validation seeds, the search is flagged as having
+    followed a false branch, and that hand is taken instead.
 - **Best response, repeated.** Best hands depend on what the others hold. Iterate the search
   two or three rounds (fictitious play) until hands stop changing, and report whether they
   converged.
@@ -275,8 +290,16 @@ Measured on the Layer 4 hands, so a later change can be checked against them:
 - **Fight length**: rounds and plays per fight, distribution not just mean.
 - **Initiative edge**: the first mover's expected score in mirrors.
 - **Comebacks**: the share of fights won by the monster behind on HP after the first round.
-- **Swing plays**: plays that move the estimated win chance by 20 points or more, using a
-  win-probability model fitted to simulated fight states (HP fractions and round).
+- **Swing plays**: plays that move the estimated win chance by 20 points or more. A model of
+  HP and round alone would give pure control, confusion, boost, hide, and delayed-effect
+  plays no swing, which are the moments this layer exists to protect. So the
+  win-probability model's state includes: HP fractions; round and position in the hand;
+  whose turn it is; active effects (immobilized, confused, hidden, delayed damage pending,
+  and each temporary stat change); cards left in the round; monster types and level. It is
+  fitted on some fights and **calibrated on held-out fights** (Brier score and a reliability
+  table, reported per action class). The 20-point threshold is used only for action classes
+  whose calibration passes; the rest get their swing from a counterfactual (the same seed
+  with that play replaced by a null card) on a sample of fights.
 - **Big moments**: natural 20s, strokes of luck, and Curse of Loki per fight; each card's
   share of plays in the top 5% of per-play value.
 
@@ -289,11 +312,14 @@ Measured on the Layer 4 hands, so a later change can be checked against them:
   the paired difference with its interval. Task 1 measures how much variance this removes.
 - **Seat-swapped pairs.** Each seed is played twice with the turn order reversed, so the
   first-mover edge cancels exactly instead of on average.
-- **Sequential stopping.** A sequential probability ratio test stops a cell once it is
-  clearly inside or outside the band edge, and spends fights where the answer is close.
+- **Sequential stopping is for triage, not for the reported number.** An interval computed
+  from data that was also used to decide when to stop does not have its stated coverage. So
+  adaptive stopping (a sequential test, or an anytime-valid confidence sequence) only decides
+  where to spend fights. Every **reported** interval, and every in-band or out-of-band
+  verdict, comes from a **fixed-size sample on fresh seeds** collected after triage.
 - **Replication and multiple comparisons.** Hundreds of cells mean some fall outside by
-  chance. A cell is out of band only when two independent seed sets both put its interval
-  outside; rankings use Holm-corrected intervals.
+  chance. A cell is out of band only when two independent fixed-size samples both put its
+  interval outside; rankings use Holm-corrected intervals.
 - **Validation of the value unit.** Before HE is used for anything, test it: (a) the
   ladder is monotone and repeatable across seed sets; (b) predicted scores of 30 held-out
   9-card hands (from summed, position-weighted HE) match their simulated scores with a mean
@@ -303,7 +329,35 @@ Measured on the Layer 4 hands, so a later change can be checked against them:
   flags, and writes JSON beside its table, so a result can be rerun and diffed.
 - **Runtime.** A worker pool (one engine per worker thread) runs independent cells in
   parallel. Two profiles: **quick** (about 30 minutes, ±5, fewer levels) for development,
-  and **full** (±3, all levels) for decisions, run overnight.
+  and **full** (±3, all levels) for decisions, run overnight on the runner below.
+
+### The runner: a standalone black box (owner, 2026-09-28)
+
+There is no scheduler, and a cloud agent session cannot hold a command open overnight. So
+every experiment runs on one **standalone batch runner** that needs only raw compute: no
+network, no model inference, no database, no services.
+
+- **Plans in, results out.** `sim:batch <plan.json> --out <dir>`. A plan lists **work
+  units**, each one cell (a matchup, hands, level, fight count, and its seeds), plus the
+  commit SHA and profile. Planners (`sim:catalogue --plan`, `sim:search --plan`, and so on)
+  only write plans; the runner only runs them. Adaptive steps (search, triage) run as a
+  sequence of plans, each written from the results of the last.
+- **Incremental, append-only output.** One JSON line per finished unit in
+  `results.jsonl`, written and flushed as it completes, with the unit's id, seeds, counts,
+  paired results, and timings. A manifest records the plan's hash, commit, and start time;
+  a heartbeat file is touched every minute. A run that dies keeps every finished unit.
+- **Resumable and chunkable.** Rerunning the same plan into the same directory skips units
+  already in `results.jsonl`. `--max-minutes N` stops cleanly after the current unit, and
+  `--units a..b` or `--shard i/n` runs a slice, so a 30-minute agent session can take a run
+  forward in chunks and an overnight machine can take all of it. Throughput per chunk is
+  logged so the chunk size can be tuned by experiment.
+- **Deterministic.** A unit's result depends only on its plan entry and the commit, so a
+  unit rerun anywhere gives the same line, and results from several machines or chunks merge.
+- **Readers.** `sim:report <dir>` aggregates whatever is present (partial runs included) into
+  the tables and JSON the layers describe, and marks missing units rather than failing.
+
+Task 1 builds this runner first, and every later script is a planner plus a report on top
+of it.
 
 ### Compute budget (estimated at about 150 fights a second on 4 workers)
 
@@ -340,6 +394,8 @@ before they gate a change in the next pass):
 
 | Module or script | Layer | What it does |
 |---|---|---|
+| `scripts/sim-batch.ts`, `src/balance/runner.ts` | all | The standalone runner: plans in, append-only `results.jsonl` out, resume, `--max-minutes`, `--units`, `--shard`, heartbeat |
+| `scripts/sim-report.ts` | all | Aggregates any results directory, partial or complete, into tables and JSON |
 | `src/balance/stats.ts` | all | Wilson and paired-difference intervals, SPRT, Holm; tested against known values |
 | `src/balance/pairs.ts` | all | Seat-swapped pairs on common seeds; random turn order per fight (replacing the fixed order for balance runs) |
 | `src/balance/pool.ts` | all | Worker-thread pool, one engine per worker; deterministic seed assignment |
@@ -403,20 +459,21 @@ a few), with this table updated in the same commit.
 
 | # | PR | Task | Acceptance | Status | Commit |
 |---|---|---|---|---|---|
-| 1 | A | Statistics, seat-swapped pairs with random turn order, worker pool; measure throughput and the variance common seeds remove; re-baseline the 33 curves without the fixed first mover | Stats module tests pass against known values; measured budget replaces the estimates; corrected curves checked in | Planned | |
+| 1 | A | The standalone runner (plans, append-only results, resume, chunks, shards, report); statistics; seat-swapped pairs with random turn order; worker pool. Measure throughput and chunk sizes an agent session can finish, and the variance common seeds remove; re-baseline the 33 curves without the fixed first mover | A run killed mid-way resumes without losing finished units; stats tests pass against known values; measured budget replaces the estimates; corrected curves checked in | Planned | |
 | 2 | A | Layer 0: `sim:formula` and the chassis table | Tables per level; the flat-strike hypothesis confirmed or refuted | Planned | |
 | 3 | A | Reference chassis, null card, synthetic cards, calibration ladder | Ladder monotone and repeatable across two seed sets; synthetic cards provably absent from the game | Planned | |
 | 4 | A | Validate HE: stacking linearity on synthetic cards; 30 held-out hands predicted within 5 points | A pass/fail statement, and what HE can and cannot be used for | Planned | |
 | 5 | B | Layer 1 experiments: exchange rates, scaling, crowd factor, profiles, order | The idealized price list, and what order can and cannot do | Planned | |
 | 6 | B | Layer 2: `sim:catalogue` over all 61 cards | Catalogue JSON and tables; outliers flagged | Planned | |
 | 7 | B | Layer 3: chassis values, collection model, inventories | Per-monster strength decomposed | Planned | |
-| 8 | B | Layer 6: excitement metrics and the win-probability model | Baseline excitement report | Planned | |
+| 8a | B | Layer 6 tooling: excitement metrics, the win-probability model with its state features, held-out calibration, and the counterfactual fallback, exercised on provisional hands (the likely decks) | Calibration report per action class; tooling tested | Planned | |
 | 9 | C | Layer 4: search with best-response rounds, matrices, skill expression; catalogue rerun against the searched field | The band check per level (realistic and unconstrained) | Planned | |
+| 8b | C | Layer 6 baseline: the excitement report on the searched hands from task 9 | Baseline excitement report | Planned | |
 | 10 | C | Layer 5: rings on searched hands | Crowd rule checked | Planned | |
 | 11 | C | Reference doc, findings report with ranked candidates, roadmap 11 updated, this plan archived | `balance-methodology.md`; the next pass's decision list | Planned | |
 
-Order: 1 → 2 and 3 (in parallel) → 4 → 5-8 (in parallel, separate scripts) → 9 → 10 →
-11. Every task gets an independent read-only review of its diff; the statistics module and
+Order: 1 → 2 and 3 (in parallel) → 4 → 5, 6, 7, 8a (in parallel, separate scripts) → 9 →
+8b and 10 (in parallel) → 11. Every task gets an independent read-only review of its diff; the statistics module and
 the synthetic-card isolation get the closest look.
 
 ## Starting evidence (from 33, to be re-measured in task 1)
@@ -463,5 +520,5 @@ seeds) stand.
 
 ## Open questions
 
-1. **Scheduled runs.** Once task 1 measures the runtime: a label-triggered quick run on PRs
-   that touch cards, and a weekly full run posting a diff, or manual only?
+None open. Scheduled runs are replaced by the standalone runner: the owner starts long runs
+on any machine, and agent sessions take quick runs forward in chunks.
