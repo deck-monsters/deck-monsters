@@ -26,6 +26,8 @@
     "plan:ladder": "node dist/scripts/plan-ladder.js",
     "plan:validate-he": "node dist/scripts/plan-validate-he.js",
     "sim:validate-he": "node dist/scripts/sim-validate-he.js",
+    "plan:catalogue": "node dist/scripts/plan-catalogue.js",
+    "sim:catalogue": "node dist/scripts/sim-catalogue.js",
     "sim:formula": "node dist/scripts/sim-formula.js",
     "sim:unicorn": "node dist/scripts/sim-monster.js Unicorn"
   },
