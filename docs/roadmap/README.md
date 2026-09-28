@@ -15,7 +15,7 @@ completed reasoning belongs in the [archive](../archive/README.md).
 |---|---|
 | [10 — Bug fixes](10-bug-fixes.md) | Indentation and spacing in feed messages (first example captured in the fight log) |
 | [11 — Balance and mechanics](11-balance-and-mechanics.md) | Simulation, telemetry, healing prices, crit ticks, fight threads, and combat decisions |
-| [12 — New content](12-new-content-backlog.md) | Dragon follow-ups (counter cards, flavour pass, live check); concrete cards, monsters, card authoring, equipment, world, and endgame proposals |
+| [12 — New content](12-new-content-backlog.md) | Dragon follow-ups (counter cards, flavour pass, live check); counters to the big swing cards (Sandstorm, Faceswap, Blink); concrete cards, monsters, card authoring, equipment, world, and endgame proposals |
 | [Item follow-ups](item-followups.md) | Prompt transport for items that ask a question |
 | [22 — Small leftovers](22-small-leftovers.md) | Cross-cutting decisions, manual verification gates, and small Workshop features |
 | [34 — Balance methodology](34-balance-methodology.md) | In progress (PR A), three PRs: engine facts and fixed-turn-order correction, a reference chassis and idealized action classes, a card-value unit, collections and inventories, skilled-hand search and win-rate matrices, excitement metrics; no card changes |

@@ -266,7 +266,7 @@ Neither card changes (owner). The method changes instead, so this does not recur
 | Area damage | Blast, Fire Breath, Sandstorm | More than one opponent (a crowd) for its full value |
 | Own-stat synergy | Feline Companion (INT), Calisthenics (DEX), AC boosts | Cards of your own that read that stat (INT: Blast II, Heal, Brain Drain, the INT contests). AC is read by the opponent's attacks, so AC boosts show in any context |
 | Stat denial (curses) | Brain Drain, Soften, Molasses, Concussion | Opponent cards that read the stat (the reference field exists for this: a Hit-only opponent never reads INT) |
-| Counters | Bad Batch (drinks) | The countered cards in the opponent's hand, at the rate the field plays them |
+| Counters | Bad Batch (drinks); Mirror Shield and the planned counters to the big effects ([12](12-new-content-backlog.md#cards)) | The countered cards in the opponent's hand, at the rate the field plays them |
 | Sustain | Heal, Whiskey Shot, Scotch, Iocane | Fights long enough for healing to matter |
 | Tempo and control | Coil, Constrict, Horn Gore, Entrance, Mesmerize, Enthrall | Opponent turns worth denying, and room to use the time won |
 | Evasion | Cloak of Invisibility, Take Wing, Camouflage Vest | Opponents whose attacks target |
@@ -611,6 +611,14 @@ seeds) stand.
 ## Candidate changes to evaluate in the next pass (not this one)
 
 - **Sandstorm as a roll**, and a softer redraw, compared on rate and excitement.
+- **Counter cards instead of nerfs** (owner, 2026-09-28): a few rare, skilful cards that
+  interact with Sandstorm, Enchanted Faceswap, Blink, and area strikes: they turn them back,
+  share them, or give a roll to resist. The design rules and sketches are in
+  [12, counters to the big effects](12-new-content-backlog.md#cards). Before either
+  approach is chosen, measure how much a counter in the field brings the swing cards'
+  matchups toward the band, beside Sandstorm-as-a-roll, and compare their excitement
+  numbers. A counter that is rarely held changes little on its own, so Layer 4 needs a field
+  where good players hold it.
 - **Roll for initiative** (owner, 2026-09-28): in real fights, turn order is a hidden coin
   flip (the ring shuffles contestants as they join, and the order holds for the whole
   fight). A visible roll at the start of a fight (d20 + DEX modifier) would make it a moment
