@@ -16,7 +16,7 @@
  *
  * `SIM_RINGS_FIGHTS` sets fights per batch (default 20). Run manually (not in CI).
  *
- * Flags (Pass C, docs/roadmap/32-pass-c-mega-boss-and-balance.md): `--likely` gives every
+ * Flags (Pass C, docs/archive/roadmap/32-pass-c-mega-boss-and-balance.md): `--likely` gives every
  * human a likely deck (`likely-decks.ts`) instead of a random legal hand, and `--events` rolls
  * the ring's own events before each fight. Without them the report is the Pass B baseline.
  */

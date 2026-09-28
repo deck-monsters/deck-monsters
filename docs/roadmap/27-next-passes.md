@@ -69,7 +69,8 @@ A5's label budget was measured in Chromium against the real label CSS at 70, 72,
 passes. It also found that a partial equip on restored room data lost the monster's
 previous hand: hydration aliased hand cards to unequipped deck cards. That was older than
 Pass A and hit every restored room; fixed in this pass as 10b #191. Item K (emoji
-card-box border) stays open; it is in the feed, not the Workshop label A5 touched.
+card-box border) stayed open, since it is in the feed, not the Workshop label A5 touched;
+it was fixed later as 10b #197 (PR #406).
 
 ## Pass B — realistic harness rings
 
@@ -105,10 +106,15 @@ guidance: balance does not need to be 50/50; judge classes against the curve in
 Take Wing, Mood Scales, Tsunami, and ancient dragons. Its follow-ups are in
 [12](12-new-content-backlog.md#dragon-follow-ups).
 
-## Later
+## Mega boss and class balance
 
-- **Mega boss event** ([12](12-new-content-backlog.md#mega-boss-event)): the owner's
-  announced, fitted, rare boss; its own pass.
+**Done** in [32](../archive/roadmap/32-pass-c-mega-boss-and-balance.md) (PR #405; the plan is
+titled "Pass C", after this list's Dragon pass had already used that letter): the daily mega
+boss, likely-deck and ring-event harness rings, Blast and Sandstorm scaling by half past
+level 10, and one Console line per Workshop action. The Jinn's late strength is an open
+owner decision in [11](11-balance-and-mechanics.md).
+
+## Later
 
 - **Dragon follow-ups** ([12](12-new-content-backlog.md#dragon-follow-ups)): the counter
   cards the owner chose for the next content PR (Lullaby and Mirror Shield), a flavour
@@ -117,8 +123,9 @@ Take Wing, Mood Scales, Tsunami, and ancient dragons. Its follow-ups are in
 - **Prompt transport for items that ask a question** ([item follow-ups](item-followups.md)),
   paired with the prompt step and flow labels in [22](22-small-leftovers.md): both need the
   same per-flow design across the prompt call sites.
-- **Feed issues that need a reproduction first**: the missing `↓ Latest` button (10 §A),
-  odd spacing (10 §F), and the emoji card-box border (10 §K, unless A5 absorbs it).
+- **Feed issues that need a reproduction first**: the missing `↓ Latest` button (10 §A)
+  and odd spacing (10 §F). Neither reproduced in PR #406, which fixed the ring-feed scroll
+  jump and the emoji card-box border (10b #196, #197).
 - **Fight rewards never credited** (10 §J) needs production evidence; the in-process path
   is already proven.
 - **Preset loading can take cards from your other monsters**

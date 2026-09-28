@@ -97,7 +97,7 @@ Open work:
 
 ## Mega boss event
 
-Built in Pass C ([32](32-pass-c-mega-boss-and-balance.md)); its rules are in
+Built in Pass C ([32](../archive/roadmap/32-pass-c-mega-boss-and-balance.md)); its rules are in
 [boss encounters §8](../architecture/boss-encounters.md#8-the-mega-boss). Nothing is open here.
 
 ## World and long-term goals

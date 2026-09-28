@@ -223,13 +223,7 @@ Three rules from #159 that are easy to undo by accident:
 re-pins. The hook's return value is memoised because consumers put it in effect dependency
 arrays (#132).
 
-The Ring list passes `heightEstimates` from `estimateFeedRowHeight` (`utils/feed-row-height.ts`)
-on the mount that first receives history. Virtuoso ignores those guesses once its size tree
-has anything in it, and the empty placeholder is enough to fill the tree, so the list is
-not mounted while history is still loading. Unmeasured rows would otherwise all be booked
-at the first rendered row, a narration line, and a card box measured while scrolling up
-would grow the size tree enough to shove `scrollTop` back toward newer events (#196). The
-guess is the CSS line box (14px at line-height 1.4) plus the card panel's padding, and the
-wrap column count comes from the feed's measured width. A rounded-up line still moves the
-viewport when the row is measured. The guess is replaced when the row mounts. Do not point
-the #159 re-pin at it.
+Scrolling up into earlier fights no longer jumps: the Ring list gives Virtuoso a height
+guess per row on its first mount, so a tall card box is not booked as a narration line
+(#196). How and why is in [web workspace](../architecture/web-workspace.md#ring-feed-row-heights);
+do not point the #159 re-pin at that guess.

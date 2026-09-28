@@ -15,11 +15,10 @@ completed reasoning belongs in the [archive](../archive/README.md).
 |---|---|
 | [10 — Bug fixes](10-bug-fixes.md) | Reward investigation, the `↓ Latest` button, and feed spacing |
 | [11 — Balance and mechanics](11-balance-and-mechanics.md) | Simulation, telemetry, healing prices, crit ticks, fight threads, and combat decisions |
-| [12 — New content](12-new-content-backlog.md) | Dragon follow-ups (counter cards, flavour pass, live check), the mega boss event; concrete cards, monsters, card authoring, equipment, world, and endgame proposals |
+| [12 — New content](12-new-content-backlog.md) | Dragon follow-ups (counter cards, flavour pass, live check); concrete cards, monsters, card authoring, equipment, world, and endgame proposals |
 | [Item follow-ups](item-followups.md) | Prompt transport for items that ask a question |
 | [22 — Small leftovers](22-small-leftovers.md) | Cross-cutting decisions, manual verification gates, and small Workshop features |
-| [32 — Pass C](32-pass-c-mega-boss-and-balance.md) | In progress: the mega boss event, Unicorn and Gladiator balance, likely-deck harness rings, and one Console line per Workshop action |
-| [27 — Next passes](27-next-passes.md) | The order of the next passes: command and workshop bugs, the Dragon, and realistic rings with boss balance (done), then the mega boss and later work |
+| [27 — Next passes](27-next-passes.md) | The order of the next passes: command and workshop bugs, the Dragon, realistic rings with boss balance, and the mega boss (done), then later work |
 
 [`10b-bugs-fixed.md`](10b-bugs-fixed.md) remains the stable fixed-bug ledger because code
 cites it. Shipped plans, retired subsystems, and pass records are historical only; they
