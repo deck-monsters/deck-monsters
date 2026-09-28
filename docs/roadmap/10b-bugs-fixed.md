@@ -4663,13 +4663,16 @@ placeholder fills it, so the guesses have to be on the mount that first receives
 **Fix**: `estimateFeedRowHeight` counts the row's lines at the CSS line box (14px × 1.4)
 and the card-panel chrome the fence becomes. `RingPane` measures the feed width for the
 wrap column count, waits until history is in state, and passes the guesses as
-`heightEstimates` on that first mount. A rounded-up line was tried first; it booked rows
+`heightEstimates` on that first mount. It also waits for a nonzero width: a pane hidden
+under the 1024px breakpoint measured 0 and froze the 48-column fallback into the guesses
+(caught in review), so the list mounts when ResizeObserver reports the shown pane's width. A rounded-up line was tried first; it booked rows
 about 12% tall and the anchor still carried the viewport. Measured heights still replace
 the guess. The #159 re-pin still scrolls the scroller element's own `scrollHeight`.
 
 **Tests**: `utils` coverage in `feed-row-height.test.ts` (a fenced card is far taller than
 a narration line). `ringPane-scroll-behavior.test.tsx` asserts the pane passes those
-estimates, and still asserts a recent wheel or touch suppresses the re-pin. The component
+estimates, that the list waits for history and for a measured width, and still asserts a
+recent wheel or touch suppresses the re-pin. The component
 assertion fails if `heightEstimates` is omitted.
 
 **Status**: Fixed.

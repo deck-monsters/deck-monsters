@@ -115,10 +115,11 @@ feed's CSS line box and the pane's measured column width; a taller line still co
 corrects `scrollTop` against the gesture (#196). The
 follow-the-bottom re-pin still scrolls the scroller's own `scrollHeight` (#159). The
 fight-log box (`.fight-log-events`) is a separate scroller and does not use this estimate.
-A pane that is hidden (`display: none`) when history arrives has no width to measure, so
-its guesses use `FEED_WRAP_COLUMNS_FALLBACK` (48 columns) and are not revised when it is
-shown, because Virtuoso reads them only once. Card boxes, the rows that drive the large
-correction, fit either way; a long narration line can be booked one line off.
+The list also waits for a real width. A pane hidden with `display: none` (the other slot
+under 1024px) measures 0, and Virtuoso reads the guesses only once, so mounting it there
+froze the 48-column `FEED_WRAP_COLUMNS_FALLBACK` into them: on a wider pane, narration was
+booked at up to twice its height. ResizeObserver reports the width when the pane is shown,
+and the list mounts then. Without ResizeObserver the fallback is used.
 
 ## Card frames
 

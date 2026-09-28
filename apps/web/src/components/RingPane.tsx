@@ -177,19 +177,25 @@ export default function RingPane({
   // line (10b #196). The list mounts once history has been copied into `events`.
   const [listReady, setListReady] = useState(false);
   // The column count has to be known on that first mount: a later `heightEstimates`
-  // array is ignored. This layout measurement runs before the history effect. A hidden
-  // pane reports 0 and keeps the fallback, which is still wide enough for a card frame.
+  // array is ignored. This layout measurement runs before the history effect. A pane
+  // hidden with `display: none` (the other slot under 1024px) measures 0, so the list
+  // waits for a real width: mounting on the 48-column fallback booked narration on a
+  // wider pane at up to twice its height, and measuring it moved scroll-back again (a
+  // Codex review of PR #406). ResizeObserver reports the width once the pane is shown.
   const feedAreaRef = useRef<HTMLDivElement>(null);
   const [wrapColumns, setWrapColumns] = useState(FEED_WRAP_COLUMNS_FALLBACK);
+  const [widthMeasured, setWidthMeasured] = useState(false);
   useLayoutEffect(() => {
     const area = feedAreaRef.current;
     if (!area) return;
-    const measure = () => {
+    const measure = (observed?: number) => {
       const scroller = area.querySelector('.event-feed');
       const width =
         scroller instanceof HTMLElement && scroller.clientWidth > 0
           ? scroller.clientWidth
-          : area.clientWidth;
+          : area.clientWidth > 0
+            ? area.clientWidth
+            : (observed ?? 0);
       if (width <= 0) return;
       const list = area.querySelector('.event-feed-list');
       let pad = 24;
@@ -199,10 +205,15 @@ export default function RingPane({
       }
       const columns = feedWrapColumns(width - pad);
       setWrapColumns((prev) => (prev === columns ? prev : columns));
+      setWidthMeasured(true);
     };
     measure();
-    if (typeof ResizeObserver === 'undefined') return;
-    const observer = new ResizeObserver(measure);
+    // Without ResizeObserver there is no later report to wait for; keep the fallback.
+    if (typeof ResizeObserver === 'undefined') {
+      setWidthMeasured(true);
+      return;
+    }
+    const observer = new ResizeObserver((entries) => measure(entries[0]?.contentRect.width));
     observer.observe(area);
     return () => observer.disconnect();
   }, []);
@@ -570,7 +581,7 @@ export default function RingPane({
       {/* Gesture listeners sit on the wrapper because Virtuoso owns the scroller element;
           wheel/touch/pointer/key events bubble up from it. */}
       <div className="pane-feed-area" ref={feedAreaRef} {...autoScroll.gestureHandlers}>
-      {listReady ? (
+      {listReady && widthMeasured ? (
       <Virtuoso
         ref={virtuosoRef}
         scrollerRef={autoScroll.setScroller}

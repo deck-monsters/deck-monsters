@@ -365,4 +365,37 @@ describe('RingPane scroll follow behavior', () => {
     historyQuery.data = [];
     historyQuery.isError = false;
   });
+
+  it('waits for a real feed width before mounting, so a hidden pane does not guess', () => {
+    // A pane hidden with display:none measures 0. Mounting then froze the 48-column
+    // fallback into Virtuoso's estimates (a Codex review of PR #406).
+    const original = window.ResizeObserver;
+    let report: ResizeObserverCallback | null = null;
+    class MockResizeObserver {
+      constructor(callback: ResizeObserverCallback) {
+        report = callback;
+      }
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    }
+    window.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
+    try {
+      historyQuery.data = [];
+      historyQuery.isError = false;
+      listeners.clear();
+      const utils = render(
+        <TestFeed>
+          <RingPane roomId="room-123" isActive />
+        </TestFeed>,
+      );
+      expect(utils.queryByTestId('scroller')).toBeNull();
+      act(() => {
+        report?.([{ contentRect: { width: 800 } } as ResizeObserverEntry], {} as ResizeObserver);
+      });
+      expect(utils.queryByTestId('scroller')).not.toBeNull();
+    } finally {
+      window.ResizeObserver = original;
+    }
+  });
 });
