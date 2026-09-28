@@ -10,14 +10,22 @@
  * levels. (The maximum of several noisy values leans high, so a best-context value near a
  * threshold is a question, not a verdict.)
  *
+ * A crowd context (more than one opponent) is reported differently: as points gained over a Hit
+ * in the same slot. There a Hit over an empty slot is worth only 2-3 points (one strike among
+ * four monsters barely moves who survives), so dividing by it blows every value up (a Heal
+ * read about 5 Hits). Crowd gains are shown, flagged at 3 points or more, and kept out of the
+ * best-context ranking, which is over duels.
+ *
  * Flags, per "Value beyond damage" in roadmap 34:
  * - `context card`: its best context is worth at least 0.7 more than the Hit context.
- * - `weak everywhere`: under 0.5 in every context, the only kind of low value that counts.
+ * - `weak everywhere`: under 0.5 in every duel context and no crowd gain of 3 points, the only
+ *   kind of low value that counts.
  * - `trap`: under 0 (worse than an empty slot) in its best context.
  */
 import { readFileSync, writeFileSync } from 'node:fs';
 import { readResults } from '../balance/results.js';
 import type { UnitResult } from '../balance/units.js';
+import { CARD_CONTEXTS } from '../balance/contexts.js';
 
 const args = process.argv.slice(2);
 const jsonIndex = args.indexOf('--json');
@@ -73,7 +81,9 @@ for (const card of catalogue.cards) {
 		for (const level of levels) {
 			const rs = byKey.get(`${context}|${level}|${card.cardType}`);
 			const b = base.get(`${context}|${level}`)!;
-			if (card.cardType === 'Hit') values[context]![level] = 1;
+			const crowd = (CARD_CONTEXTS[context]?.opponents ?? 1) > 1;
+			if (card.cardType === 'Hit') values[context]![level] = crowd ? 0 : 1;
+			else if (rs?.length && crowd) values[context]![level] = 100 * (pooled(rs) - b.hit);
 			else if (rs?.length && b.slope > 0) values[context]![level] = 1 + (pooled(rs) - b.hit) / b.slope;
 		}
 		means[context] = mean(Object.values(values[context]!));
@@ -82,13 +92,17 @@ for (const card of catalogue.cards) {
 	const field = mean(levels.map(l => card.fieldHe[String(l)] ?? NaN));
 	// The field value is shown but not used for `best`: its baseline is too small to rank on
 	// (the catalogue report calls it a direction check only).
-	const all: Record<string, number> = { hits: hitContext, ...means };
+	const duels = Object.fromEntries(Object.entries(means).filter(([c]) => (CARD_CONTEXTS[c]?.opponents ?? 1) === 1));
+	const all: Record<string, number> = { hits: hitContext, ...duels };
 	const [best, bestValue] = Object.entries(all).filter(([, v]) => Number.isFinite(v)).sort((a, b) => b[1] - a[1])[0] ?? ['—', NaN];
 	const flags: string[] = [];
 	if (Number.isFinite(bestValue)) {
 		if (bestValue - hitContext >= 0.7 && best !== 'hits') flags.push(`context card (${best})`);
-		if (Object.values(all).every(v => !Number.isFinite(v) || v < 0.5)) flags.push('weak everywhere');
+		const crowdCard = Object.entries(means).some(([c, v]) => (CARD_CONTEXTS[c]?.opponents ?? 1) > 1 && v >= 3);
+		// A card that only pays in a crowd is a crowd card, not a weak one.
+		if (!crowdCard && Object.values(all).every(v => !Number.isFinite(v) || v < 0.5)) flags.push('weak everywhere');
 		if (bestValue < 0) flags.push('trap');
+		for (const [c, v] of Object.entries(means)) if ((CARD_CONTEXTS[c]?.opponents ?? 1) > 1 && v >= 3) flags.push(`crowd card (+${v.toFixed(0)} points)`);
 	}
 	rows.push({ cardType: card.cardType, label: card.label, actionClass: card.actionClass, hitContext, field, values, means, best, bestValue, flags });
 }
@@ -96,10 +110,10 @@ for (const card of catalogue.cards) {
 const fmt = (x: number): string => (Number.isFinite(x) ? x.toFixed(2) : '—');
 const lines: string[] = [];
 lines.push(`Contexts: ${contexts.join(', ')}; levels ${levels.join(', ')} (each value is the mean over those levels). Baselines, a Hit's score / one Hit's worth over a null (points): ${contexts.map(c => `${c} ${levels.map(l => { const b = base.get(`${c}|${l}`)!; return `L${l} ${(100 * b.hit).toFixed(0)}%/${(100 * b.slope).toFixed(1)}`; }).join(' ')}`).join('; ')}.`, '');
-lines.push(`| Card | Class | Hits | Field | ${contexts.map(c => c[0]!.toUpperCase() + c.slice(1)).join(' | ')} | Best | Flags |`);
+lines.push(`| Card | Class | Hits | Field | ${contexts.map(c => c[0]!.toUpperCase() + c.slice(1) + ((CARD_CONTEXTS[c]?.opponents ?? 1) > 1 ? ' (points)' : '')).join(' | ')} | Best duel | Flags |`);
 lines.push(`|${Array(contexts.length + 6).fill('---').join('|')}|`);
 for (const r of [...rows].sort((a, b) => a.actionClass.localeCompare(b.actionClass) || b.bestValue - a.bestValue)) {
-	lines.push(`| ${r.label} | ${r.actionClass} | ${fmt(r.hitContext)} | ${fmt(r.field)} | ${contexts.map(c => fmt(r.means[c]!)).join(' | ')} | ${r.best} ${fmt(r.bestValue)} | ${r.flags.join('; ')} |`);
+	lines.push(`| ${r.label} | ${r.actionClass} | ${fmt(r.hitContext)} | ${fmt(r.field)} | ${contexts.map(c => ((CARD_CONTEXTS[c]?.opponents ?? 1) > 1 && Number.isFinite(r.means[c]!) ? `${r.means[c]! >= 0 ? '+' : ''}${r.means[c]!.toFixed(1)}` : fmt(r.means[c]!))).join(' | ')} | ${r.best} ${fmt(r.bestValue)} | ${r.flags.join('; ')} |`);
 }
 process.stdout.write(`${lines.join('\n')}\n`);
 if (jsonOut) writeFileSync(jsonOut, `${JSON.stringify({ contexts, levels, baselines: Object.fromEntries(base), cards: rows }, null, 1)}\n`);
