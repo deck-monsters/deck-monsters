@@ -103,6 +103,19 @@ Only the explicitly labelled “Open … as a full page” control uses a surfac
 Entering or bookmarking that route still opens the standalone page. On mobile, reveal
 selects the one visible slot. Returning to the workspace restores the persisted pair.
 
+## Ring feed row heights
+
+The Ring event list is a Virtuoso window. It mounts when ring history has been applied,
+because Virtuoso reads `heightEstimates` only while its size tree is empty and the empty
+placeholder fills that tree. Narration is one or two lines and a card box is a tall fenced
+frame, so the list passes a per-row `heightEstimates` value
+(`apps/web/src/utils/feed-row-height.ts`) until the row is measured. The guess is the
+feed's CSS line box and the pane's measured column width; a taller line still corrects
+`scrollTop` once the row mounts. Without that guess, scrolling up into earlier fights
+corrects `scrollTop` against the gesture (#196). The
+follow-the-bottom re-pin still scrolls the scroller's own `scrollHeight` (#159). The
+fight-log box (`.fight-log-events`) is a separate scroller and does not use this estimate.
+
 ## Change checklist
 
 - [ ] Add a surface once in `SURFACES`; tabs, selectors, and shortcuts derive from it.

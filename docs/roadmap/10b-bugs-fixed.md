@@ -4643,3 +4643,33 @@ presets, and item use publish no summary of their own and keep the engine's line
 the summary. It fails without the fix.
 
 **Status**: Fixed.
+
+### 196. The ring feed jumped while scrolling up into earlier fights — FIXED
+
+**Symptom**: scrolling up through fight history on The Ring yanked the viewport back toward
+newer events. A probe on Test Room A (2026-09-27) drove the `.event-feed` scroller upward
+in bursts. `scrollHeight` grew from 16145 to 30625 as older rows mounted, and between two
+upward bursts `scrollTop` moved from 12950 to 13391. Pauses left `scrollTop` where the
+burst ended, so this was not the #159 re-pin (that scrolls to `scrollHeight` only when
+there has been no recent upward gesture).
+
+**Root cause**: the ring Virtuoso had no per-row height. It books every unmeasured row at
+the first rendered row's height, and the bottom of a fight feed is a short narration.
+Card boxes are fenced frames tens of lines tall. When one mounted, the size tree grew and
+Virtuoso's anchor correction added that growth to `scrollTop`, against the upward gesture.
+`heightEstimates` is also ignored once the size tree is non-empty, and the empty
+placeholder fills it, so the guesses have to be on the mount that first receives history.
+
+**Fix**: `estimateFeedRowHeight` counts the row's lines at the CSS line box (14px × 1.4)
+and the card-panel chrome the fence becomes. `RingPane` measures the feed width for the
+wrap column count, waits until history is in state, and passes the guesses as
+`heightEstimates` on that first mount. A rounded-up line was tried first; it booked rows
+about 12% tall and the anchor still carried the viewport. Measured heights still replace
+the guess. The #159 re-pin still scrolls the scroller element's own `scrollHeight`.
+
+**Tests**: `utils` coverage in `feed-row-height.test.ts` (a fenced card is far taller than
+a narration line). `ringPane-scroll-behavior.test.tsx` asserts the pane passes those
+estimates, and still asserts a recent wheel or touch suppresses the re-pin. The component
+assertion fails if `heightEstimates` is omitted.
+
+**Status**: Fixed.

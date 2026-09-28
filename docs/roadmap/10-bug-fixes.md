@@ -8,7 +8,7 @@ tags: [bugs, roadmap, open]
 ---
 # Bug Fixes and Code Quality
 
-**Status:** Active — five open items. Fixed work and its root causes live only in
+**Status:** Active — four open items. Fixed work and its root causes live only in
 [`10b-bugs-fixed.md`](10b-bugs-fixed.md).
 
 ## Open items
@@ -73,47 +73,6 @@ the frame, or render the frame's border in CSS rather than as characters. Captur
 screenshot in both themes and at phone width before choosing.
 
 Read [pixel art](../reference/pixel-art.md) and [web workspace](../architecture/web-workspace.md).
-
-### L. The ring feed jumps while scrolling up into earlier fights
-
-**Owner:** Web feeds. Seen 2026-09-27 on Test Room A's Ring tab, with history already
-loaded. The scroller is the ring `Virtuoso` (`.event-feed`), the list that holds earlier
-fights. A script drove it upward in eight bursts — each burst six `scrollTop -= 400` steps
-plus a wheel `deltaY` of -400 — and paused 1.8s after each burst.
-
-| Sample | scrollTop | scrollHeight | Mounted rows |
-|---|---:|---:|---:|
-| Start | 15386 | 16145 | 7 |
-| After burst 2 | 12950 | 21475 | 2 |
-| After burst 3 | 13391 | 24317 | 7 |
-| End | 10096 | 30625 | 8 |
-
-`clientHeight` stayed 758. Between burst 2 and burst 3 the only input was upward, and
-`scrollTop` still moved 441px back toward newer events while `scrollHeight` grew by 2842px.
-Mounted rows had just collapsed to 2 and then returned. Every pause left `scrollTop` where
-the burst ended. #159's re-pin scrolls the element to `scrollHeight` when Virtuoso reports
-"not at bottom" without a recent upward gesture; that path did not run during the pauses.
-
-**Cause:** `RingPane` gives Virtuoso no default item height. Narration rows are one or two
-lines and card boxes are tall `<pre>` frames, so unmeasured rows are estimated short. As
-the reader scrolls into history those rows mount, the estimate is replaced, and
-`scrollHeight` nearly doubled across the probe (16145 → 30625). Virtuoso then corrects
-`scrollTop` from its size tree. That correction can move the viewport against the gesture.
-The same size-tree estimate is why #159 re-pins from the DOM `scrollHeight` instead of
-`scrollToIndex('LAST')`; this bug is that correction firing while the reader is scrolling
-up, away from the bottom.
-
-The 15rem fight-log box (`.fight-log-events`) is a different scroller. It truncates lines
-and does not load ring history.
-
-- [ ] Reproduce with a human wheel and a touch drag, and confirm the correction is
-  Virtuoso's size-tree anchor.
-- [ ] Keep the viewport on the row the reader is looking at once a card box is measured.
-  Leave the #159 follow rule as it is: a gesture inside
-  `USER_SCROLL_INTENT_WINDOW_MS` must still suppress the re-pin.
-
-Read [events, prompts, and replay](../architecture/events-prompts-and-replay.md) and
-[web workspace](../architecture/web-workspace.md).
 
 ## Historical detail
 

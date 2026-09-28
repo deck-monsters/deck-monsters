@@ -13,7 +13,12 @@ const scrollToIndexMock = vi.fn();
 const setAtBottomState: Array<(atBottom: boolean) => void> = [];
 let followOutput: ((atBottom: boolean) => 'auto' | 'smooth' | false) | undefined;
 let atBottomThreshold: number | undefined;
+let heightEstimates: number[] | undefined;
 const listeners = new Set<(tracked: TrackedRingFeedEvent) => void>();
+const historyQuery = vi.hoisted(() => ({
+  data: [] as unknown[] | undefined,
+  isError: false,
+}));
 
 function pushEvent(tracked: TrackedRingFeedEvent) {
   for (const listener of listeners) listener(tracked);
@@ -31,7 +36,7 @@ vi.mock('../lib/trpc.js', () => ({
   trpc: {
     game: {
       ringHistory: {
-        useQuery: () => ({ data: [] }),
+        useQuery: () => ({ data: historyQuery.data, isError: historyQuery.isError }),
       },
       recentFights: {
         useQuery: () => ({ data: [] }),
@@ -57,6 +62,7 @@ vi.mock('react-virtuoso', () => {
           atBottomThreshold?: number;
           className?: string;
           followOutput?: (atBottom: boolean) => 'auto' | 'smooth' | false;
+          heightEstimates?: number[];
           data?: Array<unknown>;
           itemContent?: (index: number, item: unknown) => React.ReactNode;
         },
@@ -72,6 +78,7 @@ vi.mock('react-virtuoso', () => {
         }, [props.atBottomStateChange]);
         followOutput = props.followOutput;
         atBottomThreshold = props.atBottomThreshold;
+        heightEstimates = props.heightEstimates;
         return (
           <div className={props.className} data-testid="scroller">
             {(props.data ?? []).map((item, index) => (
@@ -100,10 +107,13 @@ function TestFeed({ children }: { children: ReactNode }) {
 }
 
 function renderPane() {
+  historyQuery.data = [];
+  historyQuery.isError = false;
   listeners.clear();
   setAtBottomState.length = 0;
   followOutput = undefined;
   atBottomThreshold = undefined;
+  heightEstimates = undefined;
   const utils = render(
     <TestFeed>
       <RingPane roomId="room-123" isActive />
@@ -287,5 +297,72 @@ describe('RingPane scroll follow behavior', () => {
     renderPane();
     expect(atBottomThreshold).toBeDefined();
     expect(atBottomThreshold!).toBeLessThanOrEqual(12);
+  });
+
+  /*
+   * A card box is a fenced frame tens of lines tall. Without a per-row estimate Virtuoso
+   * books every unmeasured row at the first row's height (a narration line). Scrolling up
+   * mounts the frame, the size tree grows, and the anchor correction moves scrollTop back
+   * toward newer events (#196).
+   */
+  it('estimates a card box much taller than a narration line', () => {
+    renderPane();
+    const card = [
+      'lays down the following card:',
+      '```',
+      '==================================',
+      ' title',
+      '----------------------------------',
+      ...Array.from({ length: 8 }, () => ' a line of the card'),
+      '==================================',
+      '```',
+    ].join('\n');
+
+    act(() => {
+      pushEvent({
+        id: 'ev-line',
+        data: {
+          id: 'event-line',
+          type: 'announce',
+          scope: 'public',
+          text: 'one short narration line',
+          payload: {},
+          timestamp: Date.now(),
+          roomId: 'room-123',
+        },
+      });
+      pushEvent({
+        id: 'ev-card',
+        data: {
+          id: 'event-card',
+          type: 'announce',
+          scope: 'public',
+          text: card,
+          payload: {},
+          timestamp: Date.now(),
+          roomId: 'room-123',
+        },
+      });
+    });
+
+    expect(heightEstimates).toBeDefined();
+    const [line, boxed] = heightEstimates ?? [];
+    expect(line).toBeGreaterThan(0);
+    expect(boxed).toBeGreaterThan((line ?? 0) * 4);
+  });
+
+  it('keeps the list unmounted until history arrives, so the size tree can take the guesses', () => {
+    historyQuery.data = undefined;
+    historyQuery.isError = false;
+    listeners.clear();
+    const utils = render(
+      <TestFeed>
+        <RingPane roomId="room-123" isActive />
+      </TestFeed>,
+    );
+    expect(utils.queryByTestId('scroller')).toBeNull();
+    expect(utils.getByText('Waiting for fight events…')).toBeInTheDocument();
+    historyQuery.data = [];
+    historyQuery.isError = false;
   });
 });
