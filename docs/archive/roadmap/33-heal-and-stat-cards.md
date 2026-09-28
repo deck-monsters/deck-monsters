@@ -13,7 +13,8 @@ from an owner report: a Unicorn's Heals rolled `1d4 − 2` all fight after a Con
 Lasting rules are in [cards and encounter effects](../../architecture/cards-and-encounter-effects.md#temporary-stat-changes-and-their-caps)
 and [boss encounters](../../architecture/boss-encounters.md); the Heal fix is 10b #198. The
 class rebalance (task 4) moved to the principled balance methodology item in
-[11](../../roadmap/11-balance-and-mechanics.md), which the owner asked to build before any
+[11](../../roadmap/11-balance-and-mechanics.md) and its plan,
+[34](../../roadmap/34-balance-methodology.md), which the owner asked to build before any
 further card changes; the evidence below is its starting point.
 
 ## Tasks

@@ -61,7 +61,8 @@ and fixed defects are in [`10b-bugs-fixed.md`](10b-bugs-fixed.md).
   for Sandstorm should read like a roll (for example, a d20 per opponent to catch them in
   the storm, with natural 20s), not a flat halving. Starting evidence (informed-hand curves,
   why the Jinn wins duels, stat-card values) is in
-  [33](../archive/roadmap/33-heal-and-stat-cards.md).
+  [33](../archive/roadmap/33-heal-and-stat-cards.md). The plan is
+  [34 — Balance methodology](34-balance-methodology.md).
 - [ ] **Economy telemetry — owner: Analytics.** Measure coins earned, spent, and held per
   active player-room; first-purchase time; outcome mix; and unaffordable expired stock.
   The harness has the new-player scenario; a purchase-sink scenario is still open.
