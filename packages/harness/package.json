@@ -28,6 +28,9 @@
     "sim:validate-he": "node dist/scripts/sim-validate-he.js",
     "plan:catalogue": "node dist/scripts/plan-catalogue.js",
     "sim:catalogue": "node dist/scripts/sim-catalogue.js",
+    "plan:holders": "node dist/scripts/plan-holders.js",
+    "sim:holders": "node dist/scripts/sim-holders.js",
+    "sim:collection": "node dist/scripts/sim-collection.js",
     "sim:formula": "node dist/scripts/sim-formula.js",
     "sim:unicorn": "node dist/scripts/sim-monster.js Unicorn"
   },
