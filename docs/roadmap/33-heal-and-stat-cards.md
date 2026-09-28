@@ -1,12 +1,12 @@
 ---
 type: Roadmap
-title: Heal Penalty and Stat-Card Balance
-description: Active plan for the heal INT-penalty fix and a measured look at boost and curse cards since they began moving rolls.
+title: Heal, Stat Cards, and Class Balance
+description: Active plan for the heal INT-penalty fix, boost and curse cards since they began moving rolls, and a class rebalance to the owner's 35-75% band.
 status: draft
 audience: internal
 tags: [roadmap, balance, cards]
 ---
-# 33 — Heal Penalty and Stat-Card Balance
+# 33 — Heal, Stat Cards, and Class Balance
 
 **Status:** In progress on branch `claude/heal-penalty-and-stat-card-balance`, started
 2026-09-28 from an owner report: a Unicorn's Heals rolled `1d4 − 2` all fight after a
@@ -18,6 +18,8 @@ Concussion.
 |---|---|---|---|
 | 1 | Heal: an INT penalty never reduces a heal; a bonus still fades (10b #198). Roadmap 10: J and A closed by the owner, F re-scoped to indentation and spacing with a first example | Done | 0f5d3f7 |
 | 2 | Boost and curse cards since #175 (temporary DEX, STR, and INT changes move rolls): measure what each is worth per play and whether any needs a small tweak | Done: ±5 cap on temporary DEX/STR/INT changes, and curse attacks curse only on a hit | f9fbbc5, 9b15e87, this commit |
+| 3 | Baseline class curves after tasks 1-2, random and likely hands; why some monsters seem to always carry their signature card | In progress | |
+| 4 | Rebalance to the owner's band: every monster wins 35-75% at every level (ancient dragons up to 80); brutes stronger early, casters stronger late. Candidates: a per-card copy limit for area spells, level scaling | Planned | |
 
 ## Decisions (owner, 2026-09-28)
 
@@ -27,6 +29,7 @@ Concussion.
 | Boost and curse cards | "Mostly fine", but test for minor tweaks; each play is an automatic stat change |
 | Stacking cap | A temporary DEX, STR, or INT change caps at ±5 (was `level + 1`); AC keeps `level + 1` |
 | Curse attacks | Apply the curse only when the hit lands (owner's suggestion, measured below) |
+| Class balance band | No monster below 35% or above 75% at any level; ancient dragons may reach 80%. Gladiator and Basilisk stronger early, Clerics and Wizards stronger late. The Weeping Angel and Jinn at ~93% were "wild" |
 
 ## Evidence: stat cards (`sim:statcards`, 300 fights per cell)
 
@@ -83,3 +86,39 @@ The cap alone left two Molasses at level 20 at +17 and +18: past the cap each pl
 up to 4 extra damage, even on a miss. With the curse on the hit, Molasses and Soften sit
 level with a Hit at every level. Concussion reads low against Hits because Hit never uses
 INT; that is the probe, not the card.
+
+## Evidence: class curves after tasks 1-2 (`sim:rings curves`, 120 fights per cell)
+
+Each monster as a human against a random other monster at its level; share of decisive
+fights won. **Bold** is outside the owner's 35-75% band.
+
+| Monster | Random hands L1 / L3 / L5 / L10 / L15 / L20 | Likely hands L1 / L3 / L5 / L10 / L15 / L20 |
+|---|---|---|
+| Basilisk (Barbarian) | 68 / 66 / 61 / 49 / 55 / 50 | **77 / 79** / 55 / **25 / 19 / 34** |
+| Gladiator (Fighter) | 43 / 41 / 44 / 52 / 39 / 52 | 60 / 60 / 74 / 62 / **33** / 41 |
+| Jinn (Bard) | 45 / 44 / 57 / 55 / 51 / 44 | 59 / **87** / 65 / 51 / **91 / 85** |
+| Minotaur (Barbarian) | 60 / 48 / 64 / 58 / 41 / 43 | 54 / 54 / 51 / 62 / 47 / **32** |
+| Weeping Angel (Cleric) | 44 / 42 / 43 / 60 / 61 / 56 | **80** / 73 / 56 / **85 / 84 / 93** |
+| Unicorn (Cleric) | **76** / 59 / 62 / 61 / 75 / 73 | 63 / 35 / **17** / 40 / 49 / **24** |
+| Dragon (Wizard) | **32** / 45 / 57 / 41 / 56 / 64 | **4 / 9 / 6 / 35** / 56 / **81** |
+
+Random hands are nearly inside the band already. Likely hands, which follow the handbook's
+builds and each monster's signature cards, are where the extremes live; they are also the
+harness's guesses at what players equip.
+
+## Why some monsters seem to always carry their signature card
+
+Nothing equips a player's hand automatically. Every starting deck (`getMinimumDeck`) holds
+one copy of each monster's signature card, and only that monster (or class) can hold it,
+so every player has exactly one from the start. Extra copies only come from drops, and the
+rarities differ: Blast (any Cleric) is abundant (65), Fire Breath common (40), Sticketh rare
+(15), and Sandstorm, Blink, and Battle Focus epic (5). An Angel collects Blasts quickly; a
+Jinn usually has the one Sandstorm, and its players equip it because it is the Jinn's best
+card. For bosses, the hand is a random slice of the eligible deck: 70-73% carry their
+signature card, the Weeping Angel 96% and the Dragon 86% because Blast and Fire Breath also
+arrive through fills.
+
+Bosses drop Flee, Harden, Heal, Hit, and Whiskey Shot from that deck (`randomCharacter`).
+The list dates from the original JavaScript engine with no recorded reason; its effect is
+that a boss holds no filler. It predates newer basics (Scotch, Turkey Thigh, Basic Shield,
+Thick Skin), so a boss can still hold those.
