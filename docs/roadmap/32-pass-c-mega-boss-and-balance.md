@@ -20,8 +20,8 @@ Console, in one new branch and PR.
 |---|---|---|---|
 | 1 | Workshop actions echo into the Console twice (the engine's lines plus the server's summary); keep one line per action (10b #195) | Done | 1b56fb7 |
 | 2 | Harness: likely-deck archetypes per class beside the random hand (`deckStyle`), and ring events (`ringEvents`), both as `sim:rings` flags | Done | 675f493 |
-| 3 | Balance: the Unicorn strong at every level, the Gladiator weak early, measured with task 2 against the class-curve target | Not started | — |
-| 4 | The mega boss event: daily per room, announced 30 minutes ahead with a countdown, a two-minute hold on ordinary fights, fitted to about 20%, relics and minions, rewards, called off below two humans; `sim:mega` | Done | this commit |
+| 3 | Balance: the Unicorn strong at every level, the Gladiator weak early, measured with task 2 against the class-curve target. Investigated: no card change the evidence supports; the one robust finding (level-scaled Blast and Sandstorm late) waits for the owner | Findings recorded | this commit |
+| 4 | The mega boss event: daily per room, announced 30 minutes ahead with a countdown, a two-minute hold on ordinary fights, fitted to about 20%, relics and minions, rewards, called off below two humans; `sim:mega` | Done | 14f3d89 |
 | 5 | Docs close-out, generated references, independent review | Not started | — |
 
 ## Decisions (owner, 2026-09-27)
@@ -69,3 +69,23 @@ Humans' win rate against the fitted mega boss and two minions; the owner's targe
 
 A single share hit the average but not the rooms: more humans and higher levels deal damage
 faster than HP alone keeps up with. The shipped rule grows with both.
+
+## Task 3 findings
+
+Probes on likely decks (80–360 fights each), damage per hit from `SimResult.avgDamagePerCard`:
+
+- **Unicorn and Gladiator.** The random-deck findings in 11 reverse under likely decks, so no
+  card is at fault that the harness can see. The Unicorn's likely deck holds four cards that
+  deal no damage (Horn of Proof, Unconquerable Horn, Gloaming Rest, Dissonant Voice); at
+  level 5 it lands Sticketh for 11.5 and still loses 19% to 78% to a Minotaur.
+- **Dragon.** Its likely deck loses 90% or more early for the same reason: Take Wing, Mood
+  Scales, and Cloak of Invisibility deal nothing, and Tsunami hurts the Dragon too. Fire
+  Breath itself is on par with a Hit per play (2 + level, plus a burn); its low per-hit
+  figure (1.6 at level 1) averages in the 1-damage burn ticks. A player who equips every
+  signature card is punished, which is a deck-building lesson, not a broken card.
+- **Level-scaled area spells (holds under both models).** At level 15, Blast deals 18.9 a
+  hit and Sandstorm 16 (both `damage + 1 × caster level`), against 11.7 for a Hit or Horn
+  Swipe. Blast reaches every opponent and cannot be dodged. With likely decks the Weeping
+  Angel (two Blasts) wins 90% against a Minotaur at level 15 and 95–99% across levels 15–20;
+  the Jinn (Sandstorm) 96% at level 15. The owner's target wants casters strong late; how
+  strong is a decision, not a measurement. Options are in 11's "Blast and Cleric power" item.
