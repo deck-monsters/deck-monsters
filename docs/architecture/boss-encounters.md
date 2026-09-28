@@ -51,8 +51,13 @@ Boss-specific behaviour is applied in `characters/helpers/random.ts` (`randomCha
   while any are standing.
 - `monster.canHold` is wrapped to reject cards with `static noBosses = true`
   (`fight-or-flight`, `flee`, `kalevala`).
-- The deck drops weak card types (`Flee`, `Harden`, `Heal`, `Hit`, `Whiskey Shot`) and every
-  remaining card is `levelUp(random(0, 6))`'d.
+- Bosses press the attack rather than run or stall, but still hold some basic cards (owner,
+  roadmap 33). The original engine's weak list (Flee, Harden, Heal, Hit, Whiskey Shot) is
+  filtered from the starting deck and the first refill, and a last refill tops the deck up,
+  which leaves basics in about 17% of boss hand slots. On top of that a boss never holds
+  Flee, and a hand holds at most `BOSS_MAX_HEALS` (1) plain heal, a heal any monster can hold
+  (`isPlainHeal`, `pickBossHand`); monster-specific heals such as Gloaming Rest are uncapped.
+  Every remaining card is `levelUp(random(0, 6))`'d.
 - Level comes from XP: either fully random, or capped via `{ xp: random(0, getXpCapForLevel(cap)) }`.
 
 ### `userId: 'boss'` is a sentinel, and it is not a uuid

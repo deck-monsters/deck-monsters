@@ -11,7 +11,8 @@ describe('./cards/brain-drain.ts', () => {
 
 		const stats = `${hit.stats}
 Curse: xp -20
-Can reduce xp down to 40, then takes 4 from hp instead.`;
+Can reduce xp down to 40, then takes 4 from hp instead.
+The curse lands only if the hit does.`;
 
 		expect(brainDrain).to.be.an.instanceof(BrainDrainCard);
 		expect(brainDrain.icon).to.equal('🤡');
@@ -22,6 +23,8 @@ Can reduce xp down to 40, then takes 4 from hp instead.`;
 
 	it('decreases xp', () => {
 		const brainDrain = new BrainDrainCard();
+		// The drain lands with the hit, so force one (roadmap 33).
+		(brainDrain as any).hitCheck = () => ({ attackRoll: { result: 20, naturalRoll: { result: 20 } }, success: true, strokeOfLuck: false, curseOfLoki: false });
 
 		const player = new Gladiator({ name: 'player' });
 		const target = new Gladiator({ name: 'target' });
@@ -42,6 +45,8 @@ Can reduce xp down to 40, then takes 4 from hp instead.`;
 
 	it('makes a difference for their modifiers', () => {
 		const brainDrain = new BrainDrainCard();
+		// The drain lands with the hit, so force one (roadmap 33).
+		(brainDrain as any).hitCheck = () => ({ attackRoll: { result: 20, naturalRoll: { result: 20 } }, success: true, strokeOfLuck: false, curseOfLoki: false });
 
 		const player = new Gladiator({ name: 'player' });
 		const target = new Gladiator({ name: 'target' });

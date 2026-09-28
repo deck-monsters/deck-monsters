@@ -5,7 +5,8 @@ import {
 	BASE_INT,
 	BASE_STR,
 	MAX_BOOSTS,
-	MAX_PROP_MODIFICATIONS
+	MAX_PROP_MODIFICATIONS,
+	MAX_TEMPORARY_STAT_CHANGE,
 } from '../constants/stats.js';
 import { STARTING_XP } from '../helpers/experience.js';
 import type { BaseCreature } from './base.js';
@@ -20,11 +21,11 @@ export function getMaxModifications (self: BaseCreature, prop: string): number {
 			// Can't use level here — circular reference with xp
 			return Math.max(getPreBattlePropValue(self, 'xp')! - MAX_PROP_MODIFICATIONS.xp, MAX_PROP_MODIFICATIONS.xp);
 		case 'int':
-			return Math.ceil(MAX_PROP_MODIFICATIONS.int * (self.level + 1));
+			return Math.min(Math.ceil(MAX_PROP_MODIFICATIONS.int * (self.level + 1)), MAX_TEMPORARY_STAT_CHANGE);
 		case 'str':
-			return Math.ceil(MAX_PROP_MODIFICATIONS.str * (self.level + 1));
+			return Math.min(Math.ceil(MAX_PROP_MODIFICATIONS.str * (self.level + 1)), MAX_TEMPORARY_STAT_CHANGE);
 		case 'dex':
-			return Math.ceil(MAX_PROP_MODIFICATIONS.dex * (self.level + 1));
+			return Math.min(Math.ceil(MAX_PROP_MODIFICATIONS.dex * (self.level + 1)), MAX_TEMPORARY_STAT_CHANGE);
 		default:
 			return 4;
 	}

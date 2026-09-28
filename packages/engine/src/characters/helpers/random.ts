@@ -3,6 +3,16 @@ import { XP_PER_VICTORY } from '../../helpers/experience.js';
 import { BOSS_PERSONALITIES } from '../../helpers/boss-personalities.js';
 import Beastmaster from '../beastmaster.js';
 import { RING_PATRON_ICON, RING_PATRON_NAME } from '../../constants/lore.js';
+import { HEAL } from '../../constants/card-classes.js';
+import {
+	BASILISK,
+	DRAGON,
+	GLADIATOR,
+	JINN,
+	MINOTAUR,
+	UNICORN,
+	WEEPING_ANGEL,
+} from '../../constants/creature-types.js';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyFn = (...args: any[]) => any;
@@ -64,6 +74,70 @@ export interface RandomCharacterOptions {
 	icon?: string;
 	[key: string]: unknown;
 }
+
+/**
+ * What a boss may hold (owner, roadmap 33). The original engine dropped a hand-written list
+ * (Flee, Harden, Heal, Hit, Whiskey Shot) from boss decks, and its last refill let some back:
+ * on main about 17% of boss hand slots were basics, a third of boss hands held a heal, and
+ * none held Flee. The intent was bosses that press the attack rather than run or stall, not
+ * bosses with no basic cards. So: a boss never holds Flee, and a hand holds at most
+ * `BOSS_MAX_HEALS` plain heals (a heal card any monster can hold: Heal, Whiskey Shot, Scotch,
+ * Revive). Plain Hits, boosts, and shields are held like any other card; monster-specific
+ * heals such as Gloaming Rest and Horn of Proof are powers, not stalling, and are uncapped.
+ */
+export const BOSS_MAX_HEALS = 1;
+const MONSTER_TYPES = [BASILISK, GLADIATOR, JINN, MINOTAUR, WEEPING_ANGEL, UNICORN, DRAGON];
+const cardClasses = (card: any): string[] => card.cardClass ?? card.constructor?.cardClass ?? [];
+const permittedHolders = (card: any): string[] =>
+	card.permittedClassesAndTypes ?? card.constructor?.permittedClassesAndTypes ?? [];
+
+/** A heal any monster could hold, which a boss may carry only `BOSS_MAX_HEALS` of. */
+export const isPlainHeal = (card: any): boolean =>
+	cardClasses(card).includes(HEAL) && !permittedHolders(card).some(holder => MONSTER_TYPES.includes(holder));
+
+/**
+ * The original engine's weak list, kept as it behaved on main: filtered out of the starting
+ * deck and the first refill, then one more refill tops the deck up. That leaves basics in a
+ * boss hand at about 17% of slots. Filtering every refill left none; filtering none gave 3.3
+ * plain Hits a hand. The owner's intent is less filler, not none.
+ */
+const BOSS_WEAK_TYPES = ['Flee', 'Harden', 'Heal', 'Hit', 'Whiskey Shot'];
+const isBossWeak = (card: any): boolean => BOSS_WEAK_TYPES.includes(card.cardType);
+
+/** Never in a boss deck: a boss does not run. */
+export const isBossBanned = (card: any): boolean => card.cardType === 'Flee';
+
+/** A boss hand from its shuffled options: at most `BOSS_MAX_HEALS` plain heals, in order. */
+export const pickBossHand = (options: any[], slots: number): any[] => {
+	const hand: any[] = [];
+	let heals = 0;
+	for (const card of options) {
+		if (hand.length >= slots) break;
+		if (isBossBanned(card)) continue;
+		if (isPlainHeal(card)) {
+			if (heals >= BOSS_MAX_HEALS) continue;
+			heals += 1;
+		}
+		hand.push(card);
+	}
+	return hand;
+};
+
+/**
+ * `fillDeck` tops a deck up to its minimum; `clean` drops what a boss must not hold (a no-op
+ * for a player). Repeat until a refill adds nothing `clean` removes, with a bound so a pool
+ * made only of filler still returns.
+ */
+const fillWithoutFiller = (deck: any[], creature: any, clean: (deck: any[]) => any[]): any[] => {
+	let current = deck;
+	for (let attempt = 0; attempt < 50; attempt += 1) {
+		const filled = _fillDeck([...current], {}, creature);
+		const kept = clean(filled);
+		if (kept.length === filled.length) return filled;
+		current = kept;
+	}
+	return current;
+};
 
 const randomCharacter = ({
 	battles,
@@ -142,18 +216,18 @@ const randomCharacter = ({
 		...bossOwnerIdentity,
 	});
 
-	let cleanBossDeck: (deck: any[]) => any[];
-	if (isBoss) {
-		const weakTypes = ['Flee', 'Harden', 'Heal', 'Hit', 'Whiskey Shot'];
-		cleanBossDeck = deck => deck.filter((card: any) => !weakTypes.includes(card.cardType));
-	} else {
-		cleanBossDeck = deck => deck;
-	}
+	const cleanBossDeck = (deck: any[]): any[] =>
+		isBoss ? deck.filter((card: any) => !isBossBanned(card)) : deck;
 
 	if (isBoss) {
-		let deck = cleanBossDeck(_getMinimumDeck());
-		deck = cleanBossDeck(_fillDeck(deck, {}, character));
-		character.deck = _fillDeck(deck, {}, character);
+		// Top up and filter until a refill adds no banned card. The last refill used to go
+		// unfiltered, so the filter was partly undone (a Codex review of PR #407).
+		const withoutWeak = (deck: any[]) => deck.filter((card: any) => !isBossWeak(card));
+		let deck = withoutWeak(_getMinimumDeck());
+		deck = withoutWeak(_fillDeck(deck, {}, character));
+		// The last top-up may bring basics back, but never Flee (a Codex review of PR #407
+		// found this refill unfiltered).
+		character.deck = fillWithoutFiller(deck, character, cleanBossDeck);
 
 		character.deck.forEach((card: any) => {
 			if (typeof card.levelUp === 'function') {
@@ -166,8 +240,17 @@ const randomCharacter = ({
 		const eligibleCards = shuffle(
 			character.deck.filter((card: any) => monster.canHoldCard(card)),
 		);
-		const extraCards = _fillDeck([], {}, monster);
-		monster.cards = [...eligibleCards, ...extraCards].slice(0, monster.cardSlots);
+		if (!isBoss) {
+			const extraCards = _fillDeck([], {}, monster);
+			monster.cards = [...eligibleCards, ...extraCards].slice(0, monster.cardSlots);
+			return;
+		}
+		// The hand's extra cards (and any top-up the heal cap needs) pass the same rules.
+		let hand = pickBossHand([...eligibleCards, ..._fillDeck([], {}, monster)], monster.cardSlots);
+		for (let attempt = 0; hand.length < monster.cardSlots && attempt < 20; attempt += 1) {
+			hand = pickBossHand([...hand, ..._fillDeck([], {}, monster)], monster.cardSlots);
+		}
+		monster.cards = hand;
 	});
 
 	return character;

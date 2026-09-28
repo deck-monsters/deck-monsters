@@ -89,6 +89,12 @@ An ancient dragon (level 10+) breathes fire that cannot be dodged and burns for 
 | wind → narration | `{player} has {his} breath back.` |
 | wind → narration | `🔥 {player} is winded, and smoke trails from {his} nostrils. (-2 ac until {his} next card.)` |
 
+**Lines elsewhere that name this card:**
+
+| Where | Template |
+|---|---|
+| `packages/engine/src/cards/helpers/signature.ts` [DRAGON] | `Fire Breath` |
+
 ## Mood Scales
 
 Source: `packages/engine/src/cards/mood-scales.ts`.

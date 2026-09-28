@@ -75,3 +75,57 @@ describe('characters/helpers/random', () => {
 		});
 	});
 });
+
+describe('boss hands', () => {
+	// A boss never runs and never stalls on heals, but still holds basic cards (owner,
+	// roadmap 33): on main about 17% of boss hand slots were basics, a third held a heal.
+	const load = async (path: string, name: string) => new (await import(path))[name]();
+
+	it('counts only heals any monster could hold against the cap', async () => {
+		const { isPlainHeal } = await import('./random.js');
+		for (const [path, name] of [
+			['../../cards/heal.js', 'HealCard'],
+			['../../cards/scotch.js', 'ScotchCard'],
+			['../../cards/whiskey-shot.js', 'WhiskeyShotCard'],
+		]) {
+			expect(isPlainHeal(await load(path, name)), name).to.equal(true);
+		}
+		for (const [path, name] of [
+			['../../cards/gloaming-rest.js', 'GloamingRestCard'],
+			['../../cards/horn-of-proof.js', 'HornOfProofCard'],
+			['../../cards/hit.js', 'HitCard'],
+			['../../cards/turkey-thigh.js', 'TurkeyThighCard'],
+		]) {
+			expect(isPlainHeal(await load(path, name)), name).to.equal(false);
+		}
+	});
+
+	it('picks at most one plain heal and never Flee, keeping the order', async () => {
+		const { pickBossHand, BOSS_MAX_HEALS } = await import('./random.js');
+		const heal = () => load('../../cards/heal.js', 'HealCard');
+		const hit = () => load('../../cards/hit.js', 'HitCard');
+		const options = [await heal(), await load('../../cards/flee.js', 'FleeCard'), await hit(), await heal(), await hit()];
+		const hand = pickBossHand(options, 9);
+		expect(hand.map((card: any) => card.cardType)).to.deep.equal(['Heal', 'Hit', 'Hit']);
+		expect(BOSS_MAX_HEALS).to.equal(1);
+	});
+
+	it('holds full hands with at most one plain heal and no Flee, and still some basics', async () => {
+		// Also covers the refills: the last deck refill and a hand's extra cards used to skip
+		// the boss rule (a Codex review of PR #407).
+		await helpersReady;
+		const { isPlainHeal } = await import('./random.js');
+		let basics = 0;
+		for (let i = 0; i < 60; i += 1) {
+			const boss = randomCharacter({ isBoss: true });
+			expect(boss.deck.some((card: any) => card.cardType === 'Flee'), `deck ${i}`).to.equal(false);
+			for (const monster of boss.monsters as any[]) {
+				expect(monster.cards).to.have.length(monster.cardSlots);
+				expect(monster.cards.filter((card: any) => card.cardType === 'Flee')).to.deep.equal([]);
+				expect(monster.cards.filter((card: any) => isPlainHeal(card)).length, `hand ${i}`).to.be.at.most(1);
+				basics += monster.cards.filter((card: any) => card.cardType === 'Hit' || isPlainHeal(card)).length;
+			}
+		}
+		expect(basics).to.be.above(0);
+	});
+});

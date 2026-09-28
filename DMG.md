@@ -273,9 +273,9 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  Equip yourself for the fight 
  ahead.
 
- Boost: ac +2 (max boost of level 
- * 2, or 1 for beginner, then 
- boost granted to hp instead).
+ Boost: ac +2 (max total boost of 
+ level + 1, then boost granted to 
+ hp instead).
  If hit by melee attack, damage 
  comes out of ac boost first.
 
@@ -442,9 +442,9 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  It's time to put on your big boy 
  pants, and toughen up!
 
- Boost: ac +1 (max boost of level 
- * 2, or 1 for beginner, then 
- boost granted to hp instead).
+ Boost: ac +1 (max total boost of 
+ level + 1, then boost granted to 
+ hp instead).
  If hit by melee attack, damage 
  comes out of ac boost first.
 
@@ -470,6 +470,8 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  Curse: xp -20
  Can reduce xp down to 40, then 
  takes 4 from hp instead.
+ The curse lands only if the hit 
+ does.
 
  Level: 1
  Usable by: Cleric, Jinn
@@ -617,11 +619,13 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  do the trick.
 
  Hit: 1d20 vs ac / Damage: 1d4
- Curse: int -1-2 depending on how 
- hard the hit is, with a maximum 
- total curse of -(level + 1). 
- Afterwards penalties come out of 
- hp instead.
+ Curse: int -1 to -2 depending on 
+ how hard the hit is, with a 
+ maximum total curse of -(level + 
+ 1), at most -5. Afterwards 
+ penalties come out of hp 
+ instead. The curse lands only if 
+ the hit does.
 
  Level: 1
  Usable by: Barbarian, Fighter
@@ -695,7 +699,8 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  Curse: ac -1, with a maximum 
  total curse of -(level + 1). 
  Afterwards penalties come out of 
- hp instead.
+ hp instead. The curse lands only 
+ if the hit does.
 
  Level: 1
  Usable by: All
@@ -902,10 +907,9 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  A low purr in your ears helps 
  you focus your energy.
 
- Boost: int +2 (max boost of 
- level * 2, or 1 for beginner, 
- then boost granted to hp 
- instead).
+ Boost: int +2 (max total boost 
+ of level + 1, at most +5, then 
+ boost granted to hp instead).
 
  Level: 2
  Usable by: Bard, Cleric
@@ -1489,9 +1493,11 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
 
  Hit: 1d20 vs ac / Damage: 1d4
  Curse: dex -1, with a maximum 
- total curse of -(level + 1). 
- Afterwards penalties come out of 
- hp instead.
+ total curse of -(level + 1), at 
+ most -5. Afterwards penalties 
+ come out of hp instead. The 
+ curse lands only if the hit 
+ does.
 
  Level: 1
  Usable by: All
@@ -1820,9 +1826,9 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  deflect the blows of thine 
  enemies.
 
- Boost: ac +2 (max boost of level 
- * 2, or 1 for beginner, then 
- boost granted to hp instead).
+ Boost: ac +2 (max total boost of 
+ level + 1, then boost granted to 
+ hp instead).
  If hit by melee attack, damage 
  comes out of ac boost first.
 

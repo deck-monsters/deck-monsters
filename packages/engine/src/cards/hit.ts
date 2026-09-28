@@ -131,6 +131,12 @@ export class HitCard extends BaseCard<HitCardOptions> {
 		return damageRoll;
 	}
 
+	/**
+	 * Runs when the attack roll succeeds, before damage is rolled. A curse attack applies its
+	 * curse here, so a miss curses nobody (roadmap 33).
+	 */
+	protected async onLanded(_player: any, _target: any): Promise<void> {}
+
 	async effect(player: any, target: any, ring: any, _activeContestants?: any): Promise<any> {
 		const { attackRoll, success, strokeOfLuck, curseOfLoki } = this.hitCheck(
 			player,
@@ -139,6 +145,7 @@ export class HitCard extends BaseCard<HitCardOptions> {
 		await subEventDelay(ring?.pacingMultiplier);
 
 		if (success) {
+			await this.onLanded(player, target);
 			const damageRoll = this.rollForDamage(player, target, strokeOfLuck);
 			await subEventDelay(ring?.pacingMultiplier);
 			return target.hit(damageRoll.result, player, this);

@@ -95,6 +95,12 @@ Turns immobilized resets on curse of loki.
 | immobilizeCheck → outcome | `pin succeeded!` |
 | immobilizeCheck → reason | `to see if {he} pins {target}.` |
 
+**Lines elsewhere that name this card:**
+
+| Where | Template |
+|---|---|
+| `packages/engine/src/cards/helpers/signature.ts` [MINOTAUR] | `Horn Gore` |
+
 ## Horn Swipe
 
 Source: `packages/engine/src/cards/horn-swipe.ts`.

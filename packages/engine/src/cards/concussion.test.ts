@@ -10,7 +10,7 @@ describe('./cards/concussion.ts', () => {
 		const hit = new HitCard({ damageDice: '1d4' });
 
 		const stats = `${hit.stats}
-Curse: int -1-2 depending on how hard the hit is, with a maximum total curse of -(level + 1). Afterwards penalties come out of hp instead.`;
+Curse: int -1 to -2 depending on how hard the hit is, with a maximum total curse of -(level + 1), at most -5. Afterwards penalties come out of hp instead. The curse lands only if the hit does.`;
 
 		expect(concussion).to.be.an.instanceof(ConcussionCard);
 		expect(concussion.icon).to.equal('🥊');
@@ -22,6 +22,13 @@ Curse: int -1-2 depending on how hard the hit is, with a maximum total curse of 
 
 	it('decreases int', () => {
 		const concussion = new ConcussionCard();
+		// The curse lands with the hit, so force one (roadmap 33).
+		(concussion as any).hitCheck = () => ({
+			attackRoll: { result: 20, naturalRoll: { result: 20 } },
+			success: true,
+			strokeOfLuck: false,
+			curseOfLoki: false,
+		});
 
 		const player = new Gladiator({ name: 'player' });
 		const target = new Gladiator({ name: 'target' });

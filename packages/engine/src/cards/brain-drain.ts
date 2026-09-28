@@ -32,7 +32,7 @@ export class BrainDrainCard extends CurseCard {
 		let stats = `Curse: ${this.cursedProp} ${this.curseAmount}\nCan reduce ${this.cursedProp} down to ${maxMod}, then takes ${max(this.damageDice)} from hp instead.`;
 
 		if (this.hasChanceToHit) {
-			stats = `${hit.stats}\n${stats}`;
+			stats = `${hit.stats}\n${stats}\nThe curse lands only if the hit does.`;
 		}
 
 		return stats;

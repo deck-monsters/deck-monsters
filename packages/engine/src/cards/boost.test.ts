@@ -8,7 +8,7 @@ describe('./cards/boost.ts', () => {
 		const boostCard = new BoostCard();
 
 		const stats =
-			'Boost: ac +1 (max boost of level * 2, or 1 for beginner, then boost granted to hp instead).\nIf hit by melee attack, damage comes out of ac boost first.';
+			'Boost: ac +1 (max total boost of level + 1, then boost granted to hp instead).\nIf hit by melee attack, damage comes out of ac boost first.';
 
 		expect(boostCard).to.be.an.instanceof(BoostCard);
 		expect(boostCard.icon).to.equal('🆙');
@@ -21,7 +21,7 @@ describe('./cards/boost.ts', () => {
 		const boostCard = new BoostCard({ boostAmount: 20 } as any);
 
 		const stats =
-			'Boost: ac +20 (max boost of level * 2, or 1 for beginner, then boost granted to hp instead).\nIf hit by melee attack, damage comes out of ac boost first.';
+			'Boost: ac +20 (max total boost of level + 1, then boost granted to hp instead).\nIf hit by melee attack, damage comes out of ac boost first.';
 
 		expect(boostCard).to.be.an.instanceof(BoostCard);
 		expect(boostCard.icon).to.equal('🆙');
