@@ -1,11 +1,13 @@
 #!/usr/bin/env node
 /**
- * Plan the calibration ladder (roadmap 34 task 3): on the reference chassis, a 9-card hand of
- * k Hits and 9-k null cards against 9 Hits, for k = 0..9 at each level, in two independent
- * seed sets. The score curve maps any hand's score back to Hit-equivalents (HE). Null cards
- * take a slot, so action economy is held fixed; each unit shuffles its hand from its own seed,
- * so slot position averages out across units.
- * `node dist/scripts/plan-ladder.js --out plan.json [--fights 100] [--units-per-rung 2]
+ * Plan the calibration ladder (roadmap 34 tasks 3-4): on the reference chassis, two-sided.
+ * Rungs k = 0..9: a hand of k Hits and 9-k null cards against 9 Hits. Rungs k = 10..18: 9 Hits
+ * against an opponent of 18-k Hits and k-9 nulls, so a hand worth more than 9 Hits has a rung
+ * to land on (the first, one-sided ladder topped out at 9 Hits and read every stronger card as
+ * exactly one Hit). Null cards take a slot, so action economy is held fixed; each unit
+ * shuffles its hands from its own seed, and several units per rung average slot position out
+ * (a null's cost depends on its slot). Two independent seed sets check repeatability.
+ * `node dist/scripts/plan-ladder.js --out plan.json [--fights 35] [--units-per-rung 6]
  * [--levels 0,1,2,3,4,5,6,7,10,12,15,20]`.
  */
 import '../sim-env.js';
@@ -20,8 +22,8 @@ function arg(name: string, fallback: string): string {
 }
 
 const out = arg('--out', 'plan-ladder.json');
-const fights = Number(arg('--fights', '100'));
-const perRung = Number(arg('--units-per-rung', '2'));
+const fights = Number(arg('--fights', '35'));
+const perRung = Number(arg('--units-per-rung', '6'));
 const levels = arg('--levels', '0,1,2,3,4,5,6,7,10,12,15,20').split(',').map(Number);
 const HAND = 9;
 
@@ -39,15 +41,17 @@ const units: Unit[] = [];
 for (const set of ['A', 'B']) {
 	let seed = set === 'A' ? 110_003 : 910_007;
 	for (const level of levels) {
-		for (let k = 0; k <= HAND; k += 1) {
+		for (let k = 0; k <= 2 * HAND; k += 1) {
 			for (let u = 0; u < perRung; u += 1) {
 				seed += 7919;
+				const mine = k <= HAND ? shuffledHand(k, seed) : (Array(HAND).fill('Hit') as string[]);
+				const theirs = k <= HAND ? (Array(HAND).fill('Hit') as string[]) : shuffledHand(2 * HAND - k, seed + 1);
 				units.push({
 					id: `ladder:${set}:L${level}:k${k}:u${u}`,
 					group: `ladder|${set}|L${level}|k${k}`,
 					sides: [
-						{ type: 'Gladiator', level, deck: shuffledHand(k, seed), chassis: 'reference' },
-						{ type: 'Gladiator', level, deck: Array(HAND).fill('Hit'), chassis: 'reference' },
+						{ type: 'Gladiator', level, deck: mine, chassis: 'reference' },
+						{ type: 'Gladiator', level, deck: theirs, chassis: 'reference' },
 					],
 					fights,
 					seed,

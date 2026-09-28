@@ -1,19 +1,22 @@
 /**
- * The calibration ladder as a conversion (roadmap 34, "Hit-equivalent"). A ladder is, per
- * level, the expected score of a reference-chassis hand of k Hits and 9-k null cards against
- * 9 Hits, for k = 0..9. `toHE` inverts it: the number of Hits a hand is worth. A card's value
- * is then the hand's HE minus what the rest of the hand is worth (8 Hits: 8).
+ * The calibration ladder as a conversion (roadmap 34, "Hit-equivalent"). Per level, rung k is
+ * the expected score of a reference-chassis hand against 9 Hits: k Hits and 9-k nulls for
+ * k <= 9, and for k > 9 a full 9-Hit hand against an opponent missing k-9 Hits (worth k Hits
+ * relative to it). `toHE` inverts it: the Hits a hand is worth against 9 Hits, 0..18. A card's
+ * value is the hand's HE minus what the rest of the hand is worth (8 Hits: 8).
  *
  * The curve is made monotone before inverting (pool-adjacent-violators), since a rung can dip
- * below its neighbour by noise; the inverse is piecewise linear between rungs and clamped to
- * 0..9, so a hand worth more than 9 Hits reads as "above the ladder".
+ * below its neighbour by noise; the inverse is piecewise linear between rungs and clamped at
+ * the ends.
  */
 import type { UnitResult } from './units.js';
 
-/** level -> scores for k = 0..9. */
+/** level -> scores for rungs k = 0..18 (9 is a 9-Hit mirror). */
 export type Ladder = Record<number, number[]>;
 
 export const LADDER_HAND = 9;
+/** Highest rung: 9 Hits against an opponent with none. */
+export const LADDER_TOP = 2 * LADDER_HAND;
 
 /** Pool every ladder unit (all seed sets) into one curve per level. */
 export function ladderFromResults(results: UnitResult[], set?: string): Ladder {
@@ -30,7 +33,7 @@ export function ladderFromResults(results: UnitResult[], set?: string): Ladder {
 	const ladder: Ladder = {};
 	for (const [key, a] of acc) {
 		const [level, k] = key.split('|').map(Number) as [number, number];
-		(ladder[level] ??= Array(LADDER_HAND + 1).fill(NaN))[k] = a.score / a.fights;
+		(ladder[level] ??= Array(LADDER_TOP + 1).fill(NaN))[k] = a.score / a.fights;
 	}
 	for (const level of Object.keys(ladder)) ladder[Number(level)] = isotonic(ladder[Number(level)]!);
 	return ladder;
@@ -51,26 +54,28 @@ export function isotonic(values: number[]): number[] {
 	return blocks.flatMap(b => Array(b.n).fill(b.sum / b.n) as number[]);
 }
 
-/** Hit-equivalents of a hand that scored `score` at `level` (0..9, linear between rungs). */
+/** Hit-equivalents of a hand that scored `score` at `level` (linear between rungs, clamped). */
 export function toHE(ladder: Ladder, level: number, score: number): number {
 	const curve = ladder[level];
 	if (!curve) throw new Error(`No ladder for level ${level}`);
+	const top = curve.length - 1;
 	if (score <= curve[0]!) return 0;
-	if (score >= curve[LADDER_HAND]!) return LADDER_HAND;
-	for (let k = 1; k <= LADDER_HAND; k += 1) {
+	if (score >= curve[top]!) return top;
+	for (let k = 1; k <= top; k += 1) {
 		const lo = curve[k - 1]!;
 		const hi = curve[k]!;
 		if (score <= hi) return hi === lo ? k : k - 1 + (score - lo) / (hi - lo);
 	}
-	return LADDER_HAND;
+	return top;
 }
 
 /** The expected score of a hand worth `he` Hit-equivalents at `level`. */
 export function fromHE(ladder: Ladder, level: number, he: number): number {
 	const curve = ladder[level];
 	if (!curve) throw new Error(`No ladder for level ${level}`);
-	const x = Math.max(0, Math.min(LADDER_HAND, he));
+	const top = curve.length - 1;
+	const x = Math.max(0, Math.min(top, he));
 	const k = Math.floor(x);
-	if (k >= LADDER_HAND) return curve[LADDER_HAND]!;
+	if (k >= top) return curve[top]!;
 	return curve[k]! + (x - k) * (curve[k + 1]! - curve[k]!);
 }

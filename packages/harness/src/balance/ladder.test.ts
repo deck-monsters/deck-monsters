@@ -21,6 +21,9 @@ describe('balance/ladder', () => {
 	it('clamps to the ends of the ladder', () => {
 		expect(toHE(ladder, 3, -0.1)).to.equal(0);
 		expect(toHE(ladder, 3, 0.6)).to.equal(9);
+		const twoSided: Ladder = { 3: [...ladder[3]!, 0.6, 0.7, 0.8, 0.85, 0.9, 0.93, 0.96, 0.98, 1] };
+		expect(toHE(twoSided, 3, 0.65)).to.be.closeTo(10.5, 1e-9);
+		expect(toHE(twoSided, 3, 1)).to.equal(18);
 		expect(fromHE(ladder, 3, 12)).to.equal(0.5);
 		expect(() => toHE(ladder, 5, 0.3)).to.throw('No ladder');
 	});

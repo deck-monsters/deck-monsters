@@ -96,11 +96,11 @@ if (ladder.length) {
 		acc.set(key, a);
 	}
 	const ladderOut: Record<string, Record<string, Interval[]>> = {};
-	process.stdout.write('\nCalibration ladder: score (%) of k Hits + (9-k) nulls against 9 Hits, reference chassis\n');
-	process.stdout.write(`${'set level'.padEnd(12)}${Array.from({ length: 10 }, (_, k) => `k=${k}`.padStart(7)).join('')}  monotone\n`);
+	process.stdout.write('\nCalibration ladder: score (%) at rung k (k <= 9: k Hits + (9-k) nulls against 9 Hits; k > 9: 9 Hits against 18-k Hits), reference chassis\n');
+	process.stdout.write(`${'set level'.padEnd(12)}${Array.from({ length: 19 }, (_, k) => `${k}`.padStart(4)).join('')}  monotone\n`);
 	for (const set of [...sets].sort()) {
 		for (const level of [...levels].sort((x, y) => x - y)) {
-			const row = Array.from({ length: 10 }, (_, k) => {
+			const row = Array.from({ length: 19 }, (_, k) => {
 				const a = acc.get(`${set}|${level}|${k}`);
 				return a ? wilson(a.score, a.fights) : undefined;
 			});
@@ -108,7 +108,7 @@ if (ladder.length) {
 			const estimates = row.map(i => i?.estimate ?? NaN);
 			// Monotone within noise: no rung's interval lies wholly below the one before.
 			const monotone = row.every((i, k) => k === 0 || !i || !row[k - 1] || i.high >= row[k - 1]!.low);
-			process.stdout.write(`${`${set} L${level}`.padEnd(12)}${estimates.map(e => (Number.isNaN(e) ? '—' : pct(e)).padStart(7)).join('')}  ${monotone ? 'yes' : 'NO'}\n`);
+			process.stdout.write(`${`${set} L${level}`.padEnd(12)}${estimates.map(e => (Number.isNaN(e) ? '—' : pct(e)).padStart(4)).join('')}  ${monotone ? 'yes' : 'NO'}\n`);
 		}
 	}
 	output.ladder = ladderOut;
