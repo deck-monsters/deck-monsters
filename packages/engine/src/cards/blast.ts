@@ -13,6 +13,21 @@ export interface BlastCardOptions extends CardOptions {
 	levelDamage?: number;
 }
 
+/** Levels that each add the full `levelDamage`; past them, a level adds half. */
+export const FULL_SCALING_LEVELS = 10;
+
+/**
+ * The caster level Blast and Sandstorm scale by: every level up to 10, then one for every two
+ * levels past it. At +1 per level, level 15 Blast dealt 18.9 a hit against 11.7 for a Hit, to
+ * every opponent and undodgeable, and a Weeping Angel with two Blasts won 95–99% at levels
+ * 15–20 on likely decks. The owner kept casters strong late but chose to flatten the runaway
+ * past level 10, leaving early and mid game untouched (docs/roadmap/32-pass-c-mega-boss-and-balance.md).
+ */
+export const scaledCasterLevel = (level: number): number => {
+	const safe = Math.max(0, level);
+	return Math.min(safe, FULL_SCALING_LEVELS) + Math.floor(Math.max(0, safe - FULL_SCALING_LEVELS) / 2);
+};
+
 export class BlastCard extends BaseCard<BlastCardOptions> {
 	static cardClass = [AOE];
 	static cardType = 'Blast';
@@ -53,7 +68,7 @@ export class BlastCard extends BaseCard<BlastCardOptions> {
 	}
 
 	get stats(): string {
-		return `Blast: ${this.damage} base damage +${this.levelDamage} per level of the caster`;
+		return `Blast: ${this.damage} base damage +${this.levelDamage} per level of the caster (per two levels past level ${FULL_SCALING_LEVELS})`;
 	}
 
 	override getTargets(
@@ -71,7 +86,7 @@ export class BlastCard extends BaseCard<BlastCardOptions> {
 	}
 
 	effect(player: any, target: any): any {
-		const damage = this.damage + this.levelDamage * player.level;
+		const damage = this.damage + this.levelDamage * scaledCasterLevel(player.level);
 		return target.hit(damage, player, this);
 	}
 }

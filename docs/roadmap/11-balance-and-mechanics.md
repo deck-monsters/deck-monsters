@@ -98,7 +98,10 @@ Judge each item below against it.
     level 15 Blast deals 18.9 a hit and Sandstorm 16 (both `damage + 1 × level`), against
     11.7 for a Hit, so with likely decks the Weeping Angel (two Blasts) wins 95–99% and the
     Jinn 82–96% at levels 15–20. Random decks, which rarely hold two, show the Angel at 67%.
-    Whether that is "strong late" or too strong is the owner's call.
+    The owner chose half scaling past level 10 (`scaledCasterLevel`): the Angel fell to 84%
+    at level 15 and 94% at 20. The **Jinn did not move** (96% and 85%): its late strength is
+    Sandstorm's confusion, which makes opponents attack the wrong target, not its damage.
+    Open: whether the confusion needs a limit late (an owner decision).
   - If it does need a change, the choices are a to-hit roll or save, a lower rarity, or less
     level scaling. The first two soften it everywhere. The last one flattens the late-game
     caster payoff the balance target wants to keep.

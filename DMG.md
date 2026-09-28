@@ -370,7 +370,8 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  opponent in the fight.
 
  Blast: 3 base damage +1 per 
- level of the caster
+ level of the caster (per two 
+ levels past level 10)
 
  Level: Beginner
  Usable by: Cleric
@@ -1669,7 +1670,8 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  it.
 
  1 storm damage +1 per level of 
- the jinni to everyone in the 
+ the jinni (per two levels past 
+ level 10) to everyone in the 
  ring. Temporarily confuses 
  opponents and causes them to 
  mistake their targets.

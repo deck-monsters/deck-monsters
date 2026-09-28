@@ -16,7 +16,7 @@ describe('./cards/sandstorm.ts', () => {
 		expect(sandstorm).to.be.an.instanceof(SandstormCard);
 		expect((sandstorm as any).hitProbability).to.equal(30);
 		expect(sandstorm.stats).to.equal(
-			'1 storm damage +1 per level of the jinni to everyone in the ring. Temporarily confuses opponents and causes them to mistake their targets.'
+			'1 storm damage +1 per level of the jinni (per two levels past level 10) to everyone in the ring. Temporarily confuses opponents and causes them to mistake their targets.'
 		);
 	});
 

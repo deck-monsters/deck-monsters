@@ -20,7 +20,7 @@ Console, in one new branch and PR.
 |---|---|---|---|
 | 1 | Workshop actions echo into the Console twice (the engine's lines plus the server's summary); keep one line per action (10b #195) | Done | 1b56fb7 |
 | 2 | Harness: likely-deck archetypes per class beside the random hand (`deckStyle`), and ring events (`ringEvents`), both as `sim:rings` flags | Done | 675f493 |
-| 3 | Balance: the Unicorn strong at every level, the Gladiator weak early, measured with task 2 against the class-curve target. Investigated: no card change the evidence supports; the one robust finding (level-scaled Blast and Sandstorm late) waits for the owner | Findings recorded | this commit |
+| 3 | Balance: the Unicorn strong at every level, the Gladiator weak early, measured with task 2 against the class-curve target. Investigated: no Unicorn or Gladiator change the evidence supports; the one robust finding, level-scaled Blast and Sandstorm late, now scales by half past level 10 (owner) | Done | 9634d46, this commit |
 | 4 | The mega boss event: daily per room, announced 30 minutes ahead with a countdown, a two-minute hold on ordinary fights, fitted to about 20%, relics and minions, rewards, called off below two humans; `sim:mega` | Done | 14f3d89 |
 | 5 | Docs close-out, generated references, independent review | Not started | — |
 
@@ -32,6 +32,7 @@ Console, in one new branch and PR.
 | Announcement | **30 minutes** ahead, with reminders, and a countdown players can see |
 | Difficulty | Fitted to the humans in the ring when it starts so humans win **about 20%** |
 | Reward | Every surviving challenger gets **bonus coins and XP and a guaranteed rare card** |
+| Blast late (task 3) | **Half scaling past level 10**: Blast and Sandstorm add their level damage for every caster level up to 10, then one per two levels |
 | Cancellation (from [12](12-new-content-backlog.md#mega-boss-event)) | No more than one human in the ring when it is due: cancelled with flavour, and a regular boss instead |
 
 ## Evidence: class curves, random against likely decks (`sim:rings curves`, 120 fights per cell)
@@ -89,3 +90,9 @@ Probes on likely decks (80–360 fights each), damage per hit from `SimResult.av
   Angel (two Blasts) wins 90% against a Minotaur at level 15 and 95–99% across levels 15–20;
   the Jinn (Sandstorm) 96% at level 15. The owner's target wants casters strong late; how
   strong is a decision, not a measurement. Options are in 11's "Blast and Cleric power" item.
+
+After the owner's decision (`scaledCasterLevel`, `cards/blast.ts`), likely decks, same seeds:
+levels 1–10 are unchanged, as they should be. The Weeping Angel falls from 93% to 84% at
+level 15 and from 99% to 94% at level 20. The Jinn does not move (96% and 85%), so its late
+strength is Sandstorm's confusion (opponents attack the wrong target), not its damage; that
+is recorded in 11 for the owner rather than changed here.
