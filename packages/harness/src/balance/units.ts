@@ -27,6 +27,23 @@ export interface Unit {
 	rotate?: boolean;
 	/** Free-form labels a planner wants back in the result. */
 	tags?: Record<string, string | number>;
+	/** Record excitement (rounds, rare rolls, turnarounds); see `ExcitementTally`. */
+	excitement?: boolean;
+}
+
+/**
+ * Fight-level excitement summed over a unit (roadmap 35 task 1). Turnarounds count decisive
+ * fights whose winner fell at least 25 (or 50) points of HP fraction behind its best opponent
+ * at some point: the comebacks and the "please get a Loki" moments the guardrails protect.
+ */
+export interface ExcitementTally {
+	fights: number;
+	decisive: number;
+	rounds: number;
+	loki: number;
+	luck: number;
+	turnaround25: number;
+	turnaround50: number;
 }
 
 export interface Plan {
@@ -55,6 +72,8 @@ export interface UnitResult {
 	rotations: Array<{ firstSide: number; fights: number; scores: number[] }>;
 	ms: number;
 	error?: string;
+	/** When the unit asked for it. */
+	excitement?: ExcitementTally;
 }
 
 const label = (position: number): string => `Sim ${position + 1}`;
@@ -66,6 +85,7 @@ export async function runUnit(unit: Unit): Promise<UnitResult> {
 	const rotations = unit.rotate === false ? [0] : Array.from({ length: n }, (_, r) => r);
 	const totals = unit.sides.map(() => ({ wins: 0, draws: 0, losses: 0 }));
 	const perRotation: UnitResult['rotations'] = [];
+	const excitement: ExcitementTally = { fights: 0, decisive: 0, rounds: 0, loki: 0, luck: 0, turnaround25: 0, turnaround50: 0 };
 
 	for (const r of rotations) {
 		// order[position] = side index; position 0 moves first.
@@ -75,7 +95,19 @@ export async function runUnit(unit: Unit): Promise<UnitResult> {
 			fights: unit.fights,
 			seed: unit.seed,
 			roomId: `batch-${unit.id}-r${r}`,
+			...(unit.excitement ? { trackExcitement: true } : {}),
 		});
+		for (const f of res.excitement ?? []) {
+			excitement.fights += 1;
+			excitement.rounds += f.rounds;
+			excitement.loki += f.loki;
+			excitement.luck += f.luck;
+			if (f.winnerLowestLead !== undefined) {
+				excitement.decisive += 1;
+				if (f.winnerLowestLead <= -0.25) excitement.turnaround25 += 1;
+				if (f.winnerLowestLead <= -0.5) excitement.turnaround50 += 1;
+			}
+		}
 		// A fight the engine cancelled (an internal error `ring.fight()` swallowed) still gets an
 		// empty `winnersByFight` entry, which would score as a draw. Fail the unit instead, so it
 		// is not persisted as finished and runs again on resume (a Codex review of #408).
@@ -109,5 +141,6 @@ export async function runUnit(unit: Unit): Promise<UnitResult> {
 		sides: totals.map(t => ({ ...t, score: fights ? (t.wins + t.draws / 2) / fights : NaN })),
 		rotations: perRotation,
 		ms: Date.now() - started,
+		...(unit.excitement ? { excitement } : {}),
 	};
 }

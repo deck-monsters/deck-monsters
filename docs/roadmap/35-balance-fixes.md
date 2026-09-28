@@ -8,7 +8,7 @@ tags: [roadmap, balance, cards, monsters]
 ---
 # 35 — Balance Fixes: First Pass on Measured Evidence
 
-**Status:** Planned (2026-09-28). Starts after the measurement PR from
+**Status:** In progress (2026-09-28): PR C on branch `claude/balance-fixes-c`. Started after the measurement PR from
 [34](34-balance-methodology.md) (tasks 6, 6b, 7, and the lean task 9) merges. Two PRs, each
 within the budget rule in `AGENTS.md`.
 
@@ -170,7 +170,7 @@ changes:
 
 | # | PR | Task | Acceptance | Status | Commit |
 |---|---|---|---|---|---|
-| 1 | C | Harness prerequisites (above) | Tests; the heal cap shows in the collection JSON; before/after mode reproduces a known result | Planned | |
+| 1 | C | Harness prerequisites (above) | Tests; the heal cap shows in the collection JSON; before/after mode reproduces a known result | Done: the heal cap and context-ranked typical hands landed in #409 (Codex review); excitement tally in `simulate()` and the runner; a holds context; `plan:matrix` and `sim:matrix-report` for before/after on fixed hands and seeds, with the guardrails | this commit |
 | 2 | C | Dragon: diagnose Fire Breath at level 1; choose the smallest body or card change; Tsunami's slight tweak | The Dragon in band at levels 1, 3, 5 on searched hands; Tsunami 0.8+ in its best context and at most the area median; no Dragon matchup under 20%; guardrails hold | Planned | |
 | 3 | C | Gladiator: early body change | The Gladiator in band at levels 1, 3, 5; brutes stronger early than late; guardrails hold | Planned | |
 | 4 | C | Confirmation run on the owner's machine, docs (card architecture doc, generated references via `build:docs`, bugs and roadmap tables) | Before/after report checked in | Planned | |

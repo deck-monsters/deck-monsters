@@ -117,6 +117,25 @@ export interface SimConfig {
 	 * wins count under `EXTRA_BOSS_LABEL`. Ignored when any spec sets a team.
 	 */
 	ringEvents?: boolean;
+	/**
+	 * Record per-fight excitement (roadmap 35 task 1; 34's Layer 6, reduced): rounds, Curse
+	 * of Loki and stroke-of-luck rolls, and how far behind the eventual winner fell. Off by
+	 * default; it reads the public `announce` events, so it costs a little.
+	 */
+	trackExcitement?: boolean;
+}
+
+/**
+ * One fight's excitement record. `winnerLowestLead` is the winner's worst HP position during
+ * the fight: its HP fraction minus the best opponent's, at its lowest (−1 to 1). A winner that
+ * fell to −0.5 came back from half its health behind: the "please get a Loki" turnaround.
+ * Absent on a draw.
+ */
+export interface FightExcitement {
+	rounds: number;
+	loki: number;
+	luck: number;
+	winnerLowestLead?: number;
 }
 
 /** The win label for a boss a ring event added (the Gauntlet's extras). */
@@ -186,6 +205,8 @@ export interface SimResult {
 	 * under-sampled.
 	 */
 	cancelledFights: number;
+	/** Per fight, in order, when `trackExcitement` is set. */
+	excitement?: FightExcitement[];
 }
 
 /** Mean/median/p90/min/max over a sample set. Empty input reads as all-zero with count 0
@@ -535,6 +556,49 @@ export async function simulate(config: SimConfig): Promise<SimResult> {
 		},
 	});
 
+	// Excitement: HP fractions by monster name (the sim labels) and the lowest lead each side
+	// reached in the current fight. Reset when a fight resolves.
+	const excitement: FightExcitement[] = [];
+	let hpFrac = new Map<string, number>();
+	let lowestLead = new Map<string, number>();
+	let loki = 0;
+	let luck = 0;
+	const unsubExcitement = config.trackExcitement
+		? game.eventBus.subscribe(`sim-excitement:${subscriberRunId}:${roomId}`, {
+				deliver(ev: GameEvent) {
+					if (ev.type === 'ring.fightResolved') {
+						const p = ev.payload as FightResolvedPayload;
+						const winners = winnersByFight[winnersByFight.length - 1] ?? [];
+						const winner = winners.find(w => lowestLead.has(w));
+						excitement.push({
+							rounds: typeof p.rounds === 'number' ? p.rounds : 0,
+							loki,
+							luck,
+							...(winner ? { winnerLowestLead: lowestLead.get(winner)! } : {}),
+						});
+						hpFrac = new Map();
+						lowestLead = new Map();
+						loki = 0;
+						luck = 0;
+						return;
+					}
+					if (ev.type !== 'announce') return;
+					const payload = ev.payload as { roll?: { strokeOfLuck?: boolean; curseOfLoki?: boolean }; combat?: { kind?: string; target?: { name?: string }; hp?: number; maxHp?: number } };
+					if (payload.roll?.curseOfLoki) loki += 1;
+					if (payload.roll?.strokeOfLuck) luck += 1;
+					const combat = payload.combat;
+					if ((combat?.kind === 'hit' || combat?.kind === 'heal') && combat.target?.name && combat.maxHp) {
+						hpFrac.set(combat.target.name, Math.max(0, (combat.hp ?? 0) / combat.maxHp));
+						for (const name of names) {
+							const mine = hpFrac.get(name) ?? 1;
+							const best = Math.max(...names.filter(n => n !== name).map(n => hpFrac.get(n) ?? 1));
+							lowestLead.set(name, Math.min(lowestLead.get(name) ?? 0, mine - best));
+						}
+					}
+				},
+			})
+		: undefined;
+
 	const unsubDrop = game.eventBus.subscribe(`sim-drop:${subscriberRunId}:${roomId}`, {
 		deliver(ev: GameEvent) {
 			if (ev.type === 'ring.cardDrop' && ev.scope === 'public') cardDrops += 1;
@@ -690,6 +754,7 @@ export async function simulate(config: SimConfig): Promise<SimResult> {
 		ring.clearRing();
 		unsubFight();
 		unsubDrop();
+		unsubExcitement?.();
 		game.dispose();
 		Math.random = prevRandom;
 		if (prevRing === undefined) {
@@ -728,6 +793,7 @@ export async function simulate(config: SimConfig): Promise<SimResult> {
 		coinsByOutcome,
 		xpPerMonster: summarizeSamples(xpSamples),
 		cancelledFights,
+		...(config.trackExcitement ? { excitement } : {}),
 	};
 }
 
