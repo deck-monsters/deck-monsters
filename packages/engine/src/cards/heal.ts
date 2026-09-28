@@ -58,8 +58,13 @@ export class HealCard extends BaseCard<HealCardOptions> {
 			!player.encounterModifiers.healModifier ||
 			player.encounterModifiers.healModifier < 0
 		) {
+			// INT helps a heal and never hurts it. A negative INT modifier (a -1 INT monster at
+			// low level, or a Concussion) used to be subtracted in full from every play: a
+			// penalty is below zero, so this branch recomputed it each time instead of letting
+			// it fade like a bonus. On Heal's 1d4, -2 healed 0.75 hp on average and nothing half
+			// the time. Since temporary stat changes move rolls (10b #175), a curse reaches here.
 			player.encounterModifiers.healModifier =
-				player.intModifier + this.modifier;
+				Math.max(player.intModifier, 0) + this.modifier;
 		} else {
 			player.encounterModifiers.healModifier = Math.max(
 				player.encounterModifiers.healModifier - 1,

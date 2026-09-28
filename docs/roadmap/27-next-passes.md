@@ -123,11 +123,9 @@ owner decision in [11](11-balance-and-mechanics.md).
 - **Prompt transport for items that ask a question** ([item follow-ups](item-followups.md)),
   paired with the prompt step and flow labels in [22](22-small-leftovers.md): both need the
   same per-flow design across the prompt call sites.
-- **Feed issues that need a reproduction first**: the missing `↓ Latest` button (10 §A)
-  and odd spacing (10 §F). Neither reproduced in PR #406, which fixed the ring-feed scroll
-  jump and the emoji card-box border (10b #196, #197).
-- **Fight rewards never credited** (10 §J) needs production evidence; the in-process path
-  is already proven.
+- **Feed indentation and spacing** (10 §F): the first example is captured in the fight log.
+  The missing `↓ Latest` button and uncredited fight rewards were closed by the owner
+  (10b, "Closed without a fix").
 - **Preset loading can take cards from your other monsters**
   ([22](22-small-leftovers.md#workshop)): an owner-requested Workshop feature, one task in size,
   that could ride along with any pass touching the Workshop.

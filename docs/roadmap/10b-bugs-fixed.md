@@ -4705,3 +4705,39 @@ There is no light theme; phosphor and amber are the two feed themes checked.
 line at 36 columns and the border at 34. The line-break case fails on the first display-path wrap.
 
 **Status**: Fixed.
+
+### 198. An INT penalty was subtracted in full from every heal — FIXED
+
+**Symptom**: in a four-monster fight a Unicorn's Heals rolled `1d4 − 2` every play: "rolled
+2 −2 … 0 Empty! Not a drop left". A Concussion had just been played on it.
+
+**Root cause**: `HealCard.getHealRoll` keeps an encounter `healModifier` that starts at the
+healer's INT modifier plus the card's own and fades by one per play, to reset at zero. A
+value below zero was treated like zero and recomputed from INT on every play, so a penalty
+never faded: a bonus decayed and a penalty stayed whole. It only mattered once temporary
+stat changes began to move rolls (#175): a Unicorn or Minotaur starts at −1 INT, and a
+Concussion takes it lower. On Heal's 1d4, −2 heals 0.75 hp on average and nothing half the
+time. Whiskey Shot and Revive share the roll.
+
+**Fix**: INT helps a heal and never hurts it. The starting value is `max(INT modifier, 0)`
+plus the card's own modifier; the bonus still fades by one per play and resets. The card
+text already promised an "int bonus". Curse of Loki (1% poison) is unchanged.
+
+**Tests**: `cards/heal.test.ts`: a −2 INT healer's modifier is 0 on three plays in a row
+(fails before the fix with −3), a +2 bonus still fades 2, 1, 0 and resets, and Revive keeps
+its +3 for a cursed healer.
+
+**Status**: Fixed.
+
+## Closed without a fix
+
+These were open investigations the owner closed on 2026-09-28. Reopen with new evidence.
+
+- **J. Fight rewards may never be credited.** A player saw 2 wins, 9 losses, and no coins.
+  Pass 25 proved the in-process reward path in `reward-crediting.test.ts` (fresh, restored,
+  against a boss, and on the compiled engine). The owner believes it was an old bug since
+  fixed and has not seen it again.
+- **A. Intermittent missing `↓ Latest` button.** Not reproduced on 2026-09-28 against Test
+  Room A after #196 (wheel into history, roster collapse and expand, hiding and showing the
+  ring pane), and the owner has not seen it recur.
+
