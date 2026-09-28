@@ -308,8 +308,14 @@ Measured on the Layer 4 hands, so a later change can be checked against them:
 - **Precision.** A 95% interval on an expected score is about ±5 points at 385 fights and ±3
   at 1,067. Anything that gates a decision (Layer 4, candidate changes) is measured to ±3;
   exploration may use ±5.
-- **Common random numbers.** Every A/B comparison runs A and B on the same seeds and reports
-  the paired difference with its interval. Task 1 measures how much variance this removes.
+- **Common random numbers, measured (task 1).** A/B comparisons still run on the same seeds,
+  but the engine draws every roll from one global stream, so two versions stay in step only
+  until they first play a different card. Swapping a Hit for a Heal in the ninth slot, the
+  shared seeds removed 99% of the variance of the difference (ratio 0.01); in the first
+  slot they removed none (ratio 1.00). So budgets assume independent samples, and a paired
+  interval is used only where it is measurably narrower. Per-contestant random streams in
+  the engine's dice helpers (a harness mode, no gameplay change) would restore the pairing;
+  it is an option for later, not part of this pass.
 - **Seat-swapped pairs.** Each seed is played twice with the turn order reversed, so the
   first-mover edge cancels exactly instead of on average.
 - **Sequential stopping is for triage, not for the reported number.** An interval computed
@@ -459,7 +465,7 @@ a few), with this table updated in the same commit.
 
 | # | PR | Task | Acceptance | Status | Commit |
 |---|---|---|---|---|---|
-| 1 | A | The standalone runner (plans, append-only results, resume, chunks, shards, report); statistics; seat-swapped pairs with random turn order; worker pool. Measure throughput and chunk sizes an agent session can finish, and the variance common seeds remove; re-baseline the 33 curves without the fixed first mover | A run killed mid-way resumes without losing finished units; stats tests pass against known values; measured budget replaces the estimates; corrected curves checked in | In progress: runner, stats, and corrected curves done ([report](../reference/balance-reports/2026-09-28-class-curves.md)); a hard kill after 54 of 168 units lost nothing; 114 fights a second on 4 workers, and a 27k-fight plan ran in 4 minutes in an agent session. Still to do: the common-seed variance measurement | 98b253b, this commit |
+| 1 | A | The standalone runner (plans, append-only results, resume, chunks, shards, report); statistics; seat-swapped pairs with random turn order; worker pool. Measure throughput and chunk sizes an agent session can finish, and the variance common seeds remove; re-baseline the 33 curves without the fixed first mover | A run killed mid-way resumes without losing finished units; stats tests pass against known values; measured budget replaces the estimates; corrected curves checked in | Done: runner, stats, and corrected curves ([report](../reference/balance-reports/2026-09-28-class-curves.md)); a hard kill after 54 of 168 units lost nothing; 114-195 fights a second on 4 workers, and a 27k-fight plan ran in 4 minutes in an agent session. Common seeds help only while the two versions play the same cards (above). A first taste of order: a Heal in place of the first Hit cost 12.6 points; in place of the ninth, nothing | 98b253b, 5720593, this commit |
 | 2 | A | Layer 0: `sim:formula` and the chassis table | Tables per level; the flat-strike hypothesis confirmed or refuted | Planned | |
 | 3 | A | Reference chassis, null card, synthetic cards, calibration ladder | Ladder monotone and repeatable across two seed sets; synthetic cards provably absent from the game | Planned | |
 | 4 | A | Validate HE: stacking linearity on synthetic cards; 30 held-out hands predicted within 5 points | A pass/fail statement, and what HE can and cannot be used for | Planned | |
