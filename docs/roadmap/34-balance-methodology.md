@@ -359,7 +359,7 @@ network, no model inference, no database, no services.
 Task 1 builds this runner first, and every later script is a planner plus a report on top
 of it.
 
-### Compute budget (estimated at about 150 fights a second on 4 workers)
+### Compute budget (estimated at about 150 fights a second on 4 workers; measured 114 in task 1, so scale the times below by 1.3)
 
 | Work | Fights (full) | Full | Quick |
 |---|---:|---:|---:|
@@ -459,7 +459,7 @@ a few), with this table updated in the same commit.
 
 | # | PR | Task | Acceptance | Status | Commit |
 |---|---|---|---|---|---|
-| 1 | A | The standalone runner (plans, append-only results, resume, chunks, shards, report); statistics; seat-swapped pairs with random turn order; worker pool. Measure throughput and chunk sizes an agent session can finish, and the variance common seeds remove; re-baseline the 33 curves without the fixed first mover | A run killed mid-way resumes without losing finished units; stats tests pass against known values; measured budget replaces the estimates; corrected curves checked in | Planned | |
+| 1 | A | The standalone runner (plans, append-only results, resume, chunks, shards, report); statistics; seat-swapped pairs with random turn order; worker pool. Measure throughput and chunk sizes an agent session can finish, and the variance common seeds remove; re-baseline the 33 curves without the fixed first mover | A run killed mid-way resumes without losing finished units; stats tests pass against known values; measured budget replaces the estimates; corrected curves checked in | In progress: runner, stats, and corrected curves done ([report](../reference/balance-reports/2026-09-28-class-curves.md)); a hard kill after 54 of 168 units lost nothing; 114 fights a second on 4 workers, and a 27k-fight plan ran in 4 minutes in an agent session. Still to do: the common-seed variance measurement | 98b253b, this commit |
 | 2 | A | Layer 0: `sim:formula` and the chassis table | Tables per level; the flat-strike hypothesis confirmed or refuted | Planned | |
 | 3 | A | Reference chassis, null card, synthetic cards, calibration ladder | Ladder monotone and repeatable across two seed sets; synthetic cards provably absent from the game | Planned | |
 | 4 | A | Validate HE: stacking linearity on synthetic cards; 30 held-out hands predicted within 5 points | A pass/fail statement, and what HE can and cannot be used for | Planned | |
@@ -509,6 +509,14 @@ seeds) stand.
 ## Candidate changes to evaluate in the next pass (not this one)
 
 - **Sandstorm as a roll**, and a softer redraw, compared on rate and excitement.
+- **Roll for initiative** (owner, 2026-09-28): in real fights, turn order is a hidden coin
+  flip (the ring shuffles contestants as they join, and the order holds for the whole
+  fight). A visible roll at the start of a fight, for example d20 + DEX modifier with a
+  natural 20 acting twice in the first round, would make it a moment and give DEX another
+  use. Measure first: the initiative edge per matchup and level (Layer 6), how much DEX
+  would shift it, and the variants (once per fight, or each round). Across all pairs with
+  likely and random hands, going first is worth 53% (task 1 baseline), far less than the
+  51-65% of Hit mirrors, so this is mainly for excitement and stat value, not fairness.
 - **Rarity copy limits** (epic 2, or 1) if Layers 2-4 confirm stacking.
 - **Level scaling** of area strikes past level 10, re-measured after the ±5 cap.
 - **Late-game strikes.** If Layer 0 confirms flat strikes against rising HP, a structural fix

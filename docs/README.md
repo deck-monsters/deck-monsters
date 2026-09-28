@@ -64,6 +64,7 @@ Generated and authored player references remain at the repository root:
 | Sprite maps, Canvas/CSS pixel art, scaling, palettes, animation construction | [Pixel art](reference/pixel-art.md) |
 | Player agency, bounded live items, motivation evidence, or combat-control proposals | [Player agency](reference/player-agency.md) |
 | Seeded fight simulations, `SimResult` fields, or a `sim:*` script | [Simulation harness](reference/simulation-harness.md) |
+| Balance measurements that informed a decision (class curves, catalogues, matrices) | [Balance reports](reference/balance-reports/README.md) |
 
 ### Agent work
 
