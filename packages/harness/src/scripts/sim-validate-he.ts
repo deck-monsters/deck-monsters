@@ -3,7 +3,8 @@
  * Validate the Hit-equivalent (roadmap 34 task 4): `node dist/scripts/sim-validate-he.js
  * <ladder-run-dir> <validate-run-dir>`.
  *
- * - Slot weights: w_p is the HE lost by a null in slot p (a Hit is worth w_p there).
+ * - Slot weights: w_p is the HE lost by a null in slot p (a Hit is worth w_p there); by default
+ *   a straight-line fit over the slots (`--weights raw|smooth|uniform`).
  * - Single values: a variant's HE from its score in each slot, averaged over slots (the ladder
  *   also averages positions), minus the 8 Hits beside it.
  * - Stacking: per-copy value with 2 and 3 copies against the single value.
@@ -16,6 +17,7 @@ import { fromHE, ladderFromResults, toHE } from '../balance/ladder.js';
 import type { UnitResult } from '../balance/units.js';
 
 const [ladderDir, validateDir] = process.argv.slice(2);
+const weightMode = (process.argv.includes('--weights') ? process.argv[process.argv.indexOf('--weights') + 1] : 'smooth') as 'raw' | 'smooth' | 'uniform';
 if (!ladderDir || !validateDir) {
 	process.stderr.write('Usage: sim-validate-he <ladder-run-dir> <validate-run-dir>\n');
 	process.exit(2);
@@ -30,9 +32,15 @@ const levels = [...new Set(results.map(r => Number(r.tags!.level)))].sort((a, b)
 const weights = new Map<number, number[]>();
 const single = new Map<string, number>();
 for (const level of levels) {
-	const w = Array.from({ length: 9 }, (_, p) => 9 - toHE(ladder, level, pooled(of('he-slot').filter(r => r.tags!.level === level && r.tags!.slot === p))));
+	const raw = Array.from({ length: 9 }, (_, p) => 9 - toHE(ladder, level, pooled(of('he-slot').filter(r => r.tags!.level === level && r.tags!.slot === p))));
+	// Raw per-slot weights are noisy (a few hundred fights each). `smooth` fits a straight line
+	// over the slots (least squares) and rescales it to the raw mean; `uniform` ignores position.
+	const meanRaw = raw.reduce((a, b) => a + b, 0) / 9;
+	const slope = raw.reduce((a, w, p) => a + (p - 4) * (w - meanRaw), 0) / raw.reduce((a, _, p) => a + (p - 4) ** 2, 0);
+	const smooth = raw.map((_, p) => Math.max(0, meanRaw + slope * (p - 4)));
+	const w = weightMode === 'raw' ? raw : weightMode === 'uniform' ? raw.map(() => meanRaw) : smooth;
 	weights.set(level, w);
-	process.stdout.write(`L${level} slot weights (HE a Hit is worth in slot 1..9): ${w.map(x => x.toFixed(2)).join(' ')}  mean ${(w.reduce((a, b) => a + b, 0) / 9).toFixed(2)}\n`);
+	process.stdout.write(`L${level} slot weights, ${weightMode} (HE a Hit is worth in slot 1..9): ${w.map(x => x.toFixed(2)).join(' ')}  mean ${(w.reduce((a, b) => a + b, 0) / 9).toFixed(2)}\n`);
 }
 
 process.stdout.write('\nVariant value (HE), position-balanced; then per copy with 2 and 3 copies:\n');
