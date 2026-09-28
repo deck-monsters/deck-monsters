@@ -8,8 +8,9 @@ tags: [roadmap, balance, harness, methodology]
 ---
 # 34 — Balance Methodology: Measure Before Tuning
 
-**Status:** In progress (2026-09-28): PR A on branch `claude/balance-methodology-a`,
-after PR #407 merged. Follows [33](../archive/roadmap/33-heal-and-stat-cards.md), whose evidence is the
+**Status:** In progress (2026-09-28): PR A merged (#408); PR B on branch
+`claude/balance-methodology-b` (tasks 6, 6b, 7, and a lean task 9). The first fixes are
+planned in [35](35-balance-fixes.md). Follows [33](../archive/roadmap/33-heal-and-stat-cards.md), whose evidence is the
 starting point. Revised the same day after a deeper review of the engine and the owner's
 answers below.
 
@@ -42,6 +43,7 @@ changes for the owner to choose from. Changes come in the next pass, one decisio
 | Skill | A good build and a good card order should pay off a lot; the monster type alone must not decide nearly every fight |
 | Telemetry | **Read-only production queries are always allowed**, for any reason, as often as needed. This pass uses them for the level distribution of active monsters and the hands players actually equip (weights findings by where players are; gives the "typical hand" for skill expression) |
 | Weak cards (owner, after the catalogue) | **Some weak cards are fine.** A card that is situational or just fun is part of the game's joy and does not need raising. The line is the monster: a player who is really trying and making good picks must be able to be competitive with any monster type. So a weak card needs a fix only when its monster has no good picks without it (the Unicorn is the clearest case), not because it ranks low in the catalogue. Feline Companion and Bad Batch stay as they are: both turned out to be context cards (see [Value beyond damage](#value-beyond-damage-owner-2026-09-28)) |
+| Unique cards (owner, after the contexts) | **Unique cards should be usable, not ignored.** The Unicorn's weak cards (Unconquerable Horn, Dissonant Voice, Gloaming Rest) should definitely be tweaked; Tsunami slightly, never overpowered; Mesmerize, Enthrall, and Harden only if a fix is simple; Prion Disease is a joke and stays. Planned in [35](35-balance-fixes.md) |
 | Excitement | Keep swings, big moments, and natural 20s. A fix should read like a roll (the owner's Sandstorm idea: a d20 per opponent to catch them in the storm), not a flat nerf |
 | Hope (owner, 2026-09-28) | **Rare turnarounds are the point, not noise.** In real fights a player being beaten by a boss or a stronger monster says "please get a Loki, please get a Loki": hoping the attacker's natural 1 (Curse of Loki) turns the attack back on them. It rarely pays off, and that is why it is thrilling when it does. The tension while waiting for it is part of the fun too. Balance work must keep a losing side's long-shot outs: rare events (Curse of Loki, natural 20s and strokes of luck) keep their rate and their size, and no change may make a fight that is going badly certain to be lost |
 
