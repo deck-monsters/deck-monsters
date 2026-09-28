@@ -2,7 +2,7 @@
 /**
  * Plan the class curves for the balance runner (roadmap 34, task 1): every pair of monsters
  * at each level, as humans, with seat-swapped pairs, so the first-mover edge cancels.
- * `node dist/scripts/plan-curves.js --out plan.json [--fights 30] [--levels 1,3,6,8,10,12,15,20]
+ * `node dist/scripts/plan-curves.js --out plan.json [--fights 30] [--levels 0,1,2,3,4,5,6,7,10,12,15,20]
  * [--styles likely,random]`. Run it with `sim-batch`, read it with `sim-report`.
  */
 import '../sim-env.js';
@@ -18,7 +18,7 @@ function arg(name: string, fallback: string): string {
 
 const out = arg('--out', 'plan-curves.json');
 const fights = Number(arg('--fights', '30'));
-const levels = arg('--levels', '1,3,6,8,10,12,15,20').split(',').map(Number);
+const levels = arg('--levels', '0,1,2,3,4,5,6,7,10,12,15,20').split(',').map(Number);
 const styles = arg('--styles', 'likely,random').split(',') as Array<'likely' | 'random'>;
 
 const units: Unit[] = [];

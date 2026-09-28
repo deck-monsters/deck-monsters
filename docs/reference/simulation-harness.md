@@ -194,6 +194,7 @@ more in their outer `finally`, after the loop, to dispose the last fight's conte
 | `sim:statcards` | What a boost or curse card is worth per play: mirror matches (Minotaur, Gladiator, Weeping Angel at levels 1, 5, 10) where one side swaps a Hit in a four-Hit hand for the card, reported as the swing in decisive win share against four Hits a side. AC cards are a reference. The first-listed monster always moves first, so the rows are comparisons, not absolute rates (roadmap 34). `SIM_STATCARD_FIGHTS` sets fights per cell (default 300). | ~10 min |
 | `sim:batch`, `sim:report`, `plan:curves` | The standalone runner and its report, and the class-curve planner (every pair of monsters at levels 1, 3, 6, 8, 10, 12, 15, 20, likely and random hands, seat-swapped). See the runner section below. | ~5 min for `--fights 40` |
 | `sim:formula` | Layer 0 of the balance methodology: each monster's HP, AC, and stat modifiers by level (from real engine instances), and a Hit's and a Blast's per-play damage and turns to kill against the field, sampled from the cards' own roll methods. No fights. `--json out.json`. | ~7 s |
+| `plan:ladder` | The calibration ladder (roadmap 34 task 3): on the reference chassis, k Hits and 9-k null cards against 9 Hits, k = 0-9, at levels 0-7, 10, 12, 15, 20, in two independent seed sets. Run with `sim:batch`; `sim:report` prints the score curve per level and whether it is monotone. | ~12 min for `--fights 100` |
 | `sim:rings` | Realistic rings with player decks. `curves`: each monster as a human against a random other at the same level, levels 1-20 (a per-class curve). `rings`: 120 rings sampled the way rooms fill (mostly 2-3 monsters, levels mostly 0-6, some pre-arranged pairs, 40% with bosses spawned by the ring's rules), each monster's wins against its fair share, and how often humans beat bosses. Pass `curves` or `rings` to run one; `--likely` gives humans likely decks and `--events` rolls ring events. `SIM_RINGS_FIGHTS` sets fights per batch (default 20). | ~5 min each |
 | `sim:monster <type>` | One monster (`pnpm --filter @deck-monsters/harness sim:monster Dragon`; any class name or creature type) against every other monster at levels 1/5/10/15/20 with random decks, and with its thematic fixture deck when its report has one. Then a mirror, a 2v2 team fight, and a crowded free-for-all with every other monster once, where area damage shows. Prints win rate, share of decisive fights, draws, rounds, top damage per card, and the monster's card counters. Flags rows outside 35–65% of decisive fights (fixture rows only, when there is a fixture). `SIM_MONSTER_FIGHTS` sets fights per row (default 100). `sim:unicorn` is `sim:monster Unicorn`. | ~2 min per monster |
 
@@ -244,6 +245,16 @@ node dist/scripts/sim-report.js run/ [--json summary.json]         # works on pa
   human hands (measured 2026-09-28).
 - **Statistics** (`balance/stats.ts`): Wilson and mean intervals, sample sizes, Holm, and an
   SPRT for triage. Tested against textbook values.
+- **Reference chassis** (`balance/reference.ts`): `SimMonsterSpec.chassis: 'reference'` gives
+  a contestant the median stat offsets and median HP and AC variance of the seven real
+  monsters, and no creature type, so no card is strong or weak against it. `type` still picks
+  the class the engine builds. The medians are computed once on their own fixed seed, so a
+  unit's result never depends on what ran before it.
+- **Synthetic cards** (`balance/synthetic-cards.ts`): a hand entry `Ideal:<Kind>` or
+  `Ideal:<Kind>:<JSON options>` builds a harness-only card on the engine's own classes
+  (`Ideal:Null` takes a slot and does nothing; `Ideal:Strike` is a Hit with its dice set by
+  options). They are never registered with the engine, so they cannot drop or be equipped;
+  `balance/synthetic.test.ts` proves it. Every other hand entry is an engine card type.
 
 ## Humans and bosses (`SimMonsterSpec.role`)
 

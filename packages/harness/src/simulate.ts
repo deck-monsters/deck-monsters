@@ -23,6 +23,8 @@ import {
 	type Contestant,
 } from '@deck-monsters/engine';
 import { mulberry32 } from './rng.js';
+import { makeCard } from './balance/synthetic-cards.js';
+import { applyReferenceChassis } from './balance/reference.js';
 import { LIKELY_DECKS } from './likely-decks.js';
 
 /**
@@ -92,6 +94,12 @@ export interface SimMonsterSpec {
 	 * equips. Ignored for other roles and when `deck` is given.
 	 */
 	deckStyle?: 'random' | 'likely';
+	/**
+	 * `reference` builds the balance methodology's reference chassis (`balance/reference.ts`):
+	 * median stats of the real monsters, no creature type. `type` still picks the class the
+	 * engine instantiates; the chassis overrides its stats. Roadmap 34.
+	 */
+	chassis?: 'reference';
 }
 
 export interface SimConfig {
@@ -255,7 +263,7 @@ function buildContestant(
 
 	if (deckNames?.length) {
 		type CardCtor = new () => { cardType?: string; name?: string; play?: (...args: unknown[]) => unknown };
-		contestant.monster.cards = deckNames.map(n => new (getCardClassByTypeName(n) as CardCtor)());
+		contestant.monster.cards = deckNames.map(n => makeCard(n) as InstanceType<CardCtor>);
 	} else {
 		contestant.monster.cards = withoutHarnessExcludedCards(contestant.monster);
 	}
@@ -297,7 +305,7 @@ function buildHuman(
 	type CardCtor = new () => { cardType?: string };
 
 	if (deckNames?.length) {
-		monster.cards = deckNames.map(n => new (getCardClassByTypeName(n) as CardCtor)());
+		monster.cards = deckNames.map(n => makeCard(n) as InstanceType<CardCtor>);
 		return contestant;
 	}
 
@@ -543,6 +551,7 @@ export async function simulate(config: SimConfig): Promise<SimResult> {
 					m.role === 'human'
 						? buildHuman(type, m.level, m.deck, m.deckStyle)
 						: buildContestant(type, m.level, m.deck, m.statSeed, f);
+				if (m.chassis === 'reference') applyReferenceChassis(c.monster as unknown as Parameters<typeof applyReferenceChassis>[0]);
 				const label = names[i]!;
 				c.monster.setOptions({
 					name: label,

@@ -79,7 +79,42 @@ if (pairs.length) {
 	process.stdout.write(`\nFirst mover's expected score over all fights: ${pct(first.estimate)}% (${pct(first.low)}-${pct(first.high)})\n`);
 }
 
-const others = ok.filter(r => r.tags?.kind !== 'pair');
+const ladder = ok.filter(r => r.tags?.kind === 'ladder');
+if (ladder.length) {
+	// score[set][level][k] over every unit of that rung
+	const acc = new Map<string, Acc>();
+	const levels = new Set<number>();
+	const sets = new Set<string>();
+	for (const r of ladder) {
+		const { set, level, k } = r.tags as { set: string; level: number; k: number };
+		levels.add(level);
+		sets.add(set);
+		const key = `${set}|${level}|${k}`;
+		const a = acc.get(key) ?? { score: 0, fights: 0 };
+		a.score += r.sides[0]!.score * r.fights;
+		a.fights += r.fights;
+		acc.set(key, a);
+	}
+	const ladderOut: Record<string, Record<string, Interval[]>> = {};
+	process.stdout.write('\nCalibration ladder: score (%) of k Hits + (9-k) nulls against 9 Hits, reference chassis\n');
+	process.stdout.write(`${'set level'.padEnd(12)}${Array.from({ length: 10 }, (_, k) => `k=${k}`.padStart(7)).join('')}  monotone\n`);
+	for (const set of [...sets].sort()) {
+		for (const level of [...levels].sort((x, y) => x - y)) {
+			const row = Array.from({ length: 10 }, (_, k) => {
+				const a = acc.get(`${set}|${level}|${k}`);
+				return a ? wilson(a.score, a.fights) : undefined;
+			});
+			((ladderOut[set] ??= {})[`L${level}`] = row.filter((i): i is Interval => !!i));
+			const estimates = row.map(i => i?.estimate ?? NaN);
+			// Monotone within noise: no rung's interval lies wholly below the one before.
+			const monotone = row.every((i, k) => k === 0 || !i || !row[k - 1] || i.high >= row[k - 1]!.low);
+			process.stdout.write(`${`${set} L${level}`.padEnd(12)}${estimates.map(e => (Number.isNaN(e) ? '—' : pct(e)).padStart(7)).join('')}  ${monotone ? 'yes' : 'NO'}\n`);
+		}
+	}
+	output.ladder = ladderOut;
+}
+
+const others = ok.filter(r => r.tags?.kind !== 'pair' && r.tags?.kind !== 'ladder');
 if (others.length) {
 	const groups = new Map<string, Acc>();
 	for (const r of others) {

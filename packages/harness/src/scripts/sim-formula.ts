@@ -18,7 +18,7 @@ import { allMonsters, engineReady, getCardClassByTypeName, getXpCapForLevel } fr
 import { SIM_MONSTER_TYPES } from '../simulate.js';
 import { mulberry32 } from '../rng.js';
 
-const LEVELS = [1, 3, 6, 8, 10, 12, 15, 20];
+const LEVELS = [0, 1, 2, 3, 4, 5, 6, 7, 10, 12, 15, 20];
 const INSTANCES = 200;
 const PLAYS = 4000;
 
