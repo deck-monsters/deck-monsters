@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * The standalone balance runner (roadmap 34): `node dist/scripts/sim-batch.js <plan.json>
- * --out <dir> [--max-minutes N] [--units a..b] [--shard i/n] [--workers k]`.
+ * --out <dir> [--max-minutes N] [--units a..b] [--shard i/n] [--workers k] [--allow-commit-change]`.
  *
  * No network, no inference, no database: raw compute only. Results append to
  * `<dir>/results.jsonl` one line per finished unit; rerunning skips finished units, so a
@@ -22,7 +22,7 @@ async function main(): Promise<void> {
 	const planPath = process.argv[2];
 	const outDir = arg('--out');
 	if (!planPath || planPath.startsWith('--') || !outDir) {
-		process.stderr.write('Usage: sim-batch <plan.json> --out <dir> [--max-minutes N] [--units a..b] [--shard i/n] [--workers k]\n');
+		process.stderr.write('Usage: sim-batch <plan.json> --out <dir> [--max-minutes N] [--units a..b] [--shard i/n] [--workers k] [--allow-commit-change]\n');
 		process.exit(2);
 	}
 	const plan = JSON.parse(readFileSync(planPath, 'utf8')) as Plan;
@@ -39,6 +39,7 @@ async function main(): Promise<void> {
 		const [index, count] = shard.split('/').map(Number);
 		options.shard = { index: index ?? 0, count: count ?? 1 };
 	}
+	if (process.argv.includes('--allow-commit-change')) options.allowCommitChange = true;
 	const workers = arg('--workers');
 	if (workers !== undefined) options.workers = Number(workers);
 

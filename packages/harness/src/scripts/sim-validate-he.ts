@@ -50,7 +50,12 @@ for (const level of levels) {
 			const r = of('he-single').find(x => x.tags!.level === level && x.tags!.dice === dice && x.tags!.slot === p);
 			return r ? toHE(ladder, level, r.sides[0]!.score) - 8 : NaN;
 		});
-		const value = perSlot.reduce((a, b) => a + b, 0) / 9;
+		// Each slot's HE is already position-weighted: about 1 + (v - 1) * w[p]. Averaged over the
+		// nine slots that is 1 + (v - 1) * mean(w), so divide the weighting back out before the
+		// prediction applies w[p] again (a Codex review of #408: weights that do not average to 1
+		// were being applied twice).
+		const meanW = weights.get(level)!.reduce((a, b) => a + b, 0) / 9;
+		const value = 1 + (perSlot.reduce((a, b) => a + b, 0) / 9 - 1) / meanW;
 		single.set(`${level}|${strikeName(dice)}`, value);
 		const stacked = [2, 3].map(c => (toHE(ladder, level, pooled(of('he-stack').filter(r => r.tags!.level === level && r.tags!.dice === dice && r.tags!.copies === c))) - (9 - c)) / c);
 		process.stdout.write(`  L${level} ${dice.padEnd(5)} single ${value.toFixed(2).padStart(5)}   x2 ${stacked[0]!.toFixed(2).padStart(5)}   x3 ${stacked[1]!.toFixed(2).padStart(5)}\n`);

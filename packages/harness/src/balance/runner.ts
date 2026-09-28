@@ -29,6 +29,11 @@ export interface RunOptions {
 	shard?: { index: number; count: number };
 	/** Worker threads; 0 runs units in this thread (tests). Default: CPUs - 0, at least 1. */
 	workers?: number;
+	/**
+	 * Resume a directory whose runs started at a different commit. Off by default: finished units
+	 * are skipped, so the rest would run on different engine code and the results would mix.
+	 */
+	allowCommitChange?: boolean;
 	/** Called after each unit (progress line). */
 	onResult?: (result: UnitResult, progress: RunProgress) => void;
 }
@@ -60,9 +65,16 @@ export async function runPlan(plan: Plan, options: RunOptions): Promise<RunProgr
 	const hash = planHash(plan);
 	const manifestPath = join(outDir, MANIFEST_FILE);
 	if (existsSync(manifestPath)) {
-		const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as { planHash?: string };
+		const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as { planHash?: string; runCommit?: string };
 		if (manifest.planHash && manifest.planHash !== hash) {
 			throw new Error(`${outDir} holds results for a different plan (${manifest.planHash}, this is ${hash}); use a new directory`);
+		}
+		// A resume on other code would append results from a different engine to the same
+		// dataset, still labelled with the first commit (a Codex review of #408). Uncommitted
+		// edits are not caught; run long plans from a clean checkout.
+		const commit = currentCommit();
+		if (!options.allowCommitChange && manifest.runCommit && commit && manifest.runCommit !== commit) {
+			throw new Error(`${outDir} was started at ${manifest.runCommit.slice(0, 10)} and this checkout is ${commit.slice(0, 10)}; check out that commit, use a new directory, or pass --allow-commit-change`);
 		}
 	} else {
 		writeFileSync(

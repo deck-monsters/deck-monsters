@@ -59,21 +59,31 @@ single values weighted by slot:
 
 | Strike | L1 | L4 | L7 | L12 |
 |---|---|---|---|---|
-| 1d4 | 0.93 | 0.77 | 0.92 | 0.94 |
-| 1d8 | 1.29 | 1.04 | 1.16 | 1.32 |
-| 1d10 | 1.20 | 1.10 | 1.28 | 1.35 |
-| 2d6 | 1.57 | 1.39 | 1.10 | 1.08 |
+| 1d4 | 0.91 | 0.75 | 0.87 | 0.95 |
+| 1d8 | 1.36 | 1.04 | 1.25 | 1.27 |
+| 1d10 | 1.25 | 1.11 | 1.43 | 1.30 |
+| 2d6 | 1.71 | 1.41 | 1.15 | 1.06 |
 
-Stacking two or three copies stays within noise of the single value (linear).
+These are per-slot values with the level's mean slot weight divided back out (a slot's HE is
+about 1 + (v - 1) × w[p], so the nine-slot average is 1 + (v - 1) × mean(w)). The first
+version of this table left the weighting in and the prediction then applied it again; a Codex
+review of #408 caught it, and the numbers below are after the fix.
+
+Stacking two or three copies (random slots, so position-averaged) stays within noise of the
+position-averaged single value (linear).
 
 | Prediction | Mean absolute error (noise floor 2.1) |
 |---|---|
 | First design (one-sided ladder, all slots equal) | 13.5: fail |
-| Two-sided ladder, raw slot weights | 5.2: fail |
-| Two-sided ladder, position ignored | 5.7: fail |
-| **Two-sided ladder, fitted slot weights** | **4.9: pass** (mark 5) |
+| Two-sided ladder, raw slot weights | 5.5: fail |
+| Two-sided ladder, position ignored | 5.6: fail |
+| **Two-sided ladder, fitted slot weights** | **5.1: at the mark** (mark 5) |
 
-**What HE can be used for.** It passes narrowly on simple strikes: it ranks cards and
+(Before the double-weighting fix above, the fitted row read 4.9 and passed; the corrected
+figure is 5.08.)
+
+**What HE can be used for.** It lands on the pass mark, not under it, on simple strikes:
+good enough to rank cards and
 explains results, with single-card precision of about ±0.3-0.5 HE at these fight counts.
 Decisions stay on whole-hand simulation (Layer 4). The check is repeated on real cards once
 the catalogue exists (task 6), where effects that last or interact are more likely to break

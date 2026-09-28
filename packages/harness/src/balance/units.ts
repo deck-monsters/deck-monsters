@@ -76,6 +76,12 @@ export async function runUnit(unit: Unit): Promise<UnitResult> {
 			seed: unit.seed,
 			roomId: `batch-${unit.id}-r${r}`,
 		});
+		// A fight the engine cancelled (an internal error `ring.fight()` swallowed) still gets an
+		// empty `winnersByFight` entry, which would score as a draw. Fail the unit instead, so it
+		// is not persisted as finished and runs again on resume (a Codex review of #408).
+		if (res.cancelledFights > 0) {
+			throw new Error(`${res.cancelledFights} of ${res.fights} fights were cancelled by the engine (rotation ${r})`);
+		}
 		const scores = unit.sides.map(() => 0);
 		for (const winners of res.winnersByFight) {
 			const draw = winners.length === 0;
