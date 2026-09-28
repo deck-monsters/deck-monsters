@@ -19,6 +19,7 @@
     "sim:bosses": "node dist/scripts/sim-bosses.js",
     "sim:rings": "node dist/scripts/sim-rings.js",
     "sim:mega": "node dist/scripts/sim-mega.js",
+    "sim:statcards": "node dist/scripts/sim-statcards.js",
     "sim:unicorn": "node dist/scripts/sim-monster.js Unicorn"
   },
   "dependencies": {
