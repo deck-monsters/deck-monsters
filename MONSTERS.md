@@ -59,8 +59,8 @@ An adult basilisk is 13 feet long, with fully half of that made up by its long t
 
 | Stat | Value |
 |---|---|
-| HP | 31–36 (spawn + level 0) |
-| AC | 5–7 (spawn + level 0) |
+| HP | 34–39 (spawn + level 0) |
+| AC | 7–9 (spawn + level 0; +2 while young (to level 3), +1 to level 6) |
 | STR | 6 (base +1) |
 | DEX | 6 (base +1) |
 | INT | 5 (base +0) |
@@ -127,8 +127,8 @@ The horn is the heart of every tale. Topsell swore that the horn "doth wonderful
 
 | Stat | Value |
 |---|---|
-| HP | 30–35 (spawn + level 0) |
-| AC | 6–8 (spawn + level 0) |
+| HP | 33–38 (spawn + level 0) |
+| AC | 8–10 (spawn + level 0; +2 while young (to level 3), +1 to level 6) |
 | STR | 5 (base +0) |
 | DEX | 6 (base +1) |
 | INT | 6 (base +1) |

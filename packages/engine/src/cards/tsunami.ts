@@ -3,8 +3,13 @@ import { AOE } from '../constants/card-classes.js';
 import { DRAGON } from '../constants/creature-types.js';
 import { EPIC } from '../helpers/probabilities.js';
 import { EXPENSIVE } from '../helpers/costs.js';
+import { chance } from '../helpers/chance.js';
+
+const { roll } = chance;
 
 export const TSUNAMI_DAMAGE = 5;
+/** The Dragon rolls 1d20 + DEX against this to ride its own wave and take no damage. */
+export const RIDE_THE_WAVE_DIFFICULTY = 10;
 
 /*
  * The requester's own card idea: "a very powerful wave to do five damage to everybody in the
@@ -14,6 +19,14 @@ export const TSUNAMI_DAMAGE = 5;
  *
  * An area card, so it finds hidden monsters and knocks a flying one down. The Dragon is
  * struck last, so a wave that sinks its own maker still reaches everyone else first.
+ *
+ * Roadmap 35 (owner, 2026-09-28: "tweak slightly, it shouldn't become OP"): the wave hit
+ * everyone equally, so in a duel it cost the Dragon as much as its opponent and measured
+ * worse than a Hit (4-7 points of field score below one at levels 1 and 3). Now the Dragon
+ * rolls to ride its own wave: 1d20 + DEX against 10, and on a success the wave passes
+ * under it. The self-hit stays, and so does the gamble, but it reads as a roll the Dragon
+ * can win. Measured in the Dragon's searched hands against the field, it is now worth
+ * about a Hit (a little more at level 5). Taking half the wave was weaker and had no roll.
  */
 export class TsunamiCard extends BaseCard {
 	static cardClass = [AOE];
@@ -40,7 +53,8 @@ export class TsunamiCard extends BaseCard {
 	}
 
 	get stats(): string {
-		return `${TSUNAMI_DAMAGE} damage to everyone in the ring: every opponent, every ally, and you.`;
+		return `${TSUNAMI_DAMAGE} damage to everyone in the ring: every opponent, every ally, and you.
+You roll 1d20 + dex vs ${RIDE_THE_WAVE_DIFFICULTY} to ride your own wave and take none of it.`;
 	}
 
 	override getTargets(player: any, _proposedTarget: any, _ring: any, activeContestants: any[] = []): any[] {
@@ -48,8 +62,27 @@ export class TsunamiCard extends BaseCard {
 		return [...everyone, player];
 	}
 
+	/** The Dragon's roll to ride its own wave: 1d20 + DEX vs 10. True means no damage. */
+	rideTheWave(player: any): boolean {
+		const rideRoll = roll({ primaryDice: '1d20', modifier: player.dexModifier, crit: true });
+		const { success: rides } = this.checkSuccess(rideRoll, RIDE_THE_WAVE_DIFFICULTY - 1);
+		this.emit('rolled', {
+			reason: `vs ${RIDE_THE_WAVE_DIFFICULTY} to ride the wave.`,
+			card: this,
+			roll: rideRoll,
+			who: player,
+			outcome: rides
+				? `${player.givenName} rides the crest, and the sea passes under ${player.pronouns.him}.`
+				: `The wave comes back for ${player.givenName}.`,
+			vs: RIDE_THE_WAVE_DIFFICULTY,
+		});
+		return rides;
+	}
+
 	async effect(player: any, target: any): Promise<boolean> {
 		if (target !== player) return target.hit(TSUNAMI_DAMAGE, player, this);
+
+		if (this.rideTheWave(player)) return true;
 
 		// The hit line's self-hit wording is "…himself by mistake"; this is no mistake. The
 		// line is only ever this card's, and it is cleared once the hit is announced.

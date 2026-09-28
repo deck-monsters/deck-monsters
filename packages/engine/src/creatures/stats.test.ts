@@ -86,3 +86,31 @@ describe('creatures/stats', () => {
 		expect(monster.intModifier).to.equal(modifier + 1);
 	});
 });
+
+describe('youth AC (roadmap 35)', () => {
+	it('gives the full amount to level 3, half (rounded up) to level 6, and none from 7', async () => {
+		const { youthAcBonus } = await import('./stats.js');
+		expect([0, 1, 2, 3, 4, 5, 6, 7, 10, 20].map(level => youthAcBonus(level, 2))).to.deep.equal([2, 2, 2, 2, 1, 1, 1, 0, 0, 0]);
+		expect(youthAcBonus(1)).to.equal(0);
+	});
+
+	it('raises a young Dragon and Gladiator AC, and leaves an old one and other monsters alone', async () => {
+		const { default: Dragon } = await import('../monsters/dragon.js');
+		const { default: Gladiator } = await import('../monsters/gladiator.js');
+		const { default: Minotaur } = await import('../monsters/minotaur.js');
+		const { getXpCapForLevel } = await import('../ring/index.js');
+		const ac = (M: any, level: number): number => {
+			const m = new M({ name: 'probe', acVariance: 0, xp: getXpCapForLevel(level) });
+			const value = m.ac;
+			m.disposeTimers();
+			return value;
+		};
+		// Same instance roll (acVariance 0): the young one is exactly the youth bonus ahead of
+		// what the class's static AC and level alone give.
+		for (const M of [Dragon, Gladiator]) {
+			expect(ac(M, 1) - ac(Minotaur, 1) - ((M as any).acVariance ?? 0) + ((Minotaur as any).acVariance ?? 0)).to.equal(2);
+			expect(ac(M, 5) - ac(Minotaur, 5) - ((M as any).acVariance ?? 0) + ((Minotaur as any).acVariance ?? 0)).to.equal(1);
+			expect(ac(M, 8) - ac(Minotaur, 8) - ((M as any).acVariance ?? 0) + ((Minotaur as any).acVariance ?? 0)).to.equal(0);
+		}
+	});
+});

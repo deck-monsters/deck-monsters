@@ -129,7 +129,14 @@ Dragon.class = WIZARD;
 // 20 to 65%, a caster's curve (docs/archive/roadmap/30-dragon-pack.md, task 4). Scales give one
 // point of AC, and the body sits at the roster midpoint for HP.
 (Dragon as any).acVariance = 1;
-(Dragon as any).hpVariance = 2;
+// Roadmap 35 (2026-09-28): with searched hands the Dragon scored 23%, 33%, and 32% of its
+// field at levels 1, 3, and 5, below the 35% floor. Its stats spend the same +2 budget as
+// everyone's, so the fix goes to the body, not the modifiers: 3 more HP (2 -> 5) and a
+// hatchling's youth AC (+2 to level 3, +1 to level 6) brought it to 34%, 42%, and 37% with
+// the Gladiator's fix beside it. Trading INT for STR helped only at level 1 (a caster
+// needs its INT later); +1 STR worked but broke the shared budget.
+(Dragon as any).hpVariance = 5;
+(Dragon as any).youthAc = 2;
 (Dragon as any).description = `
 "Out of his mouth go burning lamps, and sparks of fire leap out. Out of his nostrils goeth smoke, as out of a seething pot." So the Book of Job describes Leviathan, and Leviathan is a sea dragon: "he maketh the deep to boil like a pot." Isaiah knew "the dragon that is in the sea," and, over the dry south, "the fiery flying serpent." The dragon of the ring is all of these at once. It hatches in the cold deep, small enough to carry in two hands, and grows, if it lives, into a flame with wings.
 

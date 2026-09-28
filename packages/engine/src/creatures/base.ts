@@ -60,6 +60,12 @@ class BaseCreature extends BaseClass<CreatureOptions> {
 	static creatureType?: string;
 	static acVariance?: number;
 	static hpVariance?: number;
+	/**
+	 * Extra AC while young, fading with level (see `youthAcBonus` in stats.ts). Roadmap 35:
+	 * a body that starts behind (the Dragon, the Gladiator) gets its help where players are,
+	 * levels 0-6, without changing its late game.
+	 */
+	static youthAc?: number;
 	static defaults?: Record<string, unknown>;
 
 	constructor ({

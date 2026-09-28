@@ -55,6 +55,17 @@ export function getPreBattleModifier (self: BaseCreature, targetProp: string): n
 	return modifier;
 }
 
+/**
+ * A class's youth AC at a level: the full amount to level 3, half (rounded up) to level 6,
+ * none from level 7. Roadmap 35 measured it with the before/after matrix on searched hands:
+ * a flat bonus helped the Dragon and Gladiator late too, where they did not need it, and
+ * the owner wants brutes strong early, not everywhere.
+ */
+export function youthAcBonus (level: number, youthAc = 0): number {
+	if (!youthAc || level >= 7) return 0;
+	return level <= 3 ? youthAc : Math.ceil(youthAc / 2);
+}
+
 export function getPreBattlePropValue (self: BaseCreature, prop: string): number | undefined {
 	switch (prop) {
 		case 'dex':
@@ -64,7 +75,7 @@ export function getPreBattlePropValue (self: BaseCreature, prop: string): number
 		case 'int':
 			return BASE_INT + getPreBattleModifier(self, 'int');
 		case 'ac': {
-			let raw = BASE_AC + self.acVariance;
+			let raw = BASE_AC + self.acVariance + youthAcBonus(self.level, (self.constructor as typeof BaseCreature).youthAc);
 			raw += Math.min(self.level, (MAX_BOOSTS as Record<string, number>)['ac']); // AC level bonus not in getModifier
 			return raw;
 		}

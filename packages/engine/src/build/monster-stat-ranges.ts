@@ -8,6 +8,7 @@ import {
 	HP_VARIANCE,
 	MAX_BOOSTS,
 } from '../constants/stats.js';
+import { youthAcBonus } from '../creatures/stats.js';
 
 export interface MonsterTypeOffsets {
 	creatureType: string;
@@ -42,14 +43,21 @@ export function hpRangeAtLevel(typeHpOffset: number, level: number): NumericRang
 	};
 }
 
-export function acRangeAtLevel(typeAcOffset: number, level: number): NumericRange {
+export function acRangeAtLevel(typeAcOffset: number, level: number, youthAc = 0): NumericRange {
 	const variance = spawnVarianceRange(typeAcOffset, AC_VARIANCE);
-	const levelBonus = Math.min(level, MAX_BOOSTS.ac);
+	// Youth AC (roadmap 35) is part of the AC the engine computes, so the references show it.
+	const levelBonus = Math.min(level, MAX_BOOSTS.ac) + youthAcBonus(level, youthAc);
 
 	return {
 		min: BASE_AC + variance.min + levelBonus,
 		max: BASE_AC + variance.max + levelBonus,
 	};
+}
+
+/** A player-facing note for a class with youth AC, or nothing. */
+export function youthAcNote(youthAc = 0): string {
+	if (!youthAc) return '';
+	return `; +${youthAc} while young (to level 3), +${Math.ceil(youthAc / 2)} to level 6`;
 }
 
 export function formatNumericRange(range: NumericRange): string {

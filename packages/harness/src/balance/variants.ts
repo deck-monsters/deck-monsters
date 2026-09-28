@@ -6,6 +6,11 @@
  *
  * Harness only: nothing here is reachable from the game, and every patch is undone after the
  * unit (a test checks this).
+ *
+ * The Dragon and Gladiator youth AC and +3 HP, and Tsunami's ride-the-wave roll, were chosen
+ * with these variants and are in the engine since roadmap 35's second commit of task 2 and 3.
+ * Applying them now stacks on top of the engine's change; they stay as the record of what was
+ * measured and to test further steps.
  */
 import { allMonsters, getCardClassByTypeName } from '@deck-monsters/engine';
 

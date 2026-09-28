@@ -188,6 +188,12 @@ new card or monster must reach. Check each one.
 
 - A creature-type constant, a class from `constants/creature-classes.ts`, a +2 total
   DEX/STR/INT modifier budget, `acVariance`, `hpVariance`, and a lore `description`.
+  Optionally `youthAc`: extra AC while young, the full amount to level 3, half (rounded up)
+  to level 6, none from level 7 (`youthAcBonus` in `creatures/stats.ts`; the generated
+  references show it). The Dragon and the Gladiator have 2 (roadmap 35): a body that starts
+  behind gets help where players are without changing its late game. Reach for body
+  fields (`hpVariance`, `acVariance`, `youthAc`) before the modifier budget, which every
+  monster shares.
 - **Append** it to `allMonsters` (`monsters/helpers/all.ts`). The spawn prompt answers with
   an index, so inserting mid-list shifts every later monster.
 - The spawn colour example (`monsters/helpers/spawn.ts`), a name generator
@@ -210,6 +216,12 @@ new card or monster must reach. Check each one.
   runs the wrong way. The 35–65% flag in `sim:winrates` and `sim:monster` marks rows to look
   at, not a pass/fail gate, and ring context (size, teams, the cards in play) shifts
   matchups a great deal.
+- **Measured balance changes (roadmap 35).** A body or card change is measured before and
+  after on the same searched hands and seeds (`plan:matrix`, `sim:matrix-report`), with the
+  excitement and hope guardrails beside the band; experiment variants
+  (`harness/src/balance/variants.ts`) let a candidate be tried before it is written into
+  the engine. The first changes, 2026-09-28: the Dragon and the Gladiator got 3 more HP and
+  youth AC 2; Tsunami lets the Dragon roll 1d20 + DEX vs 10 to ride its own wave.
 - **Evidence comes from the harness.** Run the [simulation harness](../reference/simulation-harness.md)
   before a balance claim, and read its known limits there.
 - **Sources.** Credit every source in a comment beside the text it shaped. The Unicorn's
