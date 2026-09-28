@@ -20,6 +20,44 @@ and follow the checklist in [cards and encounter effects](../architecture/cards-
 - [ ] Design and test Healing Balm, Enchanted Mirror, Bear Trap, Shardblade, Kata, Gini
   Coefficient, Healing Wind, Shuffle, Delve, Wild, Trade Hands, and Swarm.
 - [ ] Strengthen repeated Immobilize rather than merely resetting its hold.
+- [ ] **Counters to the big effects** (owner, 2026-09-28). The owner prefers a few rare,
+  skilful counter cards to nerfing Sandstorm, Enchanted Faceswap, Blink, and the other
+  swing cards. That keeps the big moments and gives complex fights a second layer: a player
+  who reads the fight and plays the counter at the right moment turns the swing around. It
+  came out of the balance catalogue ([34, value beyond damage](34-balance-methodology.md#value-beyond-damage-owner-2026-09-28)).
+  The one counter the game has, Bad Batch, answers drinks, not these. Design rules:
+  - **Rare and sophisticated.** Rare or very rare, and hard to use well: it pays off when you
+    predict or answer the swing, and barely when played blind. The payoff is for skill, not
+    for owning it.
+  - **Interact, don't cancel.** It bends the effect rather than deleting it: it turns it
+    back, shares it, or gives a roll to resist, so the swing card stays exciting and the
+    counter makes its own moment. It reads like a roll (the owner's Sandstorm-roll idea),
+    not a flat immunity.
+  - **Never dead.** It does something modest when no swing card comes, as the Dragon
+    counters above must be useful against anyone.
+  - **Not a hard counter.** A holder of the countered card should still win its share.
+    Check the matchup against Sandstorm Jinn, Faceswap casters, and Blink Angels in
+    `sim:monster`, and judge it against the field players actually use (rule 5 of the
+    balance method).
+  - **Readable.** One line of card text a player understands, with a clear announcement
+    when it fires.
+
+  Sketches to design and test (names and numbers open):
+  - *Eye of the Storm*: a ward on yourself. The next confusion that would redraw your target
+    (Sandstorm, Enchanted Faceswap) rolls 1d20 + your INT against its caster's INT. On a
+    success you see through it, and the caster gets the confusion instead. Otherwise a small
+    INT boost, so it is not dead.
+  - *Anchor* / *Stand Fast*: until your next card, you cannot be moved out of the fight or
+    have your target swapped. A Blink aimed at you rolls against your DEX; on your success
+    the Blinker is pulled into the time-shift.
+  - *Mirror Shield*, above, already turns area attacks (Sandstorm among them) back on the
+    caster; it is the first card of this family.
+  - *Unconquerable Horn, redesigned* (owner, 2026-09-28): a one-shot counterspell against the
+    next negative non-damage action aimed at the Unicorn (holds, curses, poison, Blink,
+    Sandstorm and Faceswap redirects), while damage still lands. It is planned in
+    [35](35-balance-fixes.md#unconquerable-horn-as-a-counterspell-owner-2026-09-28).
+  - A counter that reads the opponent's hand order (it answers the next card of a class the
+    opponent plays), so card order and reading the fight both matter.
 - [ ] **Owner: Cards.** Evaluate a hybrid data-driven card spec (schema plus optional
   hooks) and a card-authoring agent skill covering file locations, the base class, tests,
   and balance pitfalls. Do this after the simulation harness in
