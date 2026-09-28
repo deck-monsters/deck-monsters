@@ -8,8 +8,8 @@ tags: [roadmap, balance, harness, methodology]
 ---
 # 34 — Balance Methodology: Measure Before Tuning
 
-**Status:** Planned (2026-09-28), picked up after PR #407 merges, on its own branches and
-PRs. Follows [33](../archive/roadmap/33-heal-and-stat-cards.md), whose evidence is the
+**Status:** In progress (2026-09-28): PR A on branch `claude/balance-methodology-a`,
+after PR #407 merged. Follows [33](../archive/roadmap/33-heal-and-stat-cards.md), whose evidence is the
 starting point. Revised the same day after a deeper review of the engine and the owner's
 answers below.
 

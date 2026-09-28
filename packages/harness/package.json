@@ -20,6 +20,9 @@
     "sim:rings": "node dist/scripts/sim-rings.js",
     "sim:mega": "node dist/scripts/sim-mega.js",
     "sim:statcards": "node dist/scripts/sim-statcards.js",
+    "sim:batch": "node dist/scripts/sim-batch.js",
+    "sim:report": "node dist/scripts/sim-report.js",
+    "plan:curves": "node dist/scripts/plan-curves.js",
     "sim:unicorn": "node dist/scripts/sim-monster.js Unicorn"
   },
   "dependencies": {
