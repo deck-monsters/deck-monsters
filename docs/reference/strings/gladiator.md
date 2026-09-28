@@ -65,3 +65,9 @@ Stroke of luck increases damage per hit by 1.
 **Narration and outcomes:**
 
 _None._
+
+**Lines elsewhere that name this card:**
+
+| Where | Template |
+|---|---|
+| `packages/engine/src/cards/helpers/signature.ts` [GLADIATOR] | `Battle Focus` |

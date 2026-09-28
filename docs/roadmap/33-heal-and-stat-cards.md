@@ -20,8 +20,8 @@ Concussion.
 | 2 | Boost and curse cards since #175 (temporary DEX, STR, and INT changes move rolls): measure what each is worth per play and whether any needs a small tweak | Done: ±5 cap on temporary DEX/STR/INT changes, and curse attacks curse only on a hit | f9fbbc5, 9b15e87, this commit |
 | 3 | Baseline class curves after tasks 1-2, random and likely hands; why some monsters seem to always carry their signature card | In progress | |
 | 4 | Rebalance to the owner's band: every monster wins 35-75% at every level (ancient dragons up to 80); brutes stronger early, casters stronger late. Candidates: a per-card copy limit for area spells, level scaling | Planned | |
-| 5 | Bosses drop filler by card class (`isBossFiller`): the plain Hit and any heal, hide, or boost card not tied to one monster type | Done | this commit |
-| 6 | Signature-card catch-up: a winning monster whose owner holds no copy of its signature card very likely wins one | Planned | |
+| 5 | Bosses drop filler by card class (`isBossFiller`): the plain Hit and any heal, hide, or boost card not tied to one monster type | Done | f71686d |
+| 6 | Signature-card catch-up: a winning monster whose owner holds no copy of its signature card wins it 90% of the time (`SIGNATURE_CATCH_UP_CHANCE`); normal draws after one copy. Covers characters made before a monster pack shipped, whose starting decks never got that pack's card | Done | this commit |
 
 ## Decisions (owner, 2026-09-28)
 

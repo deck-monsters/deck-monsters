@@ -26,6 +26,13 @@ import { playerHandbook } from './build/player-handbook.js';
 import { Ring, type Contestant } from './ring/index.js';
 import { MegaBossEvent, MEGA_BOSS_REWARD_COINS, MEGA_BOSS_REWARD_XP } from './ring/mega-boss.js';
 import { RARE } from './helpers/probabilities.js';
+import { random } from './helpers/random.js';
+import {
+	ownsCardType,
+	makeSignatureCard,
+	signatureCardType,
+	SIGNATURE_CATCH_UP_CHANCE,
+} from './cards/helpers/signature.js';
 import { RoomEventBus } from './events/index.js';
 import type { StateStore } from './types/state-store.js';
 import { resolveShop, type Shop } from './items/store/shop.js';
@@ -498,7 +505,7 @@ export class Game extends BaseClass {
 		contestant.character.xp += XP_PER_VICTORY;
 		const { coinsGained, reasons } = this.awardFightCoins(contestant.character, COINS_PER_VICTORY);
 
-		const card = this.drawCard({}, monster);
+		const card = this.drawWinnerCard(contestant.character, monster);
 		contestant.character.addCard(card);
 
 		this.emit('cardDrop', { contestant, card });
@@ -987,6 +994,23 @@ export class Game extends BaseClass {
 		}
 
 		return announceAndThrow(channel, `I don't see a ${thing} here.`, { delay: 'short' });
+	}
+
+	/**
+	 * A win's card drop. While the owner holds no copy of the winning monster's signature card
+	 * it is very likely that card (`SIGNATURE_CATCH_UP_CHANCE`), so every player soon has one
+	 * for each monster they fight with; after that it is the normal draw (roadmap 33).
+	 */
+	drawWinnerCard(character: any, monster: any): any {
+		const signature = signatureCardType(monster);
+		if (signature && !ownsCardType(character, signature) && random(1, 100) <= SIGNATURE_CATCH_UP_CHANCE) {
+			const card = makeSignatureCard(monster);
+			if (card) {
+				this.emit('cardDrawn', { card });
+				return card;
+			}
+		}
+		return this.drawCard({}, monster);
 	}
 
 	drawCard(options: Record<string, unknown>, monster?: any): any {

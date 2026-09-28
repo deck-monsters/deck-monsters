@@ -42,7 +42,9 @@ already covers a subject in depth this links to it rather than restating it.
    next card, cards roll 1d20 + modifiers against AC, damage and effects resolve.
 5. **Rewards.** `Game.handleWinner()` credits `XP_PER_VICTORY` plus coins via
    `awardFightCoins()` and emits `cardDrop` (`packages/engine/src/game.ts`); the loser path
-   credits `XP_PER_DEFEAT`.
+   credits `XP_PER_DEFEAT`. The winner's card is its signature card 90% of the time while
+   its owner has no copy (`drawWinnerCard`, `cards/helpers/signature.ts`); otherwise it is
+   the normal draw.
 
 ## What blocks a monster from entering the ring
 
