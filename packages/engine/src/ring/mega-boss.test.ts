@@ -14,6 +14,8 @@ import {
 	MEGA_BOSS_MIN_INTERVAL_MS,
 	MEGA_BOSS_MINIONS,
 	MEGA_BOSS_REWARD_COINS,
+	MEGA_BOSS_LATE_GRACE_MS,
+	empowerMegaBoss,
 } from './mega-boss.js';
 
 const MINUTE = 60_000;
@@ -55,6 +57,43 @@ describe('./ring/mega-boss.ts', () => {
 		expect(fit.level).to.equal(5 + MEGA_BOSS_LEVEL_BONUS);
 		expect(fit.maxHp).to.equal(Math.round(70 * megaBossHpShare(2, 5)));
 		expect(fit.minionLevel).to.equal(2);
+	});
+
+	it('gives the mega boss its relics: +2 AC and +2 STR', () => {
+		// The crown went through a permanent modifier that pre-battle AC never reads, so it
+		// was only narration (a review of #405).
+		const monster = new Basilisk();
+		const ac = monster.ac;
+		const str = monster.str;
+		empowerMegaBoss(monster, { level: monster.level, maxHp: monster.maxHp, minionLevel: 0 });
+		expect(monster.ac).to.equal(ac + 2);
+		expect(monster.str).to.equal(str + 2);
+	});
+
+	it('keeps a due mega boss owed while a fight runs, so a restart does not drop it', () => {
+		const at = Date.now() + MINUTE;
+		const game = new Game({ roomId: 'mega-owed', megaBossAt: at }, () => {});
+		try {
+			game.ring.inEncounter = true;
+			clock.tick(MINUTE + 15 * MINUTE);
+			// Still due, not rolled to tomorrow: a restart now is inside the grace window.
+			expect(Date.now() - (game.options as any).megaBossAt).to.be.below(MEGA_BOSS_LATE_GRACE_MS);
+		} finally {
+			game.ring.inEncounter = false;
+			game.dispose();
+		}
+	});
+
+	it('arrives at once after a restart just past its time, without claiming it is a minute off', () => {
+		const game = new Game({ roomId: 'mega-overdue', megaBossAt: Date.now() - 5 * MINUTE }, () => {});
+		const lines = narrations(game);
+		try {
+			clock.tick(1);
+			expect(lines.some(line => line.includes('arrives in'))).to.equal(false);
+			expect(lines.some(line => line.includes('pitiful a showing'))).to.equal(true);
+		} finally {
+			game.dispose();
+		}
 	});
 
 	it('schedules about a day out and keeps the time in the room state', () => {
@@ -102,8 +141,12 @@ describe('./ring/mega-boss.ts', () => {
 			clock.tick(MEGA_BOSS_ANNOUNCE_MS - 1.5 * MINUTE);
 			const first = addPlayer(game, 'user-1');
 			const second = addPlayer(game, 'user-2');
+			// The hold stops the countdown before it is armed: no fight is announced and no
+			// ring event is rolled for a fight that will not happen (a review of #405).
+			expect(game.ring.nextFightAt).to.equal(null);
+			expect(game.ring.ringEvent).to.equal(undefined);
 			clock.tick(1.5 * MINUTE);
-			expect(lines.some(line => line.includes('The ring holds its breath'))).to.equal(true);
+			expect(lines.filter(line => line.includes('The ring holds its breath'))).to.have.length(1);
 			const party = game.ring.contestants.filter(contestant => contestant.mega);
 			expect(party).to.have.length(1 + MEGA_BOSS_MINIONS);
 			const [boss] = party.filter(contestant => !contestant.minion);
@@ -222,6 +265,9 @@ describe('./ring/mega-boss.ts', () => {
 			(second.monster as any).setOptions({ dead: true });
 
 			boss.monster.emit('die', {});
+			// Paid when the fight ends, not mid-fight: monster XP levels at once (a review of #405).
+			expect(first.character.coins).to.equal(coinsBefore[0]);
+			game.ring.emit('fightConcludes', {});
 
 			expect(first.character.coins - coinsBefore[0]!).to.equal(MEGA_BOSS_REWARD_COINS);
 			expect(first.character.cards.length).to.equal(cardsBefore[0]! + 1);

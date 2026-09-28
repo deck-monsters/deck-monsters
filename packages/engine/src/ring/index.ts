@@ -811,6 +811,30 @@ export class Ring extends BaseClass {
 		this.eventBus.unsubscribe('ring-internal');
 	}
 
+	/** The mega boss the hold was announced for, so the room hears it once per mega boss. */
+	private heldForMegaBossAt: number | null = null;
+
+	/**
+	 * In an announced mega boss's last `MEGA_BOSS_HOLD_MS`, no ordinary fight: nothing is
+	 * armed, any armed ring event is cleared (a Gauntlet's bosses or a Blood Feud would carry
+	 * into the mega boss fight), and the room is told once. The hold used to trip only when a
+	 * countdown ended, after it had announced a fight and rolled an event (a review of #405).
+	 */
+	private holdForMegaBoss(): boolean {
+		if (this.nextMegaBossAt === null || this.nextMegaBossAt - Date.now() > MEGA_BOSS_HOLD_MS) return false;
+		clearTimeout(this.fightTimer);
+		this.nextFightAt = null;
+		this.ringEvent = undefined;
+		this.publishState();
+		if (this.heldForMegaBossAt !== this.nextMegaBossAt) {
+			this.heldForMegaBossAt = this.nextMegaBossAt;
+			this.emit('narration', {
+				narration: 'The ring holds its breath. The mega boss is almost here, and nobody fights before it comes.',
+			});
+		}
+		return true;
+	}
+
 	startFightTimer(): void {
 		clearTimeout(this.fightTimer);
 		this.nextFightAt = null;
@@ -837,6 +861,11 @@ export class Ring extends BaseClass {
 
 		const { contestants, numberOfMonstersInRing } = getPlayerContestants();
 
+		// Challengers gathering for an announced mega boss would otherwise fight each other a
+		// minute after the second one joins, and leave the ring empty when it comes. In its
+		// last minutes no countdown is armed and no ring event rolled; its arrival restarts it.
+		if (numberOfMonstersInRing >= MIN_MONSTERS && this.holdForMegaBoss()) return;
+
 		if (numberOfMonstersInRing >= MIN_MONSTERS) {
 			this.rollRingEvent();
 
@@ -856,16 +885,8 @@ export class Ring extends BaseClass {
 				const { numberOfMonstersInRing: numberOfMonstersStillInRing } =
 					getPlayerContestants();
 
-				// Challengers gathering for an announced mega boss would otherwise fight each
-				// other a minute after the second one joins, and leave the ring empty when it
-				// comes. In its last minutes the ring waits; its arrival restarts the countdown.
-				if (this.nextMegaBossAt !== null && this.nextMegaBossAt - Date.now() <= MEGA_BOSS_HOLD_MS) {
-					this.publishState();
-					this.emit('narration', {
-						narration: 'The ring holds its breath. The mega boss is almost here, and nobody fights before it comes.',
-					});
-					return;
-				}
+				// A countdown armed just before the hold began ends inside it.
+				if (this.holdForMegaBoss()) return;
 
 				if (numberOfMonstersStillInRing >= MIN_MONSTERS) {
 					this.fight();

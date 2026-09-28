@@ -612,14 +612,19 @@ the timer; `Game` owns one `MegaBossEvent` wherever timed bosses run (`ring.spaw
   (`options.megaBossAt`), so a restart or deploy picks it up instead of rolling a new day. A
   time rolled while the Game is built is saved as soon as the server attaches its store (the
   `stateStore` setter), not at the next unrelated save; a
-  restart more than `MEGA_BOSS_LATE_GRACE_MS` (10 minutes) after it was due reschedules.
+  restart more than `MEGA_BOSS_LATE_GRACE_MS` (10 minutes) after it was due reschedules. While
+  it waits out a running fight the saved time moves to now on each retry, so a restart during
+  a long fight still owes it rather than rolling tomorrow; a restart already past its time
+  brings it at once without announcing it as a minute away.
 - **Announcement.** 30 minutes ahead, then reminders at 10 and 2 minutes. `ring.nextMegaBossAt`
   is set only inside that window and rides `ring.state`, the handshake, and `ringState`; the
   web ring header shows `MEGA BOSS in mm:ss` over the ordinary boss timer. A restart inside
   the window announces again.
-- **The hold.** In its last `MEGA_BOSS_HOLD_MS` (2 minutes) an ordinary fight countdown that
-  ends does not start the fight: challengers gathering for it would otherwise fight each other
-  and leave the ring empty. Its arrival restarts the countdown.
+- **The hold.** In its last `MEGA_BOSS_HOLD_MS` (2 minutes) no ordinary fight countdown is
+  armed (`Ring.holdForMegaBoss`): challengers gathering for it would otherwise fight each other
+  and leave the ring empty. The check runs before the countdown is armed, and the 2-minute
+  reminder stops one already running, so the ring header never counts down a fight that will
+  not happen and no ring event is rolled for it. Its arrival restarts the countdown.
 - **Arrival.** Due during a fight, it waits for the fight to end (`MEGA_BOSS_RETRY_MS`). With
   fewer than `MEGA_BOSS_MIN_HUMANS` (2) humans in the ring it is called off with a line of
   scorn and `spawnBoss()` sends a regular boss instead. Otherwise regular bosses waiting in the
@@ -637,10 +642,13 @@ the timer; `Game` owns one `MegaBossEvent` wherever timed bosses run (`ring.spaw
   (`megaBossHpShare`). The owner chose "humans win about 20%"; `sim:mega` measures 19% over
   two to four humans at levels 1–10. A single share left two level 1s near 3% and three level
   10s near 53%, because more humans and higher levels deal damage faster than HP keeps up.
-- **Relics.** A crown of black iron (+2 AC) and a war-horn of the old kings (+2 STR), set as
-  permanent modifiers on a boss that is discarded after the fight.
+- **Relics.** A crown of black iron (+2 AC) and a war-horn of the old kings (+2 STR) on a boss
+  that is discarded after the fight. The crown goes on `acVariance`, because pre-battle AC
+  never reads permanent modifiers (a permanent AC modifier would be narration only); the horn
+  is a permanent STR modifier, which STR does read.
 - **Reward.** When it falls, every challenger still standing then gets
   `MEGA_BOSS_REWARD_COINS` (25) coins, `MEGA_BOSS_REWARD_XP` (25) monster XP, and a card of
   rare or scarcer rarity (`Game.rewardMegaBossChallenger`), on top of the fight's own rewards.
-  Paid at its death rather than at the end of the fight, because the Challengers then settle
-  it among themselves and only one would be left to collect.
+  Who earned it is decided at its death, because the Challengers then settle it among
+  themselves and only one would be left standing at the end; it is paid at `fightConcludes`,
+  because monster XP levels a monster at once and a mid-fight level-up changed live combat.

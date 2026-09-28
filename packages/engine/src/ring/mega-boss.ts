@@ -95,7 +95,14 @@ export function empowerMegaBoss(monster: any, fit: MegaBossFit): void {
 	const extra = fit.maxHp - monster.maxHp;
 	if (extra !== 0) monster.setOptions({ hpVariance: (monster.options.hpVariance ?? 0) + extra });
 	monster.hp = monster.maxHp;
-	for (const relic of MEGA_BOSS_RELICS) monster.setModifier(relic.attr, relic.amount, true);
+	for (const relic of MEGA_BOSS_RELICS) {
+		// Pre-battle AC is BASE_AC + acVariance + the level bonus and never reads permanent
+		// modifiers, so an AC relic set through `setModifier` changed nothing but the
+		// narration (a review of PR #405). AC goes through `acVariance`, as HP goes through
+		// `hpVariance`; STR and INT do read permanent modifiers.
+		if (relic.attr === 'ac') monster.setOptions({ acVariance: (monster.options.acVariance ?? 0) + relic.amount });
+		else monster.setModifier(relic.attr, relic.amount, true);
+	}
 }
 
 /** A lesser minion's HP. */
@@ -117,6 +124,7 @@ export interface MegaBossHost {
 		nextMegaBossAt: number | null;
 		emit(event: string, ...args: unknown[]): void;
 		publishState(): void;
+		startFightTimer(): void;
 		spawnBoss(options?: Record<string, unknown>): Contestant | undefined;
 		addMegaBoss(boss: Contestant, minions: Contestant[]): boolean;
 		on(event: string, fn: (...args: any[]) => void): (...args: any[]) => void;
@@ -149,8 +157,9 @@ export class MegaBossEvent {
 			at = nextMegaBossAt(now);
 			this.host.setScheduledAt(at);
 		}
-		// Inside the announcement window after a restart: tell the room again now.
-		if (at - now <= MEGA_BOSS_ANNOUNCE_MS) this.announce(at, true);
+		// Inside the announcement window after a restart: tell the room again now. Already due
+		// (a restart inside the grace window) it simply arrives; "in 1 minute" would be false.
+		if (at > now && at - now <= MEGA_BOSS_ANNOUNCE_MS) this.announce(at, true);
 		this.arm(at);
 	}
 
@@ -184,6 +193,10 @@ export class MegaBossEvent {
 		const first = !restated && left > MEGA_BOSS_REMINDERS_MS[0];
 		this.host.ring.nextMegaBossAt = at;
 		this.host.ring.publishState();
+		// From the last reminder the ring holds ordinary fights; re-checking the countdown now
+		// stops one already running, so the header shows the mega boss, not a fight that will
+		// not happen.
+		if (left <= MEGA_BOSS_REMINDERS_MS[MEGA_BOSS_REMINDERS_MS.length - 1]) this.host.ring.startFightTimer();
 		this.host.ring.emit('narration', {
 			narration: first
 				? `👹 A MEGA BOSS is coming. Something vast stirs beneath the ring, and it will climb out in ${minutesLeft(left)}. It will be fitted to whoever stands in the ring when it arrives, and it will take all of you together to bring it down. Gather your challengers.`
@@ -196,6 +209,10 @@ export class MegaBossEvent {
 		if (this.disposed) return;
 		const { ring } = this.host;
 		if (ring.inEncounter) {
+			// Still owed while it waits: keep the saved time current, or a deploy during a long
+			// fight lands past the grace window and `start()` rolls a new day, dropping a boss
+			// the room was told was coming (a review of PR #405).
+			this.host.setScheduledAt(this.now());
 			this.timer = setTimeout(() => this.arrive(at), MEGA_BOSS_RETRY_MS);
 			return;
 		}
@@ -235,28 +252,30 @@ export class MegaBossEvent {
 			narration: `👹 THE MEGA BOSS HAS COME. ${boss.monster.givenName} climbs out of the dark, wearing ${relics}${brought ? `, with ${brought} lesser ${brought === 1 ? 'minion' : 'minions'} scuttling at its heels` : ''}. Every challenger stands together until it falls.`,
 		});
 
-		// Pay out the moment it falls, to every challenger still standing then: after it the
-		// challengers settle it among themselves, which would leave one survivor to collect.
+		// Who earns it is settled the moment it falls: every challenger still standing then,
+		// since after it the challengers settle it among themselves and only one would be left.
+		// They are paid when the fight ends, not then: monster XP levels a monster at once, and
+		// a level-up mid-fight would buff whoever the killing blow caught near a level boundary
+		// for the rest of the encounter (a review of PR #405).
 		const { monster } = boss;
-		let paid = false;
+		let earned: Contestant[] | undefined;
 		const onDie = () => {
-			if (paid) return;
-			paid = true;
-			const standing = ring.contestants.filter(
+			if (earned) return;
+			earned = ring.contestants.filter(
 				contestant => !contestant.isBoss && !contestant.monster.dead && !contestant.monster.fled
 			);
 			ring.emit('narration', {
-				narration: standing.length
-					? `👹 The mega boss falls! Every challenger still standing earns ${MEGA_BOSS_REWARD_COINS} coins, ${MEGA_BOSS_REWARD_XP} XP, and a rare card.`
+				narration: earned.length
+					? `👹 The mega boss falls! Every challenger still standing earns ${MEGA_BOSS_REWARD_COINS} coins, ${MEGA_BOSS_REWARD_XP} XP, and a rare card when the fight is over.`
 					: '👹 The mega boss falls, with nobody left standing to claim its hoard.',
 			});
-			for (const contestant of standing) this.host.rewardChallenger(contestant);
 		};
 		// `on` binds the listener and returns the bound copy, which is what `off` needs.
 		const boundDie = monster.on('die', onDie);
 		const boundConcludes = ring.on('fightConcludes', () => {
 			monster.off('die', boundDie);
 			ring.off('fightConcludes', boundConcludes);
+			for (const contestant of earned ?? []) this.host.rewardChallenger(contestant);
 		});
 	}
 }

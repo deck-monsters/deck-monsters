@@ -126,3 +126,18 @@ Three findings, all fixed with tests that fail without them:
   deck gave five of one card. Hands now obey `MAX_CARD_COPIES_IN_HAND`, which moved to
   `constants/card-management.ts` from its two private copies in equip and Beastmaster.
   Re-measured: the likely-deck curves match within a point, and `sim:mega` reads 18.2%.
+
+## Cursor review of PR #405
+
+Four findings, fixed with tests:
+
+- **Reward XP mid-fight.** Monster XP levels a monster at once, so paying at the boss's death
+  changed live combat. Earners are recorded at its death and paid at `fightConcludes`.
+- **The crown did nothing.** Pre-battle AC ignores permanent modifiers; the +2 AC relic now
+  goes on `acVariance`.
+- **The hold armed a countdown anyway.** The timer was set, announced, and a ring event
+  rolled before the fire-time check skipped the fight. `Ring.holdForMegaBoss` now runs before
+  arming, and the 2-minute reminder stops a countdown already running.
+- **Retries and restarts.** A long fight's retries kept the original saved time, so a restart
+  after the 10-minute grace rolled tomorrow; each retry now saves the current time. A restart
+  just past its time announced it "in 1 minute" before arriving; it now arrives unannounced.
