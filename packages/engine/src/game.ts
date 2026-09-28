@@ -67,7 +67,27 @@ export class Game extends BaseClass {
 	exploration: Exploration;
 	roomId: string;
 	stateSaveFunc?: (state: string) => void;
-	stateStore?: StateStore;
+	private _stateStore?: StateStore;
+	/** Set when room state changed before any store was attached (see the `stateStore` setter). */
+	private _unsavedSinceConstruction = false;
+
+	get stateStore(): StateStore | undefined {
+		return this._stateStore;
+	}
+
+	/**
+	 * The server attaches the store after construction, so a change made while the Game was
+	 * being built (a freshly rolled mega boss time) had nothing to save through, and waited
+	 * for some unrelated change to save it; a second restart before then rolled a new time
+	 * (the Pass C review). Save it as soon as a store arrives.
+	 */
+	set stateStore(stateStore: StateStore | undefined) {
+		this._stateStore = stateStore;
+		if (stateStore && this._unsavedSinceConstruction) {
+			this._unsavedSinceConstruction = false;
+			this.scheduleSave();
+		}
+	}
 	/** Injected by the API server for DB-backed leaderboards / catch-up. */
 	analytics?: GameAnalyticsCallbacks;
 	private _eventBus: RoomEventBus;
@@ -115,6 +135,7 @@ export class Game extends BaseClass {
 				getScheduledAt: () => (this.options as any).megaBossAt as number | undefined,
 				setScheduledAt: (at) => {
 					this.optionsStore = { ...this.optionsStore, megaBossAt: at } as any;
+					if (!this.stateSaveFunc && !this.stateStore) this._unsavedSinceConstruction = true;
 					this.scheduleSave();
 				},
 				rewardChallenger: (contestant) => this.rewardMegaBossChallenger(contestant),

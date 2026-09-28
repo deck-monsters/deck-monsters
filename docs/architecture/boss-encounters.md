@@ -609,7 +609,9 @@ the timer; `Game` owns one `MegaBossEvent` wherever timed bosses run (`ring.spaw
 
 - **Schedule.** About once a day per room: the next one is 20–28 hours after the last
   (`MEGA_BOSS_MIN_INTERVAL_MS`..`MAX`). The due time lives in the room's saved state
-  (`options.megaBossAt`), so a restart or deploy picks it up instead of rolling a new day; a
+  (`options.megaBossAt`), so a restart or deploy picks it up instead of rolling a new day. A
+  time rolled while the Game is built is saved as soon as the server attaches its store (the
+  `stateStore` setter), not at the next unrelated save; a
   restart more than `MEGA_BOSS_LATE_GRACE_MS` (10 minutes) after it was due reschedules.
 - **Announcement.** 30 minutes ahead, then reminders at 10 and 2 minutes. `ring.nextMegaBossAt`
   is set only inside that window and rides `ring.state`, the handshake, and `ringState`; the
@@ -622,7 +624,9 @@ the timer; `Game` owns one `MegaBossEvent` wherever timed bosses run (`ring.spaw
   fewer than `MEGA_BOSS_MIN_HUMANS` (2) humans in the ring it is called off with a line of
   scorn and `spawnBoss()` sends a regular boss instead. Otherwise regular bosses waiting in the
   ring step aside (refunding any summon) and `Ring.addMegaBoss` brings the party, flagged
-  `Contestant.mega`: exempt from the boss quota and from `dismissExtraBosses`.
+  `Contestant.mega`: exempt from the boss quota and from `dismissExtraBosses`. It has no
+  despawn timer, so when the last human withdraws before the fight, `removeMonster` sends the
+  whole party away; otherwise a lone newcomer would walk into a fight fitted for a crowd.
 - **Fitting.** `fitMegaBoss` reads the humans in the ring when it arrives: level two above the
   strongest, minions at the weakest human's level at a third of their HP, and HP a share of
   the humans' combined HP, `0.25 + 0.15 × humans + 0.11 × strongest level`

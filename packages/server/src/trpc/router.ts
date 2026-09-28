@@ -1722,7 +1722,7 @@ export function createRouter(roomManager: RoomManager) {
 						toMonsterName: input.toMonsterName,
 						count: input.count,
 					}),
-				) as { movedCount: number; fromMonsterName: string; toMonsterName: string };
+				) as { movedCount: number; fromMonsterName: string; toMonsterName: string; blockedBy?: string };
 				eventBus.publish({
 					type: 'card.equipped' as EventType,
 					scope: 'private',
@@ -1738,7 +1738,10 @@ export function createRouter(roomManager: RoomManager) {
 				publishPrivateAnnouncement({
 					eventBus,
 					userId: ctx.userId,
-					text: `Moved ${result.movedCount} ${input.cardName} from ${result.fromMonsterName} to ${result.toMonsterName}.`,
+					// A partial move names why it stopped short (a full hand, a card the monster
+					// cannot hold, the copy limit): the engine's own line saying so is no longer
+					// published (10b #195), so the summary has to.
+					text: `Moved ${result.movedCount} ${input.cardName} from ${result.fromMonsterName} to ${result.toMonsterName}.${result.blockedBy ? ` ${result.blockedBy}` : ''}`,
 					operation: 'moveCard',
 				});
 				eventBus.publish({
@@ -1897,7 +1900,7 @@ export function createRouter(roomManager: RoomManager) {
 				const commandId = randomUUID();
 				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId, publish: false });
 				// Not atomic — see the matching comment in unequipMany.
-				const { movedCount, fromMonsterName, toMonsterName, failures } = await runSerializedMutation(
+				const { movedCount, fromMonsterName, toMonsterName, failures, shortfalls } = await runSerializedMutation(
 					input.roomId,
 					ctx.userId,
 					async () => {
@@ -1905,6 +1908,7 @@ export function createRouter(roomManager: RoomManager) {
 						let fromMonsterName = input.fromMonsterName;
 						let toMonsterName = input.toMonsterName;
 						const failures: Array<{ cardName: string; reason: string }> = [];
+						const shortfalls: string[] = [];
 						for (const { cardName, count } of input.cards) {
 							try {
 								const result = (await character.moveCard({
@@ -1913,8 +1917,9 @@ export function createRouter(roomManager: RoomManager) {
 									fromMonsterName: input.fromMonsterName,
 									toMonsterName: input.toMonsterName,
 									count,
-								})) as { movedCount: number; fromMonsterName: string; toMonsterName: string };
+								})) as { movedCount: number; fromMonsterName: string; toMonsterName: string; blockedBy?: string };
 								movedCount += result.movedCount;
+								if (result.blockedBy) shortfalls.push(result.blockedBy);
 								fromMonsterName = result.fromMonsterName;
 								toMonsterName = result.toMonsterName;
 							} catch (err) {
@@ -1924,7 +1929,7 @@ export function createRouter(roomManager: RoomManager) {
 								});
 							}
 						}
-						return { movedCount, fromMonsterName, toMonsterName, failures };
+						return { movedCount, fromMonsterName, toMonsterName, failures, shortfalls };
 					},
 				);
 				if (movedCount === 0 && failures.length > 0) {
@@ -1945,9 +1950,15 @@ export function createRouter(roomManager: RoomManager) {
 				publishPrivateAnnouncement({
 					eventBus,
 					userId: ctx.userId,
-					text: failures.length > 0
-						? `Moved ${movedCount} cards from ${fromMonsterName} to ${toMonsterName}. Could not move: ${failures.map((f) => f.cardName).join(', ')}.`
-						: `Moved ${movedCount} cards from ${fromMonsterName} to ${toMonsterName}.`,
+					// Reasons ride the summary: the engine's lines that gave them are no longer
+					// published (10b #195). Each distinct reason once.
+					text: [
+						`Moved ${movedCount} cards from ${fromMonsterName} to ${toMonsterName}.`,
+						...(failures.length > 0
+							? [`Could not move: ${failures.map((f) => `${f.cardName} (${f.reason.replace(/\.$/, '')})`).join(', ')}.`]
+							: []),
+						...[...new Set(shortfalls)],
+					].join(' '),
 					operation: 'moveMany',
 				});
 				eventBus.publish({

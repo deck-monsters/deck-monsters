@@ -103,7 +103,9 @@ The room-wide lane serializes shared room resources such as ring membership and 
 engine path attempts a question. A mutation that publishes its own summary line (equip,
 unequip, unequip all, unequip many, move, move many, reorder) passes `publish: false`, so the
 Console gets **one line per Workshop action**: the summary, which names any skipped or failed
-cards. Publishing both printed an equip twice and a batch move as a line per card type plus
+cards and why. A move that stops short (a full hand, a card the monster cannot hold, the copy
+limit) returns `blockedBy` from `Beastmaster.moveCard`, and the move summaries carry it, since
+the engine's line that said so is no longer published. Publishing both printed an equip twice and a batch move as a line per card type plus
 the summary, which a player read as the game moving cards on its own (10b #195). Never add a prompt to an awaited Workshop path. Collect
 all answers in the form first, or use the interactive per-user command flow described in
 [engine concurrency and timing](engine-concurrency-and-timing.md).

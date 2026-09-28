@@ -454,6 +454,17 @@ export class Ring extends BaseClass {
 				// left for their own timers. No-op during encounters (rejected above).
 				if (!contestant.isBoss) {
 					const hasPlayers = this.contestants.some(c => !c.isBoss);
+					// A mega boss's party is fitted to the humans who were there; with none left it
+					// goes, or it sits in the ring for good (it has no despawn timer and is exempt
+					// from `dismissExtraBosses`) and a lone newcomer walks into a fight fitted for a
+					// crowd. The Pass C review found it stuck there.
+					const megaParty = this.contestants.filter(c => c.mega);
+					if (!hasPlayers && megaParty.length > 0) {
+						this.sendBossesAway(megaParty, boss =>
+							boss.minion
+								? `${boss.monster.givenName} scuttles off after its master.`
+								: `With no challengers left to face it, ${boss.monster.givenName} sinks back into the dark.`);
+					}
 					if (!hasPlayers) {
 						const summonedBosses = this.contestants.filter(
 							c => c.isBoss && c.summonedByUserId !== undefined

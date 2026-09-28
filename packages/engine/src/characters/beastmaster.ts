@@ -699,7 +699,7 @@ class Beastmaster extends BaseCharacter {
 		toMonsterName: string;
 		count?: number;
 		channel: ChannelFn;
-	}): Promise<{ movedCount: number; fromMonsterName: string; toMonsterName: string }> {
+	}): Promise<{ movedCount: number; fromMonsterName: string; toMonsterName: string; blockedBy?: string }> {
 		const moveCount = Math.max(Number(count) || 1, 1);
 		const fromMonster = this.findMonsterByName(fromMonsterName);
 		const toMonster = this.findMonsterByName(toMonsterName);
@@ -763,6 +763,9 @@ class Beastmaster extends BaseCharacter {
 			movedCount,
 			fromMonsterName: fromMonster.givenName,
 			toMonsterName: toMonster.givenName,
+			// Why a partial move stopped short. The Workshop's summary line carries it, since
+			// the router no longer publishes this method's own announce (10b #195).
+			...(blockedBy ? { blockedBy } : {}),
 		}));
 	}
 

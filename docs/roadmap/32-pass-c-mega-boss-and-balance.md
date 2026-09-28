@@ -20,9 +20,9 @@ Console, in one new branch and PR.
 |---|---|---|---|
 | 1 | Workshop actions echo into the Console twice (the engine's lines plus the server's summary); keep one line per action (10b #195) | Done | 1b56fb7 |
 | 2 | Harness: likely-deck archetypes per class beside the random hand (`deckStyle`), and ring events (`ringEvents`), both as `sim:rings` flags | Done | 675f493 |
-| 3 | Balance: the Unicorn strong at every level, the Gladiator weak early, measured with task 2 against the class-curve target. Investigated: no Unicorn or Gladiator change the evidence supports; the one robust finding, level-scaled Blast and Sandstorm late, now scales by half past level 10 (owner) | Done | 9634d46, this commit |
+| 3 | Balance: the Unicorn strong at every level, the Gladiator weak early, measured with task 2 against the class-curve target. Investigated: no Unicorn or Gladiator change the evidence supports; the one robust finding, level-scaled Blast and Sandstorm late, now scales by half past level 10 (owner) | Done | 9634d46, f58489f |
 | 4 | The mega boss event: daily per room, announced 30 minutes ahead with a countdown, a two-minute hold on ordinary fights, fitted to about 20%, relics and minions, rewards, called off below two humans; `sim:mega` | Done | 14f3d89 |
-| 5 | Docs close-out, generated references, independent review | Not started | — |
+| 5 | Docs close-out, generated references, independent review and its fixes | Done | this commit |
 
 ## Decisions (owner, 2026-09-27)
 
@@ -96,3 +96,18 @@ levels 1–10 are unchanged, as they should be. The Weeping Angel falls from 93%
 level 15 and from 99% to 94% at level 20. The Jinn does not move (96% and 85%), so its late
 strength is Sandstorm's confusion (opponents attack the wrong target), not its damage; that
 is recorded in 11 for the owner rather than changed here.
+
+## Independent review (task 5)
+
+A read-only review of the whole branch confirmed the owner's decisions are met and found
+three faults, fixed before the PR opened:
+
+- **The mega boss party could be stranded** (blocker). It has no despawn timer and is exempt
+  from `dismissExtraBosses`, so if every human withdrew before the fight it stayed in the ring,
+  and a lone newcomer walked into a fight fitted for a crowd. `removeMonster` now sends the
+  party away when the last human leaves.
+- **A partial card move lost its reason.** `Beastmaster.moveCard` said why it stopped short
+  only in its own line, which the Console no longer prints (task 1). It returns `blockedBy`
+  now, and both move summaries carry it; a batch move also names each failed card's reason.
+- **A freshly rolled mega boss time waited for an unrelated save**, because the server
+  attaches the store after the Game is built. The `stateStore` setter now saves it.

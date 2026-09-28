@@ -71,6 +71,21 @@ describe('./ring/mega-boss.ts', () => {
 		}
 	});
 
+	it('saves a freshly rolled time as soon as the room gets its store', () => {
+		// The server attaches the store after construction; the rolled time waited for an
+		// unrelated save, and a second restart rolled a new day (the Pass C review).
+		const game = new Game({ roomId: 'mega-save' }, () => {});
+		try {
+			const saves: string[] = [];
+			game.stateStore = { save: (_roomId: string, state: string) => { saves.push(state); return Promise.resolve(); } } as any;
+			// Just past the save debounce, and long before any other timer would save.
+			clock.tick(45_000);
+			expect(saves.length).to.be.above(0);
+		} finally {
+			game.dispose();
+		}
+	});
+
 	it('announces 30 minutes ahead with a countdown, then brings a fitted boss and its minions', () => {
 		const at = Date.now() + MEGA_BOSS_ANNOUNCE_MS + 5 * MINUTE;
 		const game = new Game({ roomId: 'mega-arrive', megaBossAt: at }, () => {});
@@ -131,6 +146,25 @@ describe('./ring/mega-boss.ts', () => {
 			game.ring.contestants = game.ring.contestants.filter(contestant => contestant.isBoss || contestant.userId !== 'user-2');
 			game.ring.dismissExtraBosses();
 			expect(game.ring.contestants.filter(contestant => contestant.mega)).to.have.length(1 + MEGA_BOSS_MINIONS);
+		} finally {
+			game.dispose();
+		}
+	});
+
+	it('leaves the ring with its minions when every challenger withdraws before the fight', async () => {
+		// Its party has no despawn timer and is exempt from the boss quota, so with no humans
+		// left it stayed in the ring for good (the Pass C review).
+		const at = Date.now() + MINUTE;
+		const game = new Game({ roomId: 'mega-withdraw', megaBossAt: at }, () => {});
+		try {
+			const first = addPlayer(game, 'user-1');
+			const second = addPlayer(game, 'user-2');
+			clock.tick(MINUTE);
+			expect(game.ring.contestants.filter(contestant => contestant.mega)).to.have.length(1 + MEGA_BOSS_MINIONS);
+
+			await game.ring.removeMonster({ ...first, userId: 'user-1' });
+			await game.ring.removeMonster({ ...second, userId: 'user-2' });
+			expect(game.ring.contestants).to.have.length(0);
 		} finally {
 			game.dispose();
 		}
