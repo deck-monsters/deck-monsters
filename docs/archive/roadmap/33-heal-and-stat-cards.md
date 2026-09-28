@@ -1,27 +1,31 @@
 ---
-type: Roadmap
+type: Archive
 title: Heal, Stat Cards, and Class Balance
-description: Active plan for the heal INT-penalty fix, boost and curse cards since they began moving rolls, and a class rebalance to the owner's 35-75% band.
-status: draft
+description: Closed pass record for the heal INT-penalty fix, boost and curse cards since they began moving rolls, and a class rebalance to the owner's 35-75% band.
+status: deprecated
 audience: internal
-tags: [roadmap, balance, cards]
+tags: [archive, balance, cards]
 ---
 # 33 — Heal, Stat Cards, and Class Balance
 
-**Status:** In progress on branch `claude/heal-penalty-and-stat-card-balance`, started
-2026-09-28 from an owner report: a Unicorn's Heals rolled `1d4 − 2` all fight after a
-Concussion.
+**Status:** Closed (2026-09-28) on branch `claude/heal-penalty-and-stat-card-balance`,
+from an owner report: a Unicorn's Heals rolled `1d4 − 2` all fight after a Concussion.
+Lasting rules are in [cards and encounter effects](../../architecture/cards-and-encounter-effects.md#temporary-stat-changes-and-their-caps)
+and [boss encounters](../../architecture/boss-encounters.md); the Heal fix is 10b #198. The
+class rebalance (task 4) moved to the principled balance methodology item in
+[11](../../roadmap/11-balance-and-mechanics.md), which the owner asked to build before any
+further card changes; the evidence below is its starting point.
 
 ## Tasks
 
 | # | Slice | Status | Commit |
 |---|---|---|---|
 | 1 | Heal: an INT penalty never reduces a heal; a bonus still fades (10b #198). Roadmap 10: J and A closed by the owner, F re-scoped to indentation and spacing with a first example | Done | 0f5d3f7 |
-| 2 | Boost and curse cards since #175 (temporary DEX, STR, and INT changes move rolls): measure what each is worth per play and whether any needs a small tweak | Done: ±5 cap on temporary DEX/STR/INT changes, and curse attacks curse only on a hit | f9fbbc5, 9b15e87, this commit |
-| 3 | Baseline class curves after tasks 1-2, random and likely hands; why some monsters seem to always carry their signature card | In progress | |
-| 4 | Rebalance to the owner's band: every monster wins 35-75% at every level (ancient dragons up to 80); brutes stronger early, casters stronger late. Candidates: a per-card copy limit for area spells, level scaling | Planned | |
+| 2 | Boost and curse cards since #175 (temporary DEX, STR, and INT changes move rolls): measure what each is worth per play and whether any needs a small tweak | Done: ±5 cap on temporary DEX/STR/INT changes, and curse attacks curse only on a hit | f9fbbc5, 9b15e87, 080ce70 |
+| 3 | Baseline class curves after tasks 1-2, random and likely hands; why some monsters seem to always carry their signature card | Done | d1ebb2e |
+| 4 | Rebalance to the owner's band | Moved to [11](../../roadmap/11-balance-and-mechanics.md): methodology first, no card changes until then | |
 | 5 | Bosses drop filler by card class (`isBossFiller`): the plain Hit and any heal, hide, or boost card not tied to one monster type | Done | f71686d |
-| 6 | Signature-card catch-up: a winning monster whose owner holds no copy of its signature card wins it 90% of the time (`SIGNATURE_CATCH_UP_CHANCE`); normal draws after one copy. Covers characters made before a monster pack shipped, whose starting decks never got that pack's card | Done | this commit |
+| 6 | Signature-card catch-up: a winning monster whose owner holds no copy of its signature card wins it 90% of the time (`SIGNATURE_CATCH_UP_CHANCE`); normal draws after one copy. Covers characters made before a monster pack shipped, whose starting decks never got that pack's card | Done | 13fb3d5 |
 
 ## Decisions (owner, 2026-09-28)
 

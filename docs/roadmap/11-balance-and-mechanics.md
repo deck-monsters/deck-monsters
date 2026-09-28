@@ -45,6 +45,23 @@ and fixed defects are in [`10b-bugs-fixed.md`](10b-bugs-fixed.md).
   both findings reversed (Gladiator 52–70% early, Unicorn 17–38% at levels 5–10), so neither
   is a card problem the harness can see; no change. What held under both deck models is
   the Blast item below.
+- [ ] **Principled balance methodology — owner: Engine (next pass, owner 2026-09-28).** No
+  card changes until this data exists. Cards fall into classes of action (strike, area
+  strike, heal, boost, curse, control, confusion, delayed damage); measure an idealized
+  version of each class, how it scales with level, and how hand order changes outcomes, in
+  small idealized hands first, then real cards and full hands. Express a card's value in a
+  common unit so each monster's holdable cards can be totalled, to find classes that are
+  short of good cards and cards that are far above the rest. Draw on game-design and
+  probability practice (card evaluation in Magic: The Gathering, damage-per-round and
+  action economy in D&D, expected value and variance as casinos use them). Write the
+  harnesses and their use up as long-lived reference. Owner's balance band: every monster
+  wins 35-75% at every level with informed hands on both sides (ancient dragons up to 80);
+  brutes stronger early, casters late; a good build and card order should pay off a lot,
+  but the monster type alone must not decide nearly every fight. Keep the excitement: a fix
+  for Sandstorm should read like a roll (for example, a d20 per opponent to catch them in
+  the storm, with natural 20s), not a flat halving. Starting evidence (informed-hand curves,
+  why the Jinn wins duels, stat-card values) is in
+  [33](../archive/roadmap/33-heal-and-stat-cards.md).
 - [ ] **Economy telemetry — owner: Analytics.** Measure coins earned, spent, and held per
   active player-room; first-purchase time; outcome mix; and unaffordable expired stock.
   The harness has the new-player scenario; a purchase-sink scenario is still open.
