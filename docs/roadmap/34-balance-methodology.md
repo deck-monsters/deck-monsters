@@ -511,10 +511,12 @@ seeds) stand.
 - **Sandstorm as a roll**, and a softer redraw, compared on rate and excitement.
 - **Roll for initiative** (owner, 2026-09-28): in real fights, turn order is a hidden coin
   flip (the ring shuffles contestants as they join, and the order holds for the whole
-  fight). A visible roll at the start of a fight, for example d20 + DEX modifier with a
-  natural 20 acting twice in the first round, would make it a moment and give DEX another
-  use. Measure first: the initiative edge per matchup and level (Layer 6), how much DEX
-  would shift it, and the variants (once per fight, or each round). Across all pairs with
+  fight). A visible roll at the start of a fight (d20 + DEX modifier) would make it a moment
+  and give DEX another use. Owner's shape: the lowest-XP monster in the ring rolls with
+  advantage (an underdog's edge); a natural 20 earns a glory announcement only, with no
+  gameplay change; no extra actions, since acting twice would disturb hand order. Measure
+  first: the initiative edge per matchup and level (Layer 6), how much DEX and the
+  underdog's advantage would shift it, and once per fight against each round. Across all pairs with
   likely and random hands, going first is worth 53% (task 1 baseline), far less than the
   51-65% of Hit mirrors, so this is mainly for excitement and stat value, not fairness.
 - **Rarity copy limits** (epic 2, or 1) if Layers 2-4 confirm stacking.
