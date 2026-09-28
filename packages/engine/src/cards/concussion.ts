@@ -25,7 +25,7 @@ export class ConcussionCard extends CurseCard {
 	}
 
 	get curseDescription(): string {
-		return `Curse: ${this.cursedProp} -1${(this.options as any).curseAmount} depending on how hard the hit is`;
+		return `Curse: ${this.cursedProp} -1 to ${(this.options as any).curseAmount} depending on how hard the hit is`;
 	}
 }
 

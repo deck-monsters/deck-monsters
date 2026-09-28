@@ -12,7 +12,7 @@ describe('./cards/curse.ts', () => {
 		const hit = new HitCard({ damageDice: '1d4' });
 
 		const stats = `${hit.stats}
-Curse: ac -1, with a maximum total curse of -(level + 1). Afterwards penalties come out of hp instead.`;
+Curse: ac -1, with a maximum total curse of -(level + 1). Afterwards penalties come out of hp instead. The curse lands only if the hit does.`;
 
 		expect(curse).to.be.an.instanceof(CurseCard);
 		expect(curse.stats).to.equal(stats);

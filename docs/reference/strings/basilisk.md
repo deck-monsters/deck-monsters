@@ -140,7 +140,7 @@ Source: `packages/engine/src/cards/thick-skin.ts`.
 **Rules text:**
 
 ```text
-Boost: ac +2 (max boost of level * 2, or 1 for beginner, then boost granted to hp instead).
+Boost: ac +2 (max total boost of level + 1, then boost granted to hp instead).
 If hit by melee attack, damage comes out of ac boost first.
 ```
 

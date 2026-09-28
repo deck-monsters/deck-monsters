@@ -25,7 +25,7 @@ describe('./cards/basic-shield.ts', () => {
 		expect((basicShield as any).boostAmount).to.equal(2);
 		expect((basicShield as any).boostedProp).to.equal('ac');
 		expect(basicShield.stats).to.equal(
-			'Boost: ac +2 (max boost of level * 2, or 1 for beginner, then boost granted to hp instead).\nIf hit by melee attack, damage comes out of ac boost first.'
+			'Boost: ac +2 (max total boost of level + 1, then boost granted to hp instead).\nIf hit by melee attack, damage comes out of ac boost first.'
 		);
 	});
 

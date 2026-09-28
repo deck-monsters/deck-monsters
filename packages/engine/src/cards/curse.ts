@@ -60,15 +60,18 @@ export class CurseCard extends HitCard {
 	}
 
 	override get stats(): string {
-		// Overflow uses getMaxModifications. For DEX, STR, INT, and AC that cap
-		// is level + 1 (MAX_PROP_MODIFICATIONS is 1). The old `maxMod * 3`
+		// Overflow uses getMaxModifications: level + 1 for AC, and level + 1 up to
+		// MAX_TEMPORARY_STAT_CHANGE for DEX, STR, and INT. The old `maxMod * 3`
 		// sentence said "-3 per level", so the generated guide stated two caps.
-		const cap = ['dex', 'str', 'int', 'ac'].includes(this.cursedProp)
-			? '-(level + 1)'
-			: `-${(STATS.MAX_PROP_MODIFICATIONS as Record<string, number>)[this.cursedProp] ?? 1}`;
+		const cap =
+			this.cursedProp === 'ac'
+				? '-(level + 1)'
+				: ['dex', 'str', 'int'].includes(this.cursedProp)
+					? `-(level + 1), at most -${STATS.MAX_TEMPORARY_STAT_CHANGE}`
+					: `-${(STATS.MAX_PROP_MODIFICATIONS as Record<string, number>)[this.cursedProp] ?? 1}`;
 		let stats = `${this.curseDescription}, with a maximum total curse of ${cap}. Afterwards penalties come out of hp instead.`;
 		if (this.hasChanceToHit) {
-			stats = `${super.stats}\n${stats}`;
+			stats = `${super.stats}\n${stats} The curse lands only if the hit does.`;
 		}
 		return stats;
 	}
@@ -98,7 +101,26 @@ export class CurseCard extends HitCard {
 		});
 	}
 
+	/**
+	 * A curse that comes with an attack lands only with the hit. It used to land first and
+	 * whatever the roll: past the stat cap, two Molasses at level 20 still won 17-18 points
+	 * more than Hits, since each overflow became up to 4 extra damage even on a miss. Landing
+	 * on the hit puts Molasses and Soften level with a Hit at every level (roadmap 33).
+	 * Curses with no attack roll (Blink, Brain Drain) still always apply.
+	 */
 	override async effect(player: any, target: any, ring: any, _activeContestants?: any): Promise<any> {
+		if (this.hasChanceToHit) {
+			return await super.effect(player, target, ring);
+		}
+		await this.applyCurse(player, target);
+		return !target.dead;
+	}
+
+	protected override async onLanded(player: any, target: any): Promise<void> {
+		await this.applyCurse(player, target);
+	}
+
+	private async applyCurse(player: any, target: any): Promise<void> {
 		const preCursedPropValue = target[this.cursedProp];
 		let curseAmount = Math.abs(this.curseAmount);
 		const postCursedPropValue = preCursedPropValue - curseAmount;
@@ -108,7 +130,7 @@ export class CurseCard extends HitCard {
 			postCursedPropValue
 		);
 
-		// Cap is getMaxModifications (level + 1 for DEX/STR/INT/AC), not
+		// Cap is getMaxModifications (level + 1, and at most 5 for DEX/STR/INT), not
 		// MAX_PROP_MODIFICATIONS. A local copy of that constant used to feed
 		// the "-3 per level" stats sentence and was never the overflow check.
 		const hpCurseOverflow =
@@ -133,11 +155,6 @@ export class CurseCard extends HitCard {
 			});
 			target.setModifier(this.cursedProp, -curseAmount);
 		}
-
-		if (this.hasChanceToHit) {
-			return await super.effect(player, target, ring);
-		}
-		return !target.dead;
 	}
 }
 

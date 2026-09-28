@@ -4,6 +4,7 @@ import { COMMON } from '../helpers/probabilities.js';
 import { VERY_CHEAP } from '../helpers/costs.js';
 import { difference } from '../helpers/difference.js';
 import { flavor } from '../helpers/flavor.js';
+import { MAX_TEMPORARY_STAT_CHANGE } from '../constants/stats.js';
 
 export interface BoostCardOptions extends CardOptions {
 	boostAmount?: number;
@@ -43,7 +44,13 @@ export class BoostCard extends BaseCard<BoostCardOptions> {
 			this.boostedProp === 'ac'
 				? '\nIf hit by melee attack, damage comes out of ac boost first.'
 				: '';
-		return `Boost: ${this.boostedProp} +${this.boostAmount} (max boost of level * 2, or 1 for beginner, then boost granted to hp instead).${acBoost}`;
+		// The cap is getMaxModifications. This used to say "level * 2, or 1 for beginner",
+		// which no version of the code enforced.
+		const cap =
+			this.boostedProp === 'ac'
+				? 'level + 1'
+				: `level + 1, at most +${MAX_TEMPORARY_STAT_CHANGE}`;
+		return `Boost: ${this.boostedProp} +${this.boostAmount} (max total boost of ${cap}, then boost granted to hp instead).${acBoost}`;
 	}
 
 	override getTargets(player: any): any[] {

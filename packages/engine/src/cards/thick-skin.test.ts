@@ -12,7 +12,7 @@ describe('./cards/thick-skin.ts', () => {
 		expect((thickSkin as any).boostAmount).to.equal(2);
 		expect((thickSkin as any).boostedProp).to.equal('ac');
 		expect(thickSkin.stats).to.equal(
-			'Boost: ac +2 (max boost of level * 2, or 1 for beginner, then boost granted to hp instead).\nIf hit by melee attack, damage comes out of ac boost first.'
+			'Boost: ac +2 (max total boost of level + 1, then boost granted to hp instead).\nIf hit by melee attack, damage comes out of ac boost first.'
 		);
 	});
 

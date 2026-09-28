@@ -17,7 +17,7 @@ Concussion.
 | # | Slice | Status | Commit |
 |---|---|---|---|
 | 1 | Heal: an INT penalty never reduces a heal; a bonus still fades (10b #198). Roadmap 10: J and A closed by the owner, F re-scoped to indentation and spacing with a first example | Done | 0f5d3f7 |
-| 2 | Boost and curse cards since #175 (temporary DEX, STR, and INT changes move rolls): measure what each is worth per play and whether any needs a small tweak | Measured; one tweak awaits the owner | f9fbbc5, this commit |
+| 2 | Boost and curse cards since #175 (temporary DEX, STR, and INT changes move rolls): measure what each is worth per play and whether any needs a small tweak | Done: ±5 cap on temporary DEX/STR/INT changes, and curse attacks curse only on a hit | f9fbbc5, 9b15e87, this commit |
 
 ## Decisions (owner, 2026-09-28)
 
@@ -25,6 +25,8 @@ Concussion.
 |---|---|
 | Heal and an INT penalty | Reads as a bug on a 1d4; fix it. Curse of Loki stays |
 | Boost and curse cards | "Mostly fine", but test for minor tweaks; each play is an automatic stat change |
+| Stacking cap | A temporary DEX, STR, or INT change caps at ±5 (was `level + 1`); AC keeps `level + 1` |
+| Curse attacks | Apply the curse only when the hit lands (owner's suggestion, measured below) |
 
 ## Evidence: stat cards (`sim:statcards`, 300 fights per cell)
 
@@ -64,3 +66,20 @@ and Concussion show no change here. Two copies a hand at the highest caps:
 - Options for the owner: leave it (it is a Hit with a rider, and only level 15+ stacks
   enough to matter); cap a temporary DEX/STR/INT change at a fixed size (for example ±5)
   instead of `level + 1`; or let Molasses's own curse stop at a smaller cap.
+
+## Evidence: the cap and curse-on-hit (300 fights per cell)
+
+Swing against four Hits a side, with the ±5 cap in place. Columns: Minotaur L1, L5, L10,
+L20, then Gladiator L1, L5, L10, L20. "On hit" is the shipped rule.
+
+| Hand | Curse always | Curse on hit |
+|---|---|---|
+| Molasses ×1 | +6 −1 +2 +8 / +1 +6 +1 +10 | −2 +3 +2 −2 / −1 +1 −3 −2 |
+| Molasses ×2 | +2 +0 −1 +17 / +2 +7 +3 +18 | +3 −1 −2 −6 / +6 +4 −4 −3 |
+| Soften ×1 | −1 +8 +7 +7 / −1 +7 +6 +7 | −2 −6 −8 −1 / +2 +2 −2 −3 |
+| Concussion ×1 | −3 −6 −5 −14 / +2 −0 −9 −13 | −3 −4 −5 −11 / −2 −4 −13 −11 |
+
+The cap alone left two Molasses at level 20 at +17 and +18: past the cap each play became
+up to 4 extra damage, even on a miss. With the curse on the hit, Molasses and Soften sit
+level with a Hit at every level. Concussion reads low against Hits because Hit never uses
+INT; that is the probe, not the card.

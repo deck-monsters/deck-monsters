@@ -61,6 +61,23 @@ fight state on `card.options` (it is persisted with the deck), and do not add a
 that lowers AC for a while must give back exactly what it took, as those two do; a cleanse that lifts
 negative AC must not lift another card's temporary penalty, as Horn of Proof checks.
 
+### Temporary stat changes and their caps
+
+A boost or curse on DEX, STR, or INT changes the raw stat and every roll that stat feeds,
+once (10b #175). Changes stack within a fight up to `getMaxModifications`: `level + 1` for
+AC, and `level + 1` but never more than `MAX_TEMPORARY_STAT_CHANGE` (±5) for DEX, STR, and
+INT. Past the cap a boost heals instead and a curse deals damage instead (`BoostCard`,
+`CurseCard`). The ±5 cap is the owner's (roadmap 33): with `level + 1`, stacked Molasses
+reached −21 DEX at level 20, the target's accuracy and defense on a d20.
+
+A curse that comes with an attack (Soften, Molasses, Concussion, Brain Drain) lands only
+when the attack roll succeeds, through `HitCard.onLanded`. It used to land before the roll,
+hit or miss, and past the cap each play still became extra damage. Curses without an attack
+roll (Blink) always apply.
+
+Heals read INT as a bonus only: an INT penalty counts as zero, and a bonus fades by one per
+play before it resets (10b #198).
+
 ### "Until your next card" and one-play bonuses
 
 An effect that lasts until its monster's next card is an encounter effect that answers the

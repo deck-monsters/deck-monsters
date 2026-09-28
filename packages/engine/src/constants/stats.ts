@@ -14,6 +14,15 @@ export const MAX_BOOSTS = {
 	str: 6,
 } as const;
 
+/**
+ * The most a temporary DEX, STR, or INT change can add up to in one fight, either way.
+ * Since #175 those changes move rolls one for one, and the cap was `level + 1`: a stacked
+ * Molasses reached -21 DEX at level 20 (the target's accuracy and defense on a d20), and
+ * two copies won 12-26 points more than plain Hits (roadmap 33). Owner's choice: +/-5,
+ * which is `level + 1` until level 4 and changes nothing below it. AC keeps `level + 1`.
+ */
+export const MAX_TEMPORARY_STAT_CHANGE = 5;
+
 export const MAX_PROP_MODIFICATIONS = {
 	ac: 1,
 	dex: 1,
