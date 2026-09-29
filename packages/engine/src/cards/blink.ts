@@ -5,6 +5,7 @@ import { chance } from '../helpers/chance.js';
 import { EPIC } from '../helpers/probabilities.js';
 import { EXPENSIVE } from '../helpers/costs.js';
 import { PSYCHIC } from '../constants/card-classes.js';
+import { wardAgainst, controlWardNarration } from './helpers/control-ward.js';
 
 const { roll } = chance;
 
@@ -89,6 +90,16 @@ export class BlinkCard extends CurseCard {
 		});
 
 		if (attackSuccess.success) {
+			// Unconquerable Horn: an armed ward cancels the whole time-shift right here, before
+			// any BlinkEffect or timeShifted flag exists, so nothing dangles and the later
+			// drain (inside that effect's ATTACK_PHASE branch) never gets the chance to run.
+			if (wardAgainst(blinkTarget, blinkPlayer, { activeContestants, ring })) {
+				this.emit('narration', {
+					narration: controlWardNarration(blinkTarget, 'will not be blinked away.'),
+				});
+				return true;
+			}
+
 			const blinkEffect = async ({ card, phase }: any) => {
 				const { effect } = card;
 

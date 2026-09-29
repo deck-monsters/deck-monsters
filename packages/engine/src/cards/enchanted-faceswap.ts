@@ -5,6 +5,7 @@ import { DEFENSE_PHASE } from '../constants/phases.js';
 import { FACESWAP_EFFECT } from '../constants/effect-types.js';
 import { PRICEY } from '../helpers/costs.js';
 import { RARE } from '../helpers/probabilities.js';
+import { wardAgainst, controlWardNarration } from './helpers/control-ward.js';
 
 const isFaceswapping = (monster: any): boolean =>
 	!!monster.encounterEffects.find(
@@ -51,6 +52,24 @@ export class EnchantedFaceswapCard extends BaseCard {
 									(encounterEffect: any) =>
 										encounterEffect.effectType !== FACESWAP_EFFECT
 								);
+
+							// Unconquerable Horn: being faceswapped — having your own card
+							// turned back on you — is the negative, non-damage effect here.
+							// swappedPlayer (the attacker) is who it lands on; faceswapTarget
+							// (the trap's owner) is the source. An armed ward on the attacker
+							// cancels the redirect, and their card resolves normally instead.
+							if (wardAgainst(swappedPlayer, faceswapTarget, { activeContestants, ring })) {
+								this.emit('narration', {
+									narration: controlWardNarration(swappedPlayer, 'will not be faceswapped.'),
+								});
+								return effect.call(
+									card,
+									swappedPlayer,
+									swappedTarget,
+									ring,
+									activeContestants
+								);
+							}
 
 							this.emit('effect', {
 								effectResult: `${this.icon} faceswapped by`,

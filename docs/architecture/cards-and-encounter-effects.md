@@ -122,19 +122,42 @@ Entrance, Enthrall, Mesmerize, Forked Stick, and Forked Metal Rod, goes through
 the held creature: at the start of that creature's turn it rolls to break free, and while
 held its card does nothing.
 
-- **The ward is checked in one place.** Unconquerable Horn arms
-  `encounterModifiers.unconquerableWard` (`cards/helpers/control-ward.ts`).
-  `immobilize()` spends it and cancels the hold, not the damage attached to it, only when
-  `isOpponentHold()` says the holder is an opponent. A teammate's area hold (Mesmerize
-  catches allies) does not spend it; a free-for-all ring event makes everyone an opponent.
-  A new control card that bypasses `immobilize()` is not warded until it calls
-  `consumeControlWard` itself.
+Unconquerable Horn used to ward only against holds. The owner asked (2026-09-28, roadmap 35
+"Unconquerable Horn as a counterspell") for more: "like a counterspell that lasts for one
+round or until some sort of negative action that is not a damage action is attempted." It is
+now a one-round, once-per-fight counterspell against the next negative, non-damage effect an
+opponent lands on the warder.
+
+- **What it covers.** Holds (via `immobilize()`), the curse part of a curse-carrying Hit
+  (Soften, Molasses, Concussion, Brain Drain — `CurseCard.applyCurse` in `cards/curse.ts`),
+  Blink's time-shift (`cards/blink.ts`), Bad Batch's poison (`cards/bad-batch.ts`),
+  Sandstorm's confusion (`cards/sandstorm.ts`), and Enchanted Faceswap's redirect
+  (`cards/enchanted-faceswap.ts`). **Damage always still lands** — only the extra,
+  non-damage effect riding with it is cancelled. **Curse of Loki is not warded**: a natural 1
+  turning an attacker's own blow back on itself is a roll outcome aimed at nobody, not an
+  opponent's action against the target.
+- **The single entry point.** `cards/helpers/control-ward.ts` exports `wardAgainst(target,
+  source, { activeContestants, ring })`: it returns true (and spends the ward) when `target`
+  has an armed ward and `source` is an opponent per `isOpponentHold()` (same team rules; a
+  creature never spends its own ward on itself, and an ally's effect never spends it). A new
+  negative, non-damage effect is not warded until it calls `wardAgainst` (or the lower-level
+  `consumeControlWard`) itself. `HitCard.onLanded` threads `ring` and `activeContestants`
+  through so `CurseCard.applyCurse` has the team data `wardAgainst` needs.
+- **Duration: one round.** Arming a ward attaches a counting `encounterEffects` entry to the
+  warder (the same `ATTACK_PHASE`-keyed-to-one-monster pattern `fire-breath.ts`'s `wind()`
+  uses) that ticks down once per card the warder itself plays. If the ward has not fired by
+  the time the warder has played a full hand's worth of further cards (`monster.cardSlots`,
+  9 by default — the same point next round), it lapses: `encounterModifiers.unconquerableWard`
+  becomes `'lapsed'`, with its own narration. **Once per fight either way**: `armControlWard`
+  refuses to re-arm after `'spent'` or `'lapsed'`.
 - **Self-holds skip the ward.** Sticketh sticks its own player with the ordinary
   `ImmobilizeEffect` through `stickFast()`, not `immobilize()`, so freedom rolls, fatigue,
   and cleanup are shared with every other hold.
 - **Narration hooks.** `ImmobilizeCard.emitHeldEffect()` and `getFreedomCommentary()` let a
   subclass narrate its own hold. The defaults read "X is currently held by Y", which is
-  wrong for a self-hold.
+  wrong for a self-hold. `controlWardNarration(target, refusal)` in `control-ward.ts` is the
+  shared refusal line for every other warded effect: the Job 39:9 quote only for a Unicorn
+  (confusion can lend the ward to any creature), naming what was refused in plain words.
 - **A held monster's card never plays.** A card that frees its own player from a hold cannot
   work on that player's turn; it only helps when it lands on someone else.
 

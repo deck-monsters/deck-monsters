@@ -6,6 +6,7 @@ import { BARD } from '../constants/creature-classes.js';
 import { POISON } from '../constants/card-classes.js';
 import { REASONABLE } from '../helpers/costs.js';
 import { UNCOMMON } from '../helpers/probabilities.js';
+import { wardAgainst, controlWardNarration } from './helpers/control-ward.js';
 
 export class BadBatchCard extends BaseCard {
 	static cardClass = [POISON];
@@ -55,7 +56,18 @@ export class BadBatchCard extends BaseCard {
 				const { effect, getHealRoll } = card;
 
 				if (effect && getHealRoll) {
-					card.effect = (player: any, target: any) => {
+					card.effect = (player: any, target: any, effectRing: any, effectActiveContestants: any) => {
+						// Unconquerable Horn: an armed ward on the drinker cancels the poisoning
+						// (only when badBatchTarget, who brewed it, is an opponent of the
+						// drinker) and the drink heals as normal, calling the card's original
+						// effect instead.
+						if (wardAgainst(target, badBatchTarget, { activeContestants: effectActiveContestants, ring: effectRing })) {
+							this.emit('narration', {
+								narration: controlWardNarration(target, 'will not be poisoned.'),
+							});
+							return effect.call(card, player, target, effectRing, effectActiveContestants);
+						}
+
 						let narration: string;
 						if (badBatchTarget === target) {
 							narration = `${target.givenName} forgets which bottle is ${target.pronouns.his} whiskey and which one is poison.`;

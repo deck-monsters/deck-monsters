@@ -133,11 +133,13 @@ export class HitCard extends BaseCard<HitCardOptions> {
 
 	/**
 	 * Runs when the attack roll succeeds, before damage is rolled. A curse attack applies its
-	 * curse here, so a miss curses nobody (roadmap 33).
+	 * curse here, so a miss curses nobody (roadmap 33). `ring` and `activeContestants` are
+	 * threaded through so a curse can check the Unconquerable Horn ward
+	 * (cards/helpers/control-ward.ts), which needs team data to tell an opponent from an ally.
 	 */
-	protected async onLanded(_player: any, _target: any): Promise<void> {}
+	protected async onLanded(_player: any, _target: any, _ring?: any, _activeContestants?: any): Promise<void> {}
 
-	async effect(player: any, target: any, ring: any, _activeContestants?: any): Promise<any> {
+	async effect(player: any, target: any, ring: any, activeContestants?: any): Promise<any> {
 		const { attackRoll, success, strokeOfLuck, curseOfLoki } = this.hitCheck(
 			player,
 			target
@@ -145,7 +147,7 @@ export class HitCard extends BaseCard<HitCardOptions> {
 		await subEventDelay(ring?.pacingMultiplier);
 
 		if (success) {
-			await this.onLanded(player, target);
+			await this.onLanded(player, target, ring, activeContestants);
 			const damageRoll = this.rollForDamage(player, target, strokeOfLuck);
 			await subEventDelay(ring?.pacingMultiplier);
 			return target.hit(damageRoll.result, player, this);

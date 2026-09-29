@@ -7,12 +7,20 @@ import { CoilCard } from './coil.js';
 import { EnthrallCard } from './enthrall.js';
 import { MesmerizeCard } from './mesmerize.js';
 import { StickethCard } from './sticketh.js';
+import { CurseCard } from './curse.js';
+import { BlinkCard } from './blink.js';
+import { BadBatchCard } from './bad-batch.js';
+import { WhiskeyShotCard } from './whiskey-shot.js';
+import { SandstormCard } from './sandstorm.js';
+import { EnchantedFaceswapCard } from './enchanted-faceswap.js';
+import { HitCard } from './hit.js';
 import { hydrateCard } from './helpers/hydrate.js';
 import { CONTROL_WARD } from './helpers/control-ward.js';
 import Unicorn from '../monsters/unicorn.js';
 import Basilisk from '../monsters/basilisk.js';
 import WeepingAngel from '../monsters/weeping-angel.js';
 import { UNICORN } from '../constants/creature-types.js';
+import { FACESWAP_EFFECT, SANDSTORM_EFFECT } from '../constants/effect-types.js';
 
 const isHeld = (monster: any) =>
 	monster.encounterEffects.some((effect: any) => effect.effectType === 'ImmobilizeEffect');
@@ -177,5 +185,186 @@ describe('./cards/unconquerable-horn.ts Unconquerable Horn', () => {
 	it('hydrates from JSON', () => {
 		const restored = hydrateCard(JSON.parse(JSON.stringify(new UnconquerableHornCard())));
 		expect(restored).to.be.instanceOf(UnconquerableHornCard);
+	});
+
+	describe('as a counterspell (roadmap 35)', () => {
+		it('cancels a curse, but the hit that carried it still lands', async () => {
+			await new UnconquerableHornCard().effect(unicorn, unicorn);
+
+			const curse = new CurseCard();
+			sinon.stub(curse, 'checkSuccess').returns({
+				success: true,
+				strokeOfLuck: false,
+				curseOfLoki: false,
+				tie: false,
+			});
+			const beforeAc = unicorn.ac;
+			const beforeHp = unicorn.hp;
+
+			await curse.effect(foe, unicorn, ring, contestants);
+
+			expect(unicorn.ac).to.equal(beforeAc);
+			expect(unicorn.hp).to.be.below(beforeHp);
+			expect(unicorn.encounterModifiers[CONTROL_WARD]).to.equal('spent');
+
+			// The ward fired once; a second curse from the same opponent now lands.
+			const secondCurse = new CurseCard();
+			sinon.stub(secondCurse, 'checkSuccess').returns({
+				success: true,
+				strokeOfLuck: false,
+				curseOfLoki: false,
+				tie: false,
+			});
+			await secondCurse.effect(foe, unicorn, ring, contestants);
+			expect(unicorn.ac).to.be.below(beforeAc);
+		});
+
+		it('does not touch Curse of Loki: the attacker still hurts itself', async () => {
+			await new UnconquerableHornCard().effect(unicorn, unicorn);
+
+			const curse = new CurseCard();
+			sinon.stub(curse, 'checkSuccess').returns({
+				success: false,
+				strokeOfLuck: false,
+				curseOfLoki: true,
+				tie: false,
+			});
+			const beforeFoeHp = foe.hp;
+			const beforeUnicornAc = unicorn.ac;
+
+			await curse.effect(foe, unicorn, ring, contestants);
+
+			expect(foe.hp).to.be.below(beforeFoeHp);
+			expect(unicorn.ac).to.equal(beforeUnicornAc);
+			// Curse of Loki is a roll outcome, not an action aimed at the target: untouched.
+			expect(unicorn.encounterModifiers[CONTROL_WARD]).to.equal('armed');
+		});
+
+		it("an ally's curse and the warder's own curse do not spend the ward", async () => {
+			const teamed = [
+				{ monster: unicorn, character: { team: 'Laurel' } },
+				{ monster: foe, character: { team: 'Laurel' } },
+			];
+			await new UnconquerableHornCard().effect(unicorn, unicorn);
+
+			const ownCurse = new CurseCard();
+			sinon.stub(ownCurse, 'checkSuccess').returns({ success: true, strokeOfLuck: false, curseOfLoki: false, tie: false });
+			await ownCurse.effect(unicorn, unicorn, ring, teamed);
+			expect(unicorn.encounterModifiers[CONTROL_WARD]).to.equal('armed');
+
+			const allyCurse = new CurseCard();
+			sinon.stub(allyCurse, 'checkSuccess').returns({ success: true, strokeOfLuck: false, curseOfLoki: false, tie: false });
+			await allyCurse.effect(foe, unicorn, ring, teamed);
+			expect(unicorn.encounterModifiers[CONTROL_WARD]).to.equal('armed');
+		});
+
+		it("cancels Blink's time-shift, leaving no BlinkEffect or timeShifted flag", async () => {
+			await new UnconquerableHornCard().effect(unicorn, unicorn);
+
+			const blink = new BlinkCard();
+			sinon.stub(blink, 'checkSuccess').returns({ success: true, strokeOfLuck: false, curseOfLoki: false, tie: false });
+
+			await blink.effect(foe, unicorn, ring, contestants);
+
+			expect(unicorn.encounterModifiers.timeShifted).to.not.equal(true);
+			expect(
+				unicorn.encounterEffects.some((effect: any) => effect.effectType === 'BlinkEffect')
+			).to.equal(false);
+			expect(unicorn.encounterModifiers[CONTROL_WARD]).to.equal('spent');
+		});
+
+		it("cancels Bad Batch's poison; the drink heals as normal", async () => {
+			await new UnconquerableHornCard().effect(unicorn, unicorn);
+
+			// foe brews the trap on itself (Bad Batch targets its own player).
+			new BadBatchCard().effect(foe, foe, ring);
+
+			const whiskey = new WhiskeyShotCard();
+			sinon.stub(Object.getPrototypeOf(whiskey), 'checkSuccess').returns({
+				curseOfLoki: false,
+				healRoll: { result: 5 },
+				result: 5,
+				strokeOfLuck: false,
+				success: true,
+			});
+			unicorn.hp = Math.max(1, unicorn.maxHp - 10);
+			const beforeHp = unicorn.hp;
+
+			await whiskey.play(unicorn, unicorn, ring, contestants);
+
+			expect(unicorn.hp).to.be.above(beforeHp);
+			expect(unicorn.encounterModifiers[CONTROL_WARD]).to.equal('spent');
+			sinon.restore();
+		});
+
+		it('cancels Sandstorm confusion, but the storm damage still lands', async () => {
+			await new UnconquerableHornCard().effect(unicorn, unicorn);
+
+			const beforeHp = unicorn.hp;
+			await new SandstormCard().effect(foe, unicorn, ring, contestants);
+
+			expect(unicorn.hp).to.be.below(beforeHp);
+			expect(
+				unicorn.encounterEffects.some((effect: any) => effect.effectType === SANDSTORM_EFFECT)
+			).to.equal(false);
+			expect(unicorn.encounterModifiers[CONTROL_WARD]).to.equal('spent');
+		});
+
+		it("cancels being faceswapped onto a warded attacker; the hit lands on its real target", async () => {
+			await new UnconquerableHornCard().effect(unicorn, unicorn);
+			new EnchantedFaceswapCard().effect(foe, foe);
+
+			const hit = new HitCard();
+			sinon.stub(Object.getPrototypeOf(hit), 'checkSuccess').returns({
+				success: true,
+				strokeOfLuck: false,
+				curseOfLoki: false,
+				tie: false,
+			});
+			const beforeFoeHp = foe.hp;
+			const beforeUnicornHp = unicorn.hp;
+
+			await hit.play(unicorn, foe, ring, contestants);
+
+			expect(foe.hp).to.be.below(beforeFoeHp);
+			expect(unicorn.hp).to.equal(beforeUnicornHp);
+			expect(
+				foe.encounterEffects.some((effect: any) => effect.effectType === FACESWAP_EFFECT)
+			).to.equal(false);
+			expect(unicorn.encounterModifiers[CONTROL_WARD]).to.equal('spent');
+			sinon.restore();
+		});
+
+		it("lapses after one round of the warder's own cards and cannot be re-armed that fight", async () => {
+			await new UnconquerableHornCard().effect(unicorn, unicorn);
+			expect(unicorn.encounterModifiers[CONTROL_WARD]).to.equal('armed');
+
+			const hit = new HitCard();
+			sinon.stub(Object.getPrototypeOf(hit), 'checkSuccess').returns({
+				success: true,
+				strokeOfLuck: false,
+				curseOfLoki: false,
+				tie: false,
+			});
+
+			for (let i = 0; i < unicorn.cardSlots; i += 1) {
+				// eslint-disable-next-line no-await-in-loop
+				await hit.play(unicorn, foe, ring, contestants);
+			}
+			sinon.restore();
+
+			expect(unicorn.encounterModifiers[CONTROL_WARD]).to.equal('lapsed');
+
+			// A hold now lands: the lapsed ward no longer blocks anything.
+			const hold = new ImmobilizeCard();
+			sinon.stub(hold, 'immobilizeCheck').returns(true);
+			await hold.effect(foe, unicorn, ring, contestants);
+			expect(isHeld(unicorn)).to.equal(true);
+
+			// It does not re-arm this fight.
+			const rearm = new UnconquerableHornCard();
+			rearm.effect(unicorn, unicorn);
+			expect(unicorn.encounterModifiers[CONTROL_WARD]).to.equal('lapsed');
+		});
 	});
 });

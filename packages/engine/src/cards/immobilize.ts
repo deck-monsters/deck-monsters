@@ -7,7 +7,7 @@ import { GLADIATOR, MINOTAUR, UNICORN, WEEPING_ANGEL } from '../constants/creatu
 import { IMPOSSIBLE } from '../helpers/probabilities.js';
 import { signedNumber } from '../helpers/signed-number.js';
 import { agree } from '../helpers/pronouns.js';
-import { consumeControlWard, isOpponentHold } from './helpers/control-ward.js';
+import { wardAgainst } from './helpers/control-ward.js';
 
 const { roll } = chance;
 
@@ -374,14 +374,11 @@ ${ongoingDamageText}`;
 			ring,
 			activeContestants
 		);
-		// Unconquerable Horn: an armed ward cancels the hold, not the damage. Only an
-		// opponent's hold spends it: not a confused creature's hold on itself, and not a
-		// teammate's area hold such as Mesmerize.
-		if (
-			immobilizeSuccess &&
-			isOpponentHold(player, target, activeContestants, ring) &&
-			consumeControlWard(target)
-		) {
+		// Unconquerable Horn: an armed ward cancels the hold, not the damage. wardAgainst()
+		// (cards/helpers/control-ward.ts) is the shared entry point every negative,
+		// non-damage effect goes through; only an opponent's hold spends it, not a confused
+		// creature's hold on itself, and not a teammate's area hold such as Mesmerize.
+		if (immobilizeSuccess && wardAgainst(target, player, { activeContestants, ring })) {
 			this.emit('narration', {
 				// Job 39:9 (King James): the Unconquerable Horn's voice; see unconquerable-horn.ts.
 				// Confusion can lend the ward to any creature, so only a Unicorn gets the quote.

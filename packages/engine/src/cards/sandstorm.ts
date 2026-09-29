@@ -6,6 +6,7 @@ import { EXPENSIVE } from '../helpers/costs.js';
 import { JINN } from '../constants/creature-types.js';
 import { SANDSTORM_EFFECT } from '../constants/effect-types.js';
 import { isProbable } from '../helpers/is-probable.js';
+import { wardAgainst, controlWardNarration } from './helpers/control-ward.js';
 
 export class SandstormCard extends BlastCard {
 	static cardType = 'Sandstorm';
@@ -58,7 +59,12 @@ export class SandstormCard extends BlastCard {
 		return `${this.damage} storm damage +${this.levelDamage} per level of the jinni (per two levels past level ${FULL_SCALING_LEVELS}) to everyone in the ring. Temporarily confuses opponents and causes them to mistake their targets.`;
 	}
 
-	override async effect(sandstormPlayer: any, sandstormTarget: any): Promise<any> {
+	override async effect(
+		sandstormPlayer: any,
+		sandstormTarget: any,
+		ring?: any,
+		activeContestants?: any
+	): Promise<any> {
 		const alreadyLost = !!sandstormTarget.encounterEffects.find(
 			(effect: any) => effect.effectType === SANDSTORM_EFFECT
 		);
@@ -192,11 +198,20 @@ export class SandstormCard extends BlastCard {
 			return card;
 		};
 
-		sandstormEffect.effectType = SANDSTORM_EFFECT;
-		sandstormTarget.encounterEffects = [
-			...sandstormTarget.encounterEffects,
-			sandstormEffect,
-		];
+		// Unconquerable Horn: an armed ward cancels the confusion, not the storm damage (still
+		// rolled below via super.effect), and only when the caster is an opponent — a jinni
+		// never confuses its own warded self.
+		if (wardAgainst(sandstormTarget, sandstormPlayer, { activeContestants, ring })) {
+			this.emit('narration', {
+				narration: controlWardNarration(sandstormTarget, 'sees through the storm.'),
+			});
+		} else {
+			sandstormEffect.effectType = SANDSTORM_EFFECT;
+			sandstormTarget.encounterEffects = [
+				...sandstormTarget.encounterEffects,
+				sandstormEffect,
+			];
+		}
 
 		return super.effect(sandstormPlayer, sandstormTarget);
 	}

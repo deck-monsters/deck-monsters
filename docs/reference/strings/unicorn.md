@@ -184,7 +184,7 @@ Source: `packages/engine/src/cards/unconquerable-horn.ts`.
 **Rules text:**
 
 ```text
-Ward yourself against the next hold an opponent lands on you (immobilize, pin, coil, enthrall, and the like). The hold is cancelled and the ward is spent; any damage that comes with it still lands.
+Ward yourself for one round against the next harmful effect an opponent puts on you that is not damage: a hold, a curse, poison, being blinked away, or being confused. That effect is cancelled and the ward is spent; any damage that comes with it still lands.
 Once per fight. Does not stack.
 ```
 
@@ -192,8 +192,8 @@ Once per fight. Does not stack.
 
 | Where | Template |
 |---|---|
-| effect → narration | `💎 {player} lowers {his} horn and plants {his} hooves. Canst thou bind the unicorn? The next hold will not take.` |
-| effect → narration | `💎 In confusion, {player} lends {his} ward to {target}. The next hold on {him} will not take.` |
+| effect → narration | `💎 {player} lowers {his} horn and plants {his} hooves. Canst thou bind the unicorn? The next harm this round will not take.` |
+| effect → narration | `💎 In confusion, {player} lends {his} ward to {target}. The next harm on {him} this round will not take.` |
 | effect → narration | `{target} already standeth braced. No band shall hold {him}.` |
 | effect → narration | `{target} has already refused one hold this fight. The ward riseth not twice.` |
 
@@ -201,4 +201,5 @@ Once per fight. Does not stack.
 
 | Where | Template |
 |---|---|
+| `packages/engine/src/cards/helpers/control-ward.ts` controlWardNarration | `{"Will the unicorn be willing to serve thee?"  / —}{target} {refusal} The Unconquerable Horn's ward is spent.` |
 | `packages/engine/src/cards/immobilize.ts` immobilize → narration | `{"Will the unicorn be willing to serve thee?"  / —}{target} will not be taken and held. {He} {refuses/refuse} to be {IMMOBILIZED}, and the Unconquerable Horn's ward is spent.` |

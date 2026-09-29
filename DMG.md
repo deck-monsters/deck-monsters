@@ -1911,13 +1911,15 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  his band in the furrow? Thou 
  canst not. Many have tried.
 
- Ward yourself against the next 
- hold an opponent lands on you 
- (immobilize, pin, coil, 
- enthrall, and the like). The 
- hold is cancelled and the ward 
- is spent; any damage that comes 
- with it still lands.
+ Ward yourself for one round 
+ against the next harmful effect 
+ an opponent puts on you that is 
+ not damage: a hold, a curse, 
+ poison, being blinked away, or 
+ being confused. That effect is 
+ cancelled and the ward is spent; 
+ any damage that comes with it 
+ still lands.
  Once per fight. Does not stack.
 
  Level: 1
