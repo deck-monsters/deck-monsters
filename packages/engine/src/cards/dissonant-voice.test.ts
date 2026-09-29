@@ -71,214 +71,68 @@ describe('./cards/dissonant-voice.ts Dissonant Voice', () => {
 		expect(targets).to.deep.equal([other]);
 	});
 
-	it('rattles each opponent who fails the save, one save at a time, with no damage', async () => {
+	it('rattles every opponent with no save and no damage, and says what it does', async () => {
 		const card = new DissonantVoiceCard();
-		const save = sinon.stub(card, 'getSaveRoll');
-		save.onFirstCall().returns(fakeRoll(2));
-		save.onSecondCall().returns(fakeRoll(20));
-		const rolled: any[] = [];
-		card.on('rolled', (_c: string, _card: any, payload: any) => rolled.push(payload));
 		const foeHit = sinon.spy(foe, 'hit');
 
 		await card.play(unicorn, foe, ring, contestants);
 
-		expect(rolled.map(({ who }) => who)).to.deep.equal([foe, other]);
 		expect(isRattled(foe)).to.equal(true);
-		expect(isRattled(other)).to.equal(false);
+		expect(isRattled(other)).to.equal(true);
+		expect(isRattled(unicorn)).to.equal(false);
 		expect(foeHit).not.to.have.been.called;
+		expect(card.stats).to.include('keeps the worse roll (disadvantage)');
 	});
 
-	describe('with the disadvantage setting on', () => {
-		beforeEach(() => {
-			DissonantVoiceCard.disadvantage = true;
-		});
-		afterEach(() => {
-			DissonantVoiceCard.disadvantage = false;
-		});
-
-		it('rattles every opponent with no save and no damage', async () => {
-			const card = new DissonantVoiceCard();
-			const save = sinon.spy(card, 'getSaveRoll');
-			const foeHit = sinon.spy(foe, 'hit');
-
-			await card.play(unicorn, foe, ring, contestants);
-
-			expect(save).not.to.have.been.called;
-			expect(isRattled(foe)).to.equal(true);
-			expect(isRattled(other)).to.equal(true);
-			expect(isRattled(unicorn)).to.equal(false);
-			expect(foeHit).not.to.have.been.called;
-			expect(card.stats).to.include('keeps the worse roll');
-		});
-
-		it('rolls the next attack twice and keeps the worse, then is spent', async () => {
-			await new DissonantVoiceCard().effect(unicorn, foe, ring);
-			const rolls = [fakeRoll(15), fakeRoll(6), fakeRoll(20), fakeRoll(3)];
-			const stub = sinon.stub(HitCard.prototype, 'getAttackRoll').callsFake(() => rolls.shift() as any);
-			const hitCheck = sinon.spy(HitCard.prototype, 'hitCheck');
-
-			await new HitCard().play(foe, unicorn, ring, contestants);
-			expect(hitCheck.firstCall.returnValue.attackRoll.result).to.equal(6);
-			expect(isRattled(foe)).to.equal(false);
-
-			await new HitCard().play(foe, unicorn, ring, contestants);
-			expect(hitCheck.secondCall.returnValue.attackRoll.result).to.equal(20);
-			expect(stub.callCount).to.equal(3);
-		});
-
-		describe('variations', () => {
-			const settings = {
-				waitsForAttack: DissonantVoiceCard.waitsForAttack,
-				lokiRange: DissonantVoiceCard.lokiRange,
-				rollTwice: DissonantVoiceCard.rollTwice,
-				untilHit: DissonantVoiceCard.untilHit,
-			};
-			afterEach(() => {
-				Object.assign(DissonantVoiceCard, settings);
-			});
-
-			it('waitsForAttack: a card that does not roll to hit leaves the rattle in place', async () => {
-				DissonantVoiceCard.waitsForAttack = true;
-				await new DissonantVoiceCard().effect(unicorn, foe, ring);
-				await new HealCard().play(foe, foe, ring, contestants);
-				expect(isRattled(foe)).to.equal(true);
-				sinon.stub(HitCard.prototype, 'getAttackRoll').returns(fakeRoll(12) as any);
-				await new HitCard().play(foe, unicorn, ring, contestants);
-				expect(isRattled(foe)).to.equal(false);
-			});
-
-			it('lokiRange: a natural 2 on the rattled attack is a curse of Loki, and the blow comes back', async () => {
-				DissonantVoiceCard.lokiRange = 2;
-				DissonantVoiceCard.rollTwice = false;
-				await new DissonantVoiceCard().effect(unicorn, foe, ring);
-				sinon.stub(HitCard.prototype, 'getAttackRoll').callsFake(() => fakeRoll(2) as any);
-				const foeHit = sinon.spy(foe, 'hit');
-				const unicornHit = sinon.spy(unicorn, 'hit');
-
-				await new HitCard().play(foe, unicorn, ring, contestants);
-
-				expect(foeHit).to.have.been.calledOnce;
-				expect(unicornHit).not.to.have.been.called;
-			});
-
-			it('lokiRange 2 leaves a natural 3 an ordinary miss', async () => {
-				DissonantVoiceCard.lokiRange = 2;
-				DissonantVoiceCard.rollTwice = false;
-				await new DissonantVoiceCard().effect(unicorn, foe, ring);
-				const rolls = [fakeRoll(3)];
-				sinon.stub(HitCard.prototype, 'getAttackRoll').callsFake(() => rolls.shift() as any);
-				const hitCheck = sinon.spy(HitCard.prototype, 'hitCheck');
-				await new HitCard().play(foe, unicorn, ring, contestants);
-				expect(hitCheck.firstCall.returnValue.curseOfLoki).to.equal(false);
-			});
-
-			it('untilHit: the ringing lasts through misses until an attack lands, up to the cap', async () => {
-				DissonantVoiceCard.waitsForAttack = true;
-				DissonantVoiceCard.untilHit = 3;
-				await new DissonantVoiceCard().effect(unicorn, foe, ring);
-				const rolls = [fakeRoll(2), fakeRoll(3), fakeRoll(2), fakeRoll(4), fakeRoll(19), fakeRoll(20)];
-				sinon.stub(HitCard.prototype, 'getAttackRoll').callsFake(() => rolls.shift() as any);
-
-				await new HitCard().play(foe, unicorn, ring, contestants);
-				await new HitCard().play(foe, unicorn, ring, contestants);
-				expect(isRattled(foe)).to.equal(true);
-				await new HitCard().play(foe, unicorn, ring, contestants);
-				expect(isRattled(foe)).to.equal(false);
-			});
-
-			it('untilHit: a cap of 2 ends after two misses', async () => {
-				DissonantVoiceCard.waitsForAttack = true;
-				DissonantVoiceCard.untilHit = 2;
-				await new DissonantVoiceCard().effect(unicorn, foe, ring);
-				sinon.stub(HitCard.prototype, 'getAttackRoll').callsFake(() => fakeRoll(2) as any);
-				await new HitCard().play(foe, unicorn, ring, contestants);
-				expect(isRattled(foe)).to.equal(true);
-				await new HitCard().play(foe, unicorn, ring, contestants);
-				expect(isRattled(foe)).to.equal(false);
-			});
-
-			it('rollTwice off rolls once', async () => {
-				DissonantVoiceCard.rollTwice = false;
-				await new DissonantVoiceCard().effect(unicorn, foe, ring);
-				const stub = sinon.stub(HitCard.prototype, 'getAttackRoll').callsFake(() => fakeRoll(12) as any);
-				await new HitCard().play(foe, unicorn, ring, contestants);
-				expect(stub.callCount).to.equal(1);
-			});
-		});
-
-		it('treats a natural 20 as the best roll and a 1 as the worst', async () => {
-			await new DissonantVoiceCard().effect(unicorn, foe, ring);
-			const rolls = [fakeRoll(20, -5), fakeRoll(18)];
-			sinon.stub(HitCard.prototype, 'getAttackRoll').callsFake(() => rolls.shift() as any);
-			const hitCheck = sinon.spy(HitCard.prototype, 'hitCheck');
-
-			await new HitCard().play(foe, unicorn, ring, contestants);
-
-			expect(hitCheck.firstCall.returnValue.attackRoll.strokeOfLuck).to.equal(false);
-		});
-	});
-
-	it('takes 2 off the rattled monster\'s next attack roll only', async () => {
-		const card = new DissonantVoiceCard();
-		sinon.stub(card, 'getSaveRoll').returns(fakeRoll(2));
-		await card.effect(unicorn, foe, ring);
-
-		const attackRolls: any[] = [];
-		const original = HitCard.prototype.getAttackRoll;
-		sinon.stub(HitCard.prototype, 'getAttackRoll').callsFake(function (this: any, ...args: any[]) {
-			const attackRoll = original.apply(this, args as any);
-			attackRolls.push(attackRoll);
-			return attackRoll;
-		});
-		sinon.stub(Math, 'random').returns(0.5);
+	it('rolls the next attack twice and keeps the worse, then is spent', async () => {
+		await new DissonantVoiceCard().effect(unicorn, foe, ring);
+		const rolls = [fakeRoll(15), fakeRoll(6), fakeRoll(20), fakeRoll(3)];
+		const stub = sinon.stub(HitCard.prototype, 'getAttackRoll').callsFake(() => rolls.shift() as any);
+		const hitCheck = sinon.spy(HitCard.prototype, 'hitCheck');
 
 		await new HitCard().play(foe, unicorn, ring, contestants);
-		await new HitCard().play(foe, unicorn, ring, contestants);
-
-		expect(attackRolls[0].modifier).to.equal(attackRolls[1].modifier - 2);
-		expect(attackRolls[0].result).to.equal(attackRolls[1].result - 2);
+		expect(hitCheck.firstCall.returnValue.attackRoll.result).to.equal(6);
 		expect(isRattled(foe)).to.equal(false);
+
+		await new HitCard().play(foe, unicorn, ring, contestants);
+		expect(hitCheck.secondCall.returnValue.attackRoll.result).to.equal(20);
+		expect(stub.callCount).to.equal(3);
 	});
 
-	it('is spent by a non-attack card as well', async () => {
-		const card = new DissonantVoiceCard();
-		sinon.stub(card, 'getSaveRoll').returns(fakeRoll(2));
-		await card.effect(unicorn, foe, ring);
+	it('keeps a natural 1 the worst roll and a natural 20 the best', async () => {
+		await new DissonantVoiceCard().effect(unicorn, foe, ring);
+		const rolls = [fakeRoll(20, -5), fakeRoll(18)];
+		sinon.stub(HitCard.prototype, 'getAttackRoll').callsFake(() => rolls.shift() as any);
+		const hitCheck = sinon.spy(HitCard.prototype, 'hitCheck');
 
+		await new HitCard().play(foe, unicorn, ring, contestants);
+
+		// Disadvantage keeps the 18, not the natural 20, although the 20's total is lower.
+		expect(hitCheck.firstCall.returnValue.attackRoll.strokeOfLuck).to.equal(false);
+		expect(hitCheck.firstCall.returnValue.attackRoll.result).to.equal(18);
+	});
+
+	it('waits for a card that rolls to hit: a Heal leaves it in place', async () => {
+		await new DissonantVoiceCard().effect(unicorn, foe, ring);
 		await new HealCard().play(foe, foe, ring, contestants);
-
-		expect(isRattled(foe)).to.equal(false);
+		expect(isRattled(foe)).to.equal(true);
 	});
 
 	it('does not stack', async () => {
 		const card = new DissonantVoiceCard();
-		sinon.stub(card, 'getSaveRoll').returns(fakeRoll(2));
-
 		await card.effect(unicorn, foe, ring);
 		await card.effect(unicorn, foe, ring);
-
 		expect(foe.encounterEffects.filter((e: any) => e.effectType === DISSONANT_VOICE_EFFECT)).to.have.length(1);
 	});
 
 	it('rattles whoever confusion points it at, including the singer', async () => {
-		const card = new DissonantVoiceCard();
-		sinon.stub(card, 'getSaveRoll').returns(fakeRoll(2));
-		const rolled: any[] = [];
-		card.on('rolled', (_c: string, _card: any, payload: any) => rolled.push(payload));
-
-		await card.effect(unicorn, unicorn, ring);
-
+		await new DissonantVoiceCard().effect(unicorn, unicorn, ring);
 		expect(isRattled(unicorn)).to.equal(true);
-		expect(rolled[0].reason).to.include('own int');
 	});
 
 	it('is gone after the encounter ends', async () => {
-		const card = new DissonantVoiceCard();
-		sinon.stub(card, 'getSaveRoll').returns(fakeRoll(2));
-		await card.effect(unicorn, foe, ring);
-
+		await new DissonantVoiceCard().effect(unicorn, foe, ring);
 		foe.endEncounter();
-
 		expect(isRattled(foe)).to.equal(false);
 	});
 

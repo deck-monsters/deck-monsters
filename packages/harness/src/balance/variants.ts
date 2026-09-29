@@ -160,125 +160,14 @@ export const VARIANTS: Record<string, Variant> = {
 			};
 		},
 	},
-	'dissonance-4': { about: 'Dissonant Voice: -4 to attack instead of -2', apply: () => cardStatic('Dissonant Voice', 'penalty', 4) },
-	'dissonance-sting': { about: 'Dissonant Voice: a failed save also takes 1d4', apply: () => cardStatic('Dissonant Voice', 'stingDice', '1d4') },
-	'dissonance-disadv': { about: 'Dissonant Voice: no save; every opponent\'s next attack rolls at disadvantage', apply: () => cardStatic('Dissonant Voice', 'disadvantage', true) },
-	'awe-hold': {
-		about: 'Helm of Awe: held; loses the next card, then saves each turn (3 easier per turn)',
-		apply: () => {
-			const undos = [cardStatic('Helm of Awe', 'hold', true)];
-			return () => {
-				for (const undo of undos.reverse()) undo();
-			};
-		},
-	},
-	'awe-hold-steady': {
-		about: 'Helm of Awe: held with no easing of the per-turn save',
-		apply: () => {
-			const undos = [cardStatic('Helm of Awe', 'hold', true), cardStatic('Helm of Awe', 'holdFatigue', 0)];
-			return () => {
-				for (const undo of undos.reverse()) undo();
-			};
-		},
-	},
-	'awe-hold-double': {
-		about: 'Helm of Awe: held; must fail the per-turn save to lose even the first card',
-		apply: () => {
-			const undos = [cardStatic('Helm of Awe', 'hold', true), cardStatic('Helm of Awe', 'holdFirstCardLost', false)];
-			return () => {
-				for (const undo of undos.reverse()) undo();
-			};
-		},
-	},
-	'awe-hold-flee': {
-		about: 'Helm of Awe: held; a natural 1 on an awe save flees the ring',
-		apply: () => {
-			const undos = [cardStatic('Helm of Awe', 'hold', true), cardStatic('Helm of Awe', 'fleeOnLoki', 'flee')];
-			return () => {
-				for (const undo of undos.reverse()) undo();
-			};
-		},
-	},
-	'awe-hold-attempt': {
-		about: 'Helm of Awe: held; a natural 1 on an awe save tries to flee (1d20 + dex, 10+)',
-		apply: () => {
-			const undos = [cardStatic('Helm of Awe', 'hold', true), cardStatic('Helm of Awe', 'fleeOnLoki', 'attempt')];
-			return () => {
-				for (const undo of undos.reverse()) undo();
-			};
-		},
-	},
-	'awe-hold-healthy': {
-		about: 'Helm of Awe: held; on a natural 1 a monster that is not bloodied tries to flee, a bloodied one cowers',
-		apply: () => {
-			const undos = [cardStatic('Helm of Awe', 'hold', true), cardStatic('Helm of Awe', 'fleeOnLoki', 'healthy')];
-			return () => {
-				for (const undo of undos.reverse()) undo();
-			};
-		},
-	},
-	'dv-until-hit-2': {
-		about: 'Dissonant Voice: waiting disadvantage that lasts until an attack lands, up to 2 attacks',
-		apply: () => {
-			const undos = [cardStatic('Dissonant Voice', 'disadvantage', true), cardStatic('Dissonant Voice', 'waitsForAttack', true), cardStatic('Dissonant Voice', 'untilHit', 2)];
-			return () => {
-				for (const undo of undos.reverse()) undo();
-			};
-		},
-	},
-	'dv-until-hit-3': {
-		about: 'Dissonant Voice: waiting disadvantage that lasts until an attack lands, up to 3 attacks',
-		apply: () => {
-			const undos = [cardStatic('Dissonant Voice', 'disadvantage', true), cardStatic('Dissonant Voice', 'waitsForAttack', true), cardStatic('Dissonant Voice', 'untilHit', 3)];
-			return () => {
-				for (const undo of undos.reverse()) undo();
-			};
-		},
-	},
-	'dv-wait': {
-		about: 'Dissonant Voice: disadvantage that waits for the next card that rolls to hit',
-		apply: () => {
-			const undos = [cardStatic('Dissonant Voice', 'disadvantage', true), cardStatic('Dissonant Voice', 'waitsForAttack', true)];
-			return () => {
-				for (const undo of undos.reverse()) undo();
-			};
-		},
-	},
-	'dv-wait-loki2': {
-		about: 'Dissonant Voice: waiting disadvantage; a natural 1 or 2 is a curse of Loki',
-		apply: () => {
-			const undos = [cardStatic('Dissonant Voice', 'disadvantage', true), cardStatic('Dissonant Voice', 'waitsForAttack', true), cardStatic('Dissonant Voice', 'lokiRange', 2)];
-			return () => {
-				for (const undo of undos.reverse()) undo();
-			};
-		},
-	},
-	'dv-loki3': {
-		about: 'Dissonant Voice: one roll, waits for an attack; a natural 1-3 is a curse of Loki',
-		apply: () => {
-			const undos = [cardStatic('Dissonant Voice', 'disadvantage', true), cardStatic('Dissonant Voice', 'waitsForAttack', true), cardStatic('Dissonant Voice', 'rollTwice', false), cardStatic('Dissonant Voice', 'lokiRange', 3)];
-			return () => {
-				for (const undo of undos.reverse()) undo();
-			};
-		},
-	},
-	'dv-wait-loki3': {
-		about: 'Dissonant Voice: waiting disadvantage; a natural 1-3 is a curse of Loki',
-		apply: () => {
-			const undos = [cardStatic('Dissonant Voice', 'disadvantage', true), cardStatic('Dissonant Voice', 'waitsForAttack', true), cardStatic('Dissonant Voice', 'lokiRange', 3)];
-			return () => {
-				for (const undo of undos.reverse()) undo();
-			};
-		},
-	},
+	'awe-steady': { about: 'Helm of Awe: the recovery save never gets easier', apply: () => cardStatic('Helm of Awe', 'holdFatigue', 0) },
+	'awe-no-flee': { about: 'Helm of Awe: a natural 1 on a recovery save only cowers', apply: () => cardStatic('Helm of Awe', 'fleeOnLoki', 'none') },
 	'rest-3d4': { about: 'Gloaming Rest: an undisturbed rest heals 3d4 (the old heal), not 4 to all missing', apply: () => cardStatic('Gloaming Rest', 'restShape', 'dice') },
 
 
 
 	'horn-companion-1d6': { about: 'Unconquerable Horn: the woodland creature deals 1d6 instead of 1d4', apply: () => cardStatic('Unconquerable Horn', 'companionDamageDice', '1d6') },
 	'tail-1d6': { about: 'Tail Lash: the tail deals 1d6 instead of 1d4', apply: () => cardStatic('Tail Lash', 'tailDamageDice', '1d6') },
-	'awe-1': { about: 'Helm of Awe: awes 1 card instead of 3', apply: () => cardStatic('Helm of Awe', 'aweCards', 1) },
-	'awe-penalty-3': { about: 'Helm of Awe: -3 to attack instead of -2', apply: () => cardStatic('Helm of Awe', 'awePenalty', 3) },
 	'asinine-ac': {
 		about: 'Asinine Companion: boosts AC by 2 instead of STR by 2',
 		// BoostCard reads `boostedProp` from the class `defaults` object, so patch a copy of it.
@@ -287,20 +176,8 @@ export const VARIANTS: Record<string, Variant> = {
 			return cardStatic('Asinine Companion', 'defaults', { ...Card.defaults, boostedProp: 'ac' });
 		},
 	},
-	'awe-cower': { about: 'Helm of Awe: a failed save makes the opponent lose its next card instead of taking the attack penalty', apply: () => cardStatic('Helm of Awe', 'cower', true) },
 	'donkey-kick': { about: 'Asinine Companion: the donkey kicks an opponent (1d20+2, 1d6) instead of boosting STR', apply: () => cardStatic('Asinine Companion', 'kick', true) },
 	'horn-of-proof-5': { about: 'Horn of Proof: heals 5 instead of 3', apply: () => cardStatic('Horn of Proof', 'healAmount', 5) },
-	'awe-penalty-5': { about: 'Helm of Awe: -5 to attack instead of -2', apply: () => cardStatic('Helm of Awe', 'awePenalty', 5) },
-	'awe-round': { about: 'Helm of Awe: awe lasts 9 cards (a whole round) instead of 3', apply: () => cardStatic('Helm of Awe', 'aweCards', 9) },
-	'awe-cower-2': {
-		about: 'Helm of Awe: cowering, and the opponent loses its next 2 cards',
-		apply: () => {
-			const undos = [cardStatic('Helm of Awe', 'cower', true), cardStatic('Helm of Awe', 'cowerCards', 2)];
-			return () => {
-				for (const undo of undos.reverse()) undo();
-			};
-		},
-	},
 	'donkey-kick-scaled': {
 		about: 'Asinine Companion: the donkey kicks, and the kick grows with the dragon level',
 		apply: () => {
@@ -310,7 +187,6 @@ export const VARIANTS: Record<string, Variant> = {
 			};
 		},
 	},
-	'awe-cower-1': { about: 'Helm of Awe: a cowering opponent loses 1 card instead of 2', apply: () => cardStatic('Helm of Awe', 'cowerCards', 1) },
 	'kick-d8': { about: 'Asinine Companion: the kick deals 1d8', apply: () => cardStatic('Asinine Companion', 'kickDamageDice', '1d8') },
 	'gladiator-ac+1': { about: 'Gladiator: 1 more AC', apply: () => staticBonus('Gladiator', 'acVariance', 1) },
 	'gladiator-hp+3': { about: 'Gladiator: 3 more HP', apply: () => staticBonus('Gladiator', 'hpVariance', 3) },

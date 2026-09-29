@@ -73,7 +73,7 @@ Source: `packages/engine/src/cards/dissonant-voice.ts`.
 **Rules text:**
 
 ```text
-Each opponent rolls 1d20 + int vs your int. On a failure, their next card takes 2 off its attack roll. A card that does not roll to hit (Blast, Heal) uses up the penalty with no effect.
+Every opponent's next attack rolls twice and keeps the worse roll (disadvantage). A card that does not roll to hit (Blast, Heal) leaves it waiting.
 No damage. Does not stack.
 ```
 
@@ -81,15 +81,9 @@ No damage. Does not stack.
 
 | Where | Template |
 |---|---|
-| rattle → narration | `{target}'s ears yet ring with that hideous lowing 🔔{ (attacks at disadvantage) / —}.` |
-| rattle → narration | `{target}'s ears yet ring with that hideous lowing 🔔 (-{penalty} to attack).` |
+| rattle → narration | `{target}'s ears yet ring with that hideous lowing 🔔 (attacks at disadvantage).` |
 | effect → narration | `{target} is already rattled.` |
 | effect → narration | `🔔 {target} is rattled!` |
-| effect → whose | `{his} own` |
-| effect → outcome | `{target} shakes it off.` |
-| effect → outcome | `{target} is already rattled.` |
-| effect → outcome | `{target} is rattled!` |
-| effect → reason | `vs {whose} int ({int}) to keep {his} focus.` |
 
 ## Gloaming Rest
 

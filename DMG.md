@@ -781,12 +781,11 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  for the voyce is strained above 
  measure." Stop thine ears.
 
- Each opponent rolls 1d20 + int 
- vs your int. On a failure, their 
- next card takes 2 off its attack 
- roll. A card that does not roll 
- to hit (Blast, Heal) uses up the 
- penalty with no effect.
+ Every opponent's next attack 
+ rolls twice and keeps the worse 
+ roll (disadvantage). A card that 
+ does not roll to hit (Blast, 
+ Heal) leaves it waiting.
  No damage. Does not stack.
 
  Level: 1
@@ -1252,9 +1251,17 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
 
  Each opponent rolls 1d20 + int 
  vs 10 + your int modifier. On a 
- failure, they cower and lose 
- their next 2 cards (they do 
- nothing).
+ failure they are awed and lose 
+ their next card.
+ At the start of each later turn 
+ they roll again, 3 easier each 
+ time: on a failure they cower 
+ and lose that card, on a success 
+ they recover.
+ On a natural 1, an opponent that 
+ is not bloodied tries to flee 
+ the ring (1d20 + dex, 10 or 
+ more); a bloodied one cowers.
  No damage. Does not stack.
 
  Level: 2

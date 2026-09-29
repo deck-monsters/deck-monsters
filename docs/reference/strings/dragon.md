@@ -133,7 +133,9 @@ Source: `packages/engine/src/cards/helm-of-awe.ts`.
 **Rules text:**
 
 ```text
-Each opponent rolls 1d20 + int vs 10 + your int modifier. On a failure, they cower and lose their next 2 cards (they do nothing).
+Each opponent rolls 1d20 + int vs 10 + your int modifier. On a failure they are awed and lose their next card.
+At the start of each later turn they roll again, 3 easier each time: on a failure they cower and lose that card, on a success they recover.
+On a natural 1, an opponent that is not bloodied tries to flee the ring (1d20 + dex, 10 or more); a bloodied one cowers.
 No damage. Does not stack.
 ```
 
@@ -141,17 +143,14 @@ No damage. Does not stack.
 
 | Where | Template |
 |---|---|
-| cowerTarget → narration | `🐲 {target} cannot bear the dragon's gaze, and cowers behind {his} shield instead of acting.` |
-| holdTarget → narration | `🐲 {target} cannot bear the dragon's gaze, and cowers behind {his} shield instead of acting.` |
-| holdTarget → reason | `vs {threshold} to meet the dragon's eye.` |
-| holdTarget → outcome | `{target} finds {his} courage and meets the dragon's eye.` |
-| holdTarget → outcome | `{target} looks once more upon the helm of awe.` |
-| holdTarget → outcome | `{target} cannot bear the dragon's gaze.` |
-| holdTarget → reason | `and needs 10 or higher to flee.` |
-| holdTarget → outcome | `Rooted to the sand!` |
-| holdTarget → narration | `🐲 The courage runs out of {target} like mead from a cracked horn, and {he} {flees/flee} the ring!` |
-| holdTarget → narration | `🐲 {target} cowers behind {his} shield instead of acting.` |
-| awe → narration | `{target} still cannot meet the dragon's eye 🐲 (-{awePenalty} to attack).` |
+| awe → narration | `🐲 {target} cannot bear the dragon's gaze, and cowers behind {his} shield instead of acting.` |
+| awe → reason | `vs {threshold} to meet the dragon's eye.` |
+| awe → outcome | `{target} finds {his} courage and meets the dragon's eye.` |
+| awe → outcome | `{target} looks once more upon the helm of awe, and turns to run.` |
+| awe → outcome | `{target} still cannot bear the dragon's gaze.` |
+| awe → reason | `and needs 10 or higher to flee.` |
+| awe → outcome | `Rooted to the sand!` |
+| awe → narration | `🐲 The courage runs out of {target} like mead from a cracked horn, and {he} {flees/flee} the ring!` |
 | effect → narration | `{target} is already cowering before the helm.` |
 | effect → outcome | `{target} stands {his} ground and stares back.` |
 | effect → outcome | `{target} looks upon the helm of awe, and {his} knees turn to water.` |

@@ -29,7 +29,7 @@ type Counters = {
 	wardTriggers: number;
 	hornOfProofPlays: number;
 	hornOfProofCleansed: number;
-	voiceSaves: number;
+	voiceTargets: number;
 	voiceRattled: number;
 	restsBegun: number;
 	restsCompleted: number;
@@ -46,7 +46,7 @@ const fresh = (): Counters => ({
 	wardTriggers: 0,
 	hornOfProofPlays: 0,
 	hornOfProofCleansed: 0,
-	voiceSaves: 0,
+	voiceTargets: 0,
 	voiceRattled: 0,
 	restsBegun: 0,
 	restsCompleted: 0,
@@ -137,12 +137,12 @@ function instrument(isUnicorn: (creature: unknown) => boolean): void {
 	}
 
 	const voice = proto('Dissonant Voice');
+	// Roadmap 35: the voice has no save; it rattles every opponent not already rattled.
 	wrap(voice, 'effect', (original, self, args) => {
-		if (isUnicorn(args[0])) unicornPlays.add(self as object);
-		return original.apply(self, args);
-	});
-	wrap(voice, 'getSaveRoll', (original, self, args) => {
-		if (unicornPlays.has(self as object)) counters.voiceSaves += 1;
+		if (isUnicorn(args[0])) {
+			unicornPlays.add(self as object);
+			counters.voiceTargets += 1;
+		}
 		return original.apply(self, args);
 	});
 	wrap(voice, 'rattle', (original, self, args) => {
@@ -161,15 +161,21 @@ function instrument(isUnicorn: (creature: unknown) => boolean): void {
 		if (unicornPlays.has(self as object)) counters.restsBegun += 1;
 		return original.apply(self, args);
 	});
+	// A completed rest is the call to restHealAmount (roadmap 35: the heal is 4 to all missing,
+	// narrated, not rolled). The interrupted counter matched "rest was broken" while the card
+	// says "rest is broken", so it never counted; match the card's own words.
+	wrap(rest, 'restHealAmount', (original, self, args) => {
+		const amount = original.apply(self, args) as number;
+		if (unicornPlays.has(self as object)) {
+			counters.restsCompleted += 1;
+			counters.restHealTotal += amount;
+		}
+		return amount;
+	});
 	wrap(rest, 'emit', (original, self, args) => {
 		const [event, payload] = args as [string, EmitPayload | undefined];
-		if (unicornPlays.has(self as object)) {
-			if (event === 'rolled' && payload?.reason === 'for a quiet rest.') {
-				counters.restsCompleted += 1;
-				counters.restHealTotal += payload.roll?.result ?? 0;
-			} else if (event === 'narration' && String(payload?.narration).includes('rest was broken')) {
-				counters.restsInterrupted += 1;
-			}
+		if (unicornPlays.has(self as object) && event === 'narration' && String(payload?.narration).includes('rest is broken')) {
+			counters.restsInterrupted += 1;
 		}
 		return original.apply(self, args);
 	});
@@ -180,7 +186,7 @@ function describeCounters(c: Counters): string {
 		`Sticketh ${c.stickethPlays} plays, hit ${pct(c.stickethHits, c.stickethPlays)}, miss ${pct(c.stickethMisses, c.stickethPlays)}, stuck ${pct(c.stickethStuck, c.stickethPlays)} of plays`,
 		`ward armed ${c.wardsArmed}, triggered ${c.wardTriggers} (${pct(c.wardTriggers, c.wardsArmed)})`,
 		`Horn of Proof ${c.hornOfProofPlays} plays, cleansed ${pct(c.hornOfProofCleansed, c.hornOfProofPlays)}`,
-		`Dissonant Voice ${c.voiceSaves} saves, rattled ${pct(c.voiceRattled, c.voiceSaves)}`,
+		`Dissonant Voice ${c.voiceTargets} opponents sung at, rattled ${pct(c.voiceRattled, c.voiceTargets)}`,
 		`Gloaming Rest ${c.restsBegun} begun, completed ${pct(c.restsCompleted, c.restsBegun)}, interrupted ${pct(c.restsInterrupted, c.restsBegun)}, avg heal ${c.restsCompleted ? (c.restHealTotal / c.restsCompleted).toFixed(1) : '—'}`,
 	].join('\n    ');
 }
