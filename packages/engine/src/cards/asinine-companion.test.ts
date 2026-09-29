@@ -8,6 +8,8 @@ import Dragon from '../monsters/dragon.js';
 import Gladiator from '../monsters/gladiator.js';
 import Minotaur from '../monsters/minotaur.js';
 import { DRAGON } from '../constants/creature-types.js';
+import { BOOST, MELEE } from '../constants/card-classes.js';
+import { isAttackCard } from './helpers/ancient-dragon.js';
 
 describe('./cards/asinine-companion.ts Asinine Companion', () => {
 	it('is a level 1 Dragon boost card, hydratable, and not for a Minotaur', () => {
@@ -34,6 +36,17 @@ describe('./cards/asinine-companion.ts Asinine Companion', () => {
 	it('ships the donkey kick, 1d8, growing with the dragon', () => {
 		expect(shipped).to.deep.equal({ kick: true, kickScales: true, kickDamageDice: '1d8', kickHitBonus: 2 });
 		expect(new AsinineCompanionCard().stats).to.include('+ your level (up to 10)');
+	});
+
+	it('is a melee attack while kicking, so braces and outwitting apply, and a boost otherwise', () => {
+		const kicking = new AsinineCompanionCard();
+		expect(kicking.isCardClass(MELEE)).to.equal(true);
+		expect(kicking.isCardClass(BOOST)).to.equal(false);
+		expect(isAttackCard(kicking)).to.equal(true);
+		AsinineCompanionCard.kick = false;
+		const boosting = new AsinineCompanionCard();
+		expect(boosting.isCardClass(BOOST)).to.equal(true);
+		expect(isAttackCard(boosting)).to.equal(false);
 	});
 
 	it('boosts STR by 2 in the boost shape', () => {

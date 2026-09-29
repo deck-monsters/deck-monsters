@@ -1,4 +1,4 @@
-import { getCardClassByTypeName } from '@deck-monsters/engine';
+import { allMonsters, getCardClassByTypeName } from '@deck-monsters/engine';
 import { pct, wrap, type MonsterReport, type Proto } from './types.js';
 
 /*
@@ -108,16 +108,18 @@ function instrument(isUnicorn: (creature: unknown) => boolean): void {
 		}
 		return result;
 	});
-	// Every hold an opponent lands goes through `immobilize()`, which is where the ward is
-	// spent. ImmobilizeCard itself is never drawn, so reach it through Sticketh's prototype.
-	wrap(Object.getPrototypeOf(sticketh) as Proto, 'immobilize', (original, self, args) => {
-		const [, target] = args as [unknown, Creature];
-		const before = target.encounterModifiers.unconquerableWard;
-		const result = original.apply(self, args);
-		if (isUnicorn(target) && before === 'armed' && target.encounterModifiers.unconquerableWard === 'spent') {
+	// A ward is spent by whichever card it stops: a hold, a curse, Blink, Bad Batch, Sandstorm,
+	// Faceswap, or Helm of Awe, each through the engine's `consumeControlWard`. It is spent at
+	// most once a fight, so read its state as the fight ends, before `endEncounter` clears it.
+	// Wrapping only `immobilize()` missed every non-hold ward (a Codex review of #411), and
+	// matching narration text would break on a wording change (see 10b #199).
+	const UnicornClass = allMonsters.find(M => (M as unknown as { name: string }).name === 'Unicorn') as unknown as { prototype: Proto };
+	wrap(UnicornClass.prototype, 'endEncounter', (original, self, args) => {
+		const unicorn = self as Creature & { encounter?: unknown };
+		if (unicorn.encounter && isUnicorn(unicorn) && unicorn.encounterModifiers.unconquerableWard === 'spent') {
 			counters.wardTriggers += 1;
 		}
-		return result;
+		return original.apply(self, args);
 	});
 
 	const horn = proto('Horn of Proof');

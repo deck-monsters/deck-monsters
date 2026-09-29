@@ -265,7 +265,7 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  Level: 1
  Usable by: Dragon
  MSRP: 20
- Class: Boost
+ Class: Melee
 
 ==================================
 ```

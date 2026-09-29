@@ -1,5 +1,6 @@
 import { BoostCard } from './boost.js';
 import { DRAGON } from '../constants/creature-types.js';
+import { BOOST, MELEE } from '../constants/card-classes.js';
 import { flavor } from '../helpers/flavor.js';
 import { chance } from '../helpers/chance.js';
 import { subEventDelay } from '../helpers/delay-times.js';
@@ -46,6 +47,21 @@ export class AsinineCompanionCard extends BoostCard {
 
 	constructor({ icon = '🫏', ...rest }: Record<string, any> = {}) {
 		super({ icon, ...rest });
+	}
+
+	/**
+	 * The kick is a d20-vs-AC strike, so it is a MELEE attack: an ancient dragon's opponents may
+	 * outwit it (`isAttackCard`) and a melee brace absorbs it. A Codex review of #411 found it
+	 * still carried only BoostCard's BOOST class. The boost shape stays BOOST.
+	 */
+	override get cardClass(): string[] | undefined {
+		const own = (this.options as any).cardClass as string[] | undefined;
+		if (own) return own;
+		return (this.constructor as typeof AsinineCompanionCard).kick ? [MELEE] : [BOOST];
+	}
+
+	override set cardClass(cardClass: string[] | undefined) {
+		super.cardClass = cardClass;
 	}
 
 	override get stats(): string {

@@ -27,6 +27,16 @@ describe('balance experiment variants', () => {
 		expect(snapshot()).to.deep.equal(before);
 	});
 
+	it('asinine-ac measures the AC boost, not the shipped kick', () => {
+		const Card = getCardClassByTypeName('Asinine Companion') as unknown as { kick: boolean; defaults: Record<string, unknown> };
+		const undo = applyVariants(['asinine-ac']);
+		expect(Card.kick).to.equal(false);
+		expect(Card.defaults.boostedProp).to.equal('ac');
+		undo();
+		expect(Card.kick).to.equal(true);
+		expect(Card.defaults.boostedProp).to.equal('str');
+	});
+
 	it('refuses an unknown variant and leaves nothing applied', () => {
 		const Dragon = cls('Dragon');
 		const hp = Dragon.hpVariance;

@@ -171,9 +171,17 @@ export const VARIANTS: Record<string, Variant> = {
 	'asinine-ac': {
 		about: 'Asinine Companion: boosts AC by 2 instead of STR by 2',
 		// BoostCard reads `boostedProp` from the class `defaults` object, so patch a copy of it.
+		// The kick is the shipped shape (roadmap 35), so the boost variant turns it off as well;
+		// patching only `boostedProp` measured the kick under the boost's name (Codex, #411).
 		apply: () => {
 			const Card = getCardClassByTypeName('Asinine Companion') as unknown as { defaults: Record<string, unknown> };
-			return cardStatic('Asinine Companion', 'defaults', { ...Card.defaults, boostedProp: 'ac' });
+			const undos = [
+				cardStatic('Asinine Companion', 'kick', false),
+				cardStatic('Asinine Companion', 'defaults', { ...Card.defaults, boostedProp: 'ac' }),
+			];
+			return () => {
+				for (const undo of undos.reverse()) undo();
+			};
 		},
 	},
 	'donkey-kick': { about: 'Asinine Companion: the donkey kicks an opponent (1d20+2, 1d6) instead of boosting STR', apply: () => cardStatic('Asinine Companion', 'kick', true) },
