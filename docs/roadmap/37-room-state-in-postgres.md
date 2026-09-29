@@ -8,10 +8,17 @@ tags: [roadmap, database, persistence, server, engine]
 ---
 # 37 — Room state as Postgres `jsonb`
 
-**Status:** Planned (2026-09-29). Ready to pick up once PR #412 (roadmap 36) merges. Nothing is
-built yet. Read [rooms and identity](../architecture/rooms-and-identity.md) and
+**Status:** In progress (2026-09-29) on branch `claude/unicorn-monster-cards-cigpmw`. Read
+[rooms and identity](../architecture/rooms-and-identity.md) and
 [engine concurrency and timing](../architecture/engine-concurrency-and-timing.md) first. Every
 query here stays scoped to one room, and saves are part of the timing contract.
+
+**PRs.** The budget rule is four or five tasks a PR, so the pass ships in three:
+1. **Expand, tasks 1–5.** Nothing changes for players, and a redeploy of the previous release
+   still works.
+2. **Views, task 7.** A small PR after the backfill has run in production, so the views are
+   checked against real rows.
+3. **Contract, task 6.** After the one-week window.
 
 ## Why
 
