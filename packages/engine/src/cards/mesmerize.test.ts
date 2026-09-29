@@ -9,6 +9,7 @@ import Jinn from '../monsters/jinn.js';
 import Minotaur from '../monsters/minotaur.js';
 import WeepingAngel from '../monsters/weeping-angel.js';
 import { ATTACK_PHASE } from '../constants/phases.js';
+import { chance } from '../helpers/chance.js';
 import { BASILISK, GLADIATOR, JINN, MINOTAUR, WEEPING_ANGEL } from '../constants/creature-types.js';
 
 describe('./cards/mesmerize.ts', () => {
@@ -130,6 +131,31 @@ Turns immobilized resets on curse of loki.
 			expect(jinn.encounterEffects.length).to.equal(0);
 			expect(minotaur.encounterEffects.length).to.equal(1);
 		}));
+
+	describe('selfMesmerize (roadmap 36, being measured)', () => {
+		afterEach(() => {
+			MesmerizeCard.selfMesmerize = 'always';
+			sinon.restore();
+		});
+
+		it('never: the caster is spared, everyone else is held', () => {
+			MesmerizeCard.selfMesmerize = 'never';
+			return mesmerize.play(player, basilisk, ring, ring.contestants).then(() => {
+				expect(player.encounterEffects.length).to.equal(0);
+				expect(basilisk.encounterEffects.length).to.equal(1);
+			});
+		});
+
+		it('loki: only a natural 1 catches the caster', async () => {
+			MesmerizeCard.selfMesmerize = 'loki';
+			const roll = sinon.stub(chance, 'roll').returns({ naturalRoll: { result: 7 } } as any);
+			await mesmerize.play(player, basilisk, ring, ring.contestants);
+			expect(player.encounterEffects.length).to.equal(0);
+			roll.returns({ naturalRoll: { result: 1 } } as any);
+			await new MesmerizeCard().effect(player, player, ring, ring.contestants);
+			expect(player.encounterEffects.length).to.equal(1);
+		});
+	});
 
 	it('hits already immobilized monsters on play', () => {
 		const playerBeforeHP = player.hp;

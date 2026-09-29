@@ -167,6 +167,8 @@ export const VARIANTS: Record<string, Variant> = {
 	'dragon-spell-save': { about: 'Dragon: 1d20 + int vs 10 + caster int for half damage from the Blast family', apply: () => staticSet('Dragon', 'spellResistance', 'save') },
 	'blast-cap-5': { about: 'Blast family: caster level scaling stops at level 5 (affects every caster)', apply: () => cardStatic('Blast', 'levelCap', 5) },
 	'take-wing-spells': { about: 'Take Wing: the flier also dodges the first area spell, not only the first melee blow', apply: () => cardStatic('Take Wing', 'dodgesSpells', true) },
+	'mesmerize-no-self': { about: 'Mesmerize: the caster no longer mesmerizes itself', apply: () => cardStatic('Mesmerize', 'selfMesmerize', 'never') },
+	'mesmerize-loki': { about: 'Mesmerize: the caster mesmerizes itself only on a natural 1', apply: () => cardStatic('Mesmerize', 'selfMesmerize', 'loki') },
 	'no-pin-advantage': {
 		about: 'Roadmap 36 before: attacks against a pinned monster roll once, as before the pinned-advantage rule',
 		apply: () => {
