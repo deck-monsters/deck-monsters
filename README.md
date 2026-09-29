@@ -47,7 +47,7 @@ if (action) await action({ channel: privateChannel, channelName, isAdmin, isDM, 
 state with `restoreGame(gameJSON, log)`, which accepts the saved object, a JSON string, or a
 legacy base64 gzip string. A `StateStore` receives the saved state as a plain object
 (`SerializedGame`), and `game.flushState()` saves now and resolves when the store write has
-settled. A connector must not load or save state without its `roomId`. Web clients use authenticated, membership-checked tRPC procedures.
+settled: `true` if it saved, `false` if the store failed (it never rejects). A connector must not load or save state without its `roomId`. Web clients use authenticated, membership-checked tRPC procedures.
 
 The callback answer is a protocol boundary; read
 [`docs/reference/prompt-answer-contract.md`](docs/reference/prompt-answer-contract.md).

@@ -370,7 +370,9 @@ walk is ever reworked; `cards/boss-feed.test.ts` pins it with a real fight.
   `RoomManager.resetting` (before any await), take the game out of the cache, flush it and
   wait, delete the projections, then write a tombstone `state_version`. Loads of that room
   wait on `resetting`, and a load that had already read the row is discarded at the load-epoch
-  gate. Without that, a load in the gap would restore the old room, and its next save would
+  gate; a request that arrives mid-reset checks `resetting` before it would join an in-flight
+  load, so it waits and loads fresh instead of joining a load the reset will discard. Without
+  that, a load in the gap would restore the old room, and its next save would
   outrank the tombstone. On shutdown, `RoomManager.flushAll` saves every active room within a
   deadline before the pool closes. All of this is per process: the server and the Discord
   connector each have a `RoomManager`, and a reset in one does not reach the other's copy of

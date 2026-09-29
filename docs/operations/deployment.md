@@ -344,8 +344,10 @@ Go to **Variables** and add:
 On `SIGTERM` or `SIGINT` the server, and the Discord connector the same way (it closes the
 Discord client first), stops accepting connections, saves every active room with
 `RoomManager.flushAll(8000)` (rooms in a fight too, without unloading them), ends the database
-pool, and exits 0. Repeated signals are ignored. The 8 s deadline sits under Railway's default
-10 s grace period; a write that hangs is abandoned so it cannot block the exit. The log line
+pool, and exits 0. Repeated signals are ignored. The whole shutdown has a 9.5 s budget, under
+Railway's default 10 s grace period: the flush gets 8 s, and closing the pool gets what is left
+(a write abandoned at the flush deadline can still hold a connection, so `pool.end()` is raced
+against the budget too). A save the store refused counts as failed, not flushed. The log line
 `flushed rooms` reports how many flushed, failed, and timed out. Before roadmap 37 there was
 no handler, and each deploy lost up to 30 s of unsaved changes in every active room.
 
