@@ -236,6 +236,26 @@ suite('room state backfill against Postgres', () => {
 		expect(Number(r.state_version)).to.equal(6);
 	});
 
+	it('fromBlob clears a stale state whose blob was nulled (a reset while rolled back)', async () => {
+		const id = await makeRoom(null, game('pre-reset'), 9);
+		const untouched = async () => {
+			const r = await row(id);
+			expect(r.state.options.marker).to.equal('pre-reset');
+			expect(Number(r.state_version)).to.equal(9);
+		};
+
+		expect((await backfillRoomState(db, { roomId: id })).clearedStale).to.equal(0);
+		await untouched();
+		expect((await backfillRoomState(db, { roomId: id, fromBlob: true, dryRun: true })).clearedStale).to.equal(1);
+		await untouched();
+
+		const report = await backfillRoomState(db, { roomId: id, fromBlob: true });
+		expect(report.clearedStale).to.equal(1);
+		const r = await row(id);
+		expect(r.state).to.equal(null);
+		expect(Number(r.state_version)).to.equal(10);
+	});
+
 	it('a failed write reports a short reason with no player data', async () => {
 		// Drizzle wraps a failed query as "Failed query: <sql>\nparams: <params>", and the params
 		// are the whole state. Throw that shape from the write step and check none of it leaks.

@@ -1,7 +1,8 @@
-import { db } from '@deck-monsters/server/db';
+import { db, pool } from '@deck-monsters/server/db';
 import { RoomManager } from '@deck-monsters/server/room-manager';
 import { GuildRoomManager } from './guild-room-manager.js';
 import { DiscordBot } from './bot.js';
+import { installShutdown } from './shutdown-wiring.js';
 
 const DISCORD_TOKEN = process.env['DISCORD_TOKEN'];
 const DISCORD_CLIENT_ID = process.env['DISCORD_CLIENT_ID'];
@@ -22,3 +23,13 @@ setInterval(() => {
 }, SWEEP_INTERVAL_MS).unref();
 
 await bot.start(DISCORD_TOKEN, DISCORD_CLIENT_ID);
+
+installShutdown({
+	bot,
+	roomManager,
+	pool,
+	log: {
+		info: (msg, ctx) => console.log(msg, ctx ?? ''),
+		error: (msg, ctx) => console.error(msg, ctx ?? ''),
+	},
+});

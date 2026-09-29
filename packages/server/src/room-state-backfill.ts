@@ -29,6 +29,8 @@ export interface BackfillReport {
 	empty: number;
 	failed: Array<{ roomId: string; reason: string }>;
 	skippedChanged: string[];
+	/** --from-blob only: rooms whose pre-reset `state` was cleared because their blob is null. */
+	clearedStale: number;
 	bytes: number;
 }
 
@@ -102,7 +104,7 @@ type Outcome = 'converted' | 'alreadyConverted' | 'changed' | 'empty';
 
 export async function backfillRoomState(db: Db, options: BackfillOptions = {}): Promise<BackfillReport> {
 	const { dryRun = false, roomId, fromBlob = false, log = () => {}, beforeWrite } = options;
-	const report: BackfillReport = { converted: 0, alreadyConverted: 0, empty: 0, failed: [], skippedChanged: [], bytes: 0 };
+	const report: BackfillReport = { converted: 0, alreadyConverted: 0, empty: 0, failed: [], skippedChanged: [], clearedStale: 0, bytes: 0 };
 
 	// Default mode only picks rooms the server has not converted; --from-blob takes every blob.
 	const conditions = [isNotNull(rooms.stateBlob)];
@@ -149,6 +151,28 @@ export async function backfillRoomState(db: Db, options: BackfillOptions = {}): 
 			.where(eq(rooms.id, id))
 			.limit(1);
 		return row;
+	}
+
+	// While rolled back, a reset or load-quarantine nulls state_blob and leaves `state` alone, so
+	// release 1 would restore the pre-reset state. --from-blob treats the blob as the truth:
+	// null blob means clear `state` (roadmap 37). The CAS keeps a blob written meanwhile.
+	if (fromBlob) {
+		const stale = await db
+			.select({ id: rooms.id })
+			.from(rooms)
+			.where(and(isNull(rooms.stateBlob), isNotNull(rooms.state), ...(roomId ? [eq(rooms.id, roomId)] : [])));
+		for (const { id } of stale) {
+			if (dryRun) {
+				report.clearedStale += 1;
+				continue;
+			}
+			const cleared = await db
+				.update(rooms)
+				.set({ state: null, stateVersion: sql`${rooms.stateVersion} + 1` })
+				.where(and(eq(rooms.id, id), isNull(rooms.stateBlob), isNotNull(rooms.state)))
+				.returning({ id: rooms.id });
+			report.clearedStale += cleared.length;
+		}
 	}
 
 	for (const { id, stateBlob } of candidates) {

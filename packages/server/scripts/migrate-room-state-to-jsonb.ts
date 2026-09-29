@@ -30,6 +30,7 @@ async function main(): Promise<number> {
 	console.log(`${dryRun ? '[dry run] ' : ''}converted: ${report.converted}`);
 	console.log(`already converted: ${report.alreadyConverted}`);
 	console.log(`empty: ${report.empty}`);
+	console.log(`cleared stale state (blob null): ${report.clearedStale}`);
 	console.log(`skipped (blob changed): ${report.skippedChanged.length}`);
 	console.log(`failed: ${report.failed.length}`);
 	for (const f of report.failed) console.log(`  ${f.roomId}: ${f.reason}`);
