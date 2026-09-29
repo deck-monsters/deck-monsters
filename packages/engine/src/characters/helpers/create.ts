@@ -107,7 +107,7 @@ const createCharacter = (
 				const index = resolveChoiceIndex(answer, creatureTypeLabels);
 				const Character = allCharacters[index] as CharacterConstructor;
 				if (!Character) {
-					return announceAndThrow(channel, `I don't recognize "${String(answer)}" as a character type.`);
+					return announceAndThrow(channel, `I don't recognize "${String(answer ?? '')}" as a character type.`);
 				}
 				return Character;
 			});

@@ -1,5 +1,5 @@
 import { TRPCError } from '@trpc/server';
-import { createKeyedPromiseQueue, startCase } from '@deck-monsters/engine';
+import { createKeyedPromiseQueue, startCase, stripControlCharacters } from '@deck-monsters/engine';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 
@@ -19,7 +19,9 @@ type ProfileRouterDependencies = {
 };
 
 const displayNameSchema = z.object({
-	displayName: z.string().trim().min(2).max(32),
+	// Strip first: a NUL is not whitespace, so it would pass `trim().min(2)`, fail the text column,
+	// and (as a character name) stop the room saving as jsonb (roadmap 37).
+	displayName: z.string().transform(stripControlCharacters).pipe(z.string().trim().min(2).max(32)),
 });
 
 export function createProfileRouter({ db: database = db, roomManager }: ProfileRouterDependencies) {

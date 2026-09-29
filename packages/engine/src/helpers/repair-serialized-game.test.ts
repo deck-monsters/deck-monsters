@@ -30,8 +30,11 @@ describe('helpers/repair-serialized-game', () => {
 	it('numbers several colliding repaired keys uniquely', () => {
 		const { state } = repairSerializedGame(game({ 'a\u0000b': 1, 'a�b': 2, 'a\u0000\u0000b': 3 }));
 
-		expect(Object.keys(state.options).sort()).to.have.length(3);
-		expect(state.options['a�b']).to.equal(2);
+		expect(state.options).to.deep.equal({
+			'a�b (2)': 1,
+			'a�b': 2,
+			'a��b': 3,
+		});
 	});
 
 	it('repairs nested objects and arrays and keeps array order', () => {
@@ -46,6 +49,15 @@ describe('helpers/repair-serialized-game', () => {
 			deep: { deeper: { 'n�': 'v�' } },
 		});
 		expect(repairs).to.equal(5);
+	});
+
+	it('keeps a key named __proto__ as an own property', () => {
+		const input = JSON.parse('{"name":"Game","options":{"__proto__":{"x":1},"a":1}}') as SerializedGame;
+		const { state } = repairSerializedGame(input);
+
+		expect(Object.keys(state.options)).to.have.members(['__proto__', 'a']);
+		expect(Object.getPrototypeOf(state.options)).to.equal(Object.prototype);
+		expect(JSON.stringify(state)).to.equal(JSON.stringify(input));
 	});
 
 	it('does not mutate its input', () => {

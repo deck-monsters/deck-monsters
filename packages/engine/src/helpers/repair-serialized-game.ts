@@ -42,7 +42,14 @@ export const repairSerializedGame = (
 					while (taken.has(newKey)) newKey = `${base} (${n++})`;
 					taken.add(newKey);
 				}
-				result[newKey] = walk(child);
+				// defineProperty, not assignment: a key named `__proto__` (presets are keyed by player
+				// text) would hit the prototype setter on a plain object and be dropped.
+				Object.defineProperty(result, newKey, {
+					value: walk(child),
+					enumerable: true,
+					writable: true,
+					configurable: true,
+				});
 			}
 			return result;
 		}

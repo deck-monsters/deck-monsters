@@ -106,6 +106,17 @@ describe('trpc/profile', () => {
 		expect(db._stubs.setStub).to.have.been.calledWith({ displayName: 'Grace Hopper' });
 	});
 
+	it('strips control characters from the display name before saving', async () => {
+		const db = makeDbStub([{ displayName: 'Ada Lovelace' }]);
+		const { caller } = createCaller(db);
+
+		expect(await caller.updateDisplayName({ displayName: 'Gra\u0000ce\u0007 Hopper' })).to.deep.equal({
+			displayName: 'Grace Hopper',
+			renamedCharacters: 0,
+		});
+		expect(db._stubs.setStub).to.have.been.calledWith({ displayName: 'Grace Hopper' });
+	});
+
 	for (const [label, displayName, message] of [
 		['email-like value', 'ada@example.com', "Display names can't look like an email address."],
 		['at-sign value', '@stary', "Display names can't look like an email address."],

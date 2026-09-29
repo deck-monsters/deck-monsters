@@ -95,7 +95,7 @@ const spawnMonster = (
 				const index = resolveChoiceIndex(answer, creatureTypeLabels);
 				const Monster = allMonsters[index];
 				if (!Monster) {
-					return announceAndThrow(channel, `I don't recognize "${String(answer)}" as a monster type.`);
+					return announceAndThrow(channel, `I don't recognize "${String(answer ?? '')}" as a monster type.`);
 				}
 				return Monster as MonsterConstructor;
 			});

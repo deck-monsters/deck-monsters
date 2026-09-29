@@ -576,7 +576,7 @@ describe('game.ts', () => {
 					expect(saved[0]!.options.note).to.equal('a\uFFFDb');
 					expect(JSON.stringify(saved[0])).to.not.include('\\u0000');
 					expect(JSON.parse(strings[0]!)).to.deep.equal(saved[0]);
-					expect(logs.filter(l => typeof l === 'string' && l.includes('repaired 1 NUL')
+					expect(logs.filter(l => typeof l === 'string' && l.includes('repaired 1 strings or keys containing NUL')
 						&& l.includes('nul-room'))).to.have.length(1);
 				} finally {
 					game.saveState = undefined;
@@ -613,6 +613,19 @@ describe('game.ts', () => {
 					expect(logs).to.include(boom);
 				} finally {
 					game.stateStore = undefined;
+					game.dispose();
+				}
+			});
+
+			it('flushState resolves and logs when persistState throws synchronously', async () => {
+				const logs: unknown[] = [];
+				const game = new Game({ roomId: 'flush-throw' }, (err) => logs.push(err));
+				const boom = new Error('cannot serialize');
+				(game as any).persistState = () => { throw boom; };
+				try {
+					await game.flushState();
+					expect(logs).to.include(boom);
+				} finally {
 					game.dispose();
 				}
 			});
@@ -721,6 +734,16 @@ describe('game.ts', () => {
 	});
 
 	describe('getCharacter Player-name auto-update', () => {
+		it('strips control characters from the healed name', async () => {
+			// jsonb rejects a NUL in a name (roadmap 37).
+			const game = new Game();
+			const channel = sinon.stub().resolves('0');
+			await game.getCharacter({ channel, id: 'user-nul', name: 'Player' });
+			const healed = await game.getCharacter({ channel, id: 'user-nul', name: 'Real\u0000Name\u0007' });
+
+			expect((healed as any).givenName).to.equal('Real Name');
+		});
+
 		it('updates givenName when existing character has placeholder "Player" name', async () => {
 			const game = new Game();
 			const channel = sinon.stub().resolves('0');

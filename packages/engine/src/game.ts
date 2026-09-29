@@ -12,6 +12,7 @@ import {
 import { earlyCoinBonus } from './constants/progression.js';
 import { createCharacter } from './characters/index.js';
 import { globalSemaphore } from './helpers/semaphore.js';
+import { stripControlCharacters } from './helpers/strip-control-characters.js';
 import { repairSerializedGame } from './helpers/repair-serialized-game.js';
 import { listen, loadHandlers } from './commands/index.js';
 import { XP_PER_VICTORY, XP_PER_DEFEAT } from './helpers/experience.js';
@@ -235,7 +236,7 @@ export class Game extends BaseClass {
 		// fire-and-forget, so nobody would notice (roadmap 37). Repair it before it reaches a store.
 		const { state, repairs } = repairSerializedGame(JSON.parse(JSON.stringify(this)) as SerializedGame);
 		if (repairs > 0) {
-			this.log(`room state: repaired ${repairs} NUL characters before saving (roomId ${this.roomId})`);
+			this.log(`room state: repaired ${repairs} strings or keys containing NUL before saving (roomId ${this.roomId})`);
 		}
 
 		if (this.stateStore) {
@@ -249,7 +250,8 @@ export class Game extends BaseClass {
 
 	/**
 	 * Saves now and resolves once the store write has settled (also when it rejected; the error
-	 * is already logged). Cancels a pending debounced save, since this one supersedes it. An
+	 * is already logged). It waits for the store write only: `stateSaveFunc` is fire-and-forget
+	 * (setImmediate) and may run after this resolves. Cancels a pending debounced save, since this one supersedes it. An
 	 * unload awaits this so a load straight after cannot read the row before the flush lands
 	 * (roadmap 37 risk 3).
 	 */
@@ -259,7 +261,13 @@ export class Game extends BaseClass {
 			this._saveDebounce = undefined;
 		}
 		this._lastSave = undefined;
-		this.persistState();
+		try {
+			this.persistState();
+		} catch (err) {
+			// An unload awaiting this must not reject because one value would not serialize.
+			this.log(err);
+			return;
+		}
 		await this._lastSave;
 	}
 
@@ -748,7 +756,7 @@ export class Game extends BaseClass {
 				(storedName === 'Player' || looksLikeEmail(storedName));
 
 			if (shouldHealName) {
-				existingCharacter.setOptions({ name });
+				existingCharacter.setOptions({ name: stripControlCharacters(name) });
 				game.emit('stateChange', { character: existingCharacter });
 			}
 

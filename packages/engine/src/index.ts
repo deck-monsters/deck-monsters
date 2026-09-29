@@ -32,6 +32,7 @@ export type {
 	EventsSinceResult,
 };
 export type { StateStore, SerializedGame } from './types/state-store.js';
+export { stripControlCharacters } from './helpers/strip-control-characters.js';
 export { repairSerializedGame } from './helpers/repair-serialized-game.js';
 export { engineReady, getHydratorStatus } from './helpers/engine-ready.js';
 export { getCardClassByTypeName } from './cards/index.js';
