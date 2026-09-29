@@ -295,6 +295,34 @@ before designing another conditional or all-or-nothing effect.
   runs the wrong way. The 35–65% flag in `sim:winrates` and `sim:monster` marks rows to look
   at, not a pass/fail gate, and ring context (size, teams, the cards in play) shifts
   matchups a great deal.
+- **Balance rules (owner, roadmaps 34 and 35, September 2026).** These are standing rules for
+  any balance change:
+  - **The band.** Keep each monster's field average within 35–75%; ancient dragons may reach
+    80%. Keep single matchups within 20–80%, and none over 85%.
+  - **Levels 0–7 come first.**
+  - **The smallest effective change wins.**
+  - **Hope and excitement are protected**: rare turnarounds, Curse of Loki, natural 20s, and
+    strokes of luck (the "please get a Loki" moments). None is reduced without the owner's
+    agreement.
+  - **Counter cards come before nerfs.** Blink stays as it is.
+  - **Unique cards should be usable**: a player who builds around one should find it worth its
+    slot. Weak situational cards are allowed. Prion Disease is a joke card and stays as it is.
+- **A natural 1 and a natural 20 are fixed (owner, 2026-09-29).** Only a natural 1 is a Curse of
+  Loki, and only a natural 20 a stroke of luck. Advantage and disadvantage fit that precedent;
+  widening either range does not, however well it measures.
+- **Complexity must earn its place (owner, 2026-09-29).** A rule that does not move the numbers
+  is dropped. Wrath on a broken rest, Dissonant Voice lasting until a hit lands, and the
+  deepening rest all measured as noise and were cut.
+- **What moves a fight (measured, roadmap 35).**
+  - Attack-roll changes barely matter here. A −2 to −5 penalty or a sting stayed 5–11 points
+    below the card it replaced, because fights last about two rounds. A debuff needs a stronger
+    shape: a lost card, a hold, a redirect, or damage that lands.
+  - An all-or-nothing effect can average fine while deciding single fights. Check the
+    per-fight split ([simulation harness](../reference/simulation-harness.md#averages-hide-all-or-nothing-cards)).
+  - Team battles flatten card differences to about ±2 points. Test a support card in them
+    (`SideSpec.team`), not only in free-for-alls.
+  - The worked examples are the [Gloaming Rest study](../archive/studies/2026-09-gloaming-rest.md)
+    and the [Helm of Awe and Dissonant Voice study](../archive/studies/2026-09-helm-of-awe-and-dissonant-voice.md).
 - **Measured balance changes (roadmap 35).** A body or card change is measured before and
   after on the same searched hands and seeds (`plan:matrix`, `sim:matrix-report`), with the
   excitement and hope guardrails beside the band; experiment variants

@@ -64,7 +64,7 @@ and follow the checklist in [cards and encounter effects](../architecture/cards-
     next negative non-damage action aimed at its bearer (holds, curses, poison, Blink,
     Sandstorm and Faceswap redirects), while damage still lands. It began on Unconquerable
     Horn, which became a rally strike instead. It is planned in
-    [35](35-balance-fixes.md#unconquerable-horn-as-a-counterspell-owner-2026-09-28).
+    [35](../archive/roadmap/35-balance-fixes.md#unconquerable-horn-as-a-counterspell-owner-2026-09-28).
   - A counter that reads the opponent's hand order (it answers the next card of a class the
     opponent plays), so card order and reading the fight both matter.
 - [ ] **Owner: Cards.** Evaluate a hybrid data-driven card spec (schema plus optional
@@ -124,7 +124,7 @@ Open work:
 - [ ] **More options for the first Wizard** (owner, 2026-09-29): the Wizard class holds only
   the Dragon's own cards plus Cloak and Revive, so a Dragon's hand leans on generic strikes.
   Widening the pool (existing spells opened to Wizards, or new Wizard cards) is task 8 of
-  [35](35-balance-fixes.md).
+  [35](../archive/roadmap/35-balance-fixes.md).
 - [ ] **Flavour-text pass after play**, as the Unicorn had
   ([28](../archive/roadmap/28-unicorn-voice-punch-up.md)). Start from the
   [Dragon strings inventory](../reference/strings/dragon.md) and the requester's reactions

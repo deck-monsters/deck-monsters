@@ -9,7 +9,7 @@ tags: [balance, cards, dragon, unicorn, simulation]
 # Helm of Awe and Dissonant Voice study (September 2026)
 
 **Status:** Closed. It shipped on `claude/balance-fixes-d` as part of
-[roadmap 35](../../roadmap/35-balance-fixes.md), tasks 5 and 8. This is a historical record. The
+[roadmap 35](../roadmap/35-balance-fixes.md), tasks 5 and 8. This is a historical record. The
 current rules are in
 [cards and encounter effects](../../architecture/cards-and-encounter-effects.md#fear-and-song-helm-of-awe-and-dissonant-voice)
 and in the two card files. The companion study,

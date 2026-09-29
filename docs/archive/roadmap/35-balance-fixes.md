@@ -1,26 +1,34 @@
 ---
-type: Roadmap
+type: Archive
 title: Balance Fixes — First Pass on Measured Evidence
 description: Plan for the first balance changes made from roadmap 34's measurements, covering the Dragon, the Gladiator, and making the unique cards that sit unused usable, with guardrails for the band, excitement, and hope.
-status: draft
+status: deprecated
 audience: internal
-tags: [roadmap, balance, cards, monsters]
+tags: [archive, balance, cards, monsters]
 ---
 # 35 — Balance Fixes: First Pass on Measured Evidence
 
-**Status:** In progress (2026-09-28): PR C on branch `claude/balance-fixes-c`. Started after the measurement PR from
-[34](34-balance-methodology.md) (tasks 6, 6b, 7, and the lean task 9) merges. Two PRs, each
-within the budget rule in `AGENTS.md`.
+**Status:** Closed (2026-09-29). PR C (`claude/balance-fixes-c`) shipped the Dragon and Gladiator
+body fixes and Tsunami. PR D (`claude/balance-fixes-d`) shipped the Unicorn's four cards and
+the Dragon's new options, confirmed by the owner's
+[run](../../reference/balance-reports/2026-09-29-confirm-35d.md). The lasting rules are in
+[cards and encounter effects](../../architecture/cards-and-encounter-effects.md#content-and-balance-rules)
+(the balance rules, the risky heals, and fear and song), the
+[voice guide](../../reference/voice-and-wording.md#the-dragons-voice), and the
+[simulation harness](../../reference/simulation-harness.md). The card studies are in
+[studies](../studies/). The leftovers are in
+[11's next balance pass](../../roadmap/11-balance-and-mechanics.md#next-balance-pass-carried-from-roadmap-35)
+and [34's candidate list](../../roadmap/34-balance-methodology.md). This is a historical record.
 
 ## Why this pass, and what it rests on
 
 Roadmap 34 measured before tuning. Its reports are in
-[balance reports](../reference/balance-reports/README.md):
+[balance reports](../../reference/balance-reports/README.md):
 
-- the [catalogue](../reference/balance-reports/2026-09-28-catalogue.md), with its
-  [contexts](../reference/balance-reports/2026-09-28-contexts.md);
-- [chassis, collections, and holders](../reference/balance-reports/2026-09-28-layer3.md);
-- the [best-hand search](../reference/balance-reports/2026-09-28-search.md).
+- the [catalogue](../../reference/balance-reports/2026-09-28-catalogue.md), with its
+  [contexts](../../reference/balance-reports/2026-09-28-contexts.md);
+- [chassis, collections, and holders](../../reference/balance-reports/2026-09-28-layer3.md);
+- the [best-hand search](../../reference/balance-reports/2026-09-28-search.md).
 
 They agree on this:
 
@@ -65,7 +73,7 @@ They agree on this:
   as it might appear. So providing more counter options is the better choice to neutering it."
   So the Dragon at level 1 (28% after task 2, the gap one Blink matchup) is **accepted**: no
   Blink trim. More counter options, starting with the Unconquerable Horn counterspell (task 5)
-  and the counter family in [12](12-new-content-backlog.md#cards), are the response.
+  and the counter family in [12](../../roadmap/12-new-content-backlog.md#cards), are the response.
 - **The Unicorn's cards are about being useful and interesting, not about the Unicorn.**
   "Unicorns are already pretty powerful because they can use spells like Blast." Task 5 must
   not raise the Unicorn's field average; a tweak passes when the card earns its slot in the
@@ -74,7 +82,7 @@ They agree on this:
   options and need to rely more heavily on just its own special cards since it's the first
   Wizard." The Wizard class holds only the Dragon's own four cards plus Cloak of
   Invisibility and Revive, so most of a Dragon's hand is generic strikes (the reason its STR
-  was raised to 0 in [30](../archive/roadmap/30-dragon-pack.md)). Task 8 below widens it.
+  was raised to 0 in [30](30-dragon-pack.md)). Task 8 below widens it.
 
 ### The two horns (owner, 2026-09-29)
 
@@ -151,20 +159,20 @@ hold at once, so it gets its own task after 5 and 8: one shared "pinned" check (
 `isOpponentHold` is half of it), then a whole-field before/after on the same seeds, probably on
 the owner's machine. Expected to be modest, since roll changes move little here. It would also
 make more strokes of luck against a held monster. Its active home is
-[11's next balance pass](11-balance-and-mechanics.md#next-balance-pass-carried-from-roadmap-35).
+[11's next balance pass](../../roadmap/11-balance-and-mechanics.md#next-balance-pass-carried-from-roadmap-35).
 
 ## Targets for a card fix
 
 A tweaked unique card should, at levels 1-7:
 
 - be worth **at least 0.8 Hit-equivalents in its best context** (the
-  [context](../reference/balance-reports/2026-09-28-contexts.md) measure), so it earns a slot
+  [context](../../reference/balance-reports/2026-09-28-contexts.md) measure), so it earns a slot
   in the hand it is built for;
 - stay **at most its class median times the rarity premium** (1.5× for epic and very rare,
   1.25× for rare), so it does not become the new default;
 - **keep its identity:**
   - same role, same fantasy, one readable line of card text, voice per
-    [voice and wording](../reference/voice-and-wording.md);
+    [voice and wording](../../reference/voice-and-wording.md);
   - **read like a roll where it can**, rather than a flat number (the Sandstorm-roll
     principle);
 - **leave its monster in band:** a card fix must not push its monster's field average above
@@ -222,10 +230,10 @@ scope is easy to extend.
 generic check before any negative non-damage effect lands on a target, for example
 `target.consumeWard(effect)`. That means a shared tag or hook on the curse, poison, removal,
 and redirect paths. Each warded effect gets a narration line in the Unicorn's voice, from the
-[strings inventory](../reference/strings/unicorn.md).
+[strings inventory](../../reference/strings/unicorn.md).
 
 **Why it matters beyond the Unicorn.** It is the first card of the counter family in
-[12](12-new-content-backlog.md#cards): it answers Sandstorm, Faceswap, and Blink by
+[12](../../roadmap/12-new-content-backlog.md#cards): it answers Sandstorm, Faceswap, and Blink by
 bending them, not by nerfing them. Measure it the way counters are judged (34's rule 5):
 against opponents who play those cards, in the holds context (task 1) and against the
 searched field.
@@ -247,7 +255,7 @@ for the measurement.
 ## Harness prerequisites (task 1 of PR C)
 
 The lean search had two limits (see the
-[search report](../reference/balance-reports/2026-09-28-search.md)). Fix them before measuring
+[search report](../../reference/balance-reports/2026-09-28-search.md)). Fix them before measuring
 changes:
 
 1. **Heals do not stack.** The collection model's typical hand caps heals (Heal, Whiskey
@@ -267,24 +275,24 @@ changes:
 | # | PR | Task | Acceptance | Status | Commit |
 |---|---|---|---|---|---|
 | 1 | C | Harness prerequisites (above) | Tests; the heal cap shows in the collection JSON; before/after mode reproduces a known result | Done: the heal cap and context-ranked typical hands landed in #409 (Codex review); excitement tally in `simulate()` and the runner; a holds context; `plan:matrix` and `sim:matrix-report` for before/after on fixed hands and seeds, with the guardrails | this commit |
-| 2 | C | Dragon: diagnose Fire Breath at level 1; choose the smallest body or card change; Tsunami's slight tweak | The Dragon in band at levels 1, 3, 5 on searched hands; Tsunami 0.8+ in its best context and at most the area median; no Dragon matchup under 20%; guardrails hold | Done, mostly: +3 HP and youth AC 2 (a new per-class field) bring the Dragon from 23/33/32% to 34/42/37%; Fire Breath is not the problem and stays; Tsunami's ride-the-wave roll takes it from worse than a Hit to about a Hit. Level 1 (34%) and the matchup under 20% remain, both from the Weeping Angel (94%). [Report](../reference/balance-reports/2026-09-28-fixes-dragon-gladiator.md) | 1cc68c5, 806036a, this commit |
-| 3 | C | Gladiator: early body change | The Gladiator in band at levels 1, 3, 5; brutes stronger early than late; guardrails hold | Done: +3 HP and youth AC 2, from 39/37/31% to 49/45/37% with the Dragon's change beside it; guardrails up 4-9%. [Report](../reference/balance-reports/2026-09-28-fixes-dragon-gladiator.md) | this commit |
-| 4 | C | Confirmation run on the owner's machine, docs (card architecture doc, generated references via `build:docs`, bugs and roadmap tables) | Before/after report checked in | Done: owner's run, a new search at levels 1-7 and 2,000 fights a pair before and after. Levels 3, 5, and 7 are in band for every monster, and the guardrails rose 4-5%. The Dragon at level 1 rose from 16% to 28% and stays below the floor through one card (the Angel's Blink, worth 52 points in that matchup), which is the owner's call. The Unicorn beating the Dragon 98% at level 7 is a search artifact (a plain Dragon hand wins 51%). [Report](../reference/balance-reports/2026-09-28-confirm-35.md) | fee9549, dcb9197 (owner's run), this commit |
-| 5 | D | Unicorn cards: Unconquerable Horn, Dissonant Voice, Gloaming Rest (Horn of Proof if still needed) | Each 0.8+ in its best context and within the class ceiling; the Unicorn stays in band; the card text is readable and in voice | Done. The owner split the two horns: Horn of Proof is the do-everything protection card (cleanse, then a one-round, once-per-fight ward against the next negative non-damage effect, see [cards and encounter effects](../architecture/cards-and-encounter-effects.md#holds-and-the-horn-of-proof-ward), then a heal of 5: about a Hit, +3.9/-1.0/+0.4 at L3/5/7); Unconquerable Horn is a rally, a Hit where an ally strikes too, or an otter, deer or ram if none (about a Hit or better, +4.3/+1.9/-1.8/+0.3 at L1-7). Measured in the Unicorn's searched hands against every other monster's, 400 fights a pair. Gloaming Rest done: an undisturbed rest heals a random 4 to all missing hp, a broken one nothing, bosses the same. A guaranteed full heal averaged fine but decided single fights (L3 duels: the Unicorn lost 9% of fights where a rest completed); seven shapes and a wrath-on-waking idea were measured, see the [Gloaming Rest study](../archive/studies/2026-09-gloaming-rest.md). Dissonant Voice done: no save; every opponent's next attack rolls at disadvantage, waiting for a card that rolls to hit. At par in crowds and team battles, 1-5 below one-on-one. See the [Helm of Awe and Dissonant Voice study](../archive/studies/2026-09-helm-of-awe-and-dissonant-voice.md). All the Unicorn's cards are done | e751b0c, fed65a8, b6bc66d, d6b5494, 8ae89d4, 6d55666, 74b3c49, 32e9db4, 134a7a0, e7c1821, bc18dea, 7a26519, 2b52ef1, this commit |
-| 6 | D | Optional simple fixes: Mesmerize, Enthrall, Harden | Only if a one-line change meets the targets without raising the Weeping Angel | Deferred by the owner (2026-09-29) to [11's next balance pass](11-balance-and-mechanics.md#next-balance-pass-carried-from-roadmap-35), after the pinned-advantage rule, which changes what the holds are worth | |
-| 8 | D | Dragon options: widen the Wizard's card pool, measured on the Dragon's searched hands, level 1 first | The Dragon gains real choices in its hand; its field average rises toward the middle of the band at levels 1-7 without passing 75% or any matchup 85%; guardrails hold | Cards done; a full-hand check is folded into task 7. Enchanted Faceswap and Lucky Strike opened to Wizards (+6..+8 and +2..+4 over the card they replace). New Dragon cards, text written by the orchestrator in the Norse voice: Tail Lash, a Battle-Focus-like strike whose tail comes round for 1d6 (+3.0/+1.9/+2.1/-0.5 at L1-7); Helm of Awe, where each opponent that fails a save cowers and loses its next 2 cards (+3.3/-4.8/-2.3 at L3-7; every attack-penalty shape was 5-8 below); Asinine Companion, a donkey that kicks for 1d8, growing with the Dragon's level (-0.9/-1.3/+0.2/-6.0; the +2 STR boost helped only at L1). The penalty and boost shapes stay behind class settings for the harness. Helm of Awe reshaped as a pin (owner): lose the next card, then save each turn, 3 easier per turn. On a natural 1 the healthy try to flee and the bloodied cower. Level with the card it replaced in duels, crowds, and team battles; a hand of Helms weakens the Dragon. See the [study](../archive/studies/2026-09-helm-of-awe-and-dissonant-voice.md) | dd75323, 6d55666, 2bd9a59, 2b52ef1, this commit |
-| 7 | D | Confirmation run and close-out: fold decisions into [cards and encounter effects](../architecture/cards-and-encounter-effects.md) and the balance method doc; archive this plan | Checked-in report; plan archived | Running on the owner's machine (2026-09-29), in two parts. (1) This branch's code on the PR C searched hands, compared with PR C's run: what the code changed. (2) A new search from `2026-09-29-collection-35d.json`, where the Dragon and Unicorn own their new cards, then the band check on those hands. Output: `2026-09-29-confirm-35d*` and `2026-09-29-search-35d*` | |
+| 2 | C | Dragon: diagnose Fire Breath at level 1; choose the smallest body or card change; Tsunami's slight tweak | The Dragon in band at levels 1, 3, 5 on searched hands; Tsunami 0.8+ in its best context and at most the area median; no Dragon matchup under 20%; guardrails hold | Done, mostly: +3 HP and youth AC 2 (a new per-class field) bring the Dragon from 23/33/32% to 34/42/37%; Fire Breath is not the problem and stays; Tsunami's ride-the-wave roll takes it from worse than a Hit to about a Hit. Level 1 (34%) and the matchup under 20% remain, both from the Weeping Angel (94%). [Report](../../reference/balance-reports/2026-09-28-fixes-dragon-gladiator.md) | 1cc68c5, 806036a, this commit |
+| 3 | C | Gladiator: early body change | The Gladiator in band at levels 1, 3, 5; brutes stronger early than late; guardrails hold | Done: +3 HP and youth AC 2, from 39/37/31% to 49/45/37% with the Dragon's change beside it; guardrails up 4-9%. [Report](../../reference/balance-reports/2026-09-28-fixes-dragon-gladiator.md) | this commit |
+| 4 | C | Confirmation run on the owner's machine, docs (card architecture doc, generated references via `build:docs`, bugs and roadmap tables) | Before/after report checked in | Done: owner's run, a new search at levels 1-7 and 2,000 fights a pair before and after. Levels 3, 5, and 7 are in band for every monster, and the guardrails rose 4-5%. The Dragon at level 1 rose from 16% to 28% and stays below the floor through one card (the Angel's Blink, worth 52 points in that matchup), which is the owner's call. The Unicorn beating the Dragon 98% at level 7 is a search artifact (a plain Dragon hand wins 51%). [Report](../../reference/balance-reports/2026-09-28-confirm-35.md) | fee9549, dcb9197 (owner's run), this commit |
+| 5 | D | Unicorn cards: Unconquerable Horn, Dissonant Voice, Gloaming Rest (Horn of Proof if still needed) | Each 0.8+ in its best context and within the class ceiling; the Unicorn stays in band; the card text is readable and in voice | Done. The owner split the two horns: Horn of Proof is the do-everything protection card (cleanse, then a one-round, once-per-fight ward against the next negative non-damage effect, see [cards and encounter effects](../../architecture/cards-and-encounter-effects.md#holds-and-the-horn-of-proof-ward), then a heal of 5: about a Hit, +3.9/-1.0/+0.4 at L3/5/7); Unconquerable Horn is a rally, a Hit where an ally strikes too, or an otter, deer or ram if none (about a Hit or better, +4.3/+1.9/-1.8/+0.3 at L1-7). Measured in the Unicorn's searched hands against every other monster's, 400 fights a pair. Gloaming Rest done: an undisturbed rest heals a random 4 to all missing hp, a broken one nothing, bosses the same. A guaranteed full heal averaged fine but decided single fights (L3 duels: the Unicorn lost 9% of fights where a rest completed); seven shapes and a wrath-on-waking idea were measured, see the [Gloaming Rest study](../studies/2026-09-gloaming-rest.md). Dissonant Voice done: no save; every opponent's next attack rolls at disadvantage, waiting for a card that rolls to hit. At par in crowds and team battles, 1-5 below one-on-one. See the [Helm of Awe and Dissonant Voice study](../studies/2026-09-helm-of-awe-and-dissonant-voice.md). All the Unicorn's cards are done | e751b0c, fed65a8, b6bc66d, d6b5494, 8ae89d4, 6d55666, 74b3c49, 32e9db4, 134a7a0, e7c1821, bc18dea, 7a26519, 2b52ef1, this commit |
+| 6 | D | Optional simple fixes: Mesmerize, Enthrall, Harden | Only if a one-line change meets the targets without raising the Weeping Angel | Deferred by the owner (2026-09-29) to [11's next balance pass](../../roadmap/11-balance-and-mechanics.md#next-balance-pass-carried-from-roadmap-35), after the pinned-advantage rule, which changes what the holds are worth | |
+| 8 | D | Dragon options: widen the Wizard's card pool, measured on the Dragon's searched hands, level 1 first | The Dragon gains real choices in its hand; its field average rises toward the middle of the band at levels 1-7 without passing 75% or any matchup 85%; guardrails hold | Cards done; a full-hand check is folded into task 7. Enchanted Faceswap and Lucky Strike opened to Wizards (+6..+8 and +2..+4 over the card they replace). New Dragon cards, text written by the orchestrator in the Norse voice: Tail Lash, a Battle-Focus-like strike whose tail comes round for 1d6 (+3.0/+1.9/+2.1/-0.5 at L1-7); Helm of Awe, where each opponent that fails a save cowers and loses its next 2 cards (+3.3/-4.8/-2.3 at L3-7; every attack-penalty shape was 5-8 below); Asinine Companion, a donkey that kicks for 1d8, growing with the Dragon's level (-0.9/-1.3/+0.2/-6.0; the +2 STR boost helped only at L1). The penalty and boost shapes stay behind class settings for the harness. Helm of Awe reshaped as a pin (owner): lose the next card, then save each turn, 3 easier per turn. On a natural 1 the healthy try to flee and the bloodied cower. Level with the card it replaced in duels, crowds, and team battles; a hand of Helms weakens the Dragon. See the [study](../studies/2026-09-helm-of-awe-and-dissonant-voice.md) | dd75323, 6d55666, 2bd9a59, 2b52ef1, this commit |
+| 7 | D | Confirmation run and close-out: fold decisions into [cards and encounter effects](../../architecture/cards-and-encounter-effects.md) and the balance method doc; archive this plan | Checked-in report; plan archived | Done: the owner's two-part [run](../../reference/balance-reports/2026-09-29-confirm-35d.md). PR D's code moved no field average more than 1.3 points on PR C's hands. With the new cards owned, the Dragon reached 63/63/59/38% at levels 1/3/5/7; every field average is in band and the guardrails are within ±4%. The decisions are folded into the current docs, and this plan is archived | cc8f03d, this commit |
 
 Later, not in this pass: the counter cards to the big swing effects
-([12](12-new-content-backlog.md#cards)), the roll for initiative, the Sandstorm roll, rarity
+([12](../../roadmap/12-new-content-backlog.md#cards)), the roll for initiative, the Sandstorm roll, rarity
 copy limits, and a trim for the Weeping Angel if the confirmation run shows one is needed.
-All are in [34's candidate list](34-balance-methodology.md#candidate-changes-to-evaluate-in-the-next-pass-not-this-one).
+All are in [34's candidate list](../../roadmap/34-balance-methodology.md#candidate-changes-to-evaluate-in-the-next-pass-not-this-one).
 
 ## Process
 
 - One commit per task, with this table updated in the same commit (AGENTS.md rules 5 and 6).
 - **Every card or monster change is measured before and after on the same seeds,** and the
   numbers go into the task's report. No change lands on intuition.
-- **Player-facing text changes** follow [voice and wording](../reference/voice-and-wording.md),
+- **Player-facing text changes** follow [voice and wording](../../reference/voice-and-wording.md),
   and the generated `CARDS.md` and `MONSTERS.md` are rebuilt, never hand-edited.
 - The owner runs the heavy confirmation runs; the agent session runs quick checks.

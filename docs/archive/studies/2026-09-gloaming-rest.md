@@ -9,7 +9,7 @@ tags: [balance, cards, unicorn, simulation]
 # Gloaming Rest heal study (September 2026)
 
 **Status:** Closed. It shipped on `claude/balance-fixes-d` as part of
-[roadmap 35](../../roadmap/35-balance-fixes.md), task 5. This is a historical record. The
+[roadmap 35](../roadmap/35-balance-fixes.md), task 5. This is a historical record. The
 current rule is in [cards and encounter effects](../../architecture/cards-and-encounter-effects.md#risky-heals-gloaming-rest)
 and in `packages/engine/src/cards/gloaming-rest.ts`.
 

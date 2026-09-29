@@ -1,3 +1,15 @@
+---
+type: Reference
+title: Roadmap 35 PR D confirmation, part 2 (raw)
+description: Raw matrix report comparing the new searched hands with the PR C hands, both on PR D code.
+status: stable
+audience: internal
+tags: [balance, harness, reports, raw]
+---
+# Roadmap 35 PR D confirmation, part 2 (raw)
+
+Raw output from the owner's run. The readable summary is [2026-09-29-confirm-35d.md](2026-09-29-confirm-35d.md).
+
 ## Level 1
 
 | Monster | Field average (before → after) | Change | Worst matchup after | Best matchup after | Band after |
