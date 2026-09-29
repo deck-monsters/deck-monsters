@@ -339,6 +339,61 @@ Go to **Variables** and add:
 
 ---
 
+## Room state migration to jsonb (roadmap 37)
+
+Room state moves from `rooms.state_blob` (base64 gzip JSON) to `rooms.state` (`jsonb`). Release
+1 writes both columns, so every step here can be undone by redeploying the previous release,
+until the contract release drops `state_blob`. The plan and its reasoning are in
+[roadmap 37](../roadmap/37-room-state-in-postgres.md).
+
+Commands run from `packages/server` with `DATABASE_URL` set to the production database.
+
+### Rollout
+
+1. Apply the migration: `supabase db push --linked`. It only adds columns, so the running
+   release keeps working.
+2. Deploy release 1. It writes `state` and `state_blob`, and loads prefer `state`.
+3. Dry run: `pnpm exec tsx scripts/migrate-room-state-to-jsonb.ts --dry-run`. Expect
+   `failed: 0`. A failed room has a corrupt blob: the script reports it and does not write it,
+   and the server quarantines it the next time the room loads. The script exits 1 while such a
+   room is left.
+4. Real run: the same command without `--dry-run`. It is safe while the service is live: it
+   writes only rooms whose `state` is still null, compares the blob it read before writing, and
+   never touches `state_version`, so a live save always lands after it. A second run converts
+   0.
+5. Read-only checks:
+
+   ```sql
+   select count(*) filter (where state is null and state_blob is not null) as unconverted,
+          count(*) filter (where state is not null) as converted
+     from rooms;
+   select id, jsonb_typeof(state), pg_column_size(state), state_version from rooms;
+   ```
+
+   `unconverted` should be 0, apart from rooms the script reported as failed, and
+   `jsonb_typeof` must be `object` for every row.
+6. Watch for a week before the contract release: `dm_room_state_saves_stale_total` should stay
+   near 0, `dm_room_state_save_failures_total` at 0, and
+   `dm_room_state_source_total{source="blob"}` should stop rising after the backfill.
+
+### Rollback and roll forward
+
+- **Rollback:** redeploy the previous release. It reads only `state_blob`, which release 1 kept
+  current, so nothing is lost.
+- **Rolling forward again** needs a short write drain. While the old release ran, only
+  `state_blob` was written, so `state` is stale. If the old release is still serving, it could
+  write a newer blob between the script's read and its write:
+  1. Stop the server service (Railway dashboard, or `railway down`) and wait until it shows
+     stopped.
+  2. Preview, then rewrite `state` from `state_blob` for every room:
+     `pnpm exec tsx scripts/migrate-room-state-to-jsonb.ts --from-blob --i-stopped-the-service --dry-run`,
+     then the same without `--dry-run`. It stamps each room with a new `state_version`, newer
+     than anything the old release left. The script refuses `--from-blob` without
+     `--i-stopped-the-service`.
+  3. Deploy release 1, and repeat the read-only checks.
+- **After the contract release** drops `state_blob`, redeploying an older release would
+  restore stale or missing state. Its release notes must say so.
+
 ## 4. Local development
 
 Local service startup, reusable test rooms, and throwaway cleanup are owned by
