@@ -357,11 +357,18 @@ until the contract release drops `state_blob`. The plan and its reasoning are in
 
 Commands run from `packages/server` with `DATABASE_URL` set to the production database.
 
+**Two services write room state:** the server and the Discord connector. Each runs its own
+`RoomManager` over the same `rooms` table. Every step below that deploys, rolls back, stops or
+starts "the services" means both, on the same release. A connector left on the old release
+keeps writing only `state_blob`, and release 1 prefers `state`, so its rooms' later changes
+would be read stale and then overwritten.
+
 ### Rollout
 
 1. Apply the migration: `supabase db push --linked`. It only adds columns, so the running
    release keeps working.
-2. Deploy release 1. It writes `state` and `state_blob`, and loads prefer `state`.
+2. Deploy release 1 to both services. They write `state` and `state_blob`, and loads prefer
+   `state`. Run the backfill only after both are on release 1.
 3. Dry run: `pnpm exec tsx scripts/migrate-room-state-to-jsonb.ts --dry-run`. Expect
    `failed: 0`. A failed room has a corrupt blob: the script reports it and does not write it,
    and the server quarantines it the next time the room loads. The script exits 1 while such a
@@ -388,21 +395,21 @@ Commands run from `packages/server` with `DATABASE_URL` set to the production da
 
 ### Rollback and roll forward
 
-- **Rollback:** redeploy the previous release. It reads only `state_blob`, which release 1 kept
-  current, so nothing is lost.
+- **Rollback:** redeploy the previous release to both services. It reads only `state_blob`,
+  which release 1 kept current, so nothing is lost.
 - **Rolling forward again** needs a short write drain. While the old release ran, only
   `state_blob` was written, so `state` is stale. If the old release is still serving, it could
   write a newer blob between the script's read and its write:
-  1. Stop the server service (Railway dashboard, or `railway down`) and wait until it shows
-     stopped.
+  1. Stop both services, the server and the Discord connector (Railway dashboard, or
+     `railway down` for each), and wait until both show stopped.
   2. Preview, then rewrite `state` from `state_blob` for every room that has a blob:
      `pnpm exec tsx scripts/migrate-room-state-to-jsonb.ts --from-blob --i-stopped-the-service --dry-run`,
      then the same without `--dry-run`. It sets each room's `state_version` one above its
      stored value, so it does not depend on the laptop's clock agreeing with Railway's. The
      script refuses `--from-blob` without `--i-stopped-the-service`, and any flag it does not
      know.
-  3. Start the service again on release 1 (redeploy it, or start the stopped service if it
-     is still release 1's build), and repeat the read-only checks.
+  3. Start both services again on release 1 (redeploy them, or start the stopped services if
+     they are still release 1's build), and repeat the read-only checks.
 - **The default mode does not repair a rollback.** It converts only rooms whose `state` is
   null, so after a rollback it skips the stale rooms and the read-only check still reads
   `unconverted = 0`. Use `--from-blob` for that.

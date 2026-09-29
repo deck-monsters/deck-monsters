@@ -84,6 +84,12 @@ projections and summaries, zeroes the fight counter, quarantines the old state, 
 new `state_version` as a tombstone. A save still in flight from the old game is then stale
 and cannot bring the room back (bugs 200–202 in the ledger).
 
+**One cache per process, not one overall.** The server and the Discord connector each run a
+`RoomManager` with its own active cache over the same `rooms` table. The ordering guarantees
+above hold within one process. A reset in one does not evict the room from the other, whose
+next save would outrank the tombstone; that is open as item G in
+[10 — bug fixes](../roadmap/10-bug-fixes.md).
+
 ## Membership and invitations
 
 `room_members` is keyed by `(room_id, user_id)` and stores `owner|member`, join time, and
