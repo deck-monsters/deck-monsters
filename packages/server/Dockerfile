@@ -51,6 +51,10 @@ RUN pnpm install --frozen-lockfile --prod
 COPY --from=builder /app/packages/engine/dist ./packages/engine/dist
 COPY --from=builder /app/packages/server/dist ./packages/server/dist
 
+# Migrations run by the pre-deploy command (packages/server/railway.toml). Copied from the build
+# context (repo root), not the builder stage, which only holds packages/.
+COPY supabase/migrations ./supabase/migrations
+
 EXPOSE 3000
 
 ENV NODE_ENV=production
