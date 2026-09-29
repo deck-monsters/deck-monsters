@@ -4746,6 +4746,76 @@ would have missed the first target, so the two were merged.
 
 **Status**: Fixed.
 
+### 200. An older room save could overwrite a newer one — FIXED
+
+Never seen in production, but nothing prevented it. `PostgresStateStore.save` was an
+unconditional `update rooms … where id`. The engine fires saves without awaiting them, so an
+immediate save (the mega boss's due time, a boss-summon refund) and a debounced save could
+overlap. They ran on different pool connections, and Postgres applied them in the order they
+finished, not the order the snapshots were taken.
+
+**Fix** (roadmap 37): each snapshot is stamped when it is taken with `nextStateVersion()`, a
+process-wide monotonic clock (`server/src/state-store.ts`). The write only lands where
+`state_version < $v`. A stale write matches no row, is counted in
+`room_state_saves_stale_total`, and is not retried. Covered by `state-store.test.ts`, and
+against real Postgres by `state-store.pg.test.ts` (run with `TEST_DATABASE_URL`).
+
+**Status**: Fixed.
+
+### 201. A quick reload could restore state older than the unload's flush — FIXED
+
+`_detachRoomEntry` flushed with `saveState()`, which is fire-and-forget, then disposed the
+game. `unloadRoom` returned at once, so a load straight after could select the row before the
+flush landed. It would then restore the older room, and race the flush.
+
+**Fix** (roadmap 37): the detach calls `Game.flushState()`, which resolves when the write has
+settled, and keeps the promise in `RoomManager.pendingFlush`. `unloadRoom` awaits it, and
+`_loadRoom` awaits it before its select. The room also leaves the `active` cache *before* the
+await. A first draft awaited first, and `getGame` during the flush was handed the disposed
+game; the race test caught it. `dispose()` does not touch the store write, so it still runs at
+once.
+
+**Status**: Fixed.
+
+### 202. A room reset could be undone by a save still in flight — FIXED
+
+`resetRoomState` wrote the database (state moved to quarantine, live columns nulled) and only
+then detached the game. A save from the old game still in flight could land after the reset
+and bring the room back.
+
+**Fix** (roadmap 37): the reset detaches the game and awaits its flush first, then writes a
+tombstone: live columns nulled, the old state quarantined, and
+`state_version = nextStateVersion()`. Any save stamped earlier is now stale. A failed restore
+quarantines the same way, so an in-flight save cannot bring back the state that failed.
+
+The first version of this fix opened a new window, caught in review before merge: the room left
+the cache at the start of the reset, but the tombstone was the last write. A load in between
+restored the old row, and its next save outranked the tombstone. The reset now registers
+itself in `RoomManager.resetting` and invalidates in-flight loads before any await; loads wait
+for it, and a load that had already read the row is discarded at the #71 load-epoch gate.
+
+**Status**: Fixed.
+
+### 203. A dropped idle database connection crashed the server — FIXED
+
+The owner, 2026-09-29: a fight in Game Night stopped mid-turn, and refreshing showed their
+dragon alone in the ring at full HP. The server log at 21:15:53 UTC shows
+`Error: Connection terminated unexpectedly … throw er; // Unhandled 'error' event` from
+`pg-pool`'s idle listener, then `server starting` a second later.
+
+Root cause: `pg-pool` re-emits an error from an idle client as an `'error'` event on the pool,
+and Node throws an `'error'` event with no listener. The Supabase pooler closes idle
+connections, and `packages/server/src/db/index.ts` built the pool without a listener, so any
+dropped idle connection killed the process. The fight in progress was lost: bosses live only
+in memory, and the player's monster came back from the last save. The server log shows 17
+starts in the seven days before; some were deploys, but several at odd hours look like this.
+
+**Fix**: `handleIdleClientErrors(pool)` (`db/pool-errors.ts`) listens for the pool's `'error'`
+event, logs a warning and counts `dm_db_idle_client_errors_total`. The pool discards the dead
+client and opens a new one on the next query. Covered by `db/pool-errors.test.ts`.
+
+**Status**: Fixed.
+
 ## Closed without a fix
 
 These were open investigations the owner closed on 2026-09-28. Reopen with new evidence.

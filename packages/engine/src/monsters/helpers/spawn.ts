@@ -1,3 +1,4 @@
+import { stripControlCharacters } from '../../helpers/strip-control-characters.js';
 import PRONOUNS, { PRONOUN_CHOICES, PRONOUN_KEYS, genderFromPronounChoice } from '../../helpers/pronouns.js';
 import names from '../../helpers/names.js';
 import { BASILISK, DRAGON, GLADIATOR, JINN, MINOTAUR, UNICORN, WEEPING_ANGEL } from '../../constants/creature-types.js';
@@ -94,7 +95,7 @@ const spawnMonster = (
 				const index = resolveChoiceIndex(answer, creatureTypeLabels);
 				const Monster = allMonsters[index];
 				if (!Monster) {
-					return announceAndThrow(channel, `I don't recognize "${String(answer)}" as a monster type.`);
+					return announceAndThrow(channel, `I don't recognize "${String(answer ?? '')}" as a monster type.`);
 				}
 				return Monster as MonsterConstructor;
 			});
@@ -119,10 +120,12 @@ const spawnMonster = (
 				return channel({ question });
 			})
 			.then((answer: unknown) => {
-				if (monsterNames.includes((answer as string).toLowerCase())) {
+				// Strip first so the taken-name check sees the name that will be stored.
+				const cleanName = stripControlCharacters(String(answer));
+				if (monsterNames.includes(cleanName.toLowerCase())) {
 					return askForName(Monster, true);
 				}
-				options.name = answer as string;
+				options.name = cleanName;
 				return options;
 			});
 

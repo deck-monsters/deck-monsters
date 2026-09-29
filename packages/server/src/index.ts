@@ -3,7 +3,8 @@ import cors from '@fastify/cors';
 import ws from '@fastify/websocket';
 import { fastifyTRPCPlugin } from '@trpc/server/adapters/fastify';
 import { collectDefaultMetrics } from 'prom-client';
-import { db } from './db/index.js';
+import { db, pool } from './db/index.js';
+import { createShutdown } from './shutdown.js';
 import { RoomManager } from './room-manager.js';
 import { createRouter } from './trpc/router.js';
 import { createContext } from './trpc/context.js';
@@ -86,6 +87,10 @@ async function start(): Promise<void> {
 	});
 
 	await fastify.listen({ port: PORT, host: HOST });
+	const shutdown = createShutdown({ server: fastify, roomManager, pool, log });
+	process.on('SIGTERM', () => void shutdown('SIGTERM'));
+	process.on('SIGINT', () => void shutdown('SIGINT'));
+
 	log.info('server listening', { url: `http://${HOST}:${PORT}` });
 }
 

@@ -361,7 +361,22 @@ walk is ever reworked; `cards/boss-feed.test.ts` pins it with a real fight.
   `stateChange` — always build a new array and assign through the setter
   (`ring.contestants = updated`, `creature.items = remaining`, …) if the
   mutation needs to survive a restart. `RoomManager.unloadRoom` also flushes
-  via `game.saveState()` before eviction, and now refuses to unload a room
+  with `game.flushState()`, which resolves only when the store write has settled. The
+  room leaves the active cache first, then the flush promise is kept in
+  `RoomManager.pendingFlush`; `unloadRoom` awaits it, and so does a load of the same room
+  before it reads the row (roadmap 37). Saves are ordered by a `state_version` stamp, not by
+  arrival, so an immediate save and a debounced save may race safely. A room reset runs in a
+  fixed order: invalidate in-flight loads for the room, register the reset in
+  `RoomManager.resetting` (before any await), take the game out of the cache, flush it and
+  wait, delete the projections, then write a tombstone `state_version`. Loads of that room
+  wait on `resetting`, and a load that had already read the row is discarded at the load-epoch
+  gate; a request that arrives mid-reset checks `resetting` before it would join an in-flight
+  load, so it waits and loads fresh instead of joining a load the reset will discard. Without
+  that, a load in the gap would restore the old room, and its next save would
+  outrank the tombstone. On shutdown, `RoomManager.flushAll` saves every active room within a
+  deadline before the pool closes. All of this is per process: the server and the Discord
+  connector each have a `RoomManager`, and a reset in one does not reach the other's copy of
+  the room (open, item G in `docs/roadmap/10-bug-fixes.md`). It also refuses to unload a room
   whose `ring.inEncounter` is true — a fight in progress keeps the room in
   the active cache until the next sweep.
 - **Ring events**: `Ring.rollRingEvent()` fires from inside `startFightTimer()` when the

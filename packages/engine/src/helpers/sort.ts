@@ -17,5 +17,3 @@ export const sortByLevel = <T extends Record<string, unknown>>(toBeSorted: T[]):
 export const sortByProbability = <T extends Record<string, unknown>>(toBeSorted: T[]): T[] =>
 	sort(toBeSorted, 'probability');
 
-export const sortByXP = <T extends Record<string, unknown>>(toBeSorted: T[]): T[] =>
-	sort(toBeSorted, 'xp');

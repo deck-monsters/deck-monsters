@@ -1,4 +1,5 @@
 /* eslint-disable max-len */
+import { stripControlCharacters } from '../helpers/strip-control-characters.js';
 import { some } from '../helpers/collection.js';
 import BaseCharacter from './base.js';
 import { BEASTMASTER } from '../constants/creature-types.js';
@@ -566,8 +567,13 @@ class Beastmaster extends BaseCharacter {
 		presets: Record<string, string[]>,
 		presetName: string
 	): string | undefined {
+		if (Object.prototype.hasOwnProperty.call(presets, presetName)) return presetName;
 		const target = normalize(presetName);
-		return Object.keys(presets).find(key => normalize(key) === target);
+		// Several saved names can normalize alike ("Aggro" and "aggro"). Pick by name, not by key
+		// order: a jsonb round trip re-sorts object keys (roadmap 37).
+		return Object.keys(presets)
+			.filter(key => normalize(key) === target)
+			.sort((a, b) => a.localeCompare(b))[0];
 	}
 
 	getPresets(monsterName?: string): Record<string, string[]> | Record<string, Record<string, string[]>> {
@@ -945,7 +951,8 @@ class Beastmaster extends BaseCharacter {
 		monsterName?: string;
 		channel: ChannelFn;
 	}): Promise<{ presetName: string; monsterName: string }> {
-		const trimmedName = presetName.trim();
+		// Preset names are object keys, and jsonb rejects a NUL in a key (roadmap 37).
+		const trimmedName = stripControlCharacters(presetName).trim();
 		if (!trimmedName) {
 			return announceAndThrow(channel, 'Preset name is required.');
 		}

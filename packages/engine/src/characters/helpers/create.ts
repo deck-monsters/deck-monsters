@@ -1,3 +1,4 @@
+import { stripControlCharacters } from '../../helpers/strip-control-characters.js';
 import PRONOUNS, { PRONOUN_CHOICES, PRONOUN_KEYS, genderFromPronounChoice } from '../../helpers/pronouns.js';
 import names from '../../helpers/names.js';
 import { announceAndThrow } from '../../helpers/announce-and-throw.js';
@@ -106,7 +107,7 @@ const createCharacter = (
 				const index = resolveChoiceIndex(answer, creatureTypeLabels);
 				const Character = allCharacters[index] as CharacterConstructor;
 				if (!Character) {
-					return announceAndThrow(channel, `I don't recognize "${String(answer)}" as a character type.`);
+					return announceAndThrow(channel, `I don't recognize "${String(answer ?? '')}" as a character type.`);
 				}
 				return Character;
 			});
@@ -154,10 +155,12 @@ const createCharacter = (
 				return channel({ question });
 			})
 			.then((answer: unknown) => {
-				if (game && game.findCharacterByName(answer as string)) {
+				// Strip first so the taken-name check sees the name that will be stored.
+				const cleanName = stripControlCharacters(String(answer));
+				if (game && game.findCharacterByName(cleanName)) {
 					return askForName(Character, true);
 				}
-				options.name = answer as string;
+				options.name = cleanName;
 				return options;
 			});
 

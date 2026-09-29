@@ -10,6 +10,7 @@
     "./types": "./src/types.js",
     "./room-manager": "./src/room-manager.js",
     "./db": "./src/db/index.js",
+    "./shutdown": "./src/shutdown.js",
     "./db/schema": "./src/db/schema.js",
     "./auth/connector-users": "./src/auth/connector-users.js"
   },

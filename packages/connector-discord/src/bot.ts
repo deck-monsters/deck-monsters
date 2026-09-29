@@ -50,6 +50,11 @@ export class DiscordBot {
 		this.wireEvents();
 	}
 
+	/** Logs the Discord client out so no new commands arrive while rooms are being flushed. */
+	async stop(): Promise<void> {
+		await this.client.destroy();
+	}
+
 	async start(token: string, clientId: string): Promise<void> {
 		await this.registerSlashCommands(token, clientId);
 		await this.client.login(token);

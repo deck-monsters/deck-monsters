@@ -1,3 +1,4 @@
+import { stripControlCharacters } from '../helpers/strip-control-characters.js';
 import { resolveChoiceIndex } from '../helpers/choices.js';
 import { announceAndThrow } from '../helpers/announce-and-throw.js';
 import type { BaseCreature, ChannelFn } from './base.js';
@@ -35,7 +36,7 @@ export function editSelf(creature: BaseCreature, channel: ChannelFn): Promise<un
 			const current = creature.options[key];
 			return (channel({
 				question: `The current value of ${key} is ${JSON.stringify(current)}. What would you like the new value to be?`
-			}) as Promise<string>).then((strVal: string) => ({ key, oldVal: current, newVal: strVal.trim() }));
+			}) as Promise<string>).then((strVal: string) => ({ key, oldVal: current, newVal: key === 'name' ? stripControlCharacters(strVal).trim() : strVal.trim() }));
 		})
 		.then(({ key, oldVal, newVal }: { key: AllowedKey; oldVal: unknown; newVal: string }) =>
 			(channel({

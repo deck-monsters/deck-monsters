@@ -60,20 +60,35 @@ a fight window can contain unrelated private events.
 fresh `Game({ roomId })`, attaches persistence, metrics, fight-stat, fight-summary, and
 debug subscribers, and adds the room to the active cache.
 
-Rooms load lazily. `_getOrLoad()` joins concurrent loads for one `roomId`; `_loadRoom()`
-restores `rooms.state_blob`, or starts fresh after quarantining a blob that cannot hydrate.
+Rooms load lazily. `_getOrLoad()` joins concurrent loads for one `roomId`. `_loadRoom()`
+first awaits any unload flush still in flight for the room (`pendingFlush`), then restores
+`rooms.state` (`jsonb`), falling back to the legacy `rooms.state_blob` (roadmap 37). If the
+state cannot hydrate, it quarantines each source column into its own quarantine column
+(`quarantined_state`, `quarantined_blob`), stamps a new `state_version`, and starts fresh.
 A deletion epoch prevents an in-flight load from publishing a room after its database row
 was deleted.
 
-State changes schedule debounced snapshots. `unloadRoom()` flushes state, detaches
-subscribers, disposes the game and removes the cache entry. It refuses to unload while
-`ring.inEncounter` because the timer-driven fight and its projection subscribers must
+State changes schedule debounced snapshots. Each save is stamped with `nextStateVersion()`,
+a process-wide monotonic clock, and only lands where the stored `state_version` is lower, so
+an older snapshot never overwrites a newer one. Until the contract release, each save also
+writes `state_blob`, so the previous release can still be redeployed. `unloadRoom()`
+removes the cache entry, detaches subscribers, flushes with `Game.flushState()`, disposes
+the game, and awaits the flush before it returns. It refuses to unload while
+`ring.inEncounter`, because the timer-driven fight and its projection subscribers must
 finish together. `sweepIdleRooms()` retries on a later sweep.
 
 Room deletion is owner-only. It evicts the active game without saving, then deletes the
 room; foreign-key cascades remove memberships, events, connector mappings, summaries, and
-room analytics. Room reset clears projections and summaries, zeroes the fight counter,
-quarantines the old state blob, and evicts the active game.
+room analytics. Room reset first evicts the active game and awaits its flush, then clears
+projections and summaries, zeroes the fight counter, quarantines the old state, and stamps a
+new `state_version` as a tombstone. A save still in flight from the old game is then stale
+and cannot bring the room back (bugs 200–202 in the ledger).
+
+**One cache per process, not one overall.** The server and the Discord connector each run a
+`RoomManager` with its own active cache over the same `rooms` table. The ordering guarantees
+above hold within one process. A reset in one does not evict the room from the other, whose
+next save would outrank the tombstone; that is open as item G in
+[10 — bug fixes](../roadmap/10-bug-fixes.md).
 
 ## Membership and invitations
 

@@ -35,6 +35,31 @@ the `=` border (the leading newline of `formatCard` plus the fence), and the lis
 Read [events, prompts, and replay](../architecture/events-prompts-and-replay.md) and
 [web workspace](../architecture/web-workspace.md).
 
+### G. A room reset does not reach the Discord connector's copy of the room
+
+**Owner:** Server and connector. Found by the roadmap 37 whole-branch review (2026-09-29); it
+was already true on main.
+
+The server and the Discord connector each run their own `RoomManager`, with their own cache of
+loaded rooms, over one `rooms` table. A reset through the web detaches the server's copy,
+waits for its flush, and writes a tombstone version (bug 202). It does not touch the
+connector's copy. If the connector has the room loaded, its next save is stamped after the
+tombstone, lands, and brings the old room back. Bug 202's fix covers saves from the process
+that ran the reset, not from another process.
+
+Root cause: a room's live state has one owner per process, not one owner overall, and nothing
+tells the other process a reset happened.
+
+- [ ] Decide the mechanism: a room generation number that every save must match (a reset bumps
+  it, and a save from an older generation matches no row and makes that process reload); or a
+  database notification (`LISTEN`/`NOTIFY`) that tells every process to drop its copy.
+- [ ] A generation check fits roadmap 37's guarded write: add `state_generation` to the guard,
+  so a stale process's save is refused and counted, and that process reloads the room.
+- [ ] Test it with two `RoomManager`s over the local Postgres.
+
+Read [rooms and identity](../architecture/rooms-and-identity.md) and
+[engine concurrency and timing](../architecture/engine-concurrency-and-timing.md).
+
 ## Historical detail
 
 The removed September incident diary was resolved work and duplicated

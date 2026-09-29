@@ -396,4 +396,20 @@ describe('characters/beastmaster', () => {
 			expect((error as Error).message).to.include('Not A Monster');
 		});
 	});
+
+	it('strips control characters from a preset name on save', async () => {
+		// Preset names are object keys, and jsonb rejects a NUL in a key (roadmap 37).
+		const beastmaster = new Beastmaster();
+		const monster = makeMonster('Stonefang', [makeCard('Hit')]);
+		beastmaster.monsters = [monster as any];
+
+		const result = await beastmaster.savePreset({
+			channel: channelStub,
+			presetName: 'ag\u0000gro\u0007',
+			monsterName: 'Stonefang',
+		});
+
+		expect(result.presetName).to.equal('aggro');
+		expect(Object.keys(beastmaster.getPresets('Stonefang'))).to.deep.equal(['aggro']);
+	});
 });

@@ -1,6 +1,5 @@
-import zlib from 'node:zlib';
 
-import { find, reduce } from './helpers/collection.js';
+import { reduce } from './helpers/collection.js';
 import { all as cardTypes, draw } from './cards/index.js';
 import { all as itemTypes } from './items/index.js';
 import { allMonsters as monsterTypes } from './monsters/index.js';
@@ -13,8 +12,9 @@ import {
 import { earlyCoinBonus } from './constants/progression.js';
 import { createCharacter } from './characters/index.js';
 import { globalSemaphore } from './helpers/semaphore.js';
+import { stripControlCharacters } from './helpers/strip-control-characters.js';
+import { repairSerializedGame } from './helpers/repair-serialized-game.js';
 import { listen, loadHandlers } from './commands/index.js';
-import { sortByXP } from './helpers/sort.js';
 import { XP_PER_VICTORY, XP_PER_DEFEAT } from './helpers/experience.js';
 import { initialize as initializeAnnouncements, createRoomScopedEventGuard } from './announcements/index.js';
 import { BaseClass } from './shared/baseClass.js';
@@ -34,7 +34,7 @@ import {
 	SIGNATURE_CATCH_UP_CHANCE,
 } from './cards/helpers/signature.js';
 import { RoomEventBus } from './events/index.js';
-import type { StateStore } from './types/state-store.js';
+import type { SerializedGame, StateStore } from './types/state-store.js';
 import { resolveShop, type Shop } from './items/store/shop.js';
 import type { BossSummonLedger } from './helpers/boss-summons.js';
 import { refundPendingSummons } from './helpers/boss-summons.js';
@@ -99,6 +99,8 @@ export class Game extends BaseClass {
 	analytics?: GameAnalyticsCallbacks;
 	private _eventBus: RoomEventBus;
 	private _saveDebounce?: ReturnType<typeof setTimeout>;
+	/** The latest store write, so `flushState` can wait for it. */
+	private _lastSave?: Promise<boolean>;
 	private _disposeListeners: Array<() => void> = [];
 	/** The daily mega boss, where timed bosses run (see ring/mega-boss.ts). */
 	megaBoss?: MegaBossEvent;
@@ -230,16 +232,52 @@ export class Game extends BaseClass {
 			this.optionsStore = rest;
 		}
 
-		const buffer = zlib.gzipSync(JSON.stringify(this));
-		const string = buffer.toString('base64');
+		// jsonb rejects \u0000, so a NUL would fail every save of the room, and the save is
+		// fire-and-forget, so nobody would notice (roadmap 37). Repair it before it reaches a store.
+		const { state, repairs } = repairSerializedGame(JSON.parse(JSON.stringify(this)) as SerializedGame);
+		if (repairs > 0) {
+			this.log(`room state: repaired ${repairs} strings or keys containing NUL before saving (roomId ${this.roomId})`);
+		}
 
 		if (this.stateStore) {
-			this.stateStore.save(this.roomId, string).catch((err: unknown) => this.log(err));
+			// Resolves true/false rather than rejecting, so fire-and-forget callers stay safe while
+			// flushState() can still tell a failed write from a good one.
+			this._lastSave = this.stateStore.save(this.roomId, state).then(
+				() => true,
+				(err: unknown) => {
+					this.log(err);
+					return false;
+				}
+			);
 		}
 
 		if (this.stateSaveFunc) {
-			setImmediate(this.stateSaveFunc, string);
+			setImmediate(this.stateSaveFunc, JSON.stringify(state));
 		}
+	}
+
+	/**
+	 * Saves now and resolves once the store write has settled (also when it rejected; the error
+	 * is already logged). Resolves true when the store write succeeded (or there is no store) and
+	 * false when it failed, so shutdown can count failures. It never rejects. It waits for the store write only: `stateSaveFunc` is fire-and-forget
+	 * (setImmediate) and may run after this resolves. Cancels a pending debounced save, since this one supersedes it. An
+	 * unload awaits this so a load straight after cannot read the row before the flush lands
+	 * (roadmap 37 risk 3).
+	 */
+	async flushState(): Promise<boolean> {
+		if (this._saveDebounce !== undefined) {
+			clearTimeout(this._saveDebounce);
+			this._saveDebounce = undefined;
+		}
+		this._lastSave = undefined;
+		try {
+			this.persistState();
+		} catch (err) {
+			// An unload awaiting this must not reject because one value would not serialize.
+			this.log(err);
+			return false;
+		}
+		return (await this._lastSave) ?? true;
 	}
 
 	reset(options: Record<string, unknown>): void {
@@ -727,7 +765,7 @@ export class Game extends BaseClass {
 				(storedName === 'Player' || looksLikeEmail(storedName));
 
 			if (shouldHealName) {
-				existingCharacter.setOptions({ name });
+				existingCharacter.setOptions({ name: stripControlCharacters(name) });
 				game.emit('stateChange', { character: existingCharacter });
 			}
 
@@ -757,8 +795,14 @@ export class Game extends BaseClass {
 	}
 
 	getAllMonstersLookup(): Record<string, any> {
+		// Two players' monsters can share a name, and the later one wins the key. Walk characters
+		// in id order, not key order: a jsonb round trip re-sorts object keys (roadmap 37), so key
+		// order would change which monster a name finds after a restart.
+		const characters = Object.keys(this.characters)
+			.sort()
+			.map(id => this.characters[id]);
 		return reduce(
-			this.characters,
+			characters,
 			(all: Record<string, any>, character: any) => {
 				character.monsters.forEach((monster: any) => {
 					all[monster.givenName.toLowerCase()] = monster;
@@ -771,10 +815,12 @@ export class Game extends BaseClass {
 	}
 
 	findCharacterByName(name: string): any {
-		return find(
-			this.characters,
-			(character: any) => character.givenName.toLowerCase() === name.toLowerCase()
-		);
+		// In id order, not key order: a jsonb round trip re-sorts object keys (roadmap 37). Names
+		// are unique at creation, so only old data can hold two matches.
+		return Object.keys(this.characters)
+			.sort()
+			.map(id => this.characters[id])
+			.find((character: any) => character.givenName.toLowerCase() === name.toLowerCase());
 	}
 
 	lookAtCharacter(channel: any, characterName: string, self: any): Promise<unknown> {
@@ -791,7 +837,17 @@ export class Game extends BaseClass {
 	}
 
 	getCreatureRankings(creatures: any[], top = 5): string[] {
-		const sortedCreatures = sortByXP(creatures).reverse();
+		// XP, then name, then id: never input order. Callers pass `Object.values` of saved objects,
+		// and a jsonb round trip re-sorts object keys (roadmap 37), so ties that followed
+		// insertion order would reorder after a restart.
+		const sortedCreatures = [...creatures].sort(
+			(a: any, b: any) =>
+				(Number(b.xp) || 0) - (Number(a.xp) || 0) ||
+				String(a.givenName ?? '').localeCompare(String(b.givenName ?? '')) ||
+				// The saved id, not the `stableId` getter: the getter mints one on first read and
+				// saves, and a rankings read must not write.
+				String(a.options?.stableId ?? a.id ?? '').localeCompare(String(b.options?.stableId ?? b.id ?? ''))
+		);
 		sortedCreatures.length = Math.min(sortedCreatures.length, top);
 
 		const maxLength = sortedCreatures.reduce(

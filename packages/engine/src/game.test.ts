@@ -4,6 +4,7 @@ import zlib from 'node:zlib';
 
 import Game from './game.js';
 import { restoreGame } from './index.js';
+import type { SerializedGame } from './types/state-store.js';
 import { BaseCard } from './cards/base.js';
 import Ring from './ring/index.js';
 import { RoomEventBus } from './events/index.js';
@@ -352,8 +353,7 @@ describe('game.ts', () => {
 
 			expect(saveStateStub.calledOnce).to.equal(true);
 			const arg = saveStateStub.firstCall.args[0] as string;
-			const decoded = zlib.gunzipSync(Buffer.from(arg, 'base64')).toString();
-			expect(JSON.parse(decoded)).to.be.an('object');
+			expect(JSON.parse(arg)).to.be.an('object');
 		} finally {
 			// Clear stateSaveFunc so stale listener doesn't fire setTimeout in subsequent tests
 			game.saveState = undefined;
@@ -392,8 +392,7 @@ describe('game.ts', () => {
 			expect(saveStateStub.calledOnce).to.equal(true);
 
 			const arg = saveStateStub.firstCall.args[0] as string;
-			const decoded = zlib.gunzipSync(Buffer.from(arg, 'base64')).toString();
-			const persisted = JSON.parse(decoded) as {
+			const persisted = JSON.parse(arg) as {
 				options?: { ringContestantRefs?: Array<{ userId: string; stableId: string }> };
 			};
 
@@ -529,6 +528,154 @@ describe('game.ts', () => {
 			expect(restoredUnknown.toJSON()).to.deep.equal(unknownPayload);
 			expect(typeof restoredUnknown.play).to.equal('function');
 		});
+
+		describe('restoreGame input forms', () => {
+			const state = { name: 'Game', options: { roomId: 'forms-test', characters: {} } };
+
+			it('accepts a plain object', () => {
+				const game = restoreGame(state);
+				try {
+					expect(game.roomId).to.equal('forms-test');
+				} finally {
+					game.dispose();
+				}
+			});
+
+			it('accepts a JSON string', () => {
+				const game = restoreGame(JSON.stringify(state));
+				try {
+					expect(game.roomId).to.equal('forms-test');
+				} finally {
+					game.dispose();
+				}
+			});
+
+			it('accepts a legacy base64-gzip string', () => {
+				const game = restoreGame(zlib.gzipSync(JSON.stringify(state)).toString('base64'));
+				try {
+					expect(game.roomId).to.equal('forms-test');
+				} finally {
+					game.dispose();
+				}
+			});
+		});
+
+		describe('persistState / flushState', () => {
+			it('hands the store a repaired plain object and stateSaveFunc plain JSON, and logs the repair', async () => {
+				const logs: unknown[] = [];
+				const game = new Game({ roomId: 'nul-room', note: 'a\u0000b' }, (err) => logs.push(err));
+				const saved: SerializedGame[] = [];
+				const strings: string[] = [];
+				game.stateStore = { save: async (_id, s) => { saved.push(s); }, load: async () => null };
+				game.saveState = (s: string) => strings.push(s);
+				try {
+					await game.flushState();
+					await new Promise<void>(resolve => setImmediate(resolve));
+
+					expect(saved).to.have.length(1);
+					expect(saved[0]!.options.note).to.equal('a\uFFFDb');
+					expect(JSON.stringify(saved[0])).to.not.include('\\u0000');
+					expect(JSON.parse(strings[0]!)).to.deep.equal(saved[0]);
+					expect(logs.filter(l => typeof l === 'string' && l.includes('repaired 1 strings or keys containing NUL')
+						&& l.includes('nul-room'))).to.have.length(1);
+				} finally {
+					game.saveState = undefined;
+					game.stateStore = undefined;
+					game.dispose();
+				}
+			});
+
+			it('flushState does not resolve until the store write settles', async () => {
+				const game = new Game({ roomId: 'flush-room' });
+				let release!: () => void;
+				game.stateStore = { save: () => new Promise<void>(r => { release = r; }), load: async () => null };
+				try {
+					let resolved = false;
+					const flushed = game.flushState().then(() => { resolved = true; });
+					await new Promise<void>(resolve => setImmediate(resolve));
+					expect(resolved).to.equal(false);
+					release();
+					await flushed;
+					expect(resolved).to.equal(true);
+				} finally {
+					game.stateStore = undefined;
+					game.dispose();
+				}
+			});
+
+			it('flushState resolves true on a good write and when there is no store', async () => {
+				const game = new Game({ roomId: 'flush-ok' });
+				try {
+					expect(await game.flushState()).to.equal(true);
+					game.stateStore = { save: async () => {}, load: async () => null };
+					expect(await game.flushState()).to.equal(true);
+				} finally {
+					game.stateStore = undefined;
+					game.dispose();
+				}
+			});
+
+			it('flushState resolves false when the store rejects, and logs the error', async () => {
+				const logs: unknown[] = [];
+				const game = new Game({ roomId: 'flush-fail' }, (err) => logs.push(err));
+				const boom = new Error('boom');
+				game.stateStore = { save: () => Promise.reject(boom), load: async () => null };
+				try {
+					expect(await game.flushState()).to.equal(false);
+					expect(logs.filter(l => l === boom)).to.have.length(1);
+				} finally {
+					game.stateStore = undefined;
+					game.dispose();
+				}
+			});
+
+			it('flushState resolves and logs when persistState throws synchronously', async () => {
+				const logs: unknown[] = [];
+				const game = new Game({ roomId: 'flush-throw' }, (err) => logs.push(err));
+				const boom = new Error('cannot serialize');
+				(game as any).persistState = () => { throw boom; };
+				try {
+					expect(await game.flushState()).to.equal(false);
+					expect(logs).to.include(boom);
+				} finally {
+					game.dispose();
+				}
+			});
+
+			it('flushState cancels a pending debounced save', async () => {
+				const clock = sinon.useFakeTimers({ shouldClearNativeTimers: true });
+				const game = new Game({ roomId: 'flush-debounce' });
+				let saves = 0;
+				game.stateStore = { save: async () => { saves += 1; }, load: async () => null };
+				try {
+					game.emit('stateChange');
+					expect((game as any)._saveDebounce).to.not.equal(undefined);
+					await game.flushState();
+					expect((game as any)._saveDebounce).to.equal(undefined);
+					const afterFlush = saves;
+					clock.tick(60_000);
+					expect(saves).to.equal(afterFlush);
+				} finally {
+					game.stateStore = undefined;
+					game.dispose();
+					clock.restore();
+				}
+			});
+
+			it('flushState with no store still calls stateSaveFunc and resolves', async () => {
+				const game = new Game({ roomId: 'flush-nostore' });
+				const strings: string[] = [];
+				game.saveState = (s: string) => strings.push(s);
+				try {
+					await game.flushState();
+					await new Promise<void>(resolve => setImmediate(resolve));
+					expect(strings).to.have.length(1);
+				} finally {
+					game.saveState = undefined;
+					game.dispose();
+				}
+			});
+		});
 	});
 
 	describe('shop', () => {
@@ -599,6 +746,16 @@ describe('game.ts', () => {
 	});
 
 	describe('getCharacter Player-name auto-update', () => {
+		it('strips control characters from the healed name', async () => {
+			// jsonb rejects a NUL in a name (roadmap 37).
+			const game = new Game();
+			const channel = sinon.stub().resolves('0');
+			await game.getCharacter({ channel, id: 'user-nul', name: 'Player' });
+			const healed = await game.getCharacter({ channel, id: 'user-nul', name: 'Real\u0000Name\u0007' });
+
+			expect((healed as any).givenName).to.equal('Real Name');
+		});
+
 		it('updates givenName when existing character has placeholder "Player" name', async () => {
 			const game = new Game();
 			const channel = sinon.stub().resolves('0');
@@ -703,9 +860,9 @@ describe('game.ts', () => {
 			const ts = Date.now();
 			const roomId = 'test-room-durability';
 
-			const savedStates: Array<{ roomId: string; state: string }> = [];
+			const savedStates: Array<{ roomId: string; state: SerializedGame }> = [];
 			const mockStore = {
-				save: async (rid: string, state: string) => { savedStates.push({ roomId: rid, state }); },
+				save: async (rid: string, state: SerializedGame) => { savedStates.push({ roomId: rid, state }); },
 				load: async () => null,
 			};
 
@@ -742,9 +899,7 @@ describe('game.ts', () => {
 			const lastSaved = savedStates[savedStates.length - 1]!;
 			expect(lastSaved.roomId).to.equal(roomId);
 
-			const decoded = JSON.parse(
-				zlib.gunzipSync(Buffer.from(lastSaved.state, 'base64')).toString()
-			);
+			const decoded = lastSaved.state as any;
 			const pendingInSave = decoded?.options?.bossSummonsPending;
 			const pendingEntries = pendingInSave ? Object.keys(pendingInSave) : [];
 			expect(pendingEntries.length, 'stateStore save must have empty bossSummonsPending').to.equal(0);
@@ -808,9 +963,7 @@ describe('game.ts', () => {
 
 			// The saved state must NOT contain bossSummonsPending with the charge
 			const lastSave = saves[saves.length - 1]!;
-			const decoded = JSON.parse(
-				zlib.gunzipSync(Buffer.from(lastSave, 'base64')).toString()
-			);
+			const decoded = JSON.parse(lastSave);
 			const pendingInSave = decoded?.options?.bossSummonsPending;
 			const pendingEntries = pendingInSave ? Object.keys(pendingInSave) : [];
 			expect(pendingEntries.length, 'saved state must have empty bossSummonsPending').to.equal(0);

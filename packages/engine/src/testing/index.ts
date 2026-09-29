@@ -14,8 +14,8 @@ import { createKeyedPromiseQueue } from '../helpers/room-engine-queue.js';
 // ---------------------------------------------------------------------------
 
 export const noopStateStore = {
-	save: async (_roomId: string, _state: string): Promise<void> => undefined,
-	load: async (_roomId: string): Promise<string | null> => null,
+	save: async (_roomId: string, _state: unknown): Promise<void> => undefined,
+	load: async (_roomId: string): Promise<null> => null,
 };
 
 // ---------------------------------------------------------------------------
