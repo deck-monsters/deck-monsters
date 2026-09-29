@@ -131,6 +131,7 @@ describe('./cards/dissonant-voice.ts Dissonant Voice', () => {
 				waitsForAttack: DissonantVoiceCard.waitsForAttack,
 				lokiRange: DissonantVoiceCard.lokiRange,
 				rollTwice: DissonantVoiceCard.rollTwice,
+				untilHit: DissonantVoiceCard.untilHit,
 			};
 			afterEach(() => {
 				Object.assign(DissonantVoiceCard, settings);
@@ -169,6 +170,31 @@ describe('./cards/dissonant-voice.ts Dissonant Voice', () => {
 				const hitCheck = sinon.spy(HitCard.prototype, 'hitCheck');
 				await new HitCard().play(foe, unicorn, ring, contestants);
 				expect(hitCheck.firstCall.returnValue.curseOfLoki).to.equal(false);
+			});
+
+			it('untilHit: the ringing lasts through misses until an attack lands, up to the cap', async () => {
+				DissonantVoiceCard.waitsForAttack = true;
+				DissonantVoiceCard.untilHit = 3;
+				await new DissonantVoiceCard().effect(unicorn, foe, ring);
+				const rolls = [fakeRoll(2), fakeRoll(3), fakeRoll(2), fakeRoll(4), fakeRoll(19), fakeRoll(20)];
+				sinon.stub(HitCard.prototype, 'getAttackRoll').callsFake(() => rolls.shift() as any);
+
+				await new HitCard().play(foe, unicorn, ring, contestants);
+				await new HitCard().play(foe, unicorn, ring, contestants);
+				expect(isRattled(foe)).to.equal(true);
+				await new HitCard().play(foe, unicorn, ring, contestants);
+				expect(isRattled(foe)).to.equal(false);
+			});
+
+			it('untilHit: a cap of 2 ends after two misses', async () => {
+				DissonantVoiceCard.waitsForAttack = true;
+				DissonantVoiceCard.untilHit = 2;
+				await new DissonantVoiceCard().effect(unicorn, foe, ring);
+				sinon.stub(HitCard.prototype, 'getAttackRoll').callsFake(() => fakeRoll(2) as any);
+				await new HitCard().play(foe, unicorn, ring, contestants);
+				expect(isRattled(foe)).to.equal(true);
+				await new HitCard().play(foe, unicorn, ring, contestants);
+				expect(isRattled(foe)).to.equal(false);
 			});
 
 			it('rollTwice off rolls once', async () => {

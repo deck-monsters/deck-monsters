@@ -58,6 +58,12 @@ export class DissonantVoiceCard extends BaseCard {
 	 * rather than only moving the roll; attack-roll changes alone barely matter (roadmap 35).
 	 */
 	static lokiRange = 1;
+	/**
+	 * In the `disadvantage` shape with `waitsForAttack`: the ringing lasts through up to this
+	 * many attacks, and ends early once one lands. 1 is a single attack. Every roll stays a plain
+	 * d20, so the natural 1 and 20 keep their meaning (owner rule, 2026-09-29).
+	 */
+	static untilHit = 1;
 
 	constructor({ icon = '🔔' }: Partial<CardOptions> = {}) {
 		super({ icon } as Partial<CardOptions>);
@@ -94,17 +100,31 @@ No damage. Does not stack.`;
 	}
 
 	rattle(target: any): void {
-		const { penalty, disadvantage, rollTwice, waitsForAttack, lokiRange } = this.constructor as typeof DissonantVoiceCard;
-		const rattled = ({ card, phase, player }: any) => {
-			if (phase !== ATTACK_PHASE || player !== target) return card;
-
-			const { getAttackRoll } = card;
-			if (waitsForAttack && disadvantage && typeof getAttackRoll !== 'function') return card;
-
-			// Spent on the next card (or, with `waitsForAttack`, the next that rolls to hit).
+		const { penalty, disadvantage, rollTwice, waitsForAttack, lokiRange, untilHit } = this.constructor as typeof DissonantVoiceCard;
+		let attacksLeft = waitsForAttack && disadvantage ? Math.max(1, untilHit) : 1;
+		const unrattle = () => {
 			target.encounterEffects = target.encounterEffects.filter(
 				(effect: any) => effect !== rattled
 			);
+		};
+		const rattled = ({ card, phase, player }: any) => {
+			if (phase !== ATTACK_PHASE || player !== target) return card;
+
+			const { getAttackRoll, hitCheck } = card;
+			if (waitsForAttack && disadvantage && typeof getAttackRoll !== 'function') return card;
+
+			// Spent on the next card (or, with `waitsForAttack`, the next that rolls to hit). With
+			// `untilHit`, a miss keeps the ringing for the next attack, up to the cap.
+			attacksLeft -= 1;
+			if (attacksLeft <= 0 || typeof hitCheck !== 'function') {
+				unrattle();
+			} else {
+				card.hitCheck = (...args: any[]) => {
+					const result = hitCheck.apply(card, args);
+					if (result?.success) unrattle();
+					return result;
+				};
+			}
 
 			if (typeof getAttackRoll === 'function' && disadvantage) {
 				this.emit('narration', {

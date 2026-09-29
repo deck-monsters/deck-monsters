@@ -217,6 +217,24 @@ export const VARIANTS: Record<string, Variant> = {
 			};
 		},
 	},
+	'dv-until-hit-2': {
+		about: 'Dissonant Voice: waiting disadvantage that lasts until an attack lands, up to 2 attacks',
+		apply: () => {
+			const undos = [cardStatic('Dissonant Voice', 'disadvantage', true), cardStatic('Dissonant Voice', 'waitsForAttack', true), cardStatic('Dissonant Voice', 'untilHit', 2)];
+			return () => {
+				for (const undo of undos.reverse()) undo();
+			};
+		},
+	},
+	'dv-until-hit-3': {
+		about: 'Dissonant Voice: waiting disadvantage that lasts until an attack lands, up to 3 attacks',
+		apply: () => {
+			const undos = [cardStatic('Dissonant Voice', 'disadvantage', true), cardStatic('Dissonant Voice', 'waitsForAttack', true), cardStatic('Dissonant Voice', 'untilHit', 3)];
+			return () => {
+				for (const undo of undos.reverse()) undo();
+			};
+		},
+	},
 	'dv-wait': {
 		about: 'Dissonant Voice: disadvantage that waits for the next card that rolls to hit',
 		apply: () => {
