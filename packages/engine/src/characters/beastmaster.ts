@@ -1,4 +1,5 @@
 /* eslint-disable max-len */
+import { stripControlCharacters } from '../helpers/strip-control-characters.js';
 import { some } from '../helpers/collection.js';
 import BaseCharacter from './base.js';
 import { BEASTMASTER } from '../constants/creature-types.js';
@@ -950,7 +951,8 @@ class Beastmaster extends BaseCharacter {
 		monsterName?: string;
 		channel: ChannelFn;
 	}): Promise<{ presetName: string; monsterName: string }> {
-		const trimmedName = presetName.trim();
+		// Preset names are object keys, and jsonb rejects a NUL in a key (roadmap 37).
+		const trimmedName = stripControlCharacters(presetName).trim();
 		if (!trimmedName) {
 			return announceAndThrow(channel, 'Preset name is required.');
 		}

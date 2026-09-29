@@ -115,4 +115,14 @@ describe('creatures/edit', () => {
 			expect(monster.givenName).to.equal('Original');
 		});
 	});
+
+	it('editSelf strips control characters from a new name', async () => {
+		// jsonb rejects a NUL, so one in a name would stop the room saving (roadmap 37).
+		const monster = makeMonster();
+		const channel = makeSequencedChannel(['Name (currently: Original)', 'Re\u0000na\u0007med', 'yes', 'yes']);
+
+		await editSelf(monster, channel as any);
+
+		expect(monster.givenName).to.equal('Renamed');
+	});
 });

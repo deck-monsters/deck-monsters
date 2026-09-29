@@ -227,4 +227,12 @@ describe('characters/helpers/create', () => {
 			expect((error as Error).message).to.include('Not An Icon');
 		});
 	});
+
+	it('strips control characters from a typed character name', async () => {
+		// jsonb rejects a NUL, so one in a name would stop the room saving (roadmap 37).
+		const { channel } = makeSequencedChannel(['she/her', 'Saf\u0000fr\u0007on\u007f', '0']);
+		const character = await createCharacter(channel, { type: '0' });
+
+		expect(character.givenName).to.equal('Saffron');
+	});
 });

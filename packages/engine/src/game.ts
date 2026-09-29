@@ -1,4 +1,3 @@
-import zlib from 'node:zlib';
 
 import { find, reduce } from './helpers/collection.js';
 import { all as cardTypes, draw } from './cards/index.js';
@@ -13,6 +12,7 @@ import {
 import { earlyCoinBonus } from './constants/progression.js';
 import { createCharacter } from './characters/index.js';
 import { globalSemaphore } from './helpers/semaphore.js';
+import { repairSerializedGame } from './helpers/repair-serialized-game.js';
 import { listen, loadHandlers } from './commands/index.js';
 import { XP_PER_VICTORY, XP_PER_DEFEAT } from './helpers/experience.js';
 import { initialize as initializeAnnouncements, createRoomScopedEventGuard } from './announcements/index.js';
@@ -33,7 +33,7 @@ import {
 	SIGNATURE_CATCH_UP_CHANCE,
 } from './cards/helpers/signature.js';
 import { RoomEventBus } from './events/index.js';
-import type { StateStore } from './types/state-store.js';
+import type { SerializedGame, StateStore } from './types/state-store.js';
 import { resolveShop, type Shop } from './items/store/shop.js';
 import type { BossSummonLedger } from './helpers/boss-summons.js';
 import { refundPendingSummons } from './helpers/boss-summons.js';
@@ -98,6 +98,8 @@ export class Game extends BaseClass {
 	analytics?: GameAnalyticsCallbacks;
 	private _eventBus: RoomEventBus;
 	private _saveDebounce?: ReturnType<typeof setTimeout>;
+	/** The latest store write, so `flushState` can wait for it. */
+	private _lastSave?: Promise<void>;
 	private _disposeListeners: Array<() => void> = [];
 	/** The daily mega boss, where timed bosses run (see ring/mega-boss.ts). */
 	megaBoss?: MegaBossEvent;
@@ -229,16 +231,36 @@ export class Game extends BaseClass {
 			this.optionsStore = rest;
 		}
 
-		const buffer = zlib.gzipSync(JSON.stringify(this));
-		const string = buffer.toString('base64');
+		// jsonb rejects \u0000, so a NUL would fail every save of the room, and the save is
+		// fire-and-forget, so nobody would notice (roadmap 37). Repair it before it reaches a store.
+		const { state, repairs } = repairSerializedGame(JSON.parse(JSON.stringify(this)) as SerializedGame);
+		if (repairs > 0) {
+			this.log(`room state: repaired ${repairs} NUL characters before saving (roomId ${this.roomId})`);
+		}
 
 		if (this.stateStore) {
-			this.stateStore.save(this.roomId, string).catch((err: unknown) => this.log(err));
+			this._lastSave = this.stateStore.save(this.roomId, state).catch((err: unknown) => this.log(err));
 		}
 
 		if (this.stateSaveFunc) {
-			setImmediate(this.stateSaveFunc, string);
+			setImmediate(this.stateSaveFunc, JSON.stringify(state));
 		}
+	}
+
+	/**
+	 * Saves now and resolves once the store write has settled (also when it rejected; the error
+	 * is already logged). Cancels a pending debounced save, since this one supersedes it. An
+	 * unload awaits this so a load straight after cannot read the row before the flush lands
+	 * (roadmap 37 risk 3).
+	 */
+	async flushState(): Promise<void> {
+		if (this._saveDebounce !== undefined) {
+			clearTimeout(this._saveDebounce);
+			this._saveDebounce = undefined;
+		}
+		this._lastSave = undefined;
+		this.persistState();
+		await this._lastSave;
 	}
 
 	reset(options: Record<string, unknown>): void {

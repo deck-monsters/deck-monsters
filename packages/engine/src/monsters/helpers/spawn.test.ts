@@ -123,4 +123,12 @@ describe('monsters/helpers/spawn', () => {
 			expect(announcements).to.deep.equal([`Unknown monster gender: ${invalidGender}`]);
 		});
 	}
+
+	it('strips control characters from a typed monster name', async () => {
+		// jsonb rejects a NUL, so one in a name would stop the room saving (roadmap 37).
+		const answers = ['Jinn', 'she/her', 'Saf\u0000fr\u0007on\u007f', 'violet smoke'];
+		const monster = await spawnMonster(async () => answers.shift());
+
+		expect(monster.givenName).to.equal('Saffron');
+	});
 });

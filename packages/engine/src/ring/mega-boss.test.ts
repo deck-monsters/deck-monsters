@@ -5,7 +5,6 @@ import Game from '../game.js';
 import Basilisk from '../monsters/basilisk.js';
 import Beastmaster from '../characters/beastmaster.js';
 import { RING_EVENTS } from './ring-events.js';
-import zlib from 'node:zlib';
 import { holdsChallengersAlliance } from './index.js';
 import {
 	fitMegaBoss,
@@ -121,7 +120,7 @@ describe('./ring/mega-boss.ts', () => {
 		const game = new Game({ roomId: 'mega-save' }, () => {});
 		try {
 			const saves: string[] = [];
-			game.stateStore = { save: (_roomId: string, state: string) => { saves.push(state); return Promise.resolve(); } } as any;
+			game.stateStore = { save: (_roomId: string, state: unknown) => { saves.push(JSON.stringify(state)); return Promise.resolve(); } } as any;
 			// Just past the save debounce, and long before any other timer would save.
 			clock.tick(45_000);
 			expect(saves.length).to.be.above(0);
@@ -304,13 +303,13 @@ describe('./ring/mega-boss.ts', () => {
 		const game = new Game({ roomId: 'mega-retry-save', megaBossAt: Date.now() + MINUTE }, () => {});
 		const saves: string[] = [];
 		try {
-			game.stateStore = { save: (_roomId: string, state: string) => { saves.push(state); return Promise.resolve(); } } as any;
+			game.stateStore = { save: (_roomId: string, state: unknown) => { saves.push(JSON.stringify(state)); return Promise.resolve(); } } as any;
 			game.ring.inEncounter = true;
 			clock.tick(MINUTE + MEGA_BOSS_RETRY_MS - 1);
 			const before = saves.length;
 			clock.tick(1);
 			expect(saves.length).to.equal(before + 1);
-			const saved = zlib.gunzipSync(Buffer.from(saves[saves.length - 1]!, 'base64')).toString();
+			const saved = saves[saves.length - 1]!;
 			expect(saved).to.include(`"megaBossAt":${Date.now()}`);
 		} finally {
 			game.ring.inEncounter = false;

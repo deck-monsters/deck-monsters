@@ -31,7 +31,8 @@ export type {
 	EventSubscriber,
 	EventsSinceResult,
 };
-export type { StateStore } from './types/state-store.js';
+export type { StateStore, SerializedGame } from './types/state-store.js';
+export { repairSerializedGame } from './helpers/repair-serialized-game.js';
 export { engineReady, getHydratorStatus } from './helpers/engine-ready.js';
 export { getCardClassByTypeName } from './cards/index.js';
 /** Every card class, in the alphabetical order the generated card lists use. */
