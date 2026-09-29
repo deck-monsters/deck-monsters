@@ -1,7 +1,7 @@
 import { BaseCard, type CardOptions } from './base.js';
 import { subEventDelay } from '../helpers/delay-times.js';
 import { ATTACK_PHASE, DEFENSE_PHASE } from '../constants/phases.js';
-import { MELEE } from '../constants/card-classes.js';
+import { AOE, MELEE } from '../constants/card-classes.js';
 import { DRAGON } from '../constants/creature-types.js';
 import { TAKE_WING_EFFECT } from '../constants/effect-types.js';
 import { UNCOMMON } from '../helpers/probabilities.js';
@@ -31,6 +31,12 @@ export class TakeWingCard extends BaseCard {
 		'"The fiery flying serpent." Up, out of reach, and then down again, all teeth.';
 	static level = 0;
 	static cost = CHEAP.cost;
+	/**
+	 * Roadmap 36, being measured: when true, the flier also dodges the first area spell (Blast
+	 * and its kin), not only the first melee blow. Today a Blast knocks a flying dragon out of
+	 * the sky, so Take Wing is a wasted turn against a Blast-heavy hand.
+	 */
+	static dodgesSpells = false;
 
 	constructor({ icon = '🌬️' }: Partial<CardOptions> = {}) {
 		super({ icon } as Partial<CardOptions>);
@@ -79,7 +85,8 @@ Any damage that lands while you are in the air knocks you down, and the dive is 
 			card.effect = async (attacker: any, target: any, ...rest: any[]) => {
 				if (target !== flier || !isAirborne(flier)) return effect.call(card, attacker, target, ...rest);
 
-				if (!dodged && card.isCardClass(MELEE)) {
+				const { dodgesSpells } = this.constructor as typeof TakeWingCard;
+				if (!dodged && (card.isCardClass(MELEE) || (dodgesSpells && card.isCardClass(AOE)))) {
 					dodged = true;
 					this.emit('narration', {
 						narration: `${flier.givenName} is high in the air, and ${attacker.givenName}'s blow strikes empty air.`,

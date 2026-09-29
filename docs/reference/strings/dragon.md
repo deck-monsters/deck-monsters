@@ -47,6 +47,7 @@ Seeded, cycling he, she, and they.
 | profile → returns | `Hoard patience? {HoardPatience}. Smoke control? {SmokeControl}. Opinion of Romans? {RomanOpinion}. Table manners? {TableManners}.` |
 | description → ancient | ` {He} {is/are} ancient. {His} fire cannot be dodged, but {he} can still be tricked.` |
 | description → returns | `{article} {head} dragon, {body}, with {wings} wings. {His} scales are {color}, and {he} {keeps/keep} to {home}. {profile}{ancient}` |
+| resistSpell → narration | `{this}'s scales turn aside the spell: {damage - resisted} of the damage slides off.` |
 
 ### Long description
 

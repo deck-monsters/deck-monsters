@@ -5,6 +5,8 @@ import { WIZARD } from '../constants/creature-classes.js';
 import { DRAGON } from '../constants/creature-types.js';
 import BaseMonster from './base.js';
 import { armAncientDragon, isAncientDragon } from '../cards/helpers/ancient-dragon.js';
+import { BlastCard } from '../cards/blast.js';
+import { chance } from '../helpers/chance.js';
 
 /*
  * The Dragon was asked for by the owner's eight-year-old son, whose favourite dragons are
@@ -51,6 +53,16 @@ const TABLE_MANNERS = ['eats the plate too', 'cooks everything first', 'surprisi
 const article = (word: string): string => (/^[aeiou]/i.test(word) ? 'an' : 'a');
 
 class Dragon extends BaseMonster {
+	/**
+	 * Roadmap 36, being measured: how a dragon's scales answer the Blast family (Blast, Blast II,
+	 * Sandstorm). At level 7 the Dragon won 3% against the Unicorn's four Blasts, which need no
+	 * attack roll. The owner prefers a dragon-side answer to changing Blast. `none` is today's
+	 * rule. `half` halves the damage (rounded up). `age` takes off half the dragon's level, so
+	 * the scales thicken as it grows. `save` rolls 1d20 + int against 10 + the caster's int for
+	 * half.
+	 */
+	static spellResistance: 'none' | 'half' | 'age' | 'save' = 'none';
+
 	constructor(options: Record<string, unknown> = {}) {
 		const defaultOptions = {
 			dexModifier: 1,
@@ -108,6 +120,30 @@ class Dragon extends BaseMonster {
 			? ` ${capitalize(pronouns.he)} ${agree(pronouns, 'is', 'are')} ancient. ${capitalize(pronouns.his)} fire cannot be dodged, but ${pronouns.he} can still be tricked.`
 			: '';
 		return `${article(this.head)} ${this.head} dragon, ${this.body}, with ${this.wings} wings. ${capitalize(pronouns.his)} scales are ${this.color}, and ${pronouns.he} ${agree(pronouns, 'keeps', 'keep')} to ${this.home}. ${this.profile}${ancient}`;
+	}
+
+	/** Damage from the Blast family after the scales (`spellResistance`); anything else is unchanged. */
+	resistSpell(damage: number, assailant?: any, card?: any): number {
+		const mode = (this.constructor as typeof Dragon).spellResistance;
+		if (mode === 'none' || !(card instanceof BlastCard) || assailant === this || damage <= 0) return damage;
+		let resisted = damage;
+		if (mode === 'half') resisted = Math.ceil(damage / 2);
+		if (mode === 'age') resisted = Math.max(1, damage - Math.floor(this.level / 2));
+		if (mode === 'save') {
+			const save = chance.roll({ primaryDice: '1d20', modifier: this.intModifier, crit: true });
+			const { success } = card.checkSuccess(save, 10 + (assailant?.intModifier ?? 0) - 1);
+			if (success) resisted = Math.ceil(damage / 2);
+		}
+		if (resisted < damage) {
+			this.emit('narration', {
+				narration: `${this.givenName}'s scales turn aside the spell: ${damage - resisted} of the damage slides off.`,
+			});
+		}
+		return resisted;
+	}
+
+	override hit(damage = 0, assailant?: any, card?: any): Promise<boolean> {
+		return super.hit(this.resistSpell(damage, assailant, card), assailant, card);
 	}
 
 	/** An ancient dragon (level 10+) carries its power and its weaknesses into every fight. */
