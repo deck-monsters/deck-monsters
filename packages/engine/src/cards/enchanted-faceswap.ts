@@ -1,6 +1,6 @@
 import { BaseCard, type CardOptions } from './base.js';
 import { AOE, HIDE, PSYCHIC } from '../constants/card-classes.js';
-import { BARD, CLERIC } from '../constants/creature-classes.js';
+import { BARD, CLERIC, WIZARD } from '../constants/creature-classes.js';
 import { DEFENSE_PHASE } from '../constants/phases.js';
 import { FACESWAP_EFFECT } from '../constants/effect-types.js';
 import { PRICEY } from '../helpers/costs.js';
@@ -15,7 +15,7 @@ const isFaceswapping = (monster: any): boolean =>
 export class EnchantedFaceswapCard extends BaseCard {
 	static cardClass = [HIDE];
 	static cardType = 'Enchanted Faceswap';
-	static permittedClassesAndTypes = [BARD, CLERIC];
+	static permittedClassesAndTypes = [BARD, CLERIC, WIZARD];
 	static probability = RARE.probability;
 	static description =
 		'A snapchat filter for the magically inclined. This spell will cause the next card played with the caster as the target to be reversed so that the player of the card becomes the target.';

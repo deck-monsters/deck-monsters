@@ -21,6 +21,7 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
 ### Card List
 
 - [Adrenaline Rush](#adrenaline-rush)
+- [Asinine Companion](#asinine-companion)
 - [Bad Batch](#bad-batch)
 - [Basic Shield](#basic-shield)
 - [Battle Focus](#battle-focus)
@@ -53,6 +54,7 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
 - [Forked Stick](#forked-stick)
 - [Gloaming Rest](#gloaming-rest)
 - [Heal](#heal)
+- [Helm of Awe](#helm-of-awe)
 - [Hit](#hit)
 - [Hit Harder](#hit-harder)
 - [Horn Gore](#horn-gore)
@@ -73,6 +75,7 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
 - [Scotch](#scotch)
 - [Sticketh](#sticketh)
 - [Survival Knife](#survival-knife)
+- [Tail Lash](#tail-lash)
 - [Take Wing](#take-wing)
 - [Thick Skin](#thick-skin)
 - [Tsunami](#tsunami)
@@ -122,6 +125,19 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
  live for. It's how you know you 
  exist. You embrace it and 
  welcome the rush.
+
+==================================
+```
+
+### Asinine Companion
+
+```text
+==================================
+ 🫏  Asinine Companion  ○
+----------------------------------
+
+ A companion boosts the strength 
+ of the caster.
 
 ==================================
 ```
@@ -568,6 +584,19 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
 ==================================
 ```
 
+### Helm of Awe
+
+```text
+==================================
+ 🪖  Helm of Awe  ◇
+----------------------------------
+
+ A helm that awes every opponent 
+ in the ring.
+
+==================================
+```
+
 ### Hit
 
 ```text
@@ -850,6 +879,19 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
  yourself in the thigh and press 
  the pommel for a Stimpak 
  injection.
+
+==================================
+```
+
+### Tail Lash
+
+```text
+==================================
+ 🐉  Tail Lash  ◆
+----------------------------------
+
+ A dragon attack that hits, then 
+ lashes with its tail.
 
 ==================================
 ```

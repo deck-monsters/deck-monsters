@@ -153,6 +153,7 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
 ## Card Catalog (verbose)
 
 - [Adrenaline Rush](#adrenaline-rush)
+- [Asinine Companion](#asinine-companion)
 - [Bad Batch](#bad-batch)
 - [Basic Shield](#basic-shield)
 - [Battle Focus](#battle-focus)
@@ -185,6 +186,7 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
 - [Forked Stick](#forked-stick)
 - [Gloaming Rest](#gloaming-rest)
 - [Heal](#heal)
+- [Helm of Awe](#helm-of-awe)
 - [Hit](#hit)
 - [Hit Harder](#hit-harder)
 - [Horn Gore](#horn-gore)
@@ -205,6 +207,7 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
 - [Scotch](#scotch)
 - [Sticketh](#sticketh)
 - [Survival Knife](#survival-knife)
+- [Tail Lash](#tail-lash)
 - [Take Wing](#take-wing)
 - [Thick Skin](#thick-skin)
 - [Tsunami](#tsunami)
@@ -235,6 +238,28 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  Level: 2
  Usable by: Barbarian, Fighter
  MSRP: 50
+ Class: Boost
+
+==================================
+```
+
+### Asinine Companion
+
+```text
+==================================
+ 🫏  Asinine Companion  ○
+----------------------------------
+
+ A companion boosts the strength 
+ of the caster.
+
+ Boost: str +2 (max total boost 
+ of level + 1, at most +5, then 
+ boost granted to hp instead).
+
+ Level: 1
+ Usable by: Dragon
+ MSRP: 20
  Class: Boost
 
 ==================================
@@ -782,7 +807,7 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  of the card becomes the target.
 
  Level: 1
- Usable by: Bard, Cleric
+ Usable by: Bard, Cleric, Wizard
  Effect chance: 100%
  MSRP: 80
  Class: Hide
@@ -1204,6 +1229,33 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
 ==================================
 ```
 
+### Helm of Awe
+
+```text
+==================================
+ 🪖  Helm of Awe  ◇
+----------------------------------
+
+ A helm that awes every opponent 
+ in the ring.
+
+ Each opponent rolls 1d20 + int 
+ vs 10 + your int modifier. On a 
+ failure, their next 3 cards each 
+ take 2 off their attack rolls. A 
+ card that does not roll to hit 
+ (Blast, Heal) uses up one of the 
+ 3 with no effect.
+ No damage. Does not stack; being 
+ awed again refreshes the count.
+
+ Level: 2
+ Usable by: Dragon
+ MSRP: 80
+
+==================================
+```
+
 ### Hit
 
 ```text
@@ -1434,7 +1486,8 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  do not crit).
 
  Level: 2
- Usable by: Bard, Cleric, Fighter
+ Usable by: Bard, Cleric, 
+ Fighter, Wizard
  Hit chance: 90% | DPT: 4
  MSRP: 50
  Targets: ac
@@ -1787,6 +1840,32 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  Hit chance: 68% | DPT: 4
  Heal chance: 0% | HPT: 0
  MSRP: 20
+ Targets: ac
+ Class: Melee
+
+==================================
+```
+
+### Tail Lash
+
+```text
+==================================
+ 🐉  Tail Lash  ◆
+----------------------------------
+
+ A dragon attack that hits, then 
+ lashes with its tail.
+
+ Hit: 1d20 vs ac / Damage: 1d6. 
+ If the hit lands and the target 
+ is still standing, the tail 
+ strikes too (1d20 + your STR 
+ modifier - 2 to hit, 1d4 damage, 
+ no critical hits).
+
+ Level: 1
+ Usable by: Dragon
+ MSRP: 50
  Targets: ac
  Class: Melee
 

@@ -53,6 +53,9 @@ describe('getCardClass', () => {
 		// A dodge and a dive, and a hide or a fury: moves, not attacks of their own.
 		expect(getCardClass('Take Wing')).toBe('utility');
 		expect(getCardClass('Mood Scales')).toBe('utility');
+		expect(getCardClass('Tail Lash')).toBe('melee');
+		expect(getCardClass('Helm of Awe')).toBe('magic');
+		expect(getCardClass('Asinine Companion')).toBe('utility');
 	});
 
 	it('falls back to utility for unmatched names', () => {

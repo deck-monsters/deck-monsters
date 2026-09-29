@@ -58,6 +58,22 @@ Dragons are clever, vain, and fast. They talk, and they will tell you so. Their 
 Vikings carved dragons on their prows. Romans marched behind a dragon of cloth that howled when the wind filled it. Neither ever tamed a real one. A dragon who fights beside a Beastmaster has decided to, and it counts its hoard every night: in Beowulf, a thief took one cup from a sleeping dragon's hoard, and the old king died of it.
 ```
 
+## Asinine Companion
+
+Source: `packages/engine/src/cards/asinine-companion.ts`.
+
+**Card description:** `A companion boosts the strength of the caster.`
+
+**Rules text:**
+
+```text
+Boost: str +2 (max total boost of level + 1, at most +5, then boost granted to hp instead).
+```
+
+**Narration and outcomes:**
+
+_None._
+
 ## Fire Breath
 
 Source: `packages/engine/src/cards/fire-breath.ts`.
@@ -95,6 +111,29 @@ An ancient dragon (level 10+) breathes fire that cannot be dodged and burns for 
 |---|---|
 | `packages/engine/src/cards/helpers/signature.ts` [DRAGON] | `Fire Breath` |
 
+## Helm of Awe
+
+Source: `packages/engine/src/cards/helm-of-awe.ts`.
+
+**Card description:** `A helm that awes every opponent in the ring.`
+
+**Rules text:**
+
+```text
+Each opponent rolls 1d20 + int vs 10 + your int modifier. On a failure, their next 3 cards each take 2 off their attack rolls. A card that does not roll to hit (Blast, Heal) uses up one of the 3 with no effect.
+No damage. Does not stack; being awed again refreshes the count.
+```
+
+**Narration and outcomes:**
+
+| Where | Template |
+|---|---|
+| awe → narration | `{target} is still awed 🪖 (-{awePenalty} to attack).` |
+| effect → outcome | `{target} is not awed.` |
+| effect → outcome | `{target} is awed!` |
+| effect → reason | `vs 10 + {player}'s int modifier ({dc}) to resist awe.` |
+| effect → narration | `will not be awed.` |
+
 ## Mood Scales
 
 Source: `packages/engine/src/cards/mood-scales.ts`.
@@ -118,6 +157,29 @@ Furious (half your hp or less): your scales blaze red and you cannot hide, but y
 | enrage → narration | `{target} strikes in a fury!` |
 | effect → narration | `{target} is already furious, and glows a little redder.` |
 | effect → narration | `🦎 {target} is furious! {His} scales blaze red, and there is no hiding now. (Next melee hit: +1d6 damage.)` |
+
+## Tail Lash
+
+Source: `packages/engine/src/cards/tail-lash.ts`.
+
+**Card description:** `A dragon attack that hits, then lashes with its tail.`
+
+**Rules text:**
+
+```text
+Hit: 1d20 vs ac / Damage: 1d6. If the hit lands and the target is still standing, the tail strikes too (1d20 + your STR modifier - 2 to hit, 1d4 damage, no critical hits).
+```
+
+**Narration and outcomes:**
+
+| Where | Template |
+|---|---|
+| tailStrike → label | `{player}'s tail` |
+| tailStrike → narration | `🐉 {player} swings {his} tail.` |
+| tailStrike → reason | `vs {target}'s ac ({ac}) to determine if the tail struck true.` |
+| tailStrike → narration | `🐉 The tail misses. {target} is untouched.` |
+| tailStrike → reason | `for damage.` |
+| tailStrike → flavorText | `{icon} 🐉 {icon}  {label} hits {target} for {result} damage.` |
 
 ## Take Wing
 

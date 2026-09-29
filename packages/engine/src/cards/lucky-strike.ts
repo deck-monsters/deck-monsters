@@ -1,6 +1,6 @@
 import { HitCard } from './hit.js';
 import { chance } from '../helpers/chance.js';
-import { BARD, CLERIC, FIGHTER } from '../constants/creature-classes.js';
+import { BARD, CLERIC, FIGHTER, WIZARD } from '../constants/creature-classes.js';
 import { RARE } from '../helpers/probabilities.js';
 import { REASONABLE } from '../helpers/costs.js';
 import { agree } from '../helpers/pronouns.js';
@@ -9,7 +9,7 @@ const { roll } = chance;
 
 export class LuckyStrike extends HitCard {
 	static cardType = 'Lucky Strike';
-	static permittedClassesAndTypes = [BARD, CLERIC, FIGHTER];
+	static permittedClassesAndTypes = [BARD, CLERIC, FIGHTER, WIZARD];
 	static probability = RARE.probability;
 	static description =
 		"A man in a jester's hat smiles at you from the crowd. You feel... Lucky for some reason. Or perhaps feel the unluckiness of your opponent...";

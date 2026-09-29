@@ -4,7 +4,7 @@ import sinon from 'sinon';
 import { LuckyStrike } from './lucky-strike.js';
 import Gladiator from '../monsters/gladiator.js';
 import Minotaur from '../monsters/minotaur.js';
-import { BARD, CLERIC, FIGHTER } from '../constants/creature-classes.js';
+import { BARD, CLERIC, FIGHTER, WIZARD } from '../constants/creature-classes.js';
 
 describe('./cards/lucky-strike.ts', () => {
 	it('can be instantiated with defaults', () => {
@@ -26,10 +26,10 @@ describe('./cards/lucky-strike.ts', () => {
 		expect((luckyStrike as any).targetProp).to.equal('str');
 	});
 
-	it('can only be played by Bards, Fighters and Clerics', () => {
+	it('can only be played by Bards, Fighters, Clerics and Wizards', () => {
 		const luckyStrike = new LuckyStrike();
 
-		expect((luckyStrike as any).permittedClassesAndTypes).to.deep.equal([BARD, CLERIC, FIGHTER]);
+		expect((luckyStrike as any).permittedClassesAndTypes).to.deep.equal([BARD, CLERIC, FIGHTER, WIZARD]);
 	});
 
 	it('rolls twice for attack', () => {
@@ -85,5 +85,12 @@ describe('./cards/lucky-strike.ts', () => {
 		expect(hitNarrative).to.equal(
 			`(${(successRoll as any).naturalRoll.result}) ${(target as any).givenName} fails to block ${(player as any).pronouns.his} blow.`
 		);
+	});
+});
+
+describe('./cards/lucky-strike.ts for Wizards', () => {
+	it('can be held by a Dragon (the first Wizard)', async () => {
+		const { default: Dragon } = await import('../monsters/dragon.js');
+		expect(new Dragon({ xp: 300 }).canHoldCard(LuckyStrike)).to.equal(true);
 	});
 });
