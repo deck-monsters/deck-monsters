@@ -92,6 +92,24 @@ points below a Hit), so:
   the ring strikes the same target; with no ally (every duel) an otter, a deer, or a ram answers
   with a modest attack of its own. The companion's numbers are class settings, to be measured.
 
+### Dragon cards: voice and jokes (owner, 2026-09-29)
+
+For task 8's new Dragon cards and any Dragon narration they bring:
+
+- **Voice: Norse mythology and the Vikings.** Old public-domain Norse texts may be quoted for
+  atmosphere (the Poetic Edda in a public-domain English, Morris and Magnússon's 1888
+  *Völsunga saga*, Gummere's 1910 *Beowulf*), named in a source comment, per "Quoting old
+  texts" in the cards architecture doc. The Dragon pack's rule still holds: the *How to Train
+  Your Dragon* books supply setting and feel only, never names, quotes, species, or designs.
+- **A joke about yelling at the dragon, loudly, to control it.**
+- **A joke about the dragon having eaten or otherwise destroyed something it shouldn't have.**
+  (The pack already has the hoard's "one cup missing" and the profile's table manners; this is
+  a new line, not a repeat.)
+- Candidates from the first pass: **Tail Lash** (Topsell's tail; a strike and a smaller follow-up
+  on a hit, the Dragon's Battle Focus) and **Draco's Howl** (the Roman draco standard; a roar that
+  shakes opponents' aim), alongside existing cards opened to the Wizard. Names and shapes may
+  change to suit the Norse voice.
+
 ## Targets for a card fix
 
 A tweaked unique card should, at levels 1-7:
