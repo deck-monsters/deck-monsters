@@ -1,13 +1,21 @@
 import type { SerializedGame } from '../types/state-store.js';
 
-const NUL = '\u0000';
-const REPLACEMENT = '�';
+const REPLACEMENT = '\uFFFD';
+// A NUL, or half of a UTF-16 surrogate pair (text cut in the middle of an emoji). jsonb rejects
+// both: `\u0000` outright, and an unpaired surrogate escape as invalid Unicode.
+const UNSAVEABLE = /\u0000|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g;
+const needsRepair = (text: string): boolean => {
+	UNSAVEABLE.lastIndex = 0;
+	return UNSAVEABLE.test(text);
+};
 
 /**
- * Replaces every NUL in every string value and object key with U+FFFD, on a copy.
+ * Replaces every NUL and every unpaired UTF-16 surrogate in every string value and object key
+ * with U+FFFD, on a copy.
  *
- * Why: `jsonb` rejects `\u0000`, so a NUL in a name would fail every save of the room, and
- * because the save is fire-and-forget nobody would notice (roadmap 37). This is a recursive
+ * Why: `jsonb` rejects both, so one in a name would fail every save of the room, and because
+ * the save is fire-and-forget nobody would notice (roadmap 37). The surrogate case was found
+ * when the backfill's own test used one to force a failed write. This is a recursive
  * walk rather than a `JSON.stringify` replacer because a replacer cannot rename keys safely.
  *
  * A repaired key can collide with a key already in the same object (`a�b` next to
@@ -20,9 +28,9 @@ export const repairSerializedGame = (
 	let repairs = 0;
 
 	const fixString = (text: string): string => {
-		if (!text.includes(NUL)) return text;
+		if (!needsRepair(text)) return text;
 		repairs += 1;
-		return text.split(NUL).join(REPLACEMENT);
+		return text.replace(UNSAVEABLE, REPLACEMENT);
 	};
 
 	const walk = (value: unknown): unknown => {
@@ -32,7 +40,7 @@ export const repairSerializedGame = (
 			const entries = Object.entries(value as Record<string, unknown>);
 			// Keys that need no repair keep their name first, so a repaired key never takes
 			// the slot of an untouched one.
-			const taken = new Set(entries.map(([key]) => key).filter(key => !key.includes(NUL)));
+			const taken = new Set(entries.map(([key]) => key).filter(key => !needsRepair(key)));
 			const result: Record<string, unknown> = {};
 			for (const [key, child] of entries) {
 				let newKey = fixString(key);

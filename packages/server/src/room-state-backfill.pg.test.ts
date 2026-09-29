@@ -237,15 +237,31 @@ suite('room state backfill against Postgres', () => {
 	});
 
 	it('a failed write reports a short reason with no player data', async () => {
-		// jsonb rejects a lone surrogate; the repair only handles NUL.
-		const id = await makeRoom('{"name":"Game","options":{"marker":"SECRET-MARKER","bad":"\\ud800"}}');
-		const report = await backfillRoomState(db, { roomId: id });
+		// Drizzle wraps a failed query as "Failed query: <sql>\nparams: <params>", and the params
+		// are the whole state. Throw that shape from the write step and check none of it leaks.
+		const id = await makeRoom('{"name":"Game","options":{"marker":"SECRET-MARKER"}}');
+		const report = await backfillRoomState(db, {
+			roomId: id,
+			beforeWrite: () => {
+				throw Object.assign(
+					new Error('Failed query: update "rooms" set "state" = $1\nparams: {"marker":"SECRET-MARKER"}'),
+					{ cause: new Error('connection terminated\nparams: SECRET-MARKER') }
+				);
+			},
+		});
 		expect(report.converted).to.equal(0);
 		expect(report.failed).to.have.length(1);
 		const reason = report.failed[0]!.reason;
-		expect(reason.length).to.be.lessThan(210);
-		expect(reason).to.not.contain('SECRET-MARKER');
+		expect(reason).to.equal('connection terminated');
 		expect(JSON.stringify(report)).to.not.contain('SECRET-MARKER');
+	});
+
+	it('repairs a lone surrogate, which jsonb would reject, and converts the room', async () => {
+		const id = await makeRoom('{"name":"Game","options":{"marker":"cut","bad":"x\\ud800y"}}');
+		const report = await backfillRoomState(db, { roomId: id });
+		expect(report.failed).to.have.length(0);
+		expect(report.converted).to.equal(1);
+		expect((await row(id)).state.options.bad).to.equal('x\uFFFDy');
 	});
 
 	it('a decode failure reports fixed text', async () => {

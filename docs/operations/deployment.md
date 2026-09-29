@@ -365,7 +365,8 @@ Commands run from `packages/server` with `DATABASE_URL` set to the production da
 3. Dry run: `pnpm exec tsx scripts/migrate-room-state-to-jsonb.ts --dry-run`. Expect
    `failed: 0`. A failed room has a corrupt blob: the script reports it and does not write it,
    and the server quarantines it the next time the room loads. The script exits 1 while such a
-   room is left.
+   room is left. A dry run does not attempt the database write, so a write Postgres refuses
+   shows up only in the real run; failure reasons are short and never include room data.
 4. Real run: the same command without `--dry-run`. It is safe while the service is live: it
    writes only rooms whose `state` is still null, compares the blob it read before writing, and
    never touches `state_version`, so a live save always lands after it. A second run converts

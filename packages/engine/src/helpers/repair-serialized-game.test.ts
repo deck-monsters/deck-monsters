@@ -74,4 +74,22 @@ describe('helpers/repair-serialized-game', () => {
 		expect(state).to.deep.equal(input);
 		expect(repairs).to.equal(0);
 	});
+	it('repairs unpaired surrogates, which jsonb rejects, and keeps whole emoji', () => {
+		const input = {
+			name: 'Game',
+			options: {
+				cutHigh: 'ab\uD83D',
+				cutLow: '\uDE00cd',
+				emoji: 'ok \uD83D\uDE00',
+				['key\uD800']: 1,
+			},
+		} as any;
+		const { state, repairs } = repairSerializedGame(input);
+		const options = state.options as Record<string, unknown>;
+		expect(options.cutHigh).to.equal('ab\uFFFD');
+		expect(options.cutLow).to.equal('\uFFFDcd');
+		expect(options.emoji).to.equal('ok \uD83D\uDE00');
+		expect(options).to.have.property('key\uFFFD', 1);
+		expect(repairs).to.equal(3);
+	});
 });
