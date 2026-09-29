@@ -2,7 +2,6 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 
 import { GloamingRestCard } from './gloaming-rest.js';
-import { HealCard } from './heal.js';
 import { HitCard } from './hit.js';
 import { hydrateCard } from './helpers/hydrate.js';
 import Unicorn from '../monsters/unicorn.js';
@@ -79,42 +78,44 @@ describe('./cards/gloaming-rest.ts Gloaming Rest', () => {
 			GloamingRestCard.restShape = 'full';
 		});
 
-		it('a broken rest wakes the unicorn in wrath: its next attack rolls with advantage', async () => {
-			GloamingRestCard.brokenRestRage = 'advantage-damage';
-			try {
-				expect(new GloamingRestCard().stats).to.include('wake in wrath');
-				await new GloamingRestCard().play(unicorn, foe, ring, contestants);
-				await unicorn.hit(1, foe, new HitCard());
-				const rolls = [
-					{ result: 4, modifier: 0, strokeOfLuck: false, curseOfLoki: false, naturalRoll: { result: 4 } },
-					{ result: 17, modifier: 0, strokeOfLuck: false, curseOfLoki: false, naturalRoll: { result: 17 } },
-				];
-				sinon.stub(HitCard.prototype, 'getAttackRoll').callsFake(() => rolls.shift() as any);
-				const hitCheck = sinon.spy(HitCard.prototype, 'hitCheck');
-				const damage = sinon.spy(HitCard.prototype, 'rollForDamage');
-				await new HitCard().play(unicorn, foe, ring, contestants);
-				expect(hitCheck.firstCall.returnValue.attackRoll.result).to.equal(17);
-				expect(damage.firstCall.returnValue.modifier).to.equal(unicorn.strModifier + 2);
-				expect(isResting(unicorn)).to.equal(false);
-			} finally {
-				GloamingRestCard.brokenRestRage = 'none';
-			}
+		it('ranged-full heals from 4 to everything missing', async () => {
+			GloamingRestCard.restShape = 'ranged-full';
+			expect(new GloamingRestCard().stats).to.include('between 4 hp and all you are missing');
+			const card = new GloamingRestCard();
+			const random = sinon.stub(Math, 'random');
+			unicorn.hp = 1;
+			random.returns(0);
+			expect(card.restHealAmount(unicorn)).to.equal(4);
+			random.returns(0.9999);
+			expect(card.restHealAmount(unicorn)).to.equal(unicorn.maxHp - 1);
 		});
 
-		it('passes the wrath on to the next card that rolls to hit', async () => {
-			GloamingRestCard.brokenRestRage = 'advantage';
-			try {
-				await new GloamingRestCard().play(unicorn, foe, ring, contestants);
-				await unicorn.hit(1, foe, new HitCard());
-				await new HealCard().play(unicorn, unicorn, ring, contestants);
-				expect(unicorn.encounterEffects).to.have.length(1);
-				const stub = sinon.stub(HitCard.prototype, 'getAttackRoll').callsFake(() => ({ result: 10, modifier: 0, strokeOfLuck: false, curseOfLoki: false, naturalRoll: { result: 10 } }) as any);
-				await new HitCard().play(unicorn, foe, ring, contestants);
-				expect(stub.callCount).to.equal(2);
-				expect(unicorn.encounterEffects).to.have.length(0);
-			} finally {
-				GloamingRestCard.brokenRestRage = 'none';
-			}
+		it('deepening heals from half to all missing, and each rest this fight costs 1 more ac', async () => {
+			GloamingRestCard.restShape = 'deepening';
+			expect(new GloamingRestCard().stats).to.include('1 more for each earlier rest');
+			const baseAc = unicorn.ac;
+			const random = sinon.stub(Math, 'random').returns(0);
+			unicorn.hp = 5;
+			const missing = unicorn.maxHp - 5;
+
+			await new GloamingRestCard().play(unicorn, foe, ring, contestants);
+			expect(unicorn.ac).to.equal(baseAc - 2);
+			await nextTurn();
+			expect(unicorn.hp).to.equal(5 + Math.ceil(missing / 2));
+			expect(unicorn.ac).to.equal(baseAc);
+
+			await new GloamingRestCard().play(unicorn, foe, ring, contestants);
+			expect(unicorn.ac).to.equal(baseAc - 3);
+			await unicorn.hit(1, foe, new HitCard());
+			await nextTurn();
+			expect(unicorn.ac).to.equal(baseAc);
+
+			await new GloamingRestCard().play(unicorn, foe, ring, contestants);
+			expect(unicorn.ac).to.equal(baseAc - 4);
+			random.returns(0.9999);
+			await nextTurn();
+			expect(unicorn.hp).to.equal(unicorn.maxHp);
+			expect(unicorn.ac).to.equal(baseAc);
 		});
 
 		it('dice heals 3d4', async () => {

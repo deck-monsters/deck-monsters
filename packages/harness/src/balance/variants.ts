@@ -165,34 +165,12 @@ export const VARIANTS: Record<string, Variant> = {
 	'dissonance-disadv': { about: 'Dissonant Voice: no save; every opponent\'s next attack rolls at disadvantage', apply: () => cardStatic('Dissonant Voice', 'disadvantage', true) },
 	'rest-3d4': { about: 'Gloaming Rest: an undisturbed rest heals 3d4, not to full (the old heal)', apply: () => cardStatic('Gloaming Rest', 'restShape', 'dice') },
 	'rest-half': { about: 'Gloaming Rest: an undisturbed rest heals half the missing hp', apply: () => cardStatic('Gloaming Rest', 'restShape', 'half') },
-	'rest-half-rage': {
-		about: 'Gloaming Rest: half heal; a broken rest wakes in wrath (next attack at advantage)',
-		apply: () => {
-			const undos = [cardStatic('Gloaming Rest', 'restShape', 'half'), cardStatic('Gloaming Rest', 'brokenRestRage', 'advantage')];
-			return () => {
-				for (const undo of undos.reverse()) undo();
-			};
-		},
-	},
-	'rest-half-rage-dmg': {
-		about: 'Gloaming Rest: half heal; a broken rest wakes in wrath (advantage, +2 damage)',
-		apply: () => {
-			const undos = [cardStatic('Gloaming Rest', 'restShape', 'half'), cardStatic('Gloaming Rest', 'brokenRestRage', 'advantage-damage')];
-			return () => {
-				for (const undo of undos.reverse()) undo();
-			};
-		},
-	},
+
+
 	'rest-ranged': { about: 'Gloaming Rest: heal a random amount from 4 to half max hp, never more than missing', apply: () => cardStatic('Gloaming Rest', 'restShape', 'ranged') },
-	'rest-ranged-rage': {
-		about: 'Gloaming Rest: ranged heal; a broken rest wakes in wrath (next attack at advantage)',
-		apply: () => {
-			const undos = [cardStatic('Gloaming Rest', 'restShape', 'ranged'), cardStatic('Gloaming Rest', 'brokenRestRage', 'advantage')];
-			return () => {
-				for (const undo of undos.reverse()) undo();
-			};
-		},
-	},
+
+	'rest-ranged-full': { about: 'Gloaming Rest: heal a random amount from 4 to all that is missing', apply: () => cardStatic('Gloaming Rest', 'restShape', 'ranged-full') },
+	'rest-deepening': { about: 'Gloaming Rest: heal from half to all missing; each rest this fight costs 1 more AC', apply: () => cardStatic('Gloaming Rest', 'restShape', 'deepening') },
 	'rest-two-turns': { about: 'Gloaming Rest: rest through two of your cards, then heal to full', apply: () => cardStatic('Gloaming Rest', 'restShape', 'two-turns') },
 	'rest-growing': { about: 'Gloaming Rest: heal 3d4, 6d4, 9d4 at each undisturbed card; kept if broken', apply: () => cardStatic('Gloaming Rest', 'restShape', 'growing') },
 	'horn-companion-1d6': { about: 'Unconquerable Horn: the woodland creature deals 1d6 instead of 1d4', apply: () => cardStatic('Unconquerable Horn', 'companionDamageDice', '1d6') },

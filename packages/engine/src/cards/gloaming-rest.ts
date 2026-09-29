@@ -50,18 +50,13 @@ export class GloamingRestCard extends BaseCard {
 	 * rests through two of your cards, then restores every hit point; `growing` heals 3d4 at
 	 * your next card, 6d4 at the one after, 9d4 at the third, while nothing disturbs you, and
 	 * keeps what it healed if the rest is broken; `ranged` heals a random amount from 4 to half
-	 * the monster's max hp, never more than it is missing. The -2 AC lasts as long as the rest.
+	 * the monster's max hp, never more than it is missing; `ranged-full` heals from 4 to all that
+	 * is missing; `deepening` heals from half to all that is missing, but each rest in the same
+	 * fight kneels deeper: -2 AC, then -3, then -4. The AC penalty lasts as long as the rest.
+	 * Owner rule: no shape may heal to full every time, or a rest that meets a card that does
+	 * not hit wins any fight the unicorn can survive one round of.
 	 */
-	static restShape: 'full' | 'half' | 'two-turns' | 'growing' | 'dice' | 'ranged' = 'full';
-	/**
-	 * What a broken rest leaves behind (owner, 2026-09-29): the hunted unicorn wakes in wrath.
-	 * `advantage`: its next card that rolls to hit rolls twice and keeps the better;
-	 * `advantage-damage`: that and +`rageDamage` damage. `none` is the plain broken rest.
-	 * Class settings for the harness (roadmap 35).
-	 */
-	static brokenRestRage: 'none' | 'advantage' | 'advantage-damage' = 'none';
-	static rageDamage = 2;
-
+	static restShape: 'full' | 'half' | 'two-turns' | 'growing' | 'dice' | 'ranged' | 'ranged-full' | 'deepening' = 'full';
 	constructor({ icon = '🌙' }: Partial<CardOptions> = {}) {
 		super({ icon } as Partial<CardOptions>);
 	}
@@ -80,9 +75,12 @@ As each card begins, if nothing has damaged you, heal 3d4, then 6d4, then 9d4. A
 					half: 'heal half your missing hp',
 					dice: `heal ${REST_HEALTH_DICE}`,
 					ranged: `heal between ${RANGED_REST_MIN} hp and half your max hp (never more than you are missing)`,
-				}[(this.constructor as typeof GloamingRestCard).restShape as 'full' | 'half' | 'dice' | 'ranged'];
-				return `Kneel to rest: -${REST_AC_PENALTY} ac until your next card.
-If nothing damages you before then, ${heal} as that card begins. Any damage interrupts the rest and the healing is lost${(this.constructor as typeof GloamingRestCard).brokenRestRage === 'none' ? '' : `, but you wake in wrath: your next card that rolls to hit rolls twice and keeps the better${(this.constructor as typeof GloamingRestCard).brokenRestRage === 'advantage-damage' ? `, for +${(this.constructor as typeof GloamingRestCard).rageDamage} damage` : ''}`}.`;
+					'ranged-full': `heal between ${RANGED_REST_MIN} hp and all you are missing`,
+					deepening: 'heal between half and all you are missing',
+				}[(this.constructor as typeof GloamingRestCard).restShape as 'full' | 'half' | 'dice' | 'ranged' | 'ranged-full' | 'deepening'];
+				const deeper = (this.constructor as typeof GloamingRestCard).restShape === 'deepening' ? ', 1 more for each earlier rest this fight,' : '';
+				return `Kneel to rest: -${REST_AC_PENALTY} ac${deeper} until your next card.
+If nothing damages you before then, ${heal} as that card begins. Any damage interrupts the rest and the healing is lost.`;
 			}
 		}
 	}
@@ -98,50 +96,8 @@ If nothing damages you before then, ${heal} as that card begins. Any damage inte
 	 * did not spend comes back whole. An earlier clamp here ("only give back what is still
 	 * missing") lost the 2 AC for the rest of the fight whenever a brace was already up.
 	 */
-	restoreAc(target: any): void {
-		target.setModifier('ac', REST_AC_PENALTY);
-	}
-
-	/**
-	 * Wrath on waking: `card` (the per-play clone, so nothing leaks into the deck) rolls to hit
-	 * with advantage, and with `advantage-damage` hits harder. A card that does not roll to
-	 * hit passes the wrath on to the monster's next card that does.
-	 */
-	enrage(target: any, card: any): void {
-		const { brokenRestRage, rageDamage } = this.constructor as typeof GloamingRestCard;
-		const apply = (clone: any): boolean => {
-			const { getAttackRoll, getDamageRoll } = clone;
-			if (typeof getAttackRoll !== 'function') return false;
-			// A curse of Loki is the worst roll and a natural 20 the best, whatever the totals.
-			const rank = (r: any) => (r.curseOfLoki ? -Infinity : r.strokeOfLuck ? Infinity : r.result);
-			clone.getAttackRoll = (...args: any[]) => {
-				const first = getAttackRoll.apply(clone, args);
-				const second = getAttackRoll.apply(clone, args);
-				return rank(second) > rank(first) ? second : first;
-			};
-			if (brokenRestRage === 'advantage-damage' && typeof getDamageRoll === 'function') {
-				clone.getDamageRoll = (...args: any[]) => {
-					const damageRoll = getDamageRoll.apply(clone, args);
-					damageRoll.modifier += rageDamage;
-					damageRoll.result += rageDamage;
-					return damageRoll;
-				};
-			}
-			this.emit('narration', {
-				narration: `${this.icon} ${target.givenName} striketh in wrath, and the horn is terrible (advantage${brokenRestRage === 'advantage-damage' ? `, +${rageDamage} damage` : ''}).`,
-			});
-			return true;
-		};
-		if (apply(card)) return;
-
-		const wrath = ({ card: next, phase, player }: any) => {
-			if (phase !== ATTACK_PHASE || player !== target) return next;
-			if (apply(next)) {
-				target.encounterEffects = target.encounterEffects.filter((effect: any) => effect !== wrath);
-			}
-			return next;
-		};
-		target.encounterEffects = [...target.encounterEffects, wrath];
+	restoreAc(target: any, penalty = REST_AC_PENALTY): void {
+		target.setModifier('ac', penalty);
 	}
 
 	/** HP the rest restores when it resolves undisturbed, for the shapes that heal once. */
@@ -150,6 +106,16 @@ If nothing damages you before then, ${heal} as that card begins. Any damage inte
 		switch ((this.constructor as typeof GloamingRestCard).restShape) {
 			case 'half': return Math.floor(missing / 2);
 			case 'dice': return roll({ primaryDice: REST_HEALTH_DICE }).result;
+			case 'ranged-full': {
+				// From a little to everything missing: a whole heal is possible, but unlikely.
+				const low = Math.min(RANGED_REST_MIN, missing);
+				return low + Math.floor(Math.random() * (missing - low + 1));
+			}
+			case 'deepening': {
+				// From half to everything missing; the price is the AC, which grows each rest.
+				const low = Math.ceil(missing / 2);
+				return low + Math.floor(Math.random() * (missing - low + 1));
+			}
 			case 'ranged': {
 				// Owner's shape (2026-09-29): somewhere between a little and half the monster,
 				// never more than it is missing, so one rest can never erase a whole lead.
@@ -161,12 +127,18 @@ If nothing damages you before then, ${heal} as that card begins. Any damage inte
 		}
 	}
 
-	rest(target: any, ring: any): void {
+	/** The AC this rest costs: -2, or with `deepening` one more for each earlier rest this fight. */
+	restPenalty(target: any): number {
+		if ((this.constructor as typeof GloamingRestCard).restShape !== 'deepening') return REST_AC_PENALTY;
+		return REST_AC_PENALTY + (((target.encounterModifiers as any).gloamingRests as number) || 0);
+	}
+
+	rest(target: any, ring: any, penalty = REST_AC_PENALTY): void {
 		// hitLogTimestamp is the same clock creature.hit() stamps hits with (see DelayedHit),
 		// so "hit after the rest began" compares like with like, including in tests.
 		const since = hitLogTimestamp();
 		const pacing = ring?.pacingMultiplier;
-		const { restShape, brokenRestRage } = this.constructor as typeof GloamingRestCard;
+		const { restShape } = this.constructor as typeof GloamingRestCard;
 		let turns = 0;
 
 		const resting = async ({ card, phase, player }: any) => {
@@ -177,7 +149,7 @@ If nothing damages you before then, ${heal} as that card begins. Any damage inte
 				target.encounterEffects = target.encounterEffects.filter(
 					(effect: any) => effect !== resting
 				);
-				this.restoreAc(target);
+				this.restoreAc(target, penalty);
 			};
 
 			const hitLog: any[] = (target.encounterModifiers.hitLog as any[]) || [];
@@ -186,16 +158,6 @@ If nothing damages you before then, ${heal} as that card begins. Any damage inte
 			const interrupted = hitLog.some(
 				({ when, damage, dealt }) => when > since && (dealt ?? damage) > 0
 			);
-
-			if (interrupted && brokenRestRage !== 'none') {
-				this.emit('narration', {
-					narration: `${this.icon} The hunters were waiting! ${target.givenName} riseth from the laurel in a terrible wrath, horn lowered.`,
-				});
-				wake();
-				this.enrage(target, card);
-				await subEventDelay(pacing);
-				return card;
-			}
 
 			if (interrupted) {
 				this.emit('narration', {
@@ -268,8 +230,14 @@ If nothing damages you before then, ${heal} as that card begins. Any damage inte
 					? `${this.icon} As the light fails, ${player.givenName} kneels among the laurel and closes ${player.pronouns.his} eyes. Somewhere in the dusk, the hunters are listening.`
 					: `${this.icon} In confusion, ${player.givenName} coaxes ${target.givenName} to kneel and rest.`,
 		});
-		target.setModifier('ac', -REST_AC_PENALTY);
-		this.rest(target, ring);
+		const penalty = this.restPenalty(target);
+		// Counted per fight: encounter modifiers are cleared when the encounter ends.
+		target.encounterModifiers = {
+			...target.encounterModifiers,
+			gloamingRests: (((target.encounterModifiers as any).gloamingRests as number) || 0) + 1,
+		} as any;
+		target.setModifier('ac', -penalty);
+		this.rest(target, ring, penalty);
 		await subEventDelay(ring?.pacingMultiplier);
 
 		return true;
