@@ -916,12 +916,15 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
 
 ```text
 ==================================
- 💎  Unconquerable Horn  ◆
+ ✨  Unconquerable Horn  ◆
 ----------------------------------
 
  Canst thou bind the unicorn with 
  his band in the furrow? Thou 
- canst not. Many have tried.
+ canst not. Many have tried. Its 
+ horn is "of a wonderful 
+ brightness," and when it rings, 
+ the wood cometh.
 
 ==================================
 ```

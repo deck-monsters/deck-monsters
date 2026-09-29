@@ -134,7 +134,7 @@ export class HitCard extends BaseCard<HitCardOptions> {
 	/**
 	 * Runs when the attack roll succeeds, before damage is rolled. A curse attack applies its
 	 * curse here, so a miss curses nobody (roadmap 33). `ring` and `activeContestants` are
-	 * threaded through so a curse can check the Unconquerable Horn ward
+	 * threaded through so a curse can check the Horn of Proof ward
 	 * (cards/helpers/control-ward.ts), which needs team data to tell an opponent from an ally.
 	 */
 	protected async onLanded(_player: any, _target: any, _ring?: any, _activeContestants?: any): Promise<void> {}

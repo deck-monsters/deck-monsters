@@ -160,30 +160,6 @@ export const VARIANTS: Record<string, Variant> = {
 			};
 		},
 	},
-	'horn-heal-1d4': {
-		about: 'Unconquerable Horn: also heals 1d4 when played (never a dead card)',
-		apply: () =>
-			cardMethod('Unconquerable Horn', 'effect', original =>
-				function (this: unknown, ...args: unknown[]) {
-					const [, target] = args as [unknown, { heal(n: number): unknown; dead?: boolean }];
-					const result = original.apply(this, args);
-					if (!target.dead) void target.heal(Math.floor(Math.random() * 4) + 1);
-					return result;
-				},
-			),
-	},
-	'horn-heal-1d6': {
-		about: 'Unconquerable Horn: also heals 1d6 when played (never a dead card)',
-		apply: () =>
-			cardMethod('Unconquerable Horn', 'effect', original =>
-				function (this: unknown, ...args: unknown[]) {
-					const [, target] = args as [unknown, { heal(n: number): unknown; dead?: boolean }];
-					const result = original.apply(this, args);
-					if (!target.dead) void target.heal(Math.floor(Math.random() * 6) + 1);
-					return result;
-				},
-			),
-	},
 	'dissonance-4': { about: 'Dissonant Voice: -4 to attack instead of -2', apply: () => cardStatic('Dissonant Voice', 'penalty', 4) },
 	'dissonance-sting': { about: 'Dissonant Voice: a failed save also takes 1d4', apply: () => cardStatic('Dissonant Voice', 'stingDice', '1d4') },
 	'rest-partial': { about: 'Gloaming Rest: damage shrinks the heal instead of cancelling it', apply: () => cardStatic('Gloaming Rest', 'partialRest', true) },

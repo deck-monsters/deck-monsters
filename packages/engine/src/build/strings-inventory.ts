@@ -11,8 +11,8 @@
  *   - Source extraction, for narration that only exists mid-fight: every string or
  *     template literal in the monster's file and in each of its signature cards (cards
  *     whose permitted types name the monster), with `${...}` rendered as readable
- *     `{placeholders}`. Lines elsewhere in the engine that name a card (the Unconquerable
- *     Horn's refusal lives in immobilize.ts) are listed under that card too.
+ *     `{placeholders}`. Lines elsewhere in the engine that name a card (Horn of Proof's
+ *     refusal lives in immobilize.ts) are listed under that card too.
  *
  * Extraction is a reading aid, not a parser of meaning: a literal with no space in it is
  * treated as an identifier and skipped, and an expression the renderer does not know

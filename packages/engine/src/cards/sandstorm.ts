@@ -198,7 +198,7 @@ export class SandstormCard extends BlastCard {
 			return card;
 		};
 
-		// Unconquerable Horn: an armed ward cancels the confusion, not the storm damage (still
+		// Horn of Proof ward: an armed ward cancels the confusion, not the storm damage (still
 		// rolled below via super.effect), and only when the caster is an opponent — a jinni
 		// never confuses its own warded self.
 		if (wardAgainst(sandstormTarget, sandstormPlayer, { activeContestants, ring })) {

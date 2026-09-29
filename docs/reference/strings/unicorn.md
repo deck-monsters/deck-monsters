@@ -123,8 +123,7 @@ Source: `packages/engine/src/cards/horn-of-proof.ts`.
 **Rules text:**
 
 ```text
-Remove one of these, in order: your worst stat penalty this fight, or a Bad Batch waiting in the ring. If the horn is turned on someone who is held, it frees them first.
-Then heal 3 hp.
+Drink from the horn: remove one harm already on you (your worst stat penalty, or a Bad Batch waiting in the ring; if turned on someone held, it frees them), then ward yourself for one round against the next harmful effect an opponent puts on you that is not damage (a hold, a curse, poison, being blinked away, or being confused). Then heal 3 hp. The ward works once per fight.
 ```
 
 **Narration and outcomes:**
@@ -134,7 +133,18 @@ Then heal 3 hp.
 | cleanseHold → narration | `🏺 The horn toucheth the bonds, and they fall away. {target} is free.` |
 | cleanseCurse → narration | `🏺 The horn draweth out the curse on {target}'s {worstStat}, as it draweth poison from the cup.` |
 | cleanseRing → narration | `🏺 {target} dips the horn in the cups in the ring. One cup froths and hisses; that bad batch is poured away.` |
+| ward → narration | `🏺 {player} sets {his} lips to the horn, and no poison shall pass it. The next harm laid on {him} this round will not take.` |
+| ward → narration | `🏺 In confusion, {player} passeth the horn to {target}. The next harm laid on {him} this round will not take.` |
+| ward → narration | `🏺 {target} hath drunk already, and standeth warded.` |
+| ward → narration | `🏺 {target} has already been warded once this fight. The horn wardeth not twice.` |
 | effect → narration | `🏺 The horn findeth nothing here to purify.` |
+
+**Lines elsewhere that name this card:**
+
+| Where | Template |
+|---|---|
+| `packages/engine/src/cards/helpers/control-ward.ts` controlWardNarration | `{"Will the unicorn be willing to serve thee?"  / —}{target} {refusal} Horn of Proof's ward is spent.` |
+| `packages/engine/src/cards/immobilize.ts` immobilize → narration | `{"Will the unicorn be willing to serve thee?"  / —}{target} will not be taken and held. {He} {refuses/refuse} to be {IMMOBILIZED}, and Horn of Proof's ward is spent.` |
 
 ## Sticketh
 
@@ -181,30 +191,26 @@ Natural 1 on either roll fails. Natural 20 on the charge deals max damage.
 
 Source: `packages/engine/src/cards/unconquerable-horn.ts`.
 
-**Card description:** `Canst thou bind the unicorn with his band in the furrow? Thou canst not. Many have tried.`
+**Card description:** `Canst thou bind the unicorn with his band in the furrow? Thou canst not. Many have tried. Its horn is "of a wonderful brightness," and when it rings, the wood cometh.`
 
 **Rules text:**
 
 ```text
-Ward yourself for one round against the next harmful effect an opponent puts on you that is not damage: a hold, a curse, poison, being blinked away, or being confused. That effect is cancelled and the ward is spent; any damage that comes with it still lands.
-Every play also heals 1d6.
-Once per fight. Does not stack.
+Let the horn ring out: hit your target, and an ally in the ring strikes it too. If you have no ally, a creature of the wood answers its light: an otter, a deer, or a ram (1d20 + 2 to hit, 1d4 damage).
 ```
 
 **Narration and outcomes:**
 
 | Where | Template |
 |---|---|
-| effect → narration | `💎 {player} lowers {his} horn and plants {his} hooves. Canst thou bind the unicorn? The next harm this round will not take.` |
-| effect → narration | `💎 In confusion, {player} lends {his} ward to {target}. The next harm on {him} this round will not take.` |
-| effect → narration | `{target} already standeth braced. No band shall hold {him}.` |
-| effect → narration | `{target} has already refused one hold this fight. The ward riseth not twice.` |
-| effect → reason | `to steady on the horn.` |
-| effect → outcome | `{target} gathereth strength.` |
-
-**Lines elsewhere that name this card:**
-
-| Where | Template |
-|---|---|
-| `packages/engine/src/cards/helpers/control-ward.ts` controlWardNarration | `{"Will the unicorn be willing to serve thee?"  / —}{target} {refusal} The Unconquerable Horn's ward is spent.` |
-| `packages/engine/src/cards/immobilize.ts` immobilize → narration | `{"Will the unicorn be willing to serve thee?"  / —}{target} will not be taken and held. {He} {refuses/refuse} to be {IMMOBILIZED}, and the Unconquerable Horn's ward is spent.` |
+| flavors → hits | `drives a shining horn into` |
+| flavors → hits | `runs through, horn first,` |
+| flavors → hits | `lets the horn ring out, and in the same breath gores` |
+| companionStrike → label | `{Name} of the wood` |
+| companionStrike → narration | `{icon} Out of the wood beyond the ring, {name} answereth the light of the horn.` |
+| companionStrike → reason | `vs {target}'s ac ({ac}) to determine if the creature of the wood struck true.` |
+| companionStrike → narration | `{icon} {label} {miss}. {target} is untouched.` |
+| companionStrike → reason | `for damage.` |
+| companionStrike → flavorText | `{icon} {icon} {icon}  {label} {strike} {target} for {result} damage.` |
+| effect → narration | `✨ {player} lifts {his} head, and the horn kindleth with a wonderful brightness and singeth over the ring.` |
+| effect → narration | `{ally} seeth the light, and heareth the singing of it, and cometh at a run.` |

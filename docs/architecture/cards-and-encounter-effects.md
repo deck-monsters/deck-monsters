@@ -114,7 +114,7 @@ Delayed Hit and Gloaming Rest compare against. Under `DECK_MONSTERS_SKIP_DELAYS`
 is a counter, so never compare it with `Date.now()`. Use `dealt ?? damage` when the
 question is "did this hurt".
 
-## Holds and the Unconquerable Horn ward
+## Holds and the Horn of Proof ward
 
 Every hold one creature puts on another, including Immobilize, Horn Gore, Coil, Constrict,
 Entrance, Enthrall, Mesmerize, Forked Stick, and Forked Metal Rod, goes through
@@ -122,11 +122,14 @@ Entrance, Enthrall, Mesmerize, Forked Stick, and Forked Metal Rod, goes through
 the held creature: at the start of that creature's turn it rolls to break free, and while
 held its card does nothing.
 
-Unconquerable Horn used to ward only against holds. The owner asked (2026-09-28, roadmap 35
-"Unconquerable Horn as a counterspell") for more: "like a counterspell that lasts for one
-round or until some sort of negative action that is not a damage action is attempted." It is
-now a one-round, once-per-fight counterspell against the next negative, non-damage effect an
-opponent lands on the warder.
+The ward began as the Unconquerable Horn's refusal to be held. The owner asked (2026-09-28,
+roadmap 35 "Unconquerable Horn as a counterspell") for more: "like a counterspell that lasts
+for one round or until some sort of negative action that is not a damage action is
+attempted." On 2026-09-29 the owner made Horn of Proof "the do everything card", so the ward
+moved there (`HornOfProofCard.ward()`): cleanse, then ward, then heal, in that order. It is a
+one-round, once-per-fight counterspell against the next negative, non-damage effect an
+opponent lands on the warder. The mechanism is in `cards/helpers/control-ward.ts` and did
+not change with the move.
 
 - **What it covers.** Holds (via `immobilize()`), the curse part of a curse-carrying Hit
   (Soften, Molasses, Concussion, Brain Drain — `CurseCard.applyCurse` in `cards/curse.ts`),
@@ -150,9 +153,18 @@ opponent lands on the warder.
   9 by default — the same point next round), it lapses: `encounterModifiers.unconquerableWard`
   becomes `'lapsed'`, with its own narration. **Once per fight either way**: `armControlWard`
   refuses to re-arm after `'spent'` or `'lapsed'`.
-- **Never a dead card.** Every play of Unconquerable Horn also heals 1d6
-  (`HORN_STEADYING_HEAL`), armed or not. As a pure counterspell it was a wasted slot against
-  hands with nothing to ward (roadmap 35, measured 2026-09-29).
+- **Never a dead card.** Horn of Proof also cleanses and heals (`healAmount`, a class setting
+  for the balance harness) whether or not the ward takes. The steadying 1d6 the Unconquerable
+  Horn briefly carried is gone with the ward.
+- **The Unconquerable Horn is a rally, not a ward** (owner, 2026-09-29). The unicorn makes its
+  own Hit and the horn, kindling and ringing, brings a second blow on the same target: from
+  a living ally in the ring (found with `isOpponentHold`, so only real teammates count and a
+  duel or free-for-all has none), else a creature of the wood, an otter, a deer, or a ram.
+  The creature is an attack profile, not a contestant: `companionHitBonus` (2) and
+  `companionDamageDice` ('1d4') are static fields for the harness, it rolls without crits (no
+  stroke of luck, no Curse of Loki), takes no damage, and a killing blow is credited to the
+  unicorn. The horn rallies only against a foe: a confused unicorn hitting itself or an ally
+  calls nobody. See `cards/unconquerable-horn.ts`.
 - **Self-holds skip the ward.** Sticketh sticks its own player with the ordinary
   `ImmobilizeEffect` through `stickFast()`, not `immobilize()`, so freedom rolls, fatigue,
   and cleanup are shared with every other hold.

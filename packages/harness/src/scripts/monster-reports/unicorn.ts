@@ -96,7 +96,10 @@ function instrument(isUnicorn: (creature: unknown) => boolean): void {
 		return result;
 	});
 
-	wrap(proto('Unconquerable Horn'), 'effect', (original, self, args) => {
+	// The ward is armed by Horn of Proof since roadmap 35 task 5 (the Unconquerable Horn is a
+	// rally call now); count arming where it happens. `ward` is synchronous, unlike `effect`,
+	// whose ward comes after an await.
+	wrap(proto('Horn of Proof'), 'ward', (original, self, args) => {
 		const [, target] = args as [unknown, Creature];
 		const before = target.encounterModifiers.unconquerableWard;
 		const result = original.apply(self, args);

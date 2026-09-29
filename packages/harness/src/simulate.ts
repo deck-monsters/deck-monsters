@@ -632,7 +632,7 @@ export async function simulate(config: SimConfig): Promise<SimResult> {
 				// its spec's team, or a faction of its own, on both the character and the monster
 				// (the monster's team wins in `factionOf`). Otherwise teamless contestants in a
 				// team fight never fight each other and all get credited a win, and ally checks
-				// such as Unconquerable Horn's treat every harness contestant as a teammate.
+				// such as the Unconquerable Horn's rally treat every harness contestant as a teammate.
 				// A real boss keeps what the ring gives it: the Boss team and boss targeting.
 				if (m.role !== 'boss') {
 					// A human with no team stays teamless, as a player's monster is, so the ring's

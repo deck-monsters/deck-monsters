@@ -90,7 +90,7 @@ export class BlinkCard extends CurseCard {
 		});
 
 		if (attackSuccess.success) {
-			// Unconquerable Horn: an armed ward cancels the whole time-shift right here, before
+			// Horn of Proof ward: an armed ward cancels the whole time-shift right here, before
 			// any BlinkEffect or timeShifted flag exists, so nothing dangles and the later
 			// drain (inside that effect's ATTACK_PHASE branch) never gets the chance to run.
 			if (wardAgainst(blinkTarget, blinkPlayer, { activeContestants, ring })) {

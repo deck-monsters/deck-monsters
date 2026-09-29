@@ -1310,13 +1310,18 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  "doth wonderfully help against 
  poisons."
 
- Remove one of these, in order: 
- your worst stat penalty this 
- fight, or a Bad Batch waiting in 
- the ring. If the horn is turned 
- on someone who is held, it frees 
- them first.
- Then heal 3 hp.
+ Drink from the horn: remove one 
+ harm already on you (your worst 
+ stat penalty, or a Bad Batch 
+ waiting in the ring; if turned 
+ on someone held, it frees them), 
+ then ward yourself for one round 
+ against the next harmful effect 
+ an opponent puts on you that is 
+ not damage (a hold, a curse, 
+ poison, being blinked away, or 
+ being confused). Then heal 3 hp. 
+ The ward works once per fight.
 
  Level: 2
  Usable by: Unicorn, Cleric
@@ -1904,29 +1909,29 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
 
 ```text
 ==================================
- 💎  Unconquerable Horn  ◆
+ ✨  Unconquerable Horn  ◆
 ----------------------------------
 
  Canst thou bind the unicorn with 
  his band in the furrow? Thou 
- canst not. Many have tried.
+ canst not. Many have tried. Its 
+ horn is "of a wonderful 
+ brightness," and when it rings, 
+ the wood cometh.
 
- Ward yourself for one round 
- against the next harmful effect 
- an opponent puts on you that is 
- not damage: a hold, a curse, 
- poison, being blinked away, or 
- being confused. That effect is 
- cancelled and the ward is spent; 
- any damage that comes with it 
- still lands.
- Every play also heals 1d6.
- Once per fight. Does not stack.
+ Let the horn ring out: hit your 
+ target, and an ally in the ring 
+ strikes it too. If you have no 
+ ally, a creature of the wood 
+ answers its light: an otter, a 
+ deer, or a ram (1d20 + 2 to hit, 
+ 1d4 damage).
 
  Level: 1
  Usable by: Unicorn
  MSRP: 50
- Class: Boost
+ Targets: ac
+ Class: Melee
 
 ==================================
 ```

@@ -3,6 +3,7 @@ import { subEventDelay } from '../helpers/delay-times.js';
 import { UNICORN } from '../constants/creature-types.js';
 import { CLERIC } from '../constants/creature-classes.js';
 import { HEAL } from '../constants/card-classes.js';
+import { armControlWard } from './helpers/control-ward.js';
 import { BAD_BATCH_EFFECT, EXPOSED_EFFECT, GLOAMING_REST_EFFECT, WINDED_EFFECT } from '../constants/effect-types.js';
 import { REST_AC_PENALTY } from './gloaming-rest.js';
 import { WINDED_AC_PENALTY } from './fire-breath.js';
@@ -23,8 +24,8 @@ const TEMPORARY_AC_PENALTIES: Record<string, number> = {
 import { RARE } from '../helpers/probabilities.js';
 import { CHEAP } from '../helpers/costs.js';
 
-// Fixed and deliberately small: the cleanse is the point, and the heal must stay weaker
-// than a dedicated Heal (1d4 + int, which also scales with level).
+// Fixed and deliberately small: the cleanse and the ward are the point, and the heal must
+// stay weaker than a dedicated Heal (1d4 + int, which also scales with level).
 const HORN_OF_PROOF_HEAL = 3;
 
 // The stats a curse such as Soften pushes below zero for the rest of the fight.
@@ -43,6 +44,14 @@ const CURSABLE_STATS = ['ac', 'dex', 'str', 'int'];
  *      text says so rather than promising a self-cleanse that cannot happen;
  *   2. the target's harshest negative encounter stat penalty (Soften and similar curses);
  *   3. a Bad Batch waiting in the ring to turn the next drink to poison.
+ *
+ * The ward (owner, 2026-09-29, roadmap 35 task 5): the owner wanted Horn of Proof to be "the
+ * do everything card", so the one-round counterspell that briefly belonged to the Unconquerable
+ * Horn lives here now (cards/helpers/control-ward.ts has the rules; that card became a rally
+ * call). After the cleanse the drinker is warded for one round against the next harmful,
+ * non-damage effect an opponent puts on them, once per fight, and then healed. The cup that
+ * draws poison out also keeps it from taking: Topsell's "doth wonderfully help against
+ * poisons" read forward in time.
  *
  * Player-facing lines (docs/archive/roadmap/28-unicorn-voice-punch-up.md): the description quotes
  * Topsell (1607, p. 721), the horn "doth wonderfully help against poisons", beside his
@@ -66,8 +75,7 @@ export class HornOfProofCard extends BaseCard {
 	}
 
 	get stats(): string {
-		return `Remove one of these, in order: your worst stat penalty this fight, or a Bad Batch waiting in the ring. If the horn is turned on someone who is held, it frees them first.
-Then heal ${(this.constructor as typeof HornOfProofCard).healAmount} hp.`;
+		return `Drink from the horn: remove one harm already on you (your worst stat penalty, or a Bad Batch waiting in the ring; if turned on someone held, it frees them), then ward yourself for one round against the next harmful effect an opponent puts on you that is not damage (a hold, a curse, poison, being blinked away, or being confused). Then heal ${(this.constructor as typeof HornOfProofCard).healAmount} hp. The ward works once per fight.`;
 	}
 
 	override getTargets(player: any): any[] {
@@ -129,7 +137,29 @@ Then heal ${(this.constructor as typeof HornOfProofCard).healAmount} hp.`;
 		return true;
 	}
 
-	async effect(_player: any, target: any, ring?: any): Promise<boolean> {
+	/**
+	 * Arms the one-round counterspell on `target` and says so. Confusion can point the horn at
+	 * someone else; the ward then goes to them, as it did when the Unconquerable Horn carried it.
+	 */
+	ward(player: any, target: any): void {
+		const result = armControlWard(target, this.emit.bind(this));
+		let narration: string;
+
+		if (result === 'armed') {
+			narration =
+				player === target
+					? `${this.icon} ${player.givenName} sets ${player.pronouns.his} lips to the horn, and no poison shall pass it. The next harm laid on ${player.pronouns.him} this round will not take.`
+					: `${this.icon} In confusion, ${player.givenName} passeth the horn to ${target.givenName}. The next harm laid on ${target.pronouns.him} this round will not take.`;
+		} else if (result === 'already-armed') {
+			narration = `${this.icon} ${target.givenName} hath drunk already, and standeth warded.`;
+		} else {
+			narration = `${this.icon} ${target.givenName} has already been warded once this fight. The horn wardeth not twice.`;
+		}
+
+		this.emit('narration', { narration });
+	}
+
+	async effect(player: any, target: any, ring?: any): Promise<boolean> {
 		const cleansed =
 			this.cleanseHold(target) || this.cleanseCurse(target) || this.cleanseRing(target, ring);
 
@@ -138,6 +168,9 @@ Then heal ${(this.constructor as typeof HornOfProofCard).healAmount} hp.`;
 				narration: `${this.icon} The horn findeth nothing here to purify.`,
 			});
 		}
+		await subEventDelay(ring?.pacingMultiplier);
+
+		this.ward(player, target);
 		await subEventDelay(ring?.pacingMultiplier);
 
 		return target.heal((this.constructor as typeof HornOfProofCard).healAmount);

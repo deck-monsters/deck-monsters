@@ -53,7 +53,7 @@ export class EnchantedFaceswapCard extends BaseCard {
 										encounterEffect.effectType !== FACESWAP_EFFECT
 								);
 
-							// Unconquerable Horn: being faceswapped — having your own card
+							// Horn of Proof ward: being faceswapped — having your own card
 							// turned back on you — is the negative, non-damage effect here.
 							// swappedPlayer (the attacker) is who it lands on; faceswapTarget
 							// (the trap's owner) is the source. An armed ward on the attacker

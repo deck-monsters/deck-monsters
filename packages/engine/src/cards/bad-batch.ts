@@ -57,7 +57,7 @@ export class BadBatchCard extends BaseCard {
 
 				if (effect && getHealRoll) {
 					card.effect = (player: any, target: any, effectRing: any, effectActiveContestants: any) => {
-						// Unconquerable Horn: an armed ward on the drinker cancels the poisoning
+						// Horn of Proof ward: an armed ward on the drinker cancels the poisoning
 						// (only when badBatchTarget, who brewed it, is an opponent of the
 						// drinker) and the drink heals as normal, calling the card's original
 						// effect instead.

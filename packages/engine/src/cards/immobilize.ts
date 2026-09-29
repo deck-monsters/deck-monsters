@@ -374,15 +374,15 @@ ${ongoingDamageText}`;
 			ring,
 			activeContestants
 		);
-		// Unconquerable Horn: an armed ward cancels the hold, not the damage. wardAgainst()
+		// Horn of Proof ward: an armed ward cancels the hold, not the damage. wardAgainst()
 		// (cards/helpers/control-ward.ts) is the shared entry point every negative,
 		// non-damage effect goes through; only an opponent's hold spends it, not a confused
 		// creature's hold on itself, and not a teammate's area hold such as Mesmerize.
 		if (immobilizeSuccess && wardAgainst(target, player, { activeContestants, ring })) {
 			this.emit('narration', {
-				// Job 39:9 (King James): the Unconquerable Horn's voice; see unconquerable-horn.ts.
+				// Job 39:9 (King James): the Unicorn's voice; see horn-of-proof.ts.
 				// Confusion can lend the ward to any creature, so only a Unicorn gets the quote.
-				narration: `\n${target.creatureType === UNICORN ? '"Will the unicorn be willing to serve thee?" ' : ''}${target.givenName} will not be taken and held. ${capitalize(target.pronouns.he)} ${agree(target.pronouns, 'refuses', 'refuse')} to be ${this.actions.IMMOBILIZED}, and the Unconquerable Horn's ward is spent.`,
+				narration: `\n${target.creatureType === UNICORN ? '"Will the unicorn be willing to serve thee?" ' : ''}${target.givenName} will not be taken and held. ${capitalize(target.pronouns.he)} ${agree(target.pronouns, 'refuses', 'refuse')} to be ${this.actions.IMMOBILIZED}, and Horn of Proof's ward is spent.`,
 			});
 			if (this.doDamageOnImmobilize) {
 				return super.effect(player, target, ring, activeContestants);

@@ -215,7 +215,7 @@ Natural 1 on either roll fails. Natural 20 on the charge deals max damage.`;
 	 * Applies the hold to the Unicorn who played the card and to nobody else, reusing the
 	 * ordinary ImmobilizeEffect so freedom, fatigue, and cleanup behave exactly as any other
 	 * hold. It deliberately skips `immobilize()`: that path is for holds an opponent applies,
-	 * and it is where Unconquerable Horn's ward is checked. The encounter owns the effect, so
+	 * and it is where Horn of Proof's ward is checked. The encounter owns the effect, so
 	 * `endEncounter()` clears it on fight end, flee, death, or cancellation.
 	 */
 	stickFast(player: any, ring: any): void {

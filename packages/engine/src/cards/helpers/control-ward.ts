@@ -2,8 +2,11 @@ import { ATTACK_PHASE } from '../../constants/phases.js';
 import { UNICORN } from '../../constants/creature-types.js';
 
 /**
- * Unconquerable Horn's once-per-fight ward, generalized (roadmap 35, "Unconquerable Horn as
- * a counterspell", owner 2026-09-28) from a hold-only block into a one-round counterspell: it
+ * Horn of Proof's once-per-fight ward. It began as the Unconquerable Horn's hold-only block,
+ * was generalized (roadmap 35, "Unconquerable Horn as a counterspell", owner 2026-09-28) into
+ * a one-round counterspell, and moved to Horn of Proof on 2026-09-29 when the owner made
+ * that card the do-everything protection card (the Unconquerable Horn became a rally call).
+ * The mechanism did not change; only who arms it did. It is a one-round counterspell: it
  * cancels the next negative, non-damage effect an opponent puts on its warder, then is spent.
  * It lives in `encounterModifiers`, which `endEncounter()` deletes, so it never outlives the
  * fight and is never serialized.
@@ -140,4 +143,4 @@ export const wardAgainst = (
  * in plain words. `refusal` is a full sentence, e.g. "will not be cursed."
  */
 export const controlWardNarration = (target: any, refusal: string): string =>
-	`${target.creatureType === UNICORN ? '"Will the unicorn be willing to serve thee?" ' : ''}${target.givenName} ${refusal} The Unconquerable Horn's ward is spent.`;
+	`${target.creatureType === UNICORN ? '"Will the unicorn be willing to serve thee?" ' : ''}${target.givenName} ${refusal} Horn of Proof's ward is spent.`;

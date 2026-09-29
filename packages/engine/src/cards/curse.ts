@@ -122,7 +122,7 @@ export class CurseCard extends HitCard {
 	}
 
 	/**
-	 * An armed Unconquerable Horn ward cancels the curse, not the hit that carried it (roadmap
+	 * An armed Horn of Proof ward cancels the curse, not the hit that carried it (roadmap
 	 * 35): the attack roll and damage already happened in `HitCard.effect` before `onLanded`
 	 * runs, so returning here just skips the stat penalty.
 	 */
