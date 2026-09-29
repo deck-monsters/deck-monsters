@@ -123,6 +123,16 @@ For task 8's new Dragon cards and any Dragon narration they bring:
   shakes opponents' aim), alongside existing cards opened to the Wizard. Names and shapes may
   change to suit the Norse voice.
 
+### Finding: attack-roll penalties barely matter (2026-09-29)
+
+Measured in real hands against the field, a penalty to opponents' attack rolls does not earn a
+card slot in any shape tried: Dissonant Voice (-2, one card; -4; plus a 1d4 sting) and Helm of
+Awe (-2 for three cards; -5; -2 for a whole round) all stayed 5-11 points below the card they
+replaced. Fights last about two rounds and each opponent makes only a few attack rolls, so a
+few points off each changes little. A card whose job is to blunt opponents needs a stronger
+shape: a lost card (fear, cowering), a hold, or a redirect. Design future debuff cards with
+this in mind, and do not tune a to-hit penalty upward to fix one.
+
 ## Targets for a card fix
 
 A tweaked unique card should, at levels 1-7:
