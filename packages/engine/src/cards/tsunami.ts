@@ -44,7 +44,8 @@ export class TsunamiCard extends BaseCard {
 			['sweeps away', 70],
 			['swamps', 60],
 			['half-drowns', 30],
-			['sends the whale-road crashing down on', 40],
+			// Owner's idea (2026-09-29): the roads that all lead to Rome lead into the water now.
+			['lifts the whole sea until all roads lead to Neptune instead of Rome, and drops it on', 40],
 			['gives a very thorough bath to', 5],
 		],
 	};
