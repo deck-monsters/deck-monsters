@@ -15,6 +15,7 @@ are not checked in; rerun the plan to reproduce them.
 
 | Report | What it measured |
 |---|---|
+| [2026-09-29 roadmap 36 confirmation](2026-09-29-confirm-36.md) | The owner's before and after of the pin rule, Take Wing's area dodge, and Mesmerize's natural-1 self-catch on PR D's hands: every field average in band, the level 7 Dragon 38% → 48%, and the level 1 Dragon vs Basilisk 85.2% (the pin rule; the Faceswap ceiling, left as it is) |
 | [2026-09-29 roadmap 35 PR D confirmation](2026-09-29-confirm-35d.md) | The owner's run, in two parts: the branch's code on PR C's hands (nothing else moved), then a new search where the Dragon and Unicorn own their new cards (the Dragon 63% / 63% / 59% / 38% at levels 1-7, every field average in band) |
 | `2026-09-29-collection-35d.json` (input) | The Layer 3 collection with one change for PR D's confirmation run: the Dragon and the Unicorn also own their new and reworked cards (Tail Lash, Asinine Companion, Enchanted Faceswap, Lucky Strike, Helm of Awe; Unconquerable Horn, Dissonant Voice, Horn of Proof, Gloaming Rest) at share 1 at every level that can hold them. New cards are in no real player's collection yet, so the search could not otherwise try them |
 | [2026-09-28 roadmap 35 confirmation](2026-09-28-confirm-35.md) | The owner's run: a new search on the changed game at levels 1-7, then 2,000 fights a pair before and after the Dragon, Gladiator, and Tsunami changes |

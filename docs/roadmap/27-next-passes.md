@@ -132,9 +132,34 @@ owner decision in [11](11-balance-and-mechanics.md).
 - **Content backlog** (12): Card Pops, Re-quip, the listed card ideas, the Time Lord and
   Bureaucrat monsters, and the optional data-driven card spec. Take them one per content
   pass, each with harness evidence.
-- **Next balance pass** ([11](11-balance-and-mechanics.md#next-balance-pass-carried-from-roadmap-35)):
-  the pinned-advantage rule first, then the optional Mesmerize, Enthrall, and Harden fixes,
-  a per-fight split in the harness, and a group-fight card if wanted.
+- **Balance leftovers** ([11](11-balance-and-mechanics.md#next-balance-pass-carried-from-roadmap-35)):
+  roadmap 36 closed the pin rule, Mesmerize, Harden, the level 7 Dragon, and the per-fight
+  split. The Faceswap watch, the level 5 Weeping Angel against the Minotaur, and a group-fight
+  card remain.
+- **Room state as `jsonb`, not a gzip blob** (owner, 2026-09-29: "an artifact of the
+  infrastructure that the game ran on long ago"). `Game.persistState()` gzips the whole game
+  JSON and base64-encodes it into `rooms.state_blob` (`text`). So SQL cannot see inside it.
+  Answering "which Dragons own Faceswap?" for roadmap 36 meant pulling every blob out and
+  decoding it by hand. Base64 also makes the stored value about a third larger, and
+  Postgres already compresses large values itself (TOAST). The plan is in two steps:
+  1. **Store the same JSON as `jsonb`.**
+     - Add a `state` `jsonb` column.
+     - `persistState()` writes plain JSON through the `StateStore`.
+     - A migration decodes the old blobs, and the loader keeps reading both forms for one
+       release. `getOptions()` already accepts plain JSON, so this is mostly server and
+       migration work.
+     - The quarantine path, `restoreGame`, and the engine's no-database rule stay as they
+       are. The state is still one document per room, written by the engine and validated
+       by `gameStateSchema` on the way in.
+     - Size: one pass task, plus a check on production row sizes and save frequency before
+       and after.
+  2. **Normalized tables** (characters, monsters, decks) only if a real query needs more than
+     `jsonb` paths and a GIN index give. It would split the engine's one serialized game
+     into rows the server must keep consistent, so it needs a reason first. Analytics
+     already has its own tables (`fight_summaries`, `room_monster_stats`).
+
+  Read [rooms and identity](../architecture/rooms-and-identity.md) first: every new query
+  keeps its `room_id` scope.
 - **Combat design** (11): stat reform, initiative, crit failures and crit ticks, card
   balance by tier, Team XP, and fight threads.
 
