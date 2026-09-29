@@ -86,16 +86,18 @@ describe('./cards/tsunami.ts Tsunami', () => {
 		expect((card as any).flavorText).to.equal(undefined);
 	});
 
-	it('knocks a flying foe out of the sky, since a wave cannot be dodged', async () => {
+	it('passes under a flying foe, as any first area attack does (roadmap 36)', async () => {
 		const flyer = new Dragon({ name: 'Vessa' });
 		flyer.startEncounter(ring);
 		const withFlyer = [...contestants, { monster: flyer, character: {} }];
 		await new TakeWingCard().play(flyer, flyer, ring, withFlyer);
 		expect(isAirborne(flyer)).to.equal(true);
 
+		const hp = flyer.hp;
 		await new TsunamiCard().play(dragon, foe, ring, withFlyer);
 
-		expect(isAirborne(flyer)).to.equal(false);
+		expect(isAirborne(flyer)).to.equal(true);
+		expect(flyer.hp).to.equal(hp);
 	});
 
 	it('survives a JSON hydration round trip', () => {

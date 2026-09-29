@@ -32,8 +32,8 @@ export class TakeWingCard extends BaseCard {
 	static level = 0;
 	static cost = CHEAP.cost;
 	/**
-	 * A flier dodges the first melee blow or area attack (Blast and its kin, a breath,
-	 * Mesmerize) that comes for it. A wave still reaches it (Tsunami's `reachesTheSky`). Roadmap 36: when only melee missed, a Blast knocked
+	 * A flier dodges the first melee blow or area attack (Blast and its kin, a breath, a
+	 * tsunami, Mesmerize) that comes for it. Roadmap 36: when only melee missed, a Blast knocked
 	 * the dragon out of the sky, so against a Blast-heavy hand Take Wing was a wasted turn. At
 	 * level 7 the Dragon won 2% against the Unicorn's four Blasts. Letting the flier dodge the
 	 * first area attack too lifted that matchup to 37% and the Dragon's level 7 field average from
@@ -93,9 +93,7 @@ Any damage that lands while you are in the air knocks you down, and the dive is 
 				if (target !== flier || !isAirborne(flier)) return effect.call(card, attacker, target, ...rest);
 
 				const { dodgesSpells } = this.constructor as typeof TakeWingCard;
-				// A wave reaches the sky (Tsunami's `reachesTheSky`), so only other area attacks miss.
-				const areaDodge = dodgesSpells && card.isCardClass(AOE) && !(card.constructor as { reachesTheSky?: boolean }).reachesTheSky;
-				if (!dodged && (card.isCardClass(MELEE) || areaDodge)) {
+				if (!dodged && (card.isCardClass(MELEE) || (dodgesSpells && card.isCardClass(AOE)))) {
 					dodged = true;
 					this.emit('narration', {
 						narration: card.isCardClass(MELEE)

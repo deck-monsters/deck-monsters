@@ -17,7 +17,8 @@ export const RIDE_THE_WAVE_DIFFICULTY = 10;
  * is the price (docs/archive/roadmap/30-dragon-pack.md). Epic and back-room only, like the Jinn's
  * Sandstorm. The description quotes Job 41:31-32 (1611 King James Bible), on Leviathan.
  *
- * An area card, so it finds hidden monsters and knocks a flying one down. The Dragon is
+ * An area card, so it finds hidden monsters. A flying monster rides above it, as above any first
+ * area attack (Take Wing, roadmap 36; the owner: a wave catching a dragon in the air was odd). The Dragon is
  * struck last, so a wave that sinks its own maker still reaches everyone else first.
  *
  * Roadmap 35 (owner, 2026-09-28: "tweak slightly, it shouldn't become OP"): the wave hit
@@ -38,8 +39,6 @@ export class TsunamiCard extends BaseCard {
 	static level = 0;
 	static cost = EXPENSIVE.cost;
 	static notForSale = true;
-	/** A wave reaches a flying monster: Take Wing's dodge does not work against it (roadmap 36). */
-	static reachesTheSky = true;
 	static flavors = {
 		hits: [
 			['brings the sea down on', 80],
