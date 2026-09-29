@@ -339,6 +339,15 @@ Go to **Variables** and add:
 
 ---
 
+## Shutdown
+
+On `SIGTERM` or `SIGINT` the server stops accepting connections, saves every active room with
+`RoomManager.flushAll(8000)` (rooms in a fight too, without unloading them), ends the database
+pool, and exits 0. Repeated signals are ignored. The 8 s deadline sits under Railway's default
+10 s grace period; a write that hangs is abandoned so it cannot block the exit. The log line
+`flushed rooms` reports how many flushed, failed, and timed out. Before roadmap 37 there was
+no handler, and each deploy lost up to 30 s of unsaved changes in every active room.
+
 ## Room state migration to jsonb (roadmap 37)
 
 Room state moves from `rooms.state_blob` (base64 gzip JSON) to `rooms.state` (`jsonb`). Release
@@ -385,12 +394,17 @@ Commands run from `packages/server` with `DATABASE_URL` set to the production da
   write a newer blob between the script's read and its write:
   1. Stop the server service (Railway dashboard, or `railway down`) and wait until it shows
      stopped.
-  2. Preview, then rewrite `state` from `state_blob` for every room:
+  2. Preview, then rewrite `state` from `state_blob` for every room that has a blob:
      `pnpm exec tsx scripts/migrate-room-state-to-jsonb.ts --from-blob --i-stopped-the-service --dry-run`,
-     then the same without `--dry-run`. It stamps each room with a new `state_version`, newer
-     than anything the old release left. The script refuses `--from-blob` without
-     `--i-stopped-the-service`.
-  3. Deploy release 1, and repeat the read-only checks.
+     then the same without `--dry-run`. It sets each room's `state_version` one above its
+     stored value, so it does not depend on the laptop's clock agreeing with Railway's. The
+     script refuses `--from-blob` without `--i-stopped-the-service`, and any flag it does not
+     know.
+  3. Start the service again on release 1 (redeploy it, or start the stopped service if it
+     is still release 1's build), and repeat the read-only checks.
+- **The default mode does not repair a rollback.** It converts only rooms whose `state` is
+  null, so after a rollback it skips the stale rooms and the read-only check still reads
+  `unconverted = 0`. Use `--from-blob` for that.
 - **After the contract release** drops `state_blob`, redeploying an older release would
   restore stale or missing state. Its release notes must say so.
 

@@ -4788,6 +4788,12 @@ tombstone: live columns nulled, the old state quarantined, and
 `state_version = nextStateVersion()`. Any save stamped earlier is now stale. A failed restore
 quarantines the same way, so an in-flight save cannot bring back the state that failed.
 
+The first version of this fix opened a new window, caught in review before merge: the room left
+the cache at the start of the reset, but the tombstone was the last write. A load in between
+restored the old row, and its next save outranked the tombstone. The reset now registers
+itself in `RoomManager.resetting` and invalidates in-flight loads before any await; loads wait
+for it, and a load that had already read the row is discarded at the #71 load-epoch gate.
+
 **Status**: Fixed.
 
 ## Closed without a fix
