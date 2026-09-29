@@ -103,6 +103,18 @@ widened Loki or luck ranges are not.
   decides whether the Angel needs a trim instead).
 - [ ] **Harden — leave unless trivial.** 0.4 in the catalogue. The owner: "fine if a bit weak".
   Change it only if a one-line fix reaches the target without new rules.
+- [ ] **The level 7 Dragon folds to the Unicorn's Blasts (3%).** Pre-existing (2% in PR C's run).
+  A diagnosis on the searched hands ([PR D's confirmation](../reference/balance-reports/2026-09-29-confirm-35d.md#open-items-this-run-surfaced))
+  found the Unicorn's four Blasts are the cause:
+  - even a Dragon holding nine Hits wins only 8%;
+  - replacing the Unicorn's Blasts with Hits lifts the Dragon to 26%;
+  - other Blast users, such as the Weeping Angel, beat the Dragon only 62–67%.
+  Find what in the Dragon's level 7 body or hand makes Blast so decisive against it (HP, youth
+  AC gone at 7, the three Take Wings) before changing anything. It breaks the owner's 85% cap.
+- [ ] **Watch the level 1 Dragon with Faceswap.** With every new card owned, the Dragon beats the
+  Unicorn 84% and the Basilisk 80% at level 1. That is under the cap but outside 20–80%. Faceswap
+  is rare and not for sale, so it is a ceiling. Recheck when real collections include it
+  (production data) before trimming.
 - [ ] **Harness: a per-fight split for card effects.** The split that exposed Gloaming Rest's
   full heal was a one-off probe (`simulate({ fights: 1, seed })` in a loop with the card's
   method wrapped). A runner option that tags each fight with "effect X happened" would make
