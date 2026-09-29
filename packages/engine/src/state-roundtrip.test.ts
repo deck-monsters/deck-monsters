@@ -139,10 +139,9 @@ describe('state round trip through jsonb key order', () => {
 
 		const saved = JSON.parse(JSON.stringify(game));
 		const resorted = resortLikeJsonb(saved) as any;
-		expect(Object.keys(resorted.options.characters)).to.deep.equal(['zz', 'mmmm', 'aaa-user']);
 		const restored = restoreGame(resorted, () => {});
 		games.push(restored);
-
+		expect(Object.keys(resorted.options.characters)).to.deep.equal(['zz', 'mmmm', 'aaa-user']);
 
 		return { game, restored, saved, resorted, zedFang };
 	};
@@ -208,7 +207,7 @@ describe('state round trip through jsonb key order', () => {
 		// defaults are settled, and compare that against its own re-sorted restore.
 		const settled = restoreGame(saved, () => {});
 		const settledSave = JSON.parse(JSON.stringify(settled));
-		const afterSort = restoreGame(resortLikeJsonb(settledSave), () => {});
+		const afterSort = restoreGame(resortLikeJsonb(settledSave) as Record<string, unknown>, () => {});
 		games.push(settled, afterSort);
 		// Restore also re-sorts each character's `deck` array by card name (an array, so not a
 		// key-order effect); sort decks on both sides so that difference is not reported.
