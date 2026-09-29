@@ -367,4 +367,23 @@ describe('./cards/unconquerable-horn.ts Unconquerable Horn', () => {
 			expect(unicorn.encounterModifiers[CONTROL_WARD]).to.equal('lapsed');
 		});
 	});
+
+	describe('the steadying heal (roadmap 35)', () => {
+		it('heals 1d6 on every play, armed or not, so the card is never dead', async () => {
+			for (let i = 0; i < 20; i += 1) {
+				const unicorn = new Unicorn({ name: 'Nola' });
+				unicorn.startEncounter({ contestants: [], encounterEffects: [] });
+				unicorn.hp = 5;
+				const card = new UnconquerableHornCard();
+				await card.play(unicorn, unicorn);
+				expect(unicorn.hp).to.be.within(6, 11);
+				// A second play in the same fight cannot re-arm, and still heals.
+				const before = unicorn.hp;
+				await card.play(unicorn, unicorn);
+				expect(unicorn.hp - before).to.be.within(1, 6);
+				unicorn.disposeTimers();
+			}
+		});
+	});
 });
+

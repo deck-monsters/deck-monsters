@@ -148,6 +148,30 @@ export const VARIANTS: Record<string, Variant> = {
 			};
 		},
 	},
+	'horn-heal-1d4': {
+		about: 'Unconquerable Horn: also heals 1d4 when played (never a dead card)',
+		apply: () =>
+			cardMethod('Unconquerable Horn', 'effect', original =>
+				function (this: unknown, ...args: unknown[]) {
+					const [, target] = args as [unknown, { heal(n: number): unknown; dead?: boolean }];
+					const result = original.apply(this, args);
+					if (!target.dead) void target.heal(Math.floor(Math.random() * 4) + 1);
+					return result;
+				},
+			),
+	},
+	'horn-heal-1d6': {
+		about: 'Unconquerable Horn: also heals 1d6 when played (never a dead card)',
+		apply: () =>
+			cardMethod('Unconquerable Horn', 'effect', original =>
+				function (this: unknown, ...args: unknown[]) {
+					const [, target] = args as [unknown, { heal(n: number): unknown; dead?: boolean }];
+					const result = original.apply(this, args);
+					if (!target.dead) void target.heal(Math.floor(Math.random() * 6) + 1);
+					return result;
+				},
+			),
+	},
 	'gladiator-ac+1': { about: 'Gladiator: 1 more AC', apply: () => staticBonus('Gladiator', 'acVariance', 1) },
 	'gladiator-hp+3': { about: 'Gladiator: 3 more HP', apply: () => staticBonus('Gladiator', 'hpVariance', 3) },
 	'gladiator-early-ac': {

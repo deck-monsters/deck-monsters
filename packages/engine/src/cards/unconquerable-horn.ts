@@ -4,6 +4,18 @@ import { UNICORN } from '../constants/creature-types.js';
 import { BOOST } from '../constants/card-classes.js';
 import { UNCOMMON } from '../helpers/probabilities.js';
 import { REASONABLE } from '../helpers/costs.js';
+import { chance } from '../helpers/chance.js';
+
+const { roll } = chance;
+
+/**
+ * The steadying heal every play gives, so the card is never dead against a hand with nothing to
+ * ward (roadmap 35, measured 2026-09-29): as a pure counterspell the Horn was worth +4 to +12
+ * points against the Weeping Angel but a wasted slot against brutes that only strike, and 1-6
+ * points below the Hit it replaced overall. With 1d6 it is worth about a Hit across levels 1-7,
+ * and more against the effects it counters (1d4 still trailed a Hit at level 3 and 5).
+ */
+export const HORN_STEADYING_HEAL = '1d6';
 
 /*
  * Aelian (De Animalium Natura, ancient report) calls the cartazon's horn unconquerable;
@@ -41,7 +53,7 @@ export class UnconquerableHornCard extends BaseCard {
 	}
 
 	get stats(): string {
-		return `Ward yourself for one round against the next harmful effect an opponent puts on you that is not damage: a hold, a curse, poison, being blinked away, or being confused. That effect is cancelled and the ward is spent; any damage that comes with it still lands.
+		return `Ward yourself for one round against the next harmful effect an opponent puts on you that is not damage: a hold, a curse, poison, being blinked away, or being confused. That effect is cancelled and the ward is spent; any damage that comes with it still lands.\nEvery play also heals ${HORN_STEADYING_HEAL}.
 Once per fight. Does not stack.`;
 	}
 
@@ -49,7 +61,7 @@ Once per fight. Does not stack.`;
 		return [player];
 	}
 
-	effect(player: any, target: any): boolean {
+	async effect(player: any, target: any): Promise<boolean> {
 		const result = armControlWard(target, this.emit.bind(this));
 		let narration: string;
 
@@ -65,7 +77,18 @@ Once per fight. Does not stack.`;
 		}
 
 		this.emit('narration', { narration });
-		return true;
+
+		// Never a dead card: the horn steadies its bearer whether or not a ward takes.
+		const healRoll = roll({ primaryDice: HORN_STEADYING_HEAL });
+		this.emit('rolled', {
+			reason: 'to steady on the horn.',
+			card: this,
+			roll: healRoll,
+			who: target,
+			outcome: `${target.givenName} gathereth strength.`,
+		});
+		await target.heal(healRoll.result);
+		return !target.dead;
 	}
 }
 

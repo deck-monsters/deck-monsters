@@ -150,6 +150,9 @@ opponent lands on the warder.
   9 by default — the same point next round), it lapses: `encounterModifiers.unconquerableWard`
   becomes `'lapsed'`, with its own narration. **Once per fight either way**: `armControlWard`
   refuses to re-arm after `'spent'` or `'lapsed'`.
+- **Never a dead card.** Every play of Unconquerable Horn also heals 1d6
+  (`HORN_STEADYING_HEAL`), armed or not. As a pure counterspell it was a wasted slot against
+  hands with nothing to ward (roadmap 35, measured 2026-09-29).
 - **Self-holds skip the ward.** Sticketh sticks its own player with the ordinary
   `ImmobilizeEffect` through `stickFast()`, not `immobilize()`, so freedom rolls, fatigue,
   and cleanup are shared with every other hold.

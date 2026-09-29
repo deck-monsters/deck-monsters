@@ -185,6 +185,7 @@ Source: `packages/engine/src/cards/unconquerable-horn.ts`.
 
 ```text
 Ward yourself for one round against the next harmful effect an opponent puts on you that is not damage: a hold, a curse, poison, being blinked away, or being confused. That effect is cancelled and the ward is spent; any damage that comes with it still lands.
+Every play also heals 1d6.
 Once per fight. Does not stack.
 ```
 
@@ -196,6 +197,8 @@ Once per fight. Does not stack.
 | effect → narration | `💎 In confusion, {player} lends {his} ward to {target}. The next harm on {him} this round will not take.` |
 | effect → narration | `{target} already standeth braced. No band shall hold {him}.` |
 | effect → narration | `{target} has already refused one hold this fight. The ward riseth not twice.` |
+| effect → reason | `to steady on the horn.` |
+| effect → outcome | `{target} gathereth strength.` |
 
 **Lines elsewhere that name this card:**
 

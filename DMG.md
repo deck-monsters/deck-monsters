@@ -1920,6 +1920,7 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  cancelled and the ward is spent; 
  any damage that comes with it 
  still lands.
+ Every play also heals 1d6.
  Once per fight. Does not stack.
 
  Level: 1
