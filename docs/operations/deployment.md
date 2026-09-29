@@ -341,7 +341,8 @@ Go to **Variables** and add:
 
 ## Shutdown
 
-On `SIGTERM` or `SIGINT` the server stops accepting connections, saves every active room with
+On `SIGTERM` or `SIGINT` the server, and the Discord connector the same way (it closes the
+Discord client first), stops accepting connections, saves every active room with
 `RoomManager.flushAll(8000)` (rooms in a fight too, without unloading them), ends the database
 pool, and exits 0. Repeated signals are ignored. The 8 s deadline sits under Railway's default
 10 s grace period; a write that hangs is abandoned so it cannot block the exit. The log line
@@ -404,8 +405,10 @@ would be read stale and then overwritten.
      `railway down` for each), and wait until both show stopped.
   2. Preview, then rewrite `state` from `state_blob` for every room that has a blob:
      `pnpm exec tsx scripts/migrate-room-state-to-jsonb.ts --from-blob --i-stopped-the-service --dry-run`,
-     then the same without `--dry-run`. It sets each room's `state_version` one above its
-     stored value, so it does not depend on the laptop's clock agreeing with Railway's. The
+     then the same without `--dry-run`. It treats the blob as the truth: a room whose blob the
+     old release nulled (a reset or a quarantine while rolled back) has its stale `state`
+     cleared too, reported as `cleared stale state`. It sets each room's `state_version` one
+     above its stored value, so it does not depend on the laptop's clock agreeing with Railway's. The
      script refuses `--from-blob` without `--i-stopped-the-service`, and any flag it does not
      know.
   3. Start both services again on release 1 (redeploy them, or start the stopped services if
