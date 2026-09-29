@@ -163,8 +163,7 @@ export const VARIANTS: Record<string, Variant> = {
 	'awe-steady': { about: 'Helm of Awe: the recovery save never gets easier', apply: () => cardStatic('Helm of Awe', 'holdFatigue', 0) },
 	'awe-no-flee': { about: 'Helm of Awe: a natural 1 on a recovery save only cowers', apply: () => cardStatic('Helm of Awe', 'fleeOnLoki', 'none') },
 	'take-wing-melee-only': { about: 'Roadmap 36 before: a flying dragon dodges only the first melee blow, and a Blast knocks it down', apply: () => cardStatic('Take Wing', 'dodgesSpells', false) },
-	'mesmerize-no-self': { about: 'Mesmerize: the caster no longer mesmerizes itself', apply: () => cardStatic('Mesmerize', 'selfMesmerize', 'never') },
-	'mesmerize-loki': { about: 'Mesmerize: the caster mesmerizes itself only on a natural 1', apply: () => cardStatic('Mesmerize', 'selfMesmerize', 'loki') },
+	'mesmerize-self-always': { about: 'Roadmap 36 before: Mesmerize catches its caster every time', apply: () => cardStatic('Mesmerize', 'selfMesmerize', 'always') },
 	'no-pin-advantage': {
 		about: 'Roadmap 36 before: attacks against a pinned monster roll once, as before the pinned-advantage rule',
 		apply: () => {

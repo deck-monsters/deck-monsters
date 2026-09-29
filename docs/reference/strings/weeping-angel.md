@@ -146,12 +146,12 @@ Turns immobilized resets on curse of loki.
 
 Source: `packages/engine/src/cards/mesmerize.ts`.
 
-**Card description:** `You strut and preen. Your beauty mesmerizes everyone, including yourself.`
+**Card description:** `You strut and preen. Your beauty mesmerizes everyone. Now and then, even yourself.`
 
 **Rules text:**
 
 ```text
-Immobilize everyone.
+Immobilize everyone. You are caught too only on a natural 1 (1d20).
 
 If already immobilized, hit instead.
 Hit: 1d20 vs int / Damage: 1d6

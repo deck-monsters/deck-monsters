@@ -35,7 +35,7 @@ studies. The standing rules are in
 |---|---|---|---|---|
 | 1 | **Pinned monsters are easier to hit.** Every attack roll against a pinned monster has advantage, as against a restrained creature in D&D. Pinned means held by any `ImmobilizeEffect`, or awed by Helm of Awe. One shared roll-mode helper makes advantage and disadvantage cancel, and Dissonant Voice moves onto it. | Tests; a whole-field before and after on the same searched hands and seeds shows the band and guardrails hold; the owner's run confirms | Built (a8bdc97c). A local before and after on PR D's searched hands (400 fights a pair, levels 1–7): no field average moved more than 2.8 points (the Basilisk most, +2.8 at level 3 and +2.4 at level 5, since Coil now sets up easier hits); every field average is in band; the guardrails moved ±2%. The owner's run confirms | a8bdc97c |
 | 2 | **The level 7 Dragon against Blast.** Validate the finding (3% against the Unicorn), then find its cause in the Dragon's body or hand before changing anything. If it holds, measure Dragon-side fixes first (a resistance), then a Blast cap at high levels | The matchup under the 85% cap, the Dragon's field average in band, no other monster moved out of band | Done: **Take Wing now also dodges the first area attack** (a wave still reaches the sky). At level 7 the Dragon went from 37% to 49% field average and from 2% to 37% against the Unicorn; levels 1–5 did not move. Blast is unchanged. The owner's run confirms | this commit |
-| 3 | **Mesmerize and Enthrall**, after task 1 changes what holds are worth. Candidate first fix: Mesmerize catches its caster only on a natural 1 | Each at least 0.8 in its best context; the Weeping Angel's field average does not rise | Planned | |
+| 3 | **Mesmerize and Enthrall**, after task 1 changes what holds are worth. Candidate first fix: Mesmerize catches its caster only on a natural 1 | Each at least 0.8 in its best context; the Weeping Angel's field average does not rise | Done: **Mesmerize catches its caster only on a natural 1** (a Curse of Loki moment); Enthrall needs no change. With the pin rule on, both are level with the card they replace one-on-one and ahead in crowds; the Weeping Angel's field average does not rise | this commit |
 | 4 | **Harness: a per-fight split.** A runner option that tags each fight with whether an effect happened, so all-or-nothing cards get the check routinely | Tests; the Gloaming Rest split reproduces | Built: units take `probes` (rest-completed, awed, rattled, held), results carry `split`, and `sim-split-report` prints it. Tests show the split sums to the totals and an unknown probe is refused | |
 | 5 | **Confirmation and close-out.** The owner's run, then Harden (only if trivial) and the Faceswap watch against production data | Report checked in; this plan archived | Planned | |
 
@@ -113,3 +113,29 @@ and its matchup against the Unicorn, before → after.
 - **The losers were removed** as complexity for nothing: the three resistances and the Blast cap.
 - **A wave still reaches a flier:** Tsunami keeps its documented rule, through a `reachesTheSky`
   flag.
+
+### Task 3 results and decision
+
+The Weeping Angel's win rate, with Mesmerize or Enthrall swapped into its PR D searched hand.
+The pin rule and Take Wing's change are both on, and the `held` probe ran. One-on-one is 400
+fights a pair at levels 1–7; crowds are four-monster free-for-alls at levels 3 and 5; teams are
+2v2 and 3v3.
+
+| Version | One-on-one L1 / L3 / L5 / L7 | Crowd L3 / L5 | 2v2 L3 / L5 | 3v3 L3 / L5 |
+|---|---|---|---|---|
+| *Card it replaced* | *67.2 / 61.7 / 65.2 / 47.9* | *55.3 / 53.3* | *56.3 / 71.4* | *55.3 / 59.8* |
+| Mesmerize, catching itself every time (before) | 60.0 / 57.3 / 61.1 / 44.5 | 55.0 / 56.3 | 54.5 / 73.1 | 54.1 / 59.6 |
+| **Mesmerize, itself only on a natural 1 (chosen)** | 68.5 / 61.1 / 64.5 / 44.8 | 56.5 / 59.0 | 55.7 / 71.2 | 54.8 / 60.3 |
+| Mesmerize, never itself | 68.6 / 60.9 / 61.6 / 46.3 | 58.0 / 58.8 | 57.6 / 72.6 | 54.9 / 59.1 |
+| Enthrall, unchanged | — / 61.8 / 64.5 / 45.9 | 57.7 / 58.0 | 56.5 / 72.6 | 55.7 / 59.0 |
+
+Enthrall is a level 2 card, so it has no level 1 figure.
+
+- **Why Mesmerize was weak:** it held its own caster. The `held` probe shows the Angel was held
+  in 8,111 of 9,600 one-on-one fights with the old rule, against 2,996 with the natural-1 rule.
+- **Mesmerize:** the natural-1 version measured the same as sparing the caster. It keeps the card's
+  joke ("even yourself") as a rare Curse of Loki moment, on the owner's natural-1 precedent.
+- **Enthrall** was already level with the card it replaced once the pin rule made holds worth more,
+  so it is unchanged.
+- **The Angel is not pushed up.** One-on-one it stays within noise of the card replaced (Mesmerize
+  +1.3 at level 1, −3.1 at level 7). In crowds holds are worth more, as they should be.

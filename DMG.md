@@ -1519,10 +1519,12 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
 ----------------------------------
 
  You strut and preen. Your beauty 
- mesmerizes everyone, including 
- yourself.
+ mesmerizes everyone. Now and 
+ then, even yourself.
 
- Immobilize everyone.
+ Immobilize everyone. You are 
+ caught too only on a natural 1 
+ (1d20).
 
  If already immobilized, hit 
  instead.
