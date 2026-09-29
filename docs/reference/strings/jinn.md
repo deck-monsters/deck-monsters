@@ -90,3 +90,4 @@ Source: `packages/engine/src/cards/sandstorm.ts`.
 | effect → narration | `In the confusion of the sandstorm, {sandstormTarget} will have trouble with {his} aim.` |
 | effect → getTargets | `{sandstormTarget} keeps {his} wits about {him} and manages to target {formerTargetName}.` |
 | effect → getTargets | `While trying to target {formerTargetName}, {sandstormTarget} instead targets {newTargetName}.` |
+| effect → narration | `sees through the storm.` |

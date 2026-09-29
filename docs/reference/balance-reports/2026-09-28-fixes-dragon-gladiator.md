@@ -8,7 +8,7 @@ tags: [balance, harness, reports, monsters, cards]
 ---
 # Dragon, Gladiator, and Tsunami fixes, 2026-09-28
 
-Roadmap 35 tasks 2 and 3 ([plan](../../roadmap/35-balance-fixes.md)).
+Roadmap 35 tasks 2 and 3 ([plan](../../archive/roadmap/35-balance-fixes.md)).
 
 **Method.** Every candidate is an experiment variant (`harness/src/balance/variants.ts`)
 played in a fixed-hand matrix: the searched hands from the

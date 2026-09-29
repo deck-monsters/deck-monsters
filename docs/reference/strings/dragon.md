@@ -58,6 +58,34 @@ Dragons are clever, vain, and fast. They talk, and they will tell you so. Their 
 Vikings carved dragons on their prows. Romans marched behind a dragon of cloth that howled when the wind filled it. Neither ever tamed a real one. A dragon who fights beside a Beastmaster has decided to, and it counts its hoard every night: in Beowulf, a thief took one cup from a sleeping dragon's hoard, and the old king died of it.
 ```
 
+## Asinine Companion
+
+Source: `packages/engine/src/cards/asinine-companion.ts`.
+
+**Card description:** `Every hero needs a faithful companion, and every dragon needs someone to carry the gold. The donkey talks the whole way. The dragon has not eaten him. Yet.`
+
+**Rules text:**
+
+```text
+The donkey kicks your target: 1d20 + 2 + your level (up to 10) vs ac, for 1d8 + half your level damage on a hit. It never crits.
+```
+
+**Narration and outcomes:**
+
+| Where | Template |
+|---|---|
+| donkeyKick → label | `The donkey` |
+| donkeyKick → narration | `🫏 The donkey, who has talked the whole fight, stops talking at last and turns around.` |
+| donkeyKick → reason | `vs {target}'s ac ({ac}) to determine if the kick landed.` |
+| donkeyKick → narration | `🫏 The donkey kicks, misses {target} entirely, and says that was a warning shot.` |
+| donkeyKick → reason | `for damage.` |
+| donkeyKick → flavorText | `{icon} 🫏 {icon}  The donkey plants both hind hooves in {target} for {result} damage.` |
+| getBoostNarrative → str | `loads the gold onto the donkey and stands a little taller` |
+| getBoostNarrative → str | `lets the donkey carry the heavy things, which is everything` |
+| getBoostNarrative → str | `listens to the donkey's advice, ignores it, and feels stronger anyway` |
+| getBoostNarrative → str | `stops the donkey from eating the battle standard, and is proud of the restraint` |
+| getBoostNarrative → returns | `{target} {text}.` |
+
 ## Fire Breath
 
 Source: `packages/engine/src/cards/fire-breath.ts`.
@@ -80,6 +108,7 @@ An ancient dragon (level 10+) breathes fire that cannot be dodged and burns for 
 |---|---|
 | flavors → hits | `breathes fire on` |
 | flavors → hits | `kindles coals around` |
+| flavors → hits | `sings the old fire-song over` |
 | flavors → hits | `very gently toasts` |
 | dodge → reason | `vs {difficulty} to dodge the flames.` |
 | dodge → outcome | `{target} twists aside and is only singed. Half damage.` |
@@ -94,6 +123,39 @@ An ancient dragon (level 10+) breathes fire that cannot be dodged and burns for 
 | Where | Template |
 |---|---|
 | `packages/engine/src/cards/helpers/signature.ts` [DRAGON] | `Fire Breath` |
+
+## Helm of Awe
+
+Source: `packages/engine/src/cards/helm-of-awe.ts`.
+
+**Card description:** `Helm of awe on the hoard-guard's brow: the bold go pale, the proud bow low. Fafnir wore it on his gold, and no man stood before him. Shouting "SIT!" at a dragon in the helm does not work. It has been tried.`
+
+**Rules text:**
+
+```text
+Each opponent rolls 1d20 + int vs 10 + your int modifier. On a failure they are awed and lose their next card.
+At the start of each later turn they roll again, 3 easier each time: on a failure they cower and lose that card, on a success they recover.
+On a natural 1, an opponent that is not bloodied tries to flee the ring (1d20 + dex, 10 or more); a bloodied one cowers.
+No damage. Does not stack.
+```
+
+**Narration and outcomes:**
+
+| Where | Template |
+|---|---|
+| awe → narration | `🐲 {target} cannot bear the dragon's gaze, and cowers behind {his} shield instead of acting.` |
+| awe → reason | `vs {threshold} to meet the dragon's eye.` |
+| awe → outcome | `{target} finds {his} courage and meets the dragon's eye.` |
+| awe → outcome | `{target} looks once more upon the helm of awe, and turns to run.` |
+| awe → outcome | `{target} still cannot bear the dragon's gaze.` |
+| awe → reason | `and needs 10 or higher to flee.` |
+| awe → outcome | `Rooted to the sand!` |
+| awe → narration | `🐲 The courage runs out of {target} like mead from a cracked horn, and {he} {flees/flee} the ring!` |
+| effect → narration | `{target} is already cowering before the helm.` |
+| effect → outcome | `{target} stands {his} ground and stares back.` |
+| effect → outcome | `{target} looks upon the helm of awe, and {his} knees turn to water.` |
+| effect → reason | `vs 10 + {player}'s int modifier ({dc}) to resist awe.` |
+| effect → narration | `will not be awed.` |
 
 ## Mood Scales
 
@@ -119,6 +181,30 @@ Furious (half your hp or less): your scales blaze red and you cannot hide, but y
 | effect → narration | `{target} is already furious, and glows a little redder.` |
 | effect → narration | `🦎 {target} is furious! {His} scales blaze red, and there is no hiding now. (Next melee hit: +1d6 damage.)` |
 
+## Tail Lash
+
+Source: `packages/engine/src/cards/tail-lash.ts`.
+
+**Card description:** `Tooth for the foeman, tail for the fool; the wise watch the far end of the wyrm. Topsell says a dragon's strength lies not in its teeth but in its tail, which is why the Vikings who shout at dragons stand at the front.`
+
+**Rules text:**
+
+```text
+Hit: 1d20 vs ac / Damage: 1d6. If the hit lands and the target is still standing, the tail strikes too (1d20 + your STR modifier - 2 to hit, 1d6 damage, no critical hits).
+```
+
+**Narration and outcomes:**
+
+| Where | Template |
+|---|---|
+| flavors → hits | `snaps at` |
+| tailStrike → label | `{player}'s tail` |
+| tailStrike → narration | `🐉 And then the tail comes round.` |
+| tailStrike → reason | `vs {target}'s ac ({ac}) to determine if the tail struck true.` |
+| tailStrike → narration | `🐉 The tail misses {target} and clears a whole table of mead-horns instead.` |
+| tailStrike → reason | `for damage.` |
+| tailStrike → flavorText | `{icon} 🐉 {icon}  {label} cracks across {target} for {result} damage.` |
+
 ## Take Wing
 
 Source: `packages/engine/src/cards/take-wing.ts`.
@@ -138,7 +224,7 @@ Any damage that lands while you are in the air knocks you down, and the dive is 
 | Where | Template |
 |---|---|
 | takeOff → narration | `🌬️ {flier} folds {his} wings and dives!` |
-| takeOff → narration | `{flier} glides back down to the sand.` |
+| takeOff → narration | `A Viking below bellows "COME DOWN FROM THERE THIS INSTANT!" {flier} glides back down to the sand, in {his} own time.` |
 | takeOff → narration | `{flier} is high in the air, and {attacker}'s blow strikes empty air.` |
 | takeOff → narration | `{flier} is knocked out of the sky! No dive this time.` |
 | effect → narration | `{target} is already in the air, and climbs a little higher.` |
@@ -164,6 +250,7 @@ You roll 1d20 + dex vs 10 to ride your own wave and take none of it.
 |---|---|
 | flavors → hits | `brings the sea down on` |
 | flavors → hits | `sweeps away` |
+| flavors → hits | `lifts the whole sea until all roads, rather than leading to Rome as per Imperial Regulation MCCCXCVII, subsection C, lead to Neptune, and drops it on` |
 | flavors → hits | `gives a very thorough bath to` |
 | rideTheWave → reason | `vs 10 to ride the wave.` |
 | rideTheWave → outcome | `{player} rides the crest, and the sea passes under {him}.` |

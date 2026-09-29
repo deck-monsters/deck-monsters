@@ -587,7 +587,7 @@ our own creature, built on the same public-domain roots the books draw on.
 - Understanding over force: a card that calms or turns a hostile creature by talking to it
   rather than hurting it, echoing the feel of the books without their dragon language. It
   would need the same bounds as other control cards and the hold rules in
-  [cards and encounter effects](../../architecture/cards-and-encounter-effects.md#holds-and-the-unconquerable-horn-ward).
+  [cards and encounter effects](../../architecture/cards-and-encounter-effects.md#holds-and-the-horn-of-proof-ward).
 - A disobedient streak: a small chance the Dragon ignores the planned card and does what it
   likes, for good or ill. Funny and in keeping with the world, but it takes control from the
   player, so weigh it against [player agency](../../reference/player-agency.md).

@@ -1,4 +1,5 @@
 import { AdrenalineRushCard } from '../adrenaline-rush.js';
+import { AsinineCompanionCard } from '../asinine-companion.js';
 import { BadBatchCard } from '../bad-batch.js';
 import { BasicShieldCard } from '../basic-shield.js';
 import { BattleFocusCard } from '../battle-focus.js';
@@ -31,6 +32,7 @@ import { ForkedMetalRodCard } from '../forked-metal-rod.js';
 import { ForkedStickCard } from '../forked-stick.js';
 import { GloamingRestCard } from '../gloaming-rest.js';
 import { HealCard } from '../heal.js';
+import { HelmOfAweCard } from '../helm-of-awe.js';
 import { HitCard } from '../hit.js';
 import { HitHarder } from '../hit-harder.js';
 import { HornGore } from '../horn-gore.js';
@@ -51,6 +53,7 @@ import { SandstormCard } from '../sandstorm.js';
 import { ScotchCard } from '../scotch.js';
 import { StickethCard } from '../sticketh.js';
 import { SurvivalKnifeCard } from '../survival-knife.js';
+import { TailLashCard } from '../tail-lash.js';
 import { TakeWingCard } from '../take-wing.js';
 import { ThickSkinCard } from '../thick-skin.js';
 import { TsunamiCard } from '../tsunami.js';
@@ -62,6 +65,7 @@ import { WoodenSpearCard } from '../wooden-spear.js';
 
 const all = [
 	AdrenalineRushCard,
+	AsinineCompanionCard,
 	BadBatchCard,
 	BasicShieldCard,
 	BattleFocusCard,
@@ -94,6 +98,7 @@ const all = [
 	ForkedStickCard,
 	GloamingRestCard,
 	HealCard,
+	HelmOfAweCard,
 	HitCard,
 	HitHarder,
 	HornGore,
@@ -114,6 +119,7 @@ const all = [
 	ScotchCard,
 	StickethCard,
 	SurvivalKnifeCard,
+	TailLashCard,
 	TakeWingCard,
 	ThickSkinCard,
 	TsunamiCard,

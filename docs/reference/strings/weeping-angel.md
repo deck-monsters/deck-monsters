@@ -67,6 +67,7 @@ On what would have been their next turn, if you are still alive you drain 1d4 hp
 | effect → timeShiftReason | `vs {his} own int ({int}) in confusion.` |
 | effect → timeShiftReason | `vs {blinkTarget}'s int ({int}) in an attempt to time-shift {him}.` |
 | effect → outcome | `Time shift {succeeded! / failed.} {blinkTarget} {blinked! / did not blink. The Doctor would be proud.}` |
+| effect → narration | `will not be blinked away.` |
 | effect → effectResult | `not target-able because they are ⏳ time-shifted by` |
 | effect → effectResult | `⏳ time-shifted for {turnsLeftToBlink} more turn{s / —} by` |
 | effect → primaryDice | `{primaryDice} (hp) & {primaryDice} (xp)` |

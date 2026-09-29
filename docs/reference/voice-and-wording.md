@@ -119,6 +119,28 @@ Why: the Unicorn's first voice read as careful and bland; the old sources supply
 - Bad: `` `${pronouns.he} riseth` `` → “they riseth”
 - Bad: “Thou rollest 1d20 + str against thine foe's dex.”
 
+### The Dragon's voice
+
+Dragon cards and narration speak in the voice of Norse myth and the Vikings, with a little of
+Rome welcome (the draco standard, a legion's regulations). Short verses are welcome: skaldic
+couplets with kennings ("hoard-guard", "whale-road"), or alliterative lines in the manner of the
+Eddas. Old public-domain texts may be quoted, named in a source comment: the Poetic Edda in a
+public-domain English, Morris and Magnússon's 1888 *Völsunga saga*, Gummere's 1910 *Beowulf*,
+and Topsell. *How to Train Your Dragon* supplies setting and feel only, never names, lines,
+species, or designs.
+
+The Dragon has two running jokes: yelling at a dragon, loudly, to control it, and the dragon
+eating or wrecking something it should not have. Old public-domain dad jokes may be copied or
+adapted. The orchestrator writes these lines; implementers do the mechanics (see
+[subagents](../agents/subagents.md)).
+
+Why: the Dragon's first cards lacked the flavour the Unicorn's had (owner decision, roadmap 35,
+September 2026).
+
+- Good: `A Viking below bellows "COME DOWN FROM THERE THIS INSTANT!" ${name} glides back down to the sand, in ${pronouns.his} own time.`
+- Good: `lifts the whole sea until all roads, rather than leading to Rome as per Imperial Regulation MCCCXCVII, subsection C, lead to Neptune, and drops it on`
+- Good: `The courage runs out of ${name} like mead from a cracked horn, and ${pronouns.he} ${agree(pronouns, 'flees', 'flee')} the ring!`
+
 ### Existing bad examples are migration targets
 
 Some legacy text is intentionally called out so it does not return: “proud owner” becomes

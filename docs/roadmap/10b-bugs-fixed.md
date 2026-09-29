@@ -4729,6 +4729,23 @@ its +3 for a cursed healer.
 
 **Status**: Fixed.
 
+### 199. The harness's Unicorn report never counted a broken Gloaming Rest — FIXED
+
+`sim:monster`'s Unicorn counters (`harness/src/scripts/monster-reports/unicorn.ts`) matched
+the narration "rest was broken", but the card has always said "rest is broken", so
+`restsInterrupted` stayed 0 in every report. The completed-rest counter listened for a
+`rolled` event with the reason "for a quiet rest.", which the card stopped emitting when roadmap
+35 replaced the 3d4 roll with a narrated heal. The Dissonant Voice counter wrapped
+`getSaveRoll`, which the card no longer has. Root cause: the counters copied player-facing
+strings instead of hooking card methods, so a wording change silently zeroed them.
+
+**Fix**: completed rests and their healing come from wrapping `restHealAmount`; broken rests
+match the card's own words; the voice counts opponents sung at through its single `effect`
+wrap. A second wrap on the same method ran before the first had registered the play and
+would have missed the first target, so the two were merged.
+
+**Status**: Fixed.
+
 ## Closed without a fix
 
 These were open investigations the owner closed on 2026-09-28. Reopen with new evidence.

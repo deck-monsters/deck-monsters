@@ -4,6 +4,7 @@ import { difference } from '../helpers/difference.js';
 import { UNCOMMON } from '../helpers/probabilities.js';
 import { VERY_CHEAP } from '../helpers/costs.js';
 import * as STATS from '../constants/stats.js';
+import { wardAgainst, controlWardNarration } from './helpers/control-ward.js';
 
 const { roll, max } = chance;
 
@@ -108,19 +109,31 @@ export class CurseCard extends HitCard {
 	 * on the hit puts Molasses and Soften level with a Hit at every level (roadmap 33).
 	 * Curses with no attack roll (Blink, Brain Drain) still always apply.
 	 */
-	override async effect(player: any, target: any, ring: any, _activeContestants?: any): Promise<any> {
+	override async effect(player: any, target: any, ring: any, activeContestants?: any): Promise<any> {
 		if (this.hasChanceToHit) {
-			return await super.effect(player, target, ring);
+			return await super.effect(player, target, ring, activeContestants);
 		}
-		await this.applyCurse(player, target);
+		await this.applyCurse(player, target, ring, activeContestants);
 		return !target.dead;
 	}
 
-	protected override async onLanded(player: any, target: any): Promise<void> {
-		await this.applyCurse(player, target);
+	protected override async onLanded(player: any, target: any, ring?: any, activeContestants?: any): Promise<void> {
+		await this.applyCurse(player, target, ring, activeContestants);
 	}
 
-	private async applyCurse(player: any, target: any): Promise<void> {
+	/**
+	 * An armed Horn of Proof ward cancels the curse, not the hit that carried it (roadmap
+	 * 35): the attack roll and damage already happened in `HitCard.effect` before `onLanded`
+	 * runs, so returning here just skips the stat penalty.
+	 */
+	private async applyCurse(player: any, target: any, ring?: any, activeContestants?: any): Promise<void> {
+		if (wardAgainst(target, player, { activeContestants, ring })) {
+			this.emit('narration', {
+				narration: controlWardNarration(target, 'will not be cursed.'),
+			});
+			return;
+		}
+
 		const preCursedPropValue = target[this.cursedProp];
 		let curseAmount = Math.abs(this.curseAmount);
 		const postCursedPropValue = preCursedPropValue - curseAmount;

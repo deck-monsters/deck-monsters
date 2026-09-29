@@ -13,7 +13,13 @@
 import { applyVariants } from './variants.js';
 import { simulate, type SimMonsterSpec, type SimResult } from '../simulate.js';
 
-export type SideSpec = Omit<SimMonsterSpec, 'team'>;
+/**
+ * A side may name a `team` (roadmap 35: Dissonant Voice and Helm of Awe are meant for team
+ * battles). A team win scores a win for every side on that team, including a member that died
+ * during the fight: `winnersByFight` lists only surviving winners, so scoring by label alone
+ * would count a fallen teammate on the winning team as a loss.
+ */
+export type SideSpec = SimMonsterSpec;
 
 export interface Unit {
 	/** Unique within a plan; the resume key. */
@@ -129,11 +135,17 @@ async function runUnitPlain(unit: Unit): Promise<UnitResult> {
 		const scores = unit.sides.map(() => 0);
 		for (const winners of res.winnersByFight) {
 			const draw = winners.length === 0;
+			const winningTeams = new Set(
+				order
+					.map((side, position) => (winners.includes(label(position)) ? unit.sides[side]!.team : undefined))
+					.filter((team): team is string => team !== undefined),
+			);
 			order.forEach((side, position) => {
+				const team = unit.sides[side]!.team;
 				if (draw) {
 					totals[side]!.draws += 1;
 					scores[side]! += 0.5;
-				} else if (winners.includes(label(position))) {
+				} else if (winners.includes(label(position)) || (team !== undefined && winningTeams.has(team))) {
 					totals[side]!.wins += 1;
 					scores[side]! += 1;
 				} else {

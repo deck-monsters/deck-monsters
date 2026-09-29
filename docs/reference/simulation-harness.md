@@ -324,6 +324,11 @@ surviving member, so a side's win rate cannot be rebuilt from `winRates` (summin
 overcounts, the best member undercounts). Use `winnersByFight`, each fight's winning labels,
 through `sideWinRate(res, labels)`; `sim:bosses` and `sim:rings` do.
 
+The batch runner (`sim:batch`) takes a `team` on each side of a unit and scores the same way:
+a side wins when its team wins, including a member that died during the fight
+(`balance/units.ts`). Before roadmap 35 the runner omitted `team`, and scoring by surviving
+labels would have counted a fallen teammate as a loss.
+
 ## Card-level counters
 
 `sim:monster` counts card events by wrapping the card classes' prototype methods inside its
@@ -344,6 +349,16 @@ accepts any of its class names or creature types. A new monster needs no harness
 appear in every report. It used to be listed by hand in five places, and a monster missing
 from one was silently left out of that report. `harness.test.ts` checks the list matches
 `allMonsters` and that every monster can fight.
+
+## Averages hide all-or-nothing cards
+
+A card whose effect either lands in full or not at all can show a healthy average win rate
+while each fight turns on one coin flip. For such a card, also split fights by whether the
+effect landed. Calibrate the split with a weak version of the same card: fights where it
+landed are biased toward fights already going well. The harness has no built-in split yet.
+The pattern is a probe that loops `simulate({ fights: 1, seed })` and wraps the card's
+method. [The Gloaming Rest study](../archive/studies/2026-09-gloaming-rest.md) is the worked
+example.
 
 ## Adding a new economy/balance measurement
 

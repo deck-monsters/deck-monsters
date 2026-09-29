@@ -114,7 +114,7 @@ Delayed Hit and Gloaming Rest compare against. Under `DECK_MONSTERS_SKIP_DELAYS`
 is a counter, so never compare it with `Date.now()`. Use `dealt ?? damage` when the
 question is "did this hurt".
 
-## Holds and the Unconquerable Horn ward
+## Holds and the Horn of Proof ward
 
 Every hold one creature puts on another, including Immobilize, Horn Gore, Coil, Constrict,
 Entrance, Enthrall, Mesmerize, Forked Stick, and Forked Metal Rod, goes through
@@ -122,21 +122,85 @@ Entrance, Enthrall, Mesmerize, Forked Stick, and Forked Metal Rod, goes through
 the held creature: at the start of that creature's turn it rolls to break free, and while
 held its card does nothing.
 
-- **The ward is checked in one place.** Unconquerable Horn arms
-  `encounterModifiers.unconquerableWard` (`cards/helpers/control-ward.ts`).
-  `immobilize()` spends it and cancels the hold, not the damage attached to it, only when
-  `isOpponentHold()` says the holder is an opponent. A teammate's area hold (Mesmerize
-  catches allies) does not spend it; a free-for-all ring event makes everyone an opponent.
-  A new control card that bypasses `immobilize()` is not warded until it calls
-  `consumeControlWard` itself.
+The ward began as the Unconquerable Horn's refusal to be held. The owner asked (2026-09-28,
+roadmap 35 "Unconquerable Horn as a counterspell") for more: "like a counterspell that lasts
+for one round or until some sort of negative action that is not a damage action is
+attempted." On 2026-09-29 the owner made Horn of Proof "the do everything card", so the ward
+moved there (`HornOfProofCard.ward()`): cleanse, then ward, then heal, in that order. It is a
+one-round, once-per-fight counterspell against the next negative, non-damage effect an
+opponent lands on the warder. The mechanism is in `cards/helpers/control-ward.ts` and did
+not change with the move.
+
+- **What it covers.** Holds (via `immobilize()`), the curse part of a curse-carrying Hit
+  (Soften, Molasses, Concussion, Brain Drain — `CurseCard.applyCurse` in `cards/curse.ts`),
+  Blink's time-shift (`cards/blink.ts`), Bad Batch's poison (`cards/bad-batch.ts`),
+  Sandstorm's confusion (`cards/sandstorm.ts`), and Enchanted Faceswap's redirect
+  (`cards/enchanted-faceswap.ts`). **Damage always still lands** — only the extra,
+  non-damage effect riding with it is cancelled. **Curse of Loki is not warded**: a natural 1
+  turning an attacker's own blow back on itself is a roll outcome aimed at nobody, not an
+  opponent's action against the target.
+- **The single entry point.** `cards/helpers/control-ward.ts` exports `wardAgainst(target,
+  source, { activeContestants, ring })`: it returns true (and spends the ward) when `target`
+  has an armed ward and `source` is an opponent per `isOpponentHold()` (same team rules; a
+  creature never spends its own ward on itself, and an ally's effect never spends it). A new
+  negative, non-damage effect is not warded until it calls `wardAgainst` (or the lower-level
+  `consumeControlWard`) itself. `HitCard.onLanded` threads `ring` and `activeContestants`
+  through so `CurseCard.applyCurse` has the team data `wardAgainst` needs.
+- **Duration: one round.** Arming a ward attaches a counting `encounterEffects` entry to the
+  warder (the same `ATTACK_PHASE`-keyed-to-one-monster pattern `fire-breath.ts`'s `wind()`
+  uses) that ticks down once per card the warder itself plays. If the ward has not fired by
+  the time the warder has played a full hand's worth of further cards (`monster.cardSlots`,
+  9 by default — the same point next round), it lapses: `encounterModifiers.unconquerableWard`
+  becomes `'lapsed'`, with its own narration. **Once per fight either way**: `armControlWard`
+  refuses to re-arm after `'spent'` or `'lapsed'`.
+- **Never a dead card.** Horn of Proof also cleanses and heals (`healAmount`, a class setting
+  for the balance harness) whether or not the ward takes. The steadying 1d6 the Unconquerable
+  Horn briefly carried is gone with the ward.
+- **The Unconquerable Horn is a rally, not a ward** (owner, 2026-09-29). The unicorn makes its
+  own Hit and the horn, kindling and ringing, brings a second blow on the same target: from
+  a living ally in the ring (found with `isOpponentHold`, so only real teammates count and a
+  duel or free-for-all has none), else a creature of the wood, an otter, a deer, or a ram.
+  The creature is an attack profile, not a contestant: `companionHitBonus` (2) and
+  `companionDamageDice` ('1d4') are static fields for the harness, it rolls without crits (no
+  stroke of luck, no Curse of Loki), takes no damage, and a killing blow is credited to the
+  unicorn. The horn rallies only against a foe: a confused unicorn hitting itself or an ally
+  calls nobody. See `cards/unconquerable-horn.ts`.
 - **Self-holds skip the ward.** Sticketh sticks its own player with the ordinary
   `ImmobilizeEffect` through `stickFast()`, not `immobilize()`, so freedom rolls, fatigue,
   and cleanup are shared with every other hold.
 - **Narration hooks.** `ImmobilizeCard.emitHeldEffect()` and `getFreedomCommentary()` let a
   subclass narrate its own hold. The defaults read "X is currently held by Y", which is
-  wrong for a self-hold.
+  wrong for a self-hold. `controlWardNarration(target, refusal)` in `control-ward.ts` is the
+  shared refusal line for every other warded effect: the Job 39:9 quote only for a Unicorn
+  (confusion can lend the ward to any creature), naming what was refused in plain words.
 - **A held monster's card never plays.** A card that frees its own player from a hold cannot
   work on that player's turn; it only helps when it lands on someone else.
+
+## Fear and song: Helm of Awe and Dissonant Voice
+
+**Helm of Awe** (`cards/helm-of-awe.ts`, Dragon) is a pin, but not an `ImmobilizeEffect`. Its
+own `AWE_EFFECT` behaves the same way. Every opponent saves (1d20 + int vs 10 + the dragon's
+int modifier). One that fails loses its next card. At the start of each later turn it saves
+again, `holdFatigue` (3) easier each time: a failure loses that card, and a success ends the
+awe. So does the dragon's death.
+
+- **The flee.** A natural 1 on a recovery save makes an opponent that is not bloodied try to
+  flee with a Flee roll (1d20 + dex, 10 or more), through `leaveCombat`. A bloodied one cowers.
+  Bosses can be frightened away: the rule that they never flee covers the Flee cards they
+  carry, not fear.
+- **No refresh.** A second helm on an awed opponent does nothing, so a hand of Helms cannot
+  chain the pin.
+- **The ward.** Awe goes through `wardAgainst`, so Horn of Proof's ward cancels it.
+
+**Dissonant Voice** (`cards/dissonant-voice.ts`, Unicorn and Bard) has no save and no damage.
+Every opponent's next card that rolls to hit rolls twice and keeps the worse. A card that does
+not roll to hit leaves it waiting. A natural 1 stays the worst roll and a natural 20 the best.
+
+Both were chosen from 13 measured variations, in duels, crowds, and team battles. The numbers,
+the owner's rules (a natural 1 is the only Curse of Loki; complexity must earn its place), and
+why each variation was dropped are in the
+[Helm of Awe and Dissonant Voice study](../archive/studies/2026-09-helm-of-awe-and-dissonant-voice.md).
+Read it before designing a debuff, a fear effect, or a support card for team fights.
 
 ## Ancient dragons
 
@@ -207,6 +271,21 @@ new card or monster must reach. Check each one.
   its own "with"; give the colour its own sentence. Verbs after a pronoun use `agree()`;
   verbs after a name never do ([voice and wording](../reference/voice-and-wording.md)).
 
+## Risky heals: Gloaming Rest
+
+Gloaming Rest (`cards/gloaming-rest.ts`) is a heal with a risk attached. The monster kneels
+at −2 AC until its next card. If nothing damages it before that card begins, it heals a random
+amount from 4 up to all the hp it is missing. Any damage in between (`dealt ?? damage` in the
+hit log, so a blow the brace absorbed does not count) breaks the rest, and it heals nothing.
+Bosses rest the same way. `restShape: 'dice'` keeps the old 3d4 for the harness.
+
+The upper end is random so the heal can never restore everything every time. A guaranteed
+full heal wins any fight in which the opponent's next card happens not to deal damage. It
+measured fine on average but decided single fights (owner rule, 2026-09-29). The
+[Gloaming Rest study](../archive/studies/2026-09-gloaming-rest.md) records the seven shapes
+tried, the per-fight measurement that exposed the problem, and why each was dropped. Read it
+before designing another conditional or all-or-nothing effect.
+
 ## Content and balance rules
 
 - **Balance target (owner decision, September 2026).** Aim for a power curve per class
@@ -216,6 +295,34 @@ new card or monster must reach. Check each one.
   runs the wrong way. The 35–65% flag in `sim:winrates` and `sim:monster` marks rows to look
   at, not a pass/fail gate, and ring context (size, teams, the cards in play) shifts
   matchups a great deal.
+- **Balance rules (owner, roadmaps 34 and 35, September 2026).** These are standing rules for
+  any balance change:
+  - **The band.** Keep each monster's field average within 35–75%; ancient dragons may reach
+    80%. Keep single matchups within 20–80%, and none over 85%.
+  - **Levels 0–7 come first.**
+  - **The smallest effective change wins.**
+  - **Hope and excitement are protected**: rare turnarounds, Curse of Loki, natural 20s, and
+    strokes of luck (the "please get a Loki" moments). None is reduced without the owner's
+    agreement.
+  - **Counter cards come before nerfs.** Blink stays as it is.
+  - **Unique cards should be usable**: a player who builds around one should find it worth its
+    slot. Weak situational cards are allowed. Prion Disease is a joke card and stays as it is.
+- **A natural 1 and a natural 20 are fixed (owner, 2026-09-29).** Only a natural 1 is a Curse of
+  Loki, and only a natural 20 a stroke of luck. Advantage and disadvantage fit that precedent;
+  widening either range does not, however well it measures.
+- **Complexity must earn its place (owner, 2026-09-29).** A rule that does not move the numbers
+  is dropped. Wrath on a broken rest, Dissonant Voice lasting until a hit lands, and the
+  deepening rest all measured as noise and were cut.
+- **What moves a fight (measured, roadmap 35).**
+  - Attack-roll changes barely matter here. A −2 to −5 penalty or a sting stayed 5–11 points
+    below the card it replaced, because fights last about two rounds. A debuff needs a stronger
+    shape: a lost card, a hold, a redirect, or damage that lands.
+  - An all-or-nothing effect can average fine while deciding single fights. Check the
+    per-fight split ([simulation harness](../reference/simulation-harness.md#averages-hide-all-or-nothing-cards)).
+  - Team battles flatten card differences to about ±2 points. Test a support card in them
+    (`SideSpec.team`), not only in free-for-alls.
+  - The worked examples are the [Gloaming Rest study](../archive/studies/2026-09-gloaming-rest.md)
+    and the [Helm of Awe and Dissonant Voice study](../archive/studies/2026-09-helm-of-awe-and-dissonant-voice.md).
 - **Measured balance changes (roadmap 35).** A body or card change is measured before and
   after on the same searched hands and seeds (`plan:matrix`, `sim:matrix-report`), with the
   excitement and hope guardrails beside the band; experiment variants

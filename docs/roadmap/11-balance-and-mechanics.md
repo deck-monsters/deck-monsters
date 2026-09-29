@@ -73,6 +73,59 @@ and fixed defects are in [`10b-bugs-fixed.md`](10b-bugs-fixed.md).
   healing item until use telemetry exists. Do not cut that price without the telemetry:
   cheaper healing makes bounded mid-fight items routine.
 
+## Next balance pass (carried from roadmap 35)
+
+The owner deferred these from [roadmap 35](../archive/roadmap/35-balance-fixes.md) on 2026-09-29. Use 35's
+method: variants behind class settings, the card swapped into searched hands, duels, crowds,
+**and team battles** (`SideSpec.team` in the batch runner), plus the per-fight split for any
+all-or-nothing effect. The [Helm of Awe and Dissonant Voice study](../archive/studies/2026-09-helm-of-awe-and-dissonant-voice.md)
+and the [Gloaming Rest study](../archive/studies/2026-09-gloaming-rest.md) are the worked
+examples. Keep the natural 1 and natural 20 rule: advantage and disadvantage are fine,
+widened Loki or luck ranges are not.
+
+- [ ] **Pinned monsters are easier to hit — owner idea — do first.** A pinned monster gets a
+  status that gives every attack against it advantage, like D&D's restrained condition.
+  Pinned means Coil, Constrict, Immobilize, Entrance, Enthrall, Mesmerize, Horn Gore's hold,
+  the Forked Stick and Rod, and Helm of Awe's awe. Dissonant Voice's rattle is not a pin,
+  because the monster still acts. Build one shared "is pinned" check (the ward's
+  `isOpponentHold` is half of it) and reuse Dissonant Voice's roll-twice code for the
+  advantage. It changes every hold at once, so measure it as a whole-field before/after on
+  the same seeds, probably on the owner's machine. Expected to be modest, since roll changes
+  move little here. It comes first because it changes what Mesmerize and Enthrall are worth.
+- [ ] **Mesmerize and Enthrall (Weeping Angel) — optional.** About 0.2 of a useful card in
+  every context in 35's catalogue. Two things waste them: Mesmerize holds everyone, *including
+  its own caster* ("Your beauty mesmerizes everyone, including yourself"), and the creature-type
+  rules make them useless against the Jinn and weak against the Minotaur and Weeping Angel. The
+  owner thinks they are probably fine, since the Angel has many good cards, but simple fixes are
+  welcome. Candidate first fix: Mesmerize stops catching its caster, or catches it only on a
+  natural 1, which keeps the joke as a rare Loki moment. Acceptance: each at least 0.8 in its
+  best context, and the Weeping Angel's field average does not rise (the confirmation run in 35
+  decides whether the Angel needs a trim instead).
+- [ ] **Harden — leave unless trivial.** 0.4 in the catalogue. The owner: "fine if a bit weak".
+  Change it only if a one-line fix reaches the target without new rules.
+- [ ] **The level 7 Dragon folds to the Unicorn's Blasts (3%).** Pre-existing (2% in PR C's run).
+  A diagnosis on the searched hands ([PR D's confirmation](../reference/balance-reports/2026-09-29-confirm-35d.md#open-items-this-run-surfaced))
+  found the Unicorn's four Blasts are the cause:
+  - even a Dragon holding nine Hits wins only 8%;
+  - replacing the Unicorn's Blasts with Hits lifts the Dragon to 26%;
+  - other Blast users, such as the Weeping Angel, beat the Dragon only 62–67%.
+  Find what in the Dragon's level 7 body or hand makes Blast so decisive against it (HP, youth
+  AC gone at 7, the three Take Wings) before changing anything. It breaks the owner's 85% cap.
+- [ ] **Watch the level 1 Dragon with Faceswap.** With every new card owned, the Dragon beats the
+  Unicorn 84% and the Basilisk 80% at level 1. That is under the cap but outside 20–80%. Faceswap
+  is rare and not for sale, so it is a ceiling. Recheck when real collections include it
+  (production data) before trimming.
+- [ ] **Harness: a per-fight split for card effects.** The split that exposed Gloaming Rest's
+  full heal was a one-off probe (`simulate({ fights: 1, seed })` in a loop with the card's
+  method wrapped). A runner option that tags each fight with "effect X happened" would make
+  the check routine for all-or-nothing cards. See the
+  [simulation harness](../reference/simulation-harness.md#averages-hide-all-or-nothing-cards).
+- [ ] **A strong group-fight card, if wanted.** In 35's 2v2 and 3v3 runs, every support-card
+  variation sat within about ±2 points: line-up decides team fights. Dissonant Voice ships as
+  "at par in groups, modest alone". A card that is truly powerful in team battles would need a
+  different kind of effect (turns denied or damage landed across the team), not a bigger roll
+  change.
+
 ## Combat design
 
 The balance target (a power curve per class across levels, not 50/50 everywhere) is a

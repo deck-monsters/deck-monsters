@@ -107,3 +107,10 @@ describe('./cards/enchanted-faceswap.ts', () => {
 			});
 	});
 });
+
+describe('./cards/enchanted-faceswap.ts for Wizards', () => {
+	it('can be held by a Dragon (the first Wizard)', async () => {
+		const { default: Dragon } = await import('../monsters/dragon.js');
+		expect(new Dragon({ xp: 300 }).canHoldCard(EnchantedFaceswapCard)).to.equal(true);
+	});
+});

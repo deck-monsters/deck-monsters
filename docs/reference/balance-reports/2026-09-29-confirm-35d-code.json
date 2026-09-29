@@ -1,0 +1,666 @@
+{
+ "runs": [
+  "/Users/dbrainer-banker/search-35/after",
+  "/Users/dbrainer-banker/search-35d/same"
+ ],
+ "summaries": [
+  {
+   "levels": {
+    "1": {
+     "Basilisk": {
+      "average": 0.5203333333333334,
+      "worst": [
+       "WeepingAngel",
+       0.36775
+      ],
+      "best": [
+       "Dragon",
+       0.67925
+      ]
+     },
+     "Minotaur": {
+      "average": 0.4748750000000001,
+      "worst": [
+       "WeepingAngel",
+       0.37675
+      ],
+      "best": [
+       "Dragon",
+       0.667
+      ]
+     },
+     "Jinn": {
+      "average": 0.43674999999999997,
+      "worst": [
+       "Unicorn",
+       0.311
+      ],
+      "best": [
+       "Dragon",
+       0.6355
+      ]
+     },
+     "Gladiator": {
+      "average": 0.4935833333333333,
+      "worst": [
+       "WeepingAngel",
+       0.263
+      ],
+      "best": [
+       "Dragon",
+       0.697
+      ]
+     },
+     "Unicorn": {
+      "average": 0.6128750000000001,
+      "worst": [
+       "WeepingAngel",
+       0.46375
+      ],
+      "best": [
+       "Dragon",
+       0.72975
+      ]
+     },
+     "WeepingAngel": {
+      "average": 0.6865416666666667,
+      "worst": [
+       "Unicorn",
+       0.53625
+      ],
+      "best": [
+       "Dragon",
+       0.94125
+      ]
+     },
+     "Dragon": {
+      "average": 0.2750416666666667,
+      "worst": [
+       "WeepingAngel",
+       0.05875
+      ],
+      "best": [
+       "Jinn",
+       0.3645
+      ]
+     }
+    },
+    "3": {
+     "Basilisk": {
+      "average": 0.4971666666666667,
+      "worst": [
+       "WeepingAngel",
+       0.301
+      ],
+      "best": [
+       "Minotaur",
+       0.61425
+      ]
+     },
+     "Gladiator": {
+      "average": 0.4668333333333334,
+      "worst": [
+       "WeepingAngel",
+       0.268
+      ],
+      "best": [
+       "Minotaur",
+       0.59875
+      ]
+     },
+     "Minotaur": {
+      "average": 0.427375,
+      "worst": [
+       "Basilisk",
+       0.38575
+      ],
+      "best": [
+       "Dragon",
+       0.488
+      ]
+     },
+     "Jinn": {
+      "average": 0.4845416666666667,
+      "worst": [
+       "WeepingAngel",
+       0.323
+      ],
+      "best": [
+       "Dragon",
+       0.59975
+      ]
+     },
+     "WeepingAngel": {
+      "average": 0.664625,
+      "worst": [
+       "Minotaur",
+       0.6095
+      ],
+      "best": [
+       "Gladiator",
+       0.732
+      ]
+     },
+     "Unicorn": {
+      "average": 0.505,
+      "worst": [
+       "WeepingAngel",
+       0.3745
+      ],
+      "best": [
+       "Basilisk",
+       0.56675
+      ]
+     },
+     "Dragon": {
+      "average": 0.45445833333333335,
+      "worst": [
+       "WeepingAngel",
+       0.35525
+      ],
+      "best": [
+       "Minotaur",
+       0.512
+      ]
+     }
+    },
+    "5": {
+     "Basilisk": {
+      "average": 0.5330833333333332,
+      "worst": [
+       "WeepingAngel",
+       0.433
+      ],
+      "best": [
+       "Gladiator",
+       0.63575
+      ]
+     },
+     "Gladiator": {
+      "average": 0.39025,
+      "worst": [
+       "WeepingAngel",
+       0.31475
+      ],
+      "best": [
+       "Minotaur",
+       0.50625
+      ]
+     },
+     "Jinn": {
+      "average": 0.57675,
+      "worst": [
+       "Basilisk",
+       0.5075
+      ],
+      "best": [
+       "Minotaur",
+       0.60825
+      ]
+     },
+     "Minotaur": {
+      "average": 0.384125,
+      "worst": [
+       "WeepingAngel",
+       0.24775
+      ],
+      "best": [
+       "Gladiator",
+       0.49375
+      ]
+     },
+     "WeepingAngel": {
+      "average": 0.6012083333333333,
+      "worst": [
+       "Jinn",
+       0.39475
+      ],
+      "best": [
+       "Minotaur",
+       0.75225
+      ]
+     },
+     "Unicorn": {
+      "average": 0.49033333333333334,
+      "worst": [
+       "WeepingAngel",
+       0.3455
+      ],
+      "best": [
+       "Gladiator",
+       0.67275
+      ]
+     },
+     "Dragon": {
+      "average": 0.52425,
+      "worst": [
+       "Jinn",
+       0.418
+      ],
+      "best": [
+       "Unicorn",
+       0.63825
+      ]
+     }
+    },
+    "7": {
+     "Basilisk": {
+      "average": 0.3752083333333333,
+      "worst": [
+       "Jinn",
+       0.2195
+      ],
+      "best": [
+       "Minotaur",
+       0.45725
+      ]
+     },
+     "Minotaur": {
+      "average": 0.4550416666666666,
+      "worst": [
+       "Unicorn",
+       0.34075
+      ],
+      "best": [
+       "Gladiator",
+       0.5455
+      ]
+     },
+     "Gladiator": {
+      "average": 0.48704166666666665,
+      "worst": [
+       "Minotaur",
+       0.4545
+      ],
+      "best": [
+       "Basilisk",
+       0.55175
+      ]
+     },
+     "Jinn": {
+      "average": 0.6709583333333334,
+      "worst": [
+       "Gladiator",
+       0.49125
+      ],
+      "best": [
+       "WeepingAngel",
+       0.799
+      ]
+     },
+     "WeepingAngel": {
+      "average": 0.516,
+      "worst": [
+       "Jinn",
+       0.201
+      ],
+      "best": [
+       "Dragon",
+       0.61625
+      ]
+     },
+     "Unicorn": {
+      "average": 0.5773333333333333,
+      "worst": [
+       "Jinn",
+       0.247
+      ],
+      "best": [
+       "Dragon",
+       0.978
+      ]
+     },
+     "Dragon": {
+      "average": 0.41841666666666666,
+      "worst": [
+       "Unicorn",
+       0.022
+      ],
+      "best": [
+       "Basilisk",
+       0.6455
+      ]
+     }
+    }
+   },
+   "excitement": {
+    "fights": 168000,
+    "decisive": 114962,
+    "rounds": 283501,
+    "loki": 139207,
+    "luck": 141012,
+    "turnaround25": 27181,
+    "turnaround50": 2168
+   }
+  },
+  {
+   "levels": {
+    "1": {
+     "Basilisk": {
+      "average": 0.5202083333333333,
+      "worst": [
+       "Unicorn",
+       0.35925
+      ],
+      "best": [
+       "Dragon",
+       0.67025
+      ]
+     },
+     "Minotaur": {
+      "average": 0.4756666666666667,
+      "worst": [
+       "WeepingAngel",
+       0.39775
+      ],
+      "best": [
+       "Dragon",
+       0.6705
+      ]
+     },
+     "Unicorn": {
+      "average": 0.6083333333333333,
+      "worst": [
+       "WeepingAngel",
+       0.4715
+      ],
+      "best": [
+       "Dragon",
+       0.72725
+      ]
+     },
+     "Gladiator": {
+      "average": 0.49804166666666666,
+      "worst": [
+       "WeepingAngel",
+       0.262
+      ],
+      "best": [
+       "Dragon",
+       0.70475
+      ]
+     },
+     "Jinn": {
+      "average": 0.4395,
+      "worst": [
+       "Unicorn",
+       0.31075
+      ],
+      "best": [
+       "Dragon",
+       0.62325
+      ]
+     },
+     "WeepingAngel": {
+      "average": 0.679625,
+      "worst": [
+       "Unicorn",
+       0.5285
+      ],
+      "best": [
+       "Dragon",
+       0.93225
+      ]
+     },
+     "Dragon": {
+      "average": 0.27862499999999996,
+      "worst": [
+       "WeepingAngel",
+       0.06775
+      ],
+      "best": [
+       "Jinn",
+       0.37675
+      ]
+     }
+    },
+    "3": {
+     "Basilisk": {
+      "average": 0.499875,
+      "worst": [
+       "WeepingAngel",
+       0.3255
+      ],
+      "best": [
+       "Minotaur",
+       0.60425
+      ]
+     },
+     "Gladiator": {
+      "average": 0.4701666666666666,
+      "worst": [
+       "WeepingAngel",
+       0.28025
+      ],
+      "best": [
+       "Minotaur",
+       0.6165
+      ]
+     },
+     "Jinn": {
+      "average": 0.4840833333333334,
+      "worst": [
+       "WeepingAngel",
+       0.312
+      ],
+      "best": [
+       "Dragon",
+       0.59025
+      ]
+     },
+     "Minotaur": {
+      "average": 0.41641666666666666,
+      "worst": [
+       "WeepingAngel",
+       0.34125
+      ],
+      "best": [
+       "Dragon",
+       0.49075
+      ]
+     },
+     "WeepingAngel": {
+      "average": 0.67325,
+      "worst": [
+       "Unicorn",
+       0.63575
+      ],
+      "best": [
+       "Gladiator",
+       0.71975
+      ]
+     },
+     "Unicorn": {
+      "average": 0.500125,
+      "worst": [
+       "WeepingAngel",
+       0.36425
+      ],
+      "best": [
+       "Gladiator",
+       0.564
+      ]
+     },
+     "Dragon": {
+      "average": 0.45608333333333334,
+      "worst": [
+       "WeepingAngel",
+       0.33725
+      ],
+      "best": [
+       "Unicorn",
+       0.51175
+      ]
+     }
+    },
+    "5": {
+     "Basilisk": {
+      "average": 0.5270833333333335,
+      "worst": [
+       "WeepingAngel",
+       0.42275
+      ],
+      "best": [
+       "Gladiator",
+       0.61425
+      ]
+     },
+     "Gladiator": {
+      "average": 0.39879166666666666,
+      "worst": [
+       "WeepingAngel",
+       0.3185
+      ],
+      "best": [
+       "Minotaur",
+       0.5195
+      ]
+     },
+     "Jinn": {
+      "average": 0.5757083333333334,
+      "worst": [
+       "Basilisk",
+       0.51125
+      ],
+      "best": [
+       "Minotaur",
+       0.5995
+      ]
+     },
+     "Minotaur": {
+      "average": 0.3861666666666666,
+      "worst": [
+       "WeepingAngel",
+       0.241
+      ],
+      "best": [
+       "Gladiator",
+       0.4805
+      ]
+     },
+     "WeepingAngel": {
+      "average": 0.6089583333333333,
+      "worst": [
+       "Jinn",
+       0.40775
+      ],
+      "best": [
+       "Minotaur",
+       0.759
+      ]
+     },
+     "Unicorn": {
+      "average": 0.49174999999999996,
+      "worst": [
+       "WeepingAngel",
+       0.33925
+      ],
+      "best": [
+       "Gladiator",
+       0.67025
+      ]
+     },
+     "Dragon": {
+      "average": 0.5115416666666667,
+      "worst": [
+       "Jinn",
+       0.40425
+      ],
+      "best": [
+       "Unicorn",
+       0.6195
+      ]
+     }
+    },
+    "7": {
+     "Basilisk": {
+      "average": 0.3782083333333333,
+      "worst": [
+       "Jinn",
+       0.2095
+      ],
+      "best": [
+       "Gladiator",
+       0.4665
+      ]
+     },
+     "Gladiator": {
+      "average": 0.4890833333333333,
+      "worst": [
+       "Minotaur",
+       0.46
+      ],
+      "best": [
+       "Basilisk",
+       0.5335
+      ]
+     },
+     "Jinn": {
+      "average": 0.6764166666666668,
+      "worst": [
+       "Gladiator",
+       0.4895
+      ],
+      "best": [
+       "WeepingAngel",
+       0.8
+      ]
+     },
+     "Minotaur": {
+      "average": 0.4478333333333333,
+      "worst": [
+       "Unicorn",
+       0.32325
+      ],
+      "best": [
+       "Basilisk",
+       0.5425
+      ]
+     },
+     "WeepingAngel": {
+      "average": 0.5123333333333333,
+      "worst": [
+       "Jinn",
+       0.2
+      ],
+      "best": [
+       "Dragon",
+       0.6175
+      ]
+     },
+     "Unicorn": {
+      "average": 0.5757916666666667,
+      "worst": [
+       "Jinn",
+       0.244
+      ],
+      "best": [
+       "Dragon",
+       0.9705
+      ]
+     },
+     "Dragon": {
+      "average": 0.4203333333333333,
+      "worst": [
+       "Unicorn",
+       0.0295
+      ],
+      "best": [
+       "Basilisk",
+       0.6495
+      ]
+     }
+    }
+   },
+   "excitement": {
+    "fights": 168000,
+    "decisive": 114934,
+    "rounds": 283908,
+    "loki": 139337,
+    "luck": 141339,
+    "turnaround25": 26986,
+    "turnaround50": 2183
+   }
+  }
+ ]
+}

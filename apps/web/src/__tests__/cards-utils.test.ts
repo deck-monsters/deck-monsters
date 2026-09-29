@@ -44,7 +44,7 @@ describe('getCardClass', () => {
 		expect(getCardClass('Gloaming Rest')).toBe('heal');
 		expect(getCardClass('Dissonant Voice')).toBe('magic');
 		// A ward against holds, like the other boosts.
-		expect(getCardClass('Unconquerable Horn')).toBe('utility');
+		expect(getCardClass('Unconquerable Horn')).toBe('melee');
 	});
 
 	it('badges the Dragon cards by what they do', () => {
@@ -53,6 +53,9 @@ describe('getCardClass', () => {
 		// A dodge and a dive, and a hide or a fury: moves, not attacks of their own.
 		expect(getCardClass('Take Wing')).toBe('utility');
 		expect(getCardClass('Mood Scales')).toBe('utility');
+		expect(getCardClass('Tail Lash')).toBe('melee');
+		expect(getCardClass('Helm of Awe')).toBe('magic');
+		expect(getCardClass('Asinine Companion')).toBe('utility');
 	});
 
 	it('falls back to utility for unmatched names', () => {

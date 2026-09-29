@@ -153,6 +153,7 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
 ## Card Catalog (verbose)
 
 - [Adrenaline Rush](#adrenaline-rush)
+- [Asinine Companion](#asinine-companion)
 - [Bad Batch](#bad-batch)
 - [Basic Shield](#basic-shield)
 - [Battle Focus](#battle-focus)
@@ -185,6 +186,7 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
 - [Forked Stick](#forked-stick)
 - [Gloaming Rest](#gloaming-rest)
 - [Heal](#heal)
+- [Helm of Awe](#helm-of-awe)
 - [Hit](#hit)
 - [Hit Harder](#hit-harder)
 - [Horn Gore](#horn-gore)
@@ -205,6 +207,7 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
 - [Scotch](#scotch)
 - [Sticketh](#sticketh)
 - [Survival Knife](#survival-knife)
+- [Tail Lash](#tail-lash)
 - [Take Wing](#take-wing)
 - [Thick Skin](#thick-skin)
 - [Tsunami](#tsunami)
@@ -236,6 +239,33 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  Usable by: Barbarian, Fighter
  MSRP: 50
  Class: Boost
+
+==================================
+```
+
+### Asinine Companion
+
+```text
+==================================
+ 🫏  Asinine Companion  ○
+----------------------------------
+
+ Every hero needs a faithful 
+ companion, and every dragon 
+ needs someone to carry the gold. 
+ The donkey talks the whole way. 
+ The dragon has not eaten him. 
+ Yet.
+
+ The donkey kicks your target: 
+ 1d20 + 2 + your level (up to 10) 
+ vs ac, for 1d8 + half your level 
+ damage on a hit. It never crits.
+
+ Level: 1
+ Usable by: Dragon
+ MSRP: 20
+ Class: Melee
 
 ==================================
 ```
@@ -751,12 +781,11 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  for the voyce is strained above 
  measure." Stop thine ears.
 
- Each opponent rolls 1d20 + int 
- vs your int. On a failure, their 
- next card takes 2 off its attack 
- roll. A card that does not roll 
- to hit (Blast, Heal) uses up the 
- penalty with no effect.
+ Every opponent's next attack 
+ rolls twice and keeps the worse 
+ roll (disadvantage). A card that 
+ does not roll to hit (Blast, 
+ Heal) leaves it waiting.
  No damage. Does not stack.
 
  Level: 1
@@ -782,7 +811,7 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  of the card becomes the target.
 
  Level: 1
- Usable by: Bard, Cleric
+ Usable by: Bard, Cleric, Wizard
  Effect chance: 100%
  MSRP: 80
  Class: Hide
@@ -1163,10 +1192,11 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  Kneel to rest: -2 ac until your 
  next card.
  If nothing damages you before 
- then, heal 3d4 as that card 
- begins. Any damage interrupts 
- the rest and the healing is 
- lost.
+ then, heal a random amount 
+ between 4 hp and all the hp you 
+ are missing as that card begins. 
+ Any damage interrupts the rest 
+ and the healing is lost.
 
  Level: 3
  Usable by: Unicorn, Cleric
@@ -1200,6 +1230,43 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  Heal chance: 95% | HPT: 3
  MSRP: 10
  Class: Heal
+
+==================================
+```
+
+### Helm of Awe
+
+```text
+==================================
+ 🐲  Helm of Awe  ◇
+----------------------------------
+
+ Helm of awe on the hoard-guard's 
+ brow: the bold go pale, the 
+ proud bow low. Fafnir wore it on 
+ his gold, and no man stood 
+ before him. Shouting "SIT!" at a 
+ dragon in the helm does not 
+ work. It has been tried.
+
+ Each opponent rolls 1d20 + int 
+ vs 10 + your int modifier. On a 
+ failure they are awed and lose 
+ their next card.
+ At the start of each later turn 
+ they roll again, 3 easier each 
+ time: on a failure they cower 
+ and lose that card, on a success 
+ they recover.
+ On a natural 1, an opponent that 
+ is not bloodied tries to flee 
+ the ring (1d20 + dex, 10 or 
+ more); a bloodied one cowers.
+ No damage. Does not stack.
+
+ Level: 2
+ Usable by: Dragon
+ MSRP: 80
 
 ==================================
 ```
@@ -1310,13 +1377,18 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  "doth wonderfully help against 
  poisons."
 
- Remove one of these, in order: 
- your worst stat penalty this 
- fight, or a Bad Batch waiting in 
- the ring. If the horn is turned 
- on someone who is held, it frees 
- them first.
- Then heal 3 hp.
+ Drink from the horn: remove one 
+ harm already on you (your worst 
+ stat penalty, or a Bad Batch 
+ waiting in the ring; if turned 
+ on someone held, it frees them), 
+ then ward yourself for one round 
+ against the next harmful effect 
+ an opponent puts on you that is 
+ not damage (a hold, a curse, 
+ poison, being blinked away, or 
+ being confused). Then heal 5 hp. 
+ The ward works once per fight.
 
  Level: 2
  Usable by: Unicorn, Cleric
@@ -1429,7 +1501,8 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  do not crit).
 
  Level: 2
- Usable by: Bard, Cleric, Fighter
+ Usable by: Bard, Cleric, 
+ Fighter, Wizard
  Hit chance: 90% | DPT: 4
  MSRP: 50
  Targets: ac
@@ -1788,6 +1861,37 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
 ==================================
 ```
 
+### Tail Lash
+
+```text
+==================================
+ 🐉  Tail Lash  ◆
+----------------------------------
+
+ Tooth for the foeman, tail for 
+ the fool; the wise watch the far 
+ end of the wyrm. Topsell says a 
+ dragon's strength lies not in 
+ its teeth but in its tail, which 
+ is why the Vikings who shout at 
+ dragons stand at the front.
+
+ Hit: 1d20 vs ac / Damage: 1d6. 
+ If the hit lands and the target 
+ is still standing, the tail 
+ strikes too (1d20 + your STR 
+ modifier - 2 to hit, 1d6 damage, 
+ no critical hits).
+
+ Level: 1
+ Usable by: Dragon
+ MSRP: 50
+ Targets: ac
+ Class: Melee
+
+==================================
+```
+
 ### Take Wing
 
 ```text
@@ -1904,26 +2008,31 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
 
 ```text
 ==================================
- 💎  Unconquerable Horn  ◆
+ ✨  Unconquerable Horn  ◆
 ----------------------------------
 
- Canst thou bind the unicorn with 
- his band in the furrow? Thou 
- canst not. Many have tried.
+ "His horns are like the horns of 
+ unicorns: with them he shall 
+ push the people together to the 
+ ends of the earth." When the 
+ horn is lifted up it shineth, 
+ and it singeth, and all that 
+ liveth in the wood cometh to its 
+ light.
 
- Ward yourself against the next 
- hold an opponent lands on you 
- (immobilize, pin, coil, 
- enthrall, and the like). The 
- hold is cancelled and the ward 
- is spent; any damage that comes 
- with it still lands.
- Once per fight. Does not stack.
+ Let the horn ring out: hit your 
+ target, and an ally in the ring 
+ strikes it too. If you have no 
+ ally, a creature of the wood 
+ answers its light: an otter, a 
+ deer, or a ram (1d20 + 2 to hit, 
+ 1d4 damage).
 
  Level: 1
  Usable by: Unicorn
  MSRP: 50
- Class: Boost
+ Targets: ac
+ Class: Melee
 
 ==================================
 ```

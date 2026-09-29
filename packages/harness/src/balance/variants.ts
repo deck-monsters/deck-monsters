@@ -53,6 +53,18 @@ function staticSet(className: string, prop: string, value: number | undefined): 
 	};
 }
 
+/** Set a card class static for the unit (a class setting such as a penalty or heal). */
+function cardStatic(cardType: string, prop: string, value: unknown): Undo {
+	const Card = getCardClassByTypeName(cardType) as unknown as Record<string, unknown>;
+	const had = Object.prototype.hasOwnProperty.call(Card, prop);
+	const before = Card[prop];
+	Card[prop] = value;
+	return () => {
+		if (had) Card[prop] = before;
+		else delete Card[prop];
+	};
+}
+
 /** Wrap a creature getter (ac, strModifier, ...) on one monster class with a level-based bonus. */
 function getterBonus(className: string, prop: string, bonus: (level: number) => number): Undo {
 	const M = monsterClass(className);
@@ -148,6 +160,42 @@ export const VARIANTS: Record<string, Variant> = {
 			};
 		},
 	},
+	'awe-steady': { about: 'Helm of Awe: the recovery save never gets easier', apply: () => cardStatic('Helm of Awe', 'holdFatigue', 0) },
+	'awe-no-flee': { about: 'Helm of Awe: a natural 1 on a recovery save only cowers', apply: () => cardStatic('Helm of Awe', 'fleeOnLoki', 'none') },
+	'rest-3d4': { about: 'Gloaming Rest: an undisturbed rest heals 3d4 (the old heal), not 4 to all missing', apply: () => cardStatic('Gloaming Rest', 'restShape', 'dice') },
+
+
+
+	'horn-companion-1d6': { about: 'Unconquerable Horn: the woodland creature deals 1d6 instead of 1d4', apply: () => cardStatic('Unconquerable Horn', 'companionDamageDice', '1d6') },
+	'tail-1d6': { about: 'Tail Lash: the tail deals 1d6 instead of 1d4', apply: () => cardStatic('Tail Lash', 'tailDamageDice', '1d6') },
+	'asinine-ac': {
+		about: 'Asinine Companion: boosts AC by 2 instead of STR by 2',
+		// BoostCard reads `boostedProp` from the class `defaults` object, so patch a copy of it.
+		// The kick is the shipped shape (roadmap 35), so the boost variant turns it off as well;
+		// patching only `boostedProp` measured the kick under the boost's name (Codex, #411).
+		apply: () => {
+			const Card = getCardClassByTypeName('Asinine Companion') as unknown as { defaults: Record<string, unknown> };
+			const undos = [
+				cardStatic('Asinine Companion', 'kick', false),
+				cardStatic('Asinine Companion', 'defaults', { ...Card.defaults, boostedProp: 'ac' }),
+			];
+			return () => {
+				for (const undo of undos.reverse()) undo();
+			};
+		},
+	},
+	'donkey-kick': { about: 'Asinine Companion: the donkey kicks an opponent (1d20+2, 1d6) instead of boosting STR', apply: () => cardStatic('Asinine Companion', 'kick', true) },
+	'horn-of-proof-5': { about: 'Horn of Proof: heals 5 instead of 3', apply: () => cardStatic('Horn of Proof', 'healAmount', 5) },
+	'donkey-kick-scaled': {
+		about: 'Asinine Companion: the donkey kicks, and the kick grows with the dragon level',
+		apply: () => {
+			const undos = [cardStatic('Asinine Companion', 'kick', true), cardStatic('Asinine Companion', 'kickScales', true)];
+			return () => {
+				for (const undo of undos.reverse()) undo();
+			};
+		},
+	},
+	'kick-d8': { about: 'Asinine Companion: the kick deals 1d8', apply: () => cardStatic('Asinine Companion', 'kickDamageDice', '1d8') },
 	'gladiator-ac+1': { about: 'Gladiator: 1 more AC', apply: () => staticBonus('Gladiator', 'acVariance', 1) },
 	'gladiator-hp+3': { about: 'Gladiator: 3 more HP', apply: () => staticBonus('Gladiator', 'hpVariance', 3) },
 	'gladiator-early-ac': {

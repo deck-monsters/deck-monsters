@@ -1,10 +1,11 @@
 import { BaseCard, type CardOptions } from './base.js';
 import { AOE, HIDE, PSYCHIC } from '../constants/card-classes.js';
-import { BARD, CLERIC } from '../constants/creature-classes.js';
+import { BARD, CLERIC, WIZARD } from '../constants/creature-classes.js';
 import { DEFENSE_PHASE } from '../constants/phases.js';
 import { FACESWAP_EFFECT } from '../constants/effect-types.js';
 import { PRICEY } from '../helpers/costs.js';
 import { RARE } from '../helpers/probabilities.js';
+import { wardAgainst, controlWardNarration } from './helpers/control-ward.js';
 
 const isFaceswapping = (monster: any): boolean =>
 	!!monster.encounterEffects.find(
@@ -14,7 +15,7 @@ const isFaceswapping = (monster: any): boolean =>
 export class EnchantedFaceswapCard extends BaseCard {
 	static cardClass = [HIDE];
 	static cardType = 'Enchanted Faceswap';
-	static permittedClassesAndTypes = [BARD, CLERIC];
+	static permittedClassesAndTypes = [BARD, CLERIC, WIZARD];
 	static probability = RARE.probability;
 	static description =
 		'A snapchat filter for the magically inclined. This spell will cause the next card played with the caster as the target to be reversed so that the player of the card becomes the target.';
@@ -51,6 +52,24 @@ export class EnchantedFaceswapCard extends BaseCard {
 									(encounterEffect: any) =>
 										encounterEffect.effectType !== FACESWAP_EFFECT
 								);
+
+							// Horn of Proof ward: being faceswapped — having your own card
+							// turned back on you — is the negative, non-damage effect here.
+							// swappedPlayer (the attacker) is who it lands on; faceswapTarget
+							// (the trap's owner) is the source. An armed ward on the attacker
+							// cancels the redirect, and their card resolves normally instead.
+							if (wardAgainst(swappedPlayer, faceswapTarget, { activeContestants, ring })) {
+								this.emit('narration', {
+									narration: controlWardNarration(swappedPlayer, 'will not be faceswapped.'),
+								});
+								return effect.call(
+									card,
+									swappedPlayer,
+									swappedTarget,
+									ring,
+									activeContestants
+								);
+							}
 
 							this.emit('effect', {
 								effectResult: `${this.icon} faceswapped by`,

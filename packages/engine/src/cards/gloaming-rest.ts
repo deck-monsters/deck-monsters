@@ -15,6 +15,7 @@ const { roll } = chance;
 
 export const REST_AC_PENALTY = 2;
 const REST_HEALTH_DICE = '3d4';
+const RANGED_REST_MIN = 4;
 
 /*
  * Edwin Julian's comic verse "The Capture of the Unicorn" (illustrated by Reginald Birch;
@@ -39,14 +40,30 @@ export class GloamingRestCard extends BaseCard {
 		'"At the sight of them they growe tame, and come and sleepe beside them." And then the hunters come. Rest, and beware.';
 	static level = 3;
 	static cost = REASONABLE.cost;
+	/**
+	 * What an undisturbed rest restores (owner, 2026-09-29, roadmap 35). `ranged`: a random
+	 * amount from 4 (or less, if less is missing) to everything missing, so a full heal can
+	 * happen but rarely does. `dice`: the old 3d4, kept for the harness. Bosses rest the same.
+	 *
+	 * Why not a full heal every time: a rest that met a card that did not hit (a Heal, a
+	 * Harden, a miss) wiped out the opponent's whole lead, and the fight turned on that one
+	 * coin flip. In level 3 duels the Unicorn lost 9% of fights where a rest completed and 48%
+	 * of fights where none did, though the average looked fine. The study, with the seven shapes
+	 * tried and why each was kept or dropped, is
+	 * docs/archive/studies/2026-09-gloaming-rest.md.
+	 */
+	static restShape: 'ranged' | 'dice' = 'ranged';
 
 	constructor({ icon = '🌙' }: Partial<CardOptions> = {}) {
 		super({ icon } as Partial<CardOptions>);
 	}
 
 	get stats(): string {
+		const heal = (this.constructor as typeof GloamingRestCard).restShape === 'dice'
+			? `heal ${REST_HEALTH_DICE}`
+			: `heal a random amount between ${RANGED_REST_MIN} hp and all the hp you are missing`;
 		return `Kneel to rest: -${REST_AC_PENALTY} ac until your next card.
-If nothing damages you before then, heal ${REST_HEALTH_DICE} as that card begins. Any damage interrupts the rest and the healing is lost.`;
+If nothing damages you before then, ${heal} as that card begins. Any damage interrupts the rest and the healing is lost.`;
 	}
 
 	override getTargets(player: any): any[] {
@@ -62,6 +79,16 @@ If nothing damages you before then, heal ${REST_HEALTH_DICE} as that card begins
 	 */
 	restoreAc(target: any): void {
 		target.setModifier('ac', REST_AC_PENALTY);
+	}
+
+	/** HP an undisturbed rest restores: never more than the monster is missing. */
+	restHealAmount(target: any): number {
+		const missing = Math.max(0, target.maxHp - target.hp);
+		if ((this.constructor as typeof GloamingRestCard).restShape === 'dice') {
+			return roll({ primaryDice: REST_HEALTH_DICE }).result;
+		}
+		const low = Math.min(RANGED_REST_MIN, missing);
+		return low + Math.floor(Math.random() * (missing - low + 1));
 	}
 
 	rest(target: any, ring: any): void {
@@ -93,16 +120,12 @@ If nothing damages you before then, heal ${REST_HEALTH_DICE} as that card begins
 				return card;
 			}
 
-			const healRoll = roll({ primaryDice: REST_HEALTH_DICE });
-			this.emit('rolled', {
-				reason: 'for a quiet rest.',
-				card: this,
-				roll: healRoll,
-				who: target,
-				outcome: `No hunter came. ${target.givenName} riseth from the laurel, restored.`,
+			const amount = this.restHealAmount(target);
+			this.emit('narration', {
+				narration: `${this.icon} No hunter came. ${target.givenName} riseth from the laurel, restored (${amount} hp).`,
 			});
 			await subEventDelay(pacing);
-			await target.heal(healRoll.result);
+			if (amount > 0) await target.heal(amount);
 			this.restoreAc(target);
 
 			return card;

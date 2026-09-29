@@ -73,7 +73,7 @@ Source: `packages/engine/src/cards/dissonant-voice.ts`.
 **Rules text:**
 
 ```text
-Each opponent rolls 1d20 + int vs your int. On a failure, their next card takes 2 off its attack roll. A card that does not roll to hit (Blast, Heal) uses up the penalty with no effect.
+Every opponent's next attack rolls twice and keeps the worse roll (disadvantage). A card that does not roll to hit (Blast, Heal) leaves it waiting.
 No damage. Does not stack.
 ```
 
@@ -81,12 +81,9 @@ No damage. Does not stack.
 
 | Where | Template |
 |---|---|
-| rattle → narration | `{target}'s ears yet ring with that hideous lowing 🔔 (-2 to attack).` |
-| effect → whose | `{his} own` |
-| effect → outcome | `{target} shakes it off.` |
-| effect → outcome | `{target} is already rattled.` |
-| effect → outcome | `{target} is rattled!` |
-| effect → reason | `vs {whose} int ({int}) to keep {his} focus.` |
+| rattle → narration | `{target}'s ears yet ring with that hideous lowing 🔔 (attacks at disadvantage).` |
+| effect → narration | `{target} is already rattled.` |
+| effect → narration | `🔔 {target} is rattled!` |
 
 ## Gloaming Rest
 
@@ -98,7 +95,7 @@ Source: `packages/engine/src/cards/gloaming-rest.ts`.
 
 ```text
 Kneel to rest: -2 ac until your next card.
-If nothing damages you before then, heal 3d4 as that card begins. Any damage interrupts the rest and the healing is lost.
+If nothing damages you before then, heal a random amount between 4 hp and all the hp you are missing as that card begins. Any damage interrupts the rest and the healing is lost.
 ```
 
 **Narration and outcomes:**
@@ -106,8 +103,7 @@ If nothing damages you before then, heal 3d4 as that card begins. Any damage int
 | Where | Template |
 |---|---|
 | rest → narration | `🌙 The hunters were waiting! {target}'s rest is broken, and {he} {rises/rise} without its comfort.` |
-| rest → reason | `for a quiet rest.` |
-| rest → outcome | `No hunter came. {target} riseth from the laurel, restored.` |
+| rest → narration | `🌙 No hunter came. {target} riseth from the laurel, restored ({amount} hp).` |
 | effect → narration | `{target} is already resting.` |
 | effect → narration | `🌙 As the light fails, {player} kneels among the laurel and closes {his} eyes. Somewhere in the dusk, the hunters are listening.` |
 | effect → narration | `🌙 In confusion, {player} coaxes {target} to kneel and rest.` |
@@ -121,8 +117,7 @@ Source: `packages/engine/src/cards/horn-of-proof.ts`.
 **Rules text:**
 
 ```text
-Remove one of these, in order: your worst stat penalty this fight, or a Bad Batch waiting in the ring. If the horn is turned on someone who is held, it frees them first.
-Then heal 3 hp.
+Drink from the horn: remove one harm already on you (your worst stat penalty, or a Bad Batch waiting in the ring; if turned on someone held, it frees them), then ward yourself for one round against the next harmful effect an opponent puts on you that is not damage (a hold, a curse, poison, being blinked away, or being confused). Then heal 5 hp. The ward works once per fight.
 ```
 
 **Narration and outcomes:**
@@ -132,7 +127,18 @@ Then heal 3 hp.
 | cleanseHold → narration | `🏺 The horn toucheth the bonds, and they fall away. {target} is free.` |
 | cleanseCurse → narration | `🏺 The horn draweth out the curse on {target}'s {worstStat}, as it draweth poison from the cup.` |
 | cleanseRing → narration | `🏺 {target} dips the horn in the cups in the ring. One cup froths and hisses; that bad batch is poured away.` |
+| ward → narration | `🏺 {player} sets {his} lips to the horn, and no poison shall pass it. The next harm laid on {him} this round will not take.` |
+| ward → narration | `🏺 In confusion, {player} passeth the horn to {target}. The next harm laid on {him} this round will not take.` |
+| ward → narration | `🏺 {target} hath drunk already, and standeth warded.` |
+| ward → narration | `🏺 {target} has already been warded once this fight. The horn wardeth not twice.` |
 | effect → narration | `🏺 The horn findeth nothing here to purify.` |
+
+**Lines elsewhere that name this card:**
+
+| Where | Template |
+|---|---|
+| `packages/engine/src/cards/helpers/control-ward.ts` controlWardNarration | `{"Will the unicorn be willing to serve thee?"  / —}{target} {refusal} Horn of Proof's ward is spent.` |
+| `packages/engine/src/cards/immobilize.ts` immobilize → narration | `{"Will the unicorn be willing to serve thee?"  / —}{target} will not be taken and held. {He} {refuses/refuse} to be {IMMOBILIZED}, and Horn of Proof's ward is spent.` |
 
 ## Sticketh
 
@@ -179,26 +185,27 @@ Natural 1 on either roll fails. Natural 20 on the charge deals max damage.
 
 Source: `packages/engine/src/cards/unconquerable-horn.ts`.
 
-**Card description:** `Canst thou bind the unicorn with his band in the furrow? Thou canst not. Many have tried.`
+**Card description:** `"His horns are like the horns of unicorns: with them he shall push the people together to the ends of the earth." When the horn is lifted up it shineth, and it singeth, and all that liveth in the wood cometh to its light.`
 
 **Rules text:**
 
 ```text
-Ward yourself against the next hold an opponent lands on you (immobilize, pin, coil, enthrall, and the like). The hold is cancelled and the ward is spent; any damage that comes with it still lands.
-Once per fight. Does not stack.
+Let the horn ring out: hit your target, and an ally in the ring strikes it too. If you have no ally, a creature of the wood answers its light: an otter, a deer, or a ram (1d20 + 2 to hit, 1d4 damage).
 ```
 
 **Narration and outcomes:**
 
 | Where | Template |
 |---|---|
-| effect → narration | `💎 {player} lowers {his} horn and plants {his} hooves. Canst thou bind the unicorn? The next hold will not take.` |
-| effect → narration | `💎 In confusion, {player} lends {his} ward to {target}. The next hold on {him} will not take.` |
-| effect → narration | `{target} already standeth braced. No band shall hold {him}.` |
-| effect → narration | `{target} has already refused one hold this fight. The ward riseth not twice.` |
-
-**Lines elsewhere that name this card:**
-
-| Where | Template |
-|---|---|
-| `packages/engine/src/cards/immobilize.ts` immobilize → narration | `{"Will the unicorn be willing to serve thee?"  / —}{target} will not be taken and held. {He} {refuses/refuse} to be {IMMOBILIZED}, and the Unconquerable Horn's ward is spent.` |
+| flavors → hits | `drives a shining horn into` |
+| flavors → hits | `runs through, horn first,` |
+| flavors → hits | `lowers a horn like a lance of light at` |
+| flavors → hits | `gores, the horn blazing,` |
+| companionStrike → label | `{Name} of the wood` |
+| companionStrike → narration | `{icon} Out of the wood beyond the ring, {name} answereth the light of the horn.` |
+| companionStrike → reason | `vs {target}'s ac ({ac}) to determine if the creature of the wood struck true.` |
+| companionStrike → narration | `{icon} {label} {miss}. {target} is untouched.` |
+| companionStrike → reason | `for damage.` |
+| companionStrike → flavorText | `{icon} {icon} {icon}  {label} {strike} {target} for {result} damage.` |
+| effect → narration | `✨ {player} lifts {his} head. "My horn shalt thou exalt like the horn of an unicorn." It kindleth with a wonderful brightness, and a clear note singeth over the ring.` |
+| effect → narration | `{ally} seeth the light, and heareth the singing of it, and cometh at a run.` |

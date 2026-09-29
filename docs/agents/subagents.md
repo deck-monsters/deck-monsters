@@ -22,6 +22,16 @@ guidance, not a whitelist.
 
 The orchestrator still owns the outcome. A subagent's report is evidence, not a result.
 
+
+### Player-facing prose stays with the orchestrator (owner, 2026-09-29)
+
+Flavour text, card descriptions, and narration are written by the orchestrator, not delegated
+to a Tier 2 implementer: "Sonnet is poor at that sort of thing." Where rich text is needed,
+build it from public-domain quotations or close variations on them (the Unicorn's King James
+and bestiary lines, the Dragon's Eddas and Viking sources) rather than writing from scratch.
+Implementers own mechanics and tests; the orchestrator writes or rewrites every player-facing
+line before the change is committed.
+
 ## Tiers
 
 | Tier | Work it is for | Example models and effort (September 2026) |

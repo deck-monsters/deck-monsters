@@ -62,9 +62,46 @@ describe('./cards/gloaming-rest.ts Gloaming Rest', () => {
 		await nextTurn();
 
 		expect(unicorn.ac).to.equal(baseAc);
-		expect(unicorn.hp).to.be.within(5 + 3, 5 + 12);
+		expect(unicorn.hp).to.be.within(5 + 4, unicorn.maxHp);
 		expect(isResting(unicorn)).to.equal(false);
 	});
+
+	it('heals a random amount from 4 to all that is missing', () => {
+		expect(new GloamingRestCard().stats).to.include('between 4 hp and all the hp you are missing');
+		const card = new GloamingRestCard();
+		const random = sinon.stub(Math, 'random');
+		unicorn.hp = 1;
+		random.returns(0);
+		expect(card.restHealAmount(unicorn)).to.equal(4);
+		random.returns(0.9999);
+		expect(card.restHealAmount(unicorn)).to.equal(unicorn.maxHp - 1);
+		unicorn.hp = unicorn.maxHp - 2;
+		random.returns(0);
+		expect(card.restHealAmount(unicorn)).to.equal(2);
+		unicorn.hp = unicorn.maxHp;
+		expect(card.restHealAmount(unicorn)).to.equal(0);
+	});
+
+	it('rests a boss the same way', async () => {
+		unicorn.setOptions({ isBoss: true });
+		sinon.stub(Math, 'random').returns(0);
+		await new GloamingRestCard().play(unicorn, foe, ring, contestants);
+		await nextTurn();
+		expect(unicorn.hp).to.equal(5 + 4);
+	});
+
+	it('heals 3d4 with the harness dice setting', async () => {
+		GloamingRestCard.restShape = 'dice';
+		try {
+			expect(new GloamingRestCard().stats).to.include('heal 3d4');
+			await new GloamingRestCard().play(unicorn, foe, ring, contestants);
+			await nextTurn();
+			expect(unicorn.hp).to.be.within(5 + 3, 5 + 12);
+		} finally {
+			GloamingRestCard.restShape = 'ranged';
+		}
+	});
+
 
 	it('loses the heal if anything damages the Unicorn first', async () => {
 		const baseAc = unicorn.ac;

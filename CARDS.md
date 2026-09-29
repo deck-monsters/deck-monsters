@@ -21,6 +21,7 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
 ### Card List
 
 - [Adrenaline Rush](#adrenaline-rush)
+- [Asinine Companion](#asinine-companion)
 - [Bad Batch](#bad-batch)
 - [Basic Shield](#basic-shield)
 - [Battle Focus](#battle-focus)
@@ -53,6 +54,7 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
 - [Forked Stick](#forked-stick)
 - [Gloaming Rest](#gloaming-rest)
 - [Heal](#heal)
+- [Helm of Awe](#helm-of-awe)
 - [Hit](#hit)
 - [Hit Harder](#hit-harder)
 - [Horn Gore](#horn-gore)
@@ -73,6 +75,7 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
 - [Scotch](#scotch)
 - [Sticketh](#sticketh)
 - [Survival Knife](#survival-knife)
+- [Tail Lash](#tail-lash)
 - [Take Wing](#take-wing)
 - [Thick Skin](#thick-skin)
 - [Tsunami](#tsunami)
@@ -122,6 +125,23 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
  live for. It's how you know you 
  exist. You embrace it and 
  welcome the rush.
+
+==================================
+```
+
+### Asinine Companion
+
+```text
+==================================
+ 🫏  Asinine Companion  ○
+----------------------------------
+
+ Every hero needs a faithful 
+ companion, and every dragon 
+ needs someone to carry the gold. 
+ The donkey talks the whole way. 
+ The dragon has not eaten him. 
+ Yet.
 
 ==================================
 ```
@@ -568,6 +588,24 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
 ==================================
 ```
 
+### Helm of Awe
+
+```text
+==================================
+ 🐲  Helm of Awe  ◇
+----------------------------------
+
+ Helm of awe on the hoard-guard's 
+ brow: the bold go pale, the 
+ proud bow low. Fafnir wore it on 
+ his gold, and no man stood 
+ before him. Shouting "SIT!" at a 
+ dragon in the helm does not 
+ work. It has been tried.
+
+==================================
+```
+
 ### Hit
 
 ```text
@@ -854,6 +892,24 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
 ==================================
 ```
 
+### Tail Lash
+
+```text
+==================================
+ 🐉  Tail Lash  ◆
+----------------------------------
+
+ Tooth for the foeman, tail for 
+ the fool; the wise watch the far 
+ end of the wyrm. Topsell says a 
+ dragon's strength lies not in 
+ its teeth but in its tail, which 
+ is why the Vikings who shout at 
+ dragons stand at the front.
+
+==================================
+```
+
 ### Take Wing
 
 ```text
@@ -916,12 +972,17 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
 
 ```text
 ==================================
- 💎  Unconquerable Horn  ◆
+ ✨  Unconquerable Horn  ◆
 ----------------------------------
 
- Canst thou bind the unicorn with 
- his band in the furrow? Thou 
- canst not. Many have tried.
+ "His horns are like the horns of 
+ unicorns: with them he shall 
+ push the people together to the 
+ ends of the earth." When the 
+ horn is lifted up it shineth, 
+ and it singeth, and all that 
+ liveth in the wood cometh to its 
+ light.
 
 ==================================
 ```

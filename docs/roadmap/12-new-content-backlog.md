@@ -20,6 +20,14 @@ and follow the checklist in [cards and encounter effects](../architecture/cards-
 - [ ] Design and test Healing Balm, Enchanted Mirror, Bear Trap, Shardblade, Kata, Gini
   Coefficient, Healing Wind, Shuffle, Delve, Wild, Trade Hands, and Swarm.
 - [ ] Strengthen repeated Immobilize rather than merely resetting its hold.
+- [ ] **Haunted Autocorrect** (owner idea, 2026-09-29): a trick card in the family of Enchanted
+  Faceswap. It haunts an opponent's next card and "autocorrects" it into a similar-sounding card
+  that does something hilariously different (Heal becomes Hail, Blast becomes Boast, Coil
+  becomes Coin; exact pairs to design). The replacement plays instead, with narration that
+  shows the typo. Design questions: which cards have a sound-alike (a curated table, never
+  random text), what a sound-alike with no real card does (a harmless joke effect), who can
+  hold it (Bard, Cleric, Wizard?), and a roll to resist so it reads as a roll. Not part of the
+  balance passes; a fun content card.
 - [ ] **Counters to the big effects** (owner, 2026-09-28). The owner prefers a few rare,
   skilful counter cards to nerfing Sandstorm, Enchanted Faceswap, Blink, and the other
   swing cards. That keeps the big moments and gives complex fights a second layer: a player
@@ -52,10 +60,11 @@ and follow the checklist in [cards and encounter effects](../architecture/cards-
     the Blinker is pulled into the time-shift.
   - *Mirror Shield*, above, already turns area attacks (Sandstorm among them) back on the
     caster; it is the first card of this family.
-  - *Unconquerable Horn, redesigned* (owner, 2026-09-28): a one-shot counterspell against the
-    next negative non-damage action aimed at the Unicorn (holds, curses, poison, Blink,
-    Sandstorm and Faceswap redirects), while damage still lands. It is planned in
-    [35](35-balance-fixes.md#unconquerable-horn-as-a-counterspell-owner-2026-09-28).
+  - *Horn of Proof's ward* (owner, 2026-09-28 and 29): a one-round counterspell against the
+    next negative non-damage action aimed at its bearer (holds, curses, poison, Blink,
+    Sandstorm and Faceswap redirects), while damage still lands. It began on Unconquerable
+    Horn, which became a rally strike instead. It is planned in
+    [35](../archive/roadmap/35-balance-fixes.md#unconquerable-horn-as-a-counterspell-owner-2026-09-28).
   - A counter that reads the opponent's hand order (it answers the next card of a class the
     opponent plays), so card order and reading the fight both matter.
 - [ ] **Owner: Cards.** Evaluate a hybrid data-driven card spec (schema plus optional
@@ -112,6 +121,10 @@ Open work:
   - **Mirror Shield** (Fighter and Bard): the next area attack aimed at you (Fire Breath,
     Blast, Sandstorm, Tsunami) turns back: you take half, and half hits its caster. Spent
     on use. Watch in `sim:monster` that it does not become a hard counter to Blast Clerics.
+- [ ] **More options for the first Wizard** (owner, 2026-09-29): the Wizard class holds only
+  the Dragon's own cards plus Cloak and Revive, so a Dragon's hand leans on generic strikes.
+  Widening the pool (existing spells opened to Wizards, or new Wizard cards) is task 8 of
+  [35](../archive/roadmap/35-balance-fixes.md).
 - [ ] **Flavour-text pass after play**, as the Unicorn had
   ([28](../archive/roadmap/28-unicorn-voice-punch-up.md)). Start from the
   [Dragon strings inventory](../reference/strings/dragon.md) and the requester's reactions

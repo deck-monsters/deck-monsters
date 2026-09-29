@@ -132,6 +132,9 @@ owner decision in [11](11-balance-and-mechanics.md).
 - **Content backlog** (12): Card Pops, Re-quip, the listed card ideas, the Time Lord and
   Bureaucrat monsters, and the optional data-driven card spec. Take them one per content
   pass, each with harness evidence.
+- **Next balance pass** ([11](11-balance-and-mechanics.md#next-balance-pass-carried-from-roadmap-35)):
+  the pinned-advantage rule first, then the optional Mesmerize, Enthrall, and Harden fixes,
+  a per-fight split in the harness, and a group-fight card if wanted.
 - **Combat design** (11): stat reform, initiative, crit failures and crit ticks, card
   balance by tier, Team XP, and fight threads.
 

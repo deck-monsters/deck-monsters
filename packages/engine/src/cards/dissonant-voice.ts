@@ -1,5 +1,4 @@
 import { BaseCard, type CardOptions } from './base.js';
-import { chance } from '../helpers/chance.js';
 import { subEventDelay } from '../helpers/delay-times.js';
 import { TARGET_ALL_CONTESTANTS, getTarget } from '../helpers/targeting-strategies.js';
 import { ATTACK_PHASE } from '../constants/phases.js';
@@ -10,14 +9,16 @@ import { ACOUSTIC } from '../constants/card-classes.js';
 import { UNCOMMON } from '../helpers/probabilities.js';
 import { VERY_CHEAP } from '../helpers/costs.js';
 
-const { roll } = chance;
-
-const DISSONANCE_PENALTY = 2;
-
 /*
  * Aelian (De Animalium Natura, ancient report): of all animals the cartazon has "the most
  * dissonant voice".
- * The card is a rattle, not a silence: one small penalty on one attack, no damage.
+ * The card is a rattle, not a silence: no save, no damage, and every opponent's next attack
+ * rolls at disadvantage (owner's shape, 2026-09-29). It waits for a card that rolls to hit, so
+ * a Blast or a Heal no longer wastes it. It is modest one-on-one and at par in crowds and team
+ * battles, which is the card's job. An attack-roll penalty (-2, -4, or with a sting) stayed
+ * 5-11 points below the card it replaced. Disadvantage keeps every roll a plain d20, so a
+ * natural 1 and a natural 20 keep their meaning (owner rule). The study is
+ * docs/archive/studies/2026-09-helm-of-awe-and-dissonant-voice.md.
  *
  * Player-facing lines quote the old sources (docs/archive/roadmap/28-unicorn-voice-punch-up.md):
  * the description is Topsell (1658 reprint), "There was nothing more horrible then the
@@ -39,7 +40,7 @@ export class DissonantVoiceCard extends BaseCard {
 	}
 
 	get stats(): string {
-		return `Each opponent rolls 1d20 + int vs your int. On a failure, their next card takes ${DISSONANCE_PENALTY} off its attack roll. A card that does not roll to hit (Blast, Heal) uses up the penalty with no effect.
+		return `Every opponent's next attack rolls twice and keeps the worse roll (disadvantage). A card that does not roll to hit (Blast, Heal) leaves it waiting.
 No damage. Does not stack.`;
 	}
 
@@ -55,38 +56,33 @@ No damage. Does not stack.`;
 		}) as any[]).map(({ monster }: any) => monster);
 	}
 
-	getSaveRoll(target: any): any {
-		return roll({
-			primaryDice: '1d20',
-			modifier: target.intModifier,
-			bonusDice: target.bonusIntDice,
-			crit: true,
-		});
+	static isRattled(target: any): boolean {
+		return target.encounterEffects.some((effect: any) => effect.effectType === DISSONANT_VOICE_EFFECT);
 	}
 
+	/** Rattles `target` until its next card that rolls to hit, which rolls at disadvantage. */
 	rattle(target: any): void {
 		const rattled = ({ card, phase, player }: any) => {
 			if (phase !== ATTACK_PHASE || player !== target) return card;
 
-			// Spent on the next card, whether or not it attacks: a one-play penalty.
+			const { getAttackRoll } = card;
+			if (typeof getAttackRoll !== 'function') return card;
+
 			target.encounterEffects = target.encounterEffects.filter(
 				(effect: any) => effect !== rattled
 			);
-
-			const { getAttackRoll } = card;
-			if (typeof getAttackRoll === 'function') {
-				this.emit('narration', {
-					narration: `${target.givenName}'s ears yet ring with that hideous lowing ${this.icon} (-${DISSONANCE_PENALTY} to attack).`,
-				});
-				// `card` is the per-play clone from applyEffects, so wrapping it never leaks
-				// into the deck.
-				card.getAttackRoll = (...args: any[]) => {
-					const attackRoll = getAttackRoll.apply(card, args);
-					attackRoll.modifier -= DISSONANCE_PENALTY;
-					attackRoll.result = Math.max(attackRoll.result - DISSONANCE_PENALTY, 0);
-					return attackRoll;
-				};
-			}
+			this.emit('narration', {
+				narration: `${target.givenName}'s ears yet ring with that hideous lowing ${this.icon} (attacks at disadvantage).`,
+			});
+			// Both rolls go through the card's own getAttackRoll, so its bonuses apply to each; a
+			// curse of Loki is the worst roll and a natural 20 the best, whatever the totals. `card`
+			// is the per-play clone from applyEffects, so wrapping it never leaks into the deck.
+			const rank = (r: any) => (r.curseOfLoki ? -Infinity : r.strokeOfLuck ? Infinity : r.result);
+			card.getAttackRoll = (...args: any[]) => {
+				const first = getAttackRoll.apply(card, args);
+				const second = getAttackRoll.apply(card, args);
+				return rank(second) < rank(first) ? second : first;
+			};
 
 			return card;
 		};
@@ -96,34 +92,15 @@ No damage. Does not stack.`;
 	}
 
 	async effect(player: any, target: any, ring?: any): Promise<boolean> {
-		const alreadyRattled = target.encounterEffects.some(
-			(effect: any) => effect.effectType === DISSONANT_VOICE_EFFECT
-		);
-		const saveRoll = this.getSaveRoll(target);
-		const { success } = this.checkSuccess(saveRoll, player.int);
-		const whose = player === target ? `${player.pronouns.his} own` : `${player.givenName}'s`;
-		let outcome: string;
-
-		if (success) {
-			outcome = `${target.givenName} shakes it off.`;
-		} else if (alreadyRattled) {
-			outcome = `${target.givenName} is already rattled.`;
-		} else {
-			outcome = `${target.givenName} is rattled!`;
-		}
-
-		this.emit('rolled', {
-			reason: `vs ${whose} int (${player.int}) to keep ${target.pronouns.his} focus.`,
-			card: this,
-			roll: saveRoll,
-			who: target,
-			outcome,
-			vs: player.int,
+		const already = DissonantVoiceCard.isRattled(target);
+		if (!already) this.rattle(target);
+		this.emit('narration', {
+			narration: already
+				? `${target.givenName} is already rattled.`
+				: `${this.icon} ${target.givenName} is rattled!`,
 		});
 
-		if (!success && !alreadyRattled) this.rattle(target);
-
-		// One save per sub-event beat, so a crowded ring does not dump every roll in one tick.
+		// One target per sub-event beat, so a crowded ring does not dump every line in one tick.
 		await subEventDelay(ring?.pacingMultiplier);
 
 		return !target.dead;

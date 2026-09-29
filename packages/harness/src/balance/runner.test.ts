@@ -70,4 +70,25 @@ describe('balance/runner', () => {
 		expect(total).to.equal(6);
 		expect(a.sides[0]!.wins).to.equal(a.sides[1]!.losses);
 	});
+
+	it('scores a team win for every member of the team, fallen or not', async () => {
+		const result = await runUnit({
+			id: 'teams',
+			sides: [
+				{ type: 'Gladiator', level: 3, deck: ['Hit', 'Hit', 'Hit', 'Hit'], team: 'north' },
+				{ type: 'Minotaur', level: 3, deck: ['Hit', 'Hit', 'Hit', 'Hit'], team: 'north' },
+				{ type: 'Basilisk', level: 3, deck: ['Hit', 'Hit', 'Hit', 'Hit'], team: 'south' },
+				{ type: 'Jinn', level: 3, deck: ['Hit', 'Hit', 'Hit', 'Hit'], team: 'south' },
+			],
+			fights: 4,
+			seed: 7,
+		});
+		const [a, b, c, d] = result.sides;
+		// Teammates share every result, and the two teams' results mirror each other.
+		expect(a).to.deep.equal(b);
+		expect(c).to.deep.equal(d);
+		expect(a!.wins).to.equal(c!.losses);
+		expect(a!.draws).to.equal(c!.draws);
+		expect(a!.wins + a!.draws + a!.losses).to.equal(result.fights);
+	});
 });
