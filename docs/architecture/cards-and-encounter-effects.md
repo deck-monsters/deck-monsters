@@ -135,8 +135,8 @@ since the monster still acts. The pin's own encounter effect grants the advantag
 - **Decided at the roll, not the play.** Who is being attacked is read when the die is
   rolled: from `rollWithModes`'s target, or from the `hitCheck` or `effect` call in progress.
   A first version read it from the play's target and missed two cases (Codex review of #412).
-  Enthrall picks its victims inside its own effect. The donkey's kick, Tail Lash's tail, and
-  the Unconquerable Horn's creature of the wood roll their own d20. A new strike that rolls its
+  Enthrall picks its victims inside its own effect. Rehit's reroll, the donkey's kick, Tail
+  Lash's tail, and the Unconquerable Horn's creature of the wood roll their own d20. A new strike that rolls its
   own d20 must go through `rollWithModes`.
 - **Companions take only the target's modes.** The donkey and the creature of the wood pass
   `targetOnly`, so they get a pin's advantage but not their player's rattle. The tail is the

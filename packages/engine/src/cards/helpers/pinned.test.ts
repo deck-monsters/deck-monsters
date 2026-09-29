@@ -3,6 +3,7 @@ import sinon from 'sinon';
 
 import { ImmobilizeCard } from '../immobilize.js';
 import { HitCard } from '../hit.js';
+import { Rehit as RehitCard } from '../rehit.js';
 import { LuckyStrike as LuckyStrikeCard } from '../lucky-strike.js';
 import { DissonantVoiceCard } from '../dissonant-voice.js';
 import { HelmOfAweCard } from '../helm-of-awe.js';
@@ -151,6 +152,15 @@ describe('./cards/helpers/pinned.ts pinned monsters are easier to hit', () => {
 		const tail = sinon.stub().returns(fakeRoll(9));
 		expect(rollWithModes(card, bystander, held, tail).result).to.equal(9);
 		expect(tail.callCount).to.equal(1);
+	});
+
+	it("puts Rehit's own rolls through the roll modes", async () => {
+		await hold();
+		const rehit = new RehitCard();
+		const onApply = sinon.spy();
+		addRollMode(rehit, 'advantage', { against: held, onApply });
+		rehit.hitCheck(bystander, held);
+		expect(onApply.called).to.equal(true);
 	});
 
 	it('treats a monster awed by Helm of Awe as pinned', async () => {

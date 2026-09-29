@@ -145,8 +145,11 @@ Facts from the code on 2026-09-29, with file references so the next pass can che
   the plain JSON object (what `JSON.parse(JSON.stringify(game))` gives). Gzip and base64 leave the
   engine's save path. `restoreGame` keeps accepting all three forms (object, JSON string, legacy
   gzip+base64 string), because connectors and tests call it with strings and old backups exist.
-- **Save order comes from a version column,** not from locks. It is a monotonically increasing
-  `state_version`, and the update only lands if it is newer. Details are in task 4.
+- **Save order comes from a version column,** not from locks. Each snapshot is stamped with a
+  version from one process-wide monotonic clock when it is taken, and the update lands only if
+  the stored version is lower. Nothing ever rewinds the version: not a reload, a reset, or the
+  backfill. Unloading a room waits for its last save before the room can load again. Details are
+  in task 4.
 - **Decoding old blobs happens in TypeScript.** Postgres cannot gunzip in SQL. A one-off,
   idempotent script converts rooms that have not been loaded since the deploy, and rooms that are
   loaded convert themselves by saving.
@@ -162,18 +165,36 @@ Facts from the code on 2026-09-29, with file references so the next pass can che
 ## Risks found while planning
 
 1. **Key order.** `jsonb` does not keep object key order: keys come back sorted by length, then
-   bytewise. The engine reads some saved objects in key order:
-   - `BeastmasterCharacter.getMonsterPresets` (`characters/beastmaster.ts`) lists a monster's
-     presets with `Object.entries(presets)`. Presets would come back sorted by name length, not
-     in the order the player made them. This is visible in the Workshop.
-   - `lookAtCharacterRankings` and `lookAtMonsterRankings` (`game.ts`) fall back to ranking
-     `Object.values(characters)` when analytics is absent. Ties would break differently.
-   - Other iteration over `characters`, `bossSummons`, and `shop` needs checking in the audit.
-   Arrays keep their order, so decks, cards, items and monsters are safe.
+   bytewise. Arrays keep their order, so decks, cards, items and monsters are safe. Object keys
+   read in order, from a grep on 2026-09-29:
+   - **Presets are already safe.** Every surface sorts them by name: the Workshop
+     (`apps/web/src/components/PresetControl.tsx` sorts `Object.keys(presets)` with
+     `localeCompare`) and `look at presets` (`commands/presets.ts`). The tRPC payload passes the
+     object through. The plan's first draft proposed a `presetOrder` field; Codex's review of
+     #412 showed it would have *changed* the order players see, so it is dropped.
+   - **The rankings fallback** (`lookAtCharacterRankings` and `lookAtMonsterRankings` in
+     `game.ts`) ranks `Object.values(characters)` when analytics is absent. Ties would break
+     differently.
+   - **Preset lookup** (`beastmaster.ts`, the `Object.keys(presets).find(...)` by normalized
+     name) returns the first match. If two saved names normalize the same way, a different one
+     wins after a round trip.
+   - **Admin menus.** `creatures/edit.ts` and `helpers/choices.ts` list `Object.keys(options)` in
+     the admin `edit` prompts. The order changes, but nothing player-facing does.
+   - **Still to check:** `announcements/index.ts` (`Object.values` over characters), `game.ts`
+     `getRoomMonsterLevels` and the character loop, `bossSummonsPending` (count only), and
+     `BaseClass` option copying (order-free).
 2. **The NUL character.** `jsonb` rejects the escaped `\u0000` in a string, and the whole save
    fails. A monster or character name typed with a NUL (a paste, a connector bug) would silently
    stop the room saving, because the save is fire-and-forget. The text column accepts it today.
-3. **Out-of-order saves** (above). This is not new, but the rewrite is the time to close it.
+   NUL can appear in object **keys** too: preset names are keys, and they accept any string. A
+   repair that deletes the NUL can merge two keys (`ab` and `a\u0000b`) and lose a preset.
+3. **Out-of-order and stale saves.** A per-store counter is not enough (Codex review of #412):
+   - Two saves in flight from one game (an immediate mega-boss save and a debounced save) can
+     land in either order today.
+   - An unload flushes with a fire-and-forget save and drops the room. A load straight after can
+     read the row before the flush lands, restore the older state, and then race the flush.
+   - `resetRoomState` writes the database before it detaches the game. A save still in flight
+     from the old game can land after the reset and bring the room back.
 4. **Driver serialization.** With `node-postgres`, Drizzle's `jsonb()` column passes a JS object
    through `JSON.stringify`. The known double-encoding bug (a JSON *string* stored as a `jsonb`
    string) affects `postgres-js`, not this driver. It must still be proven by a test against real
@@ -228,44 +249,52 @@ comment on column public.rooms.state_blob is
 
   `load` may return a legacy string, and `restoreGame` handles both.
 - **`persistState()`:**
-  - builds `const state = toSerializedGame(this)`, which is `JSON.parse(JSON.stringify(this,
-    stripNul))`;
+  - builds `const state = repairSerializedGame(JSON.parse(JSON.stringify(this)))`;
   - passes `state` to the store;
   - passes `JSON.stringify(state)` to `stateSaveFunc`. This is plain JSON, not gzip, and
     `restoreGame` already reads it. The setter's type stays `(state: string) => void`.
   - `zlib` leaves the save path. It stays in `getOptions` for legacy input.
-- **`stripNul`** is a `JSON.stringify` replacer. It removes `\u0000` from every string value and
-  key, then counts and logs once per save with the room id. A test proves a name containing NUL
-  saves, restores without the NUL, and logs. Names are free text elsewhere, so this is a repair,
-  not a validation error.
+- **`repairSerializedGame(state)`** is a recursive walk, not a `JSON.stringify` replacer (a
+  replacer cannot rename the key it is visiting). It is exported, so the backfill script uses the
+  same code.
+  - It replaces `\u0000` with U+FFFD in every string value and every key.
+  - If a repaired key collides with an existing key in the same object, it appends ` (2)`,
+    ` (3)`, and so on, so nothing is dropped.
+  - It returns the number of repairs, and `persistState` logs that once per save with the room
+    id.
+  - Tests cover a NUL in a value, in a key, and the `ab` / `a\u0000b` preset collision (both
+    presets survive).
+  - **The input side.** Also strip control characters where names enter the game: character and
+    monster names, and preset names on save. The repair is then a backstop for old data and
+    connector bugs, not the main path.
 - **Key-order independence (task 1).** Anything shown to a player, or anything that decides an
   outcome, must not depend on object key order after a round trip through sorted keys.
-  - **Presets.** Keep the object (it is the admin `edit character` shape) and add
-    `presetOrder: string[]`, maintained on create, rename and delete. `getMonsterPresets` returns
-    entries in `presetOrder` order, with any key missing from it appended in `localeCompare` order.
-    Old saves with no `presetOrder` must get one from their original key order *before* any
-    `jsonb` round trip loses it. Two places do this, and both read the decoded blob, where
-    `JSON.parse` keeps insertion order:
-    - the engine, when it restores a room from `state_blob`;
-    - the backfill script (task 5), for rooms it converts without loading them.
-    A room that reaches `state` without `presetOrder` gets its presets in sorted order. That is
-    tolerable, but the two seeding points should make it not happen.
   - **Rankings fallback.** Break ties by name, then by id.
-  - **The audit.** Grep `Object.keys|values|entries` and `for…in` over everything reachable from
-    saved `options`. Record each hit in this plan as order-safe (with the reason) or fixed.
-  - **The guard test.** Build a game with several characters, presets made in a non-sorted order,
-    a boss-summon ledger, a shop, and ring refs. Serialize it, re-sort every object's keys the way
-    `jsonb` does (length, then bytewise), restore, and assert:
-    - the Workshop preset list;
+  - **Preset lookup.** When several saved names match the normalized name, prefer the exact
+    match, then the first in `localeCompare` order.
+  - **The audit.** Finish the "still to check" list in risk 1 and grep for any
+    `Object.keys|values|entries` and `for…in` over saved `options` that the list missed. Record
+    each hit in this plan as order-safe (with the reason) or fixed.
+  - **The guard test.** Build a game with several characters, presets saved in a non-sorted
+    order, a boss-summon ledger, a shop, and ring refs. Serialize it, re-sort every object's keys
+    the way `jsonb` does (length, then bytewise), restore, and assert:
+    - the Workshop preset list and `look at presets`, alphabetical before and after;
     - rankings;
     - the shop listing;
     - `JSON.stringify` of the restored game, compared with keys sorted on both sides.
 
 ### Server (task 4)
 
-- **`PostgresStateStore`:**
-  - It holds `version`, loaded with the row, and every save increments it before writing.
-  - `save(roomId, state)`:
+- **Versions come from one clock.** `nextStateVersion()` in `state-store.ts` returns
+  `max(last + 1, Date.now() * 1000)`. `Date.now() * 1000` is about 1.8e15, inside
+  `Number.MAX_SAFE_INTEGER` and `bigint`. It is process-wide, not per store, so a room that
+  unloads and reloads keeps counting upward. A restart continues from the clock. The one
+  assumption is that the server clock does not step back by more than the gap between two saves
+  of the same room across a restart; note it in the store's comment.
+- **`PostgresStateStore.save(roomId, state)`:**
+  - It takes the version **synchronously**, when `persistState` takes the snapshot, before any
+    `await`. So version order is snapshot order.
+  - It writes:
 
     ```sql
     update rooms
@@ -277,18 +306,30 @@ comment on column public.rooms.state_blob is
 
     `$legacyBlob` is `base64(gzip(JSON.stringify(state)))`. It is built in the server, not the
     engine, and deleted by task 6.
-  - If no row updates, the save was stale. Count it in `room_state_saves_stale_total` and do not
-    retry. A newer save has already landed.
-  - The store is created per room load, so the version starts from the loaded row. The server runs
-    a single instance. If it ever runs several, this guard still refuses a stale write from another
-    process, which becomes a stale-save count.
+  - If no row updates, the save was stale: a newer snapshot or a reset already landed. Count it
+    in `room_state_saves_stale_total` and do not retry.
+  - It returns the write's promise.
+- **Waiting for the last save.**
+  - The engine keeps the promise of its latest store write, and adds
+    `Game.flushState(): Promise<void>`, which takes a snapshot now and resolves when that write
+    has settled.
+  - `RoomManager` keeps a `pendingFlush` map from room id to that promise:
+    - `_detachRoomEntry(entry, { flushState: true })` sets it;
+    - `unloadRoom` awaits it;
+    - `_loadRoom` awaits any pending flush for the room **before** it selects the row, so a
+      reload never reads state older than the flush.
+  - This ties into the per-room lanes in
+    [engine concurrency and timing](../architecture/engine-concurrency-and-timing.md). Read that
+    doc first, and add the flush to its unload section.
 - **`_loadRoom`:**
-  - It selects `state, state_version, state_blob`, and prefers `state`, falling back to
-    `state_blob`.
-  - It passes the version into the store.
+  - It selects `state` and `state_blob`, and prefers `state`, falling back to `state_blob`.
   - Quarantine moves whichever column was the source into its quarantine column
-    (`quarantined_state` or `quarantined_blob`), and nulls both live columns.
-- **`resetRoomState`:** the same, and it resets `state_version` to 0.
+    (`quarantined_state` or `quarantined_blob`), nulls both live columns, and sets
+    `state_version = nextStateVersion()`. So any save still in flight from before is stale.
+- **`resetRoomState`** detaches the game and awaits its flush **first**, then writes the
+  database. The write is: live columns to null, the old state to the quarantine columns, and
+  `state_version = nextStateVersion()`. The version is a tombstone and never rewinds to 0.
+  Today's order, database first and detach second, is the race in risk 3.
 - **`backfill-leaderboard-from-state.ts`:** read `state ?? state_blob`.
 - **Metrics** (`packages/server/src/metrics.ts`, and add them to [observability](../operations/observability.md)):
   - `room_state_save_bytes` (histogram, from `Buffer.byteLength(JSON.stringify(state))`);
@@ -304,29 +345,36 @@ comment on column public.rooms.state_blob is
 A one-off script, `packages/server/scripts/migrate-room-state-to-jsonb.ts`, run with
 `DATABASE_URL=… pnpm exec tsx`:
 
-1. Select `id` from `rooms` where `state is null and state_blob is not null`.
+1. Select `id` and `state_blob` from `rooms` where `state is null and state_blob is not null`.
 2. For each room, decode the blob (gunzip+base64, or a plain JSON string) **without** calling
-   `restoreGame`, so the stored content is what was saved, apart from the two repairs in
-   step 3.
-3. Strip NUL characters the same way the engine does, and seed `presetOrder` on every monster
-   that lacks one, from the decoded object's key order (task 1). Both repairs come from one
-   engine export (`repairSerializedGame`), so the script and the engine cannot drift apart.
+   `restoreGame`, so the stored content is what was saved, apart from the repair in step 3.
+3. Run `repairSerializedGame` (the NUL repair, task 2) from the engine, so the script and the
+   engine cannot drift apart.
 4. Write it with this guard:
 
    ```sql
    update rooms
-      set state = $s, state_version = greatest(state_version, 1)
-    where id = $id and state is null
+      set state = $s
+    where id = $id and state is null and state_blob = $blobRead
    ```
 
-   The guard means that if the server saved the room meanwhile (it now writes `state` too), the
-   script skips it.
+   - **It never touches `state_version`** (Codex review of #412). A live store's snapshots are
+     always newer than whatever is stored, so the backfill must not take a version a live save
+     would use.
+   - If the server saved the room meanwhile, `state` is no longer null and the script skips it.
+   - The `state_blob = $blobRead` compare-and-swap means a newer blob written since the read is
+     not overwritten with an older decode. A room skipped this way is re-read and retried once,
+     then reported.
 5. A blob that will not decode is **not** quarantined by the script. It is reported, and it is
    left for the server's normal load path to quarantine.
 
-- Flags: `--dry-run` (decode and report only), `--room <id>`, and `--from-blob`. The last
-  converts rooms whose `state` is already set too, for the rollback case below, and sets
-  `state_version = state_version + 1`.
+- Flags:
+  - `--dry-run`: decode and report only.
+  - `--room <id>`: one room.
+  - `--from-blob`: the rollback case below. It converts rooms whose `state` is already set, and
+    swaps the null check for `state_blob = $blobRead` alone. It sets
+    `state_version = nextStateVersion()` (the same clock), so the rewritten `state` is newer than
+    anything the old release left.
 - Output: counts of converted, already converted, empty, and failed rooms, with byte sizes.
 - It is idempotent: a second run converts nothing.
 - Run it after release 1 is live. Then check with:
@@ -384,11 +432,11 @@ after the window.
 
 | # | Task | Area / files | Acceptance | Can run beside | Status | Commit |
 |---|---|---|---|---|---|---|
-| 1 | **Key-order independence.** Audit every key-order read of saved `options`. Add `presetOrder`, with first-load seeding. Break rankings ties. Add the sorted-keys round-trip guard test | Engine: `characters/beastmaster.ts`, `game.ts`, and any audit hits; a new `state-roundtrip.test.ts` | The guard test fails on `main` for presets, then passes. The audit table is in this plan | 3 | Planned | |
-| 2 | **The engine serializes an object.** `SerializedGame`, the new `StateStore` signature, `persistState` without gzip, the `stripNul` replacer, and `saveState` handing out plain JSON | Engine: `game.ts`, `types/state-store.ts`, `index.ts` (exports); `game.test.ts` updated where it decodes saves | Engine tests pass. A NUL name saves and restores. `restoreGame` accepts an object, a JSON string, and a legacy blob (one test each) | 3 (after 1: both touch `game.ts`) | Planned | |
+| 1 | **Key-order independence.** Finish the audit of key-order reads of saved `options`. Break rankings ties. Make preset lookup deterministic. Add the sorted-keys round-trip guard test | Engine: `game.ts`, `characters/beastmaster.ts`, and any audit hits; a new `state-roundtrip.test.ts` | The guard test fails on `main` for rankings ties, then passes. Presets stay alphabetical on every surface. The audit table is in this plan | 3 | Planned | |
+| 2 | **The engine serializes an object.** `SerializedGame`, the new `StateStore` signature, `persistState` without gzip, `repairSerializedGame` (collision-safe NUL repair), control characters stripped where names enter, `Game.flushState()`, and `saveState` handing out plain JSON | Engine: `game.ts`, `types/state-store.ts`, `index.ts` (exports); `game.test.ts` updated where it decodes saves | Engine tests pass. A NUL in a value and in a key saves and restores, and the `ab` / `a\u0000b` preset collision keeps both. `flushState` resolves after the store write. `restoreGame` accepts an object, a JSON string, and a legacy blob (one test each) | 3 (after 1: both touch `game.ts`) | Planned | |
 | 3 | **Schema.** The migration and the Drizzle columns | `supabase/migrations/`, `packages/server/src/db/schema.ts` | `supabase db reset` locally applies cleanly. Drizzle types compile | 1, 2 | Planned | |
-| 4 | **Server store and load path.** Versioned dual-write, load preferring `state`, quarantine and reset for both columns, the leaderboard backfill script, and metrics | `packages/server/src/state-store.ts`, `room-manager.ts`, `metrics.ts`, `scripts/backfill-leaderboard-from-state.ts`; tests | Unit tests: prefer `state`, fall back to the blob, quarantine each source, and the stale-save guard (an older version does not overwrite). **Against local Postgres** (`supabase start`): a saved row's `jsonb_typeof(state) = 'object'`, not `'string'`, and a restart restores it. Server tests pass | none (after 2, 3) | Planned | |
-| 5 | **The backfill script and runbook** | `packages/server/scripts/migrate-room-state-to-jsonb.ts`; [deployment](../operations/deployment.md) runbook section | A dry run and a real run on local data seeded with legacy blobs, including one corrupt blob, which is reported and not written. A second run converts 0 | 7 | Planned | |
+| 4 | **Server store and load path.** Clock-versioned dual-write, the `pendingFlush` wait on unload and load, load preferring `state`, quarantine and reset for both columns with a tombstone version (reset detaches and flushes first), the leaderboard backfill script, and metrics | `packages/server/src/state-store.ts`, `room-manager.ts`, `metrics.ts`, `scripts/backfill-leaderboard-from-state.ts`; tests | Unit tests: prefer `state`, fall back to the blob, quarantine each source, and the stale-save guard (an older version does not overwrite). **Race tests,** with the store write held open: an unload then an immediate reload reads the flushed state, not the older one; a reset while an old save is in flight is not undone by it; two saves from one game landing in reverse order keep the newer. **Against local Postgres** (`supabase start`): a saved row's `jsonb_typeof(state) = 'object'`, not `'string'`, and a restart restores it. Server tests pass | none (after 2, 3) | Planned | |
+| 5 | **The backfill script and runbook** | `packages/server/scripts/migrate-room-state-to-jsonb.ts`; [deployment](../operations/deployment.md) runbook section | A dry run and a real run on local data seeded with legacy blobs, including one corrupt blob, which is reported and not written. A second run converts 0. With a room loaded in a running release 1, the script does not change `state_version`, and the live save after it still lands. A blob changed between read and write is not overwritten | 7 | Planned | |
 | 6 | **Contract** (second PR, after the window). Stop dual-writing, drop the load fallback, back up, and drop `state_blob` | Server, migration, docs | Production shows `room_state_source_total{source="blob"}` at 0 for the whole window. A backup exists. Tests pass | — | Planned | |
 | 7 | **Read-only query views** and the "Querying room state" doc section | A migration with the views; `rooms-and-identity.md` | The Faceswap query above returns the same answer as decoding by hand, on local data | 5 | Planned | |
 
@@ -401,9 +449,9 @@ after the window.
   ([local testing](../operations/local-testing.md)):
   - create a room;
   - play a fight;
-  - make two presets in a non-alphabetical order;
+  - make presets whose names sort differently by length and by alphabet;
   - restart the server;
-  - check the presets keep their order, the room restores, and
+  - check the presets still list alphabetically, the room restores, and
     `select jsonb_typeof(state), state_version from rooms` shows an object and a growing version.
 - Load a room that has only a legacy `state_blob` (seed one from a decoded production-shaped
   fixture, never a real player's data in the repo). It restores, and the first save writes
@@ -425,10 +473,18 @@ after the window.
 
 **Rollback, until task 6:** redeploy the previous release. It reads `state_blob`, which
 release 1 keeps current, and it ignores the new columns. While rolled back, only `state_blob`
-is written, so `state` goes stale. **Before redeploying release 1 after a rollback,** run the
-backfill script with `--from-blob`. It rewrites `state` from `state_blob` for every room, and
-bumps `state_version` past the stored value. During the dual-write window `state_blob` is the
-fallback of record, so the flag is always safe. The runbook in task 5 carries this step.
+is written, so `state` goes stale. **Rolling forward again needs a short write drain** (Codex
+review of #412). If the old release is still serving, it can write a newer blob between the
+script's read and its write:
+
+1. Stop the service (Railway: remove the deployment's replicas or pause the service), so no
+   release is writing.
+2. Run the backfill script with `--from-blob`. Its compare-and-swap on the exact blob read is a
+   second guard, not a replacement for the drain.
+3. Deploy release 1.
+
+This is a minute or two of downtime, only in the rare case of rolling forward after a rollback.
+The runbook in task 5 carries these steps.
 
 ## Docs to update in the same PRs
 
