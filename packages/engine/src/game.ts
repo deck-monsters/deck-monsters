@@ -14,7 +14,6 @@ import { earlyCoinBonus } from './constants/progression.js';
 import { createCharacter } from './characters/index.js';
 import { globalSemaphore } from './helpers/semaphore.js';
 import { listen, loadHandlers } from './commands/index.js';
-import { sortByXP } from './helpers/sort.js';
 import { XP_PER_VICTORY, XP_PER_DEFEAT } from './helpers/experience.js';
 import { initialize as initializeAnnouncements, createRoomScopedEventGuard } from './announcements/index.js';
 import { BaseClass } from './shared/baseClass.js';
@@ -757,8 +756,14 @@ export class Game extends BaseClass {
 	}
 
 	getAllMonstersLookup(): Record<string, any> {
+		// Two players' monsters can share a name, and the later one wins the key. Walk characters
+		// in id order, not key order: a jsonb round trip re-sorts object keys (roadmap 37), so key
+		// order would change which monster a name finds after a restart.
+		const characters = Object.keys(this.characters)
+			.sort()
+			.map(id => this.characters[id]);
 		return reduce(
-			this.characters,
+			characters,
 			(all: Record<string, any>, character: any) => {
 				character.monsters.forEach((monster: any) => {
 					all[monster.givenName.toLowerCase()] = monster;
@@ -791,7 +796,15 @@ export class Game extends BaseClass {
 	}
 
 	getCreatureRankings(creatures: any[], top = 5): string[] {
-		const sortedCreatures = sortByXP(creatures).reverse();
+		// XP, then name, then id: never input order. Callers pass `Object.values` of saved objects,
+		// and a jsonb round trip re-sorts object keys (roadmap 37), so ties that followed
+		// insertion order would reorder after a restart.
+		const sortedCreatures = [...creatures].sort(
+			(a: any, b: any) =>
+				(Number(b.xp) || 0) - (Number(a.xp) || 0) ||
+				String(a.givenName ?? '').localeCompare(String(b.givenName ?? '')) ||
+				String(a.stableId ?? a.id ?? '').localeCompare(String(b.stableId ?? b.id ?? ''))
+		);
 		sortedCreatures.length = Math.min(sortedCreatures.length, top);
 
 		const maxLength = sortedCreatures.reduce(
