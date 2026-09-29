@@ -176,6 +176,32 @@ not change with the move.
 - **A held monster's card never plays.** A card that frees its own player from a hold cannot
   work on that player's turn; it only helps when it lands on someone else.
 
+## Fear and song: Helm of Awe and Dissonant Voice
+
+**Helm of Awe** (`cards/helm-of-awe.ts`, Dragon) is a pin, but not an `ImmobilizeEffect`. Its
+own `AWE_EFFECT` behaves the same way. Every opponent saves (1d20 + int vs 10 + the dragon's
+int modifier). One that fails loses its next card. At the start of each later turn it saves
+again, `holdFatigue` (3) easier each time: a failure loses that card, and a success ends the
+awe. So does the dragon's death.
+
+- **The flee.** A natural 1 on a recovery save makes an opponent that is not bloodied try to
+  flee with a Flee roll (1d20 + dex, 10 or more), through `leaveCombat`. A bloodied one cowers.
+  Bosses can be frightened away: the rule that they never flee covers the Flee cards they
+  carry, not fear.
+- **No refresh.** A second helm on an awed opponent does nothing, so a hand of Helms cannot
+  chain the pin.
+- **The ward.** Awe goes through `wardAgainst`, so Horn of Proof's ward cancels it.
+
+**Dissonant Voice** (`cards/dissonant-voice.ts`, Unicorn and Bard) has no save and no damage.
+Every opponent's next card that rolls to hit rolls twice and keeps the worse. A card that does
+not roll to hit leaves it waiting. A natural 1 stays the worst roll and a natural 20 the best.
+
+Both were chosen from 13 measured variations, in duels, crowds, and team battles. The numbers,
+the owner's rules (a natural 1 is the only Curse of Loki; complexity must earn its place), and
+why each variation was dropped are in the
+[Helm of Awe and Dissonant Voice study](../archive/studies/2026-09-helm-of-awe-and-dissonant-voice.md).
+Read it before designing a debuff, a fear effect, or a support card for team fights.
+
 ## Ancient dragons
 
 A Dragon at level 10 or more is **ancient** (`cards/helpers/ancient-dragon.ts`). The owner
