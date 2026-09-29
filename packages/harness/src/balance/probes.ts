@@ -72,9 +72,19 @@ export const PROBES: Record<string, Probe> = {
 	},
 	held: {
 		about: 'Any hold (ImmobilizeEffect): this side was held',
-		install: mark =>
-			// ImmobilizeCard is never drawn and has no card name; every hold card extends it.
-			wrapCard('Coil', 'immobilize', args => (isPinnedBy('ImmobilizeEffect')(args[1]) ? args[1] : undefined), mark, 'ImmobilizeCard'),
+		install: mark => {
+			const held = isPinnedBy('ImmobilizeEffect');
+			const undos = [
+				// ImmobilizeCard is never drawn and has no card name; every hold card extends it.
+				wrapCard('Coil', 'immobilize', args => (held(args[1]) ? args[1] : undefined), mark, 'ImmobilizeCard'),
+				// Sticketh's stuck horn holds its own player through stickFast(), not immobilize()
+				// (Codex review of #412: those fights were counted as never held).
+				wrapCard('Sticketh', 'stickFast', args => (held(args[0]) ? args[0] : undefined), mark),
+			];
+			return () => {
+				for (const undo of undos.reverse()) undo();
+			};
+		},
 	},
 };
 

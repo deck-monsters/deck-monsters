@@ -130,8 +130,17 @@ monster has advantage, as against a restrained creature in D&D. Pinned means hel
 `ImmobilizeEffect` or awed by Helm of Awe (`isPinned` in `cards/helpers/pinned.ts`, and
 `PIN_RULES.advantage` switches it off for the harness). Dissonant Voice's rattle is not a pin,
 since the monster still acts. The pin's own encounter effect grants the advantage: in
-`DEFENSE_PHASE` it wraps the incoming card's `effect` and adds advantage only when the target is
-the pinned monster, the same way Take Wing and Faceswap wrap a play.
+`DEFENSE_PHASE` it gives the incoming card advantage against the pinned monster only.
+
+- **Decided at the roll, not the play.** Who is being attacked is read when the die is
+  rolled: from `rollWithModes`'s target, or from the `hitCheck` or `effect` call in progress.
+  A first version read it from the play's target and missed two cases (Codex review of #412).
+  Enthrall picks its victims inside its own effect. The donkey's kick, Tail Lash's tail, and
+  the Unconquerable Horn's creature of the wood roll their own d20. A new strike that rolls its
+  own d20 must go through `rollWithModes`.
+- **Companions take only the target's modes.** The donkey and the creature of the wood pass
+  `targetOnly`, so they get a pin's advantage but not their player's rattle. The tail is the
+  dragon's own blow and takes both.
 
 - **One roll-mode helper.** `addRollMode(card, mode)` (`cards/helpers/roll-mode.ts`) counts
   advantage and disadvantage on a clone's `getAttackRoll`, and one of each cancels, as in D&D.

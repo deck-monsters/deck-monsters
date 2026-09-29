@@ -6,8 +6,8 @@ import { HitCard } from '../hit.js';
 import { LuckyStrike as LuckyStrikeCard } from '../lucky-strike.js';
 import { DissonantVoiceCard } from '../dissonant-voice.js';
 import { HelmOfAweCard } from '../helm-of-awe.js';
-import { PIN_RULES, isPinned } from './pinned.js';
-import { addRollMode } from './roll-mode.js';
+import { PIN_RULES, isPinned, advantageAgainstPinned } from './pinned.js';
+import { addRollMode, rollWithModes } from './roll-mode.js';
 import Gladiator from '../../monsters/gladiator.js';
 import Minotaur from '../../monsters/minotaur.js';
 import Basilisk from '../../monsters/basilisk.js';
@@ -109,6 +109,48 @@ describe('./cards/helpers/pinned.ts pinned monsters are easier to hit', () => {
 		const stub = sinon.stub(LuckyStrikeCard.prototype, 'getAttackRoll').callsFake(() => fakeRoll(10) as any);
 		await new LuckyStrikeCard().play(bystander, held, ring, contestants);
 		expect(stub.callCount).to.equal(2);
+	});
+
+	it('lets a pin and a rattle cancel on Lucky Strike too: one roll each, not four', async () => {
+		await hold();
+		await new DissonantVoiceCard().effect(holder, bystander, ring);
+		const stub = sinon.stub(LuckyStrikeCard.prototype, 'getAttackRoll').callsFake(() => fakeRoll(10) as any);
+		await new LuckyStrikeCard().play(bystander, held, ring, contestants);
+		expect(stub.callCount).to.equal(2);
+	});
+
+	it('finds the target of a hit a card picks inside its own effect (Enthrall)', async () => {
+		// Enthrall names only its caster as a target and holds or hits each opponent from inside
+		// its effect, so the advantage must be decided at the roll, not from the outer target.
+		await hold();
+		const rolls = [fakeRoll(4), fakeRoll(15)];
+		const card: any = {
+			getAttackRoll: () => rolls.shift(),
+			hitCheck(player: any, target: any) {
+				return { attackRoll: this.getAttackRoll(player), target };
+			},
+			async effect(player: any) {
+				return this.hitCheck(player, held);
+			},
+		};
+		advantageAgainstPinned(held, card);
+		const { attackRoll } = await card.effect(bystander, bystander);
+		expect(attackRoll.result).to.equal(15);
+		expect(rolls).to.have.length(0);
+	});
+
+	it("gives a companion's own d20 (the donkey's kick) the pin's advantage, but not its player's rattle", async () => {
+		await hold();
+		const card: any = {};
+		advantageAgainstPinned(held, card);
+		addRollMode(card, 'disadvantage');
+		const once = sinon.stub().onFirstCall().returns(fakeRoll(4)).onSecondCall().returns(fakeRoll(15));
+		expect(rollWithModes(card, bystander, held, once, { targetOnly: true }).result).to.equal(15);
+		expect(once.callCount).to.equal(2);
+		// The player's own extra blow (Tail Lash's tail) takes both, which cancel.
+		const tail = sinon.stub().returns(fakeRoll(9));
+		expect(rollWithModes(card, bystander, held, tail).result).to.equal(9);
+		expect(tail.callCount).to.equal(1);
 	});
 
 	it('treats a monster awed by Helm of Awe as pinned', async () => {

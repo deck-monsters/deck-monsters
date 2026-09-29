@@ -24,7 +24,14 @@ if (!dir) {
 	process.stderr.write('Usage: sim-split-report <run-dir> [--side 0] [--by card,v,level]\n');
 	process.exit(2);
 }
-const side = Number(flag('--side') ?? 0);
+const sideFlag = flag('--side') ?? '0';
+const side = Number(sideFlag);
+// A bad index would silently report "0 fights" for every probe, which reads like an effect
+// that never fired (Codex review of #412), so refuse it.
+if (!/^\d+$/.test(sideFlag)) {
+	process.stderr.write(`--side must be a side index (0, 1, ...), not "${sideFlag}"\n`);
+	process.exit(2);
+}
 const by = flag('--by')?.split(',');
 
 type Tally = { wins: number; draws: number; losses: number };
@@ -38,6 +45,7 @@ const show = (t: Tally): string => {
 };
 
 const groups = new Map<string, Record<string, { with: Tally; without: Tally }>>();
+let sideSeen = false;
 for (const r of readResults(dir) as UnitResult[]) {
 	if (r.error || !r.split) continue;
 	const tags = r.tags ?? {};
@@ -46,6 +54,7 @@ for (const r of readResults(dir) as UnitResult[]) {
 	const group = groups.get(key) ?? {};
 	for (const [probe, s] of Object.entries(r.split)) {
 		const g = (group[probe] ??= { with: zero(), without: zero() });
+		if (side < Math.max(s.with.length, s.without.length)) sideSeen = true;
 		if (s.with[side]) g.with = add(g.with, s.with[side]!);
 		if (s.without[side]) g.without = add(g.without, s.without[side]!);
 	}
@@ -55,6 +64,10 @@ for (const r of readResults(dir) as UnitResult[]) {
 if (!groups.size) {
 	process.stdout.write('No unit in this run asked for probes.\n');
 	process.exit(0);
+}
+if (!sideSeen) {
+	process.stderr.write(`No unit in this run has a side ${side}.\n`);
+	process.exit(2);
 }
 for (const [key, group] of [...groups.entries()].sort()) {
 	process.stdout.write(`\n${key || '(all units)'}\n`);

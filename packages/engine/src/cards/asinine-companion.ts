@@ -3,6 +3,7 @@ import { DRAGON } from '../constants/creature-types.js';
 import { BOOST, MELEE } from '../constants/card-classes.js';
 import { flavor } from '../helpers/flavor.js';
 import { chance } from '../helpers/chance.js';
+import { rollWithModes } from './helpers/roll-mode.js';
 import { subEventDelay } from '../helpers/delay-times.js';
 
 const { roll } = chance;
@@ -91,10 +92,13 @@ export class AsinineCompanionCard extends BoostCard {
 		});
 		await subEventDelay(ring?.pacingMultiplier);
 
-		// No `crit`: a natural 20 or 1 means nothing to a donkey.
+		// No `crit`: a natural 20 or 1 means nothing to a donkey. Through the card's roll modes,
+		// so a pinned target gives the kick advantage (roadmap 36).
 		const { kickScales } = this.constructor as typeof AsinineCompanionCard;
 		const levelBonus = kickScales ? Math.min(player.level ?? 0, 10) : 0;
-		const attackRoll = roll({ primaryDice: '1d20', modifier: kickHitBonus + levelBonus });
+		const attackRoll = rollWithModes(this, player, target, () =>
+			roll({ primaryDice: '1d20', modifier: kickHitBonus + levelBonus }), { targetOnly: true }
+		);
 		const { success } = this.checkSuccess(attackRoll, target.ac);
 		this.emit('rolled', {
 			reason: `vs ${target.givenName}'s ac (${target.ac}) to determine if the kick landed.`,

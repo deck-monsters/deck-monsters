@@ -4,6 +4,7 @@ import { DRAGON } from '../constants/creature-types.js';
 import { UNCOMMON } from '../helpers/probabilities.js';
 import { REASONABLE } from '../helpers/costs.js';
 import { chance } from '../helpers/chance.js';
+import { rollWithModes } from './helpers/roll-mode.js';
 
 const { roll } = chance;
 
@@ -68,11 +69,14 @@ export class TailLashCard extends HitCard {
 		});
 		await subEventDelay(ring?.pacingMultiplier);
 
-		// No `crit`: a natural 20 or 1 means nothing to the tail.
-		const attackRoll = roll({
-			primaryDice: '1d20',
-			modifier: player.strModifier - tailHitPenalty,
-		});
+		// No `crit`: a natural 20 or 1 means nothing to the tail. Through the card's roll modes,
+		// so a pinned target gives the tail advantage (roadmap 36).
+		const attackRoll = rollWithModes(this, player, target, () =>
+			roll({
+				primaryDice: '1d20',
+				modifier: player.strModifier - tailHitPenalty,
+			})
+		);
 		const { success } = this.checkSuccess(attackRoll, target.ac);
 		this.emit('rolled', {
 			reason: `vs ${target.givenName}'s ac (${target.ac}) to determine if the tail struck true.`,
