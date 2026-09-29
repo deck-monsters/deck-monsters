@@ -133,6 +133,25 @@ few points off each changes little. A card whose job is to blunt opponents needs
 shape: a lost card (fear, cowering), a hold, or a redirect. Design future debuff cards with
 this in mind, and do not tune a to-hit penalty upward to fix one.
 
+### Natural 1 and natural 20 are fixed (owner, 2026-09-29)
+
+A natural 1 is the only Curse of Loki and a natural 20 the only stroke of luck. Advantage and
+disadvantage fit that precedent, because every roll is still a plain d20. Widening either
+range (a natural 1 or 2 as a Curse of Loki) does not fit it, even when it measures well. The
+`lokiRange` setting on Dissonant Voice exists only to measure that idea; no shipped shape uses
+it.
+
+### Pinned monsters are easier to hit (owner idea, 2026-09-29; a later task)
+
+A pinned monster could carry a status that gives every attack roll against it advantage, as a
+restrained creature has in D&D. "Pinned" means Coil, Constrict, Immobilize, Entrance,
+Enthrall, Mesmerize, Horn Gore's hold, the Forked Stick and Rod, and Helm of Awe's cowering.
+Dissonant Voice's rattle is not a pin: the monster still acts. The rule would change every
+hold at once, so it gets its own task after 5 and 8: one shared "pinned" check (the ward's
+`isOpponentHold` is half of it), then a whole-field before/after on the same seeds, probably on
+the owner's machine. Expected to be modest, since roll changes move little here. It would also
+make more strokes of luck against a held monster.
+
 ## Targets for a card fix
 
 A tweaked unique card should, at levels 1-7:
