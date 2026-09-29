@@ -108,6 +108,8 @@ If nothing damages you before then, heal to full hp as that card begins. Any dam
 
 | Where | Template |
 |---|---|
+| enrage → narration | `🌙 {target} striketh in wrath, and the horn is terrible (advantage{, +{rageDamage} damage / —}).` |
+| rest → narration | `🌙 The hunters were waiting! {target} riseth from the laurel in a terrible wrath, horn lowered.` |
 | rest → narration | `🌙 The hunters were waiting! {target}'s rest is broken, and {he} {rises/rise} {with what comfort the dusk gave / without its comfort}.` |
 | rest → narration | `🌙 The dusk deepens. {target} sleepeth on among the laurel, and the hunters are listening still.` |
 | rest → primaryDice | `{3 * turns}d4` |

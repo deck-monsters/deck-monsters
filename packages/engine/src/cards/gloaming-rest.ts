@@ -51,6 +51,14 @@ export class GloamingRestCard extends BaseCard {
 	 * keeps what it healed if the rest is broken. The -2 AC lasts as long as the rest.
 	 */
 	static restShape: 'full' | 'half' | 'two-turns' | 'growing' | 'dice' = 'full';
+	/**
+	 * What a broken rest leaves behind (owner, 2026-09-29): the hunted unicorn wakes in wrath.
+	 * `advantage`: its next card that rolls to hit rolls twice and keeps the better;
+	 * `advantage-damage`: that and +`rageDamage` damage. `none` is the plain broken rest.
+	 * Class settings for the harness (roadmap 35).
+	 */
+	static brokenRestRage: 'none' | 'advantage' | 'advantage-damage' = 'none';
+	static rageDamage = 2;
 
 	constructor({ icon = '🌙' }: Partial<CardOptions> = {}) {
 		super({ icon } as Partial<CardOptions>);
@@ -67,7 +75,7 @@ As each card begins, if nothing has damaged you, heal 3d4, then 6d4, then 9d4. A
 			default: {
 				const heal = { full: 'heal to full hp', half: 'heal half your missing hp', dice: `heal ${REST_HEALTH_DICE}` }[(this.constructor as typeof GloamingRestCard).restShape as 'full' | 'half' | 'dice'];
 				return `Kneel to rest: -${REST_AC_PENALTY} ac until your next card.
-If nothing damages you before then, ${heal} as that card begins. Any damage interrupts the rest and the healing is lost.`;
+If nothing damages you before then, ${heal} as that card begins. Any damage interrupts the rest and the healing is lost${(this.constructor as typeof GloamingRestCard).brokenRestRage === 'none' ? '' : `, but you wake in wrath: your next card that rolls to hit rolls twice and keeps the better${(this.constructor as typeof GloamingRestCard).brokenRestRage === 'advantage-damage' ? `, for +${(this.constructor as typeof GloamingRestCard).rageDamage} damage` : ''}`}.`;
 			}
 		}
 	}
@@ -87,6 +95,48 @@ If nothing damages you before then, ${heal} as that card begins. Any damage inte
 		target.setModifier('ac', REST_AC_PENALTY);
 	}
 
+	/**
+	 * Wrath on waking: `card` (the per-play clone, so nothing leaks into the deck) rolls to hit
+	 * with advantage, and with `advantage-damage` hits harder. A card that does not roll to
+	 * hit passes the wrath on to the monster's next card that does.
+	 */
+	enrage(target: any, card: any): void {
+		const { brokenRestRage, rageDamage } = this.constructor as typeof GloamingRestCard;
+		const apply = (clone: any): boolean => {
+			const { getAttackRoll, getDamageRoll } = clone;
+			if (typeof getAttackRoll !== 'function') return false;
+			// A curse of Loki is the worst roll and a natural 20 the best, whatever the totals.
+			const rank = (r: any) => (r.curseOfLoki ? -Infinity : r.strokeOfLuck ? Infinity : r.result);
+			clone.getAttackRoll = (...args: any[]) => {
+				const first = getAttackRoll.apply(clone, args);
+				const second = getAttackRoll.apply(clone, args);
+				return rank(second) > rank(first) ? second : first;
+			};
+			if (brokenRestRage === 'advantage-damage' && typeof getDamageRoll === 'function') {
+				clone.getDamageRoll = (...args: any[]) => {
+					const damageRoll = getDamageRoll.apply(clone, args);
+					damageRoll.modifier += rageDamage;
+					damageRoll.result += rageDamage;
+					return damageRoll;
+				};
+			}
+			this.emit('narration', {
+				narration: `${this.icon} ${target.givenName} striketh in wrath, and the horn is terrible (advantage${brokenRestRage === 'advantage-damage' ? `, +${rageDamage} damage` : ''}).`,
+			});
+			return true;
+		};
+		if (apply(card)) return;
+
+		const wrath = ({ card: next, phase, player }: any) => {
+			if (phase !== ATTACK_PHASE || player !== target) return next;
+			if (apply(next)) {
+				target.encounterEffects = target.encounterEffects.filter((effect: any) => effect !== wrath);
+			}
+			return next;
+		};
+		target.encounterEffects = [...target.encounterEffects, wrath];
+	}
+
 	/** HP the rest restores when it resolves undisturbed, for the shapes that heal once. */
 	restHealAmount(target: any): number {
 		const missing = Math.max(0, target.maxHp - target.hp);
@@ -102,7 +152,7 @@ If nothing damages you before then, ${heal} as that card begins. Any damage inte
 		// so "hit after the rest began" compares like with like, including in tests.
 		const since = hitLogTimestamp();
 		const pacing = ring?.pacingMultiplier;
-		const { restShape } = this.constructor as typeof GloamingRestCard;
+		const { restShape, brokenRestRage } = this.constructor as typeof GloamingRestCard;
 		let turns = 0;
 
 		const resting = async ({ card, phase, player }: any) => {
@@ -122,6 +172,16 @@ If nothing damages you before then, ${heal} as that card begins. Any damage inte
 			const interrupted = hitLog.some(
 				({ when, damage, dealt }) => when > since && (dealt ?? damage) > 0
 			);
+
+			if (interrupted && brokenRestRage !== 'none') {
+				this.emit('narration', {
+					narration: `${this.icon} The hunters were waiting! ${target.givenName} riseth from the laurel in a terrible wrath, horn lowered.`,
+				});
+				wake();
+				this.enrage(target, card);
+				await subEventDelay(pacing);
+				return card;
+			}
 
 			if (interrupted) {
 				this.emit('narration', {

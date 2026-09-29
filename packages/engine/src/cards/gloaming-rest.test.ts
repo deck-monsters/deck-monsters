@@ -2,6 +2,7 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 
 import { GloamingRestCard } from './gloaming-rest.js';
+import { HealCard } from './heal.js';
 import { HitCard } from './hit.js';
 import { hydrateCard } from './helpers/hydrate.js';
 import Unicorn from '../monsters/unicorn.js';
@@ -76,6 +77,44 @@ describe('./cards/gloaming-rest.ts Gloaming Rest', () => {
 	describe('rest shapes', () => {
 		afterEach(() => {
 			GloamingRestCard.restShape = 'full';
+		});
+
+		it('a broken rest wakes the unicorn in wrath: its next attack rolls with advantage', async () => {
+			GloamingRestCard.brokenRestRage = 'advantage-damage';
+			try {
+				expect(new GloamingRestCard().stats).to.include('wake in wrath');
+				await new GloamingRestCard().play(unicorn, foe, ring, contestants);
+				await unicorn.hit(1, foe, new HitCard());
+				const rolls = [
+					{ result: 4, modifier: 0, strokeOfLuck: false, curseOfLoki: false, naturalRoll: { result: 4 } },
+					{ result: 17, modifier: 0, strokeOfLuck: false, curseOfLoki: false, naturalRoll: { result: 17 } },
+				];
+				sinon.stub(HitCard.prototype, 'getAttackRoll').callsFake(() => rolls.shift() as any);
+				const hitCheck = sinon.spy(HitCard.prototype, 'hitCheck');
+				const damage = sinon.spy(HitCard.prototype, 'rollForDamage');
+				await new HitCard().play(unicorn, foe, ring, contestants);
+				expect(hitCheck.firstCall.returnValue.attackRoll.result).to.equal(17);
+				expect(damage.firstCall.returnValue.modifier).to.equal(unicorn.strModifier + 2);
+				expect(isResting(unicorn)).to.equal(false);
+			} finally {
+				GloamingRestCard.brokenRestRage = 'none';
+			}
+		});
+
+		it('passes the wrath on to the next card that rolls to hit', async () => {
+			GloamingRestCard.brokenRestRage = 'advantage';
+			try {
+				await new GloamingRestCard().play(unicorn, foe, ring, contestants);
+				await unicorn.hit(1, foe, new HitCard());
+				await new HealCard().play(unicorn, unicorn, ring, contestants);
+				expect(unicorn.encounterEffects).to.have.length(1);
+				const stub = sinon.stub(HitCard.prototype, 'getAttackRoll').callsFake(() => ({ result: 10, modifier: 0, strokeOfLuck: false, curseOfLoki: false, naturalRoll: { result: 10 } }) as any);
+				await new HitCard().play(unicorn, foe, ring, contestants);
+				expect(stub.callCount).to.equal(2);
+				expect(unicorn.encounterEffects).to.have.length(0);
+			} finally {
+				GloamingRestCard.brokenRestRage = 'none';
+			}
 		});
 
 		it('dice heals 3d4', async () => {
