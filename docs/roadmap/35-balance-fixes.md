@@ -76,6 +76,22 @@ They agree on this:
   Invisibility and Revive, so most of a Dragon's hand is generic strikes (the reason its STR
   was raised to 0 in [30](../archive/roadmap/30-dragon-pack.md)). Task 8 below widens it.
 
+### The two horns (owner, 2026-09-29)
+
+Making Unconquerable Horn a counterspell (task 5a) left it overlapping Horn of Proof: both
+answered curses and poison, one before and one after, and both healed. The owner: "either go
+with the split or make H of P the do everything card and UH something different like an attack
+or maybe a rally teammate call (one of your allies does a hit-style attack for you alongside
+your own hit ... with an imaginary animal like an otter or deer or ram filling in if you have no
+ally in the ring)". Measured, a split would leave both cards weak (the pure counterspell was 1-6
+points below a Hit), so:
+
+- **Horn of Proof is the protection card:** it cleanses one harm already on you, wards you for
+  one round against the next harmful non-damage effect (the counterspell moves here), and heals.
+- **Unconquerable Horn is a rally call:** the unicorn sounds its horn, strikes, and an ally in
+  the ring strikes the same target; with no ally (every duel) an otter, a deer, or a ram answers
+  with a modest attack of its own. The companion's numbers are class settings, to be measured.
+
 ## Targets for a card fix
 
 A tweaked unique card should, at levels 1-7:
