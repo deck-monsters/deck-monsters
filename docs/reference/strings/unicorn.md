@@ -108,10 +108,13 @@ If nothing damages you before then, heal to full hp as that card begins. Any dam
 
 | Where | Template |
 |---|---|
-| rest → narration | `🌙 The hunters were waiting! {target}'s rest is broken, and {he} {rises/rise} without its comfort.` |
-| rest → narration | `🌙 No hunter came. {target} riseth from the laurel, made whole.` |
+| rest → narration | `🌙 The hunters were waiting! {target}'s rest is broken, and {he} {rises/rise} {with what comfort the dusk gave / without its comfort}.` |
+| rest → narration | `🌙 The dusk deepens. {target} sleepeth on among the laurel, and the hunters are listening still.` |
+| rest → primaryDice | `{3 * turns}d4` |
 | rest → reason | `for a quiet rest.` |
 | rest → outcome | `No hunter came. {target} riseth from the laurel, restored.` |
+| rest → outcome | `No hunter came, and {target} sleepeth on, the deeper for it.` |
+| rest → narration | `🌙 No hunter came. {target} riseth from the laurel, restored ({amount} hp).` |
 | effect → narration | `{target} is already resting.` |
 | effect → narration | `🌙 As the light fails, {player} kneels among the laurel and closes {his} eyes. Somewhere in the dusk, the hunters are listening.` |
 | effect → narration | `🌙 In confusion, {player} coaxes {target} to kneel and rest.` |
