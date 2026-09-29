@@ -40,10 +40,14 @@ export class GloamingRestCard extends BaseCard {
 	static level = 3;
 	static cost = REASONABLE.cost;
 	/**
-	 * When true, damage during the rest shrinks the heal by the damage taken instead of
-	 * cancelling it. A class setting so the balance harness can try it (roadmap 35).
+	 * An undisturbed rest restores every hit point. The owner's call (2026-09-29, roadmap 35):
+	 * kneeling in the open is a huge risk, so the reward is huge too, and there is no partial
+	 * heal for a broken rest. At 3d4 the card was worth almost nothing in a duel, where damage
+	 * nearly always comes before your next card. Off, it heals 3d4 (kept for the harness).
+	 * A boss still heals 3d4: its pool is many times a player's, and a boss that knelt once
+	 * and rose whole would undo a whole party's fight.
 	 */
-	static partialRest = false;
+	static fullRest = true;
 
 	constructor({ icon = '🌙' }: Partial<CardOptions> = {}) {
 		super({ icon } as Partial<CardOptions>);
@@ -51,7 +55,7 @@ export class GloamingRestCard extends BaseCard {
 
 	get stats(): string {
 		return `Kneel to rest: -${REST_AC_PENALTY} ac until your next card.
-If nothing damages you before then, heal ${REST_HEALTH_DICE} as that card begins. Any damage interrupts the rest and the healing is lost.`;
+If nothing damages you before then, ${(this.constructor as typeof GloamingRestCard).fullRest ? 'heal to full hp' : `heal ${REST_HEALTH_DICE}`} as that card begins. Any damage interrupts the rest and the healing is lost.`;
 	}
 
 	override getTargets(player: any): any[] {
@@ -89,31 +93,22 @@ If nothing damages you before then, heal ${REST_HEALTH_DICE} as that card begins
 				({ when, damage, dealt }) => when > since && (dealt ?? damage) > 0
 			);
 
-			if (interrupted && (this.constructor as typeof GloamingRestCard).partialRest) {
-				const taken = hitLog
-					.filter(({ when }) => when > since)
-					.reduce((sum: number, { damage, dealt }) => sum + (dealt ?? damage), 0);
-				const healRoll = roll({ primaryDice: REST_HEALTH_DICE });
-				const amount = Math.max(0, healRoll.result - taken);
-				this.emit('rolled', {
-					reason: 'for a broken rest.',
-					card: this,
-					roll: healRoll,
-					who: target,
-					outcome: `The hunters found ${target.givenName}, but ${target.pronouns.he} ${agree(target.pronouns, 'rises', 'rise')} with a little comfort (${amount} hp).`,
-				});
-				await subEventDelay(pacing);
-				if (amount > 0) await target.heal(amount);
-				this.restoreAc(target);
-				return card;
-			}
-
 			if (interrupted) {
 				this.emit('narration', {
 					narration: `${this.icon} The hunters were waiting! ${target.givenName}'s rest is broken, and ${target.pronouns.he} ${agree(target.pronouns, 'rises', 'rise')} without its comfort.`,
 				});
 				this.restoreAc(target);
 				await subEventDelay(pacing);
+				return card;
+			}
+
+			if ((this.constructor as typeof GloamingRestCard).fullRest && !target.isBoss) {
+				this.emit('narration', {
+					narration: `${this.icon} No hunter came. ${target.givenName} riseth from the laurel, made whole.`,
+				});
+				await subEventDelay(pacing);
+				await target.heal(target.maxHp - target.hp);
+				this.restoreAc(target);
 				return card;
 			}
 

@@ -81,7 +81,10 @@ No damage. Does not stack.
 
 | Where | Template |
 |---|---|
+| rattle → narration | `{target}'s ears yet ring with that hideous lowing 🔔 (attacks at disadvantage).` |
 | rattle → narration | `{target}'s ears yet ring with that hideous lowing 🔔 (-{penalty} to attack).` |
+| effect → narration | `{target} is already rattled.` |
+| effect → narration | `🔔 {target} is rattled!` |
 | effect → whose | `{his} own` |
 | effect → outcome | `{target} shakes it off.` |
 | effect → outcome | `{target} is already rattled.` |
@@ -98,16 +101,15 @@ Source: `packages/engine/src/cards/gloaming-rest.ts`.
 
 ```text
 Kneel to rest: -2 ac until your next card.
-If nothing damages you before then, heal 3d4 as that card begins. Any damage interrupts the rest and the healing is lost.
+If nothing damages you before then, heal to full hp as that card begins. Any damage interrupts the rest and the healing is lost.
 ```
 
 **Narration and outcomes:**
 
 | Where | Template |
 |---|---|
-| rest → reason | `for a broken rest.` |
-| rest → outcome | `The hunters found {target}, but {he} {rises/rise} with a little comfort ({amount} hp).` |
 | rest → narration | `🌙 The hunters were waiting! {target}'s rest is broken, and {he} {rises/rise} without its comfort.` |
+| rest → narration | `🌙 No hunter came. {target} riseth from the laurel, made whole.` |
 | rest → reason | `for a quiet rest.` |
 | rest → outcome | `No hunter came. {target} riseth from the laurel, restored.` |
 | effect → narration | `{target} is already resting.` |

@@ -162,7 +162,8 @@ export const VARIANTS: Record<string, Variant> = {
 	},
 	'dissonance-4': { about: 'Dissonant Voice: -4 to attack instead of -2', apply: () => cardStatic('Dissonant Voice', 'penalty', 4) },
 	'dissonance-sting': { about: 'Dissonant Voice: a failed save also takes 1d4', apply: () => cardStatic('Dissonant Voice', 'stingDice', '1d4') },
-	'rest-partial': { about: 'Gloaming Rest: damage shrinks the heal instead of cancelling it', apply: () => cardStatic('Gloaming Rest', 'partialRest', true) },
+	'dissonance-disadv': { about: 'Dissonant Voice: no save; every opponent\'s next attack rolls at disadvantage', apply: () => cardStatic('Dissonant Voice', 'disadvantage', true) },
+	'rest-3d4': { about: 'Gloaming Rest: an undisturbed rest heals 3d4, not to full (the old heal)', apply: () => cardStatic('Gloaming Rest', 'fullRest', false) },
 	'horn-companion-1d6': { about: 'Unconquerable Horn: the woodland creature deals 1d6 instead of 1d4', apply: () => cardStatic('Unconquerable Horn', 'companionDamageDice', '1d6') },
 	'tail-1d6': { about: 'Tail Lash: the tail deals 1d6 instead of 1d4', apply: () => cardStatic('Tail Lash', 'tailDamageDice', '1d6') },
 	'awe-1': { about: 'Helm of Awe: awes 1 card instead of 3', apply: () => cardStatic('Helm of Awe', 'aweCards', 1) },
@@ -198,6 +199,7 @@ export const VARIANTS: Record<string, Variant> = {
 			};
 		},
 	},
+	'awe-cower-1': { about: 'Helm of Awe: a cowering opponent loses 1 card instead of 2', apply: () => cardStatic('Helm of Awe', 'cowerCards', 1) },
 	'kick-d8': { about: 'Asinine Companion: the kick deals 1d8', apply: () => cardStatic('Asinine Companion', 'kickDamageDice', '1d8') },
 	'gladiator-ac+1': { about: 'Gladiator: 1 more AC', apply: () => staticBonus('Gladiator', 'acVariance', 1) },
 	'gladiator-hp+3': { about: 'Gladiator: 3 more HP', apply: () => staticBonus('Gladiator', 'hpVariance', 3) },

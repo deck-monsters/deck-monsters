@@ -88,6 +88,56 @@ describe('./cards/dissonant-voice.ts Dissonant Voice', () => {
 		expect(foeHit).not.to.have.been.called;
 	});
 
+	describe('with the disadvantage setting on', () => {
+		beforeEach(() => {
+			DissonantVoiceCard.disadvantage = true;
+		});
+		afterEach(() => {
+			DissonantVoiceCard.disadvantage = false;
+		});
+
+		it('rattles every opponent with no save and no damage', async () => {
+			const card = new DissonantVoiceCard();
+			const save = sinon.spy(card, 'getSaveRoll');
+			const foeHit = sinon.spy(foe, 'hit');
+
+			await card.play(unicorn, foe, ring, contestants);
+
+			expect(save).not.to.have.been.called;
+			expect(isRattled(foe)).to.equal(true);
+			expect(isRattled(other)).to.equal(true);
+			expect(isRattled(unicorn)).to.equal(false);
+			expect(foeHit).not.to.have.been.called;
+			expect(card.stats).to.include('keeps the worse roll');
+		});
+
+		it('rolls the next attack twice and keeps the worse, then is spent', async () => {
+			await new DissonantVoiceCard().effect(unicorn, foe, ring);
+			const rolls = [fakeRoll(15), fakeRoll(6), fakeRoll(20), fakeRoll(3)];
+			const stub = sinon.stub(HitCard.prototype, 'getAttackRoll').callsFake(() => rolls.shift() as any);
+			const hitCheck = sinon.spy(HitCard.prototype, 'hitCheck');
+
+			await new HitCard().play(foe, unicorn, ring, contestants);
+			expect(hitCheck.firstCall.returnValue.attackRoll.result).to.equal(6);
+			expect(isRattled(foe)).to.equal(false);
+
+			await new HitCard().play(foe, unicorn, ring, contestants);
+			expect(hitCheck.secondCall.returnValue.attackRoll.result).to.equal(20);
+			expect(stub.callCount).to.equal(3);
+		});
+
+		it('treats a natural 20 as the best roll and a 1 as the worst', async () => {
+			await new DissonantVoiceCard().effect(unicorn, foe, ring);
+			const rolls = [fakeRoll(20, -5), fakeRoll(18)];
+			sinon.stub(HitCard.prototype, 'getAttackRoll').callsFake(() => rolls.shift() as any);
+			const hitCheck = sinon.spy(HitCard.prototype, 'hitCheck');
+
+			await new HitCard().play(foe, unicorn, ring, contestants);
+
+			expect(hitCheck.firstCall.returnValue.attackRoll.strokeOfLuck).to.equal(false);
+		});
+	});
+
 	it('takes 2 off the rattled monster\'s next attack roll only', async () => {
 		const card = new DissonantVoiceCard();
 		sinon.stub(card, 'getSaveRoll').returns(fakeRoll(2));

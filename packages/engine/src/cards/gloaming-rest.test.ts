@@ -62,8 +62,27 @@ describe('./cards/gloaming-rest.ts Gloaming Rest', () => {
 		await nextTurn();
 
 		expect(unicorn.ac).to.equal(baseAc);
-		expect(unicorn.hp).to.be.within(5 + 3, 5 + 12);
+		expect(unicorn.hp).to.equal(unicorn.maxHp);
 		expect(isResting(unicorn)).to.equal(false);
+	});
+
+	it('heals a boss 3d4, never to full', async () => {
+		unicorn.setOptions({ isBoss: true });
+		await new GloamingRestCard().play(unicorn, foe, ring, contestants);
+		await nextTurn();
+		expect(unicorn.hp).to.be.within(5 + 3, 5 + 12);
+	});
+
+	it('heals 3d4 instead with the full-rest setting off', async () => {
+		GloamingRestCard.fullRest = false;
+		try {
+			expect(new GloamingRestCard().stats).to.include('heal 3d4');
+			await new GloamingRestCard().play(unicorn, foe, ring, contestants);
+			await nextTurn();
+			expect(unicorn.hp).to.be.within(5 + 3, 5 + 12);
+		} finally {
+			GloamingRestCard.fullRest = true;
+		}
 	});
 
 	it('loses the heal if anything damages the Unicorn first', async () => {

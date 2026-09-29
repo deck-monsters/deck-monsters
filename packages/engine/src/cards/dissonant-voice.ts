@@ -39,12 +39,22 @@ export class DissonantVoiceCard extends BaseCard {
 	 */
 	static penalty = DISSONANCE_PENALTY;
 	static stingDice: string | undefined = undefined;
+	/**
+	 * The owner's proposed shape (2026-09-29, roadmap 35): no save, and every opponent's next
+	 * attack roll is made twice, keeping the worse. Modest in a duel, strong in a crowd. Every
+	 * flat penalty measured 5-11 points below the card it replaced. A class setting for the harness.
+	 */
+	static disadvantage = false;
 
 	constructor({ icon = '🔔' }: Partial<CardOptions> = {}) {
 		super({ icon } as Partial<CardOptions>);
 	}
 
 	get stats(): string {
+		if ((this.constructor as typeof DissonantVoiceCard).disadvantage) {
+			return `Every opponent's next card rolls to hit twice and keeps the worse roll. A card that does not roll to hit (Blast, Heal) uses it up with no effect.
+No damage. Does not stack.`;
+		}
 		return `Each opponent rolls 1d20 + int vs your int. On a failure, their next card takes ${(this.constructor as typeof DissonantVoiceCard).penalty} off its attack roll.${(this.constructor as typeof DissonantVoiceCard).stingDice ? ` The noise also stings: ${(this.constructor as typeof DissonantVoiceCard).stingDice} damage.` : ''} A card that does not roll to hit (Blast, Heal) uses up the penalty with no effect.
 No damage. Does not stack.`;
 	}
@@ -71,7 +81,7 @@ No damage. Does not stack.`;
 	}
 
 	rattle(target: any): void {
-		const penalty = (this.constructor as typeof DissonantVoiceCard).penalty;
+		const { penalty, disadvantage } = this.constructor as typeof DissonantVoiceCard;
 		const rattled = ({ card, phase, player }: any) => {
 			if (phase !== ATTACK_PHASE || player !== target) return card;
 
@@ -81,7 +91,19 @@ No damage. Does not stack.`;
 			);
 
 			const { getAttackRoll } = card;
-			if (typeof getAttackRoll === 'function') {
+			if (typeof getAttackRoll === 'function' && disadvantage) {
+				this.emit('narration', {
+					narration: `${target.givenName}'s ears yet ring with that hideous lowing ${this.icon} (attacks at disadvantage).`,
+				});
+				// Both rolls go through the card's own getAttackRoll, so its bonuses apply to each.
+				// A curse of Loki is the worst roll and a natural 20 the best, whatever the totals.
+				const rank = (r: any) => (r.curseOfLoki ? -Infinity : r.strokeOfLuck ? Infinity : r.result);
+				card.getAttackRoll = (...args: any[]) => {
+					const first = getAttackRoll.apply(card, args);
+					const second = getAttackRoll.apply(card, args);
+					return rank(second) < rank(first) ? second : first;
+				};
+			} else if (typeof getAttackRoll === 'function') {
 				this.emit('narration', {
 					narration: `${target.givenName}'s ears yet ring with that hideous lowing ${this.icon} (-${penalty} to attack).`,
 				});
@@ -103,6 +125,20 @@ No damage. Does not stack.`;
 	}
 
 	async effect(player: any, target: any, ring?: any): Promise<boolean> {
+		if ((this.constructor as typeof DissonantVoiceCard).disadvantage) {
+			const already = target.encounterEffects.some(
+				(effect: any) => effect.effectType === DISSONANT_VOICE_EFFECT
+			);
+			if (!already) this.rattle(target);
+			this.emit('narration', {
+				narration: already
+					? `${target.givenName} is already rattled.`
+					: `${this.icon} ${target.givenName} is rattled!`,
+			});
+			await subEventDelay(ring?.pacingMultiplier);
+			return !target.dead;
+		}
+
 		const alreadyRattled = target.encounterEffects.some(
 			(effect: any) => effect.effectType === DISSONANT_VOICE_EFFECT
 		);
