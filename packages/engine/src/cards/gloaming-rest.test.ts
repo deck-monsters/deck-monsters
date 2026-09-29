@@ -62,139 +62,46 @@ describe('./cards/gloaming-rest.ts Gloaming Rest', () => {
 		await nextTurn();
 
 		expect(unicorn.ac).to.equal(baseAc);
-		expect(unicorn.hp).to.equal(unicorn.maxHp);
+		expect(unicorn.hp).to.be.within(5 + 4, unicorn.maxHp);
 		expect(isResting(unicorn)).to.equal(false);
 	});
 
-	it('heals a boss to full as well', async () => {
-		unicorn.setOptions({ isBoss: true });
-		await new GloamingRestCard().play(unicorn, foe, ring, contestants);
-		await nextTurn();
-		expect(unicorn.hp).to.equal(unicorn.maxHp);
+	it('heals a random amount from 4 to all that is missing', () => {
+		expect(new GloamingRestCard().stats).to.include('between 4 hp and all the hp you are missing');
+		const card = new GloamingRestCard();
+		const random = sinon.stub(Math, 'random');
+		unicorn.hp = 1;
+		random.returns(0);
+		expect(card.restHealAmount(unicorn)).to.equal(4);
+		random.returns(0.9999);
+		expect(card.restHealAmount(unicorn)).to.equal(unicorn.maxHp - 1);
+		unicorn.hp = unicorn.maxHp - 2;
+		random.returns(0);
+		expect(card.restHealAmount(unicorn)).to.equal(2);
+		unicorn.hp = unicorn.maxHp;
+		expect(card.restHealAmount(unicorn)).to.equal(0);
 	});
 
-	describe('rest shapes', () => {
-		afterEach(() => {
-			GloamingRestCard.restShape = 'full';
-		});
+	it('rests a boss the same way', async () => {
+		unicorn.setOptions({ isBoss: true });
+		sinon.stub(Math, 'random').returns(0);
+		await new GloamingRestCard().play(unicorn, foe, ring, contestants);
+		await nextTurn();
+		expect(unicorn.hp).to.equal(5 + 4);
+	});
 
-		it('ranged-full heals from 4 to everything missing', async () => {
-			GloamingRestCard.restShape = 'ranged-full';
-			expect(new GloamingRestCard().stats).to.include('between 4 hp and all you are missing');
-			const card = new GloamingRestCard();
-			const random = sinon.stub(Math, 'random');
-			unicorn.hp = 1;
-			random.returns(0);
-			expect(card.restHealAmount(unicorn)).to.equal(4);
-			random.returns(0.9999);
-			expect(card.restHealAmount(unicorn)).to.equal(unicorn.maxHp - 1);
-		});
-
-		it('deepening heals from half to all missing, and each rest this fight costs 1 more ac', async () => {
-			GloamingRestCard.restShape = 'deepening';
-			expect(new GloamingRestCard().stats).to.include('1 more for each earlier rest');
-			const baseAc = unicorn.ac;
-			const random = sinon.stub(Math, 'random').returns(0);
-			unicorn.hp = 5;
-			const missing = unicorn.maxHp - 5;
-
-			await new GloamingRestCard().play(unicorn, foe, ring, contestants);
-			expect(unicorn.ac).to.equal(baseAc - 2);
-			await nextTurn();
-			expect(unicorn.hp).to.equal(5 + Math.ceil(missing / 2));
-			expect(unicorn.ac).to.equal(baseAc);
-
-			await new GloamingRestCard().play(unicorn, foe, ring, contestants);
-			expect(unicorn.ac).to.equal(baseAc - 3);
-			await unicorn.hit(1, foe, new HitCard());
-			await nextTurn();
-			expect(unicorn.ac).to.equal(baseAc);
-
-			await new GloamingRestCard().play(unicorn, foe, ring, contestants);
-			expect(unicorn.ac).to.equal(baseAc - 4);
-			random.returns(0.9999);
-			await nextTurn();
-			expect(unicorn.hp).to.equal(unicorn.maxHp);
-			expect(unicorn.ac).to.equal(baseAc);
-		});
-
-		it('dice heals 3d4', async () => {
-			GloamingRestCard.restShape = 'dice';
+	it('heals 3d4 with the harness dice setting', async () => {
+		GloamingRestCard.restShape = 'dice';
+		try {
 			expect(new GloamingRestCard().stats).to.include('heal 3d4');
 			await new GloamingRestCard().play(unicorn, foe, ring, contestants);
 			await nextTurn();
 			expect(unicorn.hp).to.be.within(5 + 3, 5 + 12);
-		});
-
-		it('half heals half the missing hp, rounded down', async () => {
-			GloamingRestCard.restShape = 'half';
-			expect(new GloamingRestCard().stats).to.include('half your missing hp');
-			const missing = unicorn.maxHp - 5;
-			await new GloamingRestCard().play(unicorn, foe, ring, contestants);
-			await nextTurn();
-			expect(unicorn.hp).to.equal(5 + Math.floor(missing / 2));
-		});
-
-		it('ranged heals between 4 and half max hp, never more than is missing', async () => {
+		} finally {
 			GloamingRestCard.restShape = 'ranged';
-			expect(new GloamingRestCard().stats).to.include('between 4 hp and half your max hp');
-			const card = new GloamingRestCard();
-			const random = sinon.stub(Math, 'random');
-			unicorn.hp = 1;
-			random.returns(0);
-			expect(card.restHealAmount(unicorn)).to.equal(4);
-			random.returns(0.9999);
-			expect(card.restHealAmount(unicorn)).to.equal(Math.floor(unicorn.maxHp / 2));
-			unicorn.hp = unicorn.maxHp - 2;
-			expect(card.restHealAmount(unicorn)).to.equal(2);
-			random.returns(0);
-			expect(card.restHealAmount(unicorn)).to.equal(2);
-			unicorn.hp = unicorn.maxHp;
-			expect(card.restHealAmount(unicorn)).to.equal(0);
-		});
-
-		it('two-turns sleeps through one card, then heals to full', async () => {
-			GloamingRestCard.restShape = 'two-turns';
-			const baseAc = unicorn.ac;
-			await new GloamingRestCard().play(unicorn, foe, ring, contestants);
-			await nextTurn();
-			expect(unicorn.hp).to.equal(5);
-			expect(unicorn.ac).to.equal(baseAc - 2);
-			expect(isResting(unicorn)).to.equal(true);
-			await nextTurn();
-			expect(unicorn.hp).to.equal(unicorn.maxHp);
-			expect(unicorn.ac).to.equal(baseAc);
-			expect(isResting(unicorn)).to.equal(false);
-		});
-
-		it('two-turns loses everything to a hit in the second turn', async () => {
-			GloamingRestCard.restShape = 'two-turns';
-			await new GloamingRestCard().play(unicorn, foe, ring, contestants);
-			await nextTurn();
-			await unicorn.hit(1, foe, new HitCard());
-			await nextTurn();
-			expect(unicorn.hp).to.equal(4);
-			expect(isResting(unicorn)).to.equal(false);
-		});
-
-		it('growing heals more each undisturbed card and keeps it when broken', async () => {
-			GloamingRestCard.restShape = 'growing';
-			unicorn.setOptions({ hpVariance: 0 });
-			const baseAc = unicorn.ac;
-			unicorn.hp = 1;
-			sinon.stub(Math, 'random').returns(0);
-			await new GloamingRestCard().play(unicorn, foe, ring, contestants);
-			await nextTurn();
-			expect(unicorn.hp).to.equal(1 + 3);
-			expect(isResting(unicorn)).to.equal(true);
-			expect(unicorn.ac).to.equal(baseAc - 2);
-			await unicorn.hit(1, foe, new HitCard());
-			await nextTurn();
-			expect(unicorn.hp).to.equal(3);
-			expect(isResting(unicorn)).to.equal(false);
-			expect(unicorn.ac).to.equal(baseAc);
-		});
+		}
 	});
+
 
 	it('loses the heal if anything damages the Unicorn first', async () => {
 		const baseAc = unicorn.ac;

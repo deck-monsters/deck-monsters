@@ -163,16 +163,10 @@ export const VARIANTS: Record<string, Variant> = {
 	'dissonance-4': { about: 'Dissonant Voice: -4 to attack instead of -2', apply: () => cardStatic('Dissonant Voice', 'penalty', 4) },
 	'dissonance-sting': { about: 'Dissonant Voice: a failed save also takes 1d4', apply: () => cardStatic('Dissonant Voice', 'stingDice', '1d4') },
 	'dissonance-disadv': { about: 'Dissonant Voice: no save; every opponent\'s next attack rolls at disadvantage', apply: () => cardStatic('Dissonant Voice', 'disadvantage', true) },
-	'rest-3d4': { about: 'Gloaming Rest: an undisturbed rest heals 3d4, not to full (the old heal)', apply: () => cardStatic('Gloaming Rest', 'restShape', 'dice') },
-	'rest-half': { about: 'Gloaming Rest: an undisturbed rest heals half the missing hp', apply: () => cardStatic('Gloaming Rest', 'restShape', 'half') },
+	'rest-3d4': { about: 'Gloaming Rest: an undisturbed rest heals 3d4 (the old heal), not 4 to all missing', apply: () => cardStatic('Gloaming Rest', 'restShape', 'dice') },
 
 
-	'rest-ranged': { about: 'Gloaming Rest: heal a random amount from 4 to half max hp, never more than missing', apply: () => cardStatic('Gloaming Rest', 'restShape', 'ranged') },
 
-	'rest-ranged-full': { about: 'Gloaming Rest: heal a random amount from 4 to all that is missing', apply: () => cardStatic('Gloaming Rest', 'restShape', 'ranged-full') },
-	'rest-deepening': { about: 'Gloaming Rest: heal from half to all missing; each rest this fight costs 1 more AC', apply: () => cardStatic('Gloaming Rest', 'restShape', 'deepening') },
-	'rest-two-turns': { about: 'Gloaming Rest: rest through two of your cards, then heal to full', apply: () => cardStatic('Gloaming Rest', 'restShape', 'two-turns') },
-	'rest-growing': { about: 'Gloaming Rest: heal 3d4, 6d4, 9d4 at each undisturbed card; kept if broken', apply: () => cardStatic('Gloaming Rest', 'restShape', 'growing') },
 	'horn-companion-1d6': { about: 'Unconquerable Horn: the woodland creature deals 1d6 instead of 1d4', apply: () => cardStatic('Unconquerable Horn', 'companionDamageDice', '1d6') },
 	'tail-1d6': { about: 'Tail Lash: the tail deals 1d6 instead of 1d4', apply: () => cardStatic('Tail Lash', 'tailDamageDice', '1d6') },
 	'awe-1': { about: 'Helm of Awe: awes 1 card instead of 3', apply: () => cardStatic('Helm of Awe', 'aweCards', 1) },

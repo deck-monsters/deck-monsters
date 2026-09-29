@@ -1193,10 +1193,11 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  Kneel to rest: -2 ac until your 
  next card.
  If nothing damages you before 
- then, heal to full hp as that 
- card begins. Any damage 
- interrupts the rest and the 
- healing is lost.
+ then, heal a random amount 
+ between 4 hp and all the hp you 
+ are missing as that card begins. 
+ Any damage interrupts the rest 
+ and the healing is lost.
 
  Level: 3
  Usable by: Unicorn, Cleric

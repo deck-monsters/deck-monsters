@@ -245,6 +245,21 @@ new card or monster must reach. Check each one.
   its own "with"; give the colour its own sentence. Verbs after a pronoun use `agree()`;
   verbs after a name never do ([voice and wording](../reference/voice-and-wording.md)).
 
+## Risky heals: Gloaming Rest
+
+Gloaming Rest (`cards/gloaming-rest.ts`) is a heal with a risk attached. The monster kneels
+at −2 AC until its next card. If nothing damages it before that card begins, it heals a random
+amount from 4 up to all the hp it is missing. Any damage in between (`dealt ?? damage` in the
+hit log, so a blow the brace absorbed does not count) breaks the rest, and it heals nothing.
+Bosses rest the same way. `restShape: 'dice'` keeps the old 3d4 for the harness.
+
+The upper end is random so the heal can never restore everything every time. A guaranteed
+full heal wins any fight in which the opponent's next card happens not to deal damage. It
+measured fine on average but decided single fights (owner rule, 2026-09-29). The
+[Gloaming Rest study](../archive/studies/2026-09-gloaming-rest.md) records the seven shapes
+tried, the per-fight measurement that exposed the problem, and why each was dropped. Read it
+before designing another conditional or all-or-nothing effect.
+
 ## Content and balance rules
 
 - **Balance target (owner decision, September 2026).** Aim for a power curve per class

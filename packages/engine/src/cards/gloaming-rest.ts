@@ -15,7 +15,6 @@ const { roll } = chance;
 
 export const REST_AC_PENALTY = 2;
 const REST_HEALTH_DICE = '3d4';
-const GROWING_REST_TURNS = 3;
 const RANGED_REST_MIN = 4;
 
 /*
@@ -42,47 +41,29 @@ export class GloamingRestCard extends BaseCard {
 	static level = 3;
 	static cost = REASONABLE.cost;
 	/**
-	 * What an undisturbed rest restores. The owner's call (2026-09-29, roadmap 35): kneeling in
-	 * the open is a huge risk, so the reward is huge too, and a broken rest heals nothing. At
-	 * 3d4 (`dice`) the card was worth almost nothing in a duel, where damage nearly always comes
-	 * before your next card. Shapes being measured, the same for bosses and players (owner):
-	 * `full` restores every hit point; `half` restores half of what is missing; `two-turns`
-	 * rests through two of your cards, then restores every hit point; `growing` heals 3d4 at
-	 * your next card, 6d4 at the one after, 9d4 at the third, while nothing disturbs you, and
-	 * keeps what it healed if the rest is broken; `ranged` heals a random amount from 4 to half
-	 * the monster's max hp, never more than it is missing; `ranged-full` heals from 4 to all that
-	 * is missing; `deepening` heals from half to all that is missing, but each rest in the same
-	 * fight kneels deeper: -2 AC, then -3, then -4. The AC penalty lasts as long as the rest.
-	 * Owner rule: no shape may heal to full every time, or a rest that meets a card that does
-	 * not hit wins any fight the unicorn can survive one round of.
+	 * What an undisturbed rest restores (owner, 2026-09-29, roadmap 35). `ranged`: a random
+	 * amount from 4 (or less, if less is missing) to everything missing, so a full heal can
+	 * happen but rarely does. `dice`: the old 3d4, kept for the harness. Bosses rest the same.
+	 *
+	 * Why not a full heal every time: a rest that met a card that did not hit (a Heal, a
+	 * Harden, a miss) wiped out the opponent's whole lead, and the fight turned on that one
+	 * coin flip. In level 3 duels the Unicorn lost 9% of fights where a rest completed and 48%
+	 * of fights where none did, though the average looked fine. The study, with the seven shapes
+	 * tried and why each was kept or dropped, is
+	 * docs/archive/studies/2026-09-gloaming-rest.md.
 	 */
-	static restShape: 'full' | 'half' | 'two-turns' | 'growing' | 'dice' | 'ranged' | 'ranged-full' | 'deepening' = 'full';
+	static restShape: 'ranged' | 'dice' = 'ranged';
+
 	constructor({ icon = '🌙' }: Partial<CardOptions> = {}) {
 		super({ icon } as Partial<CardOptions>);
 	}
 
 	get stats(): string {
-		switch ((this.constructor as typeof GloamingRestCard).restShape) {
-			case 'two-turns':
-				return `Kneel to rest: -${REST_AC_PENALTY} ac until your second card from now.
-If nothing damages you before then, heal to full hp as that card begins. Any damage interrupts the rest and the healing is lost.`;
-			case 'growing':
-				return `Kneel to rest: -${REST_AC_PENALTY} ac while you rest, for up to ${GROWING_REST_TURNS} of your cards.
-As each card begins, if nothing has damaged you, heal 3d4, then 6d4, then 9d4. Any damage ends the rest; you keep what you healed.`;
-			default: {
-				const heal = {
-					full: 'heal to full hp',
-					half: 'heal half your missing hp',
-					dice: `heal ${REST_HEALTH_DICE}`,
-					ranged: `heal between ${RANGED_REST_MIN} hp and half your max hp (never more than you are missing)`,
-					'ranged-full': `heal between ${RANGED_REST_MIN} hp and all you are missing`,
-					deepening: 'heal between half and all you are missing',
-				}[(this.constructor as typeof GloamingRestCard).restShape as 'full' | 'half' | 'dice' | 'ranged' | 'ranged-full' | 'deepening'];
-				const deeper = (this.constructor as typeof GloamingRestCard).restShape === 'deepening' ? ', 1 more for each earlier rest this fight,' : '';
-				return `Kneel to rest: -${REST_AC_PENALTY} ac${deeper} until your next card.
+		const heal = (this.constructor as typeof GloamingRestCard).restShape === 'dice'
+			? `heal ${REST_HEALTH_DICE}`
+			: `heal a random amount between ${RANGED_REST_MIN} hp and all the hp you are missing`;
+		return `Kneel to rest: -${REST_AC_PENALTY} ac until your next card.
 If nothing damages you before then, ${heal} as that card begins. Any damage interrupts the rest and the healing is lost.`;
-			}
-		}
 	}
 
 	override getTargets(player: any): any[] {
@@ -96,61 +77,32 @@ If nothing damages you before then, ${heal} as that card begins. Any damage inte
 	 * did not spend comes back whole. An earlier clamp here ("only give back what is still
 	 * missing") lost the 2 AC for the rest of the fight whenever a brace was already up.
 	 */
-	restoreAc(target: any, penalty = REST_AC_PENALTY): void {
-		target.setModifier('ac', penalty);
+	restoreAc(target: any): void {
+		target.setModifier('ac', REST_AC_PENALTY);
 	}
 
-	/** HP the rest restores when it resolves undisturbed, for the shapes that heal once. */
+	/** HP an undisturbed rest restores: never more than the monster is missing. */
 	restHealAmount(target: any): number {
 		const missing = Math.max(0, target.maxHp - target.hp);
-		switch ((this.constructor as typeof GloamingRestCard).restShape) {
-			case 'half': return Math.floor(missing / 2);
-			case 'dice': return roll({ primaryDice: REST_HEALTH_DICE }).result;
-			case 'ranged-full': {
-				// From a little to everything missing: a whole heal is possible, but unlikely.
-				const low = Math.min(RANGED_REST_MIN, missing);
-				return low + Math.floor(Math.random() * (missing - low + 1));
-			}
-			case 'deepening': {
-				// From half to everything missing; the price is the AC, which grows each rest.
-				const low = Math.ceil(missing / 2);
-				return low + Math.floor(Math.random() * (missing - low + 1));
-			}
-			case 'ranged': {
-				// Owner's shape (2026-09-29): somewhere between a little and half the monster,
-				// never more than it is missing, so one rest can never erase a whole lead.
-				const low = Math.min(RANGED_REST_MIN, missing);
-				const high = Math.min(Math.floor(target.maxHp / 2), missing);
-				return low + Math.floor(Math.random() * (Math.max(high, low) - low + 1));
-			}
-			default: return missing;
+		if ((this.constructor as typeof GloamingRestCard).restShape === 'dice') {
+			return roll({ primaryDice: REST_HEALTH_DICE }).result;
 		}
+		const low = Math.min(RANGED_REST_MIN, missing);
+		return low + Math.floor(Math.random() * (missing - low + 1));
 	}
 
-	/** The AC this rest costs: -2, or with `deepening` one more for each earlier rest this fight. */
-	restPenalty(target: any): number {
-		if ((this.constructor as typeof GloamingRestCard).restShape !== 'deepening') return REST_AC_PENALTY;
-		return REST_AC_PENALTY + (((target.encounterModifiers as any).gloamingRests as number) || 0);
-	}
-
-	rest(target: any, ring: any, penalty = REST_AC_PENALTY): void {
+	rest(target: any, ring: any): void {
 		// hitLogTimestamp is the same clock creature.hit() stamps hits with (see DelayedHit),
 		// so "hit after the rest began" compares like with like, including in tests.
 		const since = hitLogTimestamp();
 		const pacing = ring?.pacingMultiplier;
-		const { restShape } = this.constructor as typeof GloamingRestCard;
-		let turns = 0;
 
 		const resting = async ({ card, phase, player }: any) => {
 			if (phase !== ATTACK_PHASE || player !== target) return card;
-			turns += 1;
 
-			const wake = () => {
-				target.encounterEffects = target.encounterEffects.filter(
-					(effect: any) => effect !== resting
-				);
-				this.restoreAc(target, penalty);
-			};
+			target.encounterEffects = target.encounterEffects.filter(
+				(effect: any) => effect !== resting
+			);
 
 			const hitLog: any[] = (target.encounterModifiers.hitLog as any[]) || [];
 			// `dealt` is the HP a blow actually took; a hit the brace absorbed in full does not
@@ -161,37 +113,10 @@ If nothing damages you before then, ${heal} as that card begins. Any damage inte
 
 			if (interrupted) {
 				this.emit('narration', {
-					narration: `${this.icon} The hunters were waiting! ${target.givenName}'s rest is broken, and ${target.pronouns.he} ${agree(target.pronouns, 'rises', 'rise')} ${restShape === 'growing' && turns > 1 ? 'with what comfort the dusk gave' : 'without its comfort'}.`,
+					narration: `${this.icon} The hunters were waiting! ${target.givenName}'s rest is broken, and ${target.pronouns.he} ${agree(target.pronouns, 'rises', 'rise')} without its comfort.`,
 				});
-				wake();
+				this.restoreAc(target);
 				await subEventDelay(pacing);
-				return card;
-			}
-
-			if (restShape === 'two-turns' && turns < 2) {
-				this.emit('narration', {
-					narration: `${this.icon} The dusk deepens. ${target.givenName} sleepeth on among the laurel, and the hunters are listening still.`,
-				});
-				await subEventDelay(pacing);
-				return card;
-			}
-
-			if (restShape === 'growing') {
-				// Each undisturbed card heals more than the last: 3d4, then 6d4, then 9d4.
-				const healRoll = roll({ primaryDice: `${3 * turns}d4` });
-				const last = turns >= GROWING_REST_TURNS || target.hp + healRoll.result >= target.maxHp;
-				this.emit('rolled', {
-					reason: 'for a quiet rest.',
-					card: this,
-					roll: healRoll,
-					who: target,
-					outcome: last
-						? `No hunter came. ${target.givenName} riseth from the laurel, restored.`
-						: `No hunter came, and ${target.givenName} sleepeth on, the deeper for it.`,
-				});
-				await subEventDelay(pacing);
-				await target.heal(healRoll.result);
-				if (last) wake();
 				return card;
 			}
 
@@ -201,7 +126,7 @@ If nothing damages you before then, ${heal} as that card begins. Any damage inte
 			});
 			await subEventDelay(pacing);
 			if (amount > 0) await target.heal(amount);
-			wake();
+			this.restoreAc(target);
 
 			return card;
 		};
@@ -230,14 +155,8 @@ If nothing damages you before then, ${heal} as that card begins. Any damage inte
 					? `${this.icon} As the light fails, ${player.givenName} kneels among the laurel and closes ${player.pronouns.his} eyes. Somewhere in the dusk, the hunters are listening.`
 					: `${this.icon} In confusion, ${player.givenName} coaxes ${target.givenName} to kneel and rest.`,
 		});
-		const penalty = this.restPenalty(target);
-		// Counted per fight: encounter modifiers are cleared when the encounter ends.
-		target.encounterModifiers = {
-			...target.encounterModifiers,
-			gloamingRests: (((target.encounterModifiers as any).gloamingRests as number) || 0) + 1,
-		} as any;
-		target.setModifier('ac', -penalty);
-		this.rest(target, ring, penalty);
+		target.setModifier('ac', -REST_AC_PENALTY);
+		this.rest(target, ring);
 		await subEventDelay(ring?.pacingMultiplier);
 
 		return true;

@@ -345,6 +345,16 @@ appear in every report. It used to be listed by hand in five places, and a monst
 from one was silently left out of that report. `harness.test.ts` checks the list matches
 `allMonsters` and that every monster can fight.
 
+## Averages hide all-or-nothing cards
+
+A card whose effect either lands in full or not at all can show a healthy average win rate
+while each fight turns on one coin flip. For such a card, also split fights by whether the
+effect landed. Calibrate the split with a weak version of the same card: fights where it
+landed are biased toward fights already going well. The harness has no built-in split yet.
+The pattern is a probe that loops `simulate({ fights: 1, seed })` and wraps the card's
+method. [The Gloaming Rest study](../archive/studies/2026-09-gloaming-rest.md) is the worked
+example.
+
 ## Adding a new economy/balance measurement
 
 - Extend `SimResult` **additively** — new optional/present-when-applicable fields only, never
