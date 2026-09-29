@@ -81,7 +81,7 @@ No damage. Does not stack.
 
 | Where | Template |
 |---|---|
-| rattle → narration | `{target}'s ears yet ring with that hideous lowing 🔔 (attacks at disadvantage).` |
+| rattle → narration | `{target}'s ears yet ring with that hideous lowing 🔔{ (attacks at disadvantage) / —}.` |
 | rattle → narration | `{target}'s ears yet ring with that hideous lowing 🔔 (-{penalty} to attack).` |
 | effect → narration | `{target} is already rattled.` |
 | effect → narration | `🔔 {target} is rattled!` |

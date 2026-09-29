@@ -45,6 +45,19 @@ export class DissonantVoiceCard extends BaseCard {
 	 * flat penalty measured 5-11 points below the card it replaced. A class setting for the harness.
 	 */
 	static disadvantage = false;
+	/** In the `disadvantage` shape: roll twice and keep the worse (off leaves one roll). */
+	static rollTwice = true;
+	/**
+	 * In the `disadvantage` shape: the rattle waits for the monster's next card that rolls to
+	 * hit, instead of being spent by whatever it plays next (a Blast or a Heal wasted it).
+	 */
+	static waitsForAttack = false;
+	/**
+	 * Natural rolls up to this count as a Curse of Loki on the rattled attack, so the target
+	 * flings the blow back (Hit's counter). 1 is the normal rule. A wider range lands damage
+	 * rather than only moving the roll; attack-roll changes alone barely matter (roadmap 35).
+	 */
+	static lokiRange = 1;
 
 	constructor({ icon = '🔔' }: Partial<CardOptions> = {}) {
 		super({ icon } as Partial<CardOptions>);
@@ -81,26 +94,37 @@ No damage. Does not stack.`;
 	}
 
 	rattle(target: any): void {
-		const { penalty, disadvantage } = this.constructor as typeof DissonantVoiceCard;
+		const { penalty, disadvantage, rollTwice, waitsForAttack, lokiRange } = this.constructor as typeof DissonantVoiceCard;
 		const rattled = ({ card, phase, player }: any) => {
 			if (phase !== ATTACK_PHASE || player !== target) return card;
 
-			// Spent on the next card, whether or not it attacks: a one-play penalty.
+			const { getAttackRoll } = card;
+			if (waitsForAttack && disadvantage && typeof getAttackRoll !== 'function') return card;
+
+			// Spent on the next card (or, with `waitsForAttack`, the next that rolls to hit).
 			target.encounterEffects = target.encounterEffects.filter(
 				(effect: any) => effect !== rattled
 			);
 
-			const { getAttackRoll } = card;
 			if (typeof getAttackRoll === 'function' && disadvantage) {
 				this.emit('narration', {
-					narration: `${target.givenName}'s ears yet ring with that hideous lowing ${this.icon} (attacks at disadvantage).`,
+					narration: `${target.givenName}'s ears yet ring with that hideous lowing ${this.icon}${rollTwice ? ' (attacks at disadvantage)' : ''}.`,
 				});
+				// A natural roll inside `lokiRange` is a curse of Loki (never on a natural 20).
+				const curse = (r: any) => {
+					const natural = r?.naturalRoll?.result;
+					if (!r.strokeOfLuck && typeof natural === 'number' && natural <= lokiRange) {
+						r.curseOfLoki = true;
+					}
+					return r;
+				};
 				// Both rolls go through the card's own getAttackRoll, so its bonuses apply to each.
 				// A curse of Loki is the worst roll and a natural 20 the best, whatever the totals.
 				const rank = (r: any) => (r.curseOfLoki ? -Infinity : r.strokeOfLuck ? Infinity : r.result);
 				card.getAttackRoll = (...args: any[]) => {
-					const first = getAttackRoll.apply(card, args);
-					const second = getAttackRoll.apply(card, args);
+					const first = curse(getAttackRoll.apply(card, args));
+					if (!rollTwice) return first;
+					const second = curse(getAttackRoll.apply(card, args));
 					return rank(second) < rank(first) ? second : first;
 				};
 			} else if (typeof getAttackRoll === 'function') {

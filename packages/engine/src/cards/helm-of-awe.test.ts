@@ -253,4 +253,111 @@ describe('./cards/helm-of-awe.ts Helm of Awe', () => {
 			expect(new HelmOfAweCard().getTargets(dragon, foe, ring, contestants)).to.deep.equal([other]);
 		});
 	});
+
+	describe('with the hold setting on', () => {
+		const settings = {
+			hold: HelmOfAweCard.hold,
+			holdFatigue: HelmOfAweCard.holdFatigue,
+			holdFirstCardLost: HelmOfAweCard.holdFirstCardLost,
+			fleeOnLoki: HelmOfAweCard.fleeOnLoki,
+		};
+		beforeEach(() => {
+			HelmOfAweCard.cower = true;
+			HelmOfAweCard.hold = true;
+		});
+		afterEach(() => {
+			Object.assign(HelmOfAweCard, settings);
+		});
+
+		// Awes `foe` with the save rolls given in order, and records each save's DC.
+		const aweWith = async (naturals: number[]) => {
+			const card = new HelmOfAweCard();
+			const save = sinon.stub(card, 'getSaveRoll');
+			naturals.forEach((natural, i) => save.onCall(i).returns(fakeRoll(natural)));
+			const dcs: number[] = [];
+			card.on('rolled', (_c: string, _card: any, { vs }: any) => dcs.push(vs));
+			await card.effect(dragon, foe, ring, contestants);
+			return { card, dcs };
+		};
+		const foeActs = async () => {
+			const effect = sinon.spy(HitCard.prototype, 'effect');
+			await new HitCard().play(foe, dragon, ring, contestants);
+			const acted = effect.called;
+			effect.restore();
+			return acted;
+		};
+
+		it('says so in its rules text', () => {
+			expect(new HelmOfAweCard().stats).to.include('they roll again (3 easier for each turn already awed)');
+		});
+
+		it('costs the next card, then a card for each failed save, until a save succeeds', async () => {
+			const { dcs } = await aweWith([2, 2, 2, 20]);
+			expect(await foeActs()).to.equal(false);
+			expect(await foeActs()).to.equal(false);
+			expect(await foeActs()).to.equal(false);
+			expect(await foeActs()).to.equal(true);
+			expect(isAwed(foe)).to.equal(false);
+			const dc = 10 + dragon.intModifier;
+			// The awing save, then the recovery saves, each 3 easier than the last.
+			expect(dcs).to.deep.equal([dc, dc, dc - 3, dc - 6]);
+		});
+
+		it('with holdFirstCardLost off, the first recovery save comes at once', async () => {
+			HelmOfAweCard.holdFirstCardLost = false;
+			await aweWith([2, 20]);
+			expect(await foeActs()).to.equal(true);
+			expect(isAwed(foe)).to.equal(false);
+		});
+
+		it('never refreshes: a second helm on a cowering monster rolls nothing', async () => {
+			await aweWith([2]);
+			const again = new HelmOfAweCard();
+			const save = sinon.stub(again, 'getSaveRoll');
+			await again.effect(dragon, foe, ring, contestants);
+			expect(save).not.to.have.been.called;
+			expect(foe.encounterEffects.filter((e: any) => e.effectType === AWE_EFFECT)).to.have.length(1);
+		});
+
+		it('ends when the dragon dies', async () => {
+			await aweWith([2]);
+			dragon.dead = true;
+			expect(await foeActs()).to.equal(true);
+			expect(isAwed(foe)).to.equal(false);
+		});
+
+		it('with fleeOnLoki flee, a natural 1 sends the monster from the ring', async () => {
+			HelmOfAweCard.fleeOnLoki = 'flee';
+			await aweWith([2, 1]);
+			await foeActs();
+			await new HitCard().play(foe, dragon, ring, contestants);
+			expect(foe.fled).to.equal(true);
+			expect(isAwed(foe)).to.equal(false);
+		});
+
+		it('with fleeOnLoki attempt, the monster must also make a flee roll', async () => {
+			HelmOfAweCard.fleeOnLoki = 'attempt';
+			const { card } = await aweWith([2, 1]);
+			sinon.stub(card, 'getFleeRoll').returns(fakeRoll(3));
+			await foeActs();
+			expect(await foeActs()).to.equal(false);
+			expect(foe.fled).to.equal(false);
+			expect(isAwed(foe)).to.equal(true);
+		});
+
+		it('never makes a boss flee; it only cowers', async () => {
+			HelmOfAweCard.fleeOnLoki = 'flee';
+			foe.setOptions({ isBoss: true });
+			await aweWith([2, 1]);
+			await foeActs();
+			expect(await foeActs()).to.equal(false);
+			expect(foe.fled).to.equal(false);
+		});
+
+		it('is still cancelled by the ward', async () => {
+			armControlWard(foe);
+			await aweWith([2]);
+			expect(isAwed(foe)).to.equal(false);
+		});
+	});
 });

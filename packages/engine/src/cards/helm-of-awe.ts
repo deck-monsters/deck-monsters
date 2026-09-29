@@ -8,6 +8,7 @@ import { DRAGON } from '../constants/creature-types.js';
 import { RARE } from '../helpers/probabilities.js';
 import { PRICEY } from '../helpers/costs.js';
 import { wardAgainst, controlWardNarration } from './helpers/control-ward.js';
+import { agree } from '../helpers/pronouns.js';
 
 const { roll } = chance;
 
@@ -51,13 +52,44 @@ export class HelmOfAweCard extends BaseCard {
 	static cower = true;
 	/** Cards a cowering opponent loses; a class setting for the harness (roadmap 35). */
 	static cowerCards = 2;
+	/**
+	 * The hold shape (owner idea, 2026-09-29): an awed opponent is held like Coil's victim. At
+	 * the start of each of its turns it saves again (1d20 + int vs the same DC, less
+	 * `holdFatigue` for each turn already awed); a failure loses that card, a success ends the
+	 * awe. Class settings for the harness while the shapes are measured.
+	 */
+	static hold = false;
+	static holdFatigue = 3;
+	/**
+	 * When true, the failed save that awes the opponent costs its next card outright, and the
+	 * rolls to recover begin on the turn after. When false, the opponent rolls to recover on its
+	 * very next turn, so it must fail twice to lose anything.
+	 */
+	static holdFirstCardLost = true;
+	/**
+	 * What a natural 1 on an awe save does in the hold shape: `none`; `flee`, the monster runs
+	 * from the ring; `attempt`, it tries to, and flees on 1d20 + dex of 10 or more, as the Flee
+	 * card does. Bosses never flee (they never hold Flee either); a boss that rolls the 1
+	 * only cowers.
+	 */
+	static fleeOnLoki: 'none' | 'flee' | 'attempt' = 'none';
 
 	constructor({ icon = '🐲' }: Partial<CardOptions> = {}) {
 		super({ icon } as Partial<CardOptions>);
 	}
 
 	get stats(): string {
-		const { aweCards, awePenalty, cower, cowerCards } = this.constructor as typeof HelmOfAweCard;
+		const { aweCards, awePenalty, cower, cowerCards, hold, holdFatigue, fleeOnLoki } = this.constructor as typeof HelmOfAweCard;
+		if (hold) {
+			const flee = fleeOnLoki === 'none'
+				? ''
+				: fleeOnLoki === 'flee'
+					? ' A natural 1 on any of these rolls sends them fleeing from the ring (bosses only cower).'
+					: ' A natural 1 on any of these rolls makes them try to flee (1d20 + dex, 10 or more; bosses only cower).';
+			const { holdFirstCardLost } = this.constructor as typeof HelmOfAweCard;
+			return `Each opponent rolls 1d20 + int vs ${AWE_DC_BASE} + your int modifier. On a failure they are awed${holdFirstCardLost ? ' and lose their next card' : ''}: at the start of each ${holdFirstCardLost ? 'later turn' : 'of their turns'} they roll again${holdFatigue ? ` (${holdFatigue} easier for each turn already awed)` : ''}, and on a failure they cower and lose that card.${flee}
+No damage. Does not stack.`;
+		}
 		if (cower) {
 			const lost = cowerCards === 1 ? 'next card (it does nothing)' : `next ${cowerCards} cards (they do nothing)`;
 			return `Each opponent rolls 1d20 + int vs ${AWE_DC_BASE} + your int modifier. On a failure, they cower and lose their ${lost}.
@@ -119,9 +151,110 @@ No damage. Does not stack; being awed again refreshes the count.`;
 		];
 	}
 
+	/** A flee roll as the Flee card makes it: 1d20 + dex, 10 or more. */
+	getFleeRoll(target: any): any {
+		return roll({ primaryDice: '1d20', modifier: target.dexModifier, crit: true });
+	}
+
+	/**
+	 * The `hold` shape: `target` saves again at the start of each of its turns until it shakes
+	 * the awe off; each failure loses that card. A natural 1 may send it running (`fleeOnLoki`).
+	 * The awe ends if the dragon dies. Shares AWE_EFFECT, so a second awe never stacks.
+	 */
+	holdTarget(target: any, dragon: any, dc: number): void {
+		const { holdFatigue, fleeOnLoki, holdFirstCardLost } = this.constructor as typeof HelmOfAweCard;
+		let turnsAwed = 0;
+		let firstTurn = holdFirstCardLost;
+		const remove = () => {
+			target.encounterEffects = target.encounterEffects.filter((effect: any) => effect !== awed);
+		};
+		const awed = async ({ card, phase, player, activeContestants }: any) => {
+			if (phase !== ATTACK_PHASE || player !== target) return card;
+			if (dragon.dead) {
+				remove();
+				return card;
+			}
+
+			if (firstTurn) {
+				firstTurn = false;
+				turnsAwed += 1;
+				this.emit('narration', {
+					narration: `${this.icon} ${target.givenName} cannot bear the dragon's gaze, and cowers behind ${target.pronouns.his} shield instead of acting.`,
+				});
+				card.play = () => Promise.resolve(!player.dead);
+				return card;
+			}
+
+			const threshold = Math.max(1, dc - (turnsAwed - (holdFirstCardLost ? 1 : 0)) * holdFatigue);
+			const saveRoll = this.getSaveRoll(target);
+			const { success, curseOfLoki } = this.checkSuccess(saveRoll, threshold);
+			const flees = curseOfLoki && fleeOnLoki !== 'none' && !target.isBoss;
+			this.emit('rolled', {
+				reason: `vs ${threshold} to meet the dragon's eye.`,
+				card: this,
+				roll: saveRoll,
+				who: target,
+				outcome: success
+					? `${target.givenName} finds ${target.pronouns.his} courage and meets the dragon's eye.`
+					: flees
+						? `${target.givenName} looks once more upon the helm of awe.`
+						: `${target.givenName} cannot bear the dragon's gaze.`,
+				vs: threshold,
+			});
+
+			if (success) {
+				remove();
+				return card;
+			}
+
+			turnsAwed += 1;
+			if (flees) {
+				let runs = fleeOnLoki === 'flee';
+				if (!runs) {
+					const fleeRoll = this.getFleeRoll(target);
+					// Strict `<` in checkSuccess: 9 makes a natural 10 succeed, as Flee does.
+					runs = this.checkSuccess(fleeRoll, 9).success;
+					this.emit('rolled', {
+						reason: 'and needs 10 or higher to flee.',
+						card: this,
+						roll: fleeRoll,
+						who: target,
+						outcome: runs ? 'Away!' : 'Rooted to the sand!',
+					});
+				}
+				if (runs) {
+					remove();
+					this.emit('narration', {
+						narration: `${this.icon} The courage runs out of ${target.givenName} like mead from a cracked horn, and ${target.pronouns.he} ${agree(target.pronouns, 'flees', 'flee')} the ring!`,
+					});
+					card.play = () => Promise.resolve(target.leaveCombat(activeContestants));
+					return card;
+				}
+			}
+
+			this.emit('narration', {
+				narration: `${this.icon} ${target.givenName} cowers behind ${target.pronouns.his} shield instead of acting.`,
+			});
+			// `card` is the per-play clone from applyEffects, so replacing play never leaks
+			// into the deck (same as ImmobilizeCard).
+			card.play = () => Promise.resolve(!player.dead);
+			return card;
+		};
+
+		awed.effectType = AWE_EFFECT;
+		target.encounterEffects = [
+			...target.encounterEffects.filter((effect: any) => effect.effectType !== AWE_EFFECT),
+			awed,
+		];
+	}
+
 	/** Awes `target` for `aweCards` plays, replacing any awe already on it (refresh, not stack). */
-	awe(target: any): void {
-		const { aweCards, awePenalty, cower } = this.constructor as typeof HelmOfAweCard;
+	awe(target: any, dragon?: any, dc?: number): void {
+		const { aweCards, awePenalty, cower, hold } = this.constructor as typeof HelmOfAweCard;
+		if (hold && dragon) {
+			this.holdTarget(target, dragon, dc ?? AWE_DC_BASE);
+			return;
+		}
 		if (cower) {
 			this.cowerTarget(target);
 			return;
@@ -164,6 +297,15 @@ No damage. Does not stack; being awed again refreshes the count.`;
 
 	async effect(player: any, target: any, ring?: any, activeContestants?: any): Promise<boolean> {
 		const dc = AWE_DC_BASE + player.intModifier;
+		// In the hold shape a second awe never refreshes the first: a reset would let a hand of
+		// Helms keep an opponent cowering, as a re-cast Coil cannot.
+		if ((this.constructor as typeof HelmOfAweCard).hold && HelmOfAweCard.isAwed(target)) {
+			this.emit('narration', {
+				narration: `${target.givenName} is already cowering before the helm.`,
+			});
+			await subEventDelay(ring?.pacingMultiplier);
+			return !target.dead;
+		}
 		const saveRoll = this.getSaveRoll(target);
 		const { success } = this.checkSuccess(saveRoll, dc);
 		const outcome = success
@@ -185,7 +327,7 @@ No damage. Does not stack; being awed again refreshes the count.`;
 					narration: controlWardNarration(target, 'will not be awed.'),
 				});
 			} else {
-				this.awe(target);
+				this.awe(target, player, dc);
 			}
 		}
 

@@ -126,6 +126,60 @@ describe('./cards/dissonant-voice.ts Dissonant Voice', () => {
 			expect(stub.callCount).to.equal(3);
 		});
 
+		describe('variations', () => {
+			const settings = {
+				waitsForAttack: DissonantVoiceCard.waitsForAttack,
+				lokiRange: DissonantVoiceCard.lokiRange,
+				rollTwice: DissonantVoiceCard.rollTwice,
+			};
+			afterEach(() => {
+				Object.assign(DissonantVoiceCard, settings);
+			});
+
+			it('waitsForAttack: a card that does not roll to hit leaves the rattle in place', async () => {
+				DissonantVoiceCard.waitsForAttack = true;
+				await new DissonantVoiceCard().effect(unicorn, foe, ring);
+				await new HealCard().play(foe, foe, ring, contestants);
+				expect(isRattled(foe)).to.equal(true);
+				sinon.stub(HitCard.prototype, 'getAttackRoll').returns(fakeRoll(12) as any);
+				await new HitCard().play(foe, unicorn, ring, contestants);
+				expect(isRattled(foe)).to.equal(false);
+			});
+
+			it('lokiRange: a natural 2 on the rattled attack is a curse of Loki, and the blow comes back', async () => {
+				DissonantVoiceCard.lokiRange = 2;
+				DissonantVoiceCard.rollTwice = false;
+				await new DissonantVoiceCard().effect(unicorn, foe, ring);
+				sinon.stub(HitCard.prototype, 'getAttackRoll').callsFake(() => fakeRoll(2) as any);
+				const foeHit = sinon.spy(foe, 'hit');
+				const unicornHit = sinon.spy(unicorn, 'hit');
+
+				await new HitCard().play(foe, unicorn, ring, contestants);
+
+				expect(foeHit).to.have.been.calledOnce;
+				expect(unicornHit).not.to.have.been.called;
+			});
+
+			it('lokiRange 2 leaves a natural 3 an ordinary miss', async () => {
+				DissonantVoiceCard.lokiRange = 2;
+				DissonantVoiceCard.rollTwice = false;
+				await new DissonantVoiceCard().effect(unicorn, foe, ring);
+				const rolls = [fakeRoll(3)];
+				sinon.stub(HitCard.prototype, 'getAttackRoll').callsFake(() => rolls.shift() as any);
+				const hitCheck = sinon.spy(HitCard.prototype, 'hitCheck');
+				await new HitCard().play(foe, unicorn, ring, contestants);
+				expect(hitCheck.firstCall.returnValue.curseOfLoki).to.equal(false);
+			});
+
+			it('rollTwice off rolls once', async () => {
+				DissonantVoiceCard.rollTwice = false;
+				await new DissonantVoiceCard().effect(unicorn, foe, ring);
+				const stub = sinon.stub(HitCard.prototype, 'getAttackRoll').callsFake(() => fakeRoll(12) as any);
+				await new HitCard().play(foe, unicorn, ring, contestants);
+				expect(stub.callCount).to.equal(1);
+			});
+		});
+
 		it('treats a natural 20 as the best roll and a 1 as the worst', async () => {
 			await new DissonantVoiceCard().effect(unicorn, foe, ring);
 			const rolls = [fakeRoll(20, -5), fakeRoll(18)];

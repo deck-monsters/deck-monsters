@@ -163,6 +163,87 @@ export const VARIANTS: Record<string, Variant> = {
 	'dissonance-4': { about: 'Dissonant Voice: -4 to attack instead of -2', apply: () => cardStatic('Dissonant Voice', 'penalty', 4) },
 	'dissonance-sting': { about: 'Dissonant Voice: a failed save also takes 1d4', apply: () => cardStatic('Dissonant Voice', 'stingDice', '1d4') },
 	'dissonance-disadv': { about: 'Dissonant Voice: no save; every opponent\'s next attack rolls at disadvantage', apply: () => cardStatic('Dissonant Voice', 'disadvantage', true) },
+	'awe-hold': {
+		about: 'Helm of Awe: held; loses the next card, then saves each turn (3 easier per turn)',
+		apply: () => {
+			const undos = [cardStatic('Helm of Awe', 'hold', true)];
+			return () => {
+				for (const undo of undos.reverse()) undo();
+			};
+		},
+	},
+	'awe-hold-steady': {
+		about: 'Helm of Awe: held with no easing of the per-turn save',
+		apply: () => {
+			const undos = [cardStatic('Helm of Awe', 'hold', true), cardStatic('Helm of Awe', 'holdFatigue', 0)];
+			return () => {
+				for (const undo of undos.reverse()) undo();
+			};
+		},
+	},
+	'awe-hold-double': {
+		about: 'Helm of Awe: held; must fail the per-turn save to lose even the first card',
+		apply: () => {
+			const undos = [cardStatic('Helm of Awe', 'hold', true), cardStatic('Helm of Awe', 'holdFirstCardLost', false)];
+			return () => {
+				for (const undo of undos.reverse()) undo();
+			};
+		},
+	},
+	'awe-hold-flee': {
+		about: 'Helm of Awe: held; a natural 1 on an awe save flees the ring',
+		apply: () => {
+			const undos = [cardStatic('Helm of Awe', 'hold', true), cardStatic('Helm of Awe', 'fleeOnLoki', 'flee')];
+			return () => {
+				for (const undo of undos.reverse()) undo();
+			};
+		},
+	},
+	'awe-hold-attempt': {
+		about: 'Helm of Awe: held; a natural 1 on an awe save tries to flee (1d20 + dex, 10+)',
+		apply: () => {
+			const undos = [cardStatic('Helm of Awe', 'hold', true), cardStatic('Helm of Awe', 'fleeOnLoki', 'attempt')];
+			return () => {
+				for (const undo of undos.reverse()) undo();
+			};
+		},
+	},
+	'dv-wait': {
+		about: 'Dissonant Voice: disadvantage that waits for the next card that rolls to hit',
+		apply: () => {
+			const undos = [cardStatic('Dissonant Voice', 'disadvantage', true), cardStatic('Dissonant Voice', 'waitsForAttack', true)];
+			return () => {
+				for (const undo of undos.reverse()) undo();
+			};
+		},
+	},
+	'dv-wait-loki2': {
+		about: 'Dissonant Voice: waiting disadvantage; a natural 1 or 2 is a curse of Loki',
+		apply: () => {
+			const undos = [cardStatic('Dissonant Voice', 'disadvantage', true), cardStatic('Dissonant Voice', 'waitsForAttack', true), cardStatic('Dissonant Voice', 'lokiRange', 2)];
+			return () => {
+				for (const undo of undos.reverse()) undo();
+			};
+		},
+	},
+	'dv-loki3': {
+		about: 'Dissonant Voice: one roll, waits for an attack; a natural 1-3 is a curse of Loki',
+		apply: () => {
+			const undos = [cardStatic('Dissonant Voice', 'disadvantage', true), cardStatic('Dissonant Voice', 'waitsForAttack', true), cardStatic('Dissonant Voice', 'rollTwice', false), cardStatic('Dissonant Voice', 'lokiRange', 3)];
+			return () => {
+				for (const undo of undos.reverse()) undo();
+			};
+		},
+	},
+	'dv-wait-loki3': {
+		about: 'Dissonant Voice: waiting disadvantage; a natural 1-3 is a curse of Loki',
+		apply: () => {
+			const undos = [cardStatic('Dissonant Voice', 'disadvantage', true), cardStatic('Dissonant Voice', 'waitsForAttack', true), cardStatic('Dissonant Voice', 'lokiRange', 3)];
+			return () => {
+				for (const undo of undos.reverse()) undo();
+			};
+		},
+	},
 	'rest-3d4': { about: 'Gloaming Rest: an undisturbed rest heals 3d4 (the old heal), not 4 to all missing', apply: () => cardStatic('Gloaming Rest', 'restShape', 'dice') },
 
 
