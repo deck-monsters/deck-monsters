@@ -234,7 +234,7 @@ You roll 1d20 + dex vs 10 to ride your own wave and take none of it.
 |---|---|
 | flavors → hits | `brings the sea down on` |
 | flavors → hits | `sweeps away` |
-| flavors → hits | `lifts the whole sea until all roads, rather than leading to Rome as per imperial regulations, lead to Neptune, and drops it on` |
+| flavors → hits | `lifts the whole sea until all roads, rather than leading to Rome as per Imperial Regulation MCCCXCVII, subsection C, lead to Neptune, and drops it on` |
 | flavors → hits | `gives a very thorough bath to` |
 | rideTheWave → reason | `vs 10 to ride the wave.` |
 | rideTheWave → outcome | `{player} rides the crest, and the sea passes under {him}.` |
