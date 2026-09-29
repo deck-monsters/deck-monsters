@@ -4796,6 +4796,26 @@ for it, and a load that had already read the row is discarded at the #71 load-ep
 
 **Status**: Fixed.
 
+### 203. A dropped idle database connection crashed the server — FIXED
+
+The owner, 2026-09-29: a fight in Game Night stopped mid-turn, and refreshing showed their
+dragon alone in the ring at full HP. The server log at 21:15:53 UTC shows
+`Error: Connection terminated unexpectedly … throw er; // Unhandled 'error' event` from
+`pg-pool`'s idle listener, then `server starting` a second later.
+
+Root cause: `pg-pool` re-emits an error from an idle client as an `'error'` event on the pool,
+and Node throws an `'error'` event with no listener. The Supabase pooler closes idle
+connections, and `packages/server/src/db/index.ts` built the pool without a listener, so any
+dropped idle connection killed the process. The fight in progress was lost: bosses live only
+in memory, and the player's monster came back from the last save. The server log shows 17
+starts in the seven days before; some were deploys, but several at odd hours look like this.
+
+**Fix**: `handleIdleClientErrors(pool)` (`db/pool-errors.ts`) listens for the pool's `'error'`
+event, logs a warning and counts `dm_db_idle_client_errors_total`. The pool discards the dead
+client and opens a new one on the next query. Covered by `db/pool-errors.test.ts`.
+
+**Status**: Fixed.
+
 ## Closed without a fix
 
 These were open investigations the owner closed on 2026-09-28. Reopen with new evidence.

@@ -211,6 +211,7 @@ All custom metrics are prefixed `dm_` and carry a `service="deck-monsters"` defa
 | `dm_fight_errors_total` | Counter | Unexpected error — fight cancelled and ring cleared |
 | `dm_room_hydration_failures_total` | Counter | State blob could not be restored — fresh game started |
 | `dm_room_hydration_warnings_total` | Counter | Non-fatal partial hydration warning |
+| `dm_db_idle_client_errors_total` | Counter | An idle database connection was dropped (often by the Supabase pooler); the pool replaces it. Before this was handled, each one crashed the server |
 | `dm_room_state_save_failures_total` | Counter | A room state save threw; the engine logs the error |
 | `dm_room_state_saves_stale_total` | Counter | A save skipped because a newer snapshot or a reset had already landed. Expect about 0; a steady rise means saves race |
 | `dm_prompt_timeouts_total` | Counter | Interactive prompts that timed out |

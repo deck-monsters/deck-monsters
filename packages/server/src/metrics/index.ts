@@ -231,6 +231,12 @@ export const ringFeedReplayGapTotal = new Counter({
 	registers: [registry],
 });
 
+export const dbIdleClientErrors = new Counter({
+	name: 'dm_db_idle_client_errors_total',
+	help: 'Idle database connections dropped (e.g. by the Supabase pooler); the pool replaces them',
+	registers: [registry],
+});
+
 export const roomHydrationFailures = new Counter({
 	name: 'dm_room_hydration_failures_total',
 	help: 'State blob hydration failures (blob quarantined, fresh game started)',
