@@ -20,7 +20,24 @@ describe('./cards/asinine-companion.ts Asinine Companion', () => {
 		expect(restored).to.be.instanceOf(AsinineCompanionCard);
 	});
 
-	it('boosts STR by 2', () => {
+	// The shipped shape is the scaled 1d8 kick (roadmap 35); the boost shape is still selectable.
+	const shipped = {
+		kick: AsinineCompanionCard.kick,
+		kickScales: AsinineCompanionCard.kickScales,
+		kickDamageDice: AsinineCompanionCard.kickDamageDice,
+		kickHitBonus: AsinineCompanionCard.kickHitBonus,
+	};
+	afterEach(() => {
+		Object.assign(AsinineCompanionCard, shipped);
+	});
+
+	it('ships the donkey kick, 1d8, growing with the dragon', () => {
+		expect(shipped).to.deep.equal({ kick: true, kickScales: true, kickDamageDice: '1d8', kickHitBonus: 2 });
+		expect(new AsinineCompanionCard().stats).to.include('+ your level (up to 10)');
+	});
+
+	it('boosts STR by 2 in the boost shape', () => {
+		AsinineCompanionCard.kick = false;
 		const card = new AsinineCompanionCard();
 		expect(card.boostedProp).to.equal('str');
 		expect(card.boostAmount).to.equal(2);
@@ -34,6 +51,8 @@ describe('./cards/asinine-companion.ts Asinine Companion', () => {
 
 		beforeEach(() => {
 			AsinineCompanionCard.kick = true;
+			AsinineCompanionCard.kickScales = false;
+			AsinineCompanionCard.kickDamageDice = '1d6';
 			dragon = new Dragon({ name: 'Ember', xp: 300 });
 			foe = new Gladiator({ name: 'Tor' });
 			contestants = [dragon, foe].map(monster => ({ monster, character: {} }));
@@ -41,9 +60,6 @@ describe('./cards/asinine-companion.ts Asinine Companion', () => {
 			for (const { monster } of contestants) monster.startEncounter(ring);
 		});
 		afterEach(() => {
-			AsinineCompanionCard.kick = false;
-			AsinineCompanionCard.kickHitBonus = 2;
-			AsinineCompanionCard.kickDamageDice = '1d6';
 			sinon.restore();
 		});
 

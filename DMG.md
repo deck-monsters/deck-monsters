@@ -257,9 +257,10 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  The dragon has not eaten him. 
  Yet.
 
- Boost: str +2 (max total boost 
- of level + 1, at most +5, then 
- boost granted to hp instead).
+ The donkey kicks your target: 
+ 1d20 + 2 + your level (up to 10) 
+ vs ac, for 1d8 + half your level 
+ damage on a hit. It never crits.
 
  Level: 1
  Usable by: Dragon
@@ -1250,13 +1251,10 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
 
  Each opponent rolls 1d20 + int 
  vs 10 + your int modifier. On a 
- failure, their next 3 cards each 
- take 2 off their attack rolls. A 
- card that does not roll to hit 
- (Blast, Heal) uses up one of the 
- 3 with no effect.
- No damage. Does not stack; being 
- awed again refreshes the count.
+ failure, they cower and lose 
+ their next 2 cards (they do 
+ nothing).
+ No damage. Does not stack.
 
  Level: 2
  Usable by: Dragon
@@ -1874,7 +1872,7 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  If the hit lands and the target 
  is still standing, the tail 
  strikes too (1d20 + your STR 
- modifier - 2 to hit, 1d4 damage, 
+ modifier - 2 to hit, 1d6 damage, 
  no critical hits).
 
  Level: 1

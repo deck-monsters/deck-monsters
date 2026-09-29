@@ -67,7 +67,7 @@ Source: `packages/engine/src/cards/asinine-companion.ts`.
 **Rules text:**
 
 ```text
-Boost: str +2 (max total boost of level + 1, at most +5, then boost granted to hp instead).
+The donkey kicks your target: 1d20 + 2 + your level (up to 10) vs ac, for 1d8 + half your level damage on a hit. It never crits.
 ```
 
 **Narration and outcomes:**
@@ -75,11 +75,11 @@ Boost: str +2 (max total boost of level + 1, at most +5, then boost granted to h
 | Where | Template |
 |---|---|
 | donkeyKick → label | `The donkey` |
-| donkeyKick → narration | `🫏 The donkey lines up a kick.` |
+| donkeyKick → narration | `🫏 The donkey, who has talked the whole fight, stops talking at last and turns around.` |
 | donkeyKick → reason | `vs {target}'s ac ({ac}) to determine if the kick landed.` |
-| donkeyKick → narration | `🫏 The kick misses. {target} is untouched.` |
+| donkeyKick → narration | `🫏 The donkey kicks, misses {target} entirely, and says that was a warning shot.` |
 | donkeyKick → reason | `for damage.` |
-| donkeyKick → flavorText | `{icon} 🫏 {icon}  The donkey kicks {target} for {result} damage.` |
+| donkeyKick → flavorText | `{icon} 🫏 {icon}  The donkey plants both hind hooves in {target} for {result} damage.` |
 | getBoostNarrative → str | `loads the gold onto the donkey and stands a little taller` |
 | getBoostNarrative → str | `lets the donkey carry the heavy things, which is everything` |
 | getBoostNarrative → str | `listens to the donkey's advice, ignores it, and feels stronger anyway` |
@@ -133,15 +133,15 @@ Source: `packages/engine/src/cards/helm-of-awe.ts`.
 **Rules text:**
 
 ```text
-Each opponent rolls 1d20 + int vs 10 + your int modifier. On a failure, their next 3 cards each take 2 off their attack rolls. A card that does not roll to hit (Blast, Heal) uses up one of the 3 with no effect.
-No damage. Does not stack; being awed again refreshes the count.
+Each opponent rolls 1d20 + int vs 10 + your int modifier. On a failure, they cower and lose their next 2 cards (they do nothing).
+No damage. Does not stack.
 ```
 
 **Narration and outcomes:**
 
 | Where | Template |
 |---|---|
-| cowerTarget → narration | `{target} cowers and loses {his} card.` |
+| cowerTarget → narration | `🐲 {target} cannot bear the dragon's gaze, and cowers behind {his} shield instead of acting.` |
 | awe → narration | `{target} still cannot meet the dragon's eye 🐲 (-{awePenalty} to attack).` |
 | effect → outcome | `{target} stands {his} ground and stares back.` |
 | effect → outcome | `{target} looks upon the helm of awe, and {his} knees turn to water.` |
@@ -181,7 +181,7 @@ Source: `packages/engine/src/cards/tail-lash.ts`.
 **Rules text:**
 
 ```text
-Hit: 1d20 vs ac / Damage: 1d6. If the hit lands and the target is still standing, the tail strikes too (1d20 + your STR modifier - 2 to hit, 1d4 damage, no critical hits).
+Hit: 1d20 vs ac / Damage: 1d6. If the hit lands and the target is still standing, the tail strikes too (1d20 + your STR modifier - 2 to hit, 1d6 damage, no critical hits).
 ```
 
 **Narration and outcomes:**

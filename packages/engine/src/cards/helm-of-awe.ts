@@ -42,19 +42,25 @@ export class HelmOfAweCard extends BaseCard {
 	/** The attack penalty on each awed play; a class setting for the harness. */
 	static awePenalty = 2;
 	/**
-	 * Alternative shape for the harness (default off, today's behaviour): a failed save makes
-	 * the opponent cower and lose its next card instead of taking the attack penalty.
+	 * The shipped shape: a failed save makes the opponent cower and lose its next `cowerCards`
+	 * cards. Off, it takes the attack penalty instead (kept for the harness).
 	 */
-	static cower = false;
+	// Roadmap 35 (measured 2026-09-29): an attack-roll penalty (-2 for 3 cards, -5, or -2 for a
+	// whole round) left the card 5-8 points below the card it replaced. Cowering, two lost cards,
+	// is near a Hit in a duel and hits every opponent in a crowd.
+	static cower = true;
+	/** Cards a cowering opponent loses; a class setting for the harness (roadmap 35). */
+	static cowerCards = 2;
 
 	constructor({ icon = '🐲' }: Partial<CardOptions> = {}) {
 		super({ icon } as Partial<CardOptions>);
 	}
 
 	get stats(): string {
-		const { aweCards, awePenalty, cower } = this.constructor as typeof HelmOfAweCard;
+		const { aweCards, awePenalty, cower, cowerCards } = this.constructor as typeof HelmOfAweCard;
 		if (cower) {
-			return `Each opponent rolls 1d20 + int vs ${AWE_DC_BASE} + your int modifier. On a failure, they cower and lose their next card (it does nothing).
+			const lost = cowerCards === 1 ? 'next card (it does nothing)' : `next ${cowerCards} cards (they do nothing)`;
+			return `Each opponent rolls 1d20 + int vs ${AWE_DC_BASE} + your int modifier. On a failure, they cower and lose their ${lost}.
 No damage. Does not stack.`;
 		}
 		return `Each opponent rolls 1d20 + int vs ${AWE_DC_BASE} + your int modifier. On a failure, their next ${aweCards} cards each take ${awePenalty} off their attack rolls. A card that does not roll to hit (Blast, Heal) uses up one of the ${aweCards} with no effect.
@@ -87,17 +93,18 @@ No damage. Does not stack; being awed again refreshes the count.`;
 	}
 
 	/**
-	 * The `cower` shape: `target` loses exactly its next card. Shares AWE_EFFECT so a second
+	 * The `cower` shape: `target` loses its next `cowerCards` cards. Shares AWE_EFFECT so a second
 	 * awe replaces this one rather than stacking.
 	 */
 	cowerTarget(target: any): void {
+		let cardsLeft = (this.constructor as typeof HelmOfAweCard).cowerCards;
 		const cowering = ({ card, phase, player }: any) => {
 			if (phase !== ATTACK_PHASE || player !== target) return card;
 
-			target.encounterEffects = target.encounterEffects.filter((effect: any) => effect !== cowering);
-			// PLACEHOLDER narration; the orchestrator writes the real line.
+			cardsLeft -= 1;
+			if (cardsLeft <= 0) target.encounterEffects = target.encounterEffects.filter((effect: any) => effect !== cowering);
 			this.emit('narration', {
-				narration: `${target.givenName} cowers and loses ${target.pronouns.his} card.`,
+				narration: `${this.icon} ${target.givenName} cannot bear the dragon's gaze, and cowers behind ${target.pronouns.his} shield instead of acting.`,
 			});
 			// `card` is the per-play clone from applyEffects, so replacing play never leaks
 			// into the deck (same as ImmobilizeCard).

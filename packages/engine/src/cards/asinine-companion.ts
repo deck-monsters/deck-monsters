@@ -27,14 +27,22 @@ export class AsinineCompanionCard extends BoostCard {
 	};
 
 	/**
-	 * Alternative shape for the harness (default off, today's behaviour): the card is played at
-	 * an opponent and the donkey kicks it, instead of boosting the dragon's STR.
+	 * The shipped shape: the card is played at an opponent and the donkey kicks it. Off, it
+	 * boosts the dragon's STR instead (kept for the harness).
 	 */
-	static kick = false;
+	// Roadmap 35 (measured 2026-09-29): as a +2 STR boost the card helped only at level 1; the
+	// donkey's kick, growing with the dragon (1d8), is about a Hit at levels 1-5.
+	static kick = true;
 	/** The kick's bonus to hit, on 1d20 vs the target's AC; a class setting for the harness. */
 	static kickHitBonus = 2;
 	/** The kick's damage; a class setting for the harness. */
-	static kickDamageDice = '1d6';
+	static kickDamageDice = '1d8';
+	/**
+	 * When true, the kick grows with the dragon as its own strikes do: + its level to hit (to 10,
+	 * where AC's growth nearly stops) and + half its level to damage. A class setting for the
+	 * harness (roadmap 35): a flat kick fell further behind a Hit at every level.
+	 */
+	static kickScales = true;
 
 	constructor({ icon = '🫏', ...rest }: Record<string, any> = {}) {
 		super({ icon, ...rest });
@@ -43,7 +51,10 @@ export class AsinineCompanionCard extends BoostCard {
 	override get stats(): string {
 		const { kick, kickHitBonus, kickDamageDice } = this.constructor as typeof AsinineCompanionCard;
 		if (kick) {
-			return `The donkey kicks your target: 1d20 + ${kickHitBonus} vs ac, for ${kickDamageDice} damage on a hit. It never crits, and there is no strength boost.`;
+			const { kickScales } = this.constructor as typeof AsinineCompanionCard;
+			return kickScales
+				? `The donkey kicks your target: 1d20 + ${kickHitBonus} + your level (up to 10) vs ac, for ${kickDamageDice} + half your level damage on a hit. It never crits.`
+				: `The donkey kicks your target: 1d20 + ${kickHitBonus} vs ac, for ${kickDamageDice} damage on a hit. It never crits.`;
 		}
 		return super.stats;
 	}
@@ -59,12 +70,15 @@ export class AsinineCompanionCard extends BoostCard {
 		const { kickHitBonus, kickDamageDice } = this.constructor as typeof AsinineCompanionCard;
 		const label = 'The donkey';
 
-		// PLACEHOLDER narration; the orchestrator writes the real line.
-		this.emit('narration', { narration: `${this.icon} The donkey lines up a kick.` });
+		this.emit('narration', {
+			narration: `${this.icon} The donkey, who has talked the whole fight, stops talking at last and turns around.`,
+		});
 		await subEventDelay(ring?.pacingMultiplier);
 
 		// No `crit`: a natural 20 or 1 means nothing to a donkey.
-		const attackRoll = roll({ primaryDice: '1d20', modifier: kickHitBonus });
+		const { kickScales } = this.constructor as typeof AsinineCompanionCard;
+		const levelBonus = kickScales ? Math.min(player.level ?? 0, 10) : 0;
+		const attackRoll = roll({ primaryDice: '1d20', modifier: kickHitBonus + levelBonus });
 		const { success } = this.checkSuccess(attackRoll, target.ac);
 		this.emit('rolled', {
 			reason: `vs ${target.givenName}'s ac (${target.ac}) to determine if the kick landed.`,
@@ -77,14 +91,14 @@ export class AsinineCompanionCard extends BoostCard {
 		await subEventDelay(ring?.pacingMultiplier);
 
 		if (!success) {
-			// PLACEHOLDER narration; the orchestrator writes the real line.
 			this.emit('narration', {
-				narration: `${this.icon} The kick misses. ${target.givenName} is untouched.`,
+				narration: `${this.icon} The donkey kicks, misses ${target.givenName} entirely, and says that was a warning shot.`,
 			});
 			return !target.dead;
 		}
 
 		const damageRoll = roll({ primaryDice: kickDamageDice });
+		if (kickScales) damageRoll.result += Math.floor((player.level ?? 0) / 2);
 		damageRoll.result = Math.max(1, damageRoll.result);
 		this.emit('rolled', {
 			reason: 'for damage.',
@@ -96,8 +110,7 @@ export class AsinineCompanionCard extends BoostCard {
 
 		// The kill is credited to the dragon (`die()` needs a real creature); the line is the
 		// donkey's own.
-		// PLACEHOLDER hit line; the orchestrator writes the real one.
-		(this as any).flavorText = `${player.icon} ${this.icon} ${target.icon}  The donkey kicks ${target.givenName} for ${damageRoll.result} damage.`;
+		(this as any).flavorText = `${player.icon} ${this.icon} ${target.icon}  The donkey plants both hind hooves in ${target.givenName} for ${damageRoll.result} damage.`;
 		try {
 			return await target.hit(damageRoll.result, player, this);
 		} finally {

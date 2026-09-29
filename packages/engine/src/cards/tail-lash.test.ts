@@ -44,7 +44,7 @@ describe('./cards/tail-lash.ts Tail Lash', () => {
 		expect(TailLashCard.level).to.equal(1);
 		expect(dragon.canHoldCard(TailLashCard)).to.equal(true);
 		expect(new Minotaur({ xp: 50 }).canHoldCard(TailLashCard)).to.equal(false);
-		expect(new TailLashCard().stats).to.include('1d4 damage');
+		expect(new TailLashCard().stats).to.include('1d6 damage');
 		const restored = hydrateCard(JSON.parse(JSON.stringify(new TailLashCard())));
 		expect(restored).to.be.instanceOf(TailLashCard);
 	});

@@ -180,6 +180,25 @@ export const VARIANTS: Record<string, Variant> = {
 	'horn-of-proof-5': { about: 'Horn of Proof: heals 5 instead of 3', apply: () => cardStatic('Horn of Proof', 'healAmount', 5) },
 	'awe-penalty-5': { about: 'Helm of Awe: -5 to attack instead of -2', apply: () => cardStatic('Helm of Awe', 'awePenalty', 5) },
 	'awe-round': { about: 'Helm of Awe: awe lasts 9 cards (a whole round) instead of 3', apply: () => cardStatic('Helm of Awe', 'aweCards', 9) },
+	'awe-cower-2': {
+		about: 'Helm of Awe: cowering, and the opponent loses its next 2 cards',
+		apply: () => {
+			const undos = [cardStatic('Helm of Awe', 'cower', true), cardStatic('Helm of Awe', 'cowerCards', 2)];
+			return () => {
+				for (const undo of undos.reverse()) undo();
+			};
+		},
+	},
+	'donkey-kick-scaled': {
+		about: 'Asinine Companion: the donkey kicks, and the kick grows with the dragon level',
+		apply: () => {
+			const undos = [cardStatic('Asinine Companion', 'kick', true), cardStatic('Asinine Companion', 'kickScales', true)];
+			return () => {
+				for (const undo of undos.reverse()) undo();
+			};
+		},
+	},
+	'kick-d8': { about: 'Asinine Companion: the kick deals 1d8', apply: () => cardStatic('Asinine Companion', 'kickDamageDice', '1d8') },
 	'gladiator-ac+1': { about: 'Gladiator: 1 more AC', apply: () => staticBonus('Gladiator', 'acVariance', 1) },
 	'gladiator-hp+3': { about: 'Gladiator: 3 more HP', apply: () => staticBonus('Gladiator', 'hpVariance', 3) },
 	'gladiator-early-ac': {

@@ -46,7 +46,23 @@ describe('./cards/helm-of-awe.ts Helm of Awe', () => {
 		for (const { monster } of contestants) monster.startEncounter(ring);
 	});
 
-	afterEach(() => sinon.restore());
+	// The shipped shape is cowering (roadmap 35); these first tests pin the penalty shape the
+	// setting can still select, and the cower block below sets its own count.
+	const shipped = { cower: HelmOfAweCard.cower, cowerCards: HelmOfAweCard.cowerCards };
+	beforeEach(() => {
+		HelmOfAweCard.cower = false;
+	});
+	afterEach(() => {
+		sinon.restore();
+		HelmOfAweCard.cower = shipped.cower;
+		HelmOfAweCard.cowerCards = shipped.cowerCards;
+	});
+
+	it('ships cowering for two cards', () => {
+		expect(shipped).to.deep.equal({ cower: true, cowerCards: 2 });
+		HelmOfAweCard.cower = shipped.cower;
+		expect(new HelmOfAweCard().stats).to.include('lose their next 2 cards (they do nothing)');
+	});
 
 	const attackModifiers = async (monster: any, target: any, plays: number) => {
 		const rolls: any[] = [];
@@ -178,9 +194,7 @@ describe('./cards/helm-of-awe.ts Helm of Awe', () => {
 	describe('with the cower setting on', () => {
 		beforeEach(() => {
 			HelmOfAweCard.cower = true;
-		});
-		afterEach(() => {
-			HelmOfAweCard.cower = false;
+			HelmOfAweCard.cowerCards = 1;
 		});
 
 		it('says so in its rules text', () => {

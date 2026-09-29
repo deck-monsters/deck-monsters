@@ -32,7 +32,8 @@ export class TailLashCard extends HitCard {
 	/** Taken off the tail's 1d20 + STR modifier attack roll; a class setting for the harness. */
 	static tailHitPenalty = 2;
 	/** The tail's damage; a class setting for the harness. */
-	static tailDamageDice = '1d4';
+	// 1d6 since roadmap 35 (measured 2026-09-29): with 1d4 it trailed a Hit at level 7.
+	static tailDamageDice = '1d6';
 	static flavors = {
 		hits: [
 			['rakes', 80],
