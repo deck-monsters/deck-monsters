@@ -169,3 +169,4 @@ Turns immobilized resets on curse of loki.
 | Where | Template |
 |---|---|
 | flavors → hits | `uses their natural beauty to overwhelm` |
+| effect → narration | `{player} catches sight of {his} own reflection. Curse of Loki!` |

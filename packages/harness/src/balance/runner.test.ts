@@ -114,6 +114,22 @@ describe('balance/runner', () => {
 		expect(split.with[0]!.wins + split.with[0]!.draws + split.with[0]!.losses).to.be.greaterThan(0);
 	});
 
+	it('installs every probe, and the held probe sees a hold land', async () => {
+		const result = await runUnit({
+			id: 'probes-all',
+			sides: [
+				{ type: 'Basilisk', level: 3, deck: ['Coil', 'Coil', 'Coil', 'Coil', 'Hit', 'Hit', 'Hit', 'Hit', 'Hit'] },
+				{ type: 'Minotaur', level: 3, deck: ['Hit', 'Hit', 'Hit', 'Hit', 'Hit', 'Hit', 'Hit', 'Hit', 'Hit'] },
+			],
+			fights: 10,
+			seed: 5,
+			probes: ['rest-completed', 'awed', 'rattled', 'held'],
+		});
+		const held = result.split!.held!;
+		expect(held.with[1]!.wins + held.with[1]!.draws + held.with[1]!.losses).to.be.greaterThan(0);
+		expect(held.with[0]!.wins + held.with[0]!.draws + held.with[0]!.losses).to.equal(0);
+	});
+
 	it('refuses an unknown probe', async () => {
 		let error: unknown;
 		try {

@@ -47,7 +47,6 @@ Seeded, cycling he, she, and they.
 | profile → returns | `Hoard patience? {HoardPatience}. Smoke control? {SmokeControl}. Opinion of Romans? {RomanOpinion}. Table manners? {TableManners}.` |
 | description → ancient | ` {He} {is/are} ancient. {His} fire cannot be dodged, but {he} can still be tricked.` |
 | description → returns | `{article} {head} dragon, {body}, with {wings} wings. {His} scales are {color}, and {he} {keeps/keep} to {home}. {profile}{ancient}` |
-| resistSpell → narration | `{this}'s scales turn aside the spell: {damage - resisted} of the damage slides off.` |
 
 ### Long description
 
@@ -215,7 +214,7 @@ Source: `packages/engine/src/cards/take-wing.ts`.
 **Rules text:**
 
 ```text
-Take off until your next card. The first melee attack against you misses.
+Take off until your next card. The first melee attack or area attack against you misses.
 If your next card is a melee attack, dive: +2 to hit and +1d6 damage.
 Any damage that lands while you are in the air knocks you down, and the dive is lost.
 ```
@@ -227,6 +226,7 @@ Any damage that lands while you are in the air knocks you down, and the dive is 
 | takeOff → narration | `🌬️ {flier} folds {his} wings and dives!` |
 | takeOff → narration | `A Viking below bellows "COME DOWN FROM THERE THIS INSTANT!" {flier} glides back down to the sand, in {his} own time.` |
 | takeOff → narration | `{flier} is high in the air, and {attacker}'s blow strikes empty air.` |
+| takeOff → narration | `{flier} rides the wind high above, and {attacker}'s {cardType} bursts harmlessly beneath {him}.` |
 | takeOff → narration | `{flier} is knocked out of the sky! No dive this time.` |
 | effect → narration | `{target} is already in the air, and climbs a little higher.` |
 | effect → narration | `🌬️ {player} spreads {his} wings and takes to the sky.` |

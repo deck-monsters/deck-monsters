@@ -41,7 +41,7 @@ function staticBonus(className: string, prop: 'hpVariance' | 'acVariance', amoun
 }
 
 /** Set a class static for the unit (youthAc). */
-function staticSet(className: string, prop: string, value: number | string | undefined): Undo {
+function staticSet(className: string, prop: string, value: number | undefined): Undo {
 	const M = monsterClass(className);
 	const had = Object.prototype.hasOwnProperty.call(M, prop);
 	const before = M[prop];
@@ -162,11 +162,7 @@ export const VARIANTS: Record<string, Variant> = {
 	},
 	'awe-steady': { about: 'Helm of Awe: the recovery save never gets easier', apply: () => cardStatic('Helm of Awe', 'holdFatigue', 0) },
 	'awe-no-flee': { about: 'Helm of Awe: a natural 1 on a recovery save only cowers', apply: () => cardStatic('Helm of Awe', 'fleeOnLoki', 'none') },
-	'dragon-spell-half': { about: 'Dragon: takes half damage from the Blast family (Blast, Blast II, Sandstorm)', apply: () => staticSet('Dragon', 'spellResistance', 'half') },
-	'dragon-spell-age': { about: 'Dragon: Blast-family damage less half its level (the scales thicken with age)', apply: () => staticSet('Dragon', 'spellResistance', 'age') },
-	'dragon-spell-save': { about: 'Dragon: 1d20 + int vs 10 + caster int for half damage from the Blast family', apply: () => staticSet('Dragon', 'spellResistance', 'save') },
-	'blast-cap-5': { about: 'Blast family: caster level scaling stops at level 5 (affects every caster)', apply: () => cardStatic('Blast', 'levelCap', 5) },
-	'take-wing-spells': { about: 'Take Wing: the flier also dodges the first area spell, not only the first melee blow', apply: () => cardStatic('Take Wing', 'dodgesSpells', true) },
+	'take-wing-melee-only': { about: 'Roadmap 36 before: a flying dragon dodges only the first melee blow, and a Blast knocks it down', apply: () => cardStatic('Take Wing', 'dodgesSpells', false) },
 	'mesmerize-no-self': { about: 'Mesmerize: the caster no longer mesmerizes itself', apply: () => cardStatic('Mesmerize', 'selfMesmerize', 'never') },
 	'mesmerize-loki': { about: 'Mesmerize: the caster mesmerizes itself only on a natural 1', apply: () => cardStatic('Mesmerize', 'selfMesmerize', 'loki') },
 	'no-pin-advantage': {

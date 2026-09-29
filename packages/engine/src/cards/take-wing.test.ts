@@ -66,14 +66,32 @@ describe('./cards/take-wing.ts Take Wing', () => {
 		expect(narrations.join('\n')).to.include('Skarn is knocked out of the sky! No dive this time.');
 	});
 
-	it('is knocked down by area damage, which it cannot dodge', async () => {
+	it('dodges the first area attack too, and the next one knocks it down (roadmap 36)', async () => {
 		const hp = dragon.hp;
 		await takeOff();
+		expect(new TakeWingCard().stats).to.include('The first melee attack or area attack against you misses.');
 
 		await new BlastCard().play(foe, dragon, ring, contestants);
+		expect(dragon.hp).to.equal(hp);
+		expect(isAirborne(dragon)).to.equal(true);
+		expect(narrations.join('\n')).to.include("Skarn rides the wind high above, and Bram's Blast bursts harmlessly beneath her.");
 
+		await new BlastCard().play(foe, dragon, ring, contestants);
 		expect(dragon.hp).to.be.below(hp);
 		expect(isAirborne(dragon)).to.equal(false);
+	});
+
+	it('with dodgesSpells off (the harness before), area damage knocks it down at once', async () => {
+		TakeWingCard.dodgesSpells = false;
+		try {
+			const hp = dragon.hp;
+			await takeOff();
+			await new BlastCard().play(foe, dragon, ring, contestants);
+			expect(dragon.hp).to.be.below(hp);
+			expect(isAirborne(dragon)).to.equal(false);
+		} finally {
+			TakeWingCard.dodgesSpells = true;
+		}
 	});
 
 	it('dives on the next card when it is a melee attack', async () => {

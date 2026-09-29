@@ -85,16 +85,8 @@ export class BlastCard extends BaseCard<BlastCardOptions> {
 		}) as any[]).map(({ monster }: any) => monster);
 	}
 
-	/**
-	 * Roadmap 36, being measured: the caster level Blast stops scaling at. Infinity is today's
-	 * rule. A cap is the fallback if no dragon-side answer to the level 7 Blast matchup works; it
-	 * changes every caster.
-	 */
-	static levelCap = Infinity;
-
 	effect(player: any, target: any): any {
-		const level = Math.min(player.level, (this.constructor as typeof BlastCard).levelCap);
-		const damage = this.damage + this.levelDamage * scaledCasterLevel(level);
+		const damage = this.damage + this.levelDamage * scaledCasterLevel(player.level);
 		return target.hit(damage, player, this);
 	}
 }

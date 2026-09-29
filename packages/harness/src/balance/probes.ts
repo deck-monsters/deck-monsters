@@ -23,9 +23,23 @@ interface Probe {
 	install(mark: Mark): Undo;
 }
 
-/** Wrap `method` on a card class's prototype; `touched` picks the creature from the call. */
-function wrapCard(cardType: string, method: string, touched: (args: unknown[], result: unknown) => unknown, mark: Mark): Undo {
-	const proto = (getCardClassByTypeName(cardType) as unknown as { prototype: Record<string, Method> }).prototype;
+/**
+ * Wrap `method` on a card class's prototype; `touched` picks the creature from the call.
+ * `ancestor` names a base class to wrap instead, reached through `cardType`'s prototype chain,
+ * for a base like ImmobilizeCard that is not registered under a card name of its own.
+ */
+function wrapCard(
+	cardType: string,
+	method: string,
+	touched: (args: unknown[], result: unknown) => unknown,
+	mark: Mark,
+	ancestor?: string,
+): Undo {
+	let proto = (getCardClassByTypeName(cardType) as unknown as { prototype: Record<string, Method> }).prototype;
+	while (ancestor && proto && (proto.constructor as { name?: string }).name !== ancestor) {
+		proto = Object.getPrototypeOf(proto) as Record<string, Method>;
+	}
+	if (!proto) throw new Error(`No ${ancestor} above ${cardType}`);
 	const had = Object.prototype.hasOwnProperty.call(proto, method);
 	const original = proto[method]!;
 	proto[method] = function wrapped(this: unknown, ...args: unknown[]) {
@@ -59,7 +73,8 @@ export const PROBES: Record<string, Probe> = {
 	held: {
 		about: 'Any hold (ImmobilizeEffect): this side was held',
 		install: mark =>
-			wrapCard('Immobilize', 'immobilize', args => (isPinnedBy('ImmobilizeEffect')(args[1]) ? args[1] : undefined), mark),
+			// ImmobilizeCard is never drawn and has no card name; every hold card extends it.
+			wrapCard('Coil', 'immobilize', args => (isPinnedBy('ImmobilizeEffect')(args[1]) ? args[1] : undefined), mark, 'ImmobilizeCard'),
 	},
 };
 

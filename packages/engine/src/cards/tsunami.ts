@@ -38,6 +38,8 @@ export class TsunamiCard extends BaseCard {
 	static level = 0;
 	static cost = EXPENSIVE.cost;
 	static notForSale = true;
+	/** A wave reaches a flying monster: Take Wing's dodge does not work against it (roadmap 36). */
+	static reachesTheSky = true;
 	static flavors = {
 		hits: [
 			['brings the sea down on', 80],

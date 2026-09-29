@@ -32,18 +32,25 @@ export class TakeWingCard extends BaseCard {
 	static level = 0;
 	static cost = CHEAP.cost;
 	/**
-	 * Roadmap 36, being measured: when true, the flier also dodges the first area spell (Blast
-	 * and its kin), not only the first melee blow. Today a Blast knocks a flying dragon out of
-	 * the sky, so Take Wing is a wasted turn against a Blast-heavy hand.
+	 * A flier dodges the first melee blow or area attack (Blast and its kin, a breath,
+	 * Mesmerize) that comes for it. A wave still reaches it (Tsunami's `reachesTheSky`). Roadmap 36: when only melee missed, a Blast knocked
+	 * the dragon out of the sky, so against a Blast-heavy hand Take Wing was a wasted turn. At
+	 * level 7 the Dragon won 2% against the Unicorn's four Blasts. Letting the flier dodge the
+	 * first area attack too lifted that matchup to 37% and the Dragon's level 7 field average from
+	 * 37% to 49%, and moved nothing at levels 1–5. It won over halving spell damage (too strong
+	 * early), a resistance that grows with age, a save, and a Blast cap. The owner prefers a
+	 * dragon-side answer to changing Blast. Off, only melee misses, which the harness uses as the
+	 * before (`take-wing-melee-only`).
 	 */
-	static dodgesSpells = false;
+	static dodgesSpells = true;
 
 	constructor({ icon = '🌬️' }: Partial<CardOptions> = {}) {
 		super({ icon } as Partial<CardOptions>);
 	}
 
 	get stats(): string {
-		return `Take off until your next card. The first melee attack against you misses.
+		const { dodgesSpells } = this.constructor as typeof TakeWingCard;
+		return `Take off until your next card. The first ${dodgesSpells ? 'melee attack or area attack' : 'melee attack'} against you misses.
 If your next card is a melee attack, dive: +${DIVE_HIT_BONUS} to hit and +${DIVE_DAMAGE_DICE} damage.
 Any damage that lands while you are in the air knocks you down, and the dive is lost.`;
 	}
@@ -86,10 +93,14 @@ Any damage that lands while you are in the air knocks you down, and the dive is 
 				if (target !== flier || !isAirborne(flier)) return effect.call(card, attacker, target, ...rest);
 
 				const { dodgesSpells } = this.constructor as typeof TakeWingCard;
-				if (!dodged && (card.isCardClass(MELEE) || (dodgesSpells && card.isCardClass(AOE)))) {
+				// A wave reaches the sky (Tsunami's `reachesTheSky`), so only other area attacks miss.
+				const areaDodge = dodgesSpells && card.isCardClass(AOE) && !(card.constructor as { reachesTheSky?: boolean }).reachesTheSky;
+				if (!dodged && (card.isCardClass(MELEE) || areaDodge)) {
 					dodged = true;
 					this.emit('narration', {
-						narration: `${flier.givenName} is high in the air, and ${attacker.givenName}'s blow strikes empty air.`,
+						narration: card.isCardClass(MELEE)
+							? `${flier.givenName} is high in the air, and ${attacker.givenName}'s blow strikes empty air.`
+							: `${flier.givenName} rides the wind high above, and ${attacker.givenName}'s ${card.cardType} bursts harmlessly beneath ${flier.pronouns.him}.`,
 					});
 					await subEventDelay(ring?.pacingMultiplier);
 					return !flier.dead;
