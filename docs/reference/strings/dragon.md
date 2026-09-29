@@ -74,6 +74,12 @@ Boost: str +2 (max total boost of level + 1, at most +5, then boost granted to h
 
 | Where | Template |
 |---|---|
+| donkeyKick → label | `The donkey` |
+| donkeyKick → narration | `🫏 The donkey lines up a kick.` |
+| donkeyKick → reason | `vs {target}'s ac ({ac}) to determine if the kick landed.` |
+| donkeyKick → narration | `🫏 The kick misses. {target} is untouched.` |
+| donkeyKick → reason | `for damage.` |
+| donkeyKick → flavorText | `{icon} 🫏 {icon}  The donkey kicks {target} for {result} damage.` |
 | getBoostNarrative → str | `loads the gold onto the donkey and stands a little taller` |
 | getBoostNarrative → str | `lets the donkey carry the heavy things, which is everything` |
 | getBoostNarrative → str | `listens to the donkey's advice, ignores it, and feels stronger anyway` |
@@ -135,6 +141,7 @@ No damage. Does not stack; being awed again refreshes the count.
 
 | Where | Template |
 |---|---|
+| cowerTarget → narration | `{target} cowers and loses {his} card.` |
 | awe → narration | `{target} still cannot meet the dragon's eye 🐲 (-{awePenalty} to attack).` |
 | effect → outcome | `{target} stands {his} ground and stares back.` |
 | effect → outcome | `{target} looks upon the helm of awe, and {his} knees turn to water.` |

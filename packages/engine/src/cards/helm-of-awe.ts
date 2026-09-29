@@ -41,13 +41,22 @@ export class HelmOfAweCard extends BaseCard {
 	static aweCards = 3;
 	/** The attack penalty on each awed play; a class setting for the harness. */
 	static awePenalty = 2;
+	/**
+	 * Alternative shape for the harness (default off, today's behaviour): a failed save makes
+	 * the opponent cower and lose its next card instead of taking the attack penalty.
+	 */
+	static cower = false;
 
 	constructor({ icon = '🐲' }: Partial<CardOptions> = {}) {
 		super({ icon } as Partial<CardOptions>);
 	}
 
 	get stats(): string {
-		const { aweCards, awePenalty } = this.constructor as typeof HelmOfAweCard;
+		const { aweCards, awePenalty, cower } = this.constructor as typeof HelmOfAweCard;
+		if (cower) {
+			return `Each opponent rolls 1d20 + int vs ${AWE_DC_BASE} + your int modifier. On a failure, they cower and lose their next card (it does nothing).
+No damage. Does not stack.`;
+		}
 		return `Each opponent rolls 1d20 + int vs ${AWE_DC_BASE} + your int modifier. On a failure, their next ${aweCards} cards each take ${awePenalty} off their attack rolls. A card that does not roll to hit (Blast, Heal) uses up one of the ${aweCards} with no effect.
 No damage. Does not stack; being awed again refreshes the count.`;
 	}
@@ -77,9 +86,39 @@ No damage. Does not stack; being awed again refreshes the count.`;
 		return target.encounterEffects.some((effect: any) => effect.effectType === AWE_EFFECT);
 	}
 
+	/**
+	 * The `cower` shape: `target` loses exactly its next card. Shares AWE_EFFECT so a second
+	 * awe replaces this one rather than stacking.
+	 */
+	cowerTarget(target: any): void {
+		const cowering = ({ card, phase, player }: any) => {
+			if (phase !== ATTACK_PHASE || player !== target) return card;
+
+			target.encounterEffects = target.encounterEffects.filter((effect: any) => effect !== cowering);
+			// PLACEHOLDER narration; the orchestrator writes the real line.
+			this.emit('narration', {
+				narration: `${target.givenName} cowers and loses ${target.pronouns.his} card.`,
+			});
+			// `card` is the per-play clone from applyEffects, so replacing play never leaks
+			// into the deck (same as ImmobilizeCard).
+			card.play = () => Promise.resolve(!player.dead);
+			return card;
+		};
+
+		cowering.effectType = AWE_EFFECT;
+		target.encounterEffects = [
+			...target.encounterEffects.filter((effect: any) => effect.effectType !== AWE_EFFECT),
+			cowering,
+		];
+	}
+
 	/** Awes `target` for `aweCards` plays, replacing any awe already on it (refresh, not stack). */
 	awe(target: any): void {
-		const { aweCards, awePenalty } = this.constructor as typeof HelmOfAweCard;
+		const { aweCards, awePenalty, cower } = this.constructor as typeof HelmOfAweCard;
+		if (cower) {
+			this.cowerTarget(target);
+			return;
+		}
 		let remaining = aweCards;
 
 		const awed = ({ card, phase, player }: any) => {

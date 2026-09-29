@@ -175,4 +175,68 @@ describe('./cards/helm-of-awe.ts Helm of Awe', () => {
 		foe.endEncounter();
 		expect(isAwed(foe)).to.equal(false);
 	});
+	describe('with the cower setting on', () => {
+		beforeEach(() => {
+			HelmOfAweCard.cower = true;
+		});
+		afterEach(() => {
+			HelmOfAweCard.cower = false;
+		});
+
+		it('says so in its rules text', () => {
+			expect(new HelmOfAweCard().stats).to.include('lose their next card');
+		});
+
+		it('makes a failed save lose exactly the next card', async () => {
+			const card = new HelmOfAweCard();
+			sinon.stub(card, 'getSaveRoll').returns(fakeRoll(2));
+			await card.effect(dragon, foe, ring, contestants);
+			expect(isAwed(foe)).to.equal(true);
+
+			const dragonHit = sinon.spy(dragon, 'hit');
+			const first = await new HitCard().play(foe, dragon, ring, contestants);
+			expect(first).to.equal(true);
+			expect(dragonHit).not.to.have.been.called;
+			expect(isAwed(foe)).to.equal(false);
+
+			// The second card is a real play again, with no attack penalty.
+			const modifiers = await attackModifiers(foe, dragon, 2);
+			expect(modifiers).to.have.length(2);
+			expect(modifiers[0]).to.equal(modifiers[1]);
+		});
+
+		it('does not stack when awed again while cowering', async () => {
+			const card = new HelmOfAweCard();
+			sinon.stub(card, 'getSaveRoll').returns(fakeRoll(2));
+			await card.effect(dragon, foe, ring, contestants);
+			await card.effect(dragon, foe, ring, contestants);
+			expect(foe.encounterEffects.filter((e: any) => e.effectType === AWE_EFFECT)).to.have.length(1);
+
+			await new HitCard().play(foe, dragon, ring, contestants);
+			expect(isAwed(foe)).to.equal(false);
+		});
+
+		it('does nothing on a successful save', async () => {
+			const card = new HelmOfAweCard();
+			sinon.stub(card, 'getSaveRoll').returns(fakeRoll(20));
+			await card.effect(dragon, foe, ring, contestants);
+			expect(isAwed(foe)).to.equal(false);
+		});
+
+		it('is cancelled by the ward', async () => {
+			armControlWard(foe);
+			const card = new HelmOfAweCard();
+			sinon.stub(card, 'getSaveRoll').returns(fakeRoll(2));
+			await card.effect(dragon, foe, ring, contestants);
+			expect(isAwed(foe)).to.equal(false);
+			expect(foe.encounterModifiers[CONTROL_WARD]).to.equal('spent');
+		});
+
+		it('leaves allies untouched', () => {
+			(contestants[0] as any).team = 'north';
+			(contestants[1] as any).team = 'north';
+			(contestants[2] as any).team = 'south';
+			expect(new HelmOfAweCard().getTargets(dragon, foe, ring, contestants)).to.deep.equal([other]);
+		});
+	});
 });

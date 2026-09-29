@@ -175,6 +175,8 @@ export const VARIANTS: Record<string, Variant> = {
 			return cardStatic('Asinine Companion', 'defaults', { ...Card.defaults, boostedProp: 'ac' });
 		},
 	},
+	'awe-cower': { about: 'Helm of Awe: a failed save makes the opponent lose its next card instead of taking the attack penalty', apply: () => cardStatic('Helm of Awe', 'cower', true) },
+	'donkey-kick': { about: 'Asinine Companion: the donkey kicks an opponent (1d20+2, 1d6) instead of boosting STR', apply: () => cardStatic('Asinine Companion', 'kick', true) },
 	'horn-of-proof-5': { about: 'Horn of Proof: heals 5 instead of 3', apply: () => cardStatic('Horn of Proof', 'healAmount', 5) },
 	'awe-penalty-5': { about: 'Helm of Awe: -5 to attack instead of -2', apply: () => cardStatic('Helm of Awe', 'awePenalty', 5) },
 	'awe-round': { about: 'Helm of Awe: awe lasts 9 cards (a whole round) instead of 3', apply: () => cardStatic('Helm of Awe', 'aweCards', 9) },
