@@ -183,6 +183,16 @@ export const VARIANTS: Record<string, Variant> = {
 			};
 		},
 	},
+	'rest-ranged': { about: 'Gloaming Rest: heal a random amount from 4 to half max hp, never more than missing', apply: () => cardStatic('Gloaming Rest', 'restShape', 'ranged') },
+	'rest-ranged-rage': {
+		about: 'Gloaming Rest: ranged heal; a broken rest wakes in wrath (next attack at advantage)',
+		apply: () => {
+			const undos = [cardStatic('Gloaming Rest', 'restShape', 'ranged'), cardStatic('Gloaming Rest', 'brokenRestRage', 'advantage')];
+			return () => {
+				for (const undo of undos.reverse()) undo();
+			};
+		},
+	},
 	'rest-two-turns': { about: 'Gloaming Rest: rest through two of your cards, then heal to full', apply: () => cardStatic('Gloaming Rest', 'restShape', 'two-turns') },
 	'rest-growing': { about: 'Gloaming Rest: heal 3d4, 6d4, 9d4 at each undisturbed card; kept if broken', apply: () => cardStatic('Gloaming Rest', 'restShape', 'growing') },
 	'horn-companion-1d6': { about: 'Unconquerable Horn: the woodland creature deals 1d6 instead of 1d4', apply: () => cardStatic('Unconquerable Horn', 'companionDamageDice', '1d6') },

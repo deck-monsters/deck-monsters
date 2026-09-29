@@ -16,6 +16,7 @@ const { roll } = chance;
 export const REST_AC_PENALTY = 2;
 const REST_HEALTH_DICE = '3d4';
 const GROWING_REST_TURNS = 3;
+const RANGED_REST_MIN = 4;
 
 /*
  * Edwin Julian's comic verse "The Capture of the Unicorn" (illustrated by Reginald Birch;
@@ -48,9 +49,10 @@ export class GloamingRestCard extends BaseCard {
 	 * `full` restores every hit point; `half` restores half of what is missing; `two-turns`
 	 * rests through two of your cards, then restores every hit point; `growing` heals 3d4 at
 	 * your next card, 6d4 at the one after, 9d4 at the third, while nothing disturbs you, and
-	 * keeps what it healed if the rest is broken. The -2 AC lasts as long as the rest.
+	 * keeps what it healed if the rest is broken; `ranged` heals a random amount from 4 to half
+	 * the monster's max hp, never more than it is missing. The -2 AC lasts as long as the rest.
 	 */
-	static restShape: 'full' | 'half' | 'two-turns' | 'growing' | 'dice' = 'full';
+	static restShape: 'full' | 'half' | 'two-turns' | 'growing' | 'dice' | 'ranged' = 'full';
 	/**
 	 * What a broken rest leaves behind (owner, 2026-09-29): the hunted unicorn wakes in wrath.
 	 * `advantage`: its next card that rolls to hit rolls twice and keeps the better;
@@ -73,7 +75,12 @@ If nothing damages you before then, heal to full hp as that card begins. Any dam
 				return `Kneel to rest: -${REST_AC_PENALTY} ac while you rest, for up to ${GROWING_REST_TURNS} of your cards.
 As each card begins, if nothing has damaged you, heal 3d4, then 6d4, then 9d4. Any damage ends the rest; you keep what you healed.`;
 			default: {
-				const heal = { full: 'heal to full hp', half: 'heal half your missing hp', dice: `heal ${REST_HEALTH_DICE}` }[(this.constructor as typeof GloamingRestCard).restShape as 'full' | 'half' | 'dice'];
+				const heal = {
+					full: 'heal to full hp',
+					half: 'heal half your missing hp',
+					dice: `heal ${REST_HEALTH_DICE}`,
+					ranged: `heal between ${RANGED_REST_MIN} hp and half your max hp (never more than you are missing)`,
+				}[(this.constructor as typeof GloamingRestCard).restShape as 'full' | 'half' | 'dice' | 'ranged'];
 				return `Kneel to rest: -${REST_AC_PENALTY} ac until your next card.
 If nothing damages you before then, ${heal} as that card begins. Any damage interrupts the rest and the healing is lost${(this.constructor as typeof GloamingRestCard).brokenRestRage === 'none' ? '' : `, but you wake in wrath: your next card that rolls to hit rolls twice and keeps the better${(this.constructor as typeof GloamingRestCard).brokenRestRage === 'advantage-damage' ? `, for +${(this.constructor as typeof GloamingRestCard).rageDamage} damage` : ''}`}.`;
 			}
@@ -143,6 +150,13 @@ If nothing damages you before then, ${heal} as that card begins. Any damage inte
 		switch ((this.constructor as typeof GloamingRestCard).restShape) {
 			case 'half': return Math.floor(missing / 2);
 			case 'dice': return roll({ primaryDice: REST_HEALTH_DICE }).result;
+			case 'ranged': {
+				// Owner's shape (2026-09-29): somewhere between a little and half the monster,
+				// never more than it is missing, so one rest can never erase a whole lead.
+				const low = Math.min(RANGED_REST_MIN, missing);
+				const high = Math.min(Math.floor(target.maxHp / 2), missing);
+				return low + Math.floor(Math.random() * (Math.max(high, low) - low + 1));
+			}
 			default: return missing;
 		}
 	}

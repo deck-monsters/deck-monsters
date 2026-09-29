@@ -134,6 +134,24 @@ describe('./cards/gloaming-rest.ts Gloaming Rest', () => {
 			expect(unicorn.hp).to.equal(5 + Math.floor(missing / 2));
 		});
 
+		it('ranged heals between 4 and half max hp, never more than is missing', async () => {
+			GloamingRestCard.restShape = 'ranged';
+			expect(new GloamingRestCard().stats).to.include('between 4 hp and half your max hp');
+			const card = new GloamingRestCard();
+			const random = sinon.stub(Math, 'random');
+			unicorn.hp = 1;
+			random.returns(0);
+			expect(card.restHealAmount(unicorn)).to.equal(4);
+			random.returns(0.9999);
+			expect(card.restHealAmount(unicorn)).to.equal(Math.floor(unicorn.maxHp / 2));
+			unicorn.hp = unicorn.maxHp - 2;
+			expect(card.restHealAmount(unicorn)).to.equal(2);
+			random.returns(0);
+			expect(card.restHealAmount(unicorn)).to.equal(2);
+			unicorn.hp = unicorn.maxHp;
+			expect(card.restHealAmount(unicorn)).to.equal(0);
+		});
+
 		it('two-turns sleeps through one card, then heals to full', async () => {
 			GloamingRestCard.restShape = 'two-turns';
 			const baseAc = unicorn.ac;
