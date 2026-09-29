@@ -440,7 +440,7 @@ after the window.
 | # | Task | Area / files | Acceptance | Can run beside | Status | Commit |
 |---|---|---|---|---|---|---|
 | 1 | **Key-order independence.** Finish the audit of key-order reads of saved `options`. Break rankings ties. Make preset lookup deterministic. Add the sorted-keys round-trip guard test | Engine: `game.ts`, `characters/beastmaster.ts`, and any audit hits; a new `state-roundtrip.test.ts` | The guard test fails on `main` for rankings ties, then passes. Presets stay alphabetical on every surface. The audit table is in this plan | 3 | Done: see the audit below. The guard test fails on the old code for each fix (rankings tie, monster-name collision, preset case collision) and passes now | 973b0d81, b6c33499, this commit |
-| 2 | **The engine serializes an object.** `SerializedGame`, the new `StateStore` signature, `persistState` without gzip, `repairSerializedGame` (collision-safe NUL repair), control characters stripped where names enter, `Game.flushState()`, and `saveState` handing out plain JSON | Engine: `game.ts`, `types/state-store.ts`, `index.ts` (exports); `game.test.ts` updated where it decodes saves | Engine tests pass. A NUL in a value and in a key saves and restores, and the `ab` / `a\u0000b` preset collision keeps both. `flushState` resolves after the store write. `restoreGame` accepts an object, a JSON string, and a legacy blob (one test each) | 3 (after 1: both touch `game.ts`) | Planned | |
+| 2 | **The engine serializes an object.** `SerializedGame`, the new `StateStore` signature, `persistState` without gzip, `repairSerializedGame` (collision-safe NUL repair), control characters stripped where names enter, `Game.flushState()`, and `saveState` handing out plain JSON | Engine: `game.ts`, `types/state-store.ts`, `index.ts` (exports); `game.test.ts` updated where it decodes saves | Engine tests pass. A NUL in a value and in a key saves and restores, and the `ab` / `a\u0000b` preset collision keeps both. `flushState` resolves after the store write. `restoreGame` accepts an object, a JSON string, and a legacy blob (one test each) | 3 (after 1: both touch `game.ts`) | Done: `persistState` hands the store a repaired plain object and `saveState` plain JSON; `repairSerializedGame` and `SerializedGame` are exported; `flushState()` waits for the write; control characters are stripped in character and monster naming, the name edit, and preset save. The server still writes the old blob until task 4 | c4380aff, this commit |
 | 3 | **Schema.** The migration and the Drizzle columns | `supabase/migrations/`, `packages/server/src/db/schema.ts` | `supabase db reset` locally applies cleanly. Drizzle types compile | 1, 2 | Done: every migration applies in order on a local Postgres 16 (Supabase `auth` schema and roles stubbed), and the new one re-runs as a no-op. Drizzle types compile | this commit |
 | 4 | **Server store and load path.** Clock-versioned dual-write, the `pendingFlush` wait on unload and load, load preferring `state`, quarantine and reset for both columns with a tombstone version (reset detaches and flushes first), the leaderboard backfill script, and metrics | `packages/server/src/state-store.ts`, `room-manager.ts`, `metrics.ts`, `scripts/backfill-leaderboard-from-state.ts`; tests | Unit tests: prefer `state`, fall back to the blob, quarantine each source, and the stale-save guard (an older version does not overwrite). **Race tests,** with the store write held open: an unload then an immediate reload reads the flushed state, not the older one; a reset while an old save is in flight is not undone by it; two saves from one game landing in reverse order keep the newer. **Against local Postgres** (`supabase start`): a saved row's `jsonb_typeof(state) = 'object'`, not `'string'`, and a restart restores it. Server tests pass | none (after 2, 3) | Planned | |
 | 5 | **The backfill script and runbook** | `packages/server/scripts/migrate-room-state-to-jsonb.ts`; [deployment](../operations/deployment.md) runbook section | A dry run and a real run on local data seeded with legacy blobs, including one corrupt blob, which is reported and not written. A second run converts 0. With a room loaded in a running release 1, the script does not change `state_version`, and the live save after it still lands. A blob changed between read and write is not overwritten | 7 | Planned | |
@@ -465,6 +465,8 @@ Every read of a saved object's keys in `packages/engine/src`, and whether its or
 | `shared/baseClass.ts` | option copying | Order-safe: copies every key |
 | `creatures/edit.ts`, `helpers/choices.ts` | a creature's options | Admin `edit` menu only: the order of the prompt changes, nothing player-facing |
 | `monsters/helpers/spawn.ts` | names from the lookup | Order-safe: a name-taken check |
+| `game.ts` `findCharacterByName` | characters, first name match | **Fixed:** characters in id order. Duplicate names are refused at creation (`characters/helpers/create.ts`), so only old data could hit it |
+| `creatures/items.ts`, `beastmaster.ts` deck list | counts built at runtime | Order-safe: not saved objects |
 
 The guard test (`state-roundtrip.test.ts`) also found two things that are not key order and
 are left as they are:
@@ -473,6 +475,17 @@ are left as they are:
 
 Neither changes after a `jsonb` round trip, so the test compares a settled save with its
 re-sorted round trip.
+
+The plan asked the guard test for a shop and ring refs too. They are left out: the shop's cards
+and items are arrays, `ringContestantRefs` is an array, and `megaBossAt` is a number, so a key
+re-sort cannot move them. The full-state comparison still covers them. The preset test asserts
+the same `localeCompare` listing `look at presets` prints, and resolves differently cased names
+through `resolvePresetKey`, the path `save`, `load` and `delete preset` use.
+
+The one-time effect on existing rooms: `getAllMonstersLookup` and `findCharacterByName` now
+walk characters in id order. So where two monsters, or two characters, already share a name
+(only possible in old data, since both are refused at creation), the one a name finds may
+change once, at deploy.
 
 ## Verification
 

@@ -1,5 +1,5 @@
 
-import { find, reduce } from './helpers/collection.js';
+import { reduce } from './helpers/collection.js';
 import { all as cardTypes, draw } from './cards/index.js';
 import { all as itemTypes } from './items/index.js';
 import { allMonsters as monsterTypes } from './monsters/index.js';
@@ -798,10 +798,12 @@ export class Game extends BaseClass {
 	}
 
 	findCharacterByName(name: string): any {
-		return find(
-			this.characters,
-			(character: any) => character.givenName.toLowerCase() === name.toLowerCase()
-		);
+		// In id order, not key order: a jsonb round trip re-sorts object keys (roadmap 37). Names
+		// are unique at creation, so only old data can hold two matches.
+		return Object.keys(this.characters)
+			.sort()
+			.map(id => this.characters[id])
+			.find((character: any) => character.givenName.toLowerCase() === name.toLowerCase());
 	}
 
 	lookAtCharacter(channel: any, characterName: string, self: any): Promise<unknown> {
@@ -825,7 +827,9 @@ export class Game extends BaseClass {
 			(a: any, b: any) =>
 				(Number(b.xp) || 0) - (Number(a.xp) || 0) ||
 				String(a.givenName ?? '').localeCompare(String(b.givenName ?? '')) ||
-				String(a.stableId ?? a.id ?? '').localeCompare(String(b.stableId ?? b.id ?? ''))
+				// The saved id, not the `stableId` getter: the getter mints one on first read and
+				// saves, and a rankings read must not write.
+				String(a.options?.stableId ?? a.id ?? '').localeCompare(String(b.options?.stableId ?? b.id ?? ''))
 		);
 		sortedCreatures.length = Math.min(sortedCreatures.length, top);
 

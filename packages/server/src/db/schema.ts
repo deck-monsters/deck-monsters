@@ -15,6 +15,7 @@ import {
 	foreignKey,
 } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
+import type { SerializedGame } from '@deck-monsters/engine';
 
 export const profiles = pgTable('profiles', {
 	id: uuid('id').primaryKey(),
@@ -47,10 +48,10 @@ export const rooms = pgTable('rooms', {
 	stateBlob: text('state_blob'),
 	quarantinedBlob: text('quarantined_blob'),
 	/** The serialized Game as jsonb (roadmap 37). Guarded by `stateVersion`. */
-	state: jsonb('state').$type<Record<string, unknown>>(),
+	state: jsonb('state').$type<SerializedGame>(),
 	/** Monotonic save stamp: a save lands only when newer, and it never rewinds (roadmap 37). */
 	stateVersion: bigint('state_version', { mode: 'number' }).notNull().default(0),
-	quarantinedState: jsonb('quarantined_state').$type<Record<string, unknown>>(),
+	quarantinedState: jsonb('quarantined_state').$type<SerializedGame>(),
 	fightCounter: integer('fight_counter').notNull().default(0),
 	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 	updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
