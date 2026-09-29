@@ -57,6 +57,25 @@ They agree on this:
   - counter cards preferred to nerfing the big swing cards;
   - weak cards allowed unless a monster has no competitive picks.
 
+### Owner follow-up (2026-09-29)
+
+- **Blink stays as it is; counters are the answer.** "It's definitely not true that in normal
+  full-handed battles against diverse competitors Blink always wins. If it happens to counter
+  a really powerful card it can make a huge difference but many times it's not as significant
+  as it might appear. So providing more counter options is the better choice to neutering it."
+  So the Dragon at level 1 (28% after task 2, the gap one Blink matchup) is **accepted**: no
+  Blink trim. More counter options, starting with the Unconquerable Horn counterspell (task 5)
+  and the counter family in [12](12-new-content-backlog.md#cards), are the response.
+- **The Unicorn's cards are about being useful and interesting, not about the Unicorn.**
+  "Unicorns are already pretty powerful because they can use spells like Blast." Task 5 must
+  not raise the Unicorn's field average; a tweak passes when the card earns its slot in the
+  hand it is built for, and the Unicorn stays where it is.
+- **The Dragon may be missing options.** "It does feel like the dragon may be missing more
+  options and need to rely more heavily on just its own special cards since it's the first
+  Wizard." The Wizard class holds only the Dragon's own four cards plus Cloak of
+  Invisibility and Revive, so most of a Dragon's hand is generic strikes (the reason its STR
+  was raised to 0 in [30](../archive/roadmap/30-dragon-pack.md)). Task 8 below widens it.
+
 ## Targets for a card fix
 
 A tweaked unique card should, at levels 1-7:
@@ -176,6 +195,7 @@ changes:
 | 4 | C | Confirmation run on the owner's machine, docs (card architecture doc, generated references via `build:docs`, bugs and roadmap tables) | Before/after report checked in | Done: owner's run, a new search at levels 1-7 and 2,000 fights a pair before and after. Levels 3, 5, and 7 are in band for every monster, and the guardrails rose 4-5%. The Dragon at level 1 rose from 16% to 28% and stays below the floor through one card (the Angel's Blink, worth 52 points in that matchup), which is the owner's call. The Unicorn beating the Dragon 98% at level 7 is a search artifact (a plain Dragon hand wins 51%). [Report](../reference/balance-reports/2026-09-28-confirm-35.md) | fee9549, dcb9197 (owner's run), this commit |
 | 5 | D | Unicorn cards: Unconquerable Horn, Dissonant Voice, Gloaming Rest (Horn of Proof if still needed) | Each 0.8+ in its best context and within the class ceiling; the Unicorn stays in band; the card text is readable and in voice | In progress: task 5a (Unconquerable Horn) done — it is now a one-round, once-per-fight counterspell against the next negative non-damage effect (holds, curses, Blink, Bad Batch, Sandstorm, Faceswap), not just holds; see [cards and encounter effects](../architecture/cards-and-encounter-effects.md#holds-and-the-unconquerable-horn-ward). Measured in the Unicorn's searched hands against every other monster's (L1/3/5/7, 400 fights a pair): as a pure counterspell it was worth +4 to +12 points against the Weeping Angel but a wasted slot against strikers, 1-6 points below the Hit it replaced overall. The owner's "never a dead card" rule (backlog 12) led to a 1d6 steadying heal on every play: about a Hit across levels (+3.8, +0.4, -2.1, -0.5) and +8 to +20 against the Angel. Dissonant Voice, Gloaming Rest, and Horn of Proof remain | e751b0c, this commit |
 | 6 | D | Optional simple fixes: Mesmerize, Enthrall, Harden | Only if a one-line change meets the targets without raising the Weeping Angel | Planned | |
+| 8 | D | Dragon options: widen the Wizard's card pool (candidates: let Wizards hold existing spells such as Blast, Blast II, Brain Drain, or Feline Companion; or a new Wizard card), measured on the Dragon's searched hands, level 1 first | The Dragon gains real choices in its hand; its field average rises toward the middle of the band at levels 1-7 without passing 75% or any matchup 85%; guardrails hold | Planned | |
 | 7 | D | Confirmation run and close-out: fold decisions into [cards and encounter effects](../architecture/cards-and-encounter-effects.md) and the balance method doc; archive this plan | Checked-in report; plan archived | Planned | |
 
 Later, not in this pass: the counter cards to the big swing effects

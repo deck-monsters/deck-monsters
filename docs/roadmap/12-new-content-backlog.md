@@ -112,6 +112,10 @@ Open work:
   - **Mirror Shield** (Fighter and Bard): the next area attack aimed at you (Fire Breath,
     Blast, Sandstorm, Tsunami) turns back: you take half, and half hits its caster. Spent
     on use. Watch in `sim:monster` that it does not become a hard counter to Blast Clerics.
+- [ ] **More options for the first Wizard** (owner, 2026-09-29): the Wizard class holds only
+  the Dragon's own cards plus Cloak and Revive, so a Dragon's hand leans on generic strikes.
+  Widening the pool (existing spells opened to Wizards, or new Wizard cards) is task 8 of
+  [35](35-balance-fixes.md).
 - [ ] **Flavour-text pass after play**, as the Unicorn had
   ([28](../archive/roadmap/28-unicorn-voice-punch-up.md)). Start from the
   [Dragon strings inventory](../reference/strings/dragon.md) and the requester's reactions
