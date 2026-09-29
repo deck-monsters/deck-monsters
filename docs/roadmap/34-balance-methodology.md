@@ -8,8 +8,8 @@ tags: [roadmap, balance, harness, methodology]
 ---
 # 34 — Balance Methodology: Measure Before Tuning
 
-**Status:** In progress (2026-09-28): PR A merged (#408); PR B on branch
-`claude/balance-methodology-b` (tasks 6, 6b, 7, and a lean task 9). The first fixes are
+**Status:** In progress: PR A merged (#408); PR B merged (#409: tasks 6, 6b, 7, and a lean
+task 9). Still open: tasks 5, 8a, 8b, 10 and 11. The first fixes are
 planned in [35](../archive/roadmap/35-balance-fixes.md). Follows [33](../archive/roadmap/33-heal-and-stat-cards.md), whose evidence is the
 starting point. Revised the same day after a deeper review of the engine and the owner's
 answers below.

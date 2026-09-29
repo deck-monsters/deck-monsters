@@ -44,8 +44,10 @@ if (action) await action({ channel: privateChannel, channelName, isAdmin, isDM, 
 ```
 
 `RoomManager` creates fresh state with `new Game({ roomId }, log)` and restores persisted
-state with `restoreGame(gameJSON, log)`. A connector must not load or save a blob without
-its `roomId`. Web clients use authenticated, membership-checked tRPC procedures.
+state with `restoreGame(gameJSON, log)`, which accepts the saved object, a JSON string, or a
+legacy base64 gzip string. A `StateStore` receives the saved state as a plain object
+(`SerializedGame`), and `game.flushState()` saves now and resolves when the store write has
+settled. A connector must not load or save state without its `roomId`. Web clients use authenticated, membership-checked tRPC procedures.
 
 The callback answer is a protocol boundary; read
 [`docs/reference/prompt-answer-contract.md`](docs/reference/prompt-answer-contract.md).

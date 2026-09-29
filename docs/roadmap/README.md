@@ -18,7 +18,7 @@ completed reasoning belongs in the [archive](../archive/README.md).
 | [12 — New content](12-new-content-backlog.md) | Dragon follow-ups (counter cards, flavour pass, live check); counters to the big swing cards (Sandstorm, Faceswap, Blink); concrete cards, monsters, card authoring, equipment, world, and endgame proposals |
 | [Item follow-ups](item-followups.md) | Prompt transport for items that ask a question |
 | [22 — Small leftovers](22-small-leftovers.md) | Cross-cutting decisions, manual verification gates, and small Workshop features |
-| [34 — Balance methodology](34-balance-methodology.md) | In progress: PR A merged (#408); PR B (catalogue and contexts, chassis and collections, lean best-hand search) in review. Still open: idealized action classes (task 5), excitement tooling (8), rings (10), the method reference doc (11) |
+| [34 — Balance methodology](34-balance-methodology.md) | In progress: PR A (#408) and PR B (#409, catalogue and contexts, chassis and collections, lean best-hand search) merged. Still open: idealized action classes (task 5), excitement tooling (8), rings (10), the method reference doc (11) |
 | [37 — Room state as Postgres `jsonb`](37-room-state-in-postgres.md) | In progress (expand PR, tasks 1–5): replace the gzip+base64 `rooms.state_blob` with a queryable `jsonb` column (key-order and NUL risks, ordered saves, dual-write rollout with rollback, backfill, read-only views) |
 | [27 — Next passes](27-next-passes.md) | The order of the next passes: command and workshop bugs, the Dragon, realistic rings with boss balance, and the mega boss (done), then later work |
 

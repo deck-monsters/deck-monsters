@@ -361,7 +361,12 @@ walk is ever reworked; `cards/boss-feed.test.ts` pins it with a real fight.
   `stateChange` — always build a new array and assign through the setter
   (`ring.contestants = updated`, `creature.items = remaining`, …) if the
   mutation needs to survive a restart. `RoomManager.unloadRoom` also flushes
-  via `game.saveState()` before eviction, and now refuses to unload a room
+  with `game.flushState()`, which resolves only when the store write has settled. The
+  room leaves the active cache first, then the flush promise is kept in
+  `RoomManager.pendingFlush`; `unloadRoom` awaits it, and so does a load of the same room
+  before it reads the row (roadmap 37). Saves are ordered by a `state_version` stamp, not by
+  arrival, so an immediate save and a debounced save may race safely. It also refuses to
+  unload a room
   whose `ring.inEncounter` is true — a fight in progress keeps the room in
   the active cache until the next sweep.
 - **Ring events**: `Ring.rollRingEvent()` fires from inside `startFightTimer()` when the

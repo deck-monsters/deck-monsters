@@ -367,7 +367,7 @@ orthogonal: Blood Feud uses `freeForAll` (ignores team for targeting) but keeps
 ### The hard rule: overrides go on the `Contestant`, never on the monster
 
 `monster.team` and `monster.targetingStrategy` are `options`-backed and persist into the
-room's state blob. Writing them from a ring event would permanently re-sort a player's monster
+room's saved state. Writing them from a ring event would permanently re-sort a player's monster
 and fight the Sorting Hat scroll. So `Contestant` carries optional `team` and
 `targetingStrategy` fields, and:
 
