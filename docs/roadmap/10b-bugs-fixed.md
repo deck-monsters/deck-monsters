@@ -4746,6 +4746,50 @@ would have missed the first target, so the two were merged.
 
 **Status**: Fixed.
 
+### 200. An older room save could overwrite a newer one — FIXED
+
+Never seen in production, but nothing prevented it. `PostgresStateStore.save` was an
+unconditional `update rooms … where id`. The engine fires saves without awaiting them, so an
+immediate save (the mega boss's due time, a boss-summon refund) and a debounced save could
+overlap. They ran on different pool connections, and Postgres applied them in the order they
+finished, not the order the snapshots were taken.
+
+**Fix** (roadmap 37): each snapshot is stamped when it is taken with `nextStateVersion()`, a
+process-wide monotonic clock (`server/src/state-store.ts`). The write only lands where
+`state_version < $v`. A stale write matches no row, is counted in
+`room_state_saves_stale_total`, and is not retried. Covered by `state-store.test.ts`, and
+against real Postgres by `state-store.pg.test.ts` (run with `TEST_DATABASE_URL`).
+
+**Status**: Fixed.
+
+### 201. A quick reload could restore state older than the unload's flush — FIXED
+
+`_detachRoomEntry` flushed with `saveState()`, which is fire-and-forget, then disposed the
+game. `unloadRoom` returned at once, so a load straight after could select the row before the
+flush landed. It would then restore the older room, and race the flush.
+
+**Fix** (roadmap 37): the detach calls `Game.flushState()`, which resolves when the write has
+settled, and keeps the promise in `RoomManager.pendingFlush`. `unloadRoom` awaits it, and
+`_loadRoom` awaits it before its select. The room also leaves the `active` cache *before* the
+await. A first draft awaited first, and `getGame` during the flush was handed the disposed
+game; the race test caught it. `dispose()` does not touch the store write, so it still runs at
+once.
+
+**Status**: Fixed.
+
+### 202. A room reset could be undone by a save still in flight — FIXED
+
+`resetRoomState` wrote the database (state moved to quarantine, live columns nulled) and only
+then detached the game. A save from the old game still in flight could land after the reset
+and bring the room back.
+
+**Fix** (roadmap 37): the reset detaches the game and awaits its flush first, then writes a
+tombstone: live columns nulled, the old state quarantined, and
+`state_version = nextStateVersion()`. Any save stamped earlier is now stale. A failed restore
+quarantines the same way, so an in-flight save cannot bring back the state that failed.
+
+**Status**: Fixed.
+
 ## Closed without a fix
 
 These were open investigations the owner closed on 2026-09-28. Reopen with new evidence.
