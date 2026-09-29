@@ -439,13 +439,40 @@ after the window.
 
 | # | Task | Area / files | Acceptance | Can run beside | Status | Commit |
 |---|---|---|---|---|---|---|
-| 1 | **Key-order independence.** Finish the audit of key-order reads of saved `options`. Break rankings ties. Make preset lookup deterministic. Add the sorted-keys round-trip guard test | Engine: `game.ts`, `characters/beastmaster.ts`, and any audit hits; a new `state-roundtrip.test.ts` | The guard test fails on `main` for rankings ties, then passes. Presets stay alphabetical on every surface. The audit table is in this plan | 3 | In progress: rankings tie-break, preset lookup, and monster-name lookup fixed (973b0d81); guard test being written | 973b0d81 |
+| 1 | **Key-order independence.** Finish the audit of key-order reads of saved `options`. Break rankings ties. Make preset lookup deterministic. Add the sorted-keys round-trip guard test | Engine: `game.ts`, `characters/beastmaster.ts`, and any audit hits; a new `state-roundtrip.test.ts` | The guard test fails on `main` for rankings ties, then passes. Presets stay alphabetical on every surface. The audit table is in this plan | 3 | Done: see the audit below. The guard test fails on the old code for each fix (rankings tie, monster-name collision, preset case collision) and passes now | 973b0d81, b6c33499, this commit |
 | 2 | **The engine serializes an object.** `SerializedGame`, the new `StateStore` signature, `persistState` without gzip, `repairSerializedGame` (collision-safe NUL repair), control characters stripped where names enter, `Game.flushState()`, and `saveState` handing out plain JSON | Engine: `game.ts`, `types/state-store.ts`, `index.ts` (exports); `game.test.ts` updated where it decodes saves | Engine tests pass. A NUL in a value and in a key saves and restores, and the `ab` / `a\u0000b` preset collision keeps both. `flushState` resolves after the store write. `restoreGame` accepts an object, a JSON string, and a legacy blob (one test each) | 3 (after 1: both touch `game.ts`) | Planned | |
 | 3 | **Schema.** The migration and the Drizzle columns | `supabase/migrations/`, `packages/server/src/db/schema.ts` | `supabase db reset` locally applies cleanly. Drizzle types compile | 1, 2 | Done: every migration applies in order on a local Postgres 16 (Supabase `auth` schema and roles stubbed), and the new one re-runs as a no-op. Drizzle types compile | this commit |
 | 4 | **Server store and load path.** Clock-versioned dual-write, the `pendingFlush` wait on unload and load, load preferring `state`, quarantine and reset for both columns with a tombstone version (reset detaches and flushes first), the leaderboard backfill script, and metrics | `packages/server/src/state-store.ts`, `room-manager.ts`, `metrics.ts`, `scripts/backfill-leaderboard-from-state.ts`; tests | Unit tests: prefer `state`, fall back to the blob, quarantine each source, and the stale-save guard (an older version does not overwrite). **Race tests,** with the store write held open: an unload then an immediate reload reads the flushed state, not the older one; a reset while an old save is in flight is not undone by it; two saves from one game landing in reverse order keep the newer. **Against local Postgres** (`supabase start`): a saved row's `jsonb_typeof(state) = 'object'`, not `'string'`, and a restart restores it. Server tests pass | none (after 2, 3) | Planned | |
 | 5 | **The backfill script and runbook** | `packages/server/scripts/migrate-room-state-to-jsonb.ts`; [deployment](../operations/deployment.md) runbook section | A dry run and a real run on local data seeded with legacy blobs, including one corrupt blob, which is reported and not written. A second run converts 0. With a room loaded in a running release 1, the script does not change `state_version`, and the live save after it still lands. A blob changed between read and write is not overwritten | 7 | Planned | |
 | 6 | **Contract** (second PR, after the window). Stop dual-writing, drop the load fallback, back up, and drop `state_blob` | Server, migration, docs | Production shows `room_state_source_total{source="blob"}` at 0 for the whole window. A backup exists. Tests pass | — | Planned | |
 | 7 | **Read-only query views** and the "Querying room state" doc section | A migration with the views; `rooms-and-identity.md` | The Faceswap query above returns the same answer as decoding by hand, on local data | 5 | Planned | |
+
+### Task 1 audit (2026-09-29)
+
+Every read of a saved object's keys in `packages/engine/src`, and whether its order matters.
+
+| Where | What it iterates | Verdict |
+|---|---|---|
+| `game.ts` `getCreatureRankings` | characters, or monsters from the lookup | **Fixed:** ties break by name, then id |
+| `game.ts` `getAllMonstersLookup` | characters, to key monsters by lowercased name | **Fixed:** characters in id order, so a name two players share resolves to the same monster every time |
+| `beastmaster.ts` `resolvePresetKey` | a monster's presets, by case-insensitive name | **Fixed:** exact match first, then the alphabetically first |
+| `beastmaster.ts` `getMonsterPresets`, `commands/presets.ts`, `PresetControl.tsx` | presets | Order-safe: every surface sorts by name |
+| `beastmaster.ts` preset count (`MAX_PRESETS`) | presets | Order-safe: a count |
+| `game.ts` `getRoomMonsterLevels`, the dispose loop | characters | Order-safe: levels feed an aggregate; dispose touches all |
+| `game.ts` boss-summon finalizer | `bossSummonsPending` | Order-safe: a count |
+| `announcements/index.ts` | characters | Order-safe: a membership check |
+| `index.ts` `getOptions` | characters | Order-safe: rebuilds the same map |
+| `shared/baseClass.ts` | option copying | Order-safe: copies every key |
+| `creatures/edit.ts`, `helpers/choices.ts` | a creature's options | Admin `edit` menu only: the order of the prompt changes, nothing player-facing |
+| `monsters/helpers/spawn.ts` | names from the lookup | Order-safe: a name-taken check |
+
+The guard test (`state-roundtrip.test.ts`) also found two things that are not key order and
+are left as they are:
+- A first save omits empty defaults (`deck: []`, `items: []`), and restore fills them in.
+- Restore sorts a character's deck by card name.
+
+Neither changes after a `jsonb` round trip, so the test compares a settled save with its
+re-sorted round trip.
 
 ## Verification
 

@@ -161,6 +161,16 @@ describe('state round trip through jsonb key order', () => {
 		).to.deep.equal(game.getCreatureRankings(Object.values(game.getAllMonstersLookup())));
 	});
 
+	it('ranks tied monsters the same whatever order they arrive in', () => {
+		// The test above passes whenever the lookup fix holds, because both games feed rankings
+		// the same order. This one guards getCreatureRankings' own tie-break.
+		const { game } = setup();
+		const monsters = Object.values(game.getAllMonstersLookup());
+		expect(game.getCreatureRankings([...monsters].reverse())).to.deep.equal(
+			game.getCreatureRankings(monsters),
+		);
+	});
+
 	it('resolves a colliding monster name to the same monster', () => {
 		const { game, restored } = setup();
 		const before = game.getAllMonstersLookup().fang;
