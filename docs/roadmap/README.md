@@ -19,7 +19,7 @@ completed reasoning belongs in the [archive](../archive/README.md).
 | [Item follow-ups](item-followups.md) | Prompt transport for items that ask a question |
 | [22 — Small leftovers](22-small-leftovers.md) | Cross-cutting decisions, manual verification gates, and small Workshop features |
 | [34 — Balance methodology](34-balance-methodology.md) | In progress: PR A merged (#408); PR B (catalogue and contexts, chassis and collections, lean best-hand search) in review. Still open: idealized action classes (task 5), excitement tooling (8), rings (10), the method reference doc (11) |
-| [35 — Balance fixes](35-balance-fixes.md) | In progress (PR D): the Dragon and Gladiator body fixes and Tsunami are done (PR C); Unconquerable Horn is now a one-round counterspell, not just a hold-blocker; Dissonant Voice, Gloaming Rest, and the optional Mesmerize/Enthrall/Harden fixes remain; guardrails for the band, excitement, and hope |
+| [35 — Balance fixes](35-balance-fixes.md) | In progress (PR D): the Dragon and Gladiator body fixes and Tsunami are done (PR C); the Unicorn's four cards and the Dragon's new options are done (two horns, Gloaming Rest, Dissonant Voice; Tail Lash, Helm of Awe, Asinine Companion, Faceswap and Lucky Strike for Wizards); the confirmation run is on the owner's machine. Mesmerize, Enthrall, Harden, and the pinned-advantage rule move to [11](11-balance-and-mechanics.md#next-balance-pass-carried-from-roadmap-35) |
 | [27 — Next passes](27-next-passes.md) | The order of the next passes: command and workshop bugs, the Dragon, realistic rings with boss balance, and the mega boss (done), then later work |
 
 [`10b-bugs-fixed.md`](10b-bugs-fixed.md) remains the stable fixed-bug ledger because code
