@@ -20,6 +20,14 @@ and follow the checklist in [cards and encounter effects](../architecture/cards-
 - [ ] Design and test Healing Balm, Enchanted Mirror, Bear Trap, Shardblade, Kata, Gini
   Coefficient, Healing Wind, Shuffle, Delve, Wild, Trade Hands, and Swarm.
 - [ ] Strengthen repeated Immobilize rather than merely resetting its hold.
+- [ ] **Haunted Autocorrect** (owner idea, 2026-09-29): a trick card in the family of Enchanted
+  Faceswap. It haunts an opponent's next card and "autocorrects" it into a similar-sounding card
+  that does something hilariously different (Heal becomes Hail, Blast becomes Boast, Coil
+  becomes Coin; exact pairs to design). The replacement plays instead, with narration that
+  shows the typo. Design questions: which cards have a sound-alike (a curated table, never
+  random text), what a sound-alike with no real card does (a harmless joke effect), who can
+  hold it (Bard, Cleric, Wizard?), and a roll to resist so it reads as a roll. Not part of the
+  balance passes; a fun content card.
 - [ ] **Counters to the big effects** (owner, 2026-09-28). The owner prefers a few rare,
   skilful counter cards to nerfing Sandstorm, Enchanted Faceswap, Blink, and the other
   swing cards. That keeps the big moments and gives complex fights a second layer: a player
