@@ -8,6 +8,7 @@ import { BARD } from '../constants/creature-classes.js';
 import { ACOUSTIC } from '../constants/card-classes.js';
 import { UNCOMMON } from '../helpers/probabilities.js';
 import { VERY_CHEAP } from '../helpers/costs.js';
+import { addRollMode } from './helpers/roll-mode.js';
 
 /*
  * Aelian (De Animalium Natura, ancient report): of all animals the cartazon has "the most
@@ -74,15 +75,10 @@ No damage. Does not stack.`;
 			this.emit('narration', {
 				narration: `${target.givenName}'s ears yet ring with that hideous lowing ${this.icon} (attacks at disadvantage).`,
 			});
-			// Both rolls go through the card's own getAttackRoll, so its bonuses apply to each; a
-			// curse of Loki is the worst roll and a natural 20 the best, whatever the totals. `card`
-			// is the per-play clone from applyEffects, so wrapping it never leaks into the deck.
-			const rank = (r: any) => (r.curseOfLoki ? -Infinity : r.strokeOfLuck ? Infinity : r.result);
-			card.getAttackRoll = (...args: any[]) => {
-				const first = getAttackRoll.apply(card, args);
-				const second = getAttackRoll.apply(card, args);
-				return rank(second) < rank(first) ? second : first;
-			};
+			// Through the shared roll-mode helper, so a pin's advantage and this disadvantage
+			// cancel to one roll whichever effect ran first (roadmap 36). Both rolls go through the
+			// card's own getAttackRoll, so its bonuses apply to each.
+			addRollMode(card, 'disadvantage');
 
 			return card;
 		};

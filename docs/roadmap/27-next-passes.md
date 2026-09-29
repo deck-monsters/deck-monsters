@@ -132,9 +132,15 @@ owner decision in [11](11-balance-and-mechanics.md).
 - **Content backlog** (12): Card Pops, Re-quip, the listed card ideas, the Time Lord and
   Bureaucrat monsters, and the optional data-driven card spec. Take them one per content
   pass, each with harness evidence.
-- **Next balance pass** ([11](11-balance-and-mechanics.md#next-balance-pass-carried-from-roadmap-35)):
-  the pinned-advantage rule first, then the optional Mesmerize, Enthrall, and Harden fixes,
-  a per-fight split in the harness, and a group-fight card if wanted.
+- **Balance leftovers** ([11](11-balance-and-mechanics.md#next-balance-pass-carried-from-roadmap-35)):
+  roadmap 36 closed the pin rule, Mesmerize, Harden, the level 7 Dragon, and the per-fight
+  split. The Faceswap watch, the level 5 Weeping Angel against the Minotaur, and a group-fight
+  card remain.
+- **Room state as `jsonb`, not a gzip blob** ([37](37-room-state-in-postgres.md), owner
+  2026-09-29). The plan is ready to pick up after PR #412. It is one expand PR (key-order
+  independence, the engine serializing an object, the schema, a versioned dual-write server
+  store, a backfill script, and read-only query views), then a small contract PR that drops
+  `state_blob` after a week.
 - **Combat design** (11): stat reform, initiative, crit failures and crit ticks, card
   balance by tier, Team XP, and fight threads.
 

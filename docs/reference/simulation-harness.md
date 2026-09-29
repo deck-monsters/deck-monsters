@@ -355,10 +355,26 @@ from one was silently left out of that report. `harness.test.ts` checks the list
 A card whose effect either lands in full or not at all can show a healthy average win rate
 while each fight turns on one coin flip. For such a card, also split fights by whether the
 effect landed. Calibrate the split with a weak version of the same card: fights where it
-landed are biased toward fights already going well. The harness has no built-in split yet.
-The pattern is a probe that loops `simulate({ fights: 1, seed })` and wraps the card's
-method. [The Gloaming Rest study](../archive/studies/2026-09-gloaming-rest.md) is the worked
-example.
+landed are biased toward fights already going well. [The Gloaming Rest study](../archive/studies/2026-09-gloaming-rest.md)
+is the worked example.
+
+The runner does the split (roadmap 36). Give a unit `probes`, for example
+`"probes": ["rest-completed"]`. Each probe in `balance/probes.ts` wraps one card method for the
+length of the unit and marks the creature the effect touched:
+
+| Probe | Effect it marks |
+|---|---|
+| `rest-completed` | A Gloaming Rest completed |
+| `awed` | Helm of Awe awed the side |
+| `rattled` | Dissonant Voice rattled the side |
+| `held` | Any hold landed on the side |
+
+The result's `split` gives each side's win, draw, and loss in fights where its probe fired
+and in fights where it did not; the two always sum to the side's totals.
+`sim-split-report <run>` (`pnpm sim:split-report`) prints them, summed over units that share
+their tags (`--by card,v,level` to choose, `--side` for a side other than 0). To track a new
+effect, add a probe there, not a one-off script. Hook a card method rather than matching
+narration text, which breaks when the wording changes (10b #199).
 
 ## Adding a new economy/balance measurement
 

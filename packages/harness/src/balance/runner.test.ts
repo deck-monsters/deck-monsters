@@ -91,4 +91,52 @@ describe('balance/runner', () => {
 		expect(a!.draws).to.equal(c!.draws);
 		expect(a!.wins + a!.draws + a!.losses).to.equal(result.fights);
 	});
+
+	it('splits each side by whether a probe fired, and the split sums to the totals', async () => {
+		const result = await runUnit({
+			id: 'probes',
+			sides: [
+				{ type: 'Unicorn', level: 3, deck: ['Gloaming Rest', 'Hit', 'Hit', 'Hit', 'Hit', 'Hit', 'Hit', 'Hit', 'Hit'] },
+				{ type: 'Minotaur', level: 3, deck: ['Hit', 'Hit', 'Hit', 'Hit', 'Hit', 'Hit', 'Hit', 'Hit', 'Hit'] },
+			],
+			fights: 20,
+			seed: 11,
+			probes: ['rest-completed'],
+		});
+		const split = result.split!['rest-completed']!;
+		result.sides.forEach((side, i) => {
+			for (const k of ['wins', 'draws', 'losses'] as const) {
+				expect(split.with[i]![k] + split.without[i]![k]).to.equal(side[k]);
+			}
+		});
+		// The Minotaur never rests; the Unicorn completes some rests in 40 fights.
+		expect(split.with[1]!.wins + split.with[1]!.draws + split.with[1]!.losses).to.equal(0);
+		expect(split.with[0]!.wins + split.with[0]!.draws + split.with[0]!.losses).to.be.greaterThan(0);
+	});
+
+	it('installs every probe, and the held probe sees a hold land', async () => {
+		const result = await runUnit({
+			id: 'probes-all',
+			sides: [
+				{ type: 'Basilisk', level: 3, deck: ['Coil', 'Coil', 'Coil', 'Coil', 'Hit', 'Hit', 'Hit', 'Hit', 'Hit'] },
+				{ type: 'Minotaur', level: 3, deck: ['Hit', 'Hit', 'Hit', 'Hit', 'Hit', 'Hit', 'Hit', 'Hit', 'Hit'] },
+			],
+			fights: 10,
+			seed: 5,
+			probes: ['rest-completed', 'awed', 'rattled', 'held'],
+		});
+		const held = result.split!.held!;
+		expect(held.with[1]!.wins + held.with[1]!.draws + held.with[1]!.losses).to.be.greaterThan(0);
+		expect(held.with[0]!.wins + held.with[0]!.draws + held.with[0]!.losses).to.equal(0);
+	});
+
+	it('refuses an unknown probe', async () => {
+		let error: unknown;
+		try {
+			await runUnit({ ...plan.units[0]!, id: 'bad-probe', probes: ['no-such-probe'] });
+		} catch (err) {
+			error = err;
+		}
+		expect(String(error)).to.include('Unknown probe');
+	});
 });

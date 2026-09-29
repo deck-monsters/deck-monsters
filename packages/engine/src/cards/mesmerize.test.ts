@@ -9,6 +9,7 @@ import Jinn from '../monsters/jinn.js';
 import Minotaur from '../monsters/minotaur.js';
 import WeepingAngel from '../monsters/weeping-angel.js';
 import { ATTACK_PHASE } from '../constants/phases.js';
+import { chance } from '../helpers/chance.js';
 import { BASILISK, GLADIATOR, JINN, MINOTAUR, WEEPING_ANGEL } from '../constants/creature-types.js';
 
 describe('./cards/mesmerize.ts', () => {
@@ -59,7 +60,7 @@ describe('./cards/mesmerize.ts', () => {
 	it('can be instantiated with defaults', () => {
 		const hit = new HitCard({ targetProp: (mesmerize as any).targetProp });
 
-		const stats = `Immobilize everyone.
+		const stats = `Immobilize everyone. You are caught too only on a natural 1 (1d20).
 
 If already immobilized, hit instead.
 ${hit.stats}
@@ -121,17 +122,40 @@ Turns immobilized resets on curse of loki.
 		expect((mesmerize as any).getFreedomThreshold(player, minotaur)).to.equal(1);
 	});
 
-	it('immobilizes everyone on play', () =>
-		mesmerize.play(player, basilisk, ring, ring.contestants).then(() => {
+	it('immobilizes everyone on play (with the old always-self rule)', () => {
+		MesmerizeCard.selfMesmerize = 'always';
+		return mesmerize.play(player, basilisk, ring, ring.contestants).then(() => {
+			MesmerizeCard.selfMesmerize = 'loki';
 			expect(player.encounterEffects.length).to.equal(1);
 			expect(angel.encounterEffects.length).to.equal(1);
 			expect(basilisk.encounterEffects.length).to.equal(1);
 			expect(gladiator.encounterEffects.length).to.equal(1);
 			expect(jinn.encounterEffects.length).to.equal(0);
 			expect(minotaur.encounterEffects.length).to.equal(1);
-		}));
+		});
+	});
 
-	it('hits already immobilized monsters on play', () => {
+	describe('selfMesmerize (roadmap 36)', () => {
+		afterEach(() => {
+			MesmerizeCard.selfMesmerize = 'loki';
+			sinon.restore();
+		});
+
+		it('ships loki: only a natural 1 catches the caster, and says so', async () => {
+			expect(MesmerizeCard.selfMesmerize).to.equal('loki');
+			expect(mesmerize.stats).to.include('You are caught too only on a natural 1');
+			const roll = sinon.stub(chance, 'roll').returns({ naturalRoll: { result: 7 } } as any);
+			await mesmerize.play(player, basilisk, ring, ring.contestants);
+			expect(player.encounterEffects.length).to.equal(0);
+			expect(basilisk.encounterEffects.length).to.equal(1);
+			roll.returns({ naturalRoll: { result: 1 } } as any);
+			await new MesmerizeCard().effect(player, player, ring, ring.contestants);
+			expect(player.encounterEffects.length).to.equal(1);
+		});
+	});
+
+	it('hits already immobilized monsters on play (with the old always-self rule)', () => {
+		MesmerizeCard.selfMesmerize = 'always';
 		const playerBeforeHP = player.hp;
 		const angelBeforeHP = angel.hp;
 		const basiliskBeforeHP = basilisk.hp;
@@ -150,7 +174,10 @@ Turns immobilized resets on curse of loki.
 					expect(jinn.hp).to.be.below(jinnBeforeHP);
 					expect(minotaur.hp).to.be.below(minotaurBeforeHP);
 				})
-			);
+			)
+			.finally(() => {
+				MesmerizeCard.selfMesmerize = 'loki';
+			});
 	});
 
 	it('hits immune players on play', () => {

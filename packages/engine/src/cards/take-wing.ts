@@ -1,7 +1,7 @@
 import { BaseCard, type CardOptions } from './base.js';
 import { subEventDelay } from '../helpers/delay-times.js';
 import { ATTACK_PHASE, DEFENSE_PHASE } from '../constants/phases.js';
-import { MELEE } from '../constants/card-classes.js';
+import { AOE, MELEE } from '../constants/card-classes.js';
 import { DRAGON } from '../constants/creature-types.js';
 import { TAKE_WING_EFFECT } from '../constants/effect-types.js';
 import { UNCOMMON } from '../helpers/probabilities.js';
@@ -31,13 +31,26 @@ export class TakeWingCard extends BaseCard {
 		'"The fiery flying serpent." Up, out of reach, and then down again, all teeth.';
 	static level = 0;
 	static cost = CHEAP.cost;
+	/**
+	 * A flier dodges the first melee blow or area attack (Blast and its kin, a breath, a
+	 * tsunami, Mesmerize) that comes for it. Roadmap 36: when only melee missed, a Blast knocked
+	 * the dragon out of the sky, so against a Blast-heavy hand Take Wing was a wasted turn. At
+	 * level 7 the Dragon won 2% against the Unicorn's four Blasts. Letting the flier dodge the
+	 * first area attack too lifted that matchup to 37% and the Dragon's level 7 field average from
+	 * 37% to 49%, and moved nothing at levels 1–5. It won over halving spell damage (too strong
+	 * early), a resistance that grows with age, a save, and a Blast cap. The owner prefers a
+	 * dragon-side answer to changing Blast. Off, only melee misses, which the harness uses as the
+	 * before (`take-wing-melee-only`).
+	 */
+	static dodgesSpells = true;
 
 	constructor({ icon = '🌬️' }: Partial<CardOptions> = {}) {
 		super({ icon } as Partial<CardOptions>);
 	}
 
 	get stats(): string {
-		return `Take off until your next card. The first melee attack against you misses.
+		const { dodgesSpells } = this.constructor as typeof TakeWingCard;
+		return `Take off until your next card. The first ${dodgesSpells ? 'melee attack or area attack' : 'melee attack'} against you misses.
 If your next card is a melee attack, dive: +${DIVE_HIT_BONUS} to hit and +${DIVE_DAMAGE_DICE} damage.
 Any damage that lands while you are in the air knocks you down, and the dive is lost.`;
 	}
@@ -79,10 +92,13 @@ Any damage that lands while you are in the air knocks you down, and the dive is 
 			card.effect = async (attacker: any, target: any, ...rest: any[]) => {
 				if (target !== flier || !isAirborne(flier)) return effect.call(card, attacker, target, ...rest);
 
-				if (!dodged && card.isCardClass(MELEE)) {
+				const { dodgesSpells } = this.constructor as typeof TakeWingCard;
+				if (!dodged && (card.isCardClass(MELEE) || (dodgesSpells && card.isCardClass(AOE)))) {
 					dodged = true;
 					this.emit('narration', {
-						narration: `${flier.givenName} is high in the air, and ${attacker.givenName}'s blow strikes empty air.`,
+						narration: card.isCardClass(MELEE)
+							? `${flier.givenName} is high in the air, and ${attacker.givenName}'s blow strikes empty air.`
+							: `${flier.givenName} rides the wind high above, and ${attacker.givenName}'s ${card.cardType} bursts harmlessly beneath ${flier.pronouns.him}.`,
 					});
 					await subEventDelay(ring?.pacingMultiplier);
 					return !flier.dead;

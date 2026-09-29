@@ -728,8 +728,8 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
 ----------------------------------
 
  You strut and preen. Your beauty 
- mesmerizes everyone, including 
- yourself.
+ mesmerizes everyone. Now and 
+ then, even yourself.
 
 ==================================
 ```

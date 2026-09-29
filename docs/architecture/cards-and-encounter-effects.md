@@ -96,7 +96,10 @@ is resolved after the first has already been given back and never stacks.
 - **Reacting to someone else's card** (a dodge) means wrapping that clone's `effect` in the
   `DEFENSE_PHASE` call and checking `target === self` inside the wrapper, because the
   effect sees every card played in the ring, not only those aimed at its monster. Take Wing
-  checks HP before and after the wrapped effect to see whether anything landed. When two
+  checks HP before and after the wrapped effect to see whether anything landed. It dodges the
+  first MELEE blow or AOE card aimed at the flier, a tsunami included (roadmap 36: the Unicorn's
+  Blasts had held the level 7 Dragon to 2% against it; `static dodgesSpells` switches the area
+  dodge off for the harness). When two
   such effects sit on one monster (Take Wing and a Cloak-style hide), the one armed later
   wraps outside the other and answers first: a flight taken after hiding spends its dodge
   before the hide's search roll. Neither order double-counts damage; it is a play-order
@@ -121,6 +124,37 @@ Entrance, Enthrall, Mesmerize, Forked Stick, and Forked Metal Rod, goes through
 `ImmobilizeCard.immobilize()` (`cards/immobilize.ts`). A hold is an `ImmobilizeEffect` on
 the held creature: at the start of that creature's turn it rolls to break free, and while
 held its card does nothing.
+
+**Pinned monsters are easier to hit** (owner, roadmap 36). Every attack roll against a pinned
+monster has advantage, as against a restrained creature in D&D. Pinned means held by any
+`ImmobilizeEffect` or awed by Helm of Awe (`isPinned` in `cards/helpers/pinned.ts`, and
+`PIN_RULES.advantage` switches it off for the harness). Dissonant Voice's rattle is not a pin,
+since the monster still acts. The pin's own encounter effect grants the advantage: in
+`DEFENSE_PHASE` it gives the incoming card advantage against the pinned monster only.
+
+- **Decided at the roll, not the play.** Who is being attacked is read when the die is
+  rolled: from `rollWithModes`'s target, or from the `hitCheck` or `effect` call in progress.
+  A first version read it from the play's target and missed two cases (Codex review of #412).
+  Enthrall picks its victims inside its own effect. Rehit's reroll, the donkey's kick, Tail
+  Lash's tail, and the Unconquerable Horn's creature of the wood roll their own d20. A new strike that rolls its
+  own d20 must go through `rollWithModes`.
+- **Companions take only the target's modes.** The donkey and the creature of the wood pass
+  `targetOnly`, so they get a pin's advantage but not their player's rattle. The tail is the
+  dragon's own blow and takes both.
+
+- **One roll-mode helper.** `addRollMode(card, mode)` (`cards/helpers/roll-mode.ts`) counts
+  advantage and disadvantage on a clone's `getAttackRoll`, and one of each cancels, as in D&D.
+  So a pin and a rattle on the same attack give a plain roll whichever effect ran first. A
+  natural 1 is still the worst roll and a natural 20 the best. A card that already rolls twice
+  and keeps the better (Lucky Strike, `static rollsTwice`) gains nothing from advantage.
+- **What it moved.** The whole field shifted by no more than 1.2 points in the owner's
+  [confirmation run](../reference/balance-reports/2026-09-29-confirm-36.md). The one matchup it
+  pushed over the 85% cap is the level 1 Dragon's Faceswap hand against the Basilisk (85.2%),
+  which the owner left as it is.
+
+**Mesmerize catches its own caster only on a natural 1** (roadmap 36). It holds everyone
+else, then rolls a d20 for the caster, and a 1 is a Curse of Loki moment. It used to catch the
+caster every time, which held the Weeping Angel in most of its own fights.
 
 The ward began as the Unconquerable Horn's refusal to be held. The owner asked (2026-09-28,
 roadmap 35 "Unconquerable Horn as a counterspell") for more: "like a counterspell that lasts
@@ -193,7 +227,8 @@ awe. So does the dragon's death.
 - **The ward.** Awe goes through `wardAgainst`, so Horn of Proof's ward cancels it.
 
 **Dissonant Voice** (`cards/dissonant-voice.ts`, Unicorn and Bard) has no save and no damage.
-Every opponent's next card that rolls to hit rolls twice and keeps the worse. A card that does
+Every opponent's next card that rolls to hit rolls twice and keeps the worse, through the
+shared roll-mode helper, so a pin's advantage cancels it. A card that does
 not roll to hit leaves it waiting. A natural 1 stays the worst roll and a natural 20 the best.
 
 Both were chosen from 13 measured variations, in duels, crowds, and team battles. The numbers,

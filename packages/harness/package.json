@@ -36,6 +36,7 @@
     "sim:search": "node dist/scripts/sim-search.js",
     "plan:matrix": "node dist/scripts/plan-matrix.js",
     "sim:matrix-report": "node dist/scripts/sim-matrix-report.js",
+    "sim:split-report": "node dist/scripts/sim-split-report.js",
     "sim:search-report": "node dist/scripts/sim-search-report.js",
     "sim:formula": "node dist/scripts/sim-formula.js",
     "sim:unicorn": "node dist/scripts/sim-monster.js Unicorn"

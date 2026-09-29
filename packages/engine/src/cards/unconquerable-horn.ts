@@ -5,6 +5,7 @@ import { UNICORN } from '../constants/creature-types.js';
 import { UNCOMMON } from '../helpers/probabilities.js';
 import { REASONABLE } from '../helpers/costs.js';
 import { chance } from '../helpers/chance.js';
+import { rollWithModes } from './helpers/roll-mode.js';
 import { capitalize } from '../helpers/capitalize.js';
 
 const { roll } = chance;
@@ -121,8 +122,11 @@ export class UnconquerableHornCard extends HitCard {
 		});
 		await subEventDelay(ring?.pacingMultiplier);
 
-		// No `crit`: a natural 20 or 1 means nothing to a creature of the wood.
-		const attackRoll = roll({ primaryDice: '1d20', modifier: companionHitBonus });
+		// No `crit`: a natural 20 or 1 means nothing to a creature of the wood. Through the card's
+		// roll modes, so a pinned target gives the creature advantage too (roadmap 36).
+		const attackRoll = rollWithModes(this, player, target, () =>
+			roll({ primaryDice: '1d20', modifier: companionHitBonus }), { targetOnly: true }
+		);
 		const { success } = this.checkSuccess(attackRoll, target.ac);
 		this.emit('rolled', {
 			reason: `vs ${target.givenName}'s ac (${target.ac}) to determine if the creature of the wood struck true.`,

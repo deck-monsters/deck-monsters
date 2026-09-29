@@ -1519,10 +1519,12 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
 ----------------------------------
 
  You strut and preen. Your beauty 
- mesmerizes everyone, including 
- yourself.
+ mesmerizes everyone. Now and 
+ then, even yourself.
 
- Immobilize everyone.
+ Immobilize everyone. You are 
+ caught too only on a natural 1 
+ (1d20).
 
  If already immobilized, hit 
  instead.
@@ -1904,8 +1906,8 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  again, all teeth.
 
  Take off until your next card. 
- The first melee attack against 
- you misses.
+ The first melee attack or area 
+ attack against you misses.
  If your next card is a melee 
  attack, dive: +2 to hit and +1d6 
  damage.

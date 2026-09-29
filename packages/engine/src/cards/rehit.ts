@@ -4,6 +4,7 @@ import { CLERIC, FIGHTER } from '../constants/creature-classes.js';
 import { UNCOMMON } from '../helpers/probabilities.js';
 import { VERY_CHEAP } from '../helpers/costs.js';
 import { agree } from '../helpers/pronouns.js';
+import { rollWithModes } from './helpers/roll-mode.js';
 
 const { roll } = chance;
 
@@ -25,21 +26,23 @@ export class Rehit extends HitCard {
 	}
 
 	override hitCheck(player: any, target: any): any {
-		let attackRoll = roll({
-			primaryDice: this.attackDice,
-			modifier: player.dexModifier,
-			bonusDice: player.bonusAttackDice,
-			crit: true,
-		});
+		// Each of Rehit's own rolls goes through the card's roll modes, so a pin's advantage or a
+		// rattle's disadvantage applies to it (roadmap 36; Codex review of #412 found Rehit
+		// rolling past them).
+		const rollOnce = () =>
+			rollWithModes(this, player, target, () =>
+				roll({
+					primaryDice: this.attackDice,
+					modifier: player.dexModifier,
+					bonusDice: player.bonusAttackDice,
+					crit: true,
+				})
+			);
+		let attackRoll = rollOnce();
 		let commentary = `Originally rolled ${attackRoll.naturalRoll.result}`;
 
 		if (attackRoll.naturalRoll.result < 10) {
-			attackRoll = roll({
-				primaryDice: this.attackDice,
-				modifier: player.dexModifier,
-				bonusDice: player.bonusAttackDice,
-				crit: true,
-			});
+			attackRoll = rollOnce();
 			commentary += ', which was less than 10. Rerolled and used second roll.';
 		} else {
 			commentary += ', which was greater than 10. Kept first roll.';
