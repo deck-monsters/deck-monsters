@@ -4816,6 +4816,28 @@ client and opens a new one on the next query. Covered by `db/pool-errors.test.ts
 
 **Status**: Fixed.
 
+### 204. Migrations reached production by hand, and one never did — FIXED
+
+On 2026-09-29, #413 merged and Railway deployed it before its migration existed in production:
+the new release selected `rooms.state`, which was not there yet. It was applied 17 seconds after
+the release started, before any room loaded, so nothing failed. Checking why turned up worse:
+the privacy migration from 2026-09-17 (`stop_email_display_names`) had never been applied, so
+five profiles still stored an email address as their display name, and new sign-ups could still
+get one (the app masked them wherever names were shown).
+
+Root cause: nothing applied migrations on deploy; it depended on someone running
+`supabase db push`. Five migrations had been applied by hand and recorded under versions that
+did not match their files, so `supabase db push` would also have tried to re-run them, and
+`create policy` is not re-runnable.
+
+**Fix**: the privacy migration was applied (5 names became `Beastmaster-…` handles), the
+history's versions were repaired to match the files, and the server now runs
+`dist/migrate.js` as a Railway pre-deploy command (`packages/server/src/migrate.ts`): pending
+files apply in their own transactions under an advisory lock, a name already recorded is never
+re-run, and a failure stops the deploy. See [deployment](../operations/deployment.md#apply-the-database-schema).
+
+**Status**: Fixed.
+
 ## Closed without a fix
 
 These were open investigations the owner closed on 2026-09-28. Reopen with new evidence.
