@@ -52,9 +52,10 @@ and follow the checklist in [cards and encounter effects](../architecture/cards-
     the Blinker is pulled into the time-shift.
   - *Mirror Shield*, above, already turns area attacks (Sandstorm among them) back on the
     caster; it is the first card of this family.
-  - *Unconquerable Horn, redesigned* (owner, 2026-09-28): a one-shot counterspell against the
-    next negative non-damage action aimed at the Unicorn (holds, curses, poison, Blink,
-    Sandstorm and Faceswap redirects), while damage still lands. It is planned in
+  - *Horn of Proof's ward* (owner, 2026-09-28 and 29): a one-round counterspell against the
+    next negative non-damage action aimed at its bearer (holds, curses, poison, Blink,
+    Sandstorm and Faceswap redirects), while damage still lands. It began on Unconquerable
+    Horn, which became a rally strike instead. It is planned in
     [35](35-balance-fixes.md#unconquerable-horn-as-a-counterspell-owner-2026-09-28).
   - A counter that reads the opponent's hand order (it answers the next card of a class the
     opponent plays), so card order and reading the fight both matter.

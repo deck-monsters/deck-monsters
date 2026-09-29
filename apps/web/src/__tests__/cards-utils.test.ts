@@ -44,7 +44,7 @@ describe('getCardClass', () => {
 		expect(getCardClass('Gloaming Rest')).toBe('heal');
 		expect(getCardClass('Dissonant Voice')).toBe('magic');
 		// A ward against holds, like the other boosts.
-		expect(getCardClass('Unconquerable Horn')).toBe('utility');
+		expect(getCardClass('Unconquerable Horn')).toBe('melee');
 	});
 
 	it('badges the Dragon cards by what they do', () => {

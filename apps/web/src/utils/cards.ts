@@ -1,5 +1,6 @@
 const HEAL_KEYWORDS = ['heal', 'scotch', 'whiskey', 'potion', 'pokecen', 'spin up', 'horn of proof', 'gloaming'];
-const MELEE_KEYWORDS = ['hit', 'berserk', 'gore', 'spear', 'knife', 'swipe', 'battle', 'rampage', 'sticketh'];
+// Unconquerable Horn has been an attack (a strike and a rally) since roadmap 35.
+const MELEE_KEYWORDS = ['hit', 'berserk', 'gore', 'spear', 'knife', 'swipe', 'battle', 'rampage', 'sticketh', 'unconquerable'];
 const MAGIC_KEYWORDS = ['blink', 'blast', 'mesmer', 'sandstorm', 'curse', 'coil', 'focus', 'drain', 'cloak', 'entrance', 'dissonant', 'breath', 'tsunami'];
 
 export type CardClass = 'melee' | 'magic' | 'heal' | 'utility';

@@ -919,12 +919,14 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
  ✨  Unconquerable Horn  ◆
 ----------------------------------
 
- Canst thou bind the unicorn with 
- his band in the furrow? Thou 
- canst not. Many have tried. Its 
- horn is "of a wonderful 
- brightness," and when it rings, 
- the wood cometh.
+ "His horns are like the horns of 
+ unicorns: with them he shall 
+ push the people together to the 
+ ends of the earth." When the 
+ horn is lifted up it shineth, 
+ and it singeth, and all that 
+ liveth in the wood cometh to its 
+ light.
 
 ==================================
 ```

@@ -94,6 +94,19 @@ points below a Hit), so:
 
 ### Dragon cards: voice and jokes (owner, 2026-09-29)
 
+Owner follow-up: "It's okay to have a bit of Roman in there too. I just want to make sure the
+prose feels flavorful, and the dragon cards are missing that a bit while the other cards
+(including the also recent unicorn) have it. Dragons could also have little poems or songs."
+So task 8 includes a **flavour pass over the existing Dragon cards** (Fire Breath, Take Wing,
+Mood Scales, Tsunami, the ancient dragon lines), not only the new ones, and Dragon narration may
+carry short verses: skaldic-style couplets with kennings ("wave-steed", "hoard-warden"),
+alliterative lines in the manner of the Eddas, or a Roman marching chant for the draco
+standard. Public-domain sources named in a comment, as for the Unicorn.
+
+The jokes may be old public-domain dad jokes, copied or adapted (owner: "the web is full of
+them and dragons are a great place for the sort of 'dad joke' you can easily copy"). As with
+the quotations, the orchestrator writes these lines; implementers do mechanics.
+
 For task 8's new Dragon cards and any Dragon narration they bring:
 
 - **Voice: Norse mythology and the Vikings.** Old public-domain Norse texts may be quoted for

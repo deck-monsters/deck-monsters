@@ -19,8 +19,8 @@ interface Companion {
 
 /** The creatures of the wood that answer when the unicorn has no ally in the ring. */
 export const WOODLAND_COMPANIONS: Companion[] = [
-	{ icon: '🦦', name: 'an otter', strike: 'slips out of the sand and bites', miss: 'darts in and out again with nothing to show for it' },
-	{ icon: '🦌', name: 'a deer', strike: 'bounds in and lashes out at', miss: 'bounds in and lashes out, and the blow goes wide' },
+	{ icon: '🦦', name: 'an otter', strike: 'slips out of the brook and bites', miss: 'darts in and out again with nothing to show for it' },
+	{ icon: '🦌', name: 'a deer', strike: 'rears and strikes with sharp forehooves at', miss: 'rears and strikes, and the hooves find only air' },
 	{ icon: '🐏', name: 'a ram', strike: 'lowers its head and butts', miss: 'lowers its head and charges, and butts only air' },
 ];
 
@@ -49,15 +49,19 @@ export const WOODLAND_COMPANIONS: Companion[] = [
  * Player-facing lines: the horn's "wonderful brightness" is Solinus (Polyhistoria, Golding's
  * 1587 English, "a horne of wonderfull brightnesse"), the same page the Unicorn's own sources
  * list cites; the old grammar ("kindleth", "singeth", "cometh") follows the other Unicorn
- * cards. The description keeps Job 39:9-10 (King James, 1611), "Canst thou bind the unicorn
- * with his band in the furrow?". See docs/archive/roadmap/28-unicorn-voice-punch-up.md.
+ * cards. The description quotes Deuteronomy 33:17 and the rally Psalm 92:10 (King James,
+ * 1611): the unicorn's horn that pushes the people together, and the horn exalted. The
+ * orchestrator rewrote these lines itself (owner, 2026-09-29: "reserve the harder work [of
+ * writing text] for yourself ... or use quotations"). That it now mirrors the Minotaur's Horn
+ * Gore is welcome (owner: "a good thing and makes sense"); the shining horn and the rally are
+ * what make it the Unicorn's own. See docs/archive/roadmap/28-unicorn-voice-punch-up.md.
  */
 export class UnconquerableHornCard extends HitCard {
 	static cardType = 'Unconquerable Horn';
 	static permittedClassesAndTypes = [UNICORN];
 	static probability = UNCOMMON.probability;
 	static description =
-		'Canst thou bind the unicorn with his band in the furrow? Thou canst not. Many have tried. Its horn is "of a wonderful brightness," and when it rings, the wood cometh.';
+		'"His horns are like the horns of unicorns: with them he shall push the people together to the ends of the earth." When the horn is lifted up it shineth, and it singeth, and all that liveth in the wood cometh to its light.';
 	static level = 1;
 	static cost = REASONABLE.cost;
 	/** The woodland creature's bonus on its 1d20 attack roll; a class setting for the harness. */
@@ -68,7 +72,8 @@ export class UnconquerableHornCard extends HitCard {
 		hits: [
 			['drives a shining horn into', 80, '🦄'],
 			['runs through, horn first,', 60, '🦄'],
-			['lets the horn ring out, and in the same breath gores', 20, '🦄'],
+			['lowers a horn like a lance of light at', 20, '🦄'],
+			['gores, the horn blazing,', 20, '🦄'],
 		],
 	};
 
@@ -167,7 +172,7 @@ export class UnconquerableHornCard extends HitCard {
 		if (target === player || !isOpponentHold(target, player, activeContestants, ring)) return alive;
 
 		this.emit('narration', {
-			narration: `${this.icon} ${player.givenName} lifts ${player.pronouns.his} head, and the horn kindleth with a wonderful brightness and singeth over the ring.`,
+			narration: `${this.icon} ${player.givenName} lifts ${player.pronouns.his} head. "My horn shalt thou exalt like the horn of an unicorn." It kindleth with a wonderful brightness, and a clear note singeth over the ring.`,
 		});
 		await subEventDelay(ring?.pacingMultiplier);
 

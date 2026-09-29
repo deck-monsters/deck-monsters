@@ -191,7 +191,7 @@ Natural 1 on either roll fails. Natural 20 on the charge deals max damage.
 
 Source: `packages/engine/src/cards/unconquerable-horn.ts`.
 
-**Card description:** `Canst thou bind the unicorn with his band in the furrow? Thou canst not. Many have tried. Its horn is "of a wonderful brightness," and when it rings, the wood cometh.`
+**Card description:** `"His horns are like the horns of unicorns: with them he shall push the people together to the ends of the earth." When the horn is lifted up it shineth, and it singeth, and all that liveth in the wood cometh to its light.`
 
 **Rules text:**
 
@@ -205,12 +205,13 @@ Let the horn ring out: hit your target, and an ally in the ring strikes it too. 
 |---|---|
 | flavors → hits | `drives a shining horn into` |
 | flavors → hits | `runs through, horn first,` |
-| flavors → hits | `lets the horn ring out, and in the same breath gores` |
+| flavors → hits | `lowers a horn like a lance of light at` |
+| flavors → hits | `gores, the horn blazing,` |
 | companionStrike → label | `{Name} of the wood` |
 | companionStrike → narration | `{icon} Out of the wood beyond the ring, {name} answereth the light of the horn.` |
 | companionStrike → reason | `vs {target}'s ac ({ac}) to determine if the creature of the wood struck true.` |
 | companionStrike → narration | `{icon} {label} {miss}. {target} is untouched.` |
 | companionStrike → reason | `for damage.` |
 | companionStrike → flavorText | `{icon} {icon} {icon}  {label} {strike} {target} for {result} damage.` |
-| effect → narration | `✨ {player} lifts {his} head, and the horn kindleth with a wonderful brightness and singeth over the ring.` |
+| effect → narration | `✨ {player} lifts {his} head. "My horn shalt thou exalt like the horn of an unicorn." It kindleth with a wonderful brightness, and a clear note singeth over the ring.` |
 | effect → narration | `{ally} seeth the light, and heareth the singing of it, and cometh at a run.` |

@@ -65,7 +65,7 @@ describe('./cards/unconquerable-horn.ts Unconquerable Horn', () => {
 			'Let the horn ring out: hit your target, and an ally in the ring strikes it too. If you have no ally, a creature of the wood answers its light: an otter, a deer, or a ram (1d20 + 2 to hit, 1d4 damage).'
 		);
 		expect(stats).not.to.match(/ward|heal/i);
-		expect(description).to.include('Canst thou bind the unicorn');
+		expect(description).to.include('the horns of unicorns');
 	});
 
 	it('reads the companion profile from the class settings', () => {
@@ -109,7 +109,7 @@ describe('./cards/unconquerable-horn.ts Unconquerable Horn', () => {
 			expect(damages[1].roll.modifier).to.equal(0);
 			expect(damages[1].roll.result).to.be.within(1, 4);
 
-			expect(narrations.join('\n')).to.include('the horn kindleth');
+			expect(narrations.join('\n')).to.include('My horn shalt thou exalt');
 			expect(narrations.join('\n')).to.match(/Out of the wood beyond the ring, (an otter|a deer|a ram) answereth the light of the horn\./);
 			expect(foe.hp).to.equal(100 - (damages[0].roll.result + damages[1].roll.result));
 		});
