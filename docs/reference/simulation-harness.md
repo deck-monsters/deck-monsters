@@ -324,6 +324,11 @@ surviving member, so a side's win rate cannot be rebuilt from `winRates` (summin
 overcounts, the best member undercounts). Use `winnersByFight`, each fight's winning labels,
 through `sideWinRate(res, labels)`; `sim:bosses` and `sim:rings` do.
 
+The batch runner (`sim:batch`) takes a `team` on each side of a unit and scores the same way:
+a side wins when its team wins, including a member that died during the fight
+(`balance/units.ts`). Before roadmap 35 the runner omitted `team`, and scoring by surviving
+labels would have counted a fallen teammate as a loss.
+
 ## Card-level counters
 
 `sim:monster` counts card events by wrapping the card classes' prototype methods inside its
