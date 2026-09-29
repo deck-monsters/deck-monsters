@@ -180,7 +180,7 @@ const buildStatsReferenceMarkdown = (): string => {
 	const monsterRows = allMonsters.map((Monster: new (...args: any[]) => any) => {
 		const offsets = getMonsterTypeOffsets(Monster);
 		const hp = hpRangeAtLevel(offsets.typeHpOffset, 0);
-		const ac = acRangeAtLevel(offsets.typeAcOffset, 0, (Monster as any).youthAc);
+		const ac = acRangeAtLevel(offsets.typeAcOffset, 0, offsets.youthAc);
 		const sign = (n: number): string => (n >= 0 ? `+${n}` : `${n}`);
 
 		return `| ${offsets.creatureType} | ${offsets.classLabel} | ${formatNumericRange(hp)} | ${formatNumericRange(ac)} | ${sign(offsets.strModifier)} | ${sign(offsets.dexModifier)} | ${sign(offsets.intModifier)} |`;

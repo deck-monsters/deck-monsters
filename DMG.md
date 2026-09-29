@@ -83,7 +83,8 @@ Spawn formulas (match engine):
   hpVariance = random(0, 5) + typeHpOffset
   acVariance = random(0, 2) + typeAcOffset
   HP at level L = 28 + hpVariance + min(L × 3, 61)
-  AC at level L = 5 + acVariance + min(L, 12)
+  AC at level L = 5 + acVariance + min(L, 12) + youth AC
+  youth AC = the class's youthAc to level 3, half of it (rounded up) to level 6, 0 from level 7
 
 Effective STR, DEX, and INT. A temporary boost or curse is counted once:
   pre-battle modifier = type offset + min(level, stat cap) + min(permanent modifier, stat cap)

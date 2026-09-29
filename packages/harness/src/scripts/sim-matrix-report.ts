@@ -9,12 +9,19 @@
  * fight, and turnarounds (winner once 25 or 50 points of HP fraction behind) per decisive
  * fight. 34's working targets flag a drop of more than 20% in turnarounds or rare rolls.
  * Engine-free, so it exits at once.
+ *
+ * Two runs must hold the same finished units, or the comparison would credit the change with
+ * a difference in which matchups were sampled (a Codex review of #410). A partial run is
+ * refused; `--allow-partial` compares only the units both finished and says how many were
+ * left out.
  */
-import { writeFileSync } from 'node:fs';
-import { readResults } from '../balance/results.js';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { MANIFEST_FILE, readResults } from '../balance/results.js';
 import type { ExcitementTally, UnitResult } from '../balance/units.js';
 
-const args = process.argv.slice(2);
+const allowPartial = process.argv.includes('--allow-partial');
+const args = process.argv.slice(2).filter(a => a !== '--allow-partial');
 const jsonIndex = args.indexOf('--json');
 const jsonOut = jsonIndex >= 0 ? args[jsonIndex + 1] : undefined;
 const dirs = jsonIndex >= 0 ? args.filter((_, i) => i !== jsonIndex && i !== jsonIndex + 1) : args;
@@ -28,8 +35,36 @@ interface Summary {
 	excitement: ExcitementTally;
 }
 
-function summarize(dir: string): Summary {
-	const results = readResults(dir).filter((r: UnitResult) => !r.error && r.tags?.kind === 'matrix');
+const finished = (dir: string): UnitResult[] => {
+	const ok = readResults(dir).filter((r: UnitResult) => !r.error && r.tags?.kind === 'matrix');
+	// A unit retried after a failure has two lines; keep one per id.
+	return [...new Map(ok.map(r => [r.id, r])).values()];
+};
+const planned = (dir: string): number | undefined => {
+	const path = join(dir, MANIFEST_FILE);
+	return existsSync(path) ? (JSON.parse(readFileSync(path, 'utf8')) as { units?: number }).units : undefined;
+};
+
+/** The unit ids every run finished; refuses a mismatch unless `--allow-partial`. */
+function commonIds(): Set<string> {
+	const sets = dirs.map(dir => new Set(finished(dir).map(r => r.id)));
+	const common = new Set([...sets[0]!].filter(id => sets.every(set => set.has(id))));
+	const problems: string[] = [];
+	dirs.forEach((dir, i) => {
+		const want = planned(dir);
+		if (want !== undefined && sets[i]!.size < want) problems.push(`${dir}: ${sets[i]!.size} of ${want} planned units finished`);
+		if (sets[i]!.size > common.size) problems.push(`${dir}: ${sets[i]!.size - common.size} units the other run lacks`);
+	});
+	if (problems.length && !allowPartial) {
+		process.stderr.write(`Runs are not comparable:\n  ${problems.join('\n  ')}\nFinish them (rerun the same plan to resume), or pass --allow-partial to compare only the ${common.size} units both finished.\n`);
+		process.exit(1);
+	}
+	if (problems.length) process.stderr.write(`Comparing only the ${common.size} units both runs finished:\n  ${problems.join('\n  ')}\n`);
+	return common;
+}
+
+function summarize(dir: string, ids: Set<string>): Summary {
+	const results = finished(dir).filter(r => ids.has(r.id));
 	const levels: Summary['levels'] = {};
 	const excitement: ExcitementTally = { fights: 0, decisive: 0, rounds: 0, loki: 0, luck: 0, turnaround25: 0, turnaround50: 0 };
 	const scores = new Map<string, Map<string, number>>();
@@ -52,7 +87,8 @@ function summarize(dir: string): Summary {
 	return { levels, excitement };
 }
 
-const runs = dirs.map(summarize);
+const ids = commonIds();
+const runs = dirs.map(dir => summarize(dir, ids));
 const pct = (x: number): string => `${(100 * x).toFixed(0)}%`;
 const delta = (x: number): string => `${x >= 0 ? '+' : ''}${(100 * x).toFixed(1)}`;
 const lines: string[] = [];

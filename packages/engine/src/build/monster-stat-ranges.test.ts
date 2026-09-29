@@ -3,8 +3,12 @@ import { expect } from 'chai';
 import Basilisk from '../monsters/basilisk.js';
 import Jinn from '../monsters/jinn.js';
 import Minotaur from '../monsters/minotaur.js';
+import Dragon from '../monsters/dragon.js';
+import Gladiator from '../monsters/gladiator.js';
 import {
 	acRangeAtLevel,
+	formatStatLine,
+	getMonsterTypeOffsets,
 	hpRangeAtLevel,
 	spawnVarianceRange,
 } from './monster-stat-ranges.js';
@@ -47,5 +51,18 @@ describe('monster-stat-ranges', () => {
 	it('applies level scaling to HP and AC', () => {
 		expect(hpRangeAtLevel(2, 3)).to.deep.equal({ min: 39, max: 44 });
 		expect(acRangeAtLevel(2, 3)).to.deep.equal({ min: 10, max: 12 });
+	});
+
+	it('carries youth AC through every stats path, so the guides match the game (roadmap 35)', () => {
+		for (const Monster of [Dragon, Gladiator]) {
+			const offsets = getMonsterTypeOffsets(Monster);
+			expect(offsets.youthAc, Monster.name).to.equal(2);
+			const young = acRangeAtLevel(offsets.typeAcOffset, 0, offsets.youthAc);
+			expect(young.min - acRangeAtLevel(offsets.typeAcOffset, 0).min).to.equal(2);
+			expect(formatStatLine(offsets, 0)).to.include(`AC: ${young.min}–${young.max}`);
+			// Gone by level 7.
+			expect(acRangeAtLevel(offsets.typeAcOffset, 7, offsets.youthAc)).to.deep.equal(acRangeAtLevel(offsets.typeAcOffset, 7));
+		}
+		expect(getMonsterTypeOffsets(Minotaur).youthAc).to.equal(0);
 	});
 });

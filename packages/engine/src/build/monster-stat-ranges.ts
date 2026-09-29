@@ -18,6 +18,8 @@ export interface MonsterTypeOffsets {
 	dexModifier: number;
 	strModifier: number;
 	intModifier: number;
+	/** Youth AC (roadmap 35): extra AC to level 6; see `youthAcBonus`. */
+	youthAc: number;
 }
 
 export interface NumericRange {
@@ -67,7 +69,7 @@ export function formatNumericRange(range: NumericRange): string {
 export function formatStatLine(offsets: MonsterTypeOffsets, level = 0): string {
 	const sign = (n: number): string => (n >= 0 ? `+${n}` : `${n}`);
 	const hp = hpRangeAtLevel(offsets.typeHpOffset, level);
-	const ac = acRangeAtLevel(offsets.typeAcOffset, level);
+	const ac = acRangeAtLevel(offsets.typeAcOffset, level, offsets.youthAc);
 
 	return [
 		`  ${offsets.creatureType} (${offsets.classLabel})`,
@@ -87,6 +89,8 @@ export function baseSpawnAcRange(): NumericRange {
 export function getMonsterTypeOffsets(Monster: new (...args: any[]) => any): MonsterTypeOffsets {
 	const instance = new Monster();
 	const m = Monster as any;
+	// A probe only: stop its passive-healing timer so doc builds do not hold the process open.
+	instance.disposeTimers?.();
 
 	return {
 		creatureType: m.creatureType ?? instance.creatureType ?? Monster.name,
@@ -96,6 +100,7 @@ export function getMonsterTypeOffsets(Monster: new (...args: any[]) => any): Mon
 		dexModifier: instance.options?.dexModifier ?? 0,
 		strModifier: instance.options?.strModifier ?? 0,
 		intModifier: instance.options?.intModifier ?? 0,
+		youthAc: m.youthAc ?? 0,
 	};
 }
 
@@ -104,7 +109,8 @@ Spawn formulas (match engine):
   hpVariance = random(0, ${HP_VARIANCE}) + typeHpOffset
   acVariance = random(0, ${AC_VARIANCE}) + typeAcOffset
   HP at level L = ${BASE_HP} + hpVariance + min(L × 3, ${MAX_BOOSTS.hp})
-  AC at level L = ${BASE_AC} + acVariance + min(L, ${MAX_BOOSTS.ac})
+  AC at level L = ${BASE_AC} + acVariance + min(L, ${MAX_BOOSTS.ac}) + youth AC
+  youth AC = the class's youthAc to level 3, half of it (rounded up) to level 6, 0 from level 7
 
 Effective STR, DEX, and INT. A temporary boost or curse is counted once:
   pre-battle modifier = type offset + min(level, stat cap) + min(permanent modifier, stat cap)
