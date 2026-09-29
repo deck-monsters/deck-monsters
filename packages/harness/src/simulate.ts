@@ -123,6 +123,12 @@ export interface SimConfig {
 	 * default; it reads the public `announce` events, so it costs a little.
 	 */
 	trackExcitement?: boolean;
+	/**
+	 * Called once per fight, in fight order, as the ring resolves it, with the winning labels
+	 * (empty for a draw). The runner's per-fight probes use it to close each fight
+	 * (`balance/probes.ts`).
+	 */
+	onFightResolved?: (winners: string[]) => void;
 }
 
 /**
@@ -550,9 +556,11 @@ export async function simulate(config: SimConfig): Promise<SimResult> {
 				draws += 1;
 				// One entry per fight, so entries line up with fight order (a Codex review of #403).
 				winnersByFight.push([]);
+				config.onFightResolved?.([]);
 				return;
 			}
 			winnersByFight.push(pushWinCounts(winCounts, stableIdToLabel, p, rollEvents));
+			config.onFightResolved?.(winnersByFight[winnersByFight.length - 1]!);
 		},
 	});
 

@@ -11,6 +11,7 @@
  * identity: the edge cancels exactly instead of on average (seat-swapped pairs).
  */
 import { applyVariants } from './variants.js';
+import { installProbes } from './probes.js';
 import { simulate, type SimMonsterSpec, type SimResult } from '../simulate.js';
 
 /**
@@ -38,6 +39,8 @@ export interface Unit {
 	excitement?: boolean;
 	/** Experiment variants (`balance/variants.ts`) applied for this unit only. */
 	variants?: string[];
+	/** Per-fight probes (`balance/probes.ts`): split each side's results by whether one fired. */
+	probes?: string[];
 }
 
 /**
@@ -83,6 +86,11 @@ export interface UnitResult {
 	error?: string;
 	/** When the unit asked for it. */
 	excitement?: ExcitementTally;
+	/**
+	 * When the unit asked for probes: per probe, each side's results in fights where the probe
+	 * fired for that side (`with`) and fights where it did not (`without`), in side order.
+	 */
+	split?: Record<string, { with: SideTally[]; without: SideTally[] }>;
 }
 
 const label = (position: number): string => `Sim ${position + 1}`;
@@ -104,16 +112,37 @@ async function runUnitPlain(unit: Unit): Promise<UnitResult> {
 	const totals = unit.sides.map(() => ({ wins: 0, draws: 0, losses: 0 }));
 	const perRotation: UnitResult['rotations'] = [];
 	const excitement: ExcitementTally = { fights: 0, decisive: 0, rounds: 0, loki: 0, luck: 0, turnaround25: 0, turnaround50: 0 };
+	const blank = () => unit.sides.map(() => ({ wins: 0, draws: 0, losses: 0 }));
+	const split: Record<string, { with: ReturnType<typeof blank>; without: ReturnType<typeof blank> }> = {};
+	for (const probe of unit.probes ?? []) split[probe] = { with: blank(), without: blank() };
+	// Which probes fired for which labels, per fight in fight order.
+	let current = new Map<string, Set<string>>();
+	let firedByFight: Array<Map<string, Set<string>>> = [];
+	const undoProbes = installProbes(unit.probes, (fightLabel, probe) => {
+		if (!current.has(probe)) current.set(probe, new Set());
+		current.get(probe)!.add(fightLabel);
+	});
+	try {
 
 	for (const r of rotations) {
 		// order[position] = side index; position 0 moves first.
 		const order = Array.from({ length: n }, (_, p) => (p + r) % n);
+		current = new Map();
+		firedByFight = [];
 		const res: SimResult = await simulate({
 			monsters: order.map(side => unit.sides[side]!),
 			fights: unit.fights,
 			seed: unit.seed,
 			roomId: `batch-${unit.id}-r${r}`,
 			...(unit.excitement ? { trackExcitement: true } : {}),
+			...(unit.probes?.length
+				? {
+						onFightResolved: () => {
+							firedByFight.push(current);
+							current = new Map();
+						},
+					}
+				: {}),
 		});
 		for (const f of res.excitement ?? []) {
 			excitement.fights += 1;
@@ -133,7 +162,7 @@ async function runUnitPlain(unit: Unit): Promise<UnitResult> {
 			throw new Error(`${res.cancelledFights} of ${res.fights} fights were cancelled by the engine (rotation ${r})`);
 		}
 		const scores = unit.sides.map(() => 0);
-		for (const winners of res.winnersByFight) {
+		for (const [fight, winners] of res.winnersByFight.entries()) {
 			const draw = winners.length === 0;
 			const winningTeams = new Set(
 				order
@@ -142,21 +171,31 @@ async function runUnitPlain(unit: Unit): Promise<UnitResult> {
 			);
 			order.forEach((side, position) => {
 				const team = unit.sides[side]!.team;
-				if (draw) {
-					totals[side]!.draws += 1;
-					scores[side]! += 0.5;
-				} else if (winners.includes(label(position)) || (team !== undefined && winningTeams.has(team))) {
-					totals[side]!.wins += 1;
-					scores[side]! += 1;
-				} else {
-					totals[side]!.losses += 1;
+				const outcome = draw
+					? 'draws'
+					: winners.includes(label(position)) || (team !== undefined && winningTeams.has(team))
+						? 'wins'
+						: 'losses';
+				totals[side]![outcome] += 1;
+				scores[side]! += outcome === 'wins' ? 1 : outcome === 'draws' ? 0.5 : 0;
+				for (const [probe, tally] of Object.entries(split)) {
+					const fired = firedByFight[fight]?.get(probe)?.has(label(position)) ?? false;
+					(fired ? tally.with : tally.without)[side]![outcome] += 1;
 				}
 			});
 		}
 		perRotation.push({ firstSide: order[0]!, fights: res.fights, scores: scores.map(s => s / Math.max(1, res.fights)) });
 	}
 
+	} finally {
+		undoProbes();
+	}
+
 	const fights = perRotation.reduce((acc, r) => acc + r.fights, 0);
+	const score = (t: { wins: number; draws: number; losses: number }) => {
+		const n = t.wins + t.draws + t.losses;
+		return { ...t, score: n ? (t.wins + t.draws / 2) / n : NaN };
+	};
 	return {
 		id: unit.id,
 		...(unit.group !== undefined ? { group: unit.group } : {}),
@@ -166,5 +205,12 @@ async function runUnitPlain(unit: Unit): Promise<UnitResult> {
 		rotations: perRotation,
 		ms: Date.now() - started,
 		...(unit.excitement ? { excitement } : {}),
+		...(unit.probes?.length
+			? {
+					split: Object.fromEntries(
+						Object.entries(split).map(([probe, t]) => [probe, { with: t.with.map(score), without: t.without.map(score) }]),
+					),
+				}
+			: {}),
 	};
 }

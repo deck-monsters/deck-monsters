@@ -115,7 +115,7 @@ widened Loki or luck ranges are not.
   Unicorn 84% and the Basilisk 80% at level 1. That is under the cap but outside 20–80%. Faceswap
   is rare and not for sale, so it is a ceiling. Recheck when real collections include it
   (production data) before trimming.
-- [ ] **Harness: a per-fight split for card effects.** The split that exposed Gloaming Rest's
+- [x] **Harness: a per-fight split for card effects** (done in 36: unit `probes` and `sim-split-report`). The split that exposed Gloaming Rest's
   full heal was a one-off probe (`simulate({ fights: 1, seed })` in a loop with the card's
   method wrapped). A runner option that tags each fight with "effect X happened" would make
   the check routine for all-or-nothing cards. See the
