@@ -96,6 +96,12 @@ export class RoomManager {
 	 * neither can read or overwrite state older than the flush (roadmap 37 risk 3).
 	 */
 	private readonly pendingFlush = new Map<string, Promise<void>>();
+	/**
+	 * Rooms with a reset in progress (never rejects). A load that ran between the room leaving
+	 * `active` and the tombstone landing would restore the pre-reset row, and its next save
+	 * would outrank the tombstone and undo the reset (roadmap 37 review). Loads wait on this.
+	 */
+	private readonly resetting = new Map<string, Promise<void>>();
 
 	constructor(
 		private readonly db: Db,
@@ -480,6 +486,22 @@ export class RoomManager {
 	}
 
 	async resetRoomState(roomId: string): Promise<void> {
+		// Registered synchronously (no await before this) so no load can slip in first. Loads
+		// already past their select are discarded by the load-epoch gate (#71 mechanism).
+		this._invalidateLoads(roomId);
+		const work = this._resetRoomState(roomId);
+		const settled: Promise<void> = work.then(
+			() => undefined,
+			() => undefined
+		).finally(() => {
+			if (this.resetting.get(roomId) === settled) this.resetting.delete(roomId);
+			if (!this.loading.has(roomId) && !this.active.has(roomId)) this.loadEpoch.delete(roomId);
+		});
+		this.resetting.set(roomId, settled);
+		return work;
+	}
+
+	private async _resetRoomState(roomId: string): Promise<void> {
 		// Detach the live game and wait for its last save FIRST. Writing the DB first left a
 		// window where a save still in flight from the old game landed after the reset and
 		// brought the room back (roadmap 37 risk 3).
@@ -514,6 +536,37 @@ export class RoomManager {
 			stateVersion: nextStateVersion(),
 			updatedAt: new Date(),
 		}).where(eq(rooms.id, roomId));
+	}
+
+	/**
+	 * Saves every active room and waits for the writes, giving up at `timeoutMs` so a hung write
+	 * cannot block process exit. Does NOT unload or dispose (rooms keep serving), and includes
+	 * rooms in a fight: their state is still worth saving. Used on SIGTERM/SIGINT (roadmap 37).
+	 */
+	async flushAll(timeoutMs: number): Promise<{ flushed: number; failed: number; timedOut: number }> {
+		const outcome = { flushed: 0, failed: 0, timedOut: 0 };
+		const timedOut = Symbol('timeout');
+		let timer: NodeJS.Timeout | undefined;
+		const deadline = new Promise<typeof timedOut>((resolve) => {
+			timer = setTimeout(() => resolve(timedOut), timeoutMs);
+		});
+		await Promise.allSettled(
+			[...this.active.values()].map(async (entry) => {
+				const result = await Promise.race([
+					entry.game.flushState().then(
+						() => 'ok' as const,
+						() => 'failed' as const
+					),
+					deadline,
+				]);
+				if (result === 'ok') outcome.flushed++;
+				else if (result === 'failed') outcome.failed++;
+				else outcome.timedOut++;
+			})
+		);
+		clearTimeout(timer);
+		log.info('flushed rooms', { ...outcome, timeoutMs });
+		return outcome;
 	}
 
 	async unloadRoom(roomId: string): Promise<void> {
@@ -787,6 +840,15 @@ export class RoomManager {
 			return inflight;
 		}
 
+		const resetInProgress = this.resetting.get(roomId);
+		if (resetInProgress) {
+			// Start loading only after the tombstone landed; a load that began before the reset is
+			// stale (epoch) and is allowed to settle first so we do not join it.
+			return resetInProgress
+				.then(() => this.loading.get(roomId)?.catch(() => undefined))
+				.then(() => this._getOrLoad(roomId));
+		}
+
 		log.debug('room not in cache, loading from DB', { roomId });
 		const promise = this._loadRoom(roomId).finally(() => {
 			this.loading.delete(roomId);
@@ -829,8 +891,12 @@ export class RoomManager {
 
 		// A room that was just unloaded may still have its last save in flight; selecting first
 		// would restore older state and then race that write (roadmap 37 risk 3).
-		for (let flush = this.pendingFlush.get(roomId); flush; flush = this.pendingFlush.get(roomId)) {
-			await flush;
+		for (
+			let wait = this.resetting.get(roomId) ?? this.pendingFlush.get(roomId);
+			wait;
+			wait = this.resetting.get(roomId) ?? this.pendingFlush.get(roomId)
+		) {
+			await wait;
 		}
 
 		const rows = await this.db

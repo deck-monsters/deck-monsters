@@ -1,4 +1,6 @@
 import { expect } from 'chai';
+import type { SQL } from 'drizzle-orm';
+import { PgDialect } from 'drizzle-orm/pg-core';
 import sinon from 'sinon';
 
 import { roomStateSavesStale } from './metrics/index.js';
@@ -37,22 +39,47 @@ describe('PostgresStateStore', () => {
 		expect(written.stateBlob).to.be.a('string');
 	});
 
-	it('stamps versions at call time, so a later snapshot always carries a higher one', async () => {
-		const first = makeDb();
-		const second = makeDb();
-		const store1 = new PostgresStateStore(first.db);
-		const store2 = new PostgresStateStore(second.db);
-		// Both writes are started in snapshot order; the second one's update is what lands first
-		// on the database. Only the versions matter for the guard.
-		const p1 = store1.save('r', state);
-		const p2 = store2.save('r', state);
-		await Promise.all([p2, p1]);
+	it('stamps versions at call time, so writes landing in reverse order keep the newer state', async () => {
+		// In-memory row that honours the `state_version < $v` guard by inspecting the recorded
+		// where-clause, with each write held so the second save lands first.
+		const row = { state: null as unknown, stateVersion: 0 };
+		const gates: Array<() => void> = [];
+		let lastWhere: unknown;
+		const db = {
+			update: () => ({
+				set: (values: { state: unknown; stateVersion: number }) => ({
+					where: (cond: unknown) => {
+						lastWhere = cond;
+						return {
+							returning: () =>
+								new Promise((resolve) => {
+									gates.push(() => {
+										if (row.stateVersion < values.stateVersion) {
+											row.state = values.state;
+											row.stateVersion = values.stateVersion;
+											resolve([{ id: 'r' }]);
+										} else resolve([]);
+									});
+								}),
+						};
+					},
+				}),
+			}),
+		} as never;
+		const store = new PostgresStateStore(db);
+		const older = { name: 'Game', options: { marker: 'older' } };
+		const newer = { name: 'Game', options: { marker: 'newer' } };
 
-		const v1 = first.set.firstCall.args[0].stateVersion;
-		const v2 = second.set.firstCall.args[0].stateVersion;
-		expect(v2).to.be.greaterThan(v1);
-		// The guard `state_version < $v` is what makes the older write match no row.
-		expect(first.where.calledOnce).to.be.true;
+		const p1 = store.save('r', older);
+		const p2 = store.save('r', newer);
+		gates[1]!(); // newer lands first
+		gates[0]!(); // older lands last and must match no row
+		await Promise.all([p1, p2]);
+
+		expect(row.state).to.equal(newer);
+		// The guard is in the SQL, not just in the fake.
+		const rendered = new PgDialect().sqlToQuery(lastWhere as SQL);
+		expect(rendered.sql).to.match(/"id" = \$1 and "rooms"."state_version" < \$2|"state_version" </);
 	});
 
 	it('counts a save that matched no row as stale and does not throw or retry', async () => {
