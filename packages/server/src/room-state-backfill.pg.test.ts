@@ -7,7 +7,7 @@ import pg from 'pg';
 
 import type { Db } from './db/index.js';
 import * as schema from './db/schema.js';
-import { backfillRoomState } from './room-state-backfill.js';
+import { backfillRoomState, decodeStateBlob, parseBackfillArgs } from './room-state-backfill.js';
 import { nextStateVersion, PostgresStateStore } from './state-store.js';
 
 // Real-Postgres check for roadmap 37 task 5 (same gating and setup as state-store.pg.test.ts).
@@ -19,6 +19,33 @@ const gz = (obj: unknown) => zlib.gzipSync(JSON.stringify(obj)).toString('base64
 const game = (marker: string, extra: Record<string, unknown> = {}) => ({
 	name: 'Game',
 	options: { marker, characters: { u1: { name: 'C', options: { xp: 5 } } }, ...extra },
+});
+
+describe('decodeStateBlob', () => {
+	it('falls through to gzip for a digit-only string, and rejects non-objects', () => {
+		expect(() => decodeStateBlob('12345678')).to.throw();
+		expect(() => decodeStateBlob('[1,2]')).to.throw();
+		expect(() => decodeStateBlob('null')).to.throw();
+	});
+
+	it('returns an old-format object as saved', () => {
+		const old = { characters: { a: 1 } };
+		expect(decodeStateBlob(JSON.stringify(old))).to.deep.equal(old);
+		expect(decodeStateBlob(gz(old))).to.deep.equal(old);
+	});
+});
+
+describe('parseBackfillArgs', () => {
+	it('accepts the known flags', () => {
+		expect(parseBackfillArgs(['--dry-run', '--room', 'r1'])).to.deep.include({ dryRun: true, roomId: 'r1', fromBlob: false });
+		expect(parseBackfillArgs(['--from-blob', '--i-stopped-the-service'])).to.deep.include({ fromBlob: true, stoppedService: true });
+	});
+
+	it('rejects typos and a missing room id', () => {
+		for (const bad of [['--dryrun'], ['--dry_run'], ['--room'], ['--room', '--dry-run'], ['stray']]) {
+			expect(parseBackfillArgs(bad)).to.have.property('error');
+		}
+	});
 });
 
 suite('room state backfill against Postgres', () => {
@@ -180,6 +207,50 @@ suite('room state backfill against Postgres', () => {
 		expect(report.converted).to.equal(1);
 		const r = await row(id);
 		expect(r.state.options.marker).to.equal('blob-truth');
-		expect(Number(r.state_version)).to.be.greaterThan(oldVersion);
+		expect(Number(r.state_version)).to.equal(oldVersion + 1);
+	});
+
+	it('fromBlob dry run writes nothing', async () => {
+		const id = await makeRoom(gz(game('blob-truth')), game('stale'), 5);
+		const report = await backfillRoomState(db, { roomId: id, fromBlob: true, dryRun: true });
+		expect(report.converted).to.equal(1);
+		const r = await row(id);
+		expect(r.state.options.marker).to.equal('stale');
+		expect(Number(r.state_version)).to.equal(5);
+	});
+
+	it('fromBlob does not write an old decode over a blob that changed, and retries', async () => {
+		const id = await makeRoom(gz(game('old')), game('stale'), 5);
+		let calls = 0;
+		const report = await backfillRoomState(db, {
+			roomId: id,
+			fromBlob: true,
+			beforeWrite: async () => {
+				calls += 1;
+				if (calls === 1) await pool.query(`update rooms set state_blob = $2 where id = $1`, [id, gz(game('new'))]);
+			},
+		});
+		expect(report.converted).to.equal(1);
+		const r = await row(id);
+		expect(r.state.options.marker).to.equal('new');
+		expect(Number(r.state_version)).to.equal(6);
+	});
+
+	it('a failed write reports a short reason with no player data', async () => {
+		// jsonb rejects a lone surrogate; the repair only handles NUL.
+		const id = await makeRoom('{"name":"Game","options":{"marker":"SECRET-MARKER","bad":"\\ud800"}}');
+		const report = await backfillRoomState(db, { roomId: id });
+		expect(report.converted).to.equal(0);
+		expect(report.failed).to.have.length(1);
+		const reason = report.failed[0]!.reason;
+		expect(reason.length).to.be.lessThan(210);
+		expect(reason).to.not.contain('SECRET-MARKER');
+		expect(JSON.stringify(report)).to.not.contain('SECRET-MARKER');
+	});
+
+	it('a decode failure reports fixed text', async () => {
+		const id = await makeRoom('{"marker":"SECRET-MARKER" oops');
+		const report = await backfillRoomState(db, { roomId: id });
+		expect(report.failed[0]!.reason).to.equal('could not decode blob (not JSON, not gzip)');
 	});
 });

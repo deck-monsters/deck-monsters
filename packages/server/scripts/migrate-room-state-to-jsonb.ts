@@ -8,19 +8,18 @@
  *                   state_version. Requires --i-stopped-the-service.
  */
 import { db, pool } from '../src/db/index.js';
-import { backfillRoomState } from '../src/room-state-backfill.js';
+import { backfillRoomState, parseBackfillArgs, safeReason } from '../src/room-state-backfill.js';
+
+const USAGE = 'usage: migrate-room-state-to-jsonb.ts [--dry-run] [--room <id>] [--from-blob --i-stopped-the-service]';
 
 async function main(): Promise<number> {
-	const args = process.argv.slice(2);
-	const dryRun = args.includes('--dry-run');
-	const fromBlob = args.includes('--from-blob');
-	const roomIdx = args.indexOf('--room');
-	const roomId = roomIdx >= 0 ? args[roomIdx + 1] : undefined;
-	if (roomIdx >= 0 && (!roomId || roomId.startsWith('--'))) {
-		console.error('--room needs a room id');
+	const parsed = parseBackfillArgs(process.argv.slice(2));
+	if ('error' in parsed) {
+		console.error(`${parsed.error}\n${USAGE}`);
 		return 2;
 	}
-	if (fromBlob && !args.includes('--i-stopped-the-service')) {
+	const { dryRun, fromBlob, roomId, stoppedService } = parsed;
+	if (fromBlob && !stoppedService) {
 		// The old release writes only state_blob; a live writer during the rewrite could land a
 		// blob after we read it and be lost from `state`.
 		console.error('--from-blob rewrites state from state_blob and bumps state_version. The old release must not be writing while it runs: stop the service first, then pass --i-stopped-the-service.');
@@ -40,12 +39,13 @@ async function main(): Promise<number> {
 }
 
 main()
-	.then(async code => {
-		await pool.end();
-		process.exit(code);
+	.catch(err => {
+		// Message only: a raw error object can carry SQL params, i.e. player data.
+		console.error(`unexpected error: ${safeReason(err)}`);
+		return 1;
 	})
-	.catch(async err => {
-		console.error(err);
-		await pool.end().catch(() => {});
-		process.exit(1);
+	.then(async code => {
+		// Ended exactly once; a shutdown error is logged but does not fail a finished run.
+		await pool.end().catch(err => console.error(`pool shutdown: ${safeReason(err)}`));
+		process.exit(code);
 	});
