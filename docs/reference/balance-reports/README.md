@@ -15,6 +15,8 @@ are not checked in; rerun the plan to reproduce them.
 
 | Report | What it measured |
 |---|---|
+| [2026-09-28 roadmap 35 confirmation](2026-09-28-confirm-35.md) | The owner's run: a new search on the changed game at levels 1-7, then 2,000 fights a pair before and after the Dragon, Gladiator, and Tsunami changes |
+| [2026-09-28 Dragon, Gladiator, and Tsunami fixes](2026-09-28-fixes-dragon-gladiator.md) | Roadmap 35: the variants tried and the combined before/after check that chose the first body and card changes |
 | [2026-09-28 best-hand search](2026-09-28-search.md) | Lean Layer 4: searched hands at levels 1, 3, 5 and the first band check on them (run overnight by the owner) |
 | [2026-09-28 catalogue contexts](2026-09-28-contexts.md) | Task 6b: every card in a caster hand, a brute hand, against drinks, and in a crowd |
 | [2026-09-28 chassis, collections, and holders](2026-09-28-layer3.md) | Layer 3: each monster's body value with a fixed hand, what a typical player owns by level (from the drop code), and restricted cards on their real holders |

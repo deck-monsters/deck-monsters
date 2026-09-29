@@ -155,6 +155,7 @@ Source: `packages/engine/src/cards/tsunami.ts`.
 
 ```text
 5 damage to everyone in the ring: every opponent, every ally, and you.
+You roll 1d20 + dex vs 10 to ride your own wave and take none of it.
 ```
 
 **Narration and outcomes:**
@@ -164,4 +165,7 @@ Source: `packages/engine/src/cards/tsunami.ts`.
 | flavors → hits | `brings the sea down on` |
 | flavors → hits | `sweeps away` |
 | flavors → hits | `gives a very thorough bath to` |
+| rideTheWave → reason | `vs 10 to ride the wave.` |
+| rideTheWave → outcome | `{player} rides the crest, and the sea passes under {him}.` |
+| rideTheWave → outcome | `The wave comes back for {player}.` |
 | effect → flavorText | `{icon} 🌊  The wave comes back for {player} too: 5 damage.` |

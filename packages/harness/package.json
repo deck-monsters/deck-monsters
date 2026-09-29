@@ -34,6 +34,8 @@
     "sim:holders": "node dist/scripts/sim-holders.js",
     "sim:collection": "node dist/scripts/sim-collection.js",
     "sim:search": "node dist/scripts/sim-search.js",
+    "plan:matrix": "node dist/scripts/plan-matrix.js",
+    "sim:matrix-report": "node dist/scripts/sim-matrix-report.js",
     "sim:search-report": "node dist/scripts/sim-search-report.js",
     "sim:formula": "node dist/scripts/sim-formula.js",
     "sim:unicorn": "node dist/scripts/sim-monster.js Unicorn"

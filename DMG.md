@@ -83,7 +83,8 @@ Spawn formulas (match engine):
   hpVariance = random(0, 5) + typeHpOffset
   acVariance = random(0, 2) + typeAcOffset
   HP at level L = 28 + hpVariance + min(L × 3, 61)
-  AC at level L = 5 + acVariance + min(L, 12)
+  AC at level L = 5 + acVariance + min(L, 12) + youth AC
+  youth AC = the class's youthAc to level 3, half of it (rounded up) to level 6, 0 from level 7
 
 Effective STR, DEX, and INT. A temporary boost or curse is counted once:
   pre-battle modifier = type offset + min(level, stat cap) + min(permanent modifier, stat cap)
@@ -108,12 +109,12 @@ Base spawn ranges (type offset 0, before per-type modifiers):
 | Monster | Class | HP | AC | STR | DEX | INT |
 |---|---|---|---|---|---|---|
 | Basilisk | Barbarian | 30–35 | 7–9 | +2 | -1 | +1 |
-| Gladiator | Fighter | 31–36 | 5–7 | +1 | +1 | +0 |
+| Gladiator | Fighter | 34–39 | 7–9 | +1 | +1 | +0 |
 | Jinn | Bard | 28–33 | 7–9 | +0 | +1 | +1 |
 | Minotaur | Barbarian | 32–37 | 4–6 | +2 | +1 | -1 |
 | Weeping Angel | Cleric | 29–34 | 6–8 | -1 | +1 | +2 |
 | Unicorn | Cleric | 29–34 | 7–9 | +1 | +2 | -1 |
-| Dragon | Wizard | 30–35 | 6–8 | +0 | +1 | +1 |
+| Dragon | Wizard | 33–38 | 8–10 | +0 | +1 | +1 |
 
 ## Combat Math
 
@@ -1856,6 +1857,9 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  5 damage to everyone in the 
  ring: every opponent, every 
  ally, and you.
+ You roll 1d20 + dex vs 10 to 
+ ride your own wave and take none 
+ of it.
 
  Level: Beginner
  Usable by: Dragon

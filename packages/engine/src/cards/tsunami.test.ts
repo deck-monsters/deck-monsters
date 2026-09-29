@@ -16,7 +16,15 @@ describe('./cards/tsunami.ts Tsunami', () => {
 	let ring: any;
 	let contestants: any[];
 
+	// The Dragon's ride-the-wave roll (roadmap 35) is random; these tests fix it. The wave
+	// comes back for the Dragon unless a test says it rides.
+	const ride = TsunamiCard.prototype.rideTheWave;
+	afterEach(() => {
+		TsunamiCard.prototype.rideTheWave = ride;
+	});
+
 	beforeEach(() => {
+		TsunamiCard.prototype.rideTheWave = () => false;
 		dragon = new Dragon({ name: 'Skarn', gender: 'male' });
 		ally = new Unicorn({ name: 'Nola' });
 		foe = new Minotaur({ name: 'Bram' });
@@ -39,6 +47,32 @@ describe('./cards/tsunami.ts Tsunami', () => {
 		await new TsunamiCard().play(dragon, foe, ring, contestants);
 
 		contestants.forEach(({ monster }, i) => expect(monster.hp, monster.givenName).to.equal(before[i] - TSUNAMI_DAMAGE));
+	});
+
+	it('lets the dragon ride its own wave on a good roll: everyone else is hit, the dragon is not', async () => {
+		TsunamiCard.prototype.rideTheWave = () => true;
+		const before = contestants.map(({ monster }) => monster.hp);
+
+		await new TsunamiCard().play(dragon, foe, ring, contestants);
+
+		// contestants are [dragon, ally, foe].
+		expect(dragon.hp).to.equal(before[0]);
+		expect(ally.hp).to.equal(before[1] - TSUNAMI_DAMAGE);
+		expect(foe.hp).to.equal(before[2] - TSUNAMI_DAMAGE);
+	});
+
+	it('rolls 1d20 + dex against 10 to ride the wave, and announces it', () => {
+		TsunamiCard.prototype.rideTheWave = ride;
+		const card = new TsunamiCard();
+		const rolls: any[] = [];
+		card.on('rolled', (_c: string, _card: any, event: any) => rolls.push(event));
+		const results = Array.from({ length: 200 }, () => card.rideTheWave(dragon));
+
+		expect(rolls).to.have.length(200);
+		expect(rolls[0].vs).to.equal(10);
+		expect(rolls[0].reason).to.include('ride the wave');
+		expect(results.some(Boolean)).to.equal(true);
+		expect(results.some(r => !r)).to.equal(true);
 	});
 
 	it('says the wave comes back for the dragon, not that he hit himself by mistake', async () => {

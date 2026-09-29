@@ -8,7 +8,7 @@ tags: [roadmap, balance, cards, monsters]
 ---
 # 35 — Balance Fixes: First Pass on Measured Evidence
 
-**Status:** Planned (2026-09-28). Starts after the measurement PR from
+**Status:** In progress (2026-09-28): PR C on branch `claude/balance-fixes-c`. Started after the measurement PR from
 [34](34-balance-methodology.md) (tasks 6, 6b, 7, and the lean task 9) merges. Two PRs, each
 within the budget rule in `AGENTS.md`.
 
@@ -170,10 +170,10 @@ changes:
 
 | # | PR | Task | Acceptance | Status | Commit |
 |---|---|---|---|---|---|
-| 1 | C | Harness prerequisites (above) | Tests; the heal cap shows in the collection JSON; before/after mode reproduces a known result | Planned | |
-| 2 | C | Dragon: diagnose Fire Breath at level 1; choose the smallest body or card change; Tsunami's slight tweak | The Dragon in band at levels 1, 3, 5 on searched hands; Tsunami 0.8+ in its best context and at most the area median; no Dragon matchup under 20%; guardrails hold | Planned | |
-| 3 | C | Gladiator: early body change | The Gladiator in band at levels 1, 3, 5; brutes stronger early than late; guardrails hold | Planned | |
-| 4 | C | Confirmation run on the owner's machine, docs (card architecture doc, generated references via `build:docs`, bugs and roadmap tables) | Before/after report checked in | Planned | |
+| 1 | C | Harness prerequisites (above) | Tests; the heal cap shows in the collection JSON; before/after mode reproduces a known result | Done: the heal cap and context-ranked typical hands landed in #409 (Codex review); excitement tally in `simulate()` and the runner; a holds context; `plan:matrix` and `sim:matrix-report` for before/after on fixed hands and seeds, with the guardrails | this commit |
+| 2 | C | Dragon: diagnose Fire Breath at level 1; choose the smallest body or card change; Tsunami's slight tweak | The Dragon in band at levels 1, 3, 5 on searched hands; Tsunami 0.8+ in its best context and at most the area median; no Dragon matchup under 20%; guardrails hold | Done, mostly: +3 HP and youth AC 2 (a new per-class field) bring the Dragon from 23/33/32% to 34/42/37%; Fire Breath is not the problem and stays; Tsunami's ride-the-wave roll takes it from worse than a Hit to about a Hit. Level 1 (34%) and the matchup under 20% remain, both from the Weeping Angel (94%). [Report](../reference/balance-reports/2026-09-28-fixes-dragon-gladiator.md) | 1cc68c5, 806036a, this commit |
+| 3 | C | Gladiator: early body change | The Gladiator in band at levels 1, 3, 5; brutes stronger early than late; guardrails hold | Done: +3 HP and youth AC 2, from 39/37/31% to 49/45/37% with the Dragon's change beside it; guardrails up 4-9%. [Report](../reference/balance-reports/2026-09-28-fixes-dragon-gladiator.md) | this commit |
+| 4 | C | Confirmation run on the owner's machine, docs (card architecture doc, generated references via `build:docs`, bugs and roadmap tables) | Before/after report checked in | Done: owner's run, a new search at levels 1-7 and 2,000 fights a pair before and after. Levels 3, 5, and 7 are in band for every monster, and the guardrails rose 4-5%. The Dragon at level 1 rose from 16% to 28% and stays below the floor through one card (the Angel's Blink, worth 52 points in that matchup), which is the owner's call. The Unicorn beating the Dragon 98% at level 7 is a search artifact (a plain Dragon hand wins 51%). [Report](../reference/balance-reports/2026-09-28-confirm-35.md) | fee9549, dcb9197 (owner's run), this commit |
 | 5 | D | Unicorn cards: Unconquerable Horn, Dissonant Voice, Gloaming Rest (Horn of Proof if still needed) | Each 0.8+ in its best context and within the class ceiling; the Unicorn stays in band; the card text is readable and in voice | Planned | |
 | 6 | D | Optional simple fixes: Mesmerize, Enthrall, Harden | Only if a one-line change meets the targets without raising the Weeping Angel | Planned | |
 | 7 | D | Confirmation run and close-out: fold decisions into [cards and encounter effects](../architecture/cards-and-encounter-effects.md) and the balance method doc; archive this plan | Checked-in report; plan archived | Planned | |

@@ -32,7 +32,7 @@ function makeCaptureEb(): { eb: RoomEventBus; published: Array<{ payload: Record
 describe('./announcements/hit.ts', () => {
 	describe('hit announcement', () => {
 		it('can announce normal hit to public channel', () => {
-			const announcement = `💪 🤜 💪  Assailant hits Monster for 2 damage.\n\n💪 *Monster has 31HP.*\n`;
+			const announcement = `💪 🤜 💪  Assailant hits Monster for 2 damage.\n\n💪 *Monster has 34HP.*\n`;
 
 			const eb = makeEb(text => expect(text).to.equal(announcement));
 
@@ -89,7 +89,7 @@ describe('./announcements/hit.ts', () => {
 		});
 
 		it('can announce weak hit to public channel', () => {
-			const announcement = `💪 🏓 💪  Assailant hits Monster for 1 damage.\n\n💪 *Monster has 31HP.*\n`;
+			const announcement = `💪 🏓 💪  Assailant hits Monster for 1 damage.\n\n💪 *Monster has 34HP.*\n`;
 			const eb = makeEb(text => expect(text).to.equal(announcement));
 			const monster = new Gladiator({ name: 'monster', hpVariance: 0, acVariance: 0 });
 			const assailant = new Gladiator({ name: 'assailant', hpVariance: 0, acVariance: 0 });
@@ -98,7 +98,7 @@ describe('./announcements/hit.ts', () => {
 		});
 
 		it('can announce strong damage to public channel', () => {
-			const announcement = `💪 🔪 💪  Assailant hits Monster for 5 damage.\n\n💪 *Monster has 31HP.*\n`;
+			const announcement = `💪 🔪 💪  Assailant hits Monster for 5 damage.\n\n💪 *Monster has 34HP.*\n`;
 			const eb = makeEb(text => expect(text).to.equal(announcement));
 			const monster = new Gladiator({ name: 'monster', hpVariance: 0, acVariance: 0 });
 			const assailant = new Gladiator({ name: 'assailant', hpVariance: 0, acVariance: 0 });
@@ -107,7 +107,7 @@ describe('./announcements/hit.ts', () => {
 		});
 
 		it('can announce top damage to public channel', () => {
-			const announcement = `💪 🔥 💪  Assailant hits Monster for 10 damage.\n\n💪 *Monster has 31HP.*\n`;
+			const announcement = `💪 🔥 💪  Assailant hits Monster for 10 damage.\n\n💪 *Monster has 34HP.*\n`;
 			const eb = makeEb(text => expect(text).to.equal(announcement));
 			const monster = new Gladiator({ name: 'monster', hpVariance: 0, acVariance: 0 });
 			const assailant = new Gladiator({ name: 'assailant', hpVariance: 0, acVariance: 0 });
@@ -116,7 +116,7 @@ describe('./announcements/hit.ts', () => {
 		});
 
 		it('can announce bloodied to public channel', () => {
-			const announcement = `💪 🔥 💪  Assailant hits Monster for 10 damage.\n\n💪 *Monster is now bloodied. Monster has only 15HP.*\n`;
+			const announcement = `💪 🔥 💪  Assailant hits Monster for 10 damage.\n\n💪 *Monster is now bloodied. Monster has only 17HP.*\n`;
 			const eb = makeEb(text => expect(text).to.equal(announcement));
 			const monster = new Gladiator({ name: 'monster', hpVariance: 0, acVariance: 0 });
 			const assailant = new Gladiator({ name: 'assailant', hpVariance: 0, acVariance: 0 });

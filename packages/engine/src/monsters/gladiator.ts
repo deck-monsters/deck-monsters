@@ -58,7 +58,12 @@ class Gladiator extends BaseMonster {
 
 Gladiator.creatureType = GLADIATOR;
 Gladiator.class = FIGHTER;
-(Gladiator as any).hpVariance = 3;
+// Roadmap 35 (2026-09-28): with searched hands the Gladiator scored 39%, 37%, and 31% of
+// its field at levels 1, 3, and 5, and it had no AC bonus at all (AC 7 at level 1 against
+// 8-9 for most). The owner wants brutes strong early: 3 more HP (3 -> 6) and a young
+// fighter's youth AC (+2 to level 3, +1 to level 6) brought it to 49%, 45%, and 37%.
+(Gladiator as any).hpVariance = 6;
+(Gladiator as any).youthAc = 2;
 (Gladiator as any).description = `
 The gladiator is a professional duelist. Many are born slaves and reared in gladiatorial schools, until such time as they earn their freedom in battle, escape, or rebel. Some join dueling academies voluntarily, seeking fame or fortune in prize fights and honor matches. Some gladiators began as warriors from faroff lands, captured in battle and forced to fight to the death, while others are condemned criminals, paying their debt to society by participating in ritual combat for the public. Whatever their station or background, the gladiator has been hardened by combat and has learned to anticipate a wily foe. While gladiatorial matches often follow a prescribed, even ritual format, the gladiator must always be ready for the possibility that they will be thrown into a situation with unusual weapons, conditions, or opponents. Some arena fighters specialize in fighting exotic animals and monsters.
 `;

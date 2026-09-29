@@ -40,6 +40,12 @@ export const CARD_CONTEXTS: Record<string, CardContext> = {
 		opponents: 1,
 		about: 'An opponent that drinks and heals: shows counters to healing',
 	},
+	holds: {
+		hand: HITS8,
+		opponent: ['Coil', 'Hit', 'Constrict', 'Hit', 'Entrance', 'Hit', 'Horn Gore', 'Hit', 'Hit'],
+		opponents: 1,
+		about: 'An opponent that holds (Coil, Constrict, Entrance, Horn Gore): shows counters to holds (roadmap 35 task 1)',
+	},
 	crowd: {
 		hand: HITS8,
 		opponent: Array(9).fill('Hit') as string[],

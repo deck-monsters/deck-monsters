@@ -1,6 +1,6 @@
 import allMonsters from '../monsters/helpers/all.js';
 import { BASE_DEX, BASE_INT, BASE_STR } from '../constants/stats.js';
-import {
+import  { youthAcNote,
 	acRangeAtLevel,
 	formatNumericRange,
 	getMonsterTypeOffsets,
@@ -13,7 +13,7 @@ export function buildMonsterEntry(Monster: new (...args: any[]) => any, level = 
 	const offsets = getMonsterTypeOffsets(Monster);
 	const m = Monster as any;
 	const hp = hpRangeAtLevel(offsets.typeHpOffset, level);
-	const ac = acRangeAtLevel(offsets.typeAcOffset, level);
+	const ac = acRangeAtLevel(offsets.typeAcOffset, level, offsets.youthAc);
 	const sign = (n: number): string => (n >= 0 ? `+${n}` : `${n}`);
 	const desc: string = m.description ? m.description.trim() : '';
 
@@ -21,7 +21,7 @@ export function buildMonsterEntry(Monster: new (...args: any[]) => any, level = 
 ${offsets.creatureType} (${offsets.classLabel})
 ${'─'.repeat(40)}
 HP:  ${formatNumericRange(hp)} (spawn + level ${level})
-AC:  ${formatNumericRange(ac)} (spawn + level ${level})
+AC:  ${formatNumericRange(ac)} (spawn + level ${level}${youthAcNote(offsets.youthAc)})
 STR: ${BASE_STR + offsets.strModifier} (base ${sign(offsets.strModifier)})
 DEX: ${BASE_DEX + offsets.dexModifier} (base ${sign(offsets.dexModifier)})
 INT: ${BASE_INT + offsets.intModifier} (base ${sign(offsets.intModifier)})
@@ -42,13 +42,13 @@ export function buildMonsterEntryMarkdown(Monster: new (...args: any[]) => any, 
 	const offsets = getMonsterTypeOffsets(Monster);
 	const m = Monster as any;
 	const hp = hpRangeAtLevel(offsets.typeHpOffset, level);
-	const ac = acRangeAtLevel(offsets.typeAcOffset, level);
+	const ac = acRangeAtLevel(offsets.typeAcOffset, level, offsets.youthAc);
 	const sign = (n: number): string => (n >= 0 ? `+${n}` : `${n}`);
 	const desc: string = m.description ? m.description.trim() : '';
 
 	const rows = [
 		`| HP | ${formatNumericRange(hp)} (spawn + level ${level}) |`,
-		`| AC | ${formatNumericRange(ac)} (spawn + level ${level}) |`,
+		`| AC | ${formatNumericRange(ac)} (spawn + level ${level}${youthAcNote(offsets.youthAc)}) |`,
 		`| STR | ${BASE_STR + offsets.strModifier} (base ${sign(offsets.strModifier)}) |`,
 		`| DEX | ${BASE_DEX + offsets.dexModifier} (base ${sign(offsets.dexModifier)}) |`,
 		`| INT | ${BASE_INT + offsets.intModifier} (base ${sign(offsets.intModifier)}) |`,
