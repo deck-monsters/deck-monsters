@@ -136,30 +136,11 @@ owner decision in [11](11-balance-and-mechanics.md).
   roadmap 36 closed the pin rule, Mesmerize, Harden, the level 7 Dragon, and the per-fight
   split. The Faceswap watch, the level 5 Weeping Angel against the Minotaur, and a group-fight
   card remain.
-- **Room state as `jsonb`, not a gzip blob** (owner, 2026-09-29: "an artifact of the
-  infrastructure that the game ran on long ago"). `Game.persistState()` gzips the whole game
-  JSON and base64-encodes it into `rooms.state_blob` (`text`). So SQL cannot see inside it.
-  Answering "which Dragons own Faceswap?" for roadmap 36 meant pulling every blob out and
-  decoding it by hand. Base64 also makes the stored value about a third larger, and
-  Postgres already compresses large values itself (TOAST). The plan is in two steps:
-  1. **Store the same JSON as `jsonb`.**
-     - Add a `state` `jsonb` column.
-     - `persistState()` writes plain JSON through the `StateStore`.
-     - A migration decodes the old blobs, and the loader keeps reading both forms for one
-       release. `getOptions()` already accepts plain JSON, so this is mostly server and
-       migration work.
-     - The quarantine path, `restoreGame`, and the engine's no-database rule stay as they
-       are. The state is still one document per room, written by the engine and validated
-       by `gameStateSchema` on the way in.
-     - Size: one pass task, plus a check on production row sizes and save frequency before
-       and after.
-  2. **Normalized tables** (characters, monsters, decks) only if a real query needs more than
-     `jsonb` paths and a GIN index give. It would split the engine's one serialized game
-     into rows the server must keep consistent, so it needs a reason first. Analytics
-     already has its own tables (`fight_summaries`, `room_monster_stats`).
-
-  Read [rooms and identity](../architecture/rooms-and-identity.md) first: every new query
-  keeps its `room_id` scope.
+- **Room state as `jsonb`, not a gzip blob** ([37](37-room-state-in-postgres.md), owner
+  2026-09-29). The plan is ready to pick up after PR #412. It is one expand PR (key-order
+  independence, the engine serializing an object, the schema, a versioned dual-write server
+  store, a backfill script, and read-only query views), then a small contract PR that drops
+  `state_blob` after a week.
 - **Combat design** (11): stat reform, initiative, crit failures and crit ticks, card
   balance by tier, Team XP, and fight threads.
 

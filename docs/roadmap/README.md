@@ -19,6 +19,7 @@ completed reasoning belongs in the [archive](../archive/README.md).
 | [Item follow-ups](item-followups.md) | Prompt transport for items that ask a question |
 | [22 — Small leftovers](22-small-leftovers.md) | Cross-cutting decisions, manual verification gates, and small Workshop features |
 | [34 — Balance methodology](34-balance-methodology.md) | In progress: PR A merged (#408); PR B (catalogue and contexts, chassis and collections, lean best-hand search) in review. Still open: idealized action classes (task 5), excitement tooling (8), rings (10), the method reference doc (11) |
+| [37 — Room state as Postgres `jsonb`](37-room-state-in-postgres.md) | Planned, next after #412: replace the gzip+base64 `rooms.state_blob` with a queryable `jsonb` column (key-order and NUL risks, ordered saves, dual-write rollout with rollback, backfill, read-only views) |
 | [27 — Next passes](27-next-passes.md) | The order of the next passes: command and workshop bugs, the Dragon, realistic rings with boss balance, and the mega boss (done), then later work |
 
 [`10b-bugs-fixed.md`](10b-bugs-fixed.md) remains the stable fixed-bug ledger because code
