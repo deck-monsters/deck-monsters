@@ -15,13 +15,18 @@ const { roll } = chance;
  * without crits, so it can never trigger a stroke of luck or Curse of Loki. A kill by the
  * tail is credited to the dragon (it is the dragon's tail).
  *
- * The card's text is placeholder pending the orchestrator (roadmap 35 task 8).
+ * Player-facing text (written by the orchestrator, roadmap 35 task 8; owner, 2026-09-29: Norse and
+ * Viking voice, a little Roman welcome, short verses, dad jokes). Topsell (The Historie of
+ * Serpents, 1608) puts a dragon's strength in its tail rather than its teeth; the verse is an
+ * original alliterative quatrain in the manner of the Eddas ("wyrm" is the old word for
+ * dragon). The mead-horns are the pack's running joke about what a dragon breaks.
  */
 export class TailLashCard extends HitCard {
 	static cardType = 'Tail Lash';
 	static permittedClassesAndTypes = [DRAGON];
 	static probability = UNCOMMON.probability;
-	static description = 'A dragon attack that hits, then lashes with its tail.';
+	static description =
+		'Tooth for the foeman, tail for the fool; the wise watch the far end of the wyrm. Topsell says a dragon\'s strength lies not in its teeth but in its tail, which is why the Vikings who shout at dragons stand at the front.';
 	static level = 1;
 	static cost = REASONABLE.cost;
 	/** Taken off the tail's 1d20 + STR modifier attack roll; a class setting for the harness. */
@@ -29,7 +34,11 @@ export class TailLashCard extends HitCard {
 	/** The tail's damage; a class setting for the harness. */
 	static tailDamageDice = '1d4';
 	static flavors = {
-		hits: [['hits', 100]],
+		hits: [
+			['rakes', 80],
+			['snaps at', 60],
+			['bites', 50],
+		],
 	};
 
 	/** Set when this play's own hit landed (see `onLanded`). Reset at the top of each `effect`. */
@@ -54,7 +63,7 @@ export class TailLashCard extends HitCard {
 		const label = `${player.givenName}'s tail`;
 
 		this.emit('narration', {
-			narration: `${this.icon} ${player.givenName} swings ${player.pronouns.his} tail.`,
+			narration: `${this.icon} And then the tail comes round.`,
 		});
 		await subEventDelay(ring?.pacingMultiplier);
 
@@ -76,7 +85,7 @@ export class TailLashCard extends HitCard {
 
 		if (!success) {
 			this.emit('narration', {
-				narration: `${this.icon} The tail misses. ${target.givenName} is untouched.`,
+				narration: `${this.icon} The tail misses ${target.givenName} and clears a whole table of mead-horns instead.`,
 			});
 			return !target.dead;
 		}
@@ -92,7 +101,7 @@ export class TailLashCard extends HitCard {
 		await subEventDelay(ring?.pacingMultiplier);
 
 		// Credited to the dragon (a killing blow needs a real creature for `die()` to record).
-		(this as any).flavorText = `${player.icon} ${this.icon} ${target.icon}  ${label} hits ${target.givenName} for ${damageRoll.result} damage.`;
+		(this as any).flavorText = `${player.icon} ${this.icon} ${target.icon}  ${label} cracks across ${target.givenName} for ${damageRoll.result} damage.`;
 		try {
 			return await target.hit(damageRoll.result, player, this);
 		} finally {

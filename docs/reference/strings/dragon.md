@@ -62,7 +62,7 @@ Vikings carved dragons on their prows. Romans marched behind a dragon of cloth t
 
 Source: `packages/engine/src/cards/asinine-companion.ts`.
 
-**Card description:** `A companion boosts the strength of the caster.`
+**Card description:** `Every hero needs a faithful companion, and every dragon needs someone to carry the gold. The donkey talks the whole way. The dragon has not eaten him. Yet.`
 
 **Rules text:**
 
@@ -72,7 +72,13 @@ Boost: str +2 (max total boost of level + 1, at most +5, then boost granted to h
 
 **Narration and outcomes:**
 
-_None._
+| Where | Template |
+|---|---|
+| getBoostNarrative → str | `loads the gold onto the donkey and stands a little taller` |
+| getBoostNarrative → str | `lets the donkey carry the heavy things, which is everything` |
+| getBoostNarrative → str | `listens to the donkey's advice, ignores it, and feels stronger anyway` |
+| getBoostNarrative → str | `stops the donkey from eating the battle standard, and is proud of the restraint` |
+| getBoostNarrative → returns | `{target} {text}.` |
 
 ## Fire Breath
 
@@ -96,6 +102,7 @@ An ancient dragon (level 10+) breathes fire that cannot be dodged and burns for 
 |---|---|
 | flavors → hits | `breathes fire on` |
 | flavors → hits | `kindles coals around` |
+| flavors → hits | `sings the old fire-song over` |
 | flavors → hits | `very gently toasts` |
 | dodge → reason | `vs {difficulty} to dodge the flames.` |
 | dodge → outcome | `{target} twists aside and is only singed. Half damage.` |
@@ -115,7 +122,7 @@ An ancient dragon (level 10+) breathes fire that cannot be dodged and burns for 
 
 Source: `packages/engine/src/cards/helm-of-awe.ts`.
 
-**Card description:** `A helm that awes every opponent in the ring.`
+**Card description:** `Helm of awe on the hoard-guard's brow: the bold go pale, the proud bow low. Fafnir wore it on his gold, and no man stood before him. Shouting "SIT!" at a dragon in the helm does not work. It has been tried.`
 
 **Rules text:**
 
@@ -128,9 +135,9 @@ No damage. Does not stack; being awed again refreshes the count.
 
 | Where | Template |
 |---|---|
-| awe → narration | `{target} is still awed 🪖 (-{awePenalty} to attack).` |
-| effect → outcome | `{target} is not awed.` |
-| effect → outcome | `{target} is awed!` |
+| awe → narration | `{target} still cannot meet the dragon's eye 🐲 (-{awePenalty} to attack).` |
+| effect → outcome | `{target} stands {his} ground and stares back.` |
+| effect → outcome | `{target} looks upon the helm of awe, and {his} knees turn to water.` |
 | effect → reason | `vs 10 + {player}'s int modifier ({dc}) to resist awe.` |
 | effect → narration | `will not be awed.` |
 
@@ -162,7 +169,7 @@ Furious (half your hp or less): your scales blaze red and you cannot hide, but y
 
 Source: `packages/engine/src/cards/tail-lash.ts`.
 
-**Card description:** `A dragon attack that hits, then lashes with its tail.`
+**Card description:** `Tooth for the foeman, tail for the fool; the wise watch the far end of the wyrm. Topsell says a dragon's strength lies not in its teeth but in its tail, which is why the Vikings who shout at dragons stand at the front.`
 
 **Rules text:**
 
@@ -174,12 +181,13 @@ Hit: 1d20 vs ac / Damage: 1d6. If the hit lands and the target is still standing
 
 | Where | Template |
 |---|---|
+| flavors → hits | `snaps at` |
 | tailStrike → label | `{player}'s tail` |
-| tailStrike → narration | `🐉 {player} swings {his} tail.` |
+| tailStrike → narration | `🐉 And then the tail comes round.` |
 | tailStrike → reason | `vs {target}'s ac ({ac}) to determine if the tail struck true.` |
-| tailStrike → narration | `🐉 The tail misses. {target} is untouched.` |
+| tailStrike → narration | `🐉 The tail misses {target} and clears a whole table of mead-horns instead.` |
 | tailStrike → reason | `for damage.` |
-| tailStrike → flavorText | `{icon} 🐉 {icon}  {label} hits {target} for {result} damage.` |
+| tailStrike → flavorText | `{icon} 🐉 {icon}  {label} cracks across {target} for {result} damage.` |
 
 ## Take Wing
 
@@ -200,7 +208,7 @@ Any damage that lands while you are in the air knocks you down, and the dive is 
 | Where | Template |
 |---|---|
 | takeOff → narration | `🌬️ {flier} folds {his} wings and dives!` |
-| takeOff → narration | `{flier} glides back down to the sand.` |
+| takeOff → narration | `A Viking below bellows "COME DOWN FROM THERE THIS INSTANT!" {flier} glides back down to the sand, in {his} own time.` |
 | takeOff → narration | `{flier} is high in the air, and {attacker}'s blow strikes empty air.` |
 | takeOff → narration | `{flier} is knocked out of the sky! No dive this time.` |
 | effect → narration | `{target} is already in the air, and climbs a little higher.` |
@@ -226,6 +234,7 @@ You roll 1d20 + dex vs 10 to ride your own wave and take none of it.
 |---|---|
 | flavors → hits | `brings the sea down on` |
 | flavors → hits | `sweeps away` |
+| flavors → hits | `sends the whale-road crashing down on` |
 | flavors → hits | `gives a very thorough bath to` |
 | rideTheWave → reason | `vs 10 to ride the wave.` |
 | rideTheWave → outcome | `{player} rides the crest, and the sea passes under {him}.` |

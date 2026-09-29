@@ -57,13 +57,13 @@ describe('./cards/horn-of-proof.ts Horn of Proof', () => {
 		expect(HornOfProofCard.level).to.equal(2);
 		expect(new WeepingAngel({ xp: 300 }).canHoldCard(HornOfProofCard)).to.equal(true);
 		expect(new Jinn({ xp: 300 }).canHoldCard(HornOfProofCard)).to.equal(false);
-		expect(new HornOfProofCard().stats).to.include('Then heal 3 hp.');
+		expect(new HornOfProofCard().stats).to.include('Then heal 5 hp.');
 	});
 
-	it('heals a fixed 3 hp', async () => {
+	it('heals a fixed 5 hp', async () => {
 		const before = unicorn.hp;
 		await new HornOfProofCard().play(unicorn, foe, ring, contestants);
-		expect(unicorn.hp).to.equal(before + 3);
+		expect(unicorn.hp).to.equal(before + 5);
 	});
 
 	it('removes a hold first, and only the hold', async () => {
@@ -139,7 +139,7 @@ describe('./cards/horn-of-proof.ts Horn of Proof', () => {
 		await card.effect(unicorn, unicorn, ring);
 
 		expect(narrations[0]).to.include('findeth nothing here to purify');
-		expect(unicorn.hp).to.equal(before + 3);
+		expect(unicorn.hp).to.equal(before + 5);
 	});
 
 	it('wards, then heals, after the cleanse, in that order', async () => {
@@ -158,7 +158,7 @@ describe('./cards/horn-of-proof.ts Horn of Proof', () => {
 		expect(order).to.deep.equal(['cleanse', 'ward', 'heal']);
 		expect(unicorn.encounterModifiers.str).to.equal(0);
 		expect(unicorn.encounterModifiers[CONTROL_WARD]).to.equal('armed');
-		expect(unicorn.hp).to.equal(before + 3);
+		expect(unicorn.hp).to.equal(before + 5);
 	});
 
 	it('tells the player what the ward covers', () => {

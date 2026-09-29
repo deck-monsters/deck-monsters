@@ -24,9 +24,12 @@ const TEMPORARY_AC_PENALTIES: Record<string, number> = {
 import { RARE } from '../helpers/probabilities.js';
 import { CHEAP } from '../helpers/costs.js';
 
-// Fixed and deliberately small: the cleanse and the ward are the point, and the heal must
-// stay weaker than a dedicated Heal (1d4 + int, which also scales with level).
-const HORN_OF_PROOF_HEAL = 3;
+// Fixed, not rolled or scaled: the cleanse and the ward are the point. It was 3 until roadmap 35
+// (measured 2026-09-29, after the ward moved here): at 3 the card was worth about a Hit at level
+// 3 and 5 points below the strong strike it replaced at level 5; at 5 it is at or above a Hit at
+// levels 3 and 7 and within a point at level 5. That is about a dedicated Heal's (1d4 + int) at
+// low levels and below it as INT grows, so a Heal stays the better pure heal.
+const HORN_OF_PROOF_HEAL = 5;
 
 // The stats a curse such as Soften pushes below zero for the rest of the fight.
 const CURSABLE_STATS = ['ac', 'dex', 'str', 'int'];

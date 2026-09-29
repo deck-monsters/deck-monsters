@@ -123,7 +123,7 @@ Source: `packages/engine/src/cards/horn-of-proof.ts`.
 **Rules text:**
 
 ```text
-Drink from the horn: remove one harm already on you (your worst stat penalty, or a Bad Batch waiting in the ring; if turned on someone held, it frees them), then ward yourself for one round against the next harmful effect an opponent puts on you that is not damage (a hold, a curse, poison, being blinked away, or being confused). Then heal 3 hp. The ward works once per fight.
+Drink from the horn: remove one harm already on you (your worst stat penalty, or a Bad Batch waiting in the ring; if turned on someone held, it frees them), then ward yourself for one round against the next harmful effect an opponent puts on you that is not damage (a hold, a curse, poison, being blinked away, or being confused). Then heal 5 hp. The ward works once per fight.
 ```
 
 **Narration and outcomes:**

@@ -22,13 +22,18 @@ const AWE_DC_BASE = 10;
  * `wardAgainst` (Horn of Proof's ward cancels it). Source for the card's text: Fafnir's helm
  * of awe in the Volsunga saga.
  *
- * The card's text is placeholder pending the orchestrator (roadmap 35 task 8).
+ * Player-facing text (written by the orchestrator, roadmap 35 task 8, in the Norse voice the
+ * owner asked for): in the Völsunga saga (Morris and Magnússon's 1888 English) Fafnir the
+ * worm wears the helm of awe (ægishjálmr) as he lies on his hoard, and every living thing fears
+ * him. The verse is an original quatrain in the manner of the Eddas. The shouted Viking is the
+ * pack's joke about controlling a dragon by yelling at it (owner, 2026-09-29).
  */
 export class HelmOfAweCard extends BaseCard {
 	static cardType = 'Helm of Awe';
 	static permittedClassesAndTypes = [DRAGON];
 	static probability = RARE.probability;
-	static description = 'A helm that awes every opponent in the ring.';
+	static description =
+		'Helm of awe on the hoard-guard\'s brow: the bold go pale, the proud bow low. Fafnir wore it on his gold, and no man stood before him. Shouting "SIT!" at a dragon in the helm does not work. It has been tried.';
 	static level = 2;
 	static cost = PRICEY.cost;
 	static notForSale = true;
@@ -37,7 +42,7 @@ export class HelmOfAweCard extends BaseCard {
 	/** The attack penalty on each awed play; a class setting for the harness. */
 	static awePenalty = 2;
 
-	constructor({ icon = '🪖' }: Partial<CardOptions> = {}) {
+	constructor({ icon = '🐲' }: Partial<CardOptions> = {}) {
 		super({ icon } as Partial<CardOptions>);
 	}
 
@@ -89,7 +94,7 @@ No damage. Does not stack; being awed again refreshes the count.`;
 			const { getAttackRoll } = card;
 			if (typeof getAttackRoll === 'function') {
 				this.emit('narration', {
-					narration: `${target.givenName} is still awed ${this.icon} (-${awePenalty} to attack).`,
+					narration: `${target.givenName} still cannot meet the dragon's eye ${this.icon} (-${awePenalty} to attack).`,
 				});
 				// `card` is the per-play clone from applyEffects, so wrapping it never leaks
 				// into the deck.
@@ -115,7 +120,9 @@ No damage. Does not stack; being awed again refreshes the count.`;
 		const dc = AWE_DC_BASE + player.intModifier;
 		const saveRoll = this.getSaveRoll(target);
 		const { success } = this.checkSuccess(saveRoll, dc);
-		const outcome = success ? `${target.givenName} is not awed.` : `${target.givenName} is awed!`;
+		const outcome = success
+			? `${target.givenName} stands ${target.pronouns.his} ground and stares back.`
+			: `${target.givenName} looks upon the helm of awe, and ${target.pronouns.his} knees turn to water.`;
 
 		this.emit('rolled', {
 			reason: `vs ${AWE_DC_BASE} + ${player.givenName}'s int modifier (${dc}) to resist awe.`,

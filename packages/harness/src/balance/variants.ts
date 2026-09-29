@@ -176,6 +176,8 @@ export const VARIANTS: Record<string, Variant> = {
 		},
 	},
 	'horn-of-proof-5': { about: 'Horn of Proof: heals 5 instead of 3', apply: () => cardStatic('Horn of Proof', 'healAmount', 5) },
+	'awe-penalty-5': { about: 'Helm of Awe: -5 to attack instead of -2', apply: () => cardStatic('Helm of Awe', 'awePenalty', 5) },
+	'awe-round': { about: 'Helm of Awe: awe lasts 9 cards (a whole round) instead of 3', apply: () => cardStatic('Helm of Awe', 'aweCards', 9) },
 	'gladiator-ac+1': { about: 'Gladiator: 1 more AC', apply: () => staticBonus('Gladiator', 'acVariance', 1) },
 	'gladiator-hp+3': { about: 'Gladiator: 3 more HP', apply: () => staticBonus('Gladiator', 'hpVariance', 3) },
 	'gladiator-early-ac': {

@@ -101,7 +101,7 @@ describe('./cards/take-wing.ts Take Wing', () => {
 		await new HealCard().play(dragon, dragon, ring, contestants);
 
 		expect(isAirborne(dragon)).to.equal(false);
-		expect(narrations.join('\n')).to.include('Skarn glides back down to the sand.');
+		expect(narrations.join('\n')).to.include('Skarn glides back down to the sand, in her own time.');
 	});
 
 	it('clears with the fight', async () => {

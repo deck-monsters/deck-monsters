@@ -64,7 +64,7 @@ Any damage that lands while you are in the air knocks you down, and the dive is 
 					});
 				} else {
 					this.emit('narration', {
-						narration: `${flier.givenName} glides back down to the sand.`,
+						narration: `A Viking below bellows "COME DOWN FROM THERE THIS INSTANT!" ${flier.givenName} glides back down to the sand, in ${flier.pronouns.his} own time.`,
 					});
 				}
 				await subEventDelay(ring?.pacingMultiplier);

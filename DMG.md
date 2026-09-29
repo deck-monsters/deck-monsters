@@ -250,8 +250,12 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  🫏  Asinine Companion  ○
 ----------------------------------
 
- A companion boosts the strength 
- of the caster.
+ Every hero needs a faithful 
+ companion, and every dragon 
+ needs someone to carry the gold. 
+ The donkey talks the whole way. 
+ The dragon has not eaten him. 
+ Yet.
 
  Boost: str +2 (max total boost 
  of level + 1, at most +5, then 
@@ -1233,11 +1237,16 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
 
 ```text
 ==================================
- 🪖  Helm of Awe  ◇
+ 🐲  Helm of Awe  ◇
 ----------------------------------
 
- A helm that awes every opponent 
- in the ring.
+ Helm of awe on the hoard-guard's 
+ brow: the bold go pale, the 
+ proud bow low. Fafnir wore it on 
+ his gold, and no man stood 
+ before him. Shouting "SIT!" at a 
+ dragon in the helm does not 
+ work. It has been tried.
 
  Each opponent rolls 1d20 + int 
  vs 10 + your int modifier. On a 
@@ -1372,7 +1381,7 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  an opponent puts on you that is 
  not damage (a hold, a curse, 
  poison, being blinked away, or 
- being confused). Then heal 3 hp. 
+ being confused). Then heal 5 hp. 
  The ward works once per fight.
 
  Level: 2
@@ -1853,8 +1862,13 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  🐉  Tail Lash  ◆
 ----------------------------------
 
- A dragon attack that hits, then 
- lashes with its tail.
+ Tooth for the foeman, tail for 
+ the fool; the wise watch the far 
+ end of the wyrm. Topsell says a 
+ dragon's strength lies not in 
+ its teeth but in its tail, which 
+ is why the Vikings who shout at 
+ dragons stand at the front.
 
  Hit: 1d20 vs ac / Damage: 1d6. 
  If the hit lands and the target 

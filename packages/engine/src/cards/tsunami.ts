@@ -44,6 +44,7 @@ export class TsunamiCard extends BaseCard {
 			['sweeps away', 70],
 			['swamps', 60],
 			['half-drowns', 30],
+			['sends the whale-road crashing down on', 40],
 			['gives a very thorough bath to', 5],
 		],
 	};

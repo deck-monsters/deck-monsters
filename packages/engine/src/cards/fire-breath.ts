@@ -60,6 +60,7 @@ export class FireBreathCard extends BaseCard {
 			['scorches', 70],
 			['kindles coals around', 50],
 			['roasts', 40],
+			['sings the old fire-song over', 30],
 			['very gently toasts', 5],
 		],
 	};

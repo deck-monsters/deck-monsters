@@ -136,8 +136,12 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
  🫏  Asinine Companion  ○
 ----------------------------------
 
- A companion boosts the strength 
- of the caster.
+ Every hero needs a faithful 
+ companion, and every dragon 
+ needs someone to carry the gold. 
+ The donkey talks the whole way. 
+ The dragon has not eaten him. 
+ Yet.
 
 ==================================
 ```
@@ -588,11 +592,16 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
 
 ```text
 ==================================
- 🪖  Helm of Awe  ◇
+ 🐲  Helm of Awe  ◇
 ----------------------------------
 
- A helm that awes every opponent 
- in the ring.
+ Helm of awe on the hoard-guard's 
+ brow: the bold go pale, the 
+ proud bow low. Fafnir wore it on 
+ his gold, and no man stood 
+ before him. Shouting "SIT!" at a 
+ dragon in the helm does not 
+ work. It has been tried.
 
 ==================================
 ```
@@ -890,8 +899,13 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
  🐉  Tail Lash  ◆
 ----------------------------------
 
- A dragon attack that hits, then 
- lashes with its tail.
+ Tooth for the foeman, tail for 
+ the fool; the wise watch the far 
+ end of the wyrm. Topsell says a 
+ dragon's strength lies not in 
+ its teeth but in its tail, which 
+ is why the Vikings who shout at 
+ dragons stand at the front.
 
 ==================================
 ```
