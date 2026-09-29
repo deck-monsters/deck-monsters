@@ -33,13 +33,19 @@ export class DissonantVoiceCard extends BaseCard {
 		'"There was nothing more horrible then the voice or braying of it, for the voyce is strained above measure." Stop thine ears.';
 	static level = 1;
 	static cost = VERY_CHEAP.cost;
+	/**
+	 * The attack penalty on a failed save, and an optional sting (dice) on a failed save. Class
+	 * settings rather than module constants so the balance harness can try values (roadmap 35).
+	 */
+	static penalty = DISSONANCE_PENALTY;
+	static stingDice: string | undefined = undefined;
 
 	constructor({ icon = '🔔' }: Partial<CardOptions> = {}) {
 		super({ icon } as Partial<CardOptions>);
 	}
 
 	get stats(): string {
-		return `Each opponent rolls 1d20 + int vs your int. On a failure, their next card takes ${DISSONANCE_PENALTY} off its attack roll. A card that does not roll to hit (Blast, Heal) uses up the penalty with no effect.
+		return `Each opponent rolls 1d20 + int vs your int. On a failure, their next card takes ${(this.constructor as typeof DissonantVoiceCard).penalty} off its attack roll.${(this.constructor as typeof DissonantVoiceCard).stingDice ? ` The noise also stings: ${(this.constructor as typeof DissonantVoiceCard).stingDice} damage.` : ''} A card that does not roll to hit (Blast, Heal) uses up the penalty with no effect.
 No damage. Does not stack.`;
 	}
 
@@ -65,6 +71,7 @@ No damage. Does not stack.`;
 	}
 
 	rattle(target: any): void {
+		const penalty = (this.constructor as typeof DissonantVoiceCard).penalty;
 		const rattled = ({ card, phase, player }: any) => {
 			if (phase !== ATTACK_PHASE || player !== target) return card;
 
@@ -76,14 +83,14 @@ No damage. Does not stack.`;
 			const { getAttackRoll } = card;
 			if (typeof getAttackRoll === 'function') {
 				this.emit('narration', {
-					narration: `${target.givenName}'s ears yet ring with that hideous lowing ${this.icon} (-${DISSONANCE_PENALTY} to attack).`,
+					narration: `${target.givenName}'s ears yet ring with that hideous lowing ${this.icon} (-${penalty} to attack).`,
 				});
 				// `card` is the per-play clone from applyEffects, so wrapping it never leaks
 				// into the deck.
 				card.getAttackRoll = (...args: any[]) => {
 					const attackRoll = getAttackRoll.apply(card, args);
-					attackRoll.modifier -= DISSONANCE_PENALTY;
-					attackRoll.result = Math.max(attackRoll.result - DISSONANCE_PENALTY, 0);
+					attackRoll.modifier -= penalty;
+					attackRoll.result = Math.max(attackRoll.result - penalty, 0);
 					return attackRoll;
 				};
 			}
@@ -121,7 +128,13 @@ No damage. Does not stack.`;
 			vs: player.int,
 		});
 
-		if (!success && !alreadyRattled) this.rattle(target);
+		if (!success && !alreadyRattled) {
+			this.rattle(target);
+			const { stingDice } = this.constructor as typeof DissonantVoiceCard;
+			if (stingDice && player !== target) {
+				await target.hit(roll({ primaryDice: stingDice }).result, player, this);
+			}
+		}
 
 		// One save per sub-event beat, so a crowded ring does not dump every roll in one tick.
 		await subEventDelay(ring?.pacingMultiplier);

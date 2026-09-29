@@ -39,6 +39,11 @@ export class GloamingRestCard extends BaseCard {
 		'"At the sight of them they growe tame, and come and sleepe beside them." And then the hunters come. Rest, and beware.';
 	static level = 3;
 	static cost = REASONABLE.cost;
+	/**
+	 * When true, damage during the rest shrinks the heal by the damage taken instead of
+	 * cancelling it. A class setting so the balance harness can try it (roadmap 35).
+	 */
+	static partialRest = false;
 
 	constructor({ icon = '🌙' }: Partial<CardOptions> = {}) {
 		super({ icon } as Partial<CardOptions>);
@@ -83,6 +88,25 @@ If nothing damages you before then, heal ${REST_HEALTH_DICE} as that card begins
 			const interrupted = hitLog.some(
 				({ when, damage, dealt }) => when > since && (dealt ?? damage) > 0
 			);
+
+			if (interrupted && (this.constructor as typeof GloamingRestCard).partialRest) {
+				const taken = hitLog
+					.filter(({ when }) => when > since)
+					.reduce((sum: number, { damage, dealt }) => sum + (dealt ?? damage), 0);
+				const healRoll = roll({ primaryDice: REST_HEALTH_DICE });
+				const amount = Math.max(0, healRoll.result - taken);
+				this.emit('rolled', {
+					reason: 'for a broken rest.',
+					card: this,
+					roll: healRoll,
+					who: target,
+					outcome: `The hunters found ${target.givenName}, but ${target.pronouns.he} ${agree(target.pronouns, 'rises', 'rise')} with a little comfort (${amount} hp).`,
+				});
+				await subEventDelay(pacing);
+				if (amount > 0) await target.heal(amount);
+				this.restoreAc(target);
+				return card;
+			}
 
 			if (interrupted) {
 				this.emit('narration', {

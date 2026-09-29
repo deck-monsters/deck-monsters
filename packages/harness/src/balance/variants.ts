@@ -53,6 +53,18 @@ function staticSet(className: string, prop: string, value: number | undefined): 
 	};
 }
 
+/** Set a card class static for the unit (a class setting such as a penalty or heal). */
+function cardStatic(cardType: string, prop: string, value: unknown): Undo {
+	const Card = getCardClassByTypeName(cardType) as unknown as Record<string, unknown>;
+	const had = Object.prototype.hasOwnProperty.call(Card, prop);
+	const before = Card[prop];
+	Card[prop] = value;
+	return () => {
+		if (had) Card[prop] = before;
+		else delete Card[prop];
+	};
+}
+
 /** Wrap a creature getter (ac, strModifier, ...) on one monster class with a level-based bonus. */
 function getterBonus(className: string, prop: string, bonus: (level: number) => number): Undo {
 	const M = monsterClass(className);
@@ -172,6 +184,10 @@ export const VARIANTS: Record<string, Variant> = {
 				},
 			),
 	},
+	'dissonance-4': { about: 'Dissonant Voice: -4 to attack instead of -2', apply: () => cardStatic('Dissonant Voice', 'penalty', 4) },
+	'dissonance-sting': { about: 'Dissonant Voice: a failed save also takes 1d4', apply: () => cardStatic('Dissonant Voice', 'stingDice', '1d4') },
+	'rest-partial': { about: 'Gloaming Rest: damage shrinks the heal instead of cancelling it', apply: () => cardStatic('Gloaming Rest', 'partialRest', true) },
+	'horn-of-proof-5': { about: 'Horn of Proof: heals 5 instead of 3', apply: () => cardStatic('Horn of Proof', 'healAmount', 5) },
 	'gladiator-ac+1': { about: 'Gladiator: 1 more AC', apply: () => staticBonus('Gladiator', 'acVariance', 1) },
 	'gladiator-hp+3': { about: 'Gladiator: 3 more HP', apply: () => staticBonus('Gladiator', 'hpVariance', 3) },
 	'gladiator-early-ac': {

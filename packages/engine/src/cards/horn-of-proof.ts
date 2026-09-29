@@ -58,6 +58,8 @@ export class HornOfProofCard extends BaseCard {
 		'Kings drank from such horns and feared no cup, for the horn "doth wonderfully help against poisons."';
 	static level = 2;
 	static cost = CHEAP.cost;
+	/** The heal after the cleanse; a class setting so the balance harness can try values (roadmap 35). */
+	static healAmount = HORN_OF_PROOF_HEAL;
 
 	constructor({ icon = '🏺' }: Partial<CardOptions> = {}) {
 		super({ icon } as Partial<CardOptions>);
@@ -65,7 +67,7 @@ export class HornOfProofCard extends BaseCard {
 
 	get stats(): string {
 		return `Remove one of these, in order: your worst stat penalty this fight, or a Bad Batch waiting in the ring. If the horn is turned on someone who is held, it frees them first.
-Then heal ${HORN_OF_PROOF_HEAL} hp.`;
+Then heal ${(this.constructor as typeof HornOfProofCard).healAmount} hp.`;
 	}
 
 	override getTargets(player: any): any[] {
@@ -138,7 +140,7 @@ Then heal ${HORN_OF_PROOF_HEAL} hp.`;
 		}
 		await subEventDelay(ring?.pacingMultiplier);
 
-		return target.heal(HORN_OF_PROOF_HEAL);
+		return target.heal((this.constructor as typeof HornOfProofCard).healAmount);
 	}
 }
 
