@@ -15,6 +15,7 @@ const { roll } = chance;
 
 export const REST_AC_PENALTY = 2;
 const REST_HEALTH_DICE = '3d4';
+const GROWING_REST_TURNS = 3;
 
 /*
  * Edwin Julian's comic verse "The Capture of the Unicorn" (illustrated by Reginald Birch;
@@ -40,22 +41,35 @@ export class GloamingRestCard extends BaseCard {
 	static level = 3;
 	static cost = REASONABLE.cost;
 	/**
-	 * An undisturbed rest restores every hit point. The owner's call (2026-09-29, roadmap 35):
-	 * kneeling in the open is a huge risk, so the reward is huge too, and there is no partial
-	 * heal for a broken rest. At 3d4 the card was worth almost nothing in a duel, where damage
-	 * nearly always comes before your next card. Off, it heals 3d4 (kept for the harness).
-	 * A boss still heals 3d4: its pool is many times a player's, and a boss that knelt once
-	 * and rose whole would undo a whole party's fight.
+	 * What an undisturbed rest restores. The owner's call (2026-09-29, roadmap 35): kneeling in
+	 * the open is a huge risk, so the reward is huge too, and a broken rest heals nothing. At
+	 * 3d4 (`dice`) the card was worth almost nothing in a duel, where damage nearly always comes
+	 * before your next card. Shapes being measured, the same for bosses and players (owner):
+	 * `full` restores every hit point; `half` restores half of what is missing; `two-turns`
+	 * rests through two of your cards, then restores every hit point; `growing` heals 3d4 at
+	 * your next card, 6d4 at the one after, 9d4 at the third, while nothing disturbs you, and
+	 * keeps what it healed if the rest is broken. The -2 AC lasts as long as the rest.
 	 */
-	static fullRest = true;
+	static restShape: 'full' | 'half' | 'two-turns' | 'growing' | 'dice' = 'full';
 
 	constructor({ icon = '🌙' }: Partial<CardOptions> = {}) {
 		super({ icon } as Partial<CardOptions>);
 	}
 
 	get stats(): string {
-		return `Kneel to rest: -${REST_AC_PENALTY} ac until your next card.
-If nothing damages you before then, ${(this.constructor as typeof GloamingRestCard).fullRest ? 'heal to full hp' : `heal ${REST_HEALTH_DICE}`} as that card begins. Any damage interrupts the rest and the healing is lost.`;
+		switch ((this.constructor as typeof GloamingRestCard).restShape) {
+			case 'two-turns':
+				return `Kneel to rest: -${REST_AC_PENALTY} ac until your second card from now.
+If nothing damages you before then, heal to full hp as that card begins. Any damage interrupts the rest and the healing is lost.`;
+			case 'growing':
+				return `Kneel to rest: -${REST_AC_PENALTY} ac while you rest, for up to ${GROWING_REST_TURNS} of your cards.
+As each card begins, if nothing has damaged you, heal 3d4, then 6d4, then 9d4. Any damage ends the rest; you keep what you healed.`;
+			default: {
+				const heal = { full: 'heal to full hp', half: 'heal half your missing hp', dice: `heal ${REST_HEALTH_DICE}` }[(this.constructor as typeof GloamingRestCard).restShape as 'full' | 'half' | 'dice'];
+				return `Kneel to rest: -${REST_AC_PENALTY} ac until your next card.
+If nothing damages you before then, ${heal} as that card begins. Any damage interrupts the rest and the healing is lost.`;
+			}
+		}
 	}
 
 	override getTargets(player: any): any[] {
@@ -73,18 +87,34 @@ If nothing damages you before then, ${(this.constructor as typeof GloamingRestCa
 		target.setModifier('ac', REST_AC_PENALTY);
 	}
 
+	/** HP the rest restores when it resolves undisturbed, for the shapes that heal once. */
+	restHealAmount(target: any): number {
+		const missing = Math.max(0, target.maxHp - target.hp);
+		switch ((this.constructor as typeof GloamingRestCard).restShape) {
+			case 'half': return Math.floor(missing / 2);
+			case 'dice': return roll({ primaryDice: REST_HEALTH_DICE }).result;
+			default: return missing;
+		}
+	}
+
 	rest(target: any, ring: any): void {
 		// hitLogTimestamp is the same clock creature.hit() stamps hits with (see DelayedHit),
 		// so "hit after the rest began" compares like with like, including in tests.
 		const since = hitLogTimestamp();
 		const pacing = ring?.pacingMultiplier;
+		const { restShape } = this.constructor as typeof GloamingRestCard;
+		let turns = 0;
 
 		const resting = async ({ card, phase, player }: any) => {
 			if (phase !== ATTACK_PHASE || player !== target) return card;
+			turns += 1;
 
-			target.encounterEffects = target.encounterEffects.filter(
-				(effect: any) => effect !== resting
-			);
+			const wake = () => {
+				target.encounterEffects = target.encounterEffects.filter(
+					(effect: any) => effect !== resting
+				);
+				this.restoreAc(target);
+			};
 
 			const hitLog: any[] = (target.encounterModifiers.hitLog as any[]) || [];
 			// `dealt` is the HP a blow actually took; a hit the brace absorbed in full does not
@@ -95,34 +125,47 @@ If nothing damages you before then, ${(this.constructor as typeof GloamingRestCa
 
 			if (interrupted) {
 				this.emit('narration', {
-					narration: `${this.icon} The hunters were waiting! ${target.givenName}'s rest is broken, and ${target.pronouns.he} ${agree(target.pronouns, 'rises', 'rise')} without its comfort.`,
+					narration: `${this.icon} The hunters were waiting! ${target.givenName}'s rest is broken, and ${target.pronouns.he} ${agree(target.pronouns, 'rises', 'rise')} ${restShape === 'growing' && turns > 1 ? 'with what comfort the dusk gave' : 'without its comfort'}.`,
 				});
-				this.restoreAc(target);
+				wake();
 				await subEventDelay(pacing);
 				return card;
 			}
 
-			if ((this.constructor as typeof GloamingRestCard).fullRest && !target.isBoss) {
+			if (restShape === 'two-turns' && turns < 2) {
 				this.emit('narration', {
-					narration: `${this.icon} No hunter came. ${target.givenName} riseth from the laurel, made whole.`,
+					narration: `${this.icon} The dusk deepens. ${target.givenName} sleepeth on among the laurel, and the hunters are listening still.`,
 				});
 				await subEventDelay(pacing);
-				await target.heal(target.maxHp - target.hp);
-				this.restoreAc(target);
 				return card;
 			}
 
-			const healRoll = roll({ primaryDice: REST_HEALTH_DICE });
-			this.emit('rolled', {
-				reason: 'for a quiet rest.',
-				card: this,
-				roll: healRoll,
-				who: target,
-				outcome: `No hunter came. ${target.givenName} riseth from the laurel, restored.`,
+			if (restShape === 'growing') {
+				// Each undisturbed card heals more than the last: 3d4, then 6d4, then 9d4.
+				const healRoll = roll({ primaryDice: `${3 * turns}d4` });
+				const last = turns >= GROWING_REST_TURNS || target.hp + healRoll.result >= target.maxHp;
+				this.emit('rolled', {
+					reason: 'for a quiet rest.',
+					card: this,
+					roll: healRoll,
+					who: target,
+					outcome: last
+						? `No hunter came. ${target.givenName} riseth from the laurel, restored.`
+						: `No hunter came, and ${target.givenName} sleepeth on, the deeper for it.`,
+				});
+				await subEventDelay(pacing);
+				await target.heal(healRoll.result);
+				if (last) wake();
+				return card;
+			}
+
+			const amount = this.restHealAmount(target);
+			this.emit('narration', {
+				narration: `${this.icon} No hunter came. ${target.givenName} riseth from the laurel, restored (${amount} hp).`,
 			});
 			await subEventDelay(pacing);
-			await target.heal(healRoll.result);
-			this.restoreAc(target);
+			if (amount > 0) await target.heal(amount);
+			wake();
 
 			return card;
 		};

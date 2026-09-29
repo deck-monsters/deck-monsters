@@ -66,23 +66,76 @@ describe('./cards/gloaming-rest.ts Gloaming Rest', () => {
 		expect(isResting(unicorn)).to.equal(false);
 	});
 
-	it('heals a boss 3d4, never to full', async () => {
+	it('heals a boss to full as well', async () => {
 		unicorn.setOptions({ isBoss: true });
 		await new GloamingRestCard().play(unicorn, foe, ring, contestants);
 		await nextTurn();
-		expect(unicorn.hp).to.be.within(5 + 3, 5 + 12);
+		expect(unicorn.hp).to.equal(unicorn.maxHp);
 	});
 
-	it('heals 3d4 instead with the full-rest setting off', async () => {
-		GloamingRestCard.fullRest = false;
-		try {
+	describe('rest shapes', () => {
+		afterEach(() => {
+			GloamingRestCard.restShape = 'full';
+		});
+
+		it('dice heals 3d4', async () => {
+			GloamingRestCard.restShape = 'dice';
 			expect(new GloamingRestCard().stats).to.include('heal 3d4');
 			await new GloamingRestCard().play(unicorn, foe, ring, contestants);
 			await nextTurn();
 			expect(unicorn.hp).to.be.within(5 + 3, 5 + 12);
-		} finally {
-			GloamingRestCard.fullRest = true;
-		}
+		});
+
+		it('half heals half the missing hp, rounded down', async () => {
+			GloamingRestCard.restShape = 'half';
+			expect(new GloamingRestCard().stats).to.include('half your missing hp');
+			const missing = unicorn.maxHp - 5;
+			await new GloamingRestCard().play(unicorn, foe, ring, contestants);
+			await nextTurn();
+			expect(unicorn.hp).to.equal(5 + Math.floor(missing / 2));
+		});
+
+		it('two-turns sleeps through one card, then heals to full', async () => {
+			GloamingRestCard.restShape = 'two-turns';
+			const baseAc = unicorn.ac;
+			await new GloamingRestCard().play(unicorn, foe, ring, contestants);
+			await nextTurn();
+			expect(unicorn.hp).to.equal(5);
+			expect(unicorn.ac).to.equal(baseAc - 2);
+			expect(isResting(unicorn)).to.equal(true);
+			await nextTurn();
+			expect(unicorn.hp).to.equal(unicorn.maxHp);
+			expect(unicorn.ac).to.equal(baseAc);
+			expect(isResting(unicorn)).to.equal(false);
+		});
+
+		it('two-turns loses everything to a hit in the second turn', async () => {
+			GloamingRestCard.restShape = 'two-turns';
+			await new GloamingRestCard().play(unicorn, foe, ring, contestants);
+			await nextTurn();
+			await unicorn.hit(1, foe, new HitCard());
+			await nextTurn();
+			expect(unicorn.hp).to.equal(4);
+			expect(isResting(unicorn)).to.equal(false);
+		});
+
+		it('growing heals more each undisturbed card and keeps it when broken', async () => {
+			GloamingRestCard.restShape = 'growing';
+			unicorn.setOptions({ hpVariance: 0 });
+			const baseAc = unicorn.ac;
+			unicorn.hp = 1;
+			sinon.stub(Math, 'random').returns(0);
+			await new GloamingRestCard().play(unicorn, foe, ring, contestants);
+			await nextTurn();
+			expect(unicorn.hp).to.equal(1 + 3);
+			expect(isResting(unicorn)).to.equal(true);
+			expect(unicorn.ac).to.equal(baseAc - 2);
+			await unicorn.hit(1, foe, new HitCard());
+			await nextTurn();
+			expect(unicorn.hp).to.equal(3);
+			expect(isResting(unicorn)).to.equal(false);
+			expect(unicorn.ac).to.equal(baseAc);
+		});
 	});
 
 	it('loses the heal if anything damages the Unicorn first', async () => {

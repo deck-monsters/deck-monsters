@@ -56,7 +56,7 @@ Boss-specific behaviour is applied in `characters/helpers/random.ts` (`randomCha
   filtered from the starting deck and the first refill, and a last refill tops the deck up,
   which leaves basics in about 17% of boss hand slots. On top of that a boss never holds
   Flee, and a hand holds at most `BOSS_MAX_HEALS` (1) plain heal, a heal any monster can hold
-  (`isPlainHeal`, `pickBossHand`); monster-specific heals such as Gloaming Rest are uncapped. Gloaming Rest heals a player to full but a boss only 3d4 (roadmap 35), so a boss never rises whole.
+  (`isPlainHeal`, `pickBossHand`); monster-specific heals such as Gloaming Rest are uncapped.
   Every remaining card is `levelUp(random(0, 6))`'d.
 - Level comes from XP: either fully random, or capped via `{ xp: random(0, getXpCapForLevel(cap)) }`.
 
