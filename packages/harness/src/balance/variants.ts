@@ -208,6 +208,15 @@ export const VARIANTS: Record<string, Variant> = {
 			};
 		},
 	},
+	'awe-hold-healthy': {
+		about: 'Helm of Awe: held; on a natural 1 a monster that is not bloodied tries to flee, a bloodied one cowers',
+		apply: () => {
+			const undos = [cardStatic('Helm of Awe', 'hold', true), cardStatic('Helm of Awe', 'fleeOnLoki', 'healthy')];
+			return () => {
+				for (const undo of undos.reverse()) undo();
+			};
+		},
+	},
 	'dv-wait': {
 		about: 'Dissonant Voice: disadvantage that waits for the next card that rolls to hit',
 		apply: () => {

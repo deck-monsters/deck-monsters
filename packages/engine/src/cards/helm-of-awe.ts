@@ -69,10 +69,13 @@ export class HelmOfAweCard extends BaseCard {
 	/**
 	 * What a natural 1 on an awe save does in the hold shape: `none`; `flee`, the monster runs
 	 * from the ring; `attempt`, it tries to, and flees on 1d20 + dex of 10 or more, as the Flee
-	 * card does. Bosses never flee (they never hold Flee either); a boss that rolls the 1
-	 * only cowers.
+	 * card does; `healthy`, only a monster that is not bloodied tries to flee, and a bloodied
+	 * one cowers (owner, 2026-09-29: the injured cower on the ground; the healthy run while
+	 * they still have the strength, as some fear effects work in D&D). Bosses flee too: the
+	 * rule that bosses never flee is about the Flee cards they carry, not about being
+	 * frightened away (owner).
 	 */
-	static fleeOnLoki: 'none' | 'flee' | 'attempt' = 'none';
+	static fleeOnLoki: 'none' | 'flee' | 'attempt' | 'healthy' = 'none';
 
 	constructor({ icon = '🐲' }: Partial<CardOptions> = {}) {
 		super({ icon } as Partial<CardOptions>);
@@ -81,11 +84,12 @@ export class HelmOfAweCard extends BaseCard {
 	get stats(): string {
 		const { aweCards, awePenalty, cower, cowerCards, hold, holdFatigue, fleeOnLoki } = this.constructor as typeof HelmOfAweCard;
 		if (hold) {
-			const flee = fleeOnLoki === 'none'
-				? ''
-				: fleeOnLoki === 'flee'
-					? ' A natural 1 on any of these rolls sends them fleeing from the ring (bosses only cower).'
-					: ' A natural 1 on any of these rolls makes them try to flee (1d20 + dex, 10 or more; bosses only cower).';
+			const flee = {
+				none: '',
+				flee: ' A natural 1 on any of these rolls sends them fleeing from the ring.',
+				attempt: ' A natural 1 on any of these rolls makes them try to flee (1d20 + dex, 10 or more).',
+				healthy: ' On a natural 1 on any of these rolls, an opponent that is not bloodied tries to flee (1d20 + dex, 10 or more); a bloodied one cowers.',
+			}[fleeOnLoki];
 			const { holdFirstCardLost } = this.constructor as typeof HelmOfAweCard;
 			return `Each opponent rolls 1d20 + int vs ${AWE_DC_BASE} + your int modifier. On a failure they are awed${holdFirstCardLost ? ' and lose their next card' : ''}: at the start of each ${holdFirstCardLost ? 'later turn' : 'of their turns'} they roll again${holdFatigue ? ` (${holdFatigue} easier for each turn already awed)` : ''}, and on a failure they cower and lose that card.${flee}
 No damage. Does not stack.`;
@@ -188,7 +192,7 @@ No damage. Does not stack; being awed again refreshes the count.`;
 			const threshold = Math.max(1, dc - (turnsAwed - (holdFirstCardLost ? 1 : 0)) * holdFatigue);
 			const saveRoll = this.getSaveRoll(target);
 			const { success, curseOfLoki } = this.checkSuccess(saveRoll, threshold);
-			const flees = curseOfLoki && fleeOnLoki !== 'none' && !target.isBoss;
+			const flees = curseOfLoki && fleeOnLoki !== 'none' && (fleeOnLoki !== 'healthy' || !target.bloodied);
 			this.emit('rolled', {
 				reason: `vs ${threshold} to meet the dragon's eye.`,
 				card: this,

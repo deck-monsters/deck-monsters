@@ -345,13 +345,33 @@ describe('./cards/helm-of-awe.ts Helm of Awe', () => {
 			expect(isAwed(foe)).to.equal(true);
 		});
 
-		it('never makes a boss flee; it only cowers', async () => {
+		it('frightens a boss away like anyone else', async () => {
 			HelmOfAweCard.fleeOnLoki = 'flee';
 			foe.setOptions({ isBoss: true });
 			await aweWith([2, 1]);
 			await foeActs();
+			await new HitCard().play(foe, dragon, ring, contestants);
+			expect(foe.fled).to.equal(true);
+		});
+
+		it('with fleeOnLoki healthy, a healthy monster tries to flee and a bloodied one cowers', async () => {
+			HelmOfAweCard.fleeOnLoki = 'healthy';
+			const { card } = await aweWith([2, 1]);
+			const flee = sinon.stub(card, 'getFleeRoll').returns(fakeRoll(15));
+			foe.hp = 1;
+			await foeActs();
 			expect(await foeActs()).to.equal(false);
+			expect(flee).not.to.have.been.called;
 			expect(foe.fled).to.equal(false);
+		});
+
+		it('with fleeOnLoki healthy, a monster at full hp runs on a good flee roll', async () => {
+			HelmOfAweCard.fleeOnLoki = 'healthy';
+			const { card } = await aweWith([2, 1]);
+			sinon.stub(card, 'getFleeRoll').returns(fakeRoll(15));
+			await foeActs();
+			await new HitCard().play(foe, dragon, ring, contestants);
+			expect(foe.fled).to.equal(true);
 		});
 
 		it('is still cancelled by the ward', async () => {
