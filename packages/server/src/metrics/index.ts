@@ -238,6 +238,33 @@ export const roomHydrationFailures = new Counter({
 	registers: [registry],
 });
 
+// Room state persistence (roadmap 37). No labels carry user data.
+export const roomStateSaveBytes = new Histogram({
+	name: 'room_state_save_bytes',
+	help: 'Size in bytes of the JSON room state handed to the store on each save',
+	buckets: [1_000, 5_000, 20_000, 50_000, 100_000, 250_000, 500_000, 1_000_000, 5_000_000],
+	registers: [registry],
+});
+
+export const roomStateSaveFailures = new Counter({
+	name: 'room_state_save_failures_total',
+	help: 'Room state saves that threw (the engine logs the error)',
+	registers: [registry],
+});
+
+export const roomStateSavesStale = new Counter({
+	name: 'room_state_saves_stale_total',
+	help: 'Room state saves skipped because a newer snapshot or a reset had already landed',
+	registers: [registry],
+});
+
+export const roomStateSource = new Counter({
+	name: 'room_state_source_total',
+	help: 'Room loads that restored from the jsonb state column or the legacy blob column',
+	labelNames: ['source'] as const,
+	registers: [registry],
+});
+
 export const roomHydrationWarnings = new Counter({
 	name: 'dm_room_hydration_warnings_total',
 	help: 'Non-fatal partial hydration warnings during room load',

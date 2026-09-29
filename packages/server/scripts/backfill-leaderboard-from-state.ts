@@ -10,13 +10,14 @@ import { db } from '../src/db/index.js';
 import { rooms, roomPlayerStats, roomMonsterStats } from '../src/db/schema.js';
 
 async function main(): Promise<void> {
-	const rows = await db.select({ id: rooms.id, stateBlob: rooms.stateBlob }).from(rooms);
+	const rows = await db.select({ id: rooms.id, state: rooms.state, stateBlob: rooms.stateBlob }).from(rooms);
 
 	for (const row of rows) {
-		if (!row.stateBlob) continue;
+		const source = row.state ?? row.stateBlob;
+		if (!source) continue;
 		let game: ReturnType<typeof restoreGame>;
 		try {
-			game = restoreGame(row.stateBlob, () => {});
+			game = restoreGame(source, () => {});
 		} catch {
 			console.warn(`skip room ${row.id}: bad state blob`);
 			continue;

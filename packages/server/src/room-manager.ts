@@ -22,7 +22,7 @@ import { dbRowToGameEvent } from './db/game-event-map.js';
 import { eventVisibilityFor } from './db/event-visibility.js';
 import type { GameEvent, RingContestantSnapshot } from '@deck-monsters/engine';
 import { publicDisplayName } from './public-display-name.js';
-import { PostgresStateStore } from './state-store.js';
+import { nextStateVersion, PostgresStateStore } from './state-store.js';
 import { attachEventPersister } from './event-persister.js';
 import { attachFightStatsSubscriber, reconcilePlayerCoinStats } from './fight-stats-subscriber.js';
 import { attachFightSummaryWriter } from './fight-summary-writer.js';
@@ -52,6 +52,7 @@ import {
 	roomsCreated,
 	roomsActive,
 	roomHydrationFailures,
+	roomStateSource,
 	roomHydrationWarnings,
 	cardErrors,
 	cardValidationWarnings,
@@ -89,6 +90,12 @@ export class RoomManager {
 	private loadEpoch = new Map<string, number>();
 	/** One in-flight engine command chain per room — prevents interleaved game state / ring feed. */
 	private readonly runEngineCommand = createKeyedPromiseQueue();
+	/**
+	 * The last state write of a room that was just detached (unload or reset), by room id.
+	 * `_loadRoom` awaits it before selecting the row, and `resetRoomState` before writing, so
+	 * neither can read or overwrite state older than the flush (roadmap 37 risk 3).
+	 */
+	private readonly pendingFlush = new Map<string, Promise<void>>();
 
 	constructor(
 		private readonly db: Db,
@@ -105,16 +112,28 @@ export class RoomManager {
 	}
 
 	/** Detach subscribers and dispose the game. Callers remove the `active` entry themselves. */
-	private _detachRoomEntry(entry: ActiveRoom, { flushState = false } = {}): void {
+	private _detachRoomEntry(roomId: string, entry: ActiveRoom, { flushState = false } = {}): Promise<void> | undefined {
 		entry.unsubscribePersister();
 		entry.unsubscribeMetrics();
 		entry.unsubscribeFightStats();
 		entry.unsubscribeFightSummary();
 		entry.unsubscribeDebugLogger();
+		let flush: Promise<void> | undefined;
 		if (flushState) {
-			entry.game.saveState();
+			// flushState() takes its snapshot (and stamps its version) synchronously, so disposing
+			// straight after cannot cancel the write: dispose() only clears timers and listeners.
+			// The write is awaited by whoever needs the row to be current (see `pendingFlush`).
+			const settled: Promise<void> = entry.game
+				.flushState()
+				.catch((err: unknown) => this.log(err))
+				.finally(() => {
+					if (this.pendingFlush.get(roomId) === settled) this.pendingFlush.delete(roomId);
+				});
+			flush = settled;
+			this.pendingFlush.set(roomId, settled);
 		}
 		entry.game.dispose();
+		return flush;
 	}
 
 	/**
@@ -299,7 +318,7 @@ export class RoomManager {
 		// Remove from memory first — no state flush needed since the DB row is being deleted.
 		const activeEntry = this.active.get(roomId);
 		if (activeEntry) {
-			this._detachRoomEntry(activeEntry);
+			this._detachRoomEntry(roomId, activeEntry);
 		}
 		this.active.delete(roomId);
 		roomsActive.set(this.active.size);
@@ -461,33 +480,40 @@ export class RoomManager {
 	}
 
 	async resetRoomState(roomId: string): Promise<void> {
+		// Detach the live game and wait for its last save FIRST. Writing the DB first left a
+		// window where a save still in flight from the old game landed after the reset and
+		// brought the room back (roadmap 37 risk 3).
+		const entry = this.active.get(roomId);
+		this.active.delete(roomId);
+		roomsActive.set(this.active.size);
+		if (entry) {
+			this._detachRoomEntry(roomId, entry, { flushState: true });
+		}
+		await this.pendingFlush.get(roomId);
+
 		await this.db.delete(roomPlayerStats).where(eq(roomPlayerStats.roomId, roomId));
 		await this.db.delete(roomMonsterStats).where(eq(roomMonsterStats.roomId, roomId));
 		await this.db.delete(fightSummaries).where(eq(fightSummaries.roomId, roomId));
 		await this.db.update(rooms).set({ fightCounter: 0, updatedAt: new Date() }).where(eq(rooms.id, roomId));
 
-		// Quarantine current state, start fresh on next load.
+		// Quarantine current state, start fresh on next load. The new version is a tombstone
+		// (never 0), so a save stamped before this point can no longer land.
 		const rows = await this.db
-			.select({ stateBlob: rooms.stateBlob })
+			.select({ state: rooms.state, stateBlob: rooms.stateBlob })
 			.from(rooms)
 			.where(eq(rooms.id, roomId))
 			.limit(1);
 
-		if (rows[0]?.stateBlob) {
-			await this.db.update(rooms).set({
-				stateBlob: null,
-				quarantinedBlob: rows[0].stateBlob,
-				updatedAt: new Date(),
-			}).where(eq(rooms.id, roomId));
-		}
-
-		// Evict from active cache so next load starts fresh.
-		const entry = this.active.get(roomId);
-		if (entry) {
-			this._detachRoomEntry(entry);
-		}
-		this.active.delete(roomId);
-		roomsActive.set(this.active.size);
+		const quarantine: Partial<typeof rooms.$inferInsert> = {};
+		if (rows[0]?.state) quarantine.quarantinedState = rows[0].state;
+		if (rows[0]?.stateBlob) quarantine.quarantinedBlob = rows[0].stateBlob;
+		await this.db.update(rooms).set({
+			...quarantine,
+			state: null,
+			stateBlob: null,
+			stateVersion: nextStateVersion(),
+			updatedAt: new Date(),
+		}).where(eq(rooms.id, roomId));
 	}
 
 	async unloadRoom(roomId: string): Promise<void> {
@@ -505,11 +531,16 @@ export class RoomManager {
 				return;
 			}
 			log.debug('unloading room', { roomId, idleMs: Date.now() - entry.lastActivityAt });
-			// Flush pending debounce writes, then detach subscribers / dispose timers.
-			this._detachRoomEntry(entry, { flushState: true });
+			// Flush the latest state, then detach subscribers / dispose timers. The wait is at
+			// the end of the method so a reload straight after cannot read the row before it lands.
+			// Leave `active` BEFORE awaiting: otherwise a getGame during the flush would be
+			// served the game we just disposed instead of loading a fresh one.
+			this.active.delete(roomId);
+			roomsActive.set(this.active.size);
+			this._detachRoomEntry(roomId, entry, { flushState: true });
 		}
-		this.active.delete(roomId);
-		roomsActive.set(this.active.size);
+		// Also covers a flush started by an earlier unload that this call did not start.
+		await this.pendingFlush.get(roomId);
 	}
 
 	async sweepIdleRooms(idleThresholdMs = 2 * 60 * 60 * 1000): Promise<void> {
@@ -796,8 +827,14 @@ export class RoomManager {
 		const cached = this.active.get(roomId);
 		if (cached) return cached;
 
+		// A room that was just unloaded may still have its last save in flight; selecting first
+		// would restore older state and then race that write (roadmap 37 risk 3).
+		for (let flush = this.pendingFlush.get(roomId); flush; flush = this.pendingFlush.get(roomId)) {
+			await flush;
+		}
+
 		const rows = await this.db
-			.select({ stateBlob: rooms.stateBlob })
+			.select({ state: rooms.state, stateBlob: rooms.stateBlob })
 			.from(rooms)
 			.where(eq(rooms.id, roomId))
 			.limit(1);
@@ -806,16 +843,18 @@ export class RoomManager {
 			throw new TRPCError({ code: 'NOT_FOUND', message: 'Room not found' });
 		}
 
-		const hasBlob = !!rows[0].stateBlob;
-		log.debug('loading room from DB', { roomId, hasStateBlob: hasBlob });
+		const source = rows[0].state ? 'state' : rows[0].stateBlob ? 'blob' : null;
+		const hasBlob = source !== null;
+		log.debug('loading room from DB', { roomId, source });
 
 		const stateStore = new PostgresStateStore(this.db);
 		const roomLog = this._makeRoomLogger(roomId);
 		let game: Game;
 
-		if (rows[0].stateBlob) {
+		if (source) {
 			try {
-				game = this.deps.restoreGame(rows[0].stateBlob, roomLog);
+				game = this.deps.restoreGame((rows[0].state ?? rows[0].stateBlob)!, roomLog);
+				roomStateSource.inc({ source });
 				(game.options as Record<string, unknown>).roomId = roomId;
 				log.debug('room restored from state blob', { roomId });
 			} catch (err) {
@@ -828,9 +867,15 @@ export class RoomManager {
 					error: message,
 				});
 				this.log(err);
+				// Each source goes to its own quarantine column; both live columns are cleared and
+				// the version bumped so a save still in flight from before is stale.
 				await this.db.update(rooms).set({
+					// Keep whichever columns hold data, so nothing is lost when both were set.
+					...(rows[0].state ? { quarantinedState: rows[0].state } : {}),
+					...(rows[0].stateBlob ? { quarantinedBlob: rows[0].stateBlob } : {}),
+					state: null,
 					stateBlob: null,
-					quarantinedBlob: rows[0].stateBlob,
+					stateVersion: nextStateVersion(),
 					updatedAt: new Date(),
 				}).where(eq(rooms.id, roomId));
 				game = new this.deps.Game({ roomId }, roomLog);
@@ -881,7 +926,7 @@ export class RoomManager {
 		// Final gate: never publish a deleted room into `active` (covers a delete that
 		// landed between the post-construct check and here).
 		if (this._currentLoadEpoch(roomId) !== epochAtStart) {
-			this._detachRoomEntry(entry);
+			this._detachRoomEntry(roomId, entry);
 			log.info('discarded stale room load after deletion', { roomId });
 			throw new TRPCError({ code: 'NOT_FOUND', message: 'Room not found' });
 		}
