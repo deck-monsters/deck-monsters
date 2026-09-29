@@ -1,6 +1,6 @@
 import { HitCard } from './hit.js';
 import { chance } from '../helpers/chance.js';
-import { ATTACK_PHASE } from '../constants/phases.js';
+import { ATTACK_PHASE, DEFENSE_PHASE } from '../constants/phases.js';
 import { capitalize } from '../helpers/capitalize.js';
 import { FREE } from '../helpers/costs.js';
 import { GLADIATOR, MINOTAUR, UNICORN, WEEPING_ANGEL } from '../constants/creature-types.js';
@@ -8,6 +8,7 @@ import { IMPOSSIBLE } from '../helpers/probabilities.js';
 import { signedNumber } from '../helpers/signed-number.js';
 import { agree } from '../helpers/pronouns.js';
 import { wardAgainst } from './helpers/control-ward.js';
+import { advantageAgainstPinned } from './helpers/pinned.js';
 
 const { roll } = chance;
 
@@ -261,6 +262,10 @@ ${ongoingDamageText}`;
 	getImmobilizeEffect(player: any, target: any, ring: any, _activeContestants?: any): any {
 		const immobilize = this;
 		const ImmobilizeEffect = async ({ card, phase }: any) => {
+			// Roadmap 36: attacks against a held monster roll with advantage (helpers/pinned.ts).
+			if (phase === DEFENSE_PHASE) {
+				return advantageAgainstPinned(target, card, narration => this.emit('narration', { narration }));
+			}
 			if (phase === ATTACK_PHASE) {
 				if (!player.dead) {
 					this.emitHeldEffect(player, target, ring);

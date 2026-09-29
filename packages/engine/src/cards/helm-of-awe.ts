@@ -2,13 +2,14 @@ import { BaseCard, type CardOptions } from './base.js';
 import { chance } from '../helpers/chance.js';
 import { subEventDelay } from '../helpers/delay-times.js';
 import { TARGET_ALL_CONTESTANTS, getTarget } from '../helpers/targeting-strategies.js';
-import { ATTACK_PHASE } from '../constants/phases.js';
+import { ATTACK_PHASE, DEFENSE_PHASE } from '../constants/phases.js';
 import { AWE_EFFECT } from '../constants/effect-types.js';
 import { DRAGON } from '../constants/creature-types.js';
 import { RARE } from '../helpers/probabilities.js';
 import { PRICEY } from '../helpers/costs.js';
 import { wardAgainst, controlWardNarration } from './helpers/control-ward.js';
 import { agree } from '../helpers/pronouns.js';
+import { advantageAgainstPinned } from './helpers/pinned.js';
 
 const { roll } = chance;
 
@@ -115,6 +116,10 @@ No damage. Does not stack.`;
 		};
 
 		const awed = async ({ card, phase, player, activeContestants }: any) => {
+			// Roadmap 36: an awed monster is pinned, so attacks against it roll with advantage.
+			if (phase === DEFENSE_PHASE && !dragon.dead) {
+				return advantageAgainstPinned(target, card, narration => this.emit('narration', { narration }));
+			}
 			if (phase !== ATTACK_PHASE || player !== target) return card;
 			if (dragon.dead) {
 				remove();

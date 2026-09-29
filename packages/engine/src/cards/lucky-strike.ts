@@ -29,6 +29,9 @@ export class LuckyStrike extends HitCard {
 		],
 	};
 
+	/** Its two rolls already are advantage; a pin's advantage does not stack (helpers/roll-mode.ts). */
+	static rollsTwice = true;
+
 	constructor({ icon = '🚬', ...rest }: Record<string, any> = {}) {
 		super({ icon, ...rest } as any);
 	}

@@ -75,7 +75,7 @@ and fixed defects are in [`10b-bugs-fixed.md`](10b-bugs-fixed.md).
 
 ## Next balance pass (carried from roadmap 35)
 
-The owner deferred these from [roadmap 35](../archive/roadmap/35-balance-fixes.md) on 2026-09-29. Use 35's
+**In progress in [36](36-pins-and-dragon-resistance.md)** (2026-09-29), which owns them until it closes. The owner deferred these from [roadmap 35](../archive/roadmap/35-balance-fixes.md) on 2026-09-29. Use 35's
 method: variants behind class settings, the card swapped into searched hands, duels, crowds,
 **and team battles** (`SideSpec.team` in the batch runner), plus the per-fight split for any
 all-or-nothing effect. The [Helm of Awe and Dissonant Voice study](../archive/studies/2026-09-helm-of-awe-and-dissonant-voice.md)

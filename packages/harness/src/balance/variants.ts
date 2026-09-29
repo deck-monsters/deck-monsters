@@ -12,7 +12,7 @@
  * Applying them now stacks on top of the engine's change; they stay as the record of what was
  * measured and to test further steps.
  */
-import { allMonsters, getCardClassByTypeName } from '@deck-monsters/engine';
+import { PIN_RULES, allMonsters, getCardClassByTypeName } from '@deck-monsters/engine';
 
 type Undo = () => void;
 export interface Variant {
@@ -162,6 +162,16 @@ export const VARIANTS: Record<string, Variant> = {
 	},
 	'awe-steady': { about: 'Helm of Awe: the recovery save never gets easier', apply: () => cardStatic('Helm of Awe', 'holdFatigue', 0) },
 	'awe-no-flee': { about: 'Helm of Awe: a natural 1 on a recovery save only cowers', apply: () => cardStatic('Helm of Awe', 'fleeOnLoki', 'none') },
+	'no-pin-advantage': {
+		about: 'Roadmap 36 before: attacks against a pinned monster roll once, as before the pinned-advantage rule',
+		apply: () => {
+			const before = PIN_RULES.advantage;
+			PIN_RULES.advantage = false;
+			return () => {
+				PIN_RULES.advantage = before;
+			};
+		},
+	},
 	'rest-3d4': { about: 'Gloaming Rest: an undisturbed rest heals 3d4 (the old heal), not 4 to all missing', apply: () => cardStatic('Gloaming Rest', 'restShape', 'dice') },
 
 
