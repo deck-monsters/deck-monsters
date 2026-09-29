@@ -1,5 +1,6 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
+import { Game } from '@deck-monsters/engine';
 import { TRPCError } from '@trpc/server';
 
 import { RoomManager } from './room-manager.js';
@@ -844,6 +845,53 @@ describe('RoomManager', () => {
 			expect(err).to.be.instanceOf(TRPCError);
 			expect((err as TRPCError).code).to.equal('NOT_FOUND');
 			expect((rm as any).active.has(ROOM_ID)).to.be.false;
+		});
+	});
+
+	describe('load joining during a reset', () => {
+		it('a getGame arriving mid-reset does not join the invalidated load and gets a fresh game', async () => {
+			const { deps, GameStub } = makeEngineDeps();
+			const oldRow = held();
+			const row = [{ state: { name: 'Game', options: {} }, stateBlob: null }];
+			let n = 0;
+			const db = makeDbStub();
+			(db as any).select = sinon.stub().callsFake(() => {
+				const i = n++;
+				const limit = i === 0 ? () => oldRow.promise.then(() => row) : () => Promise.resolve(i === 1 ? row : [{ state: null, stateBlob: null }]);
+				return { from: () => ({ where: () => Object.assign(Promise.resolve([]), { limit }) }) };
+			});
+			const gate = held();
+			db._stubs.deleteWhereStub.onFirstCall().returns(gate.promise);
+			const rm = new RoomManager(db as never, () => {}, deps);
+
+			const a = rm.getGame(ROOM_ID).catch((e: unknown) => e); // load A, select held open
+			await tick();
+			const resetting = rm.resetRoomState(ROOM_ID);
+			const b = rm.getGame(ROOM_ID); // arrives mid-reset
+			oldRow.release();
+			gate.release();
+			await resetting;
+
+			expect(await a).to.be.instanceOf(TRPCError);
+			const game = await b;
+			expect(game).to.exist;
+			expect(GameStub.called).to.be.true; // fresh game, built after the tombstone
+		});
+	});
+
+	describe('flushAll with a real Game', () => {
+		it('counts a game whose store rejects as failed, not flushed', async () => {
+			const logs: unknown[] = [];
+			const game = new Game({ roomId: ROOM_ID }, (e) => logs.push(e));
+			game.stateStore = { save: () => Promise.reject(new Error('db down')), load: async () => null };
+			const rm = new RoomManager(makeDbStub() as never, () => {}, makeEngineDeps().deps);
+			(rm as any).active.set(ROOM_ID, { game });
+			try {
+				expect(await rm.flushAll(1000)).to.deep.equal({ flushed: 0, failed: 1, timedOut: 0 });
+			} finally {
+				game.stateStore = undefined;
+				game.dispose();
+			}
 		});
 	});
 

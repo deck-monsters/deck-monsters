@@ -131,7 +131,10 @@ export class RoomManager {
 			// The write is awaited by whoever needs the row to be current (see `pendingFlush`).
 			const settled: Promise<void> = entry.game
 				.flushState()
-				.catch((err: unknown) => this.log(err))
+				.then(
+					() => undefined, // the boolean (write failed) is already logged by the game
+					(err: unknown) => this.log(err)
+				)
 				.finally(() => {
 					if (this.pendingFlush.get(roomId) === settled) this.pendingFlush.delete(roomId);
 				});
@@ -553,8 +556,9 @@ export class RoomManager {
 		await Promise.allSettled(
 			[...this.active.values()].map(async (entry) => {
 				const result = await Promise.race([
+					// flushState resolves false when the store write failed (it never rejects).
 					entry.game.flushState().then(
-						() => 'ok' as const,
+						(ok) => (ok === false ? ('failed' as const) : ('ok' as const)),
 						() => 'failed' as const
 					),
 					deadline,
@@ -834,19 +838,20 @@ export class RoomManager {
 			return Promise.resolve(cached);
 		}
 
+		// Check the reset BEFORE joining an in-flight load: that load was invalidated by the reset
+		// and would reject NOT_FOUND at the epoch gate. Wait for the reset, let the stale load
+		// settle, then start a fresh one.
+		const resetInProgress = this.resetting.get(roomId);
+		if (resetInProgress) {
+			return resetInProgress
+				.then(() => this.loading.get(roomId)?.catch(() => undefined))
+				.then(() => this._getOrLoad(roomId));
+		}
+
 		const inflight = this.loading.get(roomId);
 		if (inflight) {
 			log.trace('room load already in flight, joining', { roomId });
 			return inflight;
-		}
-
-		const resetInProgress = this.resetting.get(roomId);
-		if (resetInProgress) {
-			// Start loading only after the tombstone landed; a load that began before the reset is
-			// stale (epoch) and is allowed to settle first so we do not join it.
-			return resetInProgress
-				.then(() => this.loading.get(roomId)?.catch(() => undefined))
-				.then(() => this._getOrLoad(roomId));
 		}
 
 		log.debug('room not in cache, loading from DB', { roomId });

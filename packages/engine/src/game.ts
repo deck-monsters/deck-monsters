@@ -100,7 +100,7 @@ export class Game extends BaseClass {
 	private _eventBus: RoomEventBus;
 	private _saveDebounce?: ReturnType<typeof setTimeout>;
 	/** The latest store write, so `flushState` can wait for it. */
-	private _lastSave?: Promise<void>;
+	private _lastSave?: Promise<boolean>;
 	private _disposeListeners: Array<() => void> = [];
 	/** The daily mega boss, where timed bosses run (see ring/mega-boss.ts). */
 	megaBoss?: MegaBossEvent;
@@ -240,7 +240,15 @@ export class Game extends BaseClass {
 		}
 
 		if (this.stateStore) {
-			this._lastSave = this.stateStore.save(this.roomId, state).catch((err: unknown) => this.log(err));
+			// Resolves true/false rather than rejecting, so fire-and-forget callers stay safe while
+			// flushState() can still tell a failed write from a good one.
+			this._lastSave = this.stateStore.save(this.roomId, state).then(
+				() => true,
+				(err: unknown) => {
+					this.log(err);
+					return false;
+				}
+			);
 		}
 
 		if (this.stateSaveFunc) {
@@ -250,12 +258,13 @@ export class Game extends BaseClass {
 
 	/**
 	 * Saves now and resolves once the store write has settled (also when it rejected; the error
-	 * is already logged). It waits for the store write only: `stateSaveFunc` is fire-and-forget
+	 * is already logged). Resolves true when the store write succeeded (or there is no store) and
+	 * false when it failed, so shutdown can count failures. It never rejects. It waits for the store write only: `stateSaveFunc` is fire-and-forget
 	 * (setImmediate) and may run after this resolves. Cancels a pending debounced save, since this one supersedes it. An
 	 * unload awaits this so a load straight after cannot read the row before the flush lands
 	 * (roadmap 37 risk 3).
 	 */
-	async flushState(): Promise<void> {
+	async flushState(): Promise<boolean> {
 		if (this._saveDebounce !== undefined) {
 			clearTimeout(this._saveDebounce);
 			this._saveDebounce = undefined;
@@ -266,9 +275,9 @@ export class Game extends BaseClass {
 		} catch (err) {
 			// An unload awaiting this must not reject because one value would not serialize.
 			this.log(err);
-			return;
+			return false;
 		}
-		await this._lastSave;
+		return (await this._lastSave) ?? true;
 	}
 
 	reset(options: Record<string, unknown>): void {

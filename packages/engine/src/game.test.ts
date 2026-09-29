@@ -603,14 +603,26 @@ describe('game.ts', () => {
 				}
 			});
 
-			it('flushState resolves when the store rejects, and logs the error', async () => {
+			it('flushState resolves true on a good write and when there is no store', async () => {
+				const game = new Game({ roomId: 'flush-ok' });
+				try {
+					expect(await game.flushState()).to.equal(true);
+					game.stateStore = { save: async () => {}, load: async () => null };
+					expect(await game.flushState()).to.equal(true);
+				} finally {
+					game.stateStore = undefined;
+					game.dispose();
+				}
+			});
+
+			it('flushState resolves false when the store rejects, and logs the error', async () => {
 				const logs: unknown[] = [];
 				const game = new Game({ roomId: 'flush-fail' }, (err) => logs.push(err));
 				const boom = new Error('boom');
 				game.stateStore = { save: () => Promise.reject(boom), load: async () => null };
 				try {
-					await game.flushState();
-					expect(logs).to.include(boom);
+					expect(await game.flushState()).to.equal(false);
+					expect(logs.filter(l => l === boom)).to.have.length(1);
 				} finally {
 					game.stateStore = undefined;
 					game.dispose();
@@ -623,7 +635,7 @@ describe('game.ts', () => {
 				const boom = new Error('cannot serialize');
 				(game as any).persistState = () => { throw boom; };
 				try {
-					await game.flushState();
+					expect(await game.flushState()).to.equal(false);
 					expect(logs).to.include(boom);
 				} finally {
 					game.dispose();

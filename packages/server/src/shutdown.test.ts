@@ -42,4 +42,21 @@ describe('createShutdown', () => {
 
 		expect(order).to.deep.equal(['flush', 'pool', 'exit']);
 	});
+
+	it('exits within the budget when pool.end() never resolves', async () => {
+		const clock = sinon.useFakeTimers();
+		try {
+			const { deps } = make();
+			deps.pool.end = sinon.stub().returns(new Promise(() => {}));
+			const done = createShutdown(deps as never)('SIGTERM');
+			await clock.tickAsync(9499);
+			expect(deps.exit.called).to.be.false;
+			await clock.tickAsync(2);
+			await done;
+			expect(deps.exit.calledOnceWith(0)).to.be.true;
+			expect(deps.log.error.calledWithMatch('pool end timed out')).to.be.true;
+		} finally {
+			clock.restore();
+		}
+	});
 });
