@@ -53,6 +53,7 @@ import {
 	roomsActive,
 	roomHydrationFailures,
 	roomStateGenerationDrops,
+	roomStateSaveFailures,
 	roomStateSource,
 	roomHydrationWarnings,
 	cardErrors,
@@ -224,6 +225,9 @@ export class RoomManager {
 			if (ctx === 'ring.fight.invalidCard') cardErrors.inc({ room_id: roomId });
 			else if (ctx === 'ring.addMonster.cardValidation') cardValidationWarnings.inc({ room_id: roomId });
 			else if (ctx === 'ring.fight') fightErrors.inc({ room_id: roomId });
+			// The engine could not serialize the room, so nothing reached the store (bug 207: a card
+			// holding its own deck crashed the process from the save timer; now it is logged here).
+			else if (ctx === 'game.persistState') roomStateSaveFailures.inc();
 			this.log(err);
 		};
 	}

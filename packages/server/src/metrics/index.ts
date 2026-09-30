@@ -254,7 +254,7 @@ export const roomStateSaveBytes = new Histogram({
 
 export const roomStateSaveFailures = new Counter({
 	name: 'dm_room_state_save_failures_total',
-	help: 'Room state saves that threw (the engine logs the error)',
+	help: 'Room state saves that failed: the store write threw, or the engine could not serialize the room (logged with context game.persistState)',
 	registers: [registry],
 });
 

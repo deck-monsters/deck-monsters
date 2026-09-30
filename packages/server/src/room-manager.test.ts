@@ -4,7 +4,7 @@ import { Game } from '@deck-monsters/engine';
 import { TRPCError } from '@trpc/server';
 
 import { RoomManager } from './room-manager.js';
-import { roomStateGenerationDrops, roomStateSource } from './metrics/index.js';
+import { roomStateGenerationDrops, roomStateSaveFailures, roomStateSource } from './metrics/index.js';
 
 // ---- Drizzle stub helpers ----
 
@@ -137,6 +137,22 @@ describe('RoomManager', () => {
 			expect(db._stubs.insertStub.callCount).to.equal(2);
 			expect(GameStub.calledOnce).to.be.true;
 			expect(mockGame.stateStore).to.not.be.undefined;
+		});
+
+		it('counts an engine save failure (context game.persistState) as a failed save (bug 207)', async () => {
+			const { deps, GameStub } = makeEngineDeps();
+			const logged: unknown[] = [];
+			const rm = new RoomManager(makeDbStub() as never, (err) => logged.push(err), deps);
+			await rm.createRoom(OWNER_ID, 'My Room');
+			const roomLog = GameStub.firstCall.args[1] as (err: unknown) => void;
+			const failures = async () => (await roomStateSaveFailures.get()).values[0]?.value ?? 0;
+			const before = await failures();
+
+			roomLog(Object.assign(new Error('room state save failed for roomId r: circular'), { context: 'game.persistState' }));
+			roomLog(new Error('unrelated'));
+
+			expect(await failures()).to.equal(before + 1);
+			expect(logged).to.have.length(2);
 		});
 
 		it('returns the cached game on subsequent getGame call (no extra DB query)', async () => {
