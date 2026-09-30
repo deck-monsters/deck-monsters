@@ -45,10 +45,11 @@ suite('PostgresStateStore against Postgres', () => {
 		await pool.end();
 	});
 
-	it('stores a jsonb object and a version, load returns the object, with no state_blob column', async () => {
+	it('stores a jsonb object and a version, load returns the object, and state_blob is never written', async () => {
 		const state = { name: 'Game', options: { roomId, characters: { a: { name: 'A', options: { xp: 3 } } } } };
-		const col = await pool.query(`select 1 from information_schema.columns where table_name = 'rooms' and column_name = 'state_blob'`);
-		expect(col.rowCount, 'the roadmap 37 contract migration dropped state_blob').to.equal(0);
+		// The column stays in the database until the step-B drop (docs/operations/state-blob-drop.md);
+		// code must neither reference nor write it, or the drop would break the running release.
+		await pool.query(`update rooms set state_blob = 'untouched' where id = $1`, [roomId]);
 		await store.save(roomId, state);
 
 		const r = await row();
@@ -56,6 +57,7 @@ suite('PostgresStateStore against Postgres', () => {
 		expect(Number(r.state_version)).to.be.greaterThan(0);
 		expect(r.state).to.deep.equal(state);
 		expect(await store.load(roomId)).to.deep.equal(state);
+		expect((await pool.query(`select state_blob from rooms where id = $1`, [roomId])).rows[0].state_blob).to.equal('untouched');
 	});
 
 	it('an older snapshot that lands after a newer one does not overwrite it', async () => {

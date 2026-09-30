@@ -107,6 +107,7 @@ current contract.
 | [`docs/reference/prompt-answer-contract.md`](docs/reference/prompt-answer-contract.md) | Any `channel({ question, choices })` call site or connector answer encoding |
 | [`docs/operations/local-testing.md`](docs/operations/local-testing.md) | Manual end-to-end verification, including reusable local test rooms |
 | [`docs/operations/deployment.md`](docs/operations/deployment.md) | Railway/Supabase deployment or production environment configuration |
+| [`docs/operations/state-blob-drop.md`](docs/operations/state-blob-drop.md) | Shipping the `rooms.state_blob` drop migration (step B) |
 | [`docs/operations/cloud-development.md`](docs/operations/cloud-development.md) | Cursor Cloud setup, Docker, or remote/local Supabase in Cloud |
 | [`docs/operations/devcontainer-auth.md`](docs/operations/devcontainer-auth.md) | Devcontainer setup, or GitHub credentials that must stay inside the container |
 | [`docs/reference/pixel-art.md`](docs/reference/pixel-art.md) | Sprite, canvas, or CSS pixel-art work |

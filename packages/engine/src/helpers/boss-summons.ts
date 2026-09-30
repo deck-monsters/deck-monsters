@@ -2,7 +2,7 @@
  * Per-player boss summon quota — a rolling 24 hour window, scoped to one room.
  *
  * The ledger lives in `game.options.bossSummons` (see `Game.bossSummons`), so it is
- * room-scoped for free and rides the room's `state_blob` across restarts. These functions
+ * room-scoped for free and rides the room's state across restarts. These functions
  * are deliberately pure: the caller reads the ledger, decides, and writes the new one back
  * through the setter. See `docs/architecture/boss-encounters.md` for why the quota is
  * enforced in the engine command handler rather than in the tRPC router.

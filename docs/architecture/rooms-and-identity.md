@@ -63,7 +63,8 @@ debug subscribers, and adds the room to the active cache.
 Rooms load lazily. `_getOrLoad()` joins concurrent loads for one `roomId`. `_loadRoom()`
 first awaits any unload flush still in flight for the room (`pendingFlush`), then restores
 `rooms.state` (`jsonb`) (roadmap 37); a null `state` is a new or reset room and starts fresh.
-The legacy `state_blob` column is gone (dropped by the contract migration). If the state
+No code reads or writes the legacy `state_blob` column (the drop is staged in
+[`state-blob-drop.md`](../operations/state-blob-drop.md)). If the state
 cannot hydrate, it moves it to `quarantined_state`, stamps a new `state_version`, and starts
 fresh.
 A deletion epoch prevents an in-flight load from publishing a room after its database row

@@ -387,51 +387,65 @@ no handler, and each deploy lost up to 30 s of unsaved changes in every active r
 ## Room state migration to jsonb (roadmap 37)
 
 Room state moved from `rooms.state_blob` (base64 gzip JSON) to `rooms.state` (`jsonb`) in
-three steps: **release 1** (expand) wrote both columns, **release 2** stopped writing the blob
-and kept a read-only load fallback, and the **drop** (this release) removes the column and the
-fallback. The drop must not ship with release 2, because the migration runner applies
-migrations while the old release is still serving and still writing the column. The plan and
-its reasoning are in [roadmap 37](../roadmap/37-room-state-in-postgres.md).
+phases, each its own deploy, because the migration runner applies migrations while the
+previous release is still serving:
+
+1. **Release 1 (expand)** wrote both columns.
+2. **Release 2 (stop writing)** wrote `state` only, but still *used* the column: it selected
+   `state_blob` on load and reset, set it to null on reset and quarantine, and fell back to it
+   on load for an unconverted room.
+3. **Step A (stop referencing)**, this release: no code or Drizzle schema names `state_blob`
+   any more (no fallback, no nulling, the room-state backfill script is deleted, the
+   leaderboard backfill reads `state` only). The column is still in the database and simply
+   untouched. The engine's `restoreGame` still decodes a legacy blob string (public API).
+   `dm_room_state_source_total` only reports `source="state"`.
+4. **Step B (drop)**: the migration that removes the column, ready to ship in
+   [state-blob-drop.md](state-blob-drop.md). It must follow step A on **both** services.
+
+Why step B cannot ship with step A: release 2 names the column, and Drizzle lists *every*
+schema column in an `insert` (as `default`), so even release-2 code that never mentions it
+fails with `column "state_blob" does not exist` on room load, create, reset and quarantine
+once it is dropped. A failed healthcheck after the migration committed would leave release 2
+serving against that schema. The plan is in [roadmap 37](../roadmap/37-room-state-in-postgres.md).
 
 **Two services write room state:** the server and the Discord connector. Each runs its own
-`RoomManager` over the same `rooms` table. Every deploy or rollback below means both, on the
+`RoomManager` over the same `rooms` table. Every deploy or rollback here means both, on the
 same release.
 
-### The drop (`20260930140000_drop_state_blob.sql`)
+### Step A (this release)
 
-The pre-deploy runner applies it in one transaction:
+No migration. Deploy to both services. Nothing reads or writes `state_blob`, so a stale blob
+left in the column is harmless. A room with `state` null and a blob present (never converted)
+would now start fresh; none exist in production, and the step-B guard refuses the drop while
+one does.
 
-1. **Guard.** It raises `rooms still unconverted (state null, state_blob present): convert or
-   reset them first` if any room has `state` null and a blob, because that blob is the room's
-   only copy. The transaction rolls back, the deploy fails and the previous release keeps
-   serving. The backfill script was deleted with the drop, since it only converted blobs; an
-   unconverted room would have to be converted by hand
-   (`base64 -d | gunzip` of the blob into `rooms.state`) or reset. Every production room
-   already had `state` when the drop shipped.
-2. `alter table rooms drop column if exists state_blob;`. `quarantined_blob` stays, so blobs
-   recovered earlier remain inspectable.
+### Step B (the drop)
 
-The code in this release no longer reads or writes `state_blob`: no load fallback, no reset
-or quarantine nulling, and the leaderboard backfill reads `state` only. The engine's
-`restoreGame` still decodes a legacy blob string (public API). `dm_room_state_source_total`
-now only ever reports `source="state"`.
-
-**Before shipping the drop:** both services are on release 2 (nothing still writes the
-blob), and this returns no rows:
+Ship only when both services run step A and `schema.ts` has no `stateBlob`. Pre-ship check,
+which must return no rows:
 
 ```sql
 select id from rooms where state is null and state_blob is not null;
 ```
 
+The migration holds a guard that raises `rooms still unconverted (state null, state_blob
+present)` while that query returns rows, then `alter table rooms drop column if exists
+state_blob`; `quarantined_blob` stays. Both run in one transaction. The alter takes
+`ACCESS EXCLUSIVE` on `rooms`: if it queues behind a long transaction it blocks new `rooms`
+queries for up to the 10 s `lock_timeout`, then rolls back cleanly, fails the deploy and is
+safe to retry. The full SQL and tests are in [state-blob-drop.md](state-blob-drop.md).
+
 ### Rollback
 
-- **A rollback to a release before release 2 is impossible once the drop has run.** Those
-  releases read (and, before release 2, write) `state_blob`. Going back means first
-  restoring the column and its contents from a backup (Supabase daily backups), which would
-  also discard every room save since that backup. Plan to roll **forward**: fix the release
-  and redeploy.
-- Release 2 and later do not use the column, so rolling between them is safe.
-- If the guard fails the deploy, nothing changed; the previous release keeps serving.
+- **Before step B:** rolling back to release 2 is safe, because the column is still there.
+  Rolling back past release 2 is not (release 2 stopped writing the blob, so an older
+  release would read stale blobs); do not go back further.
+- **After step B:** only step-A code and later are compatible. Release 2 and earlier break
+  room load, create, reset and quarantine. Going back needs the column and its contents
+  restored from a backup (Supabase daily backups), discarding every room save since. Roll
+  **forward** instead.
+- If the guard or a lock timeout fails the step-B deploy, nothing changed; the previous
+  release keeps serving.
 
 ## 4. Local development
 
