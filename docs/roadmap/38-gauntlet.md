@@ -8,7 +8,8 @@ tags: [roadmap, balance, bosses, ring-events]
 ---
 # 38 — The Gauntlet against a lone player
 
-**Status:** Planned (2026-09-29). Measure first, on the harness, then the owner chooses.
+**Status:** In progress (2026-09-30). First measurements done; the owner chose to measure
+"rivals when outnumbered" before anything ships.
 
 ## Why
 
@@ -61,6 +62,32 @@ Gauntlet with one human.
 | `gauntlet-rivals-minions` | Both |
 | `event-weights-global` | Frequency: pick by weight among *all* events, and fire nothing if the one picked is not eligible. A lone player then meets a Gauntlet at 25% × 30/100 = 7.5% of countdowns, not 25%. Rings with more players are unchanged in which events can fire; only the "no event" share grows where few are eligible |
 
+## First results (2026-09-30)
+
+Measured in a worktree (commits 91153eda and ffb6048a on the study branch, report
+`2026-09-29-gauntlet.md` there, not yet merged). A lone human with a likely deck, 1,000 fights
+per monster type per level per variant (7,000 per mean, standard error under 1 point).
+
+| Level | One boss, no event (reference) | Gauntlet today | Rivals when alone | Extras as minions | Rivals + minions |
+|---|---|---|---|---|---|
+| Beginner | 45 | 0 | 25 | 1 | 48 |
+| 1 | 59 | 0 | 36 | 4 | 57 |
+| 3 | 70 | 1 | 60 | 18 | 69 |
+| 5 | 72 | 8 | 71 | 32 | 74 |
+
+- **Rivals is the fix that matters.** Boss personalities already respect teams, so ignoring
+  teams (as Blood Feud does) is enough for bosses to turn on each other; no targeting override
+  was needed.
+- **Two humans are broken too:** 1% at level 1 and 14% at level 3 against the Gauntlet
+  (65% and 77% with no event). "Rivals when alone" cannot help them by design; minions lift
+  them to 17% and 42%.
+- **Frequency:** with `event-weights-global` the Gauntlet fires at 7.5% of countdowns on every
+  roster; a lone player's event rate falls from 25% to 7.5%.
+
+**Owner's choice (2026-09-30): measure "rivals when outnumbered"** (bosses fight each other
+whenever they outnumber the humans, which covers one human against three and two against four),
+with and without minion extras, and the ambush case it also touches, before shipping.
+
 ## Acceptance
 
 - A lone human's Gauntlet win rate inside the owner's 20–80% band at beginner level and at
@@ -73,6 +100,6 @@ Gauntlet with one human.
 
 | # | Task | Status | Commit |
 |---|---|---|---|
-| 1 | Engine switches for the variants (class or module settings, off by default) and a harness plan: a lone human at beginner and levels 1, 3, 5 against the ring's own boss spawns with the Gauntlet forced, plus two-human rings; 2,000 fights a cell | Planned | |
-| 2 | Frequency: measure the event mix per roster shape under today's rule and `event-weights-global`, by simulation or by counting eligible sets | Planned | |
+| 1 | Engine switches for the variants (class or module settings, off by default) and a harness plan: a lone human at beginner and levels 1, 3, 5 against the ring's own boss spawns with the Gauntlet forced, plus two-human rings; 2,000 fights a cell | First pass done at 1,000 a cell (above); "rivals when outnumbered" being measured | 91153eda, ffb6048a (study branch) |
+| 2 | Frequency: measure the event mix per roster shape under today's rule and `event-weights-global`, by simulation or by counting eligible sets | Done by arithmetic (in the study report) | ffb6048a (study branch) |
 | 3 | The owner picks from the results; ship the chosen rules on, remove the losers, update `boss-encounters.md` and the handbook text | Planned | |

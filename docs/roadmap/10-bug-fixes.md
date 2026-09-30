@@ -75,6 +75,20 @@ have only ever run on a developer's machine.
   them), so the shared test database has the schema the other suites expect.
 - [ ] Make a skipped pg suite visible in CI output, so a missing database cannot hide again.
 
+### I. A long simulation process leaks memory
+
+**Owner:** Harness. Found by the roadmap 38 Gauntlet study (2026-09-30).
+
+One `sim-gauntlet` process grew by about 2.5 GB per 12,000 fights, and five at once nearly
+filled a 16 GB machine; the first all-levels run died and was restarted as one process per cell.
+The leak is in `simulate` or the engine, not the new script: something from each fight outlives
+it (listeners, timers, or event history held by a ring or room bus that `clearRing` does not
+release).
+
+- [ ] Reproduce with a heap snapshot after N fights of plain `simulate` and find what
+  accumulates.
+- [ ] Until it is fixed, long runs use one process per cell (the Gauntlet laptop block does).
+
 ## Historical detail
 
 The removed September incident diary was resolved work and duplicated
