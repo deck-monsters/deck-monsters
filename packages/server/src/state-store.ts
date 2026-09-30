@@ -1,5 +1,3 @@
-import zlib from 'node:zlib';
-
 import type { SerializedGame, StateStore } from '@deck-monsters/engine';
 import { and, eq, lt } from 'drizzle-orm';
 
@@ -39,14 +37,13 @@ export class PostgresStateStore implements StateStore {
 		try {
 			const json = JSON.stringify(state);
 			roomStateSaveBytes.observe(Buffer.byteLength(json));
-			// Release 1 dual-writes the legacy blob so a redeploy of the previous release still
-			// restores current state. Task 6 (contract) removes this.
-			const legacyBlob = zlib.gzipSync(json).toString('base64');
+			// `state_blob` is deliberately NOT written (roadmap 37 release 2): it is stale from the
+			// first save of this release on, and a later migration drops the column.
 			// `state` is passed as the object itself: node-postgres + Drizzle JSON.stringify it once
 			// into a jsonb object (a pre-stringified value would be stored as a jsonb string).
 			const updated = await this.db
 				.update(rooms)
-				.set({ state, stateVersion: version, stateBlob: legacyBlob, updatedAt: new Date() })
+				.set({ state, stateVersion: version, updatedAt: new Date() })
 				.where(and(eq(rooms.id, roomId), lt(rooms.stateVersion, version)))
 				.returning({ id: rooms.id });
 			if (updated.length === 0) {
@@ -62,11 +59,11 @@ export class PostgresStateStore implements StateStore {
 
 	async load(roomId: string): Promise<SerializedGame | string | null> {
 		const rows = await this.db
-			.select({ state: rooms.state, stateBlob: rooms.stateBlob })
+			.select({ state: rooms.state })
 			.from(rooms)
 			.where(eq(rooms.id, roomId))
 			.limit(1);
 
-		return rows[0]?.state ?? rows[0]?.stateBlob ?? null;
+		return rows[0]?.state ?? null;
 	}
 }

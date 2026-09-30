@@ -524,17 +524,19 @@ export class RoomManager {
 		// Quarantine current state, start fresh on next load. The new version is a tombstone
 		// (never 0), so a save stamped before this point can no longer land.
 		const rows = await this.db
-			.select({ state: rooms.state, stateBlob: rooms.stateBlob })
+			.select({ state: rooms.state })
 			.from(rooms)
 			.where(eq(rooms.id, roomId))
 			.limit(1);
 
 		const quarantine: Partial<typeof rooms.$inferInsert> = {};
 		if (rows[0]?.state) quarantine.quarantinedState = rows[0].state;
-		if (rows[0]?.stateBlob) quarantine.quarantinedBlob = rows[0].stateBlob;
 		await this.db.update(rooms).set({
 			...quarantine,
 			state: null,
+			// Nothing reads or writes state_blob any more (roadmap 37 release 2), but the column
+			// still holds a pre-reset blob. Null it so a rollback to the expand release (which
+			// falls back to the blob when `state` is null) cannot resurrect reset data.
 			stateBlob: null,
 			stateVersion: nextStateVersion(),
 			updatedAt: new Date(),
@@ -905,7 +907,7 @@ export class RoomManager {
 		}
 
 		const rows = await this.db
-			.select({ state: rooms.state, stateBlob: rooms.stateBlob })
+			.select({ state: rooms.state })
 			.from(rooms)
 			.where(eq(rooms.id, roomId))
 			.limit(1);
@@ -914,36 +916,38 @@ export class RoomManager {
 			throw new TRPCError({ code: 'NOT_FOUND', message: 'Room not found' });
 		}
 
-		const source = rows[0].state ? 'state' : rows[0].stateBlob ? 'blob' : null;
-		const hasBlob = source !== null;
-		log.debug('loading room from DB', { roomId, source });
+		// Only `state` is read. A room with only a legacy `state_blob` starts fresh, which is safe
+		// only because every production room already has `state` before this release ships (the
+		// task 5 backfill plus release 1's dual-write; verified in roadmap 40). Do not add a blob
+		// fallback back: `state_blob` is stale from release 2 on and would restore old data.
+		const hasState = rows[0].state != null;
+		log.debug('loading room from DB', { roomId, hasState });
 
 		const stateStore = new PostgresStateStore(this.db);
 		const roomLog = this._makeRoomLogger(roomId);
 		let game: Game;
 
-		if (source) {
+		if (hasState) {
 			try {
-				game = this.deps.restoreGame((rows[0].state ?? rows[0].stateBlob)!, roomLog);
-				roomStateSource.inc({ source });
+				game = this.deps.restoreGame(rows[0].state!, roomLog);
+				roomStateSource.inc({ source: 'state' });
 				(game.options as Record<string, unknown>).roomId = roomId;
-				log.debug('room restored from state blob', { roomId });
+				log.debug('room restored from state', { roomId });
 			} catch (err) {
-				// Hydration failed — quarantine the bad blob so it can be inspected,
+				// Hydration failed — quarantine the bad state so it can be inspected,
 				// then start a fresh game so the room is usable again immediately.
 				roomHydrationFailures.inc({ room_id: roomId });
 				const message = err instanceof Error ? err.message : String(err);
-				log.error('room hydration failed, quarantining blob and starting fresh', {
+				log.error('room hydration failed, quarantining state and starting fresh', {
 					roomId,
 					error: message,
 				});
 				this.log(err);
-				// Each source goes to its own quarantine column; both live columns are cleared and
-				// the version bumped so a save still in flight from before is stale.
+				// The bad state goes to quarantined_state and the live column is cleared with the
+				// version bumped, so a save still in flight from before is stale. state_blob is
+				// nulled for the same rollback reason as in _resetRoomState.
 				await this.db.update(rooms).set({
-					// Keep whichever columns hold data, so nothing is lost when both were set.
-					...(rows[0].state ? { quarantinedState: rows[0].state } : {}),
-					...(rows[0].stateBlob ? { quarantinedBlob: rows[0].stateBlob } : {}),
+					quarantinedState: rows[0].state,
 					state: null,
 					stateBlob: null,
 					stateVersion: nextStateVersion(),
@@ -952,7 +956,7 @@ export class RoomManager {
 				game = new this.deps.Game({ roomId }, roomLog);
 			}
 		} else {
-			log.debug('no state blob found, starting fresh game', { roomId });
+			log.debug('no state found, starting fresh game', { roomId });
 			game = new this.deps.Game({ roomId }, roomLog);
 		}
 
@@ -1004,7 +1008,7 @@ export class RoomManager {
 
 		this.active.set(roomId, entry);
 		roomsActive.set(this.active.size);
-		log.info('room loaded and active', { roomId, restored: hasBlob, activeRooms: this.active.size });
+		log.info('room loaded and active', { roomId, restored: hasState, activeRooms: this.active.size });
 		return entry;
 	}
 }

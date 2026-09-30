@@ -7,7 +7,7 @@ import pg from 'pg';
 
 import type { Db } from './db/index.js';
 import * as schema from './db/schema.js';
-import { backfillRoomState, decodeStateBlob, parseBackfillArgs } from './room-state-backfill.js';
+import { backfillRoomState, decodeStateBlob, FROM_BLOB_REMOVED, parseBackfillArgs } from './room-state-backfill.js';
 import { nextStateVersion, PostgresStateStore } from './state-store.js';
 
 // Real-Postgres check for roadmap 37 task 5 (same gating and setup as state-store.pg.test.ts).
@@ -37,8 +37,10 @@ describe('decodeStateBlob', () => {
 
 describe('parseBackfillArgs', () => {
 	it('accepts the known flags', () => {
-		expect(parseBackfillArgs(['--dry-run', '--room', 'r1'])).to.deep.include({ dryRun: true, roomId: 'r1', fromBlob: false });
-		expect(parseBackfillArgs(['--from-blob', '--i-stopped-the-service'])).to.deep.include({ fromBlob: true, stoppedService: true });
+		expect(parseBackfillArgs(['--dry-run', '--room', 'r1'])).to.deep.equal({ dryRun: true, roomId: 'r1' });
+		// Removed in release 2: blobs are stale, so a rollback roll-forward would lose data.
+		expect(parseBackfillArgs(['--from-blob'])).to.deep.equal({ error: FROM_BLOB_REMOVED });
+		expect(parseBackfillArgs(['--i-stopped-the-service'])).to.deep.equal({ error: FROM_BLOB_REMOVED });
 	});
 
 	it('rejects typos and a missing room id', () => {
@@ -198,62 +200,6 @@ suite('room state backfill against Postgres', () => {
 		expect(report.converted).to.equal(0);
 		expect(report.skippedChanged).to.deep.equal([id]);
 		expect((await row(id)).state).to.equal(null);
-	});
-
-	it('fromBlob rewrites a stale state and bumps state_version', async () => {
-		const oldVersion = nextStateVersion();
-		const id = await makeRoom(gz(game('blob-truth')), game('stale'), oldVersion);
-		const report = await backfillRoomState(db, { roomId: id, fromBlob: true });
-		expect(report.converted).to.equal(1);
-		const r = await row(id);
-		expect(r.state.options.marker).to.equal('blob-truth');
-		expect(Number(r.state_version)).to.equal(oldVersion + 1);
-	});
-
-	it('fromBlob dry run writes nothing', async () => {
-		const id = await makeRoom(gz(game('blob-truth')), game('stale'), 5);
-		const report = await backfillRoomState(db, { roomId: id, fromBlob: true, dryRun: true });
-		expect(report.converted).to.equal(1);
-		const r = await row(id);
-		expect(r.state.options.marker).to.equal('stale');
-		expect(Number(r.state_version)).to.equal(5);
-	});
-
-	it('fromBlob does not write an old decode over a blob that changed, and retries', async () => {
-		const id = await makeRoom(gz(game('old')), game('stale'), 5);
-		let calls = 0;
-		const report = await backfillRoomState(db, {
-			roomId: id,
-			fromBlob: true,
-			beforeWrite: async () => {
-				calls += 1;
-				if (calls === 1) await pool.query(`update rooms set state_blob = $2 where id = $1`, [id, gz(game('new'))]);
-			},
-		});
-		expect(report.converted).to.equal(1);
-		const r = await row(id);
-		expect(r.state.options.marker).to.equal('new');
-		expect(Number(r.state_version)).to.equal(6);
-	});
-
-	it('fromBlob clears a stale state whose blob was nulled (a reset while rolled back)', async () => {
-		const id = await makeRoom(null, game('pre-reset'), 9);
-		const untouched = async () => {
-			const r = await row(id);
-			expect(r.state.options.marker).to.equal('pre-reset');
-			expect(Number(r.state_version)).to.equal(9);
-		};
-
-		expect((await backfillRoomState(db, { roomId: id })).clearedStale).to.equal(0);
-		await untouched();
-		expect((await backfillRoomState(db, { roomId: id, fromBlob: true, dryRun: true })).clearedStale).to.equal(1);
-		await untouched();
-
-		const report = await backfillRoomState(db, { roomId: id, fromBlob: true });
-		expect(report.clearedStale).to.equal(1);
-		const r = await row(id);
-		expect(r.state).to.equal(null);
-		expect(Number(r.state_version)).to.equal(10);
 	});
 
 	it('a failed write reports a short reason with no player data', async () => {

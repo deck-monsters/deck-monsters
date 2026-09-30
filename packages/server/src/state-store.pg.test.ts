@@ -1,5 +1,4 @@
 import { randomUUID } from 'node:crypto';
-import zlib from 'node:zlib';
 
 import { expect } from 'chai';
 import { drizzle } from 'drizzle-orm/node-postgres';
@@ -46,15 +45,17 @@ suite('PostgresStateStore against Postgres', () => {
 		await pool.end();
 	});
 
-	it('stores a jsonb object, a version, and a matching legacy blob; load returns the object', async () => {
+	it('stores a jsonb object and a version, leaves state_blob untouched; load returns the object', async () => {
 		const state = { name: 'Game', options: { roomId, characters: { a: { name: 'A', options: { xp: 3 } } } } };
+		await pool.query(`update rooms set state_blob = 'stale-blob' where id = $1`, [roomId]);
 		await store.save(roomId, state);
 
 		const r = await row();
 		expect(r.type).to.equal('object');
 		expect(Number(r.state_version)).to.be.greaterThan(0);
 		expect(r.state).to.deep.equal(state);
-		expect(JSON.parse(zlib.gunzipSync(Buffer.from(r.state_blob, 'base64')).toString())).to.deep.equal(state);
+		// Release 2 of roadmap 37: a save no longer touches the legacy column.
+		expect(r.state_blob).to.equal('stale-blob');
 		expect(await store.load(roomId)).to.deep.equal(state);
 	});
 

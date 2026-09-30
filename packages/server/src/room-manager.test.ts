@@ -377,7 +377,7 @@ describe('RoomManager', () => {
 			const selectStub = sinon.stub().callsFake(() => {
 				selectIdx += 1;
 				if (selectIdx === 1) {
-					// _loadRoom stateBlob query — held until after deleteRoom completes
+					// _loadRoom state query — held until after deleteRoom completes
 					const limitStub = sinon.stub().returns(loadSelectPromise);
 					const orderByStub = sinon.stub().returns({ limit: limitStub });
 					const whereResult = Object.assign(new Promise(() => {}), {
@@ -418,7 +418,7 @@ describe('RoomManager', () => {
 			await rm.deleteRoom(OWNER_ID, ROOM_ID);
 
 			// Pre-delete snapshot: room still appeared to exist when the load began.
-			releaseLoadSelect([{ stateBlob: null }]);
+			releaseLoadSelect([{ state: null }]);
 
 			const err = await loadPromise.catch((e: unknown) => e);
 			expect(err).to.be.instanceOf(TRPCError);
@@ -550,9 +550,9 @@ describe('RoomManager', () => {
 	// ---- getGame / _getOrLoad ----
 
 	describe('getGame', () => {
-		it('restores game from stateBlob when not in cache', async () => {
+		it('restores game from state when not in cache', async () => {
 			const db = makeDbStub({
-				selectResults: [[{ stateBlob: 'base64gzipstate' }]],
+				selectResults: [[{ state: 'base64gzipstate' }]],
 			});
 			const { deps, mockGame, restoreGameStub } = makeEngineDeps();
 			const rm = new RoomManager(db as never, () => {}, deps);
@@ -564,9 +564,9 @@ describe('RoomManager', () => {
 			expect(game).to.equal(mockGame);
 		});
 
-		it('creates a fresh Game when no stateBlob exists', async () => {
+		it('creates a fresh Game when no state exists', async () => {
 			const db = makeDbStub({
-				selectResults: [[{ stateBlob: null }]],
+				selectResults: [[{ state: null }]],
 			});
 			const { deps, mockGame, GameStub, restoreGameStub } = makeEngineDeps();
 			const rm = new RoomManager(db as never, () => {}, deps);
@@ -657,9 +657,9 @@ describe('RoomManager', () => {
 			return metric.values.find((v) => v.labels['source'] === source)?.value ?? 0;
 		}
 
-		it('prefers the jsonb state over the legacy blob and counts the source', async () => {
+		it('restores from the jsonb state and counts the source', async () => {
 			const state = { name: 'Game', options: { roomId: ROOM_ID } };
-			const db = makeDbStub({ selectResults: [[{ state, stateBlob: 'oldblob' }]] });
+			const db = makeDbStub({ selectResults: [[{ state }]] });
 			const { deps, restoreGameStub } = makeEngineDeps();
 			const rm = new RoomManager(db as never, () => {}, deps);
 			const before = await sourceCount('state');
@@ -670,21 +670,21 @@ describe('RoomManager', () => {
 			expect(await sourceCount('state')).to.equal(before + 1);
 		});
 
-		it('falls back to the legacy blob when state is null and counts the source', async () => {
+		it('starts fresh, never from a legacy blob, when state is null (roadmap 37 release 2)', async () => {
+			// Even if a row still carries a stale blob, only `state` is read.
 			const db = makeDbStub({ selectResults: [[{ state: null, stateBlob: 'oldblob' }]] });
-			const { deps, restoreGameStub } = makeEngineDeps();
+			const { deps, restoreGameStub, GameStub } = makeEngineDeps();
 			const rm = new RoomManager(db as never, () => {}, deps);
-			const before = await sourceCount('blob');
 
 			await rm.getGame(ROOM_ID);
 
-			expect(restoreGameStub.firstCall.args[0]).to.equal('oldblob');
-			expect(await sourceCount('blob')).to.equal(before + 1);
+			expect(restoreGameStub.called).to.be.false;
+			expect(GameStub.calledOnce).to.be.true;
 		});
 
 		it('quarantines a failed jsonb state into quarantined_state with a new version', async () => {
 			const state = { name: 'Game', options: {} };
-			const db = makeDbStub({ selectResults: [[{ state, stateBlob: null }]] });
+			const db = makeDbStub({ selectResults: [[{ state }]] });
 			const { deps, restoreGameStub, GameStub } = makeEngineDeps();
 			restoreGameStub.throws(new Error('bad state'));
 			const rm = new RoomManager(db as never, () => {}, deps);
@@ -693,27 +693,10 @@ describe('RoomManager', () => {
 
 			const set = db._stubs.updateSetStub.firstCall.args[0];
 			expect(set.quarantinedState).to.equal(state);
-			expect(set).to.not.have.property('quarantinedBlob');
-			expect(set.state).to.equal(null);
+				expect(set.state).to.equal(null);
 			expect(set.stateBlob).to.equal(null);
 			expect(set.stateVersion).to.be.greaterThan(0);
 			expect(GameStub.calledOnce).to.be.true;
-		});
-
-		it('quarantines a failed legacy blob into quarantined_blob with a new version', async () => {
-			const db = makeDbStub({ selectResults: [[{ state: null, stateBlob: 'badblob' }]] });
-			const { deps, restoreGameStub } = makeEngineDeps();
-			restoreGameStub.throws(new Error('bad blob'));
-			const rm = new RoomManager(db as never, () => {}, deps);
-
-			await rm.getGame(ROOM_ID);
-
-			const set = db._stubs.updateSetStub.firstCall.args[0];
-			expect(set.quarantinedBlob).to.equal('badblob');
-			expect(set).to.not.have.property('quarantinedState');
-			expect(set.state).to.equal(null);
-			expect(set.stateBlob).to.equal(null);
-			expect(set.stateVersion).to.be.greaterThan(0);
 		});
 	});
 
@@ -723,7 +706,7 @@ describe('RoomManager', () => {
 
 		it('a reload right after unload selects only once the flush has landed', async () => {
 			const { deps, flushStateFn, mockGame, GameStub } = makeEngineDeps();
-			const db = makeDbStub({ selectResults: [[{ state: null, stateBlob: null }]] });
+			const db = makeDbStub({ selectResults: [[{ state: null }]] });
 			const rm = new RoomManager(db as never, () => {}, deps);
 			const { roomId } = await rm.createRoom(OWNER_ID, 'Room');
 			const write = held();
@@ -767,7 +750,7 @@ describe('RoomManager', () => {
 
 		it('a reset writes the DB only after the old game flush has settled', async () => {
 			const { deps, flushStateFn } = makeEngineDeps();
-			const db = makeDbStub({ selectResults: [[{ state: { name: 'Game', options: {} }, stateBlob: 'blob' }]] });
+			const db = makeDbStub({ selectResults: [[{ state: { name: 'Game', options: {} } }]] });
 			const rm = new RoomManager(db as never, () => {}, deps);
 			const { roomId } = await rm.createRoom(OWNER_ID, 'Room');
 			db._stubs.deleteStub.resetHistory();
@@ -788,7 +771,6 @@ describe('RoomManager', () => {
 			expect(tombstone.state).to.equal(null);
 			expect(tombstone.stateBlob).to.equal(null);
 			expect(tombstone.quarantinedState).to.deep.equal({ name: 'Game', options: {} });
-			expect(tombstone.quarantinedBlob).to.equal('blob');
 			expect(tombstone.stateVersion).to.be.greaterThan(0);
 			expect((rm as any).active.has(roomId)).to.be.false;
 		});
@@ -797,8 +779,8 @@ describe('RoomManager', () => {
 			const { deps, restoreGameStub, GameStub } = makeEngineDeps();
 			const db = makeDbStub({
 				selectResults: [
-					[{ state: { name: 'Game', options: {} }, stateBlob: null }], // reset reads the old row
-					[{ state: null, stateBlob: null }],                          // the load sees the tombstone
+					[{ state: { name: 'Game', options: {} } }], // reset reads the old row
+					[{ state: null }],                          // the load sees the tombstone
 				],
 			});
 			const gate = held();
@@ -825,7 +807,7 @@ describe('RoomManager', () => {
 		it('discards a load that had already selected before the reset began', async () => {
 			const { deps } = makeEngineDeps();
 			const oldRow = held();
-			const rows = [[{ state: { name: 'Game', options: {} }, stateBlob: null }], [{ state: { name: 'Game', options: {} }, stateBlob: null }]];
+			const rows = [[{ state: { name: 'Game', options: {} } }], [{ state: { name: 'Game', options: {} } }]];
 			let n = 0;
 			const db = makeDbStub();
 			(db as any).select = sinon.stub().callsFake(() => {
@@ -852,12 +834,12 @@ describe('RoomManager', () => {
 		it('a getGame arriving mid-reset does not join the invalidated load and gets a fresh game', async () => {
 			const { deps, GameStub } = makeEngineDeps();
 			const oldRow = held();
-			const row = [{ state: { name: 'Game', options: {} }, stateBlob: null }];
+			const row = [{ state: { name: 'Game', options: {} } }];
 			let n = 0;
 			const db = makeDbStub();
 			(db as any).select = sinon.stub().callsFake(() => {
 				const i = n++;
-				const limit = i === 0 ? () => oldRow.promise.then(() => row) : () => Promise.resolve(i === 1 ? row : [{ state: null, stateBlob: null }]);
+				const limit = i === 0 ? () => oldRow.promise.then(() => row) : () => Promise.resolve(i === 1 ? row : [{ state: null }]);
 				return { from: () => ({ where: () => Object.assign(Promise.resolve([]), { limit }) }) };
 			});
 			const gate = held();

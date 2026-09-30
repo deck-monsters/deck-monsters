@@ -44,7 +44,8 @@ export const rooms = pgTable('rooms', {
 		.notNull()
 		.references(() => profiles.id),
 	inviteCode: text('invite_code').notNull().unique(),
-	/** DEPRECATED (roadmap 37): base64(gzip(JSON)); dual-written until the contract release. */
+	/** DEPRECATED (roadmap 37): base64(gzip(JSON)). App code no longer writes it except a reset or
+	 * quarantine nulling it (see `_resetRoomState`); stale for every room. Dropped by a later migration. */
 	stateBlob: text('state_blob'),
 	quarantinedBlob: text('quarantined_blob'),
 	/** The serialized Game as jsonb (roadmap 37). Guarded by `stateVersion`. */
