@@ -18,7 +18,7 @@ const hookMock = vi.hoisted(() => ({
   },
   shuffleAvatars: vi.fn(),
   spawnOptions: {
-    types: [{ index: 0, label: 'Basilisk', summary: 'DRAFT(39): Basilisk one-liner' }, { index: 2, label: 'Jinn', summary: 'DRAFT(39): Jinn one-liner' }],
+    types: [{ index: 0, label: 'Basilisk', summary: 'A hard-hitting serpent that coils around its foes and grows a thicker skin.' }, { index: 2, label: 'Jinn', summary: 'A trickster spirit that stirs up sandstorms and turns the fight with clever magic.' }],
     pronouns: [
       { key: 'male', label: 'he/him' },
       { key: 'female', label: 'she/her' },
@@ -142,10 +142,10 @@ describe('WorkshopPanel: first run with no character', () => {
     render(<WorkshopPanel roomId="room-1" />);
     fireEvent.click(screen.getByRole('button', { name: 'Train monster' }));
 
-    expect(screen.getByText('DRAFT(39): Basilisk one-liner')).toBeTruthy();
+    expect(screen.getByText('A hard-hitting serpent that coils around its foes and grows a thicker skin.')).toBeTruthy();
     fireEvent.change(screen.getByLabelText('Type'), { target: { value: '2' } });
-    expect(screen.getByText('DRAFT(39): Jinn one-liner')).toBeTruthy();
-    expect(screen.queryByText('DRAFT(39): Basilisk one-liner')).toBeNull();
+    expect(screen.getByText('A trickster spirit that stirs up sandstorms and turns the fight with clever magic.')).toBeTruthy();
+    expect(screen.queryByText('A hard-hitting serpent that coils around its foes and grows a thicker skin.')).toBeNull();
   });
 
   it('offers a different set of avatars without losing the rest of the form', () => {

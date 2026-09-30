@@ -9,23 +9,17 @@ import { BASILISK, DRAGON, GLADIATOR, JINN, MINOTAUR, UNICORN, WEEPING_ANGEL } f
  * characters), which is not a choice aid, so this is a separate, deliberately short text.
  * One source, so the two paths cannot drift.
  *
- * Every line below is a placeholder: the owner writes the final wording.
+ * Each line names what the type is good at, from its own cards and stats (Monster Manual),
+ * so a new player can pick one without reading the lore.
  */
 export const MONSTER_TYPE_SUMMARIES: Record<string, string> = {
-	// DRAFT(39): one-line description
-	[BASILISK]: 'DRAFT(39): Basilisk one-liner',
-	// DRAFT(39): one-line description
-	[GLADIATOR]: 'DRAFT(39): Gladiator one-liner',
-	// DRAFT(39): one-line description
-	[JINN]: 'DRAFT(39): Jinn one-liner',
-	// DRAFT(39): one-line description
-	[MINOTAUR]: 'DRAFT(39): Minotaur one-liner',
-	// DRAFT(39): one-line description
-	[WEEPING_ANGEL]: 'DRAFT(39): Weeping Angel one-liner',
-	// DRAFT(39): one-line description
-	[UNICORN]: 'DRAFT(39): Unicorn one-liner',
-	// DRAFT(39): one-line description
-	[DRAGON]: 'DRAFT(39): Dragon one-liner',
+	[BASILISK]: 'A hard-hitting serpent that coils around its foes and grows a thicker skin.',
+	[GLADIATOR]: 'A trained duelist with the most HP, extra armour while young, and a focus that sharpens its blows.',
+	[JINN]: 'A trickster spirit that stirs up sandstorms and turns the fight with clever magic.',
+	[MINOTAUR]: 'A strong brawler that gores with its horns but wears little armour.',
+	[WEEPING_ANGEL]: 'A mind-bending angel that blinks out of reach and holds foes in a trance.',
+	[UNICORN]: 'A quick, proud beast that fights with its horn and heals its allies.',
+	[DRAGON]: 'A clever, vain wizard that breathes fire, takes to the air, and calls up the sea.',
 };
 
 /** The one-line summary for a monster class (or creature type name), or '' when it has none. */

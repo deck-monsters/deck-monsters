@@ -16,20 +16,16 @@ export type CardRefusalReason =
   | 'fighting';
 
 /**
- * The reason sentences. Every one is a placeholder: the owner writes the final wording.
+ * The reason sentences, one per refusal code, written without pronouns: the sentence already
+ * names the monster, whose pronouns this code does not know.
  * Each ends without a full stop; `cardRefusalSentence` adds it.
  */
 export const CARD_REFUSAL_REASON_TEXT: Record<CardRefusalReason, string> = {
-  // DRAFT(39): cannot_hold - this kind of monster cannot hold this card (class restriction)
-  cannot_hold: 'DRAFT(39) cannot_hold',
-  // DRAFT(39): deck_full - every card slot on the monster is taken
-  deck_full: 'DRAFT(39) deck_full',
-  // DRAFT(39): max_copies - the monster already holds the most copies of this card allowed
-  max_copies: 'DRAFT(39) max_copies',
-  // DRAFT(39): not_in_inventory - no copy of the card is left in the inventory
-  not_in_inventory: 'DRAFT(39) not_in_inventory',
-  // DRAFT(39): fighting - the monster is in a fight, so its cards are locked
-  fighting: 'DRAFT(39) fighting',
+  cannot_hold: "that kind of monster can't use it",
+  deck_full: 'every card slot is taken',
+  max_copies: "that's already the most copies one monster can hold",
+  not_in_inventory: 'no copy of it is left in your inventory',
+  fighting: 'cards are locked until the fight ends',
 };
 
 export const isCardRefusalReason = (value: string): value is CardRefusalReason =>

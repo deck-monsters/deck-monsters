@@ -226,7 +226,7 @@ describe('WorkshopView review regressions', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Select inventory card' }));
 
     expect(screen.getByTestId('refusal-Stonefang')).toHaveTextContent('');
-    expect(screen.getByTestId('refusal-Emberclaw')).toHaveTextContent("Hit can't go on Emberclaw: DRAFT(39) cannot_hold.");
+    expect(screen.getByTestId('refusal-Emberclaw')).toHaveTextContent("Hit can't go on Emberclaw: that kind of monster can't use it.");
   });
 
   it('says the deck is full before the tap when every slot is taken', () => {
@@ -235,7 +235,7 @@ describe('WorkshopView review regressions', () => {
       renderWorkshop();
       fireEvent.click(screen.getByRole('button', { name: 'Select inventory card' }));
       expect(screen.getByTestId('compat-Stonefang')).toHaveTextContent('ineligible');
-      expect(screen.getByTestId('refusal-Stonefang')).toHaveTextContent("Hit can't go on Stonefang: DRAFT(39) deck_full.");
+      expect(screen.getByTestId('refusal-Stonefang')).toHaveTextContent("Hit can't go on Stonefang: every card slot is taken.");
     } finally {
       workshopMock.monsters[0]!.cards = [] as never;
     }
@@ -259,7 +259,7 @@ describe('WorkshopView review regressions', () => {
     renderWorkshop();
     fireEvent.click(screen.getByRole('button', { name: 'Drop on Stonefang' }));
 
-    expect(await screen.findByText("Hit can't go on Stonefang: DRAFT(39) deck_full.")).toBeInTheDocument();
+    expect(await screen.findByText("Hit can't go on Stonefang: every card slot is taken.")).toBeInTheDocument();
   });
 
   it('clears selected banner after drag/drop actions', async () => {

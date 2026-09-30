@@ -139,8 +139,8 @@ The Workshop reads the line from `spawnOptions` (`types[].summary`) and shows it
 Type select; the Console prompt puts `Label: line` rows in the *question text*. The lines are
 not in `choices`: choices are the labels an answer is matched against
 ([prompt answer contract](../reference/prompt-answer-contract.md)), and a label with a
-description glued on would stop the Discord button answer from resolving. The lines are
-`DRAFT(39)` placeholders until the owner writes them.
+description glued on would stop the Discord button answer from resolving. The lines live in
+`monsters/helpers/type-summaries.ts`, one source for both paths.
 
 `Beastmaster.spawnMonster` opens with `You can train {n} more {monster|monsters}.` and, with
 no places left, refuses with `Every place at your side is taken ({slots} {monster|monsters}).`,
@@ -152,7 +152,7 @@ the Workshop Train row's wording.
 `cannot_hold` class restriction, `deck_full`, `max_copies`, or `not_in_inventory`) plus
 `cardCount` and `cardSlots`, the deck after the equip; `equipCards` passes them through.
 `apps/web/src/lib/cardRefusal.ts` maps codes to sentences (`{Card} can't go on {Monster}:
-{reason}.`, reasons are `DRAFT(39)` placeholders) and to the success line
+{reason}.`, each reason written without pronouns) and to the success line
 `Equipped {Card} on {Monster}. {Monster} holds {k} of {slots} cards.` The old `(1/1)` was
 cards equipped of cards requested in that one call, not the deck. The pre-tap hint on a
 monster panel uses the same `cardRefusalReason` (also `fighting`), checked in the order
