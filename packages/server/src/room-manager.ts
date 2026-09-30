@@ -951,10 +951,9 @@ export class RoomManager {
 			throw new TRPCError({ code: 'NOT_FOUND', message: 'Room not found' });
 		}
 
-		// Only `state` is read: every room was on it before this release, and nothing here names
-		// `state_blob`, so the column can be dropped later without breaking this release (a Drizzle
-		// insert lists every schema column; docs/operations/state-blob-drop.md). A null `state` is
-		// a new or reset room.
+		// Only `state` is read. `state_blob` is dropped (docs/operations/state-blob-drop.md); never
+		// add it back to the schema, since a Drizzle insert lists every schema column. A null
+		// `state` is a new or reset room.
 		const source = rows[0].state != null ? 'state' : null;
 		log.debug('loading room from DB', { roomId, source });
 

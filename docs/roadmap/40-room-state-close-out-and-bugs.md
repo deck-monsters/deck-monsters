@@ -8,7 +8,7 @@ tags: [roadmap, pass, database, ci, harness]
 ---
 # 40 — Room state close-out and open bugs
 
-**Status:** Tasks 1–5, 7 and 6a done; PR #416 deployed 2026-09-30. Task 6b, the drop itself, ships after 6a is live. Owner: "Do the 37 close out and bug fixes and then let's
+**Status:** Every task done. #416 and #417 (6a) deployed 2026-09-30; 6b, the drop, is in the next PR. Once it is live, fold the decisions into the area docs and archive this plan. Owner: "Do the 37 close out and bug fixes and then let's
 tackle 39 next."
 
 ## Tasks
@@ -22,7 +22,7 @@ tackle 39 next."
 | 5 | **Item H:** real-Postgres tests run in CI | `.github/workflows/ci.yml` | any | Done: bug 206. Checked by running the CI steps on a fresh local database (13 migrations applied, server 312 passing with no pg suite skipped) | (this commit) |
 | 7 | **Save crash (found in this pass):** a restored room's refilled deck could hold a card whose options pointed back at the deck, so the next save threw "circular structure" from a timer and killed the server (production, 2026-09-24). Fix the draw options, stop two cards keeping foreign options, and keep a save failure from crashing the process | Engine: `characters/helpers/hydrate.ts`, `cards/ecdysis.ts`, `game.ts`; tests | 1, 2 | Done: bug 207. The server counter for `game.persistState` rides with task 4 (same file) | 0de59968, 9ca4193c |
 | 6a | **Roadmap 37 task 6, stop referencing:** no code or Drizzle schema names `state_blob`; load reads `state` only; the backfill script goes; a migration clears the stale blob of every converted room, so a reset cannot be undone by a release-2 fallback (Codex review of #417). The column stays | Server, docs; `docs/operations/state-blob-drop.md` holds step B | After release 2 is live | Done (#417) | 163ed40f…2e92b8c7, and the stale-blob migration |
-| 6b | **Roadmap 37 task 6, the drop:** the guarded `drop column` migration from `docs/operations/state-blob-drop.md` | A migration and its tests | After 6a is live on both services | Planned | |
+| 6b | **Roadmap 37 task 6, the drop:** the guarded `drop column` migration from `docs/operations/state-blob-drop.md` | A migration and its tests | After 6a is live on both services | Done. 6a checked live first (both services on #417; 7 rooms, all with `state`, no blob left). Tests: the four guard cases, the migration count at 17, and the pg suites assert the column is gone | (this commit) |
 
 ## Decisions
 

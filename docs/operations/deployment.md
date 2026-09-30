@@ -394,13 +394,13 @@ previous release is still serving:
 2. **Release 2 (stop writing)** wrote `state` only, but still *used* the column: it selected
    `state_blob` on load and reset, set it to null on reset and quarantine, and fell back to it
    on load for an unconverted room.
-3. **Step A (stop referencing)**, this release: no code or Drizzle schema names `state_blob`
+3. **Step A (stop referencing)**, #417, live on both services 2026-09-30: no code or Drizzle schema names `state_blob`
    any more (no fallback, no nulling, the room-state backfill script is deleted, the
    leaderboard backfill reads `state` only). The column is still in the database and simply
    untouched. The engine's `restoreGame` still decodes a legacy blob string (public API).
    `dm_room_state_source_total` only reports `source="state"`.
-4. **Step B (drop)**: the migration that removes the column, ready to ship in
-   [state-blob-drop.md](state-blob-drop.md). It must follow step A on **both** services.
+4. **Step B (drop)**, `20260930150000_drop_state_blob.sql`: removes the column. It ships only
+   after step A runs on **both** services. Details: [state-blob-drop.md](state-blob-drop.md).
 
 Why step B cannot ship with step A: release 2 names the column, and Drizzle lists *every*
 schema column in an `insert` (as `default`), so even release-2 code that never mentions it
@@ -412,7 +412,7 @@ serving against that schema. The plan is in [roadmap 37](../roadmap/37-room-stat
 `RoomManager` over the same `rooms` table. Every deploy or rollback here means both, on the
 same release.
 
-### Step A (this release)
+### Step A (#417)
 
 One data migration, `20260930140000_clear_stale_state_blobs.sql`: it empties `state_blob`
 wherever `state` is set, which is every production room. It must, because step A's resets no
@@ -438,7 +438,7 @@ present)` while that query returns rows, then `alter table rooms drop column if 
 state_blob`; `quarantined_blob` stays. Both run in one transaction. The alter takes
 `ACCESS EXCLUSIVE` on `rooms`: if it queues behind a long transaction it blocks new `rooms`
 queries for up to the 10 s `lock_timeout`, then rolls back cleanly, fails the deploy and is
-safe to retry. The full SQL and tests are in [state-blob-drop.md](state-blob-drop.md).
+safe to retry. What to do if the guard trips is in [state-blob-drop.md](state-blob-drop.md).
 
 ### Rollback
 

@@ -85,7 +85,7 @@ suite('runMigrations against Postgres', () => {
 	it('applies all real repo migrations in order, records them, and a second run applies none', async () => {
 		await stubSupabase();
 		const files = readdirSync(repoMigrations).filter((f) => f.endsWith('.sql')).sort();
-		expect(files).to.have.length(16);
+		expect(files).to.have.length(17);
 
 		const first = await runMigrations({ connectionString: dbUrl, dir: repoMigrations, log: quiet });
 		expect(first.ok).to.equal(true);
@@ -132,6 +132,78 @@ suite('runMigrations against Postgres', () => {
 			{ name: 'converted', state_blob: null },
 			{ name: 'unconverted', state_blob: 'only-copy' },
 		]);
+	});
+
+	describe('drop_state_blob guard (roadmap 37 contract)', () => {
+		const DROP = '20260930150000_drop_state_blob.sql';
+		const hasBlobColumn = () =>
+			withDb(async (p) => {
+				const r = await p.query(
+					`select 1 from information_schema.columns where table_name = 'rooms' and column_name = 'state_blob'`
+				);
+				return r.rowCount === 1;
+			});
+
+		async function migrateAllButDrop(): Promise<string> {
+			await stubSupabase();
+			const all = readdirSync(repoMigrations).filter((f) => f.endsWith('.sql')).sort();
+			expect(all).to.include(DROP);
+			const before = Object.fromEntries(
+				all.filter((f) => f !== DROP).map((f) => [f, readFileSync(path.join(repoMigrations, f), 'utf8')])
+			);
+			const report = await runMigrations({ connectionString: dbUrl, dir: tempDir(before), log: quiet });
+			expect(report.ok).to.equal(true);
+			return DROP;
+		}
+
+		async function insertRoom(cols: string, vals: string): Promise<void> {
+			await withDb(async (p) => {
+				await p.query(`insert into auth.users (id) values ('00000000-0000-0000-0000-000000000001')`);
+				await p.query(`insert into profiles (id, display_name) values ('00000000-0000-0000-0000-000000000001', 't') on conflict (id) do nothing`);
+				await p.query(
+					`insert into rooms (id, name, owner_id, invite_code, ${cols}) values ('00000000-0000-0000-0000-0000000000aa', 'r', '00000000-0000-0000-0000-000000000001', 'abcd1234', ${vals})`
+				);
+			});
+		}
+
+		it('refuses while a room has state null and a blob, leaving the column and the blob intact', async () => {
+			await migrateAllButDrop();
+			await insertRoom('state_blob', `'the-only-copy'`);
+
+			const report = await runMigrations({ connectionString: dbUrl, dir: repoMigrations, log: quiet });
+			expect(report.ok).to.equal(false);
+			expect(report.failed?.filename).to.equal(DROP);
+			expect(report.failed?.error).to.match(/rooms still unconverted/);
+			expect(await hasBlobColumn()).to.equal(true);
+			const r = await withDb((p) => p.query(`select state_blob from rooms`));
+			expect(r.rows[0].state_blob).to.equal('the-only-copy');
+		});
+
+		it('drops the column when every room has state (a stale blob alongside it is fine)', async () => {
+			await migrateAllButDrop();
+			await insertRoom('state, state_blob', `'{"name":"Game","options":{}}'::jsonb, 'stale'`);
+
+			const report = await runMigrations({ connectionString: dbUrl, dir: repoMigrations, log: quiet });
+			expect(report.ok).to.equal(true);
+			expect(report.applied).to.deep.equal([DROP]);
+			expect(await hasBlobColumn()).to.equal(false);
+		});
+
+		it('passes with no rooms at all', async () => {
+			await migrateAllButDrop();
+			// No rooms yet: the guard's exists() is false.
+			const empty = await runMigrations({ connectionString: dbUrl, dir: repoMigrations, log: quiet });
+			expect(empty.ok).to.equal(true);
+			expect(await hasBlobColumn()).to.equal(false);
+		});
+
+		it('passes with a room whose state and blob are both null', async () => {
+			await migrateAllButDrop();
+			await insertRoom('state', 'null');
+			const report = await runMigrations({ connectionString: dbUrl, dir: repoMigrations, log: quiet });
+			expect(report.ok).to.equal(true);
+			expect(await hasBlobColumn()).to.equal(false);
+		});
 	});
 
 	it('rolls back a failing migration, keeps the earlier one, and reports failure', async () => {
