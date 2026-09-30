@@ -7,7 +7,7 @@ import Beastmaster from '../characters/beastmaster.js';
 import Game from '../game.js';
 import { RoomEventBus } from '../events/index.js';
 import { engineReady } from '../helpers/engine-ready.js';
-import { ALLIANCE_TEAM, RING_EVENTS } from './ring-events.js';
+import { ALLIANCE_TEAM, GAUNTLET_RULES, RING_EVENTS } from './ring-events.js';
 import { SNAPSHOT_APPEARANCE_MAX } from './index.js';
 import { getTarget, TARGET_NEXT_PLAYER } from '../helpers/targeting-strategies.js';
 import { addPendingSummon, recordSummon } from '../helpers/boss-summons.js';
@@ -802,6 +802,117 @@ describe('ring/index.ts', () => {
 			ring.addMonster({ monster, character, userId: name });
 			return { character, monster };
 		};
+
+		describe('Gauntlet harness switches (roadmap 38)', () => {
+			afterEach(() => {
+				GAUNTLET_RULES.rivalsWhenAlone = false;
+				GAUNTLET_RULES.rivalsWhenOutnumbered = false;
+				GAUNTLET_RULES.extrasAsMinions = false;
+			});
+
+			const gauntletFightWith = (humans: number) => {
+				const game = new Game();
+				const ring = game.getRing();
+				for (let i = 0; i < humans; i++) addPlayer(ring, `user-${i}`);
+				ring.activateRingEvent(ringEventFor('gauntlet'));
+				return { game, ring };
+			};
+
+			it('rivalsWhenAlone off: a lone human\'s Gauntlet keeps team targeting', () => {
+				const { game, ring } = gauntletFightWith(1);
+				ring.startEncounter();
+				expect(ring.encounterFreeForAll).to.equal(false);
+				ring.endEncounter();
+				game.dispose();
+			});
+
+			it('rivalsWhenAlone on: one human in the Gauntlet makes targeting free-for-all, cleared with the encounter', () => {
+				GAUNTLET_RULES.rivalsWhenAlone = true;
+				const { game, ring } = gauntletFightWith(1);
+				expect(ring.encounterFreeForAll).to.equal(false); // decided at fight start
+				ring.startEncounter();
+				expect(ring.encounterFreeForAll).to.equal(true);
+				ring.endEncounter();
+				expect(ring.encounterFreeForAll).to.equal(false);
+				game.dispose();
+			});
+
+			it('rivalsWhenAlone on: two humans leave the Gauntlet unchanged', () => {
+				GAUNTLET_RULES.rivalsWhenAlone = true;
+				const { game, ring } = gauntletFightWith(2);
+				ring.startEncounter();
+				expect(ring.encounterFreeForAll).to.equal(false);
+				ring.endEncounter();
+				game.dispose();
+			});
+
+			it('rivalsWhenAlone on: other ring events are unaffected', () => {
+				GAUNTLET_RULES.rivalsWhenAlone = true;
+				const game = new Game();
+				const ring = game.getRing();
+				addPlayer(ring, 'user-1');
+				ring.ringEvent = ringEventFor('the-reckoning');
+				ring.startEncounter();
+				expect(ring.encounterFreeForAll).to.equal(false);
+				ring.endEncounter();
+				game.dispose();
+			});
+
+			const outnumberedFree = (humans: number, bosses: number, minions = 0, on = true) => {
+				GAUNTLET_RULES.rivalsWhenOutnumbered = on;
+				const game = new Game();
+				const ring = game.getRing();
+				for (let i = 0; i < humans; i++) addPlayer(ring, `user-${i}`);
+				for (let i = 0; i < bosses; i++) ring.spawnBoss({ ignoreQuota: true, deferFightTimer: true });
+				for (let i = 0; i < minions; i++) ring.spawnBoss({ ignoreQuota: true, deferFightTimer: true, asMinion: true });
+				ring.startEncounter();
+				const result = ring.encounterFreeForAll;
+				ring.endEncounter();
+				game.dispose();
+				return result;
+			};
+
+			it('rivalsWhenOutnumbered on: 1 human vs 3 bosses and 2 vs 4 are free-for-alls', () => {
+				expect(outnumberedFree(1, 3)).to.equal(true);
+				expect(outnumberedFree(2, 4)).to.equal(true);
+			});
+
+			it('rivalsWhenOutnumbered on: equal numbers keep teams, 1 vs 1 included', () => {
+				expect(outnumberedFree(1, 1)).to.equal(false);
+				expect(outnumberedFree(2, 2)).to.equal(false);
+			});
+
+			it('rivalsWhenOutnumbered on: an ambush minion counts as a boss (1 human, 1 boss, 1 minion)', () => {
+				expect(outnumberedFree(1, 1, 1)).to.equal(true);
+			});
+
+			it('rivalsWhenOutnumbered off: nothing changes', () => {
+				expect(outnumberedFree(1, 3, 0, false)).to.equal(false);
+				expect(outnumberedFree(1, 1, 1, false)).to.equal(false);
+			});
+
+			it('extrasAsMinions off: the Gauntlet\'s extras are full-strength bosses', () => {
+				const { game, ring } = gauntletFightWith(1);
+				const bosses = ring.contestants.filter(c => c.isBoss);
+				expect(bosses.length).to.equal(2);
+				expect(bosses.some(c => c.minion)).to.equal(false);
+				game.dispose();
+			});
+
+			it('extrasAsMinions on: extras are minions at a third of their HP and survive dismissExtraBosses', () => {
+				GAUNTLET_RULES.extrasAsMinions = true;
+				const { game, ring } = gauntletFightWith(1);
+				const bosses = ring.contestants.filter(c => c.isBoss);
+				expect(bosses.length).to.equal(2);
+				expect(bosses.every(c => c.minion)).to.equal(true);
+				for (const boss of bosses) {
+					expect(boss.monster.hp).to.equal(Math.max(1, Math.floor(boss.monster.maxHp / 3)));
+				}
+				ring.dismissExtraBosses();
+				expect(ring.contestants.filter(c => c.isBoss).length).to.equal(2);
+				game.dispose();
+			});
+		});
 
 		describe('activateRingEvent (Finding 3 — centralized activation)', () => {
 			it('activateRingEvent sets ringEvent, emits ringEvent, spawns extraBosses', () => {

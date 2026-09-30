@@ -19,6 +19,7 @@ import {
 	RING_EVENT_CHANCE_PERCENT,
 	MAX_CARD_COPIES_IN_HAND,
 	buildRingEventContext,
+	getRingEvent,
 	selectRingEvent,
 	type Contestant,
 } from '@deck-monsters/engine';
@@ -87,6 +88,8 @@ export interface SimMonsterSpec {
 	 * Bosses are only realistic beside at least one human.
 	 */
 	role?: 'human' | 'boss';
+	/** A `boss` that is a lesser minion (a third of its HP), as an ambush's is. Roadmap 38. */
+	minion?: boolean;
 	/**
 	 * How a `human` builds its hand. `random` (the default) equips legal cards at random
 	 * from a starting deck plus fills; `likely` prefers its monster's signature cards and
@@ -117,6 +120,14 @@ export interface SimConfig {
 	 * wins count under `EXTRA_BOSS_LABEL`. Ignored when any spec sets a team.
 	 */
 	ringEvents?: boolean;
+	/**
+	 * Harness only (roadmap 38): activate this ring event (by id or name, e.g. `'gauntlet'`)
+	 * before EVERY fight instead of rolling one, through the ring's own `activateRingEvent`,
+	 * so a Gauntlet's extra bosses are spawned by the ring's own rules. An event the roster is
+	 * not eligible for is skipped. Wins by a boss an event added count under `EXTRA_BOSS_LABEL`.
+	 * Off in play, and ignored when any spec sets a team.
+	 */
+	forceRingEvent?: string;
 	/**
 	 * Record per-fight excitement (roadmap 35 task 1; 34's Layer 6, reduced): rounds, Curse
 	 * of Loki and stroke-of-luck rolls, and how far behind the eventual winner fell. Off by
@@ -513,7 +524,7 @@ export async function simulate(config: SimConfig): Promise<SimResult> {
 	}
 
 	const hasTeams = monsters.some(m => m.team);
-	const rollEvents = !!config.ringEvents && !hasTeams;
+	const rollEvents = (!!config.ringEvents || !!config.forceRingEvent) && !hasTeams;
 	const eventPick = mulberry32((seed ?? 1) * 104729 + 17);
 	const ringEventCounts: Record<string, number> = {};
 	const names = monsters.map((_, i) => `Sim ${i + 1}`);
@@ -679,6 +690,7 @@ export async function simulate(config: SimConfig): Promise<SimResult> {
 					character: c.character,
 					userId: c.userId,
 					isBoss: c.isBoss,
+					...(monsters[contestants.indexOf(c)]!.minion ? { minion: true } : {}),
 				});
 			}
 
@@ -692,6 +704,13 @@ export async function simulate(config: SimConfig): Promise<SimResult> {
 				// Set after `addMonster`, which can re-roll a ring event, and before the fight
 				// starts. `clearRing()` at the top of the next iteration removes it again.
 				(ring as unknown as { ringEvent: unknown }).ringEvent = HARNESS_TEAM_EVENT;
+			} else if (rollEvents && config.forceRingEvent) {
+				const forced = getRingEvent(config.forceRingEvent);
+				if (!forced) throw new Error(`simulate: no ring event "${config.forceRingEvent}"`);
+				if (forced.eligible(buildRingEventContext(ring.contestants))) {
+					ring.activateRingEvent(forced);
+					ringEventCounts[forced.name] = (ringEventCounts[forced.name] ?? 0) + 1;
+				}
 			} else if (rollEvents && eventPick() * 100 < RING_EVENT_CHANCE_PERCENT) {
 				// The ring's own roll is off under the determinism switch this run sets, so roll
 				// here, from its own eligible list, with a seeded pick. `activateRingEvent` spawns

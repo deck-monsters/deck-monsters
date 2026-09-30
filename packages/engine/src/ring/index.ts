@@ -7,6 +7,7 @@ import { randomContestant } from '../helpers/bosses.js';
 import {
 	buildRingEventContext,
 	CHALLENGERS_TEAM,
+	GAUNTLET_RULES,
 	getRingEvent,
 	selectRingEvent,
 	type RingEventDefinition,
@@ -278,6 +279,12 @@ export class Ring extends BaseClass {
 	 * `startEncounter()`, cleared by `clearRing()`.
 	 */
 	ringEvent?: RingEventDefinition;
+	/**
+	 * Roadmap 38 harness switch (`GAUNTLET_RULES.rivalsWhenAlone`): decided once at fight start
+	 * from the human count, so a human dying mid-fight cannot flip targeting. Cleared with the
+	 * encounter.
+	 */
+	private gauntletRivals = false;
 
 	/**
 	 * Stub satisfying legacy card code that calls `ring.channelManager.sendMessages()`.
@@ -677,6 +684,15 @@ export class Ring extends BaseClass {
 		// Apply the ring event against the final roster — contestants may have joined or
 		// withdrawn since it was rolled during the countdown.
 		this.ringEvent?.apply(this.contestants);
+		const humanCount = this.contestants.filter(contestant => !contestant.isBoss).length;
+		const bossCount = this.contestants.filter(contestant => contestant.isBoss).length;
+		this.gauntletRivals =
+			(GAUNTLET_RULES.rivalsWhenAlone && this.ringEvent?.id === 'gauntlet' && humanCount === 1) ||
+			// Bosses that outnumber the humans (minions count as bosses) turn on each other too.
+			// A mega boss's party is a designed pack and keeps its alliance.
+			(GAUNTLET_RULES.rivalsWhenOutnumbered &&
+				bossCount > humanCount &&
+				!this.contestants.some(contestant => contestant.mega));
 
 		this.contestants.forEach(({ userId, monster, minion }) => {
 			if (minion) monster.hp = Math.min(monster.hp, minionHp(monster));
@@ -699,6 +715,7 @@ export class Ring extends BaseClass {
 	endEncounter(): void {
 		this.contestants.forEach(contestant => contestant.monster.endEncounter());
 		this.inEncounter = false;
+		this.gauntletRivals = false;
 		delete this.encounter;
 		this.activeContestant = undefined;
 		// Post-fight HP is what players check between rounds; publish the final board.
@@ -966,7 +983,7 @@ export class Ring extends BaseClass {
 		 * itself rule, and a team a player or ring event already set is never replaced.
 		 */
 		let challengers: Contestant[] =
-			!this.ringEvent?.freeForAll && contestants.some(contestant => contestant.isBoss)
+			!this.encounterFreeForAll && contestants.some(contestant => contestant.isBoss)
 				? contestants.filter(
 						contestant =>
 							!contestant.isBoss &&
@@ -1118,7 +1135,7 @@ export class Ring extends BaseClass {
 							strategy:
 								playerContestant.targetingStrategy ?? playerContestant.monster.targetingStrategy,
 							// Blood Feud drops team alignment for everyone.
-							...(this.ringEvent?.freeForAll ? { team: false as const } : {}),
+							...(this.encounterFreeForAll ? { team: false as const } : {}),
 						});
 						// TARGET_ALL_CONTESTANTS resolves to an array rather than a single contestant.
 						// No monster should carry it as a strategy, but now that ring events assign
@@ -1769,7 +1786,7 @@ export class Ring extends BaseClass {
 	 * docs/architecture/boss-encounters.md §5.
 	 */
 	get encounterFreeForAll(): boolean {
-		return this.ringEvent?.freeForAll === true;
+		return this.ringEvent?.freeForAll === true || this.gauntletRivals;
 	}
 
 	/**
@@ -1805,7 +1822,11 @@ export class Ring extends BaseClass {
 		// come out of the level budget, so they are weaker the more of them there are.
 		for (let i = 0; i < (ringEvent.extraBosses ?? 0); i++) {
 			if (!this.canAcceptBoss({ ignoreQuota: true }).ok) break;
-			this.spawnBoss({ deferFightTimer: true, ignoreQuota: true });
+			this.spawnBoss({
+				deferFightTimer: true,
+				ignoreQuota: true,
+				asMinion: GAUNTLET_RULES.extrasAsMinions,
+			});
 		}
 	}
 
@@ -1904,8 +1925,11 @@ export class Ring extends BaseClass {
 		summonedAt,
 		ambush,
 		ignoreQuota,
+		asMinion,
 	}: {
 		deferFightTimer?: boolean;
+		/** Force a lesser minion (a third of its HP) whatever the quota says. Roadmap 38's Gauntlet switch. */
+		asMinion?: boolean;
 		/** A timer spawn that may bring one boss beyond one per human. */
 		ambush?: boolean;
 		/** The Gauntlet's extra bosses. */
@@ -1919,7 +1943,7 @@ export class Ring extends BaseClass {
 		const contestant = this.getSpawnedBossContestant();
 		// A boss beyond one per human is an ambush's lesser minion.
 		const humans = this.contestants.filter(c => !c.isBoss).length;
-		const minion = ambush && humans > 0 && this.bossCount >= humans;
+		const minion = asMinion || (ambush && humans > 0 && this.bossCount >= humans);
 		// Weakened on arrival, so the roster shows it, and again as the fight starts.
 		if (minion) contestant.monster.hp = minionHp(contestant.monster);
 
@@ -1962,8 +1986,10 @@ export class Ring extends BaseClass {
 		// included let one human keep facing two full-strength bosses after the other human
 		// withdrew, the matchup the quota exists to prevent (a Codex review of PR #403).
 		const humans = this.contestants.filter(contestant => !contestant.isBoss).length;
-		const fullAllowance = this.bossAllowance(false) + (this.ringEvent?.extraBosses ?? 0);
-		const minionAllowance = humans > 0 ? 1 : 0;
+		const gauntletExtras = this.ringEvent?.extraBosses ?? 0;
+		const asMinions = GAUNTLET_RULES.extrasAsMinions;
+		const fullAllowance = this.bossAllowance(false) + (asMinions ? 0 : gauntletExtras);
+		const minionAllowance = (humans > 0 ? 1 : 0) + (asMinions ? gauntletExtras : 0);
 		const kept = [
 			...bosses.filter(boss => !boss.minion).slice(0, fullAllowance),
 			...bosses.filter(boss => boss.minion).slice(0, minionAllowance),
