@@ -353,6 +353,11 @@ walk is ever reworked; `cards/boss-feed.test.ts` pins it with a real fight.
   on every ring add/remove — the fight fires 60s after the *last* membership
   change (legacy behavior, intentional). `nextFightAt` / `nextBossSpawnAt` are
   published via `ring.state` events for client countdowns.
+- **`persistState()` never throws.** A serialization failure is caught, logged through the
+  game's logger as an `Error` carrying `context: 'game.persistState'` (roomId and message only,
+  no state), and the room keeps running; the next save retries, and `flushState()` resolves
+  `false`. On 2026-09-24 a circular structure made `JSON.stringify` throw inside the debounce
+  timer, an uncaught exception that killed the server process.
 - **State saves**: `Game.scheduleSave()` debounces 30s off `stateChange`
   events, now correctly room-scoped (see above) so one room's activity can't
   keep resetting another's debounce indefinitely. Any direct mutation of an

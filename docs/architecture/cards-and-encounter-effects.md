@@ -268,6 +268,10 @@ new card or monster must reach. Check each one.
 
 - `permittedClassesAndTypes` (class names and creature types), `level` (the draw and hold
   gate), `probability` (rarity from `helpers/probabilities.ts`), and `cost`.
+- The constructor must not forward unknown options (`...rest`) into `super()`; pass only the
+  options the card owns. A card that kept a caller's `deck` option became part of the very array
+  it was pushed into, and the circular structure made every save of the room throw (the
+  2026-09-24 crash). `cards/card-options-isolation.test.ts` enforces it for every registered card.
 - Sale: default is the front shop; `notForSale` sends it to the back room at a steep
   markup; `neverForSale` keeps it out of both.
 - Register it in `cards/helpers/all.ts` **in alphabetical order**, because the generated

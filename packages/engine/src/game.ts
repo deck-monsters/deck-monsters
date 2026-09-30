@@ -215,7 +215,29 @@ export class Game extends BaseClass {
 		}, SAVE_DEBOUNCE_MS);
 	}
 
+	/**
+	 * Saves the room, and never throws. On 2026-09-24 a circular structure in a card's options made
+	 * `JSON.stringify(this)` throw from the debounced timer; nothing caught it, so the exception
+	 * killed the server process. A failed serialize is logged (roomId and message only, never state)
+	 * and the room keeps running; the next save attempt tries again. Every caller (the timer, the
+	 * boss finalizer, `saveState`, `flushState`) relies on this.
+	 */
 	private persistState(): void {
+		try {
+			this.persistStateUnsafe();
+		} catch (err) {
+			// An Error with a context, so the server's room logger can count it by `context`.
+			const failure = new Error(
+				`room state save failed for roomId ${this.roomId}: ${err instanceof Error ? err.message : String(err)}`
+			) as Error & { context?: string };
+			failure.context = 'game.persistState';
+			this.log(failure);
+			// A serialize failure never reached the store, so flushState() must not wait on a stale save.
+			this._lastSave = Promise.resolve(false);
+		}
+	}
+
+	private persistStateUnsafe(): void {
 		// Snapshot non-boss contestant refs so the ring can be restored after a server restart.
 		const ringContestantRefs = this.ring.contestants
 			.filter(c => !c.isBoss)
@@ -273,7 +295,7 @@ export class Game extends BaseClass {
 		try {
 			this.persistState();
 		} catch (err) {
-			// An unload awaiting this must not reject because one value would not serialize.
+			// persistState already catches serialize failures; this guards a subclass or stub that throws.
 			this.log(err);
 			return false;
 		}
