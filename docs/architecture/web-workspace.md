@@ -31,6 +31,28 @@ second implementation for a pane.
 Other routes remain outside the workspace: `/rooms`, `/room/:roomId/settings`, `/account`,
 `/leaderboard`, authentication/reset pages, and invite links.
 
+## Help and guides
+
+`HelpPanel` (`components/HelpPanel.tsx`) is the Help page; `HelpView` hosts it full page at `/room/:roomId/help` and, outside a room, `/help`. The header menu (desktop nav and
+the ☰ menu) has a **Help and guides** link to those routes, like Workshop and Fight log.
+
+Help is **deliberately not a registered surface**: the phone tab bar already overflows at
+390px with five tabs, so a sixth would make it worse. It is a route only, and `App.tsx`
+lazy-loads `HelpView` so the bundled guides are a separate chunk.
+
+Its text is not fetched. `PLAYER_HANDBOOK.md`, `MONSTERS.md`, `CARDS.md` and `ITEMS.md` at
+the repo root are imported with Vite `?raw` and bundled at build time, so **`pnpm run
+build:docs` (then a web build) refreshes what players read**; `apps/web/railway.toml` lists
+those files in `watchPatterns` so a regeneration redeploys the web service. Railway builds
+from the monorepo root, so they are in the build context. The **Commands** section renders
+`COMMAND_CATALOG`, the same data as the Console's `CommandReference`, which also supplies
+its category labels and order.
+
+`lib/markdown.tsx` is a small purpose-built renderer for the shapes those guides use (no
+Markdown dependency; it emits React elements, never HTML strings). Tables and code blocks
+scroll inside their own focusable `.help-table-region` / `.help-pre` box, never the page.
+Adding Markdown syntax to a generator means checking the renderer handles it.
+
 ## Two slots and the breakpoint
 
 `Terminal` stores exactly two distinct `SurfaceId`s. Fresh viewers get

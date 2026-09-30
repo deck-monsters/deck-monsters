@@ -1,7 +1,9 @@
 [build]
 builder = "RAILPACK"
 buildCommand = "pnpm --filter @deck-monsters/engine build && pnpm --filter @deck-monsters/web build"
-watchPatterns = ["apps/web/**", "packages/engine/**"]
+# The root guides are bundled into the Help panel (`?raw` imports), so regenerating them
+# must redeploy the web app.
+watchPatterns = ["apps/web/**", "packages/engine/**", "PLAYER_HANDBOOK.md", "MONSTERS.md", "CARDS.md", "ITEMS.md"]
 
 [deploy]
 startCommand = "pnpm --filter @deck-monsters/web start"

@@ -1,5 +1,5 @@
 import { Navigate, Route, Routes, useNavigate, useParams } from 'react-router-dom';
-import { useEffect } from 'react';
+import { Suspense, lazy, useEffect } from 'react';
 import { useAuth } from './lib/auth-context.js';
 import AppShell from './components/AppShell.js';
 import Terminal from './components/Terminal.js';
@@ -11,6 +11,7 @@ import AccountView from './views/AccountView.js';
 import LeaderboardView from './views/LeaderboardView.js';
 import FightLogView from './views/FightLogView.js';
 import WorkshopView from './views/WorkshopView.js';
+const HelpView = lazy(() => import('./views/HelpView.js'));
 import { trpc } from './lib/trpc.js';
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
@@ -217,6 +218,24 @@ export default function App() {
         element={
           <RequireAuth>
             <WorkshopView />
+          </RequireAuth>
+        }
+      />
+
+      <Route
+        path="/room/:roomId/help"
+        element={
+          <RequireAuth>
+            <Suspense fallback={<LoadingScreen />}><HelpView /></Suspense>
+          </RequireAuth>
+        }
+      />
+
+      <Route
+        path="/help"
+        element={
+          <RequireAuth>
+            <Suspense fallback={<LoadingScreen />}><HelpView /></Suspense>
           </RequireAuth>
         }
       />

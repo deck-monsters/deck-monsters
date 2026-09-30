@@ -135,6 +135,9 @@ export default function AppShell({ children, roomName, roomId }: AppShellProps) 
               Fight log
             </Link>
           )}
+          <Link to={roomId ? `/room/${roomId}/help` : '/help'} className="btn" style={{ fontSize: '0.8rem' }}>
+            Help and guides
+          </Link>
           <Link to="/account" className="btn" style={{ fontSize: '0.8rem' }}>
             Account
           </Link>
@@ -220,6 +223,13 @@ export default function AppShell({ children, roomName, roomId }: AppShellProps) 
                 Fight log
               </Link>
             )}
+            <Link
+              to={roomId ? `/room/${roomId}/help` : '/help'}
+              className="btn"
+              onClick={() => setMenuOpen(false)}
+            >
+              Help and guides
+            </Link>
             <Link to="/account" className="btn" onClick={() => setMenuOpen(false)}>Account</Link>
             <button
               className="btn"
