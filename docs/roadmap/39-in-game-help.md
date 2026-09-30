@@ -8,7 +8,7 @@ tags: [roadmap, onboarding, help, web, commands, wording]
 ---
 # 39 — In-game help for every control
 
-**Status:** Next (owner, 2026-09-30: "let's tackle 39 next"), after [40](40-room-state-close-out-and-bugs.md). No code yet.
+**Status:** In progress (2026-09-30). Tasks 1 and 2 are built and reviewed; Cursor's live check (Prompt B in [39a](39a-cursor-first-pass.md)) and walk (Prompt A) come next, then tasks 3–7.
 
 ## Why
 
@@ -56,8 +56,8 @@ Tasks 1 and 2 are specified in [39a](39a-cursor-first-pass.md), which Claude imp
 
 | # | Task | Status |
 |---|---|---|
-| 1 | **Workshop quick wins,** from the findings above: the wallet moves to the Shop; Train monster gets its own row and a line of help; Sync goes, with event and focus refresh in its place; zero prices read **Free**; the Sorting Hat's description leads with its purpose; a revival in progress shows **Reviving…** and its return time | Planned |
-| 2 | **Help in the game:** a Help entry in the menu that opens the player handbook, the monster, card and item guides, and the command list, readable on a phone | Planned |
+| 1 | **Workshop quick wins,** from the findings above: the wallet moves to the Shop; Train monster gets its own row and a line of help; Sync goes, with event and focus refresh in its place; zero prices read **Free**; the Sorting Hat's description leads with its purpose; a revival in progress shows **Reviving…** and its return time | Done (2026-09-30): f9f8fc0d, c359cd4a; the Sorting Hat text 8f260bb8. Needs the live check (Prompt B in 39a) |
+| 2 | **Help in the game:** a Help entry in the menu that opens the player handbook, the monster, card and item guides, and the command list, readable on a phone | Done (2026-09-30): a Help and guides page from the ☰ menu, not a tab (the phone tab bar already overflows); lazy-loaded; 57563764, 9e31cf05. Needs the live check |
 | 3 | **Inventory,** by walking the game as a new player in a real browser at phone and desktop widths (a Cursor prompt is below): every tab, panel, button, menu, header counter, Console command and prompt, and every mechanic a player meets in a fight. For each, what explains it today (a label, a tooltip, a help line, a handbook section, or nothing) and what confused the walker | Planned |
 | 4 | **Decide the forms of help,** per kind of control: a short description on each button and menu item (tooltip, or long-press on a phone); a one-line "what is this" for each tab and panel, shown the first time and reachable after; `help <command>` with an example for every command; and a narration line the first time a player meets a mechanic in a fight (a ring event, a boss's temperament, an ambush, bosses turning on each other). Keep it short, and never block play | Planned |
 | 5 | **Write the text.** The orchestrator writes every line in the game's voice, from the inventory, in batches by surface | Planned |

@@ -8,7 +8,7 @@ tags: [roadmap, onboarding, help, web, cursor]
 ---
 # 39a — In-game help: spec and Cursor passes
 
-**Status:** Walk ready to run (2026-09-30). Claude implements Parts 1 and 2 below. Cursor, which
+**Status:** Walk ready to run; Parts 1 and 2 landed (2026-09-30), so Prompt B is ready too. Claude implements Parts 1 and 2 below. Cursor, which
 drives a real browser but runs a smaller model, does the browser work around them (owner): the
 new-player walk now, and a live check once Parts 1 and 2 land. Claude reviews Cursor's branch and
 writes any new player-facing text.
@@ -26,8 +26,8 @@ finish, with your report in docs/reference/help-inventory.md.
 ## Prompt B: the live check (paste whole into Cursor, after Claude says Parts 1 and 2 landed)
 
 ```text
-Read docs/roadmap/39a-cursor-first-pass.md in the deck-monsters repo. Fetch and check out the
-branch Claude names for roadmap 39, then create your own branch cursor/help-check-39 from it.
+Read docs/roadmap/39a-cursor-first-pass.md in the deck-monsters repo. Fetch and check out
+branch claude/unicorn-monster-cards-cigpmw, then create your own branch cursor/help-check-39 from it.
 In a real browser at 390 x 844 and 1440 x 900, check every numbered item in Parts 1 and 2
 against the app: does it do exactly what the item says, with exactly the text given? Record
 each item as pass or fail, with a screenshot, in docs/reference/help-check.md (front matter
