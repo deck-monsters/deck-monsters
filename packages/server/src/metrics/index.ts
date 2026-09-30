@@ -272,7 +272,7 @@ export const roomStateGenerationDrops = new Counter({
 
 export const roomStateSource = new Counter({
 	name: 'dm_room_state_source_total',
-	help: 'Room loads that restored from the jsonb state column (source is always state since roadmap 37 release 2)',
+	help: 'Room loads by where the state came from: state (the jsonb column) or blob (the read-only legacy fallback for a room not yet converted; goes with the state_blob drop)',
 	labelNames: ['source'] as const,
 	registers: [registry],
 });
