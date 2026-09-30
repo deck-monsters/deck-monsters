@@ -3,6 +3,7 @@ import { trpc } from '../lib/trpc.js';
 import { formatEventText, truncateEventText } from '../utils/format-event-text.js';
 import { useMonsterMentions } from '../hooks/useMonsterMentions.js';
 import { rememberMonsters } from '../hooks/useKnownMonsters.js';
+import { useFightOnRing } from '../hooks/useFightOnRing.js';
 import { fightSubtitle, fightTitleOneLine, type FightSummaryLike } from '../utils/fight-display.js';
 
 interface FightLogPanelProps { roomId: string; headerActions?: ReactNode }
@@ -16,7 +17,9 @@ function relTime(d: Date): string {
 
 export default function FightLogPanel({ roomId, headerActions }: FightLogPanelProps) {
   const [expanded, setExpanded] = useState<number | null>(null);
-  const fights = trpc.game.recentFights.useQuery({ roomId, limit: 80 });
+  const fightOnRing = useFightOnRing(roomId);
+  // While a fight is on, refetch so it appears here soon after it ends.
+  const fights = trpc.game.recentFights.useQuery({ roomId, limit: 80 }, { refetchInterval: fightOnRing ? 5_000 : false });
   // Monster sprites in place of their emoji, as in the Ring feed (roadmap 24). The history
   // records its own participants rather than relying on the Ring pane having run: opened
   // directly, after a reload, or in a layout without the Ring, it would otherwise know no
@@ -55,7 +58,7 @@ export default function FightLogPanel({ roomId, headerActions }: FightLogPanelPr
   }, [fights.data]);
 
   return <div className="surface-panel-host"><section className="surface-panel fight-log-panel">
-    <header className="surface-panel-heading"><h1>Fight log</h1><div className="surface-panel-actions">{headerActions}</div></header>
+    <header className="surface-panel-heading"><h1>Fights</h1><div className="surface-panel-actions">{headerActions}</div></header>
     {fights.isLoading && <p className="surface-muted">Loading…</p>}
     {/*
       A room with no fights yet rendered the heading and then nothing at all — the same
@@ -64,8 +67,13 @@ export default function FightLogPanel({ roomId, headerActions }: FightLogPanelPr
     */}
     {!fights.isLoading && (fights.data ?? []).length === 0 && (
       <p className="surface-muted">
-        No fights yet — send two monsters to the ring and the first one starts on its own.
+        {fightOnRing
+          ? 'A fight is on in the ring. It shows here when it ends.'
+          : 'No fights yet. A fight starts on its own once two monsters are in the ring.'}
       </p>
+    )}
+    {fightOnRing && (fights.data ?? []).length > 0 && (
+      <p className="surface-muted">A fight is on in the ring. It shows here when it ends.</p>
     )}
     <ul className="fight-log-list">{(fights.data ?? []).map((fight) => {
       const summary = fight as FightSummaryLike;

@@ -311,7 +311,7 @@ export default function MonsterWorkshopPanel({
 
       {locked && (
         <p className="workshop-warning">
-          {monster.name} is currently fighting. Changes apply after they return.
+          {monster.name} is in a fight. Cards unlock when it ends.
         </p>
       )}
 

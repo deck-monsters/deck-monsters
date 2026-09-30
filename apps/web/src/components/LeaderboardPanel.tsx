@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { trpc } from '../lib/trpc.js';
+import { useFightOnRing } from '../hooks/useFightOnRing.js';
 
 type Scope = 'room' | 'global';
 type Kind = 'players' | 'monsters';
@@ -16,6 +17,7 @@ function LeaderboardTableRegion({ label, children }: { label: string; children: 
 }
 
 export default function LeaderboardPanel({ roomId, initialScope = roomId ? 'room' : 'global', headerActions }: LeaderboardPanelProps) {
+  const fightOnRing = useFightOnRing(roomId);
   const [scope, setScope] = useState<Scope>(initialScope);
   const [kind, setKind] = useState<Kind>('players');
   const [sortBy, setSortBy] = useState<Sort>('xp');
@@ -59,7 +61,7 @@ export default function LeaderboardPanel({ roomId, initialScope = roomId ? 'room
   return (
     <div className="surface-panel-host">
     <section className="surface-panel leaderboard-panel">
-        <header className="surface-panel-heading"><h1>Leaderboard</h1><div className="surface-panel-actions">{headerActions}</div></header>
+        <header className="surface-panel-heading"><h1>Leaders</h1><div className="surface-panel-actions">{headerActions}</div></header>
 
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1rem', alignItems: 'center' }}>
           <label style={{ display: 'flex', gap: '0.35rem', alignItems: 'center', fontSize: '0.85rem' }}>
@@ -130,9 +132,11 @@ export default function LeaderboardPanel({ roomId, initialScope = roomId ? 'room
         */}
         {showEmpty && (
           <p style={{ color: 'var(--color-fg-dim)' }}>
-            {scope === 'room'
-              ? 'No ranked fights in this room yet — rankings fill in once monsters start fighting.'
-              : 'No ranked fights anywhere yet.'}
+            {fightOnRing
+              ? 'No ranked fights yet. A fight is on in the ring; rankings update when it ends.'
+              : scope === 'room'
+                ? 'No ranked fights in this room yet — rankings fill in once monsters start fighting.'
+                : 'No ranked fights anywhere yet.'}
           </p>
         )}
 
