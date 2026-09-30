@@ -35,14 +35,26 @@ describe('.workshop-header-actions is an explicit flex row (10-bug-fixes.md #6)'
 
   it('the phone-width override has a flex row to act on', () => {
     const narrow = baseCss.slice(baseCss.indexOf('@container workshop (max-width: 520px)'));
-    const mobileBody = ruleBody(narrow, '.workshop-header-actions');
-    expect(mobileBody).toMatch(/justify-content:\s*space-between/);
-    expect(mobileBody).toMatch(/flex-wrap:\s*wrap/);
+    expect(ruleBody(narrow, '.workshop-header-actions')).toMatch(/flex-wrap:\s*wrap/);
+  });
+
+  // Bug 210: once coins, Sync and Train monster left the header, a stacked header put the
+  // pane's lone ⤢ link on a line of its own. The header stays a row at phone width.
+  it('keeps the header a row at phone width', () => {
+    const narrow = baseCss.slice(baseCss.indexOf('@container workshop (max-width: 520px)'));
+    expect(ruleBody(narrow, '.workshop-header')).not.toMatch(/flex-direction:\s*column/);
   });
 
   it('gives the Train row a flex row that stacks at phone width', () => {
     expect(ruleBody(baseCss, '.workshop-train-row')).toMatch(/display:\s*flex/);
     const narrow = baseCss.slice(baseCss.indexOf('@container workshop (max-width: 520px)'));
     expect(ruleBody(narrow, '.workshop-train-row')).toMatch(/flex-direction:\s*column/);
+  });
+
+  // Bug 210: in the stacked column the desktop `flex: 1 1 12rem` basis became a 12rem
+  // height, leaving a screen-high gap above the button.
+  it('gives the Train sentence its natural height when the row stacks', () => {
+    const narrow = baseCss.slice(baseCss.indexOf('@container workshop (max-width: 520px)'));
+    expect(ruleBody(narrow, '.workshop-train-line')).toMatch(/flex:\s*0 0 auto/);
   });
 });
