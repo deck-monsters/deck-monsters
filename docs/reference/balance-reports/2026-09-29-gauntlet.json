@@ -1,0 +1,810 @@
+{
+ "winRates": {
+  "method": {
+   "reference": {
+    "fightsPerCell": 1000,
+    "pairFights": 3000,
+    "batch": 20
+   },
+   "none": {
+    "fightsPerCell": 1000,
+    "pairFights": 3000,
+    "batch": 20
+   },
+   "gauntlet-rivals-alone": {
+    "fightsPerCell": 1000,
+    "pairFights": 3000,
+    "batch": 20
+   },
+   "gauntlet-minions": {
+    "fightsPerCell": 1000,
+    "pairFights": 3000,
+    "batch": 20
+   },
+   "gauntlet-rivals-minions": {
+    "fightsPerCell": 1000,
+    "pairFights": 3000,
+    "batch": 20
+   }
+  },
+  "lone": {
+   "0": {
+    "reference": {
+     "mean": 44.75714285714286,
+     "se": 0.594319833204262,
+     "worst": [
+      "Dragon",
+      31.8
+     ],
+     "best": [
+      "Unicorn",
+      53.3
+     ],
+     "draws": 8.685714285714285,
+     "extraBossWinShare": 0.0,
+     "avgRounds": 2.0354285714285716,
+     "perType": {
+      "Basilisk": 50.1,
+      "Gladiator": 44.3,
+      "Jinn": 33.1,
+      "Minotaur": 48.0,
+      "WeepingAngel": 52.7,
+      "Unicorn": 53.3,
+      "Dragon": 31.8
+     },
+     "fights": 7000
+    },
+    "none": {
+     "mean": 0.014285714285714287,
+     "se": 0.014284693841105268,
+     "worst": [
+      "Basilisk",
+      0.0
+     ],
+     "best": [
+      "Dragon",
+      0.1
+     ],
+     "draws": 8.571428571428571,
+     "extraBossWinShare": 69.05714285714286,
+     "avgRounds": 2.2855714285714286,
+     "perType": {
+      "Basilisk": 0.0,
+      "Gladiator": 0.0,
+      "Jinn": 0.0,
+      "Minotaur": 0.0,
+      "WeepingAngel": 0.0,
+      "Unicorn": 0.0,
+      "Dragon": 0.1
+     },
+     "fights": 7000
+    },
+    "gauntlet-rivals-alone": {
+     "mean": 24.77142857142857,
+     "se": 0.515962233345685,
+     "worst": [
+      "Jinn",
+      21.5
+     ],
+     "best": [
+      "Gladiator",
+      28.5
+     ],
+     "draws": 9.985714285714286,
+     "extraBossWinShare": 53.628571428571426,
+     "avgRounds": 2.137857142857143,
+     "perType": {
+      "Basilisk": 23.3,
+      "Gladiator": 28.5,
+      "Jinn": 21.5,
+      "Minotaur": 24.8,
+      "WeepingAngel": 28.3,
+      "Unicorn": 23.3,
+      "Dragon": 23.7
+     },
+     "fights": 7000
+    },
+    "gauntlet-minions": {
+     "mean": 1.042857142857143,
+     "se": 0.12141908726467428,
+     "worst": [
+      "Gladiator",
+      0.1
+     ],
+     "best": [
+      "Dragon",
+      4.0
+     ],
+     "draws": 8.1,
+     "extraBossWinShare": 26.52857142857143,
+     "avgRounds": 1.6965714285714282,
+     "perType": {
+      "Basilisk": 0.5,
+      "Gladiator": 0.1,
+      "Jinn": 0.5,
+      "Minotaur": 0.1,
+      "WeepingAngel": 1.7,
+      "Unicorn": 0.4,
+      "Dragon": 4.0
+     },
+     "fights": 7000
+    },
+    "gauntlet-rivals-minions": {
+     "mean": 48.17142857142858,
+     "se": 0.5972145255302932,
+     "worst": [
+      "Dragon",
+      40.1
+     ],
+     "best": [
+      "Basilisk",
+      54.0
+     ],
+     "draws": 8.200000000000001,
+     "extraBossWinShare": 9.414285714285715,
+     "avgRounds": 1.8202857142857145,
+     "perType": {
+      "Basilisk": 54.0,
+      "Gladiator": 53.8,
+      "Jinn": 42.6,
+      "Minotaur": 48.0,
+      "WeepingAngel": 46.1,
+      "Unicorn": 52.6,
+      "Dragon": 40.1
+     },
+     "fights": 7000
+    }
+   },
+   "1": {
+    "reference": {
+     "mean": 59.14285714285713,
+     "se": 0.5875382252932638,
+     "worst": [
+      "Dragon",
+      35.1
+     ],
+     "best": [
+      "WeepingAngel",
+      75.4
+     ],
+     "draws": 5.671428571428572,
+     "extraBossWinShare": 0.0,
+     "avgRounds": 1.8082857142857145,
+     "perType": {
+      "Basilisk": 69.8,
+      "Gladiator": 64.1,
+      "Jinn": 54.6,
+      "Minotaur": 51.3,
+      "WeepingAngel": 75.4,
+      "Unicorn": 63.7,
+      "Dragon": 35.1
+     },
+     "fights": 7000
+    },
+    "none": {
+     "mean": 0.08571428571428572,
+     "se": 0.034977710520217746,
+     "worst": [
+      "Basilisk",
+      0.0
+     ],
+     "best": [
+      "Dragon",
+      0.5
+     ],
+     "draws": 7.685714285714286,
+     "extraBossWinShare": 67.9,
+     "avgRounds": 2.190142857142857,
+     "perType": {
+      "Basilisk": 0.0,
+      "Gladiator": 0.0,
+      "Jinn": 0.0,
+      "Minotaur": 0.0,
+      "WeepingAngel": 0.1,
+      "Unicorn": 0.0,
+      "Dragon": 0.5
+     },
+     "fights": 7000
+    },
+    "gauntlet-rivals-alone": {
+     "mean": 36.114285714285714,
+     "se": 0.5741063787407236,
+     "worst": [
+      "Minotaur",
+      26.6
+     ],
+     "best": [
+      "WeepingAngel",
+      46.1
+     ],
+     "draws": 8.628571428571428,
+     "extraBossWinShare": 44.08571428571428,
+     "avgRounds": 2.0904285714285717,
+     "perType": {
+      "Basilisk": 31.2,
+      "Gladiator": 39.8,
+      "Jinn": 42.1,
+      "Minotaur": 26.6,
+      "WeepingAngel": 46.1,
+      "Unicorn": 35.1,
+      "Dragon": 31.9
+     },
+     "fights": 7000
+    },
+    "gauntlet-minions": {
+     "mean": 4.042857142857143,
+     "se": 0.2354148376220045,
+     "worst": [
+      "Minotaur",
+      0.1
+     ],
+     "best": [
+      "WeepingAngel",
+      12.0
+     ],
+     "draws": 8.471428571428572,
+     "extraBossWinShare": 26.171428571428574,
+     "avgRounds": 1.612714285714286,
+     "perType": {
+      "Basilisk": 0.7,
+      "Gladiator": 1.1,
+      "Jinn": 3.0,
+      "Minotaur": 0.1,
+      "WeepingAngel": 12.0,
+      "Unicorn": 1.3,
+      "Dragon": 10.1
+     },
+     "fights": 7000
+    },
+    "gauntlet-rivals-minions": {
+     "mean": 56.97142857142858,
+     "se": 0.5917768864884165,
+     "worst": [
+      "Dragon",
+      41.1
+     ],
+     "best": [
+      "WeepingAngel",
+      67.3
+     ],
+     "draws": 7.057142857142858,
+     "extraBossWinShare": 9.22857142857143,
+     "avgRounds": 1.708857142857143,
+     "perType": {
+      "Basilisk": 58.3,
+      "Gladiator": 62.7,
+      "Jinn": 61.9,
+      "Minotaur": 48.9,
+      "WeepingAngel": 67.3,
+      "Unicorn": 58.6,
+      "Dragon": 41.1
+     },
+     "fights": 7000
+    }
+   },
+   "3": {
+    "reference": {
+     "mean": 70.11428571428571,
+     "se": 0.5471243669279383,
+     "worst": [
+      "Dragon",
+      50.9
+     ],
+     "best": [
+      "Gladiator",
+      81.0
+     ],
+     "draws": 3.1857142857142855,
+     "extraBossWinShare": 0.0,
+     "avgRounds": 1.6341428571428571,
+     "perType": {
+      "Basilisk": 74.9,
+      "Gladiator": 81.0,
+      "Jinn": 79.7,
+      "Minotaur": 66.1,
+      "WeepingAngel": 67.9,
+      "Unicorn": 70.3,
+      "Dragon": 50.9
+     },
+     "fights": 7000
+    },
+    "none": {
+     "mean": 1.3714285714285714,
+     "se": 0.13900772887881682,
+     "worst": [
+      "Basilisk",
+      0.2
+     ],
+     "best": [
+      "Dragon",
+      4.8
+     ],
+     "draws": 5.4714285714285715,
+     "extraBossWinShare": 55.714285714285715,
+     "avgRounds": 2.0805714285714285,
+     "perType": {
+      "Basilisk": 0.2,
+      "Gladiator": 1.3,
+      "Jinn": 0.6,
+      "Minotaur": 0.3,
+      "WeepingAngel": 1.6,
+      "Unicorn": 0.8,
+      "Dragon": 4.8
+     },
+     "fights": 7000
+    },
+    "gauntlet-rivals-alone": {
+     "mean": 59.58571428571429,
+     "se": 0.5865290251778622,
+     "worst": [
+      "Dragon",
+      48.6
+     ],
+     "best": [
+      "Jinn",
+      66.3
+     ],
+     "draws": 6.514285714285714,
+     "extraBossWinShare": 20.62857142857143,
+     "avgRounds": 2.0005714285714284,
+     "perType": {
+      "Basilisk": 61.7,
+      "Gladiator": 63.4,
+      "Jinn": 66.3,
+      "Minotaur": 50.4,
+      "WeepingAngel": 61.1,
+      "Unicorn": 65.6,
+      "Dragon": 48.6
+     },
+     "fights": 7000
+    },
+    "gauntlet-minions": {
+     "mean": 17.514285714285716,
+     "se": 0.45429354376515807,
+     "worst": [
+      "Minotaur",
+      2.6
+     ],
+     "best": [
+      "WeepingAngel",
+      39.5
+     ],
+     "draws": 6.671428571428571,
+     "extraBossWinShare": 24.628571428571426,
+     "avgRounds": 1.6385714285714283,
+     "perType": {
+      "Basilisk": 4.4,
+      "Gladiator": 9.9,
+      "Jinn": 24.8,
+      "Minotaur": 2.6,
+      "WeepingAngel": 39.5,
+      "Unicorn": 6.4,
+      "Dragon": 35.0
+     },
+     "fights": 7000
+    },
+    "gauntlet-rivals-minions": {
+     "mean": 68.72857142857143,
+     "se": 0.5541068246988504,
+     "worst": [
+      "Dragon",
+      56.6
+     ],
+     "best": [
+      "Gladiator",
+      75.3
+     ],
+     "draws": 4.3999999999999995,
+     "extraBossWinShare": 4.885714285714285,
+     "avgRounds": 1.6338571428571431,
+     "perType": {
+      "Basilisk": 73.5,
+      "Gladiator": 75.3,
+      "Jinn": 74.3,
+      "Minotaur": 62.9,
+      "WeepingAngel": 66.1,
+      "Unicorn": 72.4,
+      "Dragon": 56.6
+     },
+     "fights": 7000
+    }
+   },
+   "5": {
+    "reference": {
+     "mean": 71.81428571428572,
+     "se": 0.5377382447111911,
+     "worst": [
+      "Dragon",
+      56.5
+     ],
+     "best": [
+      "Jinn",
+      83.9
+     ],
+     "draws": 2.942857142857143,
+     "extraBossWinShare": 0.0,
+     "avgRounds": 1.513857142857143,
+     "perType": {
+      "Basilisk": 71.2,
+      "Gladiator": 78.8,
+      "Jinn": 83.9,
+      "Minotaur": 73.6,
+      "WeepingAngel": 72.1,
+      "Unicorn": 66.6,
+      "Dragon": 56.5
+     },
+     "fights": 7000
+    },
+    "none": {
+     "mean": 8.157142857142858,
+     "se": 0.32714682289727104,
+     "worst": [
+      "Minotaur",
+      1.1
+     ],
+     "best": [
+      "WeepingAngel",
+      19.1
+     ],
+     "draws": 5.642857142857142,
+     "extraBossWinShare": 44.42857142857143,
+     "avgRounds": 2.0024285714285717,
+     "perType": {
+      "Basilisk": 4.3,
+      "Gladiator": 6.4,
+      "Jinn": 10.0,
+      "Minotaur": 1.1,
+      "WeepingAngel": 19.1,
+      "Unicorn": 5.5,
+      "Dragon": 10.7
+     },
+     "fights": 7000
+    },
+    "gauntlet-rivals-alone": {
+     "mean": 70.64285714285714,
+     "se": 0.5443045955265952,
+     "worst": [
+      "Dragon",
+      57.8
+     ],
+     "best": [
+      "Jinn",
+      81.8
+     ],
+     "draws": 4.628571428571428,
+     "extraBossWinShare": 10.671428571428573,
+     "avgRounds": 1.8954285714285715,
+     "perType": {
+      "Basilisk": 69.3,
+      "Gladiator": 75.9,
+      "Jinn": 81.8,
+      "Minotaur": 67.2,
+      "WeepingAngel": 70.7,
+      "Unicorn": 71.8,
+      "Dragon": 57.8
+     },
+     "fights": 7000
+    },
+    "gauntlet-minions": {
+     "mean": 31.985714285714288,
+     "se": 0.5574797254742713,
+     "worst": [
+      "Minotaur",
+      14.2
+     ],
+     "best": [
+      "WeepingAngel",
+      58.0
+     ],
+     "draws": 7.085714285714285,
+     "extraBossWinShare": 17.442857142857143,
+     "avgRounds": 1.6158571428571429,
+     "perType": {
+      "Basilisk": 15.8,
+      "Gladiator": 22.5,
+      "Jinn": 50.5,
+      "Minotaur": 14.2,
+      "WeepingAngel": 58.0,
+      "Unicorn": 15.0,
+      "Dragon": 47.9
+     },
+     "fights": 7000
+    },
+    "gauntlet-rivals-minions": {
+     "mean": 73.67142857142856,
+     "se": 0.526397930601088,
+     "worst": [
+      "Dragon",
+      60.5
+     ],
+     "best": [
+      "Gladiator",
+      81.4
+     ],
+     "draws": 3.8571428571428568,
+     "extraBossWinShare": 2.4428571428571426,
+     "avgRounds": 1.5368571428571427,
+     "perType": {
+      "Basilisk": 74.0,
+      "Gladiator": 81.4,
+      "Jinn": 80.5,
+      "Minotaur": 74.0,
+      "WeepingAngel": 72.4,
+      "Unicorn": 72.9,
+      "Dragon": 60.5
+     },
+     "fights": 7000
+    }
+   }
+  },
+  "pair": {
+   "1": {
+    "reference": {
+     "winRate": 65.3,
+     "se": 0.8690818910398105,
+     "draws": 7.733333333333333,
+     "fights": 3000,
+     "extraBossWinShare": 0.0
+    },
+    "none": {
+     "winRate": 1.0666666666666667,
+     "se": 0.18755344917195282,
+     "draws": 8.366666666666667,
+     "fights": 3000,
+     "extraBossWinShare": 60.1
+    },
+    "gauntlet-rivals-alone": {
+     "winRate": 1.0666666666666667,
+     "se": 0.18755344917195282,
+     "draws": 8.366666666666667,
+     "fights": 3000,
+     "extraBossWinShare": 60.1
+    },
+    "gauntlet-minions": {
+     "winRate": 16.566666666666666,
+     "se": 0.6787764045747372,
+     "draws": 9.366666666666667,
+     "fights": 3000,
+     "extraBossWinShare": 15.233333333333333
+    },
+    "gauntlet-rivals-minions": {
+     "winRate": 16.566666666666666,
+     "se": 0.6787764045747372,
+     "draws": 9.366666666666667,
+     "fights": 3000,
+     "extraBossWinShare": 15.233333333333333
+    }
+   },
+   "3": {
+    "reference": {
+     "winRate": 76.73333333333333,
+     "se": 0.7714334900881797,
+     "draws": 6.933333333333334,
+     "fights": 3000,
+     "extraBossWinShare": 0.0
+    },
+    "none": {
+     "winRate": 14.099999999999998,
+     "se": 0.6353975133725344,
+     "draws": 6.066666666666666,
+     "fights": 3000,
+     "extraBossWinShare": 43.5
+    },
+    "gauntlet-rivals-alone": {
+     "winRate": 14.099999999999998,
+     "se": 0.6353975133725344,
+     "draws": 6.066666666666666,
+     "fights": 3000,
+     "extraBossWinShare": 43.5
+    },
+    "gauntlet-minions": {
+     "winRate": 41.96666666666667,
+     "se": 0.901011571430607,
+     "draws": 8.233333333333333,
+     "fights": 3000,
+     "extraBossWinShare": 11.0
+    },
+    "gauntlet-rivals-minions": {
+     "winRate": 41.96666666666667,
+     "se": 0.901011571430607,
+     "draws": 8.233333333333333,
+     "fights": 3000,
+     "extraBossWinShare": 11.0
+    }
+   }
+  }
+ },
+ "frequency": {
+  "chance": 25,
+  "totalWeight": 100,
+  "weights": {
+   "gauntlet": 30,
+   "blood-feud": 20,
+   "common-cause": 20,
+   "house-war": 15,
+   "the-reckoning": 15
+  },
+  "shapes": [
+   {
+    "label": "1 human + 1 boss",
+    "humans": 1,
+    "bosses": 1,
+    "eligibleWeight": 30,
+    "events": {
+     "gauntlet": {
+      "today": 25,
+      "global": 7.5
+     },
+     "blood-feud": {
+      "today": 0,
+      "global": 0
+     },
+     "common-cause": {
+      "today": 0,
+      "global": 0
+     },
+     "house-war": {
+      "today": 0,
+      "global": 0
+     },
+     "the-reckoning": {
+      "today": 0,
+      "global": 0
+     }
+    },
+    "anyToday": 25,
+    "anyGlobal": 7.5
+   },
+   {
+    "label": "1 human + 0 bosses",
+    "humans": 1,
+    "bosses": 0,
+    "eligibleWeight": 30,
+    "events": {
+     "gauntlet": {
+      "today": 25,
+      "global": 7.5
+     },
+     "blood-feud": {
+      "today": 0,
+      "global": 0
+     },
+     "common-cause": {
+      "today": 0,
+      "global": 0
+     },
+     "house-war": {
+      "today": 0,
+      "global": 0
+     },
+     "the-reckoning": {
+      "today": 0,
+      "global": 0
+     }
+    },
+    "anyToday": 25,
+    "anyGlobal": 7.5
+   },
+   {
+    "label": "2 humans + 1 boss",
+    "humans": 2,
+    "bosses": 1,
+    "eligibleWeight": 85,
+    "events": {
+     "gauntlet": {
+      "today": 8.823529411764707,
+      "global": 7.5
+     },
+     "blood-feud": {
+      "today": 5.882352941176471,
+      "global": 5
+     },
+     "common-cause": {
+      "today": 5.882352941176471,
+      "global": 5
+     },
+     "house-war": {
+      "today": 0,
+      "global": 0
+     },
+     "the-reckoning": {
+      "today": 4.411764705882353,
+      "global": 3.75
+     }
+    },
+    "anyToday": 25,
+    "anyGlobal": 21.25
+   },
+   {
+    "label": "2 humans + 0 bosses",
+    "humans": 2,
+    "bosses": 0,
+    "eligibleWeight": 30,
+    "events": {
+     "gauntlet": {
+      "today": 25,
+      "global": 7.5
+     },
+     "blood-feud": {
+      "today": 0,
+      "global": 0
+     },
+     "common-cause": {
+      "today": 0,
+      "global": 0
+     },
+     "house-war": {
+      "today": 0,
+      "global": 0
+     },
+     "the-reckoning": {
+      "today": 0,
+      "global": 0
+     }
+    },
+    "anyToday": 25,
+    "anyGlobal": 7.5
+   },
+   {
+    "label": "3 humans + 1 boss",
+    "humans": 3,
+    "bosses": 1,
+    "eligibleWeight": 85,
+    "events": {
+     "gauntlet": {
+      "today": 8.823529411764707,
+      "global": 7.5
+     },
+     "blood-feud": {
+      "today": 5.882352941176471,
+      "global": 5
+     },
+     "common-cause": {
+      "today": 5.882352941176471,
+      "global": 5
+     },
+     "house-war": {
+      "today": 0,
+      "global": 0
+     },
+     "the-reckoning": {
+      "today": 4.411764705882353,
+      "global": 3.75
+     }
+    },
+    "anyToday": 25,
+    "anyGlobal": 21.25
+   },
+   {
+    "label": "3 humans + 0 bosses",
+    "humans": 3,
+    "bosses": 0,
+    "eligibleWeight": 65,
+    "events": {
+     "gauntlet": {
+      "today": 11.538461538461538,
+      "global": 7.5
+     },
+     "blood-feud": {
+      "today": 7.6923076923076925,
+      "global": 5
+     },
+     "common-cause": {
+      "today": 0,
+      "global": 0
+     },
+     "house-war": {
+      "today": 5.769230769230769,
+      "global": 3.75
+     },
+     "the-reckoning": {
+      "today": 0,
+      "global": 0
+     }
+    },
+    "anyToday": 25,
+    "anyGlobal": 16.25
+   }
+  ]
+ }
+}
