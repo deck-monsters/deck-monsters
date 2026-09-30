@@ -4,13 +4,14 @@
  *
  *   --dry-run       decode, repair and count; write nothing
  *   --room <id>     one room only
- *   --from-blob     rollback roll-forward: rewrite `state` from `state_blob` even if set, and bump
- *                   state_version. Requires --i-stopped-the-service.
+ *
+ * After roadmap 37 release 2 this only converts stragglers (`state` null, blob present).
+ * `--from-blob` was removed: blobs are no longer written, so they are stale.
  */
 import { db, pool } from '../src/db/index.js';
 import { backfillRoomState, parseBackfillArgs, safeReason } from '../src/room-state-backfill.js';
 
-const USAGE = 'usage: migrate-room-state-to-jsonb.ts [--dry-run] [--room <id>] [--from-blob --i-stopped-the-service]';
+const USAGE = 'usage: migrate-room-state-to-jsonb.ts [--dry-run] [--room <id>]';
 
 async function main(): Promise<number> {
 	const parsed = parseBackfillArgs(process.argv.slice(2));
@@ -18,19 +19,12 @@ async function main(): Promise<number> {
 		console.error(`${parsed.error}\n${USAGE}`);
 		return 2;
 	}
-	const { dryRun, fromBlob, roomId, stoppedService } = parsed;
-	if (fromBlob && !stoppedService) {
-		// The old release writes only state_blob; a live writer during the rewrite could land a
-		// blob after we read it and be lost from `state`.
-		console.error('--from-blob rewrites state from state_blob and bumps state_version. The old release must not be writing while it runs: stop the service first, then pass --i-stopped-the-service.');
-		return 2;
-	}
+	const { dryRun, roomId } = parsed;
 
-	const report = await backfillRoomState(db, { dryRun, roomId, fromBlob, log: line => console.log(line) });
+	const report = await backfillRoomState(db, { dryRun, roomId, log: line => console.log(line) });
 	console.log(`${dryRun ? '[dry run] ' : ''}converted: ${report.converted}`);
 	console.log(`already converted: ${report.alreadyConverted}`);
 	console.log(`empty: ${report.empty}`);
-	console.log(`cleared stale state (blob null): ${report.clearedStale}`);
 	console.log(`skipped (blob changed): ${report.skippedChanged.length}`);
 	console.log(`failed: ${report.failed.length}`);
 	for (const f of report.failed) console.log(`  ${f.roomId}: ${f.reason}`);

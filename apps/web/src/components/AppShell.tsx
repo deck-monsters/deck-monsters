@@ -65,8 +65,8 @@ export default function AppShell({ children, roomName, roomId }: AppShellProps) 
                   textDecoration: 'none',
                   borderBottom: '1px solid transparent',
                 }}
-                title="Back to Ring and Console"
-                aria-label={`Back to ${roomName} terminal`}
+                title="Back to The Ring and Console"
+                aria-label={`Back to ${roomName}: The Ring and Console`}
               >
                 {roomName}
               </Link>
@@ -102,7 +102,7 @@ export default function AppShell({ children, roomName, roomId }: AppShellProps) 
         >
           {roomId && (
             <Link to={`/room/${roomId}`} className="btn" style={{ fontSize: '0.8rem' }}>
-              Terminal
+              The Ring
             </Link>
           )}
           <button
@@ -123,7 +123,7 @@ export default function AppShell({ children, roomName, roomId }: AppShellProps) 
             className="btn"
             style={{ fontSize: '0.8rem' }}
           >
-            Leaderboard
+            Leaders
           </Link>
           {roomId && (
             <Link to={`/room/${roomId}/workshop`} className="btn" style={{ fontSize: '0.8rem' }}>
@@ -132,9 +132,12 @@ export default function AppShell({ children, roomName, roomId }: AppShellProps) 
           )}
           {roomId && (
             <Link to={`/room/${roomId}/fights`} className="btn" style={{ fontSize: '0.8rem' }}>
-              Fight log
+              Fights
             </Link>
           )}
+          <Link to={roomId ? `/room/${roomId}/help` : '/help'} className="btn" style={{ fontSize: '0.8rem' }}>
+            Help and guides
+          </Link>
           <Link to="/account" className="btn" style={{ fontSize: '0.8rem' }}>
             Account
           </Link>
@@ -200,7 +203,7 @@ export default function AppShell({ children, roomName, roomId }: AppShellProps) 
             <Link to="/rooms" className="btn" onClick={() => setMenuOpen(false)}>Rooms</Link>
             {roomId && (
               <Link to={`/room/${roomId}`} className="btn" onClick={() => setMenuOpen(false)}>
-                Terminal
+                The Ring
               </Link>
             )}
             <Link
@@ -208,7 +211,7 @@ export default function AppShell({ children, roomName, roomId }: AppShellProps) 
               className="btn"
               onClick={() => setMenuOpen(false)}
             >
-              Leaderboard
+              Leaders
             </Link>
             {roomId && (
               <Link to={`/room/${roomId}/workshop`} className="btn" onClick={() => setMenuOpen(false)}>
@@ -217,9 +220,16 @@ export default function AppShell({ children, roomName, roomId }: AppShellProps) 
             )}
             {roomId && (
               <Link to={`/room/${roomId}/fights`} className="btn" onClick={() => setMenuOpen(false)}>
-                Fight log
+                Fights
               </Link>
             )}
+            <Link
+              to={roomId ? `/room/${roomId}/help` : '/help'}
+              className="btn"
+              onClick={() => setMenuOpen(false)}
+            >
+              Help and guides
+            </Link>
             <Link to="/account" className="btn" onClick={() => setMenuOpen(false)}>Account</Link>
             <button
               className="btn"

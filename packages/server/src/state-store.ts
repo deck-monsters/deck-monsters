@@ -1,11 +1,12 @@
-import zlib from 'node:zlib';
-
 import type { SerializedGame, StateStore } from '@deck-monsters/engine';
 import { and, eq, lt } from 'drizzle-orm';
 
 import type { Db } from './db/index.js';
 import { rooms } from './db/schema.js';
+import { createLogger } from './logger.js';
 import { roomStateSaveBytes, roomStateSaveFailures, roomStateSavesStale } from './metrics/index.js';
+
+const log = createLogger('state-store');
 
 let lastStateVersion = 0;
 
@@ -23,8 +24,26 @@ export function nextStateVersion(): number {
 	return lastStateVersion;
 }
 
+export interface StateStoreOptions {
+	/**
+	 * The `rooms.state_generation` this room was loaded at. When set, every save also requires
+	 * the row to still be at this generation. Unset (tests, the version-only guard) skips it.
+	 */
+	generation?: number;
+	/**
+	 * Called once when a save matched no row because the generation moved, i.e. another process
+	 * reset the room. The owner must drop its copy: every further save would be refused.
+	 */
+	onGenerationMoved?: () => void;
+}
+
 export class PostgresStateStore implements StateStore {
-	constructor(private readonly db: Db) {}
+	private generationMoved = false;
+
+	constructor(
+		private readonly db: Db,
+		private readonly options: StateStoreOptions = {}
+	) {}
 
 	async save(roomId: string, state: SerializedGame): Promise<void> {
 		// Stamp synchronously, before any await: the engine calls save() synchronously inside
@@ -39,24 +58,58 @@ export class PostgresStateStore implements StateStore {
 		try {
 			const json = JSON.stringify(state);
 			roomStateSaveBytes.observe(Buffer.byteLength(json));
-			// Release 1 dual-writes the legacy blob so a redeploy of the previous release still
-			// restores current state. Task 6 (contract) removes this.
-			const legacyBlob = zlib.gzipSync(json).toString('base64');
+			// `state_blob` is deliberately NOT written (roadmap 37 release 2): it is stale from the
+			// first save of this release on, and a later migration drops the column.
 			// `state` is passed as the object itself: node-postgres + Drizzle JSON.stringify it once
 			// into a jsonb object (a pre-stringified value would be stored as a jsonb string).
+			const { generation } = this.options;
 			const updated = await this.db
 				.update(rooms)
-				.set({ state, stateVersion: version, stateBlob: legacyBlob, updatedAt: new Date() })
-				.where(and(eq(rooms.id, roomId), lt(rooms.stateVersion, version)))
+				.set({ state, stateVersion: version, updatedAt: new Date() })
+				.where(
+					and(
+						eq(rooms.id, roomId),
+						lt(rooms.stateVersion, version),
+						// The version guard alone cannot stop another process's reset: this process
+						// stamps from its own clock, after the tombstone (bug G).
+						generation === undefined ? undefined : eq(rooms.stateGeneration, generation)
+					)
+				)
 				.returning({ id: rooms.id });
 			if (updated.length === 0) {
 				// A newer snapshot, a quarantine or a reset already landed. Never retry: retrying
 				// would resurrect exactly the state that was superseded.
 				roomStateSavesStale.inc();
+				if (generation !== undefined) await this.checkGenerationMoved(roomId, generation);
 			}
 		} catch (err) {
 			roomStateSaveFailures.inc();
 			throw err;
+		}
+	}
+
+	/**
+	 * Only reached after a refused save. A missing row (room deleted) or an unchanged generation
+	 * is an ordinary stale save; a moved generation means a reset elsewhere, so tell the owner.
+	 * The probe is best-effort: if it fails, the next refused save probes again.
+	 */
+	private async checkGenerationMoved(roomId: string, generation: number): Promise<void> {
+		if (this.generationMoved || !this.options.onGenerationMoved) return;
+		try {
+			const rows = await this.db
+				.select({ generation: rooms.stateGeneration })
+				.from(rooms)
+				.where(eq(rooms.id, roomId))
+				.limit(1);
+			if (rows[0] && rows[0].generation !== generation) {
+				this.generationMoved = true;
+				this.options.onGenerationMoved();
+			}
+		} catch (err) {
+			log.warn('generation probe failed after a refused save; will retry on the next refusal', {
+				roomId,
+				error: err instanceof Error ? err.message : String(err),
+			});
 		}
 	}
 
@@ -67,6 +120,7 @@ export class PostgresStateStore implements StateStore {
 			.where(eq(rooms.id, roomId))
 			.limit(1);
 
+		// Read-only blob fallback, same reason as RoomManager._loadRoom; removed with the drop.
 		return rows[0]?.state ?? rows[0]?.stateBlob ?? null;
 	}
 }

@@ -103,3 +103,45 @@ describe('hydrateCharacter resilience', () => {
 		expect(total()).to.equal(before);
 	});
 });
+
+/**
+ * 2026-09-24 production crash: hydrate passed the character's whole options as card draw options,
+ * so a drawn Ecdysis / Adrenaline Rush kept `deck` in its own options, the array it was pushed
+ * into. `JSON.stringify` of the room then threw "circular structure" from the debounced save.
+ */
+describe('hydrateCharacter deck top-up', () => {
+	before(async () => {
+		await helpersReady;
+	});
+
+	it('draws cards without capturing the character\'s options (no circular structure)', async () => {
+		const { default: all } = await import('../../cards/helpers/all.js');
+		const { default: EcdysisCard } = await import('../../cards/ecdysis.js');
+		const { default: HitCard } = await import('../../cards/hit.js');
+		const original = [...all];
+		// Force every draw to be an Ecdysis, the card that kept its rest options.
+		(all as unknown[]).splice(0, all.length, EcdysisCard);
+		try {
+			const hit = new HitCard().toJSON();
+			const character = hydrateCharacter({
+				name: 'Beastmaster',
+				options: {
+					deck: Array.from({ length: 12 }, () => hit),
+					items: [],
+					monsters: [{ name: 'Basilisk', options: { name: 'Fang', xp: 1050 } }],
+				},
+			}) as any;
+
+			const ecdysis = character.deck.filter((c: any) => c instanceof EcdysisCard);
+			expect(ecdysis.length, 'the forced draw produced Ecdysis cards').to.be.greaterThan(0);
+			expect(() => JSON.stringify(character)).not.to.throw();
+			character.deck.forEach((card: any) => {
+				['deck', 'monsters', 'items'].forEach(key => {
+					expect(card.options, `${card.cardType} options`).not.to.have.property(key);
+				});
+			});
+		} finally {
+			(all as unknown[]).splice(0, all.length, ...original);
+		}
+	});
+});

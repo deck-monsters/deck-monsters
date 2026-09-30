@@ -13,6 +13,8 @@ import {
 	PROMPT_CANCELLED,
 	PromptCancelledError,
 	allMonsters,
+	monsterTypeSummary,
+	equipResultMessage,
 	getXpCapForLevel,
 	isCommandRefusal,
 	purchaseShopItem,
@@ -126,6 +128,9 @@ type InventorySummary = {
 	// not tell "no character yet" from "character with no monsters", and so could not
 	// offer first-run character creation — see `spawnMonster`'s `character` input.
 	hasCharacter: boolean;
+	// How many monsters this character may have at their side (engine `Beastmaster.monsterSlots`,
+	// never fewer than the roster). The Workshop's Train row says how many places are free.
+	monsterSlots: number;
 	monsters: InventoryMonsterSummary[];
 	unequippedDeck: string[];
 	// Raw shop cost for each unequipped card, keyed by display name (see `ItemSummary.cost`
@@ -458,6 +463,10 @@ const summarizeInventory = ({
 
 	return {
 		hasCharacter: true,
+		monsterSlots:
+			typeof character.monsterSlots === 'number' && Number.isFinite(character.monsterSlots)
+				? Math.max(character.monsterSlots, monsterSummaries.length)
+				: monsterSummaries.length,
 		monsters: monsterSummaries,
 		unequippedDeck: deck.map((card) => getDisplayName(card)),
 		cardCosts,
@@ -1132,6 +1141,8 @@ export function createRouter(roomManager: RoomManager) {
 					types: allMonsters.map((Monster, index) => ({
 						index,
 						label: String((Monster as unknown as { creatureType?: string }).creatureType ?? Monster.name),
+						// The same one-liner the Console prompt shows.
+						summary: monsterTypeSummary(Monster as unknown as { creatureType?: string }),
 					})),
 					pronouns: PRONOUN_KEYS.map((key, i) => ({ key, label: PRONOUN_CHOICES[i] })),
 				};
@@ -1231,6 +1242,7 @@ export function createRouter(roomManager: RoomManager) {
 				if (!character || typeof character !== 'object') {
 					return {
 						hasCharacter: false,
+						monsterSlots: 0,
 						monsters: [],
 						unequippedDeck: [],
 						cardCosts: {},
@@ -1539,7 +1551,7 @@ export function createRouter(roomManager: RoomManager) {
 				publishPrivateAnnouncement({
 					eventBus,
 					userId: ctx.userId,
-					text: `Unequipped ${result.removedCount} ${input.cardName} from ${result.monsterName}.`,
+					text: `Unequipped ${result.removedCount} ${input.cardName}${result.removedCount === 1 ? '' : ' cards'} from ${result.monsterName}.`,
 					operation: 'unequipCard',
 				});
 				eventBus.publish({
@@ -1646,7 +1658,15 @@ export function createRouter(roomManager: RoomManager) {
 						cardNames: input.cardNames,
 						replaceAll: input.replaceAll ?? false,
 					}),
-				) as { equipped: number; requested: number; skippedCards: string[]; monsterName: string };
+				) as {
+					equipped: number;
+					requested: number;
+					skippedCards: string[];
+					skipped?: Array<{ cardName: string; reason: string }>;
+					cardCount?: number;
+					cardSlots?: number;
+					monsterName: string;
+				};
 				eventBus.publish({
 					type: 'card.equipped' as EventType,
 					scope: 'private',
@@ -1662,13 +1682,10 @@ export function createRouter(roomManager: RoomManager) {
 					},
 				});
 
-				const skippedText = result.skippedCards.length > 0
-					? ` Skipped: ${result.skippedCards.join(', ')}.`
-					: '';
 				publishPrivateAnnouncement({
 					eventBus,
 					userId: ctx.userId,
-					text: `Equipped ${result.monsterName}: ${result.equipped}/${result.requested}.${skippedText}`,
+					text: equipResultMessage({ monsterName: result.monsterName, cardNames: input.cardNames, result }),
 					operation: 'equipCards',
 				});
 				eventBus.publish({
@@ -1688,6 +1705,12 @@ export function createRouter(roomManager: RoomManager) {
 					equippedCount: result.equipped,
 					requestedCount: result.requested,
 					skippedCards: result.skippedCards,
+					// Why each card was left out, and what the deck holds now: the Workshop says
+					// "X can't go on Y: reason" and "Y holds k of n cards" from these.
+					skipped: result.skipped ?? result.skippedCards.map((cardName) => ({ cardName, reason: 'cannot_hold' })),
+					monsterName: result.monsterName,
+					cardCount: result.cardCount ?? null,
+					cardSlots: result.cardSlots ?? null,
 				};
 			}),
 
@@ -1850,8 +1873,8 @@ export function createRouter(roomManager: RoomManager) {
 					eventBus,
 					userId: ctx.userId,
 					text: failures.length > 0
-						? `Unequipped ${removedCount} cards from ${monsterName}. Could not unequip: ${failures.map((f) => f.cardName).join(', ')}.`
-						: `Unequipped ${removedCount} cards from ${monsterName}.`,
+						? `Unequipped ${removedCount} ${removedCount === 1 ? 'card' : 'cards'} from ${monsterName}. Could not unequip: ${failures.map((f) => f.cardName).join(', ')}.`
+						: `Unequipped ${removedCount} ${removedCount === 1 ? 'card' : 'cards'} from ${monsterName}.`,
 					operation: 'unequipMany',
 				});
 				eventBus.publish({
@@ -2099,7 +2122,15 @@ export function createRouter(roomManager: RoomManager) {
 						monsterName: input.monsterName,
 						presetName: input.presetName,
 					}),
-				) as { equipped: number; requested: number; skippedCards: string[] };
+				) as {
+					equipped: number;
+					requested: number;
+					skippedCards: string[];
+					skipped?: Array<{ cardName: string; reason: string }>;
+					cardCount?: number;
+					cardSlots?: number;
+					monsterName?: string;
+				};
 				eventBus.publish({
 					type: 'card.presetLoaded' as EventType,
 					scope: 'private',
@@ -2124,6 +2155,9 @@ export function createRouter(roomManager: RoomManager) {
 					equippedCount: result.equipped,
 					requestedCount: result.requested,
 					skippedCards: result.skippedCards,
+					skipped: result.skipped ?? result.skippedCards.map((cardName) => ({ cardName, reason: 'cannot_hold' })),
+					cardCount: result.cardCount ?? null,
+					cardSlots: result.cardSlots ?? null,
 				};
 			}),
 

@@ -49,6 +49,23 @@ jobs:
   test:
     name: Tests
     runs-on: ubuntu-latest
+    # Real Postgres for the *.pg.test.ts suites (save ordering, the room-state backfill, the
+    # migration runner). Without it they skipped and "passed" (roadmap 10, item H).
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: deck_monsters_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/deck_monsters_test
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -64,5 +81,12 @@ jobs:
       - run: pnpm test:docs
       # Harness tests spawn `dist/scripts/repro-sim-seed.js` (compiled output).
       - run: pnpm --filter @deck-monsters/harness run build
+      # Give the test database the production schema: Supabase stubs, then every migration
+      # through the same runner Railway uses before a deploy.
+      - run: psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/server/scripts/ci-supabase-stubs.sql
+      - run: pnpm --filter @deck-monsters/server run build
+      - run: node packages/server/dist/migrate-cli.js
+        env:
+          DATABASE_URL: ${{ env.TEST_DATABASE_URL }}
       - run: pnpm run test
       - run: pnpm --filter @deck-monsters/web run test

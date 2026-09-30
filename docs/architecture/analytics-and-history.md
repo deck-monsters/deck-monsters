@@ -19,7 +19,7 @@ The server derives three different read models from room events:
 |---|---|---|
 | Raw event history | `room_events` | Reconnect fallback, Ring/Console history, fight detail |
 | Career projection | `room_player_stats`, `room_monster_stats` | Room and global leaderboards |
-| Fight summaries | `fight_summaries`, `rooms.fight_counter` | Fight Log, per-monster history, catch-up |
+| Fight summaries | `fight_summaries`, `rooms.fight_counter` | Fights panel, per-monster history, catch-up |
 
 These are projections. The room's serialized engine state remains authoritative for the
 live character, balance, monsters, and ring.

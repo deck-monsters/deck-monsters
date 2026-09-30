@@ -200,7 +200,7 @@ All custom metrics are prefixed `dm_` and carry a `service="deck-monsters"` defa
 | `dm_commands_total` | Counter | Commands processed; labels: `result` (`ok` / `rejected` / `error`) |
 | `dm_ws_connections_active` | Gauge | Active WebSocket ringFeed subscribers |
 | `dm_room_state_save_bytes` | Histogram | Size of the JSON room state on each save |
-| `dm_room_state_source_total` | Counter | Room loads, by where the state came from; label `source` (`state` / `blob`). `blob` should reach 0 once the roadmap 37 backfill has run |
+| `dm_room_state_source_total` | Counter | Room loads, by where the state came from; label `source`. `state`, or `blob` for the read-only legacy fallback (roadmap 37 release 2; a room not yet converted). `blob` should reach 0 and the fallback goes with the column drop |
 
 ### Errors & warnings
 
@@ -209,11 +209,12 @@ All custom metrics are prefixed `dm_` and carry a `service="deck-monsters"` defa
 | `dm_card_errors_total` | Counter | Invalid card played mid-fight |
 | `dm_card_validation_warnings_total` | Counter | Bad card detected at ring-join time |
 | `dm_fight_errors_total` | Counter | Unexpected error — fight cancelled and ring cleared |
-| `dm_room_hydration_failures_total` | Counter | State blob could not be restored — fresh game started |
+| `dm_room_hydration_failures_total` | Counter | Room state could not be restored — fresh game started |
 | `dm_room_hydration_warnings_total` | Counter | Non-fatal partial hydration warning |
 | `dm_db_idle_client_errors_total` | Counter | An idle database connection was dropped (often by the Supabase pooler); the pool replaces it. Before this was handled, each one crashed the server |
-| `dm_room_state_save_failures_total` | Counter | A room state save threw; the engine logs the error |
+| `dm_room_state_save_failures_total` | Counter | A room state save failed: the store write threw, or the engine could not serialize the room (the engine logs it with context `game.persistState`, bug 207). Expect 0 |
 | `dm_room_state_saves_stale_total` | Counter | A save skipped because a newer snapshot or a reset had already landed. Expect about 0; a steady rise means saves race |
+| `dm_room_state_generation_drops_total` | Counter | A loaded room was dropped because another process reset it (its `state_generation` moved). Expect a bump only after a reset while a second process (the Discord connector) had the room loaded; the drop is also logged at warn |
 | `dm_prompt_timeouts_total` | Counter | Interactive prompts that timed out |
 
 Node.js process metrics (`go_*`, `process_*`, `nodejs_*`) are also collected via `collectDefaultMetrics`.

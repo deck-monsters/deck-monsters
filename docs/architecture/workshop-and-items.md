@@ -122,6 +122,52 @@ otherwise re-prompt on the silent channel. It supplies every answer the engine c
 name, class index, persisted pronoun key, and avatar. If training later fails, the created
 character remains intentionally.
 
+The Console path asks the same question the form does. `Game.getCharacter({ askName })`
+(set by `commands/index.ts`, not for admin aliases) hands the display name to
+`createCharacter` as `suggestedName` instead of `name`, so a new player is asked, before
+pronouns, `What should we call you? Type a name, or type ok to be {suggested}.` The answer
+`ok`, `okay`, `yes`, `y` (any case) or an empty one takes the suggestion. The word exists
+because neither the web Console nor Discord can send an empty message, so "take this one"
+needs something to type. The suggestion gets the typed name's clean-up (control characters
+stripped, trimmed, `CHARACTER_NAME_MAX_LENGTH` = 40). If it is empty after that, or already
+another character's name, the question is `What should we call you? Type a name.` with no
+`ok`; after a clash it is re-asked in that form, so the taken name is never offered again.
+Callers that supply `name` (the Workshop, the Discord slash commands) are never asked. Before
+roadmap 39 the Console silently used the display name, which is how a player ended up with a
+name they never chose.
+
+## Training: type descriptions and place count
+
+Each monster type has one line in `MONSTER_TYPE_SUMMARIES`. The classes' own `description` is long lore, so it is not reused.
+The Workshop reads the line from `spawnOptions` (`types[].summary`) and shows it under the
+Type select; the Console prompt puts `Label: line` rows in the *question text*. The lines are
+not in `choices`: choices are the labels an answer is matched against
+([prompt answer contract](../reference/prompt-answer-contract.md)), and a label with a
+description glued on would stop the Discord button answer from resolving. The lines live in
+`monsters/helpers/type-summaries.ts`, one source for both paths.
+
+`Beastmaster.spawnMonster` opens with `You can train {n} more {monster|monsters}.` and, with
+no places left, refuses with `Every place at your side is taken ({slots} {monster|monsters}).`,
+the Workshop Train row's wording.
+
+## Card moves say why
+
+`Beastmaster.equipCards` and `loadPreset` return `skipped: [{ cardName, reason }]` (reason is
+`cannot_hold` class restriction, `deck_full`, `max_copies`, or `not_in_inventory`) plus
+`cardCount` and `cardSlots`, the deck after the call; the router passes them through.
+`characters/helpers/equip-message.ts` is the one home for the reason texts, the refusal
+sentence (`{Card} can't go on {Monster}: {reason}.`) and the result line
+(`Equipped {Card} on {Monster}. {Monster} holds {k} of {slots} cards.`, or `Equipped {n} cards
+on ...`). The engine's announce, the server's private announcement, the Workshop's equip and
+preset messages all call `equipResultMessage`, so they cannot drift; one sentence is written
+per distinct card and reason, not per copy. The old `(1/1)` was cards equipped of cards
+requested in that one call, not the deck. The pre-tap hint on a monster panel uses
+`cardRefusalReason` (also `fighting`), which checks in the order `equipCards` does: fight, free
+slot, class, copies. A `cardSlots` of 0 is the server's fallback for an unreadable record and
+means unknown, not full. `loadPreset` checks copies before class, so its reason can differ
+from the hint's when a card fails both. Monster-to-monster moves already carry the engine's
+reason text and are unchanged.
+
 Before a character exists, the Workshop leaves `game.shop` off: it answers `NOT_FOUND`
 without a character, and polling it made a first-run room look broken (10b #188). The
 query turns on when `myInventory` reports `hasCharacter`. The "Applying changes…" banner
@@ -197,9 +243,34 @@ the authoritative price the same way, from the shop it re-reads at commit time.
 ## Client invalidation
 
 Every Workshop query and invalidation includes the active `roomId`. Successful mutations
-refresh only that room's inventory, ring state, or shop as applicable. Live private
-`ring.xp` events trigger a room-local inventory/shop refresh so wallet rewards do not wait
-for polling.
+refresh only that room's inventory, ring state, or shop as applicable.
+
+There is no Sync button. The Workshop refreshes (inventory, `myMonsters`, and the shop once a
+character exists) from these triggers:
+
+- the 30 s poll on `myInventory` and `shop`;
+- every Workshop mutation, and coins arriving;
+- a private `ring.xp` event, which the room sends the moment a fight the player was in pays
+  out (this also covers level-ups, which come from the same XP);
+- the tab or window regaining focus (`refetchOnWindowFocus` on both queries);
+- a timer the panel sets for the soonest running revival (`revivesAt` + 1 s). No room event
+  reaches the web when a revival timer fires (the engine's `respawn` is a creature emit,
+  not a bus event), so the panel schedules its own refresh.
+
+## Workshop header, Train row and Shop labels
+
+Coins are shown in the Shop only; the header carries no balance (a new player read it as
+the price of levelling up the monster beside it, roadmap 39a). "Train monster" has its own
+row with a line built from `myInventory.monsterSlots` (the engine's `Beastmaster.monsterSlots`,
+never below the roster size) minus the monsters listed: the free-places sentence, or "Every
+place at your side is taken (1 monster / n monsters)." with the button disabled (Cancel stays
+usable if the form is already open). A first-run player (no character) gets
+the plain button. A shop price of 0 reads **Free**, with its own confirm and success text.
+A fallen monster with a running revival (`revivesAt`, set only once `respawn()` starts, never
+merely on death) shows a disabled **Reviving…** button and `Fallen · back at {local time}
+({relative})`, where `{relative}` is `formatRelativeFromNow` ("in 12 min", "in 2 h 15 min").
+Under 60 s it reads `Fallen · back in {s} s` (never above 59, ticking every second), and once
+the time has passed but the client has not refetched, `Fallen · almost back`.
 
 Server validation remains authoritative. Optimistic UI must roll back or refetch when
 state changes between render and mutation.

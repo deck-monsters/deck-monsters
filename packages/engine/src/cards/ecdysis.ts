@@ -23,12 +23,11 @@ export class EcdysisCard extends BaseCard<EcdysisCardOptions> {
 		],
 	};
 
-	constructor({
-		boosts,
-		icon = '📶',
-		...rest
-	}: Partial<EcdysisCardOptions> = {}) {
-		super({ boosts, icon, ...rest } as Partial<EcdysisCardOptions>);
+	// Only the options this card owns are kept. Forwarding `...rest` let a caller's unrelated
+	// options (a character's `deck`, 2026-09-24) into this card's saved options and, through
+	// them, create a circular structure that crashed the save.
+	constructor({ boosts, icon = '📶' }: Partial<EcdysisCardOptions> = {}) {
+		super({ boosts, icon } as Partial<EcdysisCardOptions>);
 	}
 
 	get boosts(): Array<{ prop: string; amount: number }> {

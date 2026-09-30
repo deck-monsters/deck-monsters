@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 
-import { announceTurnBegin } from './playerTurnBegin.js';
+import { announceTurnBegin, possessive } from './playerTurnBegin.js';
 import { monsterTurnLine } from '../helpers/card.js';
 
 function capture() {
@@ -45,6 +45,17 @@ describe('./announcements/playerTurnBegin.ts', () => {
 		// formatCard wraps at 32 chars, so assert on fragments that survive wrapping.
 		expect(text).to.include('powerful');
 		expect(text).to.include('Fights: 0 · Won: 0');
+	});
+
+	it("names a boss's monster, not The Editor, on a boss's turn", () => {
+		const { eb, published } = capture();
+		const contestant = { ...makeContestant(), isBoss: true };
+		contestant.character = { givenName: 'The Editor', identity: '👑 The Editor' };
+
+		announceTurnBegin(eb as never, 'Ring', {}, { contestant });
+
+		expect(published[0]!.text).to.include("It's Killer Killer's turn.");
+		expect(published[0]!.text).to.not.include("It's The Editor's turn.");
 	});
 
 	it('collapses to a one-line summary on a repeat turn', () => {
@@ -101,6 +112,14 @@ describe('./announcements/playerTurnBegin.ts', () => {
 		announceTurnBegin(eb as never, 'Ring', {}, { contestant });
 
 		expect(published[1]!.text).to.include('Alliance');
+	});
+});
+
+describe('possessive', () => {
+	it("adds 's, or a bare apostrophe after a final s", () => {
+		expect(possessive('Pip')).to.equal("Pip's");
+		expect(possessive('Herinth Protector Of Creatures')).to.equal("Herinth Protector Of Creatures'");
+		expect(possessive('ATLAS')).to.equal("ATLAS'");
 	});
 });
 

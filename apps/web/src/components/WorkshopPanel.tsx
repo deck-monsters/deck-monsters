@@ -6,6 +6,7 @@ import MonsterWorkshopPanel from './MonsterWorkshopPanel.js';
 import type { WorkshopCardLocation } from './CardSlot.js';
 import { useDeckWorkshop } from '../hooks/useDeckWorkshop.js';
 import { RingFeedContext, type TrackedRingFeedEvent } from '../hooks/useRingFeed.js';
+import { cardRefusalReason, cardRefusalSentence, equipResultMessage } from '../lib/cardRefusal.js';
 import { groupSelectionByCardName, isSameSource, toggleWorkshopSelection } from '../utils/workshop-selection.js';
 
 export type SelectionState = {
@@ -28,6 +29,7 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showSpawn, setShowSpawn] = useState(false);
+  const [spawnTypeIndex, setSpawnTypeIndex] = useState<number | null>(null);
 
   const {
     monsters,
@@ -42,6 +44,7 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
     hasCharacter,
     characterCreation,
     shuffleAvatars,
+    monsterSlots,
     loading,
     busy,
 	consoleFlowActive,
@@ -76,6 +79,20 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
    */
   const needsCharacter = hasCharacter === false;
 
+  // Places at the player's side. Absent while the inventory loads (and in older test
+  // doubles), in which case no line is shown rather than a wrong count.
+  const freePlaces =
+    hasCharacter === true && typeof monsterSlots === 'number'
+      ? Math.max(monsterSlots - monsters.length, 0)
+      : undefined;
+  const trainingFull = freePlaces === 0;
+  const trainLine =
+    freePlaces === undefined
+      ? null
+      : freePlaces > 0
+        ? `Train a new monster to fight at your side. You can train ${freePlaces} more.`
+        : `Every place at your side is taken (${monsterSlots} ${monsterSlots === 1 ? 'monster' : 'monsters'}).`;
+
   /*
    * Bug: "I still see only 0 coins in the workshop view." Coins are awarded the instant a
    * fight resolves (`Game.awardFightCoins`, `packages/engine/src/game.ts`), but the wallet
@@ -106,6 +123,26 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
       }
     });
   }, [ringFeed]);
+
+  /*
+   * No event reaches the web when a monster's revival timer fires (the engine's 'respawn'
+   * is a creature-level emit, not a room event), so the Workshop schedules its own refresh
+   * for the moment the soonest running revival completes. Without it the "Fallen · back in
+   * 0 s" line stayed until the next 30 s poll.
+   */
+  const nextRevivalAt = monsters.reduce<number | undefined>((soonest, monster) => {
+    const at = monster.dead && typeof monster.revivesAt === 'number' ? monster.revivesAt : undefined;
+    if (at === undefined) return soonest;
+    return soonest === undefined || at < soonest ? at : soonest;
+  }, undefined);
+  useEffect(() => {
+    if (nextRevivalAt === undefined) return;
+    // +1 s so the engine's own timer has fired before we ask; capped so a far-off revival
+    // does not overflow setTimeout (the 30 s poll covers anything longer anyway).
+    const delay = Math.min(Math.max(nextRevivalAt - Date.now() + 1_000, 1_000), 2_147_000_000);
+    const timer = setTimeout(() => void refreshRef.current(), delay);
+    return () => clearTimeout(timer);
+  }, [nextRevivalAt]);
 
 	async function handleCancelConsoleFlow() {
 	  try {
@@ -214,7 +251,8 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
       setError('The shop is still loading. Try again in a moment.');
       return;
     }
-    if (!window.confirm(`Buy ${item.displayName} for ${item.price} coins?`)) return;
+    const isFree = item.price === 0;
+    if (!window.confirm(isFree ? `Take the ${item.displayName}? It's free.` : `Buy ${item.displayName} for ${item.price} coins?`)) return;
     try {
       setError(null);
       const result = await buyShopItem({
@@ -223,7 +261,7 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
         expectedItemType: item.displayName,
         expectedClosingTime: shop.closingTime,
       });
-      setMessage(`Bought ${result.itemName} for ${result.price} coins. ${result.remainingCoins} coins remain.`);
+      setMessage(isFree ? `You took the ${result.itemName}. It was free.` : `Bought ${result.itemName} for ${result.price} coins. ${result.remainingCoins} coins remain.`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not complete that purchase');
     }
@@ -331,6 +369,12 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
     );
   }, [activeMonsterFilter, isCardCompatibleWithMonster]);
 
+  const refusalFor = useCallback(
+    (cardName: string, monster: { name: string; cards: string[]; cardSlots: number; inEncounter?: boolean }) =>
+      cardRefusalReason({ cardName, monster, compatible: isCardCompatibleWithMonster(cardName, monster.name) }),
+    [isCardCompatibleWithMonster],
+  );
+
   const selectedInventoryCardName = useMemo(() => {
     if (selectedCards.length !== 1) return null;
     const selection = selectedCards[0];
@@ -372,10 +416,7 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
           cardNames: [cardName],
           replaceAll: false,
         });
-        const skipped = result.skippedCards.length > 0 ? ` Skipped: ${result.skippedCards.join(', ')}.` : '';
-        setMessage(
-          `Equipped ${target.monsterName} (${result.equippedCount}/${result.requestedCount}).${skipped}`,
-        );
+        setMessage(equipResultMessage({ monsterName: target.monsterName, cardNames: [cardName], result }));
         return;
       }
 
@@ -427,8 +468,11 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
         cardNames: selection.map((entry) => entry.cardName),
         replaceAll: false,
       });
-      const skipped = result.skippedCards.length > 0 ? ` Skipped: ${result.skippedCards.join(', ')}.` : '';
-      setMessage(`Equipped ${target.monsterName} (${result.equippedCount}/${result.requestedCount}).${skipped}`);
+      setMessage(equipResultMessage({
+        monsterName: target.monsterName,
+        cardNames: selection.map((entry) => entry.cardName),
+        result,
+      }));
       return;
     }
 
@@ -440,7 +484,7 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
       const skipped = result.failures.length > 0
         ? ` Skipped: ${result.failures.map((f) => f.cardName).join(', ')}.`
         : '';
-      setMessage(`Unequipped ${result.removedCount} cards from ${source.monsterName}.${skipped}`);
+      setMessage(`Unequipped ${result.removedCount} ${result.removedCount === 1 ? 'card' : 'cards'} from ${source.monsterName}.${skipped}`);
       return;
     }
 
@@ -531,10 +575,8 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
     try {
       setError(null);
       const result = await loadPreset({ monsterName, presetName });
-      const skipped = result.skippedCards.length > 0 ? ` Skipped: ${result.skippedCards.join(', ')}.` : '';
-      setMessage(
-        `Loaded "${presetName}" on ${monsterName} (${result.equippedCount}/${result.requestedCount}).${skipped}`,
-      );
+      const requested = monsters.find((monster) => monster.name === monsterName)?.presets[presetName] ?? [];
+      setMessage(equipResultMessage({ monsterName, cardNames: requested, result }));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not load preset');
     }
@@ -589,31 +631,30 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
     <div className="workshop-view">
       <div className="workshop-header">
         <div>
-          <h1>Deck Workshop</h1>
-          <p>Manage equipped and unequipped cards in one view.</p>
+          <h1>Workshop</h1>
+          <p>Train monsters, choose their cards, and spend your coins.</p>
         </div>
         <div className="workshop-header-actions">
-          {/*
-           * The coin balance used to be visible only inside the shop section, which the
-           * player has to scroll past the monster row and inventory to reach. Surfacing it
-           * here too means a player can see their wallet — and that it just moved after a
-           * fight — without opening the shop at all. `shop` is undefined until the first
-           * shop query resolves, so this renders nothing rather than a misleading "0 coins"
-           * during that brief window.
-           */}
-          {shop && (
-            <strong className="workshop-wallet" title="Coins">
-              {shop.coins} {shop.coins === 1 ? 'coin' : 'coins'}
-            </strong>
-          )}
-          <button className="btn" onClick={() => setShowSpawn((shown) => !shown)} disabled={!roomId || busy}>
-            {showSpawn ? 'Cancel' : 'Train monster'}
-          </button>
-          <button className="btn" onClick={() => void refresh()} disabled={!roomId || loading || busy}>
-            Sync
-          </button>
           {headerActions}
         </div>
+      </div>
+
+      {/*
+        Train monster has its own row. It used to sit beside the coin balance, and a new
+        player read "196 coins  Train monster" as the price of levelling up the monster
+        below. Coins now live in the Shop only. The line says how many places are free
+        (`monsterSlots` from the inventory query); a first-run player has no character and
+        so no places to count, and keeps the plain button.
+      */}
+      <div className="workshop-train-row">
+        {trainLine && <p className="workshop-train-line">{trainLine}</p>}
+        <button
+          className="btn"
+          onClick={() => setShowSpawn((shown) => !shown)}
+          disabled={!roomId || busy || (trainingFull && !showSpawn)}
+        >
+          {showSpawn ? 'Cancel' : 'Train monster'}
+        </button>
       </div>
 
       {message && <div className="success-msg" role="status" aria-live="polite">{message}</div>}
@@ -648,7 +689,12 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
               </fieldset>
             </fieldset>
           )}
-          <label>Type<select name="type" defaultValue={spawnOptions.types[0]?.index}>{spawnOptions.types.map((type) => <option key={type.index} value={type.index}>{type.label}</option>)}</select></label>
+          <label>Type<select name="type" value={spawnTypeIndex ?? spawnOptions.types[0]?.index} onChange={(event) => setSpawnTypeIndex(Number(event.target.value))}>{spawnOptions.types.map((type) => <option key={type.index} value={type.index}>{type.label}</option>)}</select></label>
+          {/* One line per type, from the same source as the Console prompt. */}
+          {(() => {
+            const chosen = spawnOptions.types.find((type) => type.index === (spawnTypeIndex ?? spawnOptions.types[0]?.index));
+            return chosen?.summary ? <p className="workshop-type-summary">{chosen.summary}</p> : null;
+          })()}
           <label>Pronouns<select name="gender" defaultValue="androgynous">{spawnOptions.pronouns.map(({ key, label }) => <option key={key} value={key}>{label}</option>)}</select></label>
           <label>Name<input name="name" required maxLength={40} autoComplete="off" /></label>
           <label>Appearance<input name="color" required maxLength={100} placeholder="gold and black" /></label>
@@ -685,7 +731,16 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
         </div>
       ) : (
       <div className="workshop-monster-row" ref={monsterRowRef} onScroll={handleMonsterRowScroll}>
-        {monsters.map((monster) => (
+        {monsters.map((monster) => {
+          // Once per monster per render: the reason, then the sentence built from it.
+          const reason = selectedInventoryCardName ? refusalFor(selectedInventoryCardName, monster) : null;
+          const hint = {
+            reason,
+            sentence: selectedInventoryCardName && reason
+              ? cardRefusalSentence(selectedInventoryCardName, monster.name, reason)
+              : undefined,
+          };
+          return (
           <MonsterWorkshopPanel
             key={monster.name}
             monster={monster}
@@ -722,14 +777,12 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
             }}
             isFilterActive={Boolean(activeMonsterFilter)}
             isFilterTarget={activeMonsterFilter === monster.name}
-            compatibilityHint={
-              selectedInventoryCardName
-                ? (isCardCompatibleWithMonster(selectedInventoryCardName, monster.name) ? 'eligible' : 'ineligible')
-                : 'none'
-            }
+            compatibilityHint={hint.reason === null ? (selectedInventoryCardName ? 'eligible' : 'none') : 'ineligible'}
+            refusalSentence={hint.sentence}
             onToggleFilter={() => handleToggleMonsterFilter(monster.name)}
           />
-        ))}
+          );
+        })}
       </div>
       )}
 

@@ -35,59 +35,33 @@ the `=` border (the leading newline of `formatCard` plus the fence), and the lis
 Read [events, prompts, and replay](../architecture/events-prompts-and-replay.md) and
 [web workspace](../architecture/web-workspace.md).
 
-### G. A room reset does not reach the Discord connector's copy of the room
+### J. A reset leaves a running fight, open prompts and connector subscriptions behind
 
-**Owner:** Server and connector. Found by the roadmap 37 whole-branch review (2026-09-29); it
-was already true on main.
+**Owner:** Server and connector. Found by the review of item G's fix (roadmap 40, 2026-09-30).
+It was already true of every reset; item G's cross-process drop inherits it because it tears
+a room down the same way.
 
-The server and the Discord connector each run their own `RoomManager`, with their own cache of
-loaded rooms, over one `rooms` table. A reset through the web detaches the server's copy,
-waits for its flush, and writes a tombstone version (bug 202). It does not touch the
-connector's copy. If the connector has the room loaded, its next save is stamped after the
-tombstone, lands, and brings the old room back. Bug 202's fix covers saves from the process
-that ran the reset, not from another process.
+A reset (and now a cross-process drop) detaches the room's subscribers and calls
+`game.dispose()`. That leaves three things behind:
+- A fight in progress keeps its timer chain; `unloadRoom` refuses to unload mid-fight for this
+  reason, but a reset does not wait.
+- A command waiting on an interactive prompt waits until the prompt times out.
+- The Discord connector caches one `GuildRoomSubscription` per guild and room, bound to the
+  old game's bus, so announcements stay silent until the connector restarts. (No connector is
+  deployed today.)
 
-Root cause: a room's live state has one owner per process, not one owner overall, and nothing
-tells the other process a reset happened.
+- [ ] Stop a running fight's timers and cancel open prompts with `PromptCancelledError` when a
+  room is torn down by a reset or a drop.
+- [ ] Give the connector a way to hear that a room was replaced (a `RoomManager` listener) and
+  re-subscribe.
 
-- [ ] Decide the mechanism: a room generation number that every save must match (a reset bumps
-  it, and a save from an older generation matches no row and makes that process reload); or a
-  database notification (`LISTEN`/`NOTIFY`) that tells every process to drop its copy.
-- [ ] A generation check fits roadmap 37's guarded write: add `state_generation` to the guard,
-  so a stale process's save is refused and counted, and that process reloads the room.
-- [ ] Test it with two `RoomManager`s over the local Postgres.
+### K. Some simulation runs take far longer than expected
 
-Read [rooms and identity](../architecture/rooms-and-identity.md) and
-[engine concurrency and timing](../architecture/engine-concurrency-and-timing.md).
+**Owner:** Harness. Seen while fixing item I (2026-09-30): a 60-batch run of three bosses
+printed nothing for 10 minutes, and a 4-batch run took over 120 s. Not investigated; it may be
+a slow seed or a fight that never ends.
 
-### H. The real-Postgres tests never run in CI
-
-**Owner:** CI. Found by the review of the migration runner (2026-09-29).
-
-`state-store.pg.test.ts`, `room-state-backfill.pg.test.ts` and `migrate.pg.test.ts` run only when
-`TEST_DATABASE_URL` is set, and the CI workflow has no database. So the tests that prove save
-ordering, the backfill, and migrations against real Postgres pass in CI by being skipped. They
-have only ever run on a developer's machine.
-
-- [ ] Add a `postgres:16` service to the Tests job and set `TEST_DATABASE_URL`.
-- [ ] Before the suite, apply the repo's migrations to it with the migration runner, after
-  creating the Supabase `auth` stubs and roles the migrations need (`migrate.pg.test.ts` shows
-  them), so the shared test database has the schema the other suites expect.
-- [ ] Make a skipped pg suite visible in CI output, so a missing database cannot hide again.
-
-### I. A long simulation process leaks memory
-
-**Owner:** Harness. Found by the roadmap 38 Gauntlet study (2026-09-30).
-
-One `sim-gauntlet` process grew by about 2.5 GB per 12,000 fights, and five at once nearly
-filled a 16 GB machine; the first all-levels run died and was restarted as one process per cell.
-The leak is in `simulate` or the engine, not the new script: something from each fight outlives
-it (listeners, timers, or event history held by a ring or room bus that `clearRing` does not
-release).
-
-- [ ] Reproduce with a heap snapshot after N fights of plain `simulate` and find what
-  accumulates.
-- [ ] Until it is fixed, long runs use one process per cell (the Gauntlet laptop block does).
+- [ ] Time each fight in a long run and look at the slowest seeds' logs.
 
 ## Historical detail
 

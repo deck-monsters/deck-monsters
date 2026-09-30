@@ -1,14 +1,22 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import FightLogPanel from '../components/FightLogPanel.js';
 import LeaderboardPanel from '../components/LeaderboardPanel.js';
 
 const query = { data: [], isLoading: false };
+const ringState = vi.hoisted(() => ({ inEncounter: false }));
+const invalidate = vi.hoisted(() => ({ fights: vi.fn(), leaderboard: vi.fn() }));
+const fightRows = vi.hoisted(() => ({ rows: [] as unknown[] }));
 
 vi.mock('../lib/trpc.js', () => ({
 	trpc: {
+		useUtils: () => ({
+			game: { recentFights: { invalidate: invalidate.fights } },
+			leaderboard: { invalidate: invalidate.leaderboard },
+		}),
 		game: {
-			recentFights: { useQuery: vi.fn(() => query) },
+			ringState: { useQuery: vi.fn(() => ({ data: { inEncounter: ringState.inEncounter } })) },
+			recentFights: { useQuery: vi.fn(() => ({ data: fightRows.rows, isLoading: false })) },
 			fight: { useQuery: vi.fn(() => ({ data: undefined, isLoading: false })) },
 		},
 		leaderboard: {
@@ -21,13 +29,20 @@ vi.mock('../lib/trpc.js', () => ({
 }));
 
 describe('layout-agnostic surface panels', () => {
-	it('puts Fight Log content inside its own query container and header', () => {
+	beforeEach(() => {
+		ringState.inEncounter = false;
+		fightRows.rows = [];
+		invalidate.fights.mockClear();
+		invalidate.leaderboard.mockClear();
+	});
+
+	it('puts Fights content inside its own query container and header', () => {
 		const { container } = render(
 			<FightLogPanel roomId="room-1" headerActions={<button type="button">Host action</button>} />,
 		);
 
 		expect(container.querySelector('.surface-panel-host > .fight-log-panel')).not.toBeNull();
-		expect(screen.getByRole('heading', { name: 'Fight log' })).toBeTruthy();
+		expect(screen.getByRole('heading', { name: 'Fights' })).toBeTruthy();
 		expect(screen.getByRole('button', { name: 'Host action' })).toBeTruthy();
 	});
 
@@ -40,5 +55,56 @@ describe('layout-agnostic surface panels', () => {
 		const region = screen.getByRole('region', { name: 'Scrollable room player rankings' });
 		expect(region).toHaveAttribute('tabindex', '0');
 		expect(region).toContainElement(screen.getByRole('table', { name: 'Room player rankings' }));
+	});
+
+	it('names the Leaders panel and its empty state when no fight is on', () => {
+		render(<LeaderboardPanel roomId="room-1" />);
+		expect(screen.getByRole('heading', { name: 'Leaders' })).toBeTruthy();
+		expect(screen.getByText(/No ranked fights in this room yet/)).toBeTruthy();
+	});
+
+	it('says no fights yet, and how one starts, when the ring is quiet', () => {
+		render(<FightLogPanel roomId="room-1" />);
+		expect(
+			screen.getByText('No fights yet. A fight starts on its own once two monsters are in the ring.'),
+		).toBeTruthy();
+	});
+
+	it('says a fight is on, instead of "no fights yet", while one is on the ring', () => {
+		ringState.inEncounter = true;
+		render(<FightLogPanel roomId="room-1" />);
+		expect(screen.getByText('A fight is on in the ring. It shows here when it ends.')).toBeTruthy();
+		expect(screen.queryByText(/No fights yet/)).toBeNull();
+	});
+
+	it('leaders empty state mentions the fight on the ring', () => {
+		ringState.inEncounter = true;
+		render(<LeaderboardPanel roomId="room-1" />);
+		expect(
+			screen.getByText('No ranked fights yet. A fight is on in the ring; rankings update when it ends.'),
+		).toBeTruthy();
+	});
+
+	it('keeps the list and adds the fight-is-on line above it when fights exist', () => {
+		ringState.inEncounter = true;
+		fightRows.rows = [{ id: 'f1', fightNumber: 1, endedAt: new Date().toISOString(), participants: [] }];
+		const { container } = render(<FightLogPanel roomId="room-1" />);
+		expect(screen.getByText('A fight is on in the ring. It shows here when it ends.')).toBeTruthy();
+		expect(container.querySelectorAll('.fight-log-card')).toHaveLength(1);
+	});
+
+	it('refetches fights and rankings once when the fight on the ring ends', () => {
+		ringState.inEncounter = true;
+		const fights = render(<FightLogPanel roomId="room-1" />);
+		const board = render(<LeaderboardPanel roomId="room-1" />);
+		expect(invalidate.fights).not.toHaveBeenCalled();
+		ringState.inEncounter = false;
+		fights.rerender(<FightLogPanel roomId="room-1" />);
+		board.rerender(<LeaderboardPanel roomId="room-1" />);
+		expect(invalidate.fights).toHaveBeenCalledTimes(1);
+		expect(invalidate.fights).toHaveBeenCalledWith({ roomId: 'room-1' });
+		expect(invalidate.leaderboard).toHaveBeenCalledTimes(1);
+		fights.rerender(<FightLogPanel roomId="room-1" />);
+		expect(invalidate.fights).toHaveBeenCalledTimes(1);
 	});
 });

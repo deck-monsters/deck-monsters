@@ -386,9 +386,11 @@ no handler, and each deploy lost up to 30 s of unsaved changes in every active r
 
 ## Room state migration to jsonb (roadmap 37)
 
-Room state moves from `rooms.state_blob` (base64 gzip JSON) to `rooms.state` (`jsonb`). Release
-1 writes both columns, so every step here can be undone by redeploying the previous release,
-until the contract release drops `state_blob`. The plan and its reasoning are in
+Room state moves from `rooms.state_blob` (base64 gzip JSON) to `rooms.state` (`jsonb`) in
+three steps. **Release 1** (expand) writes both columns. **Release 2** (this one, "stop
+using the blob") writes and reads `state` only. A **later migration** then drops `state_blob`;
+it must not ship with release 2, because the migration runner applies migrations while the old
+release is still serving and still writing the column. The plan and its reasoning are in
 [roadmap 37](../roadmap/37-room-state-in-postgres.md).
 
 Commands run from `packages/server` with `DATABASE_URL` set to the production database.
@@ -426,33 +428,55 @@ would be read stale and then overwritten.
    `unconverted` should be 0, apart from rooms the script reported as failed, and
    `jsonb_typeof` must be `object` for every row.
 6. Watch for a week before the contract release: `dm_room_state_saves_stale_total` should stay
-   near 0, `dm_room_state_save_failures_total` at 0, and
-   `dm_room_state_source_total{source="blob"}` should stop rising after the backfill.
+   near 0 and `dm_room_state_save_failures_total` at 0.
 
-### Rollback and roll forward
+### Release 2 (stop using `state_blob`)
 
-- **Rollback:** redeploy the previous release to both services. It reads only `state_blob`,
-  which release 1 kept current, so nothing is lost.
-- **Rolling forward again** needs a short write drain. While the old release ran, only
-  `state_blob` was written, so `state` is stale. If the old release is still serving, it could
-  write a newer blob between the script's read and its write:
-  1. Stop both services, the server and the Discord connector (Railway dashboard, or
-     `railway down` for each), and wait until both show stopped.
-  2. Preview, then rewrite `state` from `state_blob` for every room that has a blob:
-     `pnpm exec tsx scripts/migrate-room-state-to-jsonb.ts --from-blob --i-stopped-the-service --dry-run`,
-     then the same without `--dry-run`. It treats the blob as the truth: a room whose blob the
-     old release nulled (a reset or a quarantine while rolled back) has its stale `state`
-     cleared too, reported as `cleared stale state`. It sets each room's `state_version` one
-     above its stored value, so it does not depend on the laptop's clock agreeing with Railway's. The
-     script refuses `--from-blob` without `--i-stopped-the-service`, and any flag it does not
-     know.
-  3. Start both services again on release 1 (redeploy them, or start the stopped services if
-     they are still release 1's build), and repeat the read-only checks.
-- **The default mode does not repair a rollback.** It converts only rooms whose `state` is
-  null, so after a rollback it skips the stale rooms and the read-only check still reads
-  `unconverted = 0`. Use `--from-blob` for that.
-- **After the contract release** drops `state_blob`, redeploying an older release would
-  restore stale or missing state. Its release notes must say so.
+Release 2 stops writing `state_blob` but keeps a **read-only** blob fallback on load, so it is
+safe even for a room the backfill has not converted (`state` null, blob present): it loads from
+the blob (logged at warn, counted as `source="blob"`), never writes the blob, and the room's
+next save fills `state`. Stop-writing and drop are separate deploys (roadmap 40).
+
+1. The pre-deploy runner applies this release's two migrations (roadmap 40): the read-only
+   query views with `card_types`, and `rooms.state_generation` (a metadata-only column add).
+   Neither changes what the old release reads or writes.
+2. Deploy release 2 to **both** services, the server and the Discord connector. Saves write
+   `state` and `state_version` only, so `state_blob` is stale for every room from the first
+   save on. A reset or a load-time quarantine moves a present blob to `quarantined_blob` and
+   nulls `state_blob`, so neither the fallback nor a rollback to release 1 can resurrect reset
+   data.
+3. Watch `dm_room_state_source_total{source="blob"}`: it should stop rising as rooms save.
+   Run the backfill (default mode, safe while live) for any straggler.
+4. A reset reaches another process's copy only when both run this release (bug 208): until
+   the connector is upgraded, only the tombstone version protects a reset from its saves.
+   No connector is deployed today.
+
+**Before the DROP migration** (a later, separate PR that also removes the fallback, the
+schema column, the reset/quarantine nulling and the leaderboard/backfill blob reads;
+`quarantined_blob` stays):
+
+1. Both services are on release 2.
+2. Run the read-only check; `unconverted` must be 0 (list the ids of any that are not, and
+   backfill or reset them first):
+
+   ```sql
+   select id from rooms where state is null and state_blob is not null;
+   ```
+
+3. The drop migration refuses to run while that query returns rows.
+
+### Rollback
+
+- **Release 2 to release 1:** safe. Release 1 prefers `state`, which release 2 kept current.
+  It only falls back to `state_blob` where `state` is null, and a reset nulls both.
+- **Contract warning: release 2 to a pre-37 release is NOT safe.** A pre-37 release reads only
+  `state_blob`, which release 2 no longer writes, so every room would load from a stale blob
+  and later saves would overwrite the current `state` lineage. Do not roll back past release 1.
+  If it is unavoidable, stop both services first and rebuild the blobs from `state` by hand
+  (`base64(gzip(JSON))` of each room's `state`).
+- `--from-blob` was removed from the backfill script with release 2, because it treated the
+  blob as the truth. The script now only converts stragglers (`state` null, blob present) and
+  refuses `--from-blob` with an explanation.
 
 ## 4. Local development
 

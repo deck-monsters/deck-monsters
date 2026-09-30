@@ -268,6 +268,10 @@ new card or monster must reach. Check each one.
 
 - `permittedClassesAndTypes` (class names and creature types), `level` (the draw and hold
   gate), `probability` (rarity from `helpers/probabilities.ts`), and `cost`.
+- The constructor must not forward unknown options (`...rest`) into `super()`; pass only the
+  options the card owns. A card that kept a caller's `deck` option became part of the very array
+  it was pushed into, and the circular structure made every save of the room throw (the
+  2026-09-24 crash). `cards/card-options-isolation.test.ts` enforces it for every registered card.
 - Sale: default is the front shop; `notForSale` sends it to the back room at a steep
   markup; `neverForSale` keeps it out of both.
 - Register it in `cards/helpers/all.ts` **in alphabetical order**, because the generated
@@ -278,6 +282,9 @@ new card or monster must reach. Check each one.
   name, and an unmatched card shows as Utility.
 - Tests: permissions, stats text, hit and miss, natural 1 and 20, confusion
   (`target === player`), encounter cleanup, and a JSON hydration round trip.
+- Add a `card_types` row in a new migration (class name to display name) so the operator
+  views can name it; `room-state-views.test.ts` fails without it
+  ([querying room state](rooms-and-identity.md#querying-room-state)).
 - Regenerate `CARDS.md`, `DMG.md`, `cards.html`, and the
   [strings inventories](../reference/strings/README.md) with `pnpm run build:docs`. A card
   whose permitted types name a monster appears in that monster's inventory by itself, and

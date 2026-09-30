@@ -20,7 +20,8 @@
     "test": {
       "dependsOn": [],
       "outputs": ["coverage/**"],
-      "cache": false
+      "cache": false,
+      "passThroughEnv": ["CI", "TEST_DATABASE_URL"]
     },
     "test:coverage": {
       "dependsOn": [],

@@ -39,6 +39,10 @@ const BOSS_TEAM = 'Boss';
 > (`RING_PATRON` in `constants/lore.ts`, rendered `👑 The Editor`), and the ring roster
 > reports `owner: null` for a boss. See `docs/roadmap/10b-bugs-fixed.md` #102. The
 > generated character itself is unchanged — it still carries the boss's stats and team.
+>
+> A boss's turn line (`announcements/playerTurnBegin.ts`) names the boss monster
+> (`It's Seeskane Orcbane's turn.`), not The Editor: the house names nobody in the roster,
+> so a player could not tell whose turn it was. Players' turns still name the beastmaster.
 
 Boss-specific behaviour is applied in `characters/helpers/random.ts` (`randomCharacter`):
 

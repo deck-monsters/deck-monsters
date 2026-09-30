@@ -329,6 +329,54 @@ describe('game.ts', () => {
 		}
 	});
 
+	// 2026-09-24 production crash: a circular structure made persistState throw inside the debounced
+	// save timer, an uncaught exception that killed the server. A failed serialize must be logged
+	// and survived, and the next save must try again.
+	it('survives a serialize failure in the debounced save, logs it, and saves again once fixed', () => {
+		const clock = sinon.useFakeTimers({ shouldClearNativeTimers: true });
+		const logs: unknown[] = [];
+		const game = new Game({ roomId: 'circ-room' }, (m: unknown) => logs.push(m));
+		const saved: SerializedGame[] = [];
+		game.stateStore = { save: async (_id, s) => { saved.push(s); }, load: async () => null };
+		const cycle: any = {};
+		cycle.self = cycle;
+		(game as any).optionsStore = { ...(game as any).optionsStore, cycle };
+
+		try {
+			(game as any).scheduleSave();
+			expect(() => clock.tick(30_000)).not.to.throw();
+			expect(saved).to.have.length(0);
+			expect(logs).to.have.length(1);
+			expect(logs[0]).to.be.instanceOf(Error);
+			expect((logs[0] as any).context).to.equal('game.persistState');
+			expect((logs[0] as Error).message).to.include('circ-room');
+			expect((logs[0] as Error).message).to.match(/circular/i);
+
+			delete (game as any).optionsStore.cycle;
+			(game as any).scheduleSave();
+			clock.tick(30_000);
+			expect(saved).to.have.length(1);
+		} finally {
+			game.stateStore = undefined;
+			game.dispose();
+			clock.restore();
+		}
+	});
+
+	it('flushState resolves false, not a rejection, when serialization fails', async () => {
+		const game = new Game({ roomId: 'circ-flush' }, () => {});
+		game.stateStore = { save: async () => {}, load: async () => null };
+		const cycle: any = {};
+		cycle.self = cycle;
+		(game as any).optionsStore = { ...(game as any).optionsStore, cycle };
+		try {
+			expect(await game.flushState()).to.equal(false);
+		} finally {
+			game.stateStore = undefined;
+			game.dispose();
+		}
+	});
+
 	it('can look at the ring', () => {
 		const game = new Game();
 		const lookStub = sinon.stub(game.ring, 'look');
@@ -742,6 +790,36 @@ describe('game.ts', () => {
 			} finally {
 				clock.restore();
 			}
+		});
+	});
+
+	describe('getCharacter askName', () => {
+		it('offers the name as a suggestion and stores the typed answer', async () => {
+			const game = new Game();
+			const questions: string[] = [];
+			const answers = ['Ada', 'she/her', '0'];
+			const channel = async (m: { question?: string }) => {
+				if (m.question) questions.push(m.question);
+				return answers.shift();
+			};
+			const character = await game.getCharacter({ channel, id: 'u1', name: 'sam', askName: true });
+
+			expect(questions[0]).to.equal('What should we call you? Type a name, or type ok to be sam.');
+			expect((character as any).givenName).to.equal('Ada');
+		});
+
+		it('does not ask when askName is off', async () => {
+			const game = new Game();
+			const questions: string[] = [];
+			const answers = ['she/her', '0'];
+			const channel = async (m: { question?: string }) => {
+				if (m.question) questions.push(m.question);
+				return answers.shift();
+			};
+			const character = await game.getCharacter({ channel, id: 'u2', name: 'sam' });
+
+			expect(questions.some(q => q.startsWith('What should we call you'))).to.equal(false);
+			expect((character as any).givenName).to.equal('Sam');
 		});
 	});
 

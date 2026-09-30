@@ -52,7 +52,12 @@ Rows are designed to lose the least important information first:
 
 Species remains in the accessible label and is represented visually by the icon/sprite.
 The bar and figures both stay: the bar communicates shape while the numbers communicate
-scale. Long names may ellipse, but the boss badge and HP rail remain visible.
+scale. Long names wrap onto a second line rather than ellipsing (a boss's full generated name is
+what the narration uses, and an ellipsed one could not be matched to the feed at 390px); the
+boss badge and HP rail remain visible. The Ring pane header hides the event countdown and
+the summons count while a fight is on, and on a clear ring reads the summons as what is
+left (`2 summons left`, `1 summon left`, `No summons left today`); see
+`components/ringHeaderBadges.ts`.
 
 Teams render only when at least two distinct teams are still standing. Colour is never the
 only channel; labels and a legend name the teams in play.
@@ -105,9 +110,9 @@ assistive technology, and never delays or replaces game state.
 
 ## Room-known monsters and narration portraits
 
-Ring, Console, and Fight Log all render narration through the same formatter. A small
+Ring, Console, and Fights all render narration through the same formatter. A small
 external store records monsters seen in `ring.state`; fight history also records its
-participant rows so a direct Fight Log route works without the Ring mounted.
+participant rows so a direct Fights route works without the Ring mounted.
 
 The store:
 

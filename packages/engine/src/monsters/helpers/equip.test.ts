@@ -372,9 +372,33 @@ describe('equip helpers', () => {
 			// Catalogued alphabetically: Blast, Heal, Hit; after Blast, the list is Heal, Hit.
 			expect(result.map((c: { cardType: string }) => c.cardType)).to.deep.equal(['Blast', 'Hit']);
 			expect(announcements).to.include(
-				'"send brass to the ring" isn\'t one of the cards. Pick cards by name or number, or reply "done" to finish.'
+				'"send brass to the ring" is a command, not a card. Cancel this question first, then run it.'
 			);
+			expect(announcements.join('\n')).not.to.match(/isn't one of the cards/);
 			expect(announcements.join('\n')).not.to.match(/Skipped an invalid selection/);
+		});
+
+		it('keeps "isn\'t one of the cards" for text that is not a command', async () => {
+			const deck = [makeCard('Hit'), makeCard('Heal')];
+			const monster = makeMonster(2) as any;
+			const announcements: string[] = [];
+			const answers = ['banana', '0', 'done'];
+			let promptRound = 0;
+
+			const channel = async ({ announce, question }: { announce?: string; question?: string }) => {
+				if (announce) {
+					announcements.push(announce);
+					return undefined;
+				}
+				if (!question) return undefined;
+				promptRound += 1;
+				if (promptRound > answers.length) throw new Error('equip loop did not finish');
+				return answers[promptRound - 1];
+			};
+
+			await equipMonster({ deck: deck as any, monster, channel: channel as any });
+
+			expect(announcements[0]).to.match(/^"banana" isn't one of the cards\./);
 		});
 
 		it('leaves out the "done" hint while nothing is chosen yet', async () => {

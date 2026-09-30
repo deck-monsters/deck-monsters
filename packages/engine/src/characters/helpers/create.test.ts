@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import emoji from 'node-emoji';
 import sinon from 'sinon';
 
-import createCharacter, { createHelperReady, randomAvatarChoices } from './create.js';
+import createCharacter, { CHARACTER_NAME_MAX_LENGTH, createHelperReady, randomAvatarChoices } from './create.js';
 import { CommandRefusalError } from '../../helpers/command-refusal-error.js';
 
 // Each createCharacter() call with no options prompts, in order: pronouns, name, avatar.
@@ -234,5 +234,79 @@ describe('characters/helpers/create', () => {
 		const character = await createCharacter(channel, { type: '0' });
 
 		expect(character.givenName).to.equal('Saffron');
+	});
+
+	describe('suggestedName (the Console path)', () => {
+		it('asks "What should we call you?" first, offering the suggestion', async () => {
+			const { channel, seenQuestions } = makeSequencedChannel(['Ada Lovelace', 'she/her', '0']);
+			const character = await createCharacter(channel, { type: '0', suggestedName: 'ada' });
+
+			expect(seenQuestions[0]).to.equal('What should we call you? Type a name, or type ok to be ada.');
+			expect(seenQuestions[1]).to.equal('Which pronouns should we use for you?');
+			expect(character.givenName).to.equal('Ada Lovelace');
+		});
+
+		// Nobody can send an empty message from the web Console or Discord, so the word is
+		// the real-input path; the empty answer is the scripted/defensive one.
+		for (const accept of ['ok', 'OK', ' Okay ', 'yes', 'Y', '  ']) {
+			it(`takes the suggestion on ${JSON.stringify(accept)}`, async () => {
+				const { channel } = makeSequencedChannel([accept, 'she/her', '0']);
+				const character = await createCharacter(channel, { type: '0', suggestedName: 'ada' });
+
+				expect(character.givenName).to.equal('Ada');
+			});
+		}
+
+		it('asks without the ok option when the suggestion is empty after cleaning', async () => {
+			const { channel, seenQuestions } = makeSequencedChannel(['ok', 'she/her', '0']);
+			const character = await createCharacter(channel, { type: '0', suggestedName: '\u0000 \u0001' });
+
+			// "ok" is then just a name, since there was nothing to accept.
+			expect(seenQuestions[0]).to.equal('What should we call you? Type a name.');
+			expect(character.givenName).to.equal('Ok');
+		});
+
+		it('does not offer a suggestion that is already taken', async () => {
+			const game = { findCharacterByName: (n: string) => (n.toLowerCase() === 'bob' ? {} : undefined) };
+			const { channel, seenQuestions } = makeSequencedChannel(['Sam', 'she/her', '0']);
+			const character = await createCharacter(channel, { type: '0', suggestedName: 'Bob', game });
+
+			expect(seenQuestions[0]).to.equal('What should we call you? Type a name.');
+			expect(character.givenName).to.equal('Sam');
+		});
+
+		it('re-asks without the taken name after a clash', async () => {
+			const game = { findCharacterByName: (n: string) => (n.toLowerCase() === 'bob' ? {} : undefined) };
+			const { channel, seenQuestions } = makeSequencedChannel(['bob', 'Sam', 'she/her', '0']);
+			const character = await createCharacter(channel, { type: '0', suggestedName: 'ada', game });
+
+			expect(seenQuestions[1]).to.equal('That name is already taken, please choose a different name. What should we call you? Type a name.');
+			expect(character.givenName).to.equal('Sam');
+		});
+
+		it('sanitizes the suggestion it offers', async () => {
+			const { channel, seenQuestions } = makeSequencedChannel(['ok', 'she/her', '0']);
+			await createCharacter(channel, { type: '0', suggestedName: `A\u0000da${'x'.repeat(60)}` });
+
+			expect(seenQuestions[0]).to.equal(`What should we call you? Type a name, or type ok to be ${`Adax${'x'.repeat(36)}`}.`);
+		});
+
+		it('strips control characters and caps the length like the Workshop form', async () => {
+			const long = 'x'.repeat(60);
+			const { channel } = makeSequencedChannel([`Ad\u0000a${long}`, 'she/her', '0']);
+			const character = await createCharacter(channel, { type: '0', suggestedName: 'ada' });
+
+			expect(character.givenName).to.have.length(CHARACTER_NAME_MAX_LENGTH);
+			expect(character.givenName.startsWith('Ada')).to.equal(true);
+			expect(character.givenName).to.not.include('\u0000');
+		});
+
+		it('does not ask when a name was supplied', async () => {
+			const { channel, seenQuestions } = makeSequencedChannel(['she/her', '0']);
+			const character = await createCharacter(channel, { type: '0', name: 'Given', suggestedName: 'ada' });
+
+			expect(seenQuestions).to.deep.equal(['Which pronouns should we use for you?', 'Finally, choose an avatar:']);
+			expect(character.givenName).to.equal('Given');
+		});
 	});
 });

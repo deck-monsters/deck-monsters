@@ -24,12 +24,59 @@ defines, in keyboard-shortcut order:
 | `Cmd/Ctrl+4` | Fights | `/room/:roomId/fights` |
 | `Cmd/Ctrl+5` | Leaders | `/room/:roomId/leaderboard` |
 
-Workshop, Fight Log, and Leaderboard are layout-agnostic panels. A route host wraps the
+## One name per place
+
+The tab names win (roadmap 39 B4): **The Ring, Console, Workshop, Fights, Leaders**. The
+tabs, pane selectors, ☰ menu, desktop nav links, panel headings and aria-labels use them;
+the routes keep their old paths (`/fights`, `/leaderboard`) so links do not break. The
+menu's former "Terminal" link goes to `/room/:roomId`, which renders the workspace whose
+default is The Ring, so it is labelled "The Ring". "Help and guides" and the command
+reference `?` keep their names.
+
+On a phone (`max-width: 480px`) the five tabs share the bar's width (`flex: 1 1 0`,
+0.25rem side padding, 0.8rem font, `min-height: 44px`) instead of scrolling it. Covered by
+`tab-names-css.test.ts`; widths at 390px still need a live check.
+
+Fights and Leaders also read `game.ringState` (via `useFightOnRing`) so their empty states
+say "A fight is on in the ring" instead of claiming nothing has happened.
+
+Workshop, Fights, and Leaders are layout-agnostic panels. A route host wraps the
 panel as a full page; `Terminal` can render the same panel in a slot. Do not create a
 second implementation for a pane.
 
 Other routes remain outside the workspace: `/rooms`, `/room/:roomId/settings`, `/account`,
 `/leaderboard`, authentication/reset pages, and invite links.
+
+## The Console while a prompt is open
+
+While `ConsolePane` has an open prompt (`activePromptId`), it renders neither the
+quick-action chips nor the getting-started guide, so the question is on screen on a
+phone (roadmap 39 B1; the walk found both covering it). They come back when the prompt
+closes; the guide is only unrendered, not dismissed, and a `quick_actions` event that
+arrives meanwhile is kept. The "A command is waiting for your answer. Command suggestions
+are paused." banner still shows when the prompt is scrolled out of view, and is now true.
+
+## Help and guides
+
+`HelpPanel` (`components/HelpPanel.tsx`) is the Help page; `HelpView` hosts it full page at `/room/:roomId/help` and, outside a room, `/help`. The header menu (desktop nav and
+the ☰ menu) has a **Help and guides** link to those routes, like Workshop and Fights.
+
+Help is **deliberately not a registered surface**: the phone tab bar is full at
+390px with five tabs, so a sixth would not fit. It is a route only, and `App.tsx`
+lazy-loads `HelpView` so the bundled guides are a separate chunk.
+
+Its text is not fetched. `PLAYER_HANDBOOK.md`, `MONSTERS.md`, `CARDS.md` and `ITEMS.md` at
+the repo root are imported with Vite `?raw` and bundled at build time, so **`pnpm run
+build:docs` (then a web build) refreshes what players read**; `apps/web/railway.toml` lists
+those files in `watchPatterns` so a regeneration redeploys the web service. Railway builds
+from the monorepo root, so they are in the build context. The **Commands** section renders
+`COMMAND_CATALOG`, the same data as the Console's `CommandReference`, which also supplies
+its category labels and order.
+
+`lib/markdown.tsx` is a small purpose-built renderer for the shapes those guides use (no
+Markdown dependency; it emits React elements, never HTML strings). Tables and code blocks
+scroll inside their own focusable `.help-table-region` / `.help-pre` box, never the page.
+Adding Markdown syntax to a generator means checking the renderer handles it.
 
 ## Two slots and the breakpoint
 

@@ -61,7 +61,7 @@ function StockList({ items, busy, onBuy }: { items: ShopStockItem[]; busy?: bool
       <button type="button" className="btn workshop-inline-btn shop-buy-button"
         disabled={busy || !item.affordable}
         title={item.affordable ? `Buy ${item.displayName}` : `Need ${item.price} coins`}
-        onClick={() => onBuy(item)}>{item.price} coins</button>
+        onClick={() => onBuy(item)}>{item.price === 0 ? 'Free' : `${item.price} coins`}</button>
     </li>
   ))}</ul>;
 }
@@ -171,7 +171,7 @@ export default function ShopPanel({ shop, busy, onBuy, sellableItems, sellableCa
         <p><strong>{shop.name}</strong> waits behind a {shop.adjective} door.</p>
         <p className="workshop-filter-summary">Stock rotates at <time dateTime={closing.toISOString()}>{closing.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</time>. This room has its own merchant.</p>
       </div>
-      <strong className="shop-wallet">{shop.coins} coins</strong>
+      <strong className="shop-wallet">{shop.coins} {shop.coins === 1 ? 'coin' : 'coins'}</strong>
     </header>
     <h3>On the shelves</h3>
     <StockList items={shop.items} busy={busy} onBuy={onBuy} />

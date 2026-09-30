@@ -34,31 +34,29 @@ const makeShop = (coins: number) => ({
 });
 
 /**
- * Bug: "I still see only 0 coins in the workshop view." The wallet used to be visible only
- * inside the shop section, well below the monster row and inventory — a player checking
- * their balance right after a fight had to scroll past everything else to find it, and a
- * still-loading shop query briefly looked exactly like a genuine zero balance. Surfacing
- * the balance in the header fixes the visibility half of that report; the header wallet
- * only renders once `shop` (and therefore `shop.coins`) has actually loaded, so a loading
- * state never prints a misleading "0 coins". See docs/roadmap/10b-bugs-fixed.md.
+ * Coins live in the Shop only (roadmap 39a, Part 1 item 1). The Workshop header used to
+ * carry the wallet beside "Train monster", and a new player read "196 coins" as the price
+ * of levelling up the monster below. The balance is still shown, singular-aware, in the
+ * Shop (ShopPanel.test.tsx).
  */
-describe('workshop header wallet', () => {
-  it('renders nothing in the header before the shop query resolves', () => {
+describe('workshop header has no wallet', () => {
+  it('renders no coin balance in the header, before or after the shop loads', () => {
     hookMock.shop = undefined;
+    const { unmount } = render(<WorkshopPanel roomId="room-1" />);
+    expect(screen.queryByTitle('Coins')).not.toBeInTheDocument();
+    unmount();
+
+    hookMock.shop = makeShop(196);
     render(<WorkshopPanel roomId="room-1" />);
     expect(screen.queryByTitle('Coins')).not.toBeInTheDocument();
+    const header = document.querySelector('.workshop-header') as HTMLElement;
+    expect(header).not.toHaveTextContent(/\d+ coins?/);
   });
 
-  it('shows the live coin balance once the shop has loaded', () => {
-    hookMock.shop = makeShop(42);
+  it('shows the new subtitle and no Sync button', () => {
+    hookMock.shop = makeShop(5);
     render(<WorkshopPanel roomId="room-1" />);
-    expect(screen.getByTitle('Coins')).toHaveTextContent('42 coins');
-  });
-
-  it('uses singular "coin" for a balance of exactly one', () => {
-    hookMock.shop = makeShop(1);
-    render(<WorkshopPanel roomId="room-1" />);
-    expect(screen.getByTitle('Coins')).toHaveTextContent('1 coin');
-    expect(screen.getByTitle('Coins')).not.toHaveTextContent('1 coins');
+    expect(screen.getByText('Train monsters, choose their cards, and spend your coins.')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Sync' })).not.toBeInTheDocument();
   });
 });

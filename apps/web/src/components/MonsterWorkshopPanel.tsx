@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { formatRelativeFromNow } from '../utils/format-relative.js';
 import CardSlot, { type WorkshopCardLocation } from './CardSlot.js';
 import PresetControl from './PresetControl.js';
 // Reusing the ring roster's own hp math/bands rather than re-deriving them here — the two
@@ -8,7 +9,6 @@ import PresetControl from './PresetControl.js';
 // row bakes hp/ac/name text into the same block the bar lives in and splitting that out
 // carried more refactor risk than the (small, now duplicated) bar/track markup was worth.
 import { hpBand, hpRatio } from './RingRoster.js';
-import { formatRelativeFromNow } from '../utils/format-relative.js';
 
 type MonsterCompatibilityHint = 'none' | 'eligible' | 'ineligible';
 
@@ -61,8 +61,23 @@ type MonsterPanelProps = {
   isFilterActive?: boolean;
   isFilterTarget?: boolean;
   compatibilityHint?: MonsterCompatibilityHint;
+  /** `{Card} can't go on {Monster}: {reason}.` shown when the hint is 'ineligible'. */
+  refusalSentence?: string;
   onToggleFilter?: () => void;
 };
+
+/**
+ * `Fallen · back at 3:05 PM (in 12 min)`, then `Fallen · back in 40 s` for the last minute.
+ * The clock time is the viewer's local time.
+ */
+function revivalStatus(revivesAt: number, now: number): string {
+  const remainingMs = revivesAt - now;
+  if (remainingMs <= 0) return 'Fallen · almost back';
+  // Under 60 s left, count seconds; clamp so rounding up never shows "60 s".
+  if (remainingMs < 60_000) return `Fallen · back in ${Math.min(59, Math.ceil(remainingMs / 1000))} s`;
+  const time = new Date(revivesAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  return `Fallen · back at ${time} (${formatRelativeFromNow(revivesAt, now)})`;
+}
 
 export default function MonsterWorkshopPanel({
   monster,
@@ -82,6 +97,7 @@ export default function MonsterWorkshopPanel({
   isFilterActive = false,
   isFilterTarget = false,
   compatibilityHint = 'none',
+  refusalSentence,
   onToggleFilter,
 }: MonsterPanelProps) {
   const [now, setNow] = useState(() => Date.now());
@@ -115,13 +131,27 @@ export default function MonsterWorkshopPanel({
       ? monster.revivesAt
       : undefined;
 
+  // In the last minute the label counts seconds, so the clock has to tick every second
+  // there; before that a 30 s tick is plenty for a minutes label. `now` is not a dependency
+  // of the interval itself, only the boolean flip is, so the timer is restarted once.
+  const inLastMinute = revivesAt !== undefined && revivesAt - now < 60_000;
   useEffect(() => {
     if (revivesAt === undefined) return;
 
     setNow(Date.now());
-    const interval = setInterval(() => setNow(Date.now()), 30_000);
-    return () => clearInterval(interval);
-  }, [revivesAt]);
+    const interval = setInterval(() => setNow(Date.now()), inLastMinute ? 1_000 : 30_000);
+    // Wake exactly when the last minute begins instead of waiting for the next 30 s tick,
+    // which could leave a "(in 1 min)" label up for up to 30 s of the final minute.
+    const untilLastMinute = revivesAt - 60_000 - Date.now() + 1;
+    const flip =
+      !inLastMinute && untilLastMinute > 0 && untilLastMinute < 2_147_000_000
+        ? setTimeout(() => setNow(Date.now()), untilLastMinute)
+        : undefined;
+    return () => {
+      clearInterval(interval);
+      if (flip !== undefined) clearTimeout(flip);
+    };
+  }, [revivesAt, inLastMinute]);
 
   const hpRatioValue = hpRatio(hp, maxHp);
   // Same "force critical when dead" rule as `RingRoster`'s `ContestantRow` — a dead
@@ -129,9 +159,13 @@ export default function MonsterWorkshopPanel({
   // land in the critical band, but this keeps the two bars' banding logic identical on
   // its face rather than relying on that clamp never changing.
   const hpBandValue = monster.dead ? 'critical' : hpBand(hpRatioValue);
+  // `revivesAt` is set only once a revival has started (`respawn()` in the engine runs from
+  // Beastmaster.reviveMonster, the Spin Up potion, or a restore), never merely because the
+  // monster died — so its presence is what turns Revive into "Reviving…".
+  const reviving = monster.dead && revivesAt !== undefined;
   const hpLabel = monster.dead
     ? revivesAt !== undefined
-      ? `Fallen · revives ${formatRelativeFromNow(revivesAt, now)}`
+      ? revivalStatus(revivesAt, now)
       : 'Fallen'
     : `HP ${hp}/${maxHp}`;
 
@@ -235,8 +269,8 @@ export default function MonsterWorkshopPanel({
       </div>
       <div className="workshop-monster-actions">
         {monster.dead ? (
-          <button type="button" className="btn" disabled={busy || monster.inEncounter} onClick={onRevive}>
-            Revive
+          <button type="button" className="btn" disabled={busy || monster.inEncounter || reviving} onClick={onRevive}>
+            {reviving ? 'Reviving…' : 'Revive'}
           </button>
         ) : !monster.inRing ? (
           <button
@@ -275,12 +309,12 @@ export default function MonsterWorkshopPanel({
         <p className="workshop-compatibility-hint eligible">Can use selected inventory card.</p>
       )}
       {compatibilityHint === 'ineligible' && (
-        <p className="workshop-compatibility-hint ineligible">Cannot use selected inventory card.</p>
+        <p className="workshop-compatibility-hint ineligible">{refusalSentence ?? 'Cannot use selected inventory card.'}</p>
       )}
 
       {locked && (
         <p className="workshop-warning">
-          {monster.name} is currently fighting. Changes apply after they return.
+          {monster.name} is in a fight. Cards unlock when it ends.
         </p>
       )}
 

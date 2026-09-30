@@ -40,10 +40,9 @@ describe('.workshop-header-actions is an explicit flex row (10-bug-fixes.md #6)'
     expect(mobileBody).toMatch(/flex-wrap:\s*wrap/);
   });
 
-  it('the wallet no longer double-spaces itself with a margin on top of the row gap', () => {
-    // `margin-right` here used to be the *only* spacing mechanism (chosen while the author
-    // believed the parent's `gap` did nothing); once the parent really is a flex row, the
-    // margin stacked with the gap and doubled the visible space after the wallet.
-    expect(ruleBody(baseCss, '.workshop-wallet')).not.toMatch(/margin-right/);
+  it('gives the Train row a flex row that stacks at phone width', () => {
+    expect(ruleBody(baseCss, '.workshop-train-row')).toMatch(/display:\s*flex/);
+    const narrow = baseCss.slice(baseCss.indexOf('@container workshop (max-width: 520px)'));
+    expect(ruleBody(narrow, '.workshop-train-row')).toMatch(/flex-direction:\s*column/);
   });
 });

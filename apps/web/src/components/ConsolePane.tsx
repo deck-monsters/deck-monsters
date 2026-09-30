@@ -930,7 +930,12 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
       )}
       </div>
 
-      {quickActions.length > 0 && (
+      {/*
+        * The chips and the getting-started guide step aside while a prompt is open: on a
+        * phone they covered the question (help inventory, phone-name-covered.png). They
+        * return when the prompt closes. The guide is not dismissed, only not rendered.
+        */}
+      {!activePromptId && quickActions.length > 0 && (
         <nav className="quick-actions" aria-label="Quick action suggestions">
           {quickActions.map((qa, i) => (
             <button
@@ -945,7 +950,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
         </nav>
       )}
 
-      {ftuxPhase !== 'hidden' && (
+      {!activePromptId && ftuxPhase !== 'hidden' && (
         <section
           className="ftux-guide"
           aria-label="Getting started guide"
@@ -1005,6 +1010,25 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
         </section>
       )}
 
+      {/*
+       * Shown only when the prompt is off-screen: the banner exists to explain a
+       * prompt the player cannot see (#142). When the prompt's own choice buttons
+       * are visible in the feed, this banner is redundant and covers the input on
+       * a phone — the pane header's "Cancel action" button already covers that
+       * case. See 10b-bugs-fixed.md #158.
+       *
+       * It sits in the layout above the input, not over the feed: absolutely positioned, it
+       * covered the lower choices of a long prompt, which is exactly when it shows (the
+       * visibility sentinel sits under the last choice). Cursor's live check, roadmap 39.
+       */}
+      {activePromptId && !activePromptInView && (
+        <div className="command-blocked-banner" role="status">
+          <span>A command is waiting for your answer. Command suggestions are paused.</span>
+          <button type="button" className="btn" onClick={() => void handleCancelFlow()}>
+            Cancel action
+          </button>
+        </div>
+      )}
       <form
         className="command-dock"
         onSubmit={(e) => {
@@ -1028,21 +1052,6 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
         aria-label="Command input"
         style={{ position: 'relative' }}
       >
-        {/*
-         * Shown only when the prompt is off-screen: the banner exists to explain a
-         * prompt the player cannot see (#142). When the prompt's own choice buttons
-         * are visible in the feed, this banner is redundant and covers the input on
-         * a phone — the pane header's "Cancel action" button already covers that
-         * case. See 10b-bugs-fixed.md #158.
-         */}
-        {activePromptId && !activePromptInView && (
-          <div className="command-blocked-banner" role="status">
-            <span>A command is waiting for your answer. Command suggestions are paused.</span>
-            <button type="button" className="btn" onClick={() => void handleCancelFlow()}>
-              Cancel action
-            </button>
-          </div>
-        )}
         <CommandSuggestions
           suggestions={suggestions}
           activeIndex={suggestionIndex}

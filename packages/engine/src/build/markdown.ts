@@ -428,9 +428,7 @@ export const renderCommandCatalogMarkdown = (catalog: CommandEntry[]): string =>
 
 		const items = entries.map(entry => {
 			const example = entry.example ? ` (e.g. \`${entry.example}\`)` : '';
-			// A description can quote JSON syntax inline (the `["Card"]` array-literal
-			// alternative for a card name containing a quote character) — code, not prose.
-			const description = entry.description.replace(/(\[".*?"\])/g, '`$1`');
+			const description = entry.description;
 			return `- \`${entry.command}\` — ${description}${example}`;
 		});
 

@@ -83,7 +83,7 @@ export function listen(options: { command?: string; game: any } | null): ((actio
 				(channel as any).channelName = channelName;
 
 				return game
-					.getCharacter({ ...actionOptions, channel, id, name })
+					.getCharacter({ ...actionOptions, channel, id, name, askName: !aliasCheck })
 					.then((character: any) =>
 						action({ ...actionOptions, channel, character, game })
 					);
@@ -91,6 +91,18 @@ export function listen(options: { command?: string; game: any } | null): ((actio
 	}
 
 	return null;
+}
+
+/**
+ * True when `text` would be run as a command. Used by prompts that re-ask on
+ * unrecognised input (the equip card chooser) so a command typed into the wrong
+ * box gets an accurate reply. Asks the real dispatcher, not a word list, so it
+ * cannot drift from what the Console actually runs. Ignores the ` as <name>`
+ * admin alias suffix, which is not a player-facing form.
+ */
+export function isCommand(text: string): boolean {
+	loadHandlers();
+	return listen({ command: text, game: {} }) !== null;
 }
 
 export function registerPreCharacterHandler(

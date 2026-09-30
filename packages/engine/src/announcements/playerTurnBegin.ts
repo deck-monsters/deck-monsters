@@ -2,6 +2,9 @@ import { monsterCard, monsterTurnLine } from '../helpers/card.js';
 import { isRivalTeam } from '../ring/ring-events.js';
 import type { RoomEventBus } from '../events/index.js';
 
+/** "Pip's", but "Protector Of Creatures'": a name ending in s takes a bare apostrophe (Cursor's live check, roadmap 39). */
+export const possessive = (name: string): string => (/s$/i.test(name) ? `${name}'` : `${name}'s`);
+
 /**
  * Announces whose turn it is.
  *
@@ -23,10 +26,14 @@ export function announceTurnBegin(
 		? monsterTurnLine(monster, isRivalTeam(contestant.team) ? undefined : contestant.team)
 		: `${contestant.character.identity} plays the following monster:\n${monsterCard(monster, true)}`;
 
+	// A boss's character is the shared "The Editor", which names nobody in the roster or the
+	// feed; the monster's own given name is what a player can match to the roster row.
+	const turnName = contestant.isBoss ? monster.givenName : contestant.character.givenName;
+
 	eb.publish({
 		type: 'announce',
 		scope: 'public',
-		text: `*It's ${contestant.character.givenName}'s turn.*\n\n${body}`,
+		text: `*It's ${possessive(turnName)} turn.*\n\n${body}`,
 		payload: { contestant },
 	});
 

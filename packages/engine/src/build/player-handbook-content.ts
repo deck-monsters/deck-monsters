@@ -2,6 +2,7 @@ import { formatCommandList } from '../commands/catalog.js';
 import { DEFAULT_MONSTER_SLOTS } from '../characters/beastmaster.js';
 import { BOSS_SUMMON_LIMIT } from '../helpers/boss-summons.js';
 import { CHALLENGERS_TEAM } from '../ring/ring-events.js';
+import { discountedLevelThreshold } from '../helpers/levels.js';
 
 /** Markdown title for the generated root handbook. The ownership banner is applied in root-docs. */
 export const PLAYER_HANDBOOK_TITLE = 'Player Handbook';
@@ -9,7 +10,10 @@ export const PLAYER_HANDBOOK_TITLE = 'Player Handbook';
 export const FIGHT_DELAY_SECONDS = 60;
 export const MAX_MONSTERS = 12;
 export const MIN_MONSTERS = 2;
-export const XP_THRESHOLDS = [50, 100, 150, 250, 400, 650, 1050] as const;
+// The XP the game actually asks for (levels.ts, with the early-level discount), not the
+// undiscounted Fibonacci numbers. The handbook hard-coded 50, 100, 150… after the discount
+// shipped, so it said Level 1 needed 50 XP while the Workshop showed "XP 0/28" (roadmap 39).
+export const XP_THRESHOLDS: readonly number[] = [1, 2, 3, 4, 5, 6, 7].map(discountedLevelThreshold);
 
 export const HANDBOOK_HEADER = `
 ╔══════════════════════════════════╗
@@ -202,6 +206,27 @@ Gladiator (Level 6):
   equip [monster] with "Camouflage Vest", "Basic Shield", "Delayed Hit", "Forked Metal Rod", "Camouflage Vest", "Scotch", "Delayed Hit", "Lucky Strike", "Battle Focus"
 `.trim();
 
+export const READING_A_FIGHT = `
+── Reading a Fight ───────────────────
+
+The ring narrates every roll. What the words and numbers mean:
+
+- Round and turn: each monster in the ring takes one turn per round, playing the next card in its deck.
+- It's [name]'s turn: whose monster is about to play a card. On a boss's turn it names the boss.
+- 1d20, 1d6, 2d4: dice. 1d20 is one twenty-sided die; 2d4 is two four-sided dice added together.
+- +2, -1 after a roll: the bonus or penalty from the monster's stats, added to the die.
+- vs ac (10): the number the attack roll has to beat. A roll equal to it misses; ties go to the defender.
+- Natural 20: the die itself shows 20. The attack hits whatever the target's AC, for the most damage the dice allow.
+- Natural 1, the Curse of Loki: the die itself shows 1. The attack misses, and the target turns it back on the attacker.
+- Hit! and Miss...: whether the attack roll beat the target's defense.
+- Bloodied: a monster at half its HP or less.
+- AC, HP, DEX, STR, INT: the monster's stats, described in Combat Stats & Card Roles.
+- XP: experience. Monsters earn it from every fight, and it raises their level.
+- Beginner and Lvl 0: the same thing, a monster that has not reached level 1. The Workshop shows the number, the ring the word.
+- Class: the monster's fighting style, such as Barbarian or Wizard. It decides which cards the monster can hold; the Monster Manual lists each type's class.
+- Strategy: who a boss goes after. Each boss's stat card says it.
+`.trim();
+
 export const collectPlayerHandbookSections = (): string[] => [
 	HANDBOOK_HEADER,
 	GETTING_STARTED,
@@ -213,6 +238,7 @@ export const collectPlayerHandbookSections = (): string[] => [
 	TEAMS_AND_BOSSES,
 	`── All Commands ─────────────────────\n\n${formatCommandList()}`,
 	COMBAT_STATS_AND_ROLES,
+	READING_A_FIGHT,
 	BUILD_STRATEGIES,
 ];
 

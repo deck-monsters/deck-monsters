@@ -285,14 +285,19 @@ button {
   flex: 0 0 auto;
 }
 
-/* Header-level echo of `.shop-wallet` (ShopPanel) — same look, different reach: this one
-   stays visible while scrolling past the monster row and inventory, not just inside the
-   shop section. See docs/architecture/workshop-and-items.md and 10b-bugs-fixed.md.
-   No margin: `.workshop-header-actions` is a flex row with its own `gap`, and a
-   `margin-right` on top of it doubled the space after the wallet (#177). */
-.workshop-wallet {
-  color: var(--color-accent);
-  white-space: nowrap;
+/* Train monster row: the sentence wraps beside the button on desktop and the button drops
+   below it at phone width (see the @container rule further down). */
+.workshop-train-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.workshop-train-line {
+  flex: 1 1 12rem;
+  min-width: 0;
+  margin: 0;
 }
 
 .workshop-header h1 {
@@ -1003,6 +1008,8 @@ button {
     align-items: stretch;
   }
   .workshop-header-actions { justify-content: space-between; flex-wrap: wrap; }
+  .workshop-train-row { flex-direction: column; align-items: stretch; }
+  .workshop-train-row .btn { min-height: 44px; }
   .workshop-section-header,
   .workshop-item-row-main,
   .workshop-item-row-meta,
@@ -1151,4 +1158,10 @@ button {
 .leaderboard-panel input[type='radio'],
 .leaderboard-panel input[type='checkbox'] {
   accent-color: var(--color-accent);
+}
+
+.workshop-type-summary {
+  margin: 0;
+  color: var(--color-fg-dim);
+  font-size: 0.85rem;
 }

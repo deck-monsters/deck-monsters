@@ -412,4 +412,29 @@ describe('characters/beastmaster', () => {
 		expect(result.presetName).to.equal('aggro');
 		expect(Object.keys(beastmaster.getPresets('Stonefang'))).to.deep.equal(['aggro']);
 	});
+
+	describe('spawnMonster place count', () => {
+		const announcements = async (monsters: number, slots: number) => {
+			const beastmaster = new Beastmaster({ name: 'Ada' });
+			Object.defineProperty(beastmaster, 'monsterSlots', { get: () => slots });
+			for (let i = 0; i < monsters; i++) beastmaster.addMonster(makeMonster(`M${i}`) as any);
+			const lines: string[] = [];
+			const channel = (async ({ announce }: { announce?: string }) => {
+				if (announce) lines.push(announce);
+				throw new Error('stop after the first line');
+			}) as any;
+			await beastmaster.spawnMonster(channel).catch(() => undefined);
+			return lines;
+		};
+
+		it('says how many more can be trained, pluralised', async () => {
+			expect((await announcements(0, 10))[0]).to.equal('You can train 10 more monsters.');
+			expect((await announcements(9, 10))[0]).to.equal('You can train 1 more monster.');
+		});
+
+		it('says every place is taken when none are left', async () => {
+			expect((await announcements(2, 2))[0]).to.equal('Every place at your side is taken (2 monsters).');
+			expect((await announcements(1, 1))[0]).to.equal('Every place at your side is taken (1 monster).');
+		});
+	});
 });

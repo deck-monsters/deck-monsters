@@ -69,13 +69,30 @@ describe('monsters/helpers/spawn', () => {
 			return answers.shift();
 		});
 
-		expect(messages[0]).to.include({
-			question: 'Which type of monster would you like to train?',
-		});
+		expect(messages[0]?.question).to.match(/^Which type of monster would you like to train\?\n/);
+		// Labels stay bare: choices are what an answer is matched against.
+		expect(messages[0]?.choices?.[0]).to.equal('Basilisk');
+		// One description line per type, in choice order.
+		const lines = messages[0]?.question?.split('\n').slice(1) ?? [];
+		expect(lines).to.have.length(7);
+		messages[0]?.choices?.forEach((label, i) => expect(lines[i]).to.match(new RegExp(`^${label}: .+`)));
 		expect(messages[1]).to.include({
 			question: 'Which pronouns should we use for your monster?',
 		});
 		expect(messages[1]?.choices).to.deep.equal(['he/him', 'she/her', 'they/them']);
+	});
+
+	it('offers name suggestions as suggestions, not as a list of questions', async () => {
+		const questions: string[] = [];
+		const answers = ['2', 'they/them', 'Saffron', 'violet smoke'];
+		await spawnMonster(async (message) => {
+			if ((message as { question?: string }).question) questions.push((message as { question: string }).question);
+			return answers.shift();
+		});
+
+		const nameQuestion = questions.find((q) => q.startsWith('What would you like to name'));
+		expect(nameQuestion).to.match(/^What would you like to name them\? Type a name, or take one of these: .+, .+\.$/);
+		expect(nameQuestion).not.to.match(/Something else/);
 	});
 
 	it('announces an unknown supplied pronoun before refusing the spawn', async () => {

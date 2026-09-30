@@ -254,4 +254,57 @@ describe('ConsolePane prompt waiting banner', () => {
 
     expect(screen.getByText(/Command suggestions are paused/)).toBeInTheDocument();
   });
+
+  // On a phone the chips and the getting-started guide covered the question
+  // (help inventory, phone-name-covered.png). They step aside for the prompt.
+  it('hides the suggestion chips and the getting-started guide while a prompt is open, and restores them after', () => {
+    render(
+      <TestFeed>
+        <ConsolePane roomId={roomId} isActive />
+      </TestFeed>,
+    );
+
+    act(() => {
+      pushEvent({
+        id: 'quick-1',
+        data: {
+          id: 'quick-1',
+          type: 'quick_actions',
+          scope: 'private',
+          targetUserId: 'user-1',
+          text: '',
+          payload: { actions: [{ label: 'look at monsters', command: 'look at monsters' }] },
+          timestamp: Date.now(),
+          roomId,
+        },
+      });
+    });
+
+    expect(screen.getByLabelText('Quick action suggestions')).toBeInTheDocument();
+    expect(screen.getByLabelText('Getting started guide')).toBeInTheDocument();
+
+    pushPromptRequest();
+
+    expect(screen.queryByLabelText('Quick action suggestions')).toBeNull();
+    expect(screen.queryByLabelText('Getting started guide')).toBeNull();
+
+    act(() => {
+      pushEvent({
+        id: 'cancel-1',
+        data: {
+          id: 'cancel-1',
+          type: 'prompt.cancel',
+          scope: 'private',
+          targetUserId: 'user-1',
+          text: '',
+          payload: { requestId: 'request-1' },
+          timestamp: Date.now(),
+          roomId,
+        },
+      });
+    });
+
+    expect(screen.getByLabelText('Quick action suggestions')).toBeInTheDocument();
+    expect(screen.getByLabelText('Getting started guide')).toBeInTheDocument();
+  });
 });

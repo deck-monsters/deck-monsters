@@ -1,7 +1,7 @@
 import zlib from 'node:zlib';
 
 import { repairSerializedGame, type SerializedGame } from '@deck-monsters/engine';
-import { and, eq, isNotNull, isNull, sql } from 'drizzle-orm';
+import { and, eq, isNotNull, isNull } from 'drizzle-orm';
 
 import type { Db } from './db/index.js';
 import { rooms } from './db/schema.js';
@@ -13,11 +13,6 @@ export interface BackfillOptions {
 	dryRun?: boolean;
 	/** Restrict to one room. */
 	roomId?: string;
-	/**
-	 * Rollback roll-forward: rewrite `state` from `state_blob` even when `state` is set, and bump
-	 * `state_version`. Only safe with the service stopped (the old release must not be writing).
-	 */
-	fromBlob?: boolean;
 	log?: (line: string) => void;
 	/** Test seam: runs after the blob is read and decoded, before the write. */
 	beforeWrite?: (roomId: string) => void | Promise<void>;
@@ -29,8 +24,6 @@ export interface BackfillReport {
 	empty: number;
 	failed: Array<{ roomId: string; reason: string }>;
 	skippedChanged: string[];
-	/** --from-blob only: rooms whose pre-reset `state` was cleared because their blob is null. */
-	clearedStale: number;
 	bytes: number;
 }
 
@@ -70,18 +63,28 @@ export function safeReason(err: unknown): string {
 
 class DecodeFailure extends Error {}
 
-const KNOWN_FLAGS = new Set(['--dry-run', '--from-blob', '--i-stopped-the-service']);
+const KNOWN_FLAGS = new Set(['--dry-run']);
+
+/**
+ * `--from-blob` (rollback roll-forward: rewrite `state` from `state_blob`) was removed in
+ * release 2 of roadmap 37. From that release on the server no longer writes `state_blob`, so
+ * every blob is stale and rewriting `state` from one would silently roll rooms back. Refuse by
+ * name rather than falling through to "unrecognised argument", so an operator following an old
+ * runbook learns why.
+ */
+export const FROM_BLOB_REMOVED =
+	'--from-blob was removed: since roadmap 37 release 2 the server no longer writes state_blob, so blobs are stale and must not overwrite state';
+export const STOPPED_SERVICE_REMOVED =
+	'--i-stopped-the-service was removed along with --from-blob (it only confirmed the service was stopped for that mode); the default mode is safe while the service is live';
 
 export interface ParsedArgs {
 	dryRun: boolean;
-	fromBlob: boolean;
 	roomId?: string;
-	stoppedService: boolean;
 }
 
 /** Strict: a typo like `--dryrun` must not silently turn into a real write. */
 export function parseBackfillArgs(args: string[]): ParsedArgs | { error: string } {
-	const parsed: ParsedArgs = { dryRun: false, fromBlob: false, stoppedService: false };
+	const parsed: ParsedArgs = { dryRun: false };
 	for (let i = 0; i < args.length; i += 1) {
 		const arg = args[i]!;
 		if (arg === '--room') {
@@ -90,9 +93,11 @@ export function parseBackfillArgs(args: string[]): ParsedArgs | { error: string 
 			parsed.roomId = value;
 			i += 1;
 		} else if (KNOWN_FLAGS.has(arg)) {
-			if (arg === '--dry-run') parsed.dryRun = true;
-			else if (arg === '--from-blob') parsed.fromBlob = true;
-			else parsed.stoppedService = true;
+			parsed.dryRun = true;
+		} else if (arg === '--from-blob') {
+			return { error: FROM_BLOB_REMOVED };
+		} else if (arg === '--i-stopped-the-service') {
+			return { error: STOPPED_SERVICE_REMOVED };
 		} else {
 			return { error: `unrecognised argument: ${arg.slice(0, 50)}` };
 		}
@@ -103,12 +108,12 @@ export function parseBackfillArgs(args: string[]): ParsedArgs | { error: string 
 type Outcome = 'converted' | 'alreadyConverted' | 'changed' | 'empty';
 
 export async function backfillRoomState(db: Db, options: BackfillOptions = {}): Promise<BackfillReport> {
-	const { dryRun = false, roomId, fromBlob = false, log = () => {}, beforeWrite } = options;
-	const report: BackfillReport = { converted: 0, alreadyConverted: 0, empty: 0, failed: [], skippedChanged: [], clearedStale: 0, bytes: 0 };
+	const { dryRun = false, roomId, log = () => {}, beforeWrite } = options;
+	const report: BackfillReport = { converted: 0, alreadyConverted: 0, empty: 0, failed: [], skippedChanged: [], bytes: 0 };
 
-	// Default mode only picks rooms the server has not converted; --from-blob takes every blob.
-	const conditions = [isNotNull(rooms.stateBlob)];
-	if (!fromBlob) conditions.push(isNull(rooms.state));
+	// Only rooms the server has not converted. After release 2 this is a straggler tool: a room
+	// with `state` set is current and its blob is stale, so it is never picked.
+	const conditions = [isNotNull(rooms.stateBlob), isNull(rooms.state)];
 	if (roomId) conditions.push(eq(rooms.id, roomId));
 	const candidates = await db
 		.select({ id: rooms.id, stateBlob: rooms.stateBlob })
@@ -127,16 +132,10 @@ export async function backfillRoomState(db: Db, options: BackfillOptions = {}): 
 			report.bytes += Buffer.byteLength(JSON.stringify(state));
 			return 'converted';
 		}
-		// The blob compare-and-swap keeps an older decode from overwriting a newer blob. Default
-		// mode leaves state_version alone: a live store's clock-stamped save must land after us.
-		const guard = fromBlob
-			? and(eq(rooms.id, id), eq(rooms.stateBlob, blob))
-			: and(eq(rooms.id, id), isNull(rooms.state), eq(rooms.stateBlob, blob));
-		// --from-blob bumps by one rather than stamping a clock: the operator's clock may run ahead
-		// of the server's, and a future stamp would make release 1's guarded saves count as stale.
-		// +1 is above every earlier version of this row and immune to skew (roadmap 37).
-		const set = fromBlob ? { state, stateVersion: sql`${rooms.stateVersion} + 1` } : { state };
-		const updated = await db.update(rooms).set(set).where(guard).returning({ id: rooms.id });
+		// The blob compare-and-swap keeps an older decode from overwriting a newer blob. It leaves
+		// state_version alone: a live store's clock-stamped save must land after us.
+		const guard = and(eq(rooms.id, id), isNull(rooms.state), eq(rooms.stateBlob, blob));
+		const updated = await db.update(rooms).set({ state }).where(guard).returning({ id: rooms.id });
 		if (updated.length > 0) {
 			report.bytes += Buffer.byteLength(JSON.stringify(state));
 			return 'converted';
@@ -153,28 +152,6 @@ export async function backfillRoomState(db: Db, options: BackfillOptions = {}): 
 		return row;
 	}
 
-	// While rolled back, a reset or load-quarantine nulls state_blob and leaves `state` alone, so
-	// release 1 would restore the pre-reset state. --from-blob treats the blob as the truth:
-	// null blob means clear `state` (roadmap 37). The CAS keeps a blob written meanwhile.
-	if (fromBlob) {
-		const stale = await db
-			.select({ id: rooms.id })
-			.from(rooms)
-			.where(and(isNull(rooms.stateBlob), isNotNull(rooms.state), ...(roomId ? [eq(rooms.id, roomId)] : [])));
-		for (const { id } of stale) {
-			if (dryRun) {
-				report.clearedStale += 1;
-				continue;
-			}
-			const cleared = await db
-				.update(rooms)
-				.set({ state: null, stateVersion: sql`${rooms.stateVersion} + 1` })
-				.where(and(eq(rooms.id, id), isNull(rooms.stateBlob), isNotNull(rooms.state)))
-				.returning({ id: rooms.id });
-			report.clearedStale += cleared.length;
-		}
-	}
-
 	for (const { id, stateBlob } of candidates) {
 		if (!stateBlob) {
 			report.empty += 1;
@@ -184,7 +161,7 @@ export async function backfillRoomState(db: Db, options: BackfillOptions = {}): 
 			let outcome = await convert(id, stateBlob);
 			if (outcome === 'changed') {
 				const now = await reread(id);
-				if (!now || (!fromBlob && now.state !== null)) {
+				if (!now || now.state !== null) {
 					// The server saved the room meanwhile, so `state` is already current.
 					outcome = 'alreadyConverted';
 				} else if (!now.stateBlob) {

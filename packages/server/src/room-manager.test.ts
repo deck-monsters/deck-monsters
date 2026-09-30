@@ -4,7 +4,7 @@ import { Game } from '@deck-monsters/engine';
 import { TRPCError } from '@trpc/server';
 
 import { RoomManager } from './room-manager.js';
-import { roomStateSource } from './metrics/index.js';
+import { roomStateGenerationDrops, roomStateSaveFailures, roomStateSource } from './metrics/index.js';
 
 // ---- Drizzle stub helpers ----
 
@@ -49,7 +49,7 @@ function makeDbStub(opts: DbStubOpts = {}) {
 	const deleteWhereStub = sinon.stub().resolves([]);
 	const deleteStub = sinon.stub().returns({ where: deleteWhereStub });
 
-	const updateWhereStub = sinon.stub().resolves([]);
+	const updateWhereStub = sinon.stub().callsFake(() => Object.assign(Promise.resolve([]), { returning: () => Promise.resolve([]) }));
 	const updateSetStub = sinon.stub().returns({ where: updateWhereStub });
 	const updateStub = sinon.stub().returns({ set: updateSetStub });
 
@@ -137,6 +137,22 @@ describe('RoomManager', () => {
 			expect(db._stubs.insertStub.callCount).to.equal(2);
 			expect(GameStub.calledOnce).to.be.true;
 			expect(mockGame.stateStore).to.not.be.undefined;
+		});
+
+		it('counts an engine save failure (context game.persistState) as a failed save (bug 207)', async () => {
+			const { deps, GameStub } = makeEngineDeps();
+			const logged: unknown[] = [];
+			const rm = new RoomManager(makeDbStub() as never, (err) => logged.push(err), deps);
+			await rm.createRoom(OWNER_ID, 'My Room');
+			const roomLog = GameStub.firstCall.args[1] as (err: unknown) => void;
+			const failures = async () => (await roomStateSaveFailures.get()).values[0]?.value ?? 0;
+			const before = await failures();
+
+			roomLog(Object.assign(new Error('room state save failed for roomId r: circular'), { context: 'game.persistState' }));
+			roomLog(new Error('unrelated'));
+
+			expect(await failures()).to.equal(before + 1);
+			expect(logged).to.have.length(2);
 		});
 
 		it('returns the cached game on subsequent getGame call (no extra DB query)', async () => {
@@ -377,7 +393,7 @@ describe('RoomManager', () => {
 			const selectStub = sinon.stub().callsFake(() => {
 				selectIdx += 1;
 				if (selectIdx === 1) {
-					// _loadRoom stateBlob query — held until after deleteRoom completes
+					// _loadRoom state query — held until after deleteRoom completes
 					const limitStub = sinon.stub().returns(loadSelectPromise);
 					const orderByStub = sinon.stub().returns({ limit: limitStub });
 					const whereResult = Object.assign(new Promise(() => {}), {
@@ -418,7 +434,7 @@ describe('RoomManager', () => {
 			await rm.deleteRoom(OWNER_ID, ROOM_ID);
 
 			// Pre-delete snapshot: room still appeared to exist when the load began.
-			releaseLoadSelect([{ stateBlob: null }]);
+			releaseLoadSelect([{ state: null }]);
 
 			const err = await loadPromise.catch((e: unknown) => e);
 			expect(err).to.be.instanceOf(TRPCError);
@@ -550,9 +566,9 @@ describe('RoomManager', () => {
 	// ---- getGame / _getOrLoad ----
 
 	describe('getGame', () => {
-		it('restores game from stateBlob when not in cache', async () => {
+		it('restores game from state when not in cache', async () => {
 			const db = makeDbStub({
-				selectResults: [[{ stateBlob: 'base64gzipstate' }]],
+				selectResults: [[{ state: 'base64gzipstate' }]],
 			});
 			const { deps, mockGame, restoreGameStub } = makeEngineDeps();
 			const rm = new RoomManager(db as never, () => {}, deps);
@@ -564,9 +580,9 @@ describe('RoomManager', () => {
 			expect(game).to.equal(mockGame);
 		});
 
-		it('creates a fresh Game when no stateBlob exists', async () => {
+		it('creates a fresh Game when no state exists', async () => {
 			const db = makeDbStub({
-				selectResults: [[{ stateBlob: null }]],
+				selectResults: [[{ state: null }]],
 			});
 			const { deps, mockGame, GameStub, restoreGameStub } = makeEngineDeps();
 			const rm = new RoomManager(db as never, () => {}, deps);
@@ -657,9 +673,9 @@ describe('RoomManager', () => {
 			return metric.values.find((v) => v.labels['source'] === source)?.value ?? 0;
 		}
 
-		it('prefers the jsonb state over the legacy blob and counts the source', async () => {
+		it('restores from the jsonb state and counts the source', async () => {
 			const state = { name: 'Game', options: { roomId: ROOM_ID } };
-			const db = makeDbStub({ selectResults: [[{ state, stateBlob: 'oldblob' }]] });
+			const db = makeDbStub({ selectResults: [[{ state }]] });
 			const { deps, restoreGameStub } = makeEngineDeps();
 			const rm = new RoomManager(db as never, () => {}, deps);
 			const before = await sourceCount('state');
@@ -670,34 +686,20 @@ describe('RoomManager', () => {
 			expect(await sourceCount('state')).to.equal(before + 1);
 		});
 
-		it('falls back to the legacy blob when state is null and counts the source', async () => {
+		it('falls back read-only to the legacy blob when state is null and counts the source', async () => {
+			// Stop-writing and drop are separate deploys (roadmap 40): a not-yet-converted room
+			// must load from its blob, never start fresh.
 			const db = makeDbStub({ selectResults: [[{ state: null, stateBlob: 'oldblob' }]] });
-			const { deps, restoreGameStub } = makeEngineDeps();
+			const { deps, restoreGameStub, GameStub } = makeEngineDeps();
 			const rm = new RoomManager(db as never, () => {}, deps);
 			const before = await sourceCount('blob');
 
 			await rm.getGame(ROOM_ID);
 
 			expect(restoreGameStub.firstCall.args[0]).to.equal('oldblob');
+			expect(GameStub.called).to.be.false;
 			expect(await sourceCount('blob')).to.equal(before + 1);
-		});
-
-		it('quarantines a failed jsonb state into quarantined_state with a new version', async () => {
-			const state = { name: 'Game', options: {} };
-			const db = makeDbStub({ selectResults: [[{ state, stateBlob: null }]] });
-			const { deps, restoreGameStub, GameStub } = makeEngineDeps();
-			restoreGameStub.throws(new Error('bad state'));
-			const rm = new RoomManager(db as never, () => {}, deps);
-
-			await rm.getGame(ROOM_ID);
-
-			const set = db._stubs.updateSetStub.firstCall.args[0];
-			expect(set.quarantinedState).to.equal(state);
-			expect(set).to.not.have.property('quarantinedBlob');
-			expect(set.state).to.equal(null);
-			expect(set.stateBlob).to.equal(null);
-			expect(set.stateVersion).to.be.greaterThan(0);
-			expect(GameStub.calledOnce).to.be.true;
+			expect(db._stubs.updateSetStub.called, 'the blob fallback must not write').to.be.false;
 		});
 
 		it('quarantines a failed legacy blob into quarantined_blob with a new version', async () => {
@@ -715,6 +717,23 @@ describe('RoomManager', () => {
 			expect(set.stateBlob).to.equal(null);
 			expect(set.stateVersion).to.be.greaterThan(0);
 		});
+
+		it('quarantines a failed jsonb state into quarantined_state with a new version', async () => {
+			const state = { name: 'Game', options: {} };
+			const db = makeDbStub({ selectResults: [[{ state }]] });
+			const { deps, restoreGameStub, GameStub } = makeEngineDeps();
+			restoreGameStub.throws(new Error('bad state'));
+			const rm = new RoomManager(db as never, () => {}, deps);
+
+			await rm.getGame(ROOM_ID);
+
+			const set = db._stubs.updateSetStub.firstCall.args[0];
+			expect(set.quarantinedState).to.equal(state);
+				expect(set.state).to.equal(null);
+			expect(set.stateBlob).to.equal(null);
+			expect(set.stateVersion).to.be.greaterThan(0);
+			expect(GameStub.calledOnce).to.be.true;
+		});
 	});
 
 	// ---- flush races (roadmap 37 risk 3) ----
@@ -723,7 +742,7 @@ describe('RoomManager', () => {
 
 		it('a reload right after unload selects only once the flush has landed', async () => {
 			const { deps, flushStateFn, mockGame, GameStub } = makeEngineDeps();
-			const db = makeDbStub({ selectResults: [[{ state: null, stateBlob: null }]] });
+			const db = makeDbStub({ selectResults: [[{ state: null }]] });
 			const rm = new RoomManager(db as never, () => {}, deps);
 			const { roomId } = await rm.createRoom(OWNER_ID, 'Room');
 			const write = held();
@@ -787,8 +806,8 @@ describe('RoomManager', () => {
 			const tombstone = db._stubs.updateSetStub.lastCall.args[0];
 			expect(tombstone.state).to.equal(null);
 			expect(tombstone.stateBlob).to.equal(null);
-			expect(tombstone.quarantinedState).to.deep.equal({ name: 'Game', options: {} });
 			expect(tombstone.quarantinedBlob).to.equal('blob');
+			expect(tombstone.quarantinedState).to.deep.equal({ name: 'Game', options: {} });
 			expect(tombstone.stateVersion).to.be.greaterThan(0);
 			expect((rm as any).active.has(roomId)).to.be.false;
 		});
@@ -797,8 +816,8 @@ describe('RoomManager', () => {
 			const { deps, restoreGameStub, GameStub } = makeEngineDeps();
 			const db = makeDbStub({
 				selectResults: [
-					[{ state: { name: 'Game', options: {} }, stateBlob: null }], // reset reads the old row
-					[{ state: null, stateBlob: null }],                          // the load sees the tombstone
+					[{ state: { name: 'Game', options: {} } }], // reset reads the old row
+					[{ state: null }],                          // the load sees the tombstone
 				],
 			});
 			const gate = held();
@@ -825,7 +844,7 @@ describe('RoomManager', () => {
 		it('discards a load that had already selected before the reset began', async () => {
 			const { deps } = makeEngineDeps();
 			const oldRow = held();
-			const rows = [[{ state: { name: 'Game', options: {} }, stateBlob: null }], [{ state: { name: 'Game', options: {} }, stateBlob: null }]];
+			const rows = [[{ state: { name: 'Game', options: {} } }], [{ state: { name: 'Game', options: {} } }]];
 			let n = 0;
 			const db = makeDbStub();
 			(db as any).select = sinon.stub().callsFake(() => {
@@ -852,12 +871,12 @@ describe('RoomManager', () => {
 		it('a getGame arriving mid-reset does not join the invalidated load and gets a fresh game', async () => {
 			const { deps, GameStub } = makeEngineDeps();
 			const oldRow = held();
-			const row = [{ state: { name: 'Game', options: {} }, stateBlob: null }];
+			const row = [{ state: { name: 'Game', options: {} } }];
 			let n = 0;
 			const db = makeDbStub();
 			(db as any).select = sinon.stub().callsFake(() => {
 				const i = n++;
-				const limit = i === 0 ? () => oldRow.promise.then(() => row) : () => Promise.resolve(i === 1 ? row : [{ state: null, stateBlob: null }]);
+				const limit = i === 0 ? () => oldRow.promise.then(() => row) : () => Promise.resolve(i === 1 ? row : [{ state: null }]);
 				return { from: () => ({ where: () => Object.assign(Promise.resolve([]), { limit }) }) };
 			});
 			const gate = held();
@@ -876,6 +895,90 @@ describe('RoomManager', () => {
 			const game = await b;
 			expect(game).to.exist;
 			expect(GameStub.called).to.be.true; // fresh game, built after the tombstone
+		});
+	});
+
+	describe('room generation (bug G)', () => {
+		// Load a room at generation 3 whose saves are refused, and whose generation probe reads
+		// `probeGeneration` (a row that no longer exists is `null`).
+		async function loadedRoom(probeGeneration: number | null) {
+			const { deps, mockGame } = makeEngineDeps();
+			const db = makeDbStub();
+			let n = 0;
+			(db as any).select = sinon.stub().callsFake(() => {
+				const rows = n++ === 0
+					? [{ state: { name: 'Game', options: {} }, stateGeneration: 3 }]
+					: probeGeneration === null ? [] : [{ generation: probeGeneration }];
+				return { from: () => ({ where: () => Object.assign(Promise.resolve(rows), { limit: () => Promise.resolve(rows) }) }) };
+			});
+			const returning = sinon.stub().resolves([]);
+			db._stubs.updateSetStub.returns({ where: sinon.stub().returns({ returning }) });
+			const rm = new RoomManager(db as never, () => {}, deps);
+			await rm.getGame(ROOM_ID);
+			return { rm, mockGame };
+		}
+		const drops = async () => (await roomStateGenerationDrops.get()).values[0]?.value ?? 0;
+
+		it('drops its copy without flushing when a refused save finds the generation moved', async () => {
+			const { rm, mockGame } = await loadedRoom(4);
+			const before = await drops();
+			mockGame.dispose.resetHistory();
+			mockGame.flushState.resetHistory();
+
+			await (mockGame.stateStore as { save(id: string, s: unknown): Promise<void> }).save(ROOM_ID, { name: 'Game', options: {} });
+
+			expect((rm as any).active.has(ROOM_ID)).to.be.false;
+			expect(mockGame.dispose.calledOnce).to.be.true;
+			expect(mockGame.flushState.called).to.be.false;
+			expect(await drops()).to.equal(before + 1);
+		});
+
+		it('keeps its copy when the refused save was merely stale (same generation) or the row is gone', async () => {
+			for (const probe of [3, null]) {
+				const { rm, mockGame } = await loadedRoom(probe);
+				const before = await drops();
+				await (mockGame.stateStore as { save(id: string, s: unknown): Promise<void> }).save(ROOM_ID, { name: 'Game', options: {} });
+				expect((rm as any).active.has(ROOM_ID)).to.be.true;
+				expect(await drops()).to.equal(before);
+			}
+		});
+
+		it('a drop is a no-op when the active copy was replaced by a newer load', async () => {
+			const { rm, mockGame } = await loadedRoom(4);
+			const newer = { game: { dispose: sinon.stub() } };
+			(rm as any).active.set(ROOM_ID, newer);
+			const before = await drops();
+			mockGame.dispose.resetHistory();
+
+			await (mockGame.stateStore as { save(id: string, s: unknown): Promise<void> }).save(ROOM_ID, { name: 'Game', options: {} });
+
+			expect((rm as any).active.get(ROOM_ID)).to.equal(newer);
+			expect(newer.game.dispose.called).to.be.false;
+			expect(mockGame.dispose.called).to.be.false;
+			expect(await drops()).to.equal(before);
+		});
+
+		it('flushAll counts a copy dropped by a refused generation save as failed, not flushed', async () => {
+			const { rm, mockGame } = await loadedRoom(4);
+			mockGame.flushState.callsFake(() =>
+				(mockGame.stateStore as { save(id: string, s: unknown): Promise<void> })
+					.save(ROOM_ID, { name: 'Game', options: {} })
+					.then(() => true)
+			);
+			expect(await rm.flushAll(1000)).to.deep.equal({ flushed: 0, failed: 1, timedOut: 0 });
+		});
+
+		it('a reset bumps the generation in the tombstone update', async () => {
+			const { deps } = makeEngineDeps();
+			const db = makeDbStub();
+			(db as any).select = sinon.stub().callsFake(() => {
+				const rows = [{ state: null, stateBlob: null }];
+				return { from: () => ({ where: () => Object.assign(Promise.resolve(rows), { limit: () => Promise.resolve(rows) }) }) };
+			});
+			await new RoomManager(db as never, () => {}, deps).resetRoomState(ROOM_ID);
+			const tombstone = db._stubs.updateSetStub.getCalls().map((c) => c.args[0]).find((v) => 'stateVersion' in v);
+			expect(tombstone).to.have.property('stateGeneration');
+			expect(tombstone.state).to.equal(null);
 		});
 	});
 

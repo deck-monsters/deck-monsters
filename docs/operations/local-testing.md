@@ -64,8 +64,8 @@ agent in. To get a fight going from the console in a few commands:
 - `equip <monster> with "Hit", "Hit", "Heal", …` equips in one shot. Card names go in double
   quotes, comma-separated; unavailable names are reported and skipped, and any slots left
   over reopen the interactive prompt (answer with **Done equipping**). While that prompt is
-  open, a command typed into the console is refused ("… isn't one of the cards") and the
-  prompt is asked again; finish the equip before sending the monster anywhere.
+  open, a command typed into the console is refused ("… is a command, not a card. Cancel this
+  question first, then run it.") and the prompt is asked again; finish the equip before sending the monster anywhere.
 - `equip` **rebuilds the hand from scratch** (`monster.cards = cards`), returning the old hand
   to your deck. Equipping one card onto a monster that held eight leaves it holding one.
 - A monster may only enter the ring with a **full** deck (`cards.length === cardSlots`,
@@ -100,10 +100,10 @@ configured by the
 of creating new ones, and **update this section in the same commit** whenever you change
 what is in them — the next agent plans its test from this list.
 
-| Room | `roomId` | Invite | Purpose | State (2026-09-20) |
+| Room | `roomId` | Invite | Purpose | State (2026-09-30) |
 |------|----------|--------|---------|--------------------|
-| `Test Room A` | `70cb10d2-4faa-4300-9c20-8befe121a3d1` | `717305BE` | Existing character with trained monsters; fights, workshop, items, feeds | Character present; `Fang` (Basilisk, Lvl 0, 9/9 cards) and `Chuvvo` (Gladiator, Lvl 0, 9/9 cards); 20 unequipped cards; ring empty |
-| `Test Room B` | `227ba78e-bca5-4bd4-a59c-9793fac508bd` | `328F58D2` | **First-run fixture** — the test account has *no character* here | Reserved. Do not create a character or monster in it; if a first-run test must actually create one, use a throwaway room instead, or delete and recreate Room B and update this row |
+| `Test Room A` | `70cb10d2-4faa-4300-9c20-8befe121a3d1` | `717305BE` | Existing character with trained monsters; fights, workshop, items, feeds | Character present. `Fang` (Basilisk, Lvl 0, alive at 1/30 HP after a level-0 revive during the help check, deck 9/9) and `Chuvvo` (Gladiator, Lvl 0, fallen, deck 9/9; left fallen). One Sorting Hat in items. Unequipped cards still present. The ring was in a boss fight during the check. |
+| `Test Room B` | `227ba78e-bca5-4bd4-a59c-9793fac508bd` | `328F58D2` | **First-run fixture** — the test account has *no character* here | Reserved. Confirmed still empty on 2026-09-30. Do not create a character or monster in it; if a first-run test must actually create one, use a throwaway room instead, or delete and recreate Room B and update this row |
 
 The test account is also a *member* (not owner) of `Game Night`. That is a real room: never
 spawn, fight, rename, or run anything there.

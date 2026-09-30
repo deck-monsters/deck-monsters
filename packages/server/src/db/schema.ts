@@ -44,13 +44,17 @@ export const rooms = pgTable('rooms', {
 		.notNull()
 		.references(() => profiles.id),
 	inviteCode: text('invite_code').notNull().unique(),
-	/** DEPRECATED (roadmap 37): base64(gzip(JSON)); dual-written until the contract release. */
+	/** DEPRECATED (roadmap 37): base64(gzip(JSON)). App code no longer writes it except a reset or
+	 * quarantine nulling it (see `_resetRoomState`); stale for every room, read only as a fallback
+	 * where `state` is null. Dropped by a later migration (roadmap 40). */
 	stateBlob: text('state_blob'),
 	quarantinedBlob: text('quarantined_blob'),
 	/** The serialized Game as jsonb (roadmap 37). Guarded by `stateVersion`. */
 	state: jsonb('state').$type<SerializedGame>(),
 	/** Monotonic save stamp: a save lands only when newer, and it never rewinds (roadmap 37). */
 	stateVersion: bigint('state_version', { mode: 'number' }).notNull().default(0),
+	/** Bumped by a reset; every save must match the generation its process loaded (bug G). */
+	stateGeneration: bigint('state_generation', { mode: 'number' }).notNull().default(0),
 	quarantinedState: jsonb('quarantined_state').$type<SerializedGame>(),
 	fightCounter: integer('fight_counter').notNull().default(0),
 	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),

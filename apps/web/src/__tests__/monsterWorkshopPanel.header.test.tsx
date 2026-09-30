@@ -67,17 +67,64 @@ describe('MonsterWorkshopPanel header — HP first, no slot bar (10b-bugs-fixed.
     expect(fill?.className).toContain('roster-bar-hurt');
   });
 
-  it('uses the full non-duplicated revive label for timed and overdue revivals', () => {
+  it('says when a running revival completes, in local time and minutes, and disables the button', () => {
     vi.useFakeTimers();
     vi.setSystemTime(NOW);
     const revivesAt = NOW + 5 * MINUTE;
-    const { unmount } = renderPanel({ dead: true, hp: 0, revivesAt });
+    renderPanel({ dead: true, hp: 0, revivesAt });
 
-    expect(screen.getByText('Fallen · revives in 5 min')).toBeTruthy();
+    const time = new Date(revivesAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    expect(screen.getByText(`Fallen · back at ${time} (in 5 min)`)).toBeTruthy();
+    const button = screen.getByRole('button', { name: 'Reviving…' }) as HTMLButtonElement;
+    expect(button.disabled).toBe(true);
+    expect(screen.queryByRole('button', { name: 'Revive' })).toBeNull();
+  });
+
+  it('counts seconds in the last minute, ticking every second', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(NOW);
+    renderPanel({ dead: true, hp: 0, revivesAt: NOW + 90_000 });
+
+    // 90 s away: still the minutes label. The 30 s tick brings it inside the last minute.
+    expect(screen.getByText(/^Fallen · back at .* \(in 1 min\)$/)).toBeTruthy();
+    act(() => vi.advanceTimersByTime(45_000));
+    expect(screen.getByText('Fallen · back in 45 s')).toBeTruthy();
+    act(() => vi.advanceTimersByTime(1_000));
+    expect(screen.getByText('Fallen · back in 44 s')).toBeTruthy();
+    act(() => vi.advanceTimersByTime(3_000));
+    expect(screen.getByText('Fallen · back in 41 s')).toBeTruthy();
+  });
+
+  it('uses the compact hours-and-minutes form for a long revival', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(NOW);
+    renderPanel({ dead: true, hp: 0, revivesAt: NOW + 135 * MINUTE });
+    expect(screen.getByText(/^Fallen · back at .* \(in 2 h 15 min\)$/)).toBeTruthy();
+  });
+
+  it('clears the last-minute flip timeout and interval on unmount', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(NOW);
+    const clearTimeoutSpy = vi.spyOn(globalThis, 'clearTimeout');
+    const { unmount } = renderPanel({ dead: true, hp: 0, revivesAt: NOW + 5 * MINUTE });
+    // Flip timeout (to the last minute) and interval are both pending.
+    expect(vi.getTimerCount()).toBe(2);
     unmount();
-    renderPanel({ dead: true, hp: 0, revivesAt: NOW - MINUTE });
+    expect(clearTimeoutSpy).toHaveBeenCalled();
+    expect(vi.getTimerCount()).toBe(0);
+  });
 
-    expect(screen.getByText('Fallen · revives any moment')).toBeTruthy();
+  it('never shows more than 59 s', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(NOW);
+    renderPanel({ dead: true, hp: 0, revivesAt: NOW + 59_500 });
+    expect(screen.getByText('Fallen · back in 59 s')).toBeTruthy();
+  });
+
+  it('keeps Revive enabled on a fallen monster with no timer running', () => {
+    renderPanel({ dead: true, hp: 0, revivesAt: null });
+    const button = screen.getByRole('button', { name: 'Revive' }) as HTMLButtonElement;
+    expect(button.disabled).toBe(false);
   });
 
   it('updates the revive label as time passes and clears its interval on unmount', () => {
@@ -87,9 +134,9 @@ describe('MonsterWorkshopPanel header — HP first, no slot bar (10b-bugs-fixed.
     const revivesAt = NOW + 2 * MINUTE;
     const { container, unmount } = renderPanel({ dead: true, hp: 0, revivesAt });
 
-    expect(screen.getByText('Fallen · revives in 2 min')).toBeTruthy();
+    expect(screen.getByText(/\(in 2 min\)$/)).toBeTruthy();
     act(() => vi.advanceTimersByTime(2 * MINUTE));
-    expect(screen.getByText('Fallen · revives any moment')).toBeTruthy();
+    expect(screen.getByText('Fallen · almost back')).toBeTruthy();
     const fill = container.querySelector('.roster-bar-fill') as HTMLElement;
     expect(fill.style.width).toBe('0%');
     expect(fill.className).toContain('roster-bar-critical');
@@ -111,7 +158,7 @@ describe('MonsterWorkshopPanel header — HP first, no slot bar (10b-bugs-fixed.
     renderPanel({ dead: true, hp: 0, revivesAt: null });
 
     expect(screen.getByText('Fallen')).toBeTruthy();
-    expect(screen.queryByText(/revives in/)).toBeNull();
+    expect(screen.queryByText(/back (at|in)/)).toBeNull();
   });
 
   it('shows the type line as "{type} · Lvl {level}"', () => {
@@ -201,5 +248,17 @@ describe('MonsterWorkshopPanel header — HP first, no slot bar (10b-bugs-fixed.
     expect(screen.queryByText('in the ring')).toBeNull();
     expect(screen.queryByText('fighting')).toBeNull();
     expect(screen.queryByText('fallen')).toBeNull();
+  });
+});
+
+describe('MonsterWorkshopPanel fighting line (roadmap 39 B2)', () => {
+  it('says the monster is in a fight and when its cards unlock', () => {
+    renderPanel({ inEncounter: true });
+    expect(screen.getByText('Stonefang is in a fight. Cards unlock when it ends.')).toBeTruthy();
+  });
+
+  it('shows no fighting line when the monster is not in an encounter', () => {
+    renderPanel();
+    expect(screen.queryByText(/is in a fight/)).toBeNull();
   });
 });

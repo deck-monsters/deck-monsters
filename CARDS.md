@@ -1426,22 +1426,27 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
  🎩  Sorting Hat  •
 ----------------------------------
 
+ Join a team, switch teams, or 
+ leave one. Teammates go after 
+ everyone else in the ring first, 
+ and only turn on each other when 
+ nobody else is left. If your 
+ character has joined a team but 
+ your monster hasn't, that 
+ monster is on your character's 
+ team.
+
+ It's free, and every shop keeps 
+ one in stock, because choosing a 
+ side should never cost you. 
+ `leave team` also takes you and 
+ your monsters off a team for 
+ free.
+
  An enchanted hat that once 
  belonged to Godric Gryffindor. 
  Put it on and find out where you 
- truly belong, or choose no team 
- at all.
-
- Teammates go after everyone else 
- in the ring first, and only turn 
- on each other when nobody else 
- is left. If your character has 
- joined a team but your monster 
- hasn't, that monster is on your 
- character's team. Every shop 
- keeps one in stock, and `leave 
- team` takes you and your 
- monsters off a team for free.
+ truly belong.
 
 ==================================
 ```

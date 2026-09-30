@@ -62,16 +62,18 @@ debug subscribers, and adds the room to the active cache.
 
 Rooms load lazily. `_getOrLoad()` joins concurrent loads for one `roomId`. `_loadRoom()`
 first awaits any unload flush still in flight for the room (`pendingFlush`), then restores
-`rooms.state` (`jsonb`), falling back to the legacy `rooms.state_blob` (roadmap 37). If the
-state cannot hydrate, it quarantines each source column into its own quarantine column
-(`quarantined_state`, `quarantined_blob`), stamps a new `state_version`, and starts fresh.
+`rooms.state` (`jsonb`) (roadmap 37). Only when `state` is null and a legacy `state_blob`
+exists does it restore, read-only, from the blob (warn log, `source="blob"`); the blob is
+never written and the room's next save fills `state`. Removed with the column drop. If the
+source cannot hydrate, it moves it to its own quarantine column (`quarantined_state` or
+`quarantined_blob`), stamps a new `state_version`, and starts fresh.
 A deletion epoch prevents an in-flight load from publishing a room after its database row
 was deleted.
 
 State changes schedule debounced snapshots. Each save is stamped with `nextStateVersion()`,
 a process-wide monotonic clock, and only lands where the stored `state_version` is lower, so
-an older snapshot never overwrites a newer one. Until the contract release, each save also
-writes `state_blob`, so the previous release can still be redeployed. `unloadRoom()`
+an older snapshot never overwrites a newer one. Saves write `state` and
+`state_version` only; `state_blob` is no longer written (it is dropped by a later migration). `unloadRoom()`
 removes the cache entry, detaches subscribers, flushes with `Game.flushState()`, disposes
 the game, and awaits the flush before it returns. It refuses to unload while
 `ring.inEncounter`, because the timer-driven fight and its projection subscribers must
@@ -86,9 +88,34 @@ and cannot bring the room back (bugs 200–202 in the ledger).
 
 **One cache per process, not one overall.** The server and the Discord connector each run a
 `RoomManager` with its own active cache over the same `rooms` table. The ordering guarantees
-above hold within one process. A reset in one does not evict the room from the other, whose
-next save would outrank the tombstone; that is open as item G in
-[10 — bug fixes](../roadmap/10-bug-fixes.md).
+above (flush, tombstone, `resetting` gate) hold within one process only. Across processes a
+room has a **generation** (`rooms.state_generation`, bug G):
+
+- A loaded room remembers the generation it was loaded at; the load reads it in the same row
+  as the state, so the two are one snapshot. Every save's guarded update requires
+  `state_generation = <loaded>` in addition to the `state_version` guard.
+- A reset (and a hydration-failure quarantine) bumps `state_generation` in the same update that
+  writes the tombstone. The resetting process has already detached and flushed its own copy
+  (bug 202's order), so its own saves are never refused by the bump; its next load reads the
+  new generation.
+- Another process's copy keeps saving at the old generation. Its next save matches no row.
+  `PostgresStateStore` then probes the row: a moved generation means "reset elsewhere", so
+  `RoomManager` drops that copy without flushing (a flush would be refused too), counts
+  `dm_room_state_generation_drops_total`, and logs a warning. The next request reloads the reset
+  room. A missing row (deleted room) or an unchanged generation is an ordinary stale save.
+- A drop tears the copy down exactly as a same-process reset does (`_detachRoomEntry`, no
+  flush), so what a reset leaves behind (a running fight timer chain, unanswered prompts,
+  long-lived bus subscribers) a drop leaves behind too.
+- The reset wins by design. The other process serves its stale copy until that copy next saves,
+  so an action taken on it in that window (a command that reported success) is lost when the
+  save is refused and the copy dropped.
+- Overlaps: a save in flight when the reset lands is refused by the tombstone version and
+  the generation both, and the drop is a no-op if the room already left `active`. A fight in
+  the dropped copy is discarded, since the room it belonged to no longer exists.
+- Compatibility: a release that does not know the column writes with the version guard only.
+  The tombstone version still refuses its stale saves as before, but it neither notices nor
+  reacts to a reset. The generation check protects only between processes running this release.
+  A deploy that upgrades the server before the connector leaves that window open.
 
 ## Membership and invitations
 
@@ -126,6 +153,41 @@ and monster-stat snapshots remain historical.
 
 Room leaderboards prefer the current room character name. Global player leaderboards use
 the profile display name.
+
+## Querying room state
+
+Each room's whole game is stored as jsonb in `rooms.state` (roadmap 37). Three views flatten
+it for **read-only operator use** in the SQL editor: `room_state_monsters`,
+`room_state_monster_cards`, and `room_state_characters`. They span every room on purpose, so
+they are the one place a query may leave out `room_id`. App code must not use them: it keeps
+reading state through a room id (the room's `Game`, or a query with `where room_id = ?`).
+
+They are `security_invoker` and revoked from `anon` and `authenticated`, so the Supabase API
+cannot reach them. `card_types` (class name to display name) is the same, with RLS on and no
+policy. Which Dragons own Enchanted Faceswap:
+
+```sql
+select m.room_id, m.given_name, m.level
+  from room_state_monsters m
+  join room_state_monster_cards c using (room_id, owner_user_id, monster_index)
+ where m.monster_type = 'Dragon' and c.card_type = 'Enchanted Faceswap';
+```
+
+- **`level` is computed** by `room_state_level_for_xp`, which holds the engine's XP thresholds
+  (`helpers/levels.ts`), not read from `room_monster_stats`. That table updates only after a
+  fight, so it lags or misses a monster. A test compares the function with `getLevel` at every
+  threshold; retuning the curve means a new migration.
+- **`stable_id` can be null.** The engine mints it on the first read of `monster.stableId`, so
+  a monster nothing has read yet is saved without one, and `null = null` never joins. Join
+  monsters to their cards on `owner_user_id` + `monster_index`, as above; `stable_id` is only
+  for cross-referencing with `room_monster_stats.monster_id`.
+- **`given_name` is the raw saved name.** The game displays it title-cased, and a monster with
+  no saved name shows a generated one; here it is the stored string or null.
+- **A new card needs a `card_types` row.** Add a migration with
+  `insert into public.card_types (class_name, card_type) values (...) on conflict (class_name) do update ...`.
+  The class name is the JavaScript class (`HitCard`, `DelayedHit`; not uniform), and the display
+  name is the card's static `cardType`. `room-state-views.test.ts` fails when a card in
+  `allCards` has no row; until it exists, the view shows the raw class name.
 
 ## Common failures
 

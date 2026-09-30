@@ -391,11 +391,8 @@
 }
 
 .command-blocked-banner {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 100%;
-  z-index: 12;
+  /* In the layout above the command dock, not overlaid on the feed: see ConsolePane. */
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -526,6 +523,23 @@
 
   .terminal-slot.active {
     display: flex;
+  }
+}
+
+/* Phone: all five tabs (The Ring, Console, Workshop, Fights, Leaders) share the bar's width
+   instead of scrolling it sideways. The 1023px rule above sizes each tab to its label with
+   1rem side padding, which at 390px pushed the fifth tab off-screen (roadmap 39 B4). Five
+   labels are ~35 characters; at 0.8rem that is well under 390px with 0.25rem side padding.
+   min-height keeps the 44px touch target that the smaller padding would otherwise shrink. */
+@media (max-width: 480px) {
+  .terminal-tab {
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 44px;
+    padding: 0.5rem 0.25rem;
+    font-size: 0.8rem;
+    letter-spacing: 0;
+    white-space: nowrap;
   }
 }
 
@@ -692,12 +706,16 @@
   gap: 0.35rem;
 }
 
+/* The name wraps onto a second line rather than ellipsing: a boss's generated name is
+   the one the narration uses, and at 390px "Seeskane Orc..." left a player unable to match
+   the roster to the feed (roadmap 39 batch 2). `overflow-wrap: anywhere` also lets a
+   single unbroken long word break instead of pushing the row wider than the pane, and
+   still lets the flex item shrink below its content width. */
 .roster-name-text {
   min-width: 0;
   flex: 0 1 auto;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
   color: var(--color-fg);
 }
 
@@ -1024,6 +1042,29 @@
 .leaderboard-table-region { max-width: 100%; overflow-x: auto; outline-offset: -2px; }
 .leaderboard-table-region:focus-visible { outline: 2px solid var(--color-accent); }
 .leaderboard-table-region table { min-width: 40rem; display: table; }
+
+/* Help and guides (roadmap 39). Wide content (tables, ASCII art) scrolls inside its own box,
+   never the page: the panel is a query container that can be as narrow as a 390px phone. */
+.help-sections { display: flex; flex-wrap: wrap; gap: .4rem; margin: .75rem 0 1rem; }
+.help-sections .btn[aria-pressed='true'] { color: var(--color-fg-bright); border-color: var(--color-accent); }
+.help-guide { overflow-wrap: anywhere; line-height: 1.5; }
+.help-guide h2 { font-size: 1.15rem; color: var(--color-fg-bright); margin: 1.25rem 0 .5rem; }
+.help-guide h3 { font-size: 1rem; color: var(--color-fg-bright); margin: 1.1rem 0 .4rem; }
+.help-guide h4, .help-guide h5 { font-size: .9rem; color: var(--color-fg-bright); margin: 1rem 0 .3rem; }
+.help-guide h2:focus, .help-guide h3:focus, .help-guide h4:focus { outline: none; }
+.help-guide p, .help-guide ul, .help-guide ol { margin: .5rem 0; }
+.help-guide ul, .help-guide ol { padding-left: 1.5rem; }
+.help-guide blockquote { margin: .5rem 0; padding-left: .75rem; border-left: 2px solid var(--color-border); color: var(--color-fg-dim); }
+.help-guide hr { border: 0; border-top: 1px solid var(--color-border); margin: 1rem 0; }
+.help-guide code { color: var(--color-accent); }
+.help-guide a { color: var(--color-accent); }
+.help-pre { max-width: 100%; overflow-x: auto; margin: .5rem 0; padding: .5rem; border: 1px solid var(--color-border); outline-offset: -2px; }
+.help-pre code { white-space: pre; }
+.help-table-region { max-width: 100%; overflow-x: auto; margin: .5rem 0; outline-offset: -2px; }
+.help-table-region table { border-collapse: collapse; min-width: 20rem; }
+.help-table-region th, .help-table-region td { text-align: left; vertical-align: top; padding: .3rem .6rem; border-bottom: 1px solid var(--color-border); overflow-wrap: normal; }
+.help-pre:focus-visible, .help-table-region:focus-visible { outline: 2px solid var(--color-accent); }
+.help-example { color: var(--color-fg-dim); font-size: .85em; }
 
 @container surface (max-width: 520px) {
   .surface-panel { padding: .75rem; }

@@ -254,7 +254,7 @@ export const roomStateSaveBytes = new Histogram({
 
 export const roomStateSaveFailures = new Counter({
 	name: 'dm_room_state_save_failures_total',
-	help: 'Room state saves that threw (the engine logs the error)',
+	help: 'Room state saves that failed: the store write threw, or the engine could not serialize the room (logged with context game.persistState)',
 	registers: [registry],
 });
 
@@ -264,9 +264,15 @@ export const roomStateSavesStale = new Counter({
 	registers: [registry],
 });
 
+export const roomStateGenerationDrops = new Counter({
+	name: 'dm_room_state_generation_drops_total',
+	help: 'Loaded rooms dropped because another process reset the room (its state generation moved)',
+	registers: [registry],
+});
+
 export const roomStateSource = new Counter({
 	name: 'dm_room_state_source_total',
-	help: 'Room loads that restored from the jsonb state column or the legacy blob column',
+	help: 'Room loads by where the state came from: state (the jsonb column) or blob (the read-only legacy fallback for a room not yet converted; goes with the state_blob drop)',
 	labelNames: ['source'] as const,
 	registers: [registry],
 });

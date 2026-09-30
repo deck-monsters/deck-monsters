@@ -56,12 +56,12 @@ Monsters earn XP from every fight, win or lose. More XP unlocks higher-level car
 
 Level thresholds (XP required):
 
-- Beginner: 0–49 XP
-- Level 1: 50+ XP
-- Level 2: 100+ XP
-- Level 3: 150+ XP
-- Level 4: 250+ XP
-- Level 5: 400+ XP
+- Beginner: 0–27 XP
+- Level 1: 28+ XP
+- Level 2: 65+ XP
+- Level 3: 113+ XP
+- Level 4: 213+ XP
+- Level 5: 380+ XP
 - Level 6: 650+ XP
 - Level 7: 1050+ XP
 
@@ -141,7 +141,7 @@ Some fights bring a ring event that changes the teams for that fight only: Commo
 
 - `train a monster` — Train a new monster
 - `equip [monster]` — Equip a monster with your cards (e.g. `equip Fluffy`)
-- `equip [monster] with "Card", "Card"` — Equip a monster with specific cards. For a card name containing a quote character, use a JSON array instead: `["Card"]` (e.g. `equip Fluffy with "Hit", "Hit", "Heal"`)
+- `equip [monster] with "Card", "Card"` — Equip a monster with the cards you name, separated by commas (e.g. `equip Fluffy with "Hit", "Hit", "Heal"`)
 - `dismiss [monster]` — Part ways with a monster for good (e.g. `dismiss Fluffy`)
 - `revive [monster]` — Revive a fallen monster (e.g. `revive Fluffy`)
 - `look at monsters` — View all your monsters
@@ -223,6 +223,12 @@ Example, not a universal best deck. This illustration is a Level 3 Minotaur deck
 One-Heal alternative: replace the second "Heal" with "Hit" when you would rather spend that turn on damage and trust a single recovery.
 
 Matchup swap: Forked Stick pins a Basilisk or a Gladiator more easily. It is at a disadvantage against a Jinn or another Minotaur, and it does not pin a Weeping Angel. Against another Minotaur, replace "Forked Stick" with "Horn Gore". Against a Jinn or a Weeping Angel, replace "Forked Stick" with "Hit Harder".
+
+## Reading a Fight
+
+The ring narrates every roll. What the words and numbers mean:
+
+- Round and turn: each monster in the ring takes one turn per round, playing the next card in its deck. - It's [name]'s turn: whose monster is about to play a card. On a boss's turn it names the boss. - 1d20, 1d6, 2d4: dice. 1d20 is one twenty-sided die; 2d4 is two four-sided dice added together. - +2, -1 after a roll: the bonus or penalty from the monster's stats, added to the die. - vs ac (10): the number the attack roll has to beat. A roll equal to it misses; ties go to the defender. - Natural 20: the die itself shows 20. The attack hits whatever the target's AC, for the most damage the dice allow. - Natural 1, the Curse of Loki: the die itself shows 1. The attack misses, and the target turns it back on the attacker. - Hit! and Miss...: whether the attack roll beat the target's defense. - Bloodied: a monster at half its HP or less. - AC, HP, DEX, STR, INT: the monster's stats, described in Combat Stats & Card Roles. - XP: experience. Monsters earn it from every fight, and it raises their level. - Beginner and Lvl 0: the same thing, a monster that has not reached level 1. The Workshop shows the number, the ring the word. - Class: the monster's fighting style, such as Barbarian or Wizard. It decides which cards the monster can hold; the Monster Manual lists each type's class. - Strategy: who a boss goes after. Each boss's stat card says it.
 
 ## Example Deck Builds
 
