@@ -44,6 +44,7 @@ import {
 import RingRoster, { type RingContestantSnapshot } from './RingRoster.js';
 import FeedList from './FeedList.js';
 import RingItemsPanel from './RingItemsPanel.js';
+import { headerBadgesVisible, summonsLeftLabel } from './ringHeaderBadges.js';
 
 type PixelSpritesProps = {
   contestants: RingContestantSnapshot[];
@@ -514,9 +515,8 @@ export default function RingPane({
   }, [roomId, rosterContestants]);
   const mentions = useMonsterMentions(roomId, inlineSpritesLoader);
 
-  const summonBadge = ringState
-    ? `summons ${ringState.bossSummonsRemaining}/${ringState.bossSummonLimit}`
-    : null;
+  const showHeaderBadges = headerBadgesVisible(timerState.inEncounter);
+  const summonBadge = ringState ? summonsLeftLabel(ringState.bossSummonsRemaining) : null;
   const myFightingMonster = timerState.inEncounter
     ? rosterContestants.find((contestant) => contestant.userId === myUserId && !contestant.dead)
     : undefined;
@@ -537,12 +537,12 @@ export default function RingPane({
     >
       <header className="pane-header">
         <span>The Ring</span>
-        {timerBadge && (
+        {showHeaderBadges && timerBadge && (
           <span className="pane-header-timer" title="Time until next ring event">
             {timerBadge}
           </span>
         )}
-        {summonBadge && (
+        {showHeaderBadges && summonBadge && (
           <span
             className="pane-header-timer"
             title="Boss summons you have left today — type `summon a boss` to use one"

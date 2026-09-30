@@ -692,12 +692,16 @@
   gap: 0.35rem;
 }
 
+/* The name wraps onto a second line rather than ellipsing: a boss's generated name is
+   the one the narration uses, and at 390px "Seeskane Orc..." left a player unable to match
+   the roster to the feed (roadmap 39 batch 2). `overflow-wrap: anywhere` also lets a
+   single unbroken long word break instead of pushing the row wider than the pane, and
+   still lets the flex item shrink below its content width. */
 .roster-name-text {
   min-width: 0;
   flex: 0 1 auto;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
   color: var(--color-fg);
 }
 
