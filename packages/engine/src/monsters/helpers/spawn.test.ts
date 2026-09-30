@@ -78,6 +78,19 @@ describe('monsters/helpers/spawn', () => {
 		expect(messages[1]?.choices).to.deep.equal(['he/him', 'she/her', 'they/them']);
 	});
 
+	it('offers name suggestions as suggestions, not as a list of questions', async () => {
+		const questions: string[] = [];
+		const answers = ['2', 'they/them', 'Saffron', 'violet smoke'];
+		await spawnMonster(async (message) => {
+			if ((message as { question?: string }).question) questions.push((message as { question: string }).question);
+			return answers.shift();
+		});
+
+		const nameQuestion = questions.find((q) => q.startsWith('What would you like to name'));
+		expect(nameQuestion).to.match(/^What would you like to name them\? Type a name, or take one of these: .+, .+\.$/);
+		expect(nameQuestion).not.to.match(/Something else/);
+	});
+
 	it('announces an unknown supplied pronoun before refusing the spawn', async () => {
 		const announcements: string[] = [];
 		let error: unknown;

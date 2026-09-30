@@ -150,7 +150,7 @@ const createCharacter = (
 				const name2 = names((Character as any).creatureType, options.gender as string, [name1]);
 
 				const pronounSet = (PRONOUNS as any)[(options.gender as string) ?? 'male'];
-				question += `What would you like to name ${pronounSet?.him ?? 'them'}? ${name1}? ${name2}? Something else?`;
+				question += `What would you like to name ${pronounSet?.him ?? 'them'}? Type a name, or take one of these: ${name1}, ${name2}.`;
 
 				return channel({ question });
 			})
