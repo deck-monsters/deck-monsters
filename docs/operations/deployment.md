@@ -414,10 +414,15 @@ same release.
 
 ### Step A (this release)
 
-No migration. Deploy to both services. Nothing reads or writes `state_blob`, so a stale blob
-left in the column is harmless. A room with `state` null and a blob present (never converted)
-would now start fresh; none exist in production, and the step-B guard refuses the drop while
-one does.
+One data migration, `20260930140000_clear_stale_state_blobs.sql`: it empties `state_blob`
+wherever `state` is set, which is every production room. It must, because step A's resets no
+longer touch the blob (Codex review of #417): a reset would otherwise leave `state` null beside
+a stale blob, and a release-2 process (a rollback, or the old release during the deploy
+overlap) would fall back to that blob and bring the reset room back; the step-B guard could
+then never pass either. With the stale blobs gone, neither can happen. Release 2 writes no
+blobs, so none reappear while it still serves. A room with `state` null and a blob present
+(never converted) keeps its blob and would start fresh under step A; none exist in
+production, and the step-B guard refuses the drop while one does. Deploy to both services.
 
 ### Step B (the drop)
 
@@ -437,7 +442,9 @@ safe to retry. The full SQL and tests are in [state-blob-drop.md](state-blob-dro
 
 ### Rollback
 
-- **Before step B:** rolling back to release 2 is safe, because the column is still there.
+- **Before step B:** rolling back to release 2 is safe, because the column is still there and
+  step A's migration cleared every stale blob, so release 2's fallback finds nothing to
+  resurrect after a step-A reset.
   Rolling back past release 2 is not (release 2 stopped writing the blob, so an older
   release would read stale blobs); do not go back further.
 - **After step B:** only step-A code and later are compatible. Release 2 and earlier break

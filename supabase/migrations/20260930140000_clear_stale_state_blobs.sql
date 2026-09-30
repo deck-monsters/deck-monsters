@@ -1,0 +1,13 @@
+-- Roadmap 40 task 6a: clear the stale state_blob of every room that already has `state`.
+--
+-- Release 2 stopped writing state_blob, so for a converted room the blob is an old snapshot. It
+-- was harmless while release 2 nulled the blob on every reset, but step A no longer names the
+-- column, so a reset under step A would leave `state` null beside that stale blob. Two things then
+-- go wrong (Codex review of #417): a release-2 process (a rollback, or the old release during the
+-- deploy overlap) falls back to the blob and brings the reset room back; and step B's guard, which
+-- refuses to drop the column while any room has `state` null and a blob, can never pass.
+--
+-- Clearing the stale blobs removes both: no blob is left to fall back to, and the guard only trips
+-- on a genuinely unconverted room (state null, blob present), which this leaves alone. Release 2
+-- writes no blobs, so none reappear while it still serves. quarantined_blob is not touched.
+update rooms set state_blob = null where state is not null and state_blob is not null;

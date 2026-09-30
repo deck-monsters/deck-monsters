@@ -34,7 +34,7 @@ select id from rooms where state is null and state_blob is not null;
 
 ## Migration
 
-Add as `supabase/migrations/20260930140000_drop_state_blob.sql` (or any timestamp after the
+Add as `supabase/migrations/20260930150000_drop_state_blob.sql` (or any timestamp after the
 latest file), and raise the hard-coded migration counts in `migrate.test.ts` and
 `migrate.pg.test.ts` by one:
 
@@ -62,7 +62,12 @@ end $$;
 alter table rooms drop column if exists state_blob;
 ```
 
-A reset room (state and blob both null) passes the guard by design: nothing is lost.
+A reset room (state and blob both null) passes the guard by design: nothing is lost. Step A's
+migration cleared the stale blob of every converted room, so a room reset under step A has no
+blob either. If the guard ever does trip, the room it names was never converted: its blob is
+its only copy. Convert it by hand (`base64 -d | gunzip` of the blob into `rooms.state`, the
+engine's `restoreGame` accepts the decoded JSON) or, if the room is disposable, reset it and
+then clear its blob with `update rooms set state_blob = null where id = '<id>'`.
 
 Lock note: `drop column` takes `ACCESS EXCLUSIVE` on `rooms`. It queues behind in-flight
 transactions there (saves, the fight-summary writer) and, while queued, blocks every new
@@ -78,7 +83,7 @@ failing migration" test:
 
 ```ts
 	describe('drop_state_blob guard (roadmap 37 contract)', () => {
-		const DROP = '20260930140000_drop_state_blob.sql';
+		const DROP = '20260930150000_drop_state_blob.sql';
 		const hasBlobColumn = () =>
 			withDb(async (p) => {
 				const r = await p.query(
