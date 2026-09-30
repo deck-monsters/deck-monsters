@@ -13,6 +13,7 @@ import { getItemKey } from '../items/helpers/counts.js';
 import { matchesCardLookupName } from '../cards/helpers/matches-lookup-name.js';
 import { formatRelative } from '../helpers/time.js';
 import { eachSeries } from '../helpers/promise.js';
+import { equipResultMessage } from './helpers/equip-message.js';
 import { MAX_PRESETS } from '../constants/card-management.js';
 import { announceAndThrow } from '../helpers/announce-and-throw.js';
 import type { ChannelFn, ChannelWithManager, CardInstance, ItemInstance } from '../creatures/base.js';
@@ -51,6 +52,19 @@ export const beastmasterReady = loadHelpers().catch((err) => {
 // (`monsterSlots`), not stored. Per-character grants live in `monsterSlotModifier`.
 // Raised from 7 to 10 in September 2026.
 export const DEFAULT_MONSTER_SLOTS = 10;
+
+/** Why `equipCards` left a card out. The web maps each code to the sentence a player reads. */
+export type EquipSkipReason = 'cannot_hold' | 'deck_full' | 'max_copies' | 'not_in_inventory';
+export interface EquipSkip { cardName: string; reason: EquipSkipReason }
+export interface EquipCardsResult {
+	equipped: number;
+	requested: number;
+	skippedCards: string[];
+	skipped: EquipSkip[];
+	cardCount: number;
+	cardSlots: number;
+	monsterName: string;
+}
 
 
 const normalize = (value: string): string => value.trim().toLowerCase();
@@ -174,7 +188,9 @@ class Beastmaster extends BaseCharacter {
 			return Promise.resolve()
 				.then(() =>
 					channel({
-						announce: `You have ${remainingSlots} of ${this.monsterSlots} monsters left to train.`,
+						// Same wording as the Workshop Train row (help-inventory #9): the old
+						// "10 of 10 left" read as a fraction of something, not as a count of places.
+						announce: `You can train ${remainingSlots} more ${remainingSlots === 1 ? 'monster' : 'monsters'}.`,
 					}),
 				)
 				.then(() => spawn(channel, options as any))
@@ -191,7 +207,11 @@ class Beastmaster extends BaseCharacter {
 				});
 		}
 
-		return announceAndThrow(channel, "You're all out space for new monsters!");
+		// Same wording as the Workshop Train row when no places are left.
+		return announceAndThrow(
+			channel,
+			`Every place at your side is taken (${this.monsterSlots} ${this.monsterSlots === 1 ? 'monster' : 'monsters'}).`,
+		);
 	}
 
 	chooseMonster({
@@ -871,7 +891,7 @@ class Beastmaster extends BaseCharacter {
 		cardNames: string[];
 		replaceAll?: boolean;
 		channel: ChannelFn;
-	}): Promise<{ equipped: number; requested: number; skippedCards: string[]; monsterName: string }> {
+	}): Promise<EquipCardsResult> {
 		return Promise.resolve()
 			.then(() =>
 				this.chooseMonster({
@@ -891,6 +911,11 @@ class Beastmaster extends BaseCharacter {
 
 				const requested = cardNames.length;
 				const skippedCards: string[] = [];
+				const skipped: EquipSkip[] = [];
+				const skip = (cardName: string, reason: EquipSkipReason) => {
+					skippedCards.push(cardName);
+					skipped.push({ cardName, reason });
+				};
 				let deck = [...this.deck];
 				let nextCards = replaceAll ? [] : [...monster.cards];
 
@@ -901,7 +926,7 @@ class Beastmaster extends BaseCharacter {
 
 				cardNames.forEach((cardName) => {
 					if (nextCards.length >= monster.cardSlots) {
-						skippedCards.push(cardName);
+						skip(cardName, 'deck_full');
 						return;
 					}
 
@@ -909,7 +934,9 @@ class Beastmaster extends BaseCharacter {
 						isSameCardName(card, cardName) && monster.canHoldCard(card),
 					);
 					if (cardIndex < 0) {
-						skippedCards.push(cardName);
+						// Tell "this kind of monster can't hold it" from "you have none left":
+						// the player is shown the reason (roadmap 39, help-inventory #10).
+						skip(cardName, deck.some(card => isSameCardName(card, cardName)) ? 'cannot_hold' : 'not_in_inventory');
 						return;
 					}
 
@@ -918,7 +945,7 @@ class Beastmaster extends BaseCharacter {
 						card => getItemKey(card) === getItemKey(selectedCard),
 					).length;
 					if (cardCount >= MAX_CARD_COPIES_IN_HAND) {
-						skippedCards.push(cardName);
+						skip(cardName, 'max_copies');
 						return;
 					}
 
@@ -929,15 +956,20 @@ class Beastmaster extends BaseCharacter {
 				monster.cards = nextCards;
 
 				const equipped = requested - skippedCards.length;
-				const summary = {
+				const summary: EquipCardsResult = {
 					equipped,
 					requested,
 					skippedCards,
+					skipped,
+					// What the deck holds now, so a caller can say "holds k of n cards" without a
+					// second read (the old "1/1" counted cards moved this call, not the deck).
+					cardCount: monster.cards.length,
+					cardSlots: monster.cardSlots,
 					monsterName: monster.givenName,
 				};
 
 				return Promise.resolve(channel({
-					announce: `Equipped ${monster.givenName}: ${equipped}/${requested}${skippedCards.length > 0 ? ` (skipped: ${skippedCards.join(', ')})` : ''}.`,
+					announce: equipResultMessage({ monsterName: monster.givenName, cardNames, result: summary }),
 				})).then(() => summary);
 			});
 	}
@@ -1003,7 +1035,7 @@ class Beastmaster extends BaseCharacter {
 		presetName: string;
 		monsterName?: string;
 		channel: ChannelFn;
-	}): Promise<{ equipped: number; requested: number; skippedCards: string[]; presetName: string; monsterName: string }> {
+	}): Promise<EquipCardsResult & { presetName: string }> {
 		const trimmedName = presetName.trim();
 		if (!trimmedName) {
 			return announceAndThrow(channel, 'Preset name is required.');
@@ -1041,10 +1073,15 @@ class Beastmaster extends BaseCharacter {
 				let deck = [...this.deck];
 				const nextCards: CardInstance[] = [];
 				const skippedCards: string[] = [];
+				const skipped: EquipSkip[] = [];
+				const skip = (cardName: string, reason: EquipSkipReason) => {
+					skippedCards.push(cardName);
+					skipped.push({ cardName, reason });
+				};
 
 				requestedCards.forEach((requestedCard) => {
 					if (nextCards.length >= monster.cardSlots) {
-						skippedCards.push(requestedCard);
+						skip(requestedCard, 'deck_full');
 						return;
 					}
 
@@ -1053,7 +1090,7 @@ class Beastmaster extends BaseCharacter {
 						card => normalize(getItemKey(card)) === requestedKey,
 					).length;
 					if (selectedCount >= MAX_CARD_COPIES_IN_HAND) {
-						skippedCards.push(requestedCard);
+						skip(requestedCard, 'max_copies');
 						return;
 					}
 
@@ -1061,7 +1098,7 @@ class Beastmaster extends BaseCharacter {
 						isSameCardName(card, requestedCard) && monster.canHoldCard(card),
 					);
 					if (cardIndex < 0) {
-						skippedCards.push(requestedCard);
+						skip(requestedCard, deck.some(card => isSameCardName(card, requestedCard)) ? 'cannot_hold' : 'not_in_inventory');
 						return;
 					}
 
@@ -1075,12 +1112,15 @@ class Beastmaster extends BaseCharacter {
 					equipped: nextCards.length,
 					requested: requestedCards.length,
 					skippedCards,
+					skipped,
+					cardCount: monster.cards.length,
+					cardSlots: monster.cardSlots,
 					presetName: trimmedName,
 					monsterName: monster.givenName,
 				};
 
 				return Promise.resolve(channel({
-					announce: `Loaded preset "${trimmedName}" on ${monster.givenName}: equipped ${summary.equipped}/${summary.requested}${skippedCards.length > 0 ? ` (skipped: ${skippedCards.join(', ')})` : ''}.`,
+					announce: equipResultMessage({ monsterName: monster.givenName, cardNames: requestedCards, result: summary }),
 				})).then(() => summary);
 			});
 	}

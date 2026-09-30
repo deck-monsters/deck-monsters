@@ -793,6 +793,36 @@ describe('game.ts', () => {
 		});
 	});
 
+	describe('getCharacter askName', () => {
+		it('offers the name as a suggestion and stores the typed answer', async () => {
+			const game = new Game();
+			const questions: string[] = [];
+			const answers = ['Ada', 'she/her', '0'];
+			const channel = async (m: { question?: string }) => {
+				if (m.question) questions.push(m.question);
+				return answers.shift();
+			};
+			const character = await game.getCharacter({ channel, id: 'u1', name: 'sam', askName: true });
+
+			expect(questions[0]).to.equal('What should we call you? Type a name, or type ok to be sam.');
+			expect((character as any).givenName).to.equal('Ada');
+		});
+
+		it('does not ask when askName is off', async () => {
+			const game = new Game();
+			const questions: string[] = [];
+			const answers = ['she/her', '0'];
+			const channel = async (m: { question?: string }) => {
+				if (m.question) questions.push(m.question);
+				return answers.shift();
+			};
+			const character = await game.getCharacter({ channel, id: 'u2', name: 'sam' });
+
+			expect(questions.some(q => q.startsWith('What should we call you'))).to.equal(false);
+			expect((character as any).givenName).to.equal('Sam');
+		});
+	});
+
 	describe('getCharacter Player-name auto-update', () => {
 		it('strips control characters from the healed name', async () => {
 			// jsonb rejects a NUL in a name (roadmap 37).

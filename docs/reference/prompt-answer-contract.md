@@ -70,6 +70,13 @@ channel({ question: '...', choices: ['Items', 'Cards', 'Back Room'] })
    has no attempt cap because it cannot strand a player: a cancel still aborts it
    (`PROMPT_CANCELLED` passes straight through), and every prompt times out on the bus.
 
+**Descriptions ride in the question, not in `choices`.** The monster type prompt explains each
+type with `Label: line` rows in the question text while `choices` stays the bare labels. A
+label with a description glued on would stop the Discord button's label answer from resolving.
+**Free-text prompts cannot take an empty answer** (the web Console and Discord will not send
+one), so a "take the default" option needs a word to type: the character-name prompt accepts
+`ok`, `okay`, `yes` or `y`.
+
 ## Where this is enforced today
 
 - `packages/engine/src/helpers/choices.ts` — `getChoices` (and its `getItemChoices` /

@@ -1159,3 +1159,9 @@ button {
 .leaderboard-panel input[type='checkbox'] {
   accent-color: var(--color-accent);
 }
+
+.workshop-type-summary {
+  margin: 0;
+  color: var(--color-fg-dim);
+  font-size: 0.85rem;
+}

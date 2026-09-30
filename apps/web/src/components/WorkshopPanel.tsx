@@ -6,6 +6,7 @@ import MonsterWorkshopPanel from './MonsterWorkshopPanel.js';
 import type { WorkshopCardLocation } from './CardSlot.js';
 import { useDeckWorkshop } from '../hooks/useDeckWorkshop.js';
 import { RingFeedContext, type TrackedRingFeedEvent } from '../hooks/useRingFeed.js';
+import { cardRefusalReason, cardRefusalSentence, equipResultMessage } from '../lib/cardRefusal.js';
 import { groupSelectionByCardName, isSameSource, toggleWorkshopSelection } from '../utils/workshop-selection.js';
 
 export type SelectionState = {
@@ -28,6 +29,7 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showSpawn, setShowSpawn] = useState(false);
+  const [spawnTypeIndex, setSpawnTypeIndex] = useState<number | null>(null);
 
   const {
     monsters,
@@ -367,6 +369,12 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
     );
   }, [activeMonsterFilter, isCardCompatibleWithMonster]);
 
+  const refusalFor = useCallback(
+    (cardName: string, monster: { name: string; cards: string[]; cardSlots: number; inEncounter?: boolean }) =>
+      cardRefusalReason({ cardName, monster, compatible: isCardCompatibleWithMonster(cardName, monster.name) }),
+    [isCardCompatibleWithMonster],
+  );
+
   const selectedInventoryCardName = useMemo(() => {
     if (selectedCards.length !== 1) return null;
     const selection = selectedCards[0];
@@ -408,10 +416,7 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
           cardNames: [cardName],
           replaceAll: false,
         });
-        const skipped = result.skippedCards.length > 0 ? ` Skipped: ${result.skippedCards.join(', ')}.` : '';
-        setMessage(
-          `Equipped ${target.monsterName} (${result.equippedCount}/${result.requestedCount}).${skipped}`,
-        );
+        setMessage(equipResultMessage({ monsterName: target.monsterName, cardNames: [cardName], result }));
         return;
       }
 
@@ -463,8 +468,11 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
         cardNames: selection.map((entry) => entry.cardName),
         replaceAll: false,
       });
-      const skipped = result.skippedCards.length > 0 ? ` Skipped: ${result.skippedCards.join(', ')}.` : '';
-      setMessage(`Equipped ${target.monsterName} (${result.equippedCount}/${result.requestedCount}).${skipped}`);
+      setMessage(equipResultMessage({
+        monsterName: target.monsterName,
+        cardNames: selection.map((entry) => entry.cardName),
+        result,
+      }));
       return;
     }
 
@@ -567,10 +575,8 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
     try {
       setError(null);
       const result = await loadPreset({ monsterName, presetName });
-      const skipped = result.skippedCards.length > 0 ? ` Skipped: ${result.skippedCards.join(', ')}.` : '';
-      setMessage(
-        `Loaded "${presetName}" on ${monsterName} (${result.equippedCount}/${result.requestedCount}).${skipped}`,
-      );
+      const requested = monsters.find((monster) => monster.name === monsterName)?.presets[presetName] ?? [];
+      setMessage(equipResultMessage({ monsterName, cardNames: requested, result }));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not load preset');
     }
@@ -683,7 +689,12 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
               </fieldset>
             </fieldset>
           )}
-          <label>Type<select name="type" defaultValue={spawnOptions.types[0]?.index}>{spawnOptions.types.map((type) => <option key={type.index} value={type.index}>{type.label}</option>)}</select></label>
+          <label>Type<select name="type" value={spawnTypeIndex ?? spawnOptions.types[0]?.index} onChange={(event) => setSpawnTypeIndex(Number(event.target.value))}>{spawnOptions.types.map((type) => <option key={type.index} value={type.index}>{type.label}</option>)}</select></label>
+          {/* One line per type, from the same source as the Console prompt. */}
+          {(() => {
+            const chosen = spawnOptions.types.find((type) => type.index === (spawnTypeIndex ?? spawnOptions.types[0]?.index));
+            return chosen?.summary ? <p className="workshop-type-summary">{chosen.summary}</p> : null;
+          })()}
           <label>Pronouns<select name="gender" defaultValue="androgynous">{spawnOptions.pronouns.map(({ key, label }) => <option key={key} value={key}>{label}</option>)}</select></label>
           <label>Name<input name="name" required maxLength={40} autoComplete="off" /></label>
           <label>Appearance<input name="color" required maxLength={100} placeholder="gold and black" /></label>
@@ -720,7 +731,16 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
         </div>
       ) : (
       <div className="workshop-monster-row" ref={monsterRowRef} onScroll={handleMonsterRowScroll}>
-        {monsters.map((monster) => (
+        {monsters.map((monster) => {
+          // Once per monster per render: the reason, then the sentence built from it.
+          const reason = selectedInventoryCardName ? refusalFor(selectedInventoryCardName, monster) : null;
+          const hint = {
+            reason,
+            sentence: selectedInventoryCardName && reason
+              ? cardRefusalSentence(selectedInventoryCardName, monster.name, reason)
+              : undefined,
+          };
+          return (
           <MonsterWorkshopPanel
             key={monster.name}
             monster={monster}
@@ -757,14 +777,12 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
             }}
             isFilterActive={Boolean(activeMonsterFilter)}
             isFilterTarget={activeMonsterFilter === monster.name}
-            compatibilityHint={
-              selectedInventoryCardName
-                ? (isCardCompatibleWithMonster(selectedInventoryCardName, monster.name) ? 'eligible' : 'ineligible')
-                : 'none'
-            }
+            compatibilityHint={hint.reason === null ? (selectedInventoryCardName ? 'eligible' : 'none') : 'ineligible'}
+            refusalSentence={hint.sentence}
             onToggleFilter={() => handleToggleMonsterFilter(monster.name)}
           />
-        ))}
+          );
+        })}
       </div>
       )}
 

@@ -83,7 +83,7 @@ export function listen(options: { command?: string; game: any } | null): ((actio
 				(channel as any).channelName = channelName;
 
 				return game
-					.getCharacter({ ...actionOptions, channel, id, name })
+					.getCharacter({ ...actionOptions, channel, id, name, askName: !aliasCheck })
 					.then((character: any) =>
 						action({ ...actionOptions, channel, character, game })
 					);

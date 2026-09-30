@@ -194,4 +194,44 @@ describe('./characters/base.ts starting-deck grant', () => {
 		beastmaster.deck = [] as never;
 		expect(beastmaster.deck, 'legacy character must not refill after emptying').to.have.lengthOf(0);
 	});
+
+	describe('skip reasons and the deck count', () => {
+		it('reports the deck count and slots after the equip', async () => {
+			const { beastmaster } = setup(3);
+			const result = await beastmaster.equipCards({ monsterName: 'Stonefang', cardNames: ['Hit', 'Hit'], channel: silentChannel });
+
+			expect(result.equipped).to.equal(2);
+			expect(result.cardCount).to.equal(2);
+			expect(result.cardSlots).to.equal(9);
+			expect(result.skipped).to.deep.equal([]);
+		});
+
+		it('says why a card was left out', async () => {
+			const { beastmaster, monster } = setup(6);
+			beastmaster.deck = [...beastmaster.deck, new HealCard()] as never;
+			const original = monster.canHoldCard.bind(monster);
+			monster.canHoldCard = ((card: { name?: string; cardType?: string }) =>
+				card.cardType === 'Heal' ? false : original(card as never)) as never;
+
+			const result = await beastmaster.equipCards({
+				monsterName: 'Stonefang',
+				cardNames: ['Heal', 'Blink', 'Hit', 'Hit', 'Hit', 'Hit', 'Hit'],
+				channel: silentChannel,
+			});
+			const reason = (cardName: string) => result.skipped.filter(s => s.cardName === cardName).map(s => s.reason);
+
+			expect(reason('Heal')).to.deep.equal(['cannot_hold']);
+			expect(reason('Blink')).to.deep.equal(['not_in_inventory']);
+			expect(reason('Hit')).to.deep.equal(['max_copies']);
+			expect(result.skippedCards).to.have.length(result.skipped.length);
+		});
+
+		it('says the deck is full when every slot is taken', async () => {
+			const { beastmaster, monster } = setup(2);
+			Object.defineProperty(monster, 'cardSlots', { get: () => 1 });
+			const result = await beastmaster.equipCards({ monsterName: 'Stonefang', cardNames: ['Hit', 'Hit'], channel: silentChannel });
+
+			expect(result.skipped).to.deep.equal([{ cardName: 'Hit', reason: 'deck_full' }]);
+		});
+	});
 });

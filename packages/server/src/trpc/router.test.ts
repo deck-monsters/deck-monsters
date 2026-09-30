@@ -940,6 +940,10 @@ describe('trpc/router card management procedures', () => {
 			equippedCount: 2,
 			requestedCount: 3,
 			skippedCards: ['Heal'],
+			// An engine that reports no reasons or counts still yields the fields the Workshop reads.
+			skipped: [{ cardName: 'Heal', reason: 'cannot_hold' }],
+			cardCount: null,
+			cardSlots: null,
 		});
 	});
 
@@ -951,6 +955,9 @@ describe('trpc/router card management procedures', () => {
 				equipped: 1,
 				requested: 2,
 				skippedCards: ['Heal'],
+				skipped: [{ cardName: 'Heal', reason: 'cannot_hold' }],
+				cardCount: 3,
+				cardSlots: 9,
 				monsterName: 'Stonefang',
 			};
 		};
@@ -982,6 +989,10 @@ describe('trpc/router card management procedures', () => {
 			equippedCount: 1,
 			requestedCount: 2,
 			skippedCards: ['Heal'],
+			skipped: [{ cardName: 'Heal', reason: 'cannot_hold' }],
+			monsterName: 'Stonefang',
+			cardCount: 3,
+			cardSlots: 9,
 		});
 	});
 
@@ -1019,12 +1030,15 @@ describe('trpc/router card management procedures', () => {
 	});
 
 	it('prints one Console line for a Workshop equip, not the engine\'s line and the summary', async () => {
-		// Both used to reach the Console: "Equipped Stonefang: 1/2." from the engine and the
+		// Both used to reach the Console: "Equipped Hit on Stonefang." from the engine and the
 		// same summary from the router, and a batch move printed a line per card type plus a
 		// summary. A player read the burst as the game moving cards by itself.
 		const equipCards = async ({ channel }: { channel: (m: { announce: string }) => Promise<unknown> }) => {
-			await channel({ announce: 'Equipped Stonefang: 1/2.' });
-			return { equipped: 1, requested: 2, skippedCards: ['Heal'], monsterName: 'Stonefang' };
+			await channel({ announce: 'Equipped Hit on Stonefang.' });
+			return {
+				equipped: 1, requested: 2, skippedCards: ['Heal'], monsterName: 'Stonefang',
+				skipped: [{ cardName: 'Heal', reason: 'cannot_hold' }], cardCount: 4, cardSlots: 9,
+			};
 		};
 		const announced: string[] = [];
 		const roomManager = {
@@ -1041,7 +1055,7 @@ describe('trpc/router card management procedures', () => {
 		const caller = createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false });
 		await caller.game.equipCards({ roomId: ROOM_ID, monsterName: 'Stonefang', cardNames: ['Hit', 'Heal'] });
 
-		expect(announced).to.deep.equal(['Equipped Stonefang: 1/2. Skipped: Heal.']);
+		expect(announced).to.deep.equal(["Equipped Hit on Stonefang. Stonefang holds 4 of 9 cards. Heal can't go on Stonefang: that kind of monster can't use it."]);
 	});
 
 	it('routes game.reorderCards through character.reorderCards', async () => {
@@ -1117,6 +1131,8 @@ describe('trpc/router monster lifecycle procedures', () => {
 		expect(options.types.map((type) => type.label)).to.deep.equal([
 			'Basilisk', 'Gladiator', 'Jinn', 'Minotaur', 'Weeping Angel', 'Unicorn', 'Dragon',
 		]);
+		// The same one-liner the Console prompt shows, one per type.
+		expect(options.types.every((type) => typeof type.summary === 'string' && type.summary.length > 0)).to.equal(true);
 		expect(options.pronouns).to.deep.equal([
 			{ key: 'male', label: 'he/him' },
 			{ key: 'female', label: 'she/her' },
