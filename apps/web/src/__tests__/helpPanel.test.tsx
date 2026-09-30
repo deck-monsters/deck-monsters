@@ -3,7 +3,6 @@ import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 import HelpPanel from '../components/HelpPanel.js';
 import AppShell from '../components/AppShell.js';
-import { SURFACES } from '../components/surfaces.js';
 import { renderMarkdown } from '../lib/markdown.js';
 
 vi.mock('../lib/auth-context.js', () => ({ useAuth: () => ({ user: null, signOut: vi.fn() }) }));
@@ -47,14 +46,9 @@ describe('HelpPanel', () => {
     render(<HelpPanel />);
     fireEvent.click(screen.getByRole('button', { name: 'Cards' }));
     fireEvent.click(screen.getAllByRole('link', { name: 'ITEMS.md' })[0]!);
-    expect(screen.getByRole('button', { name: 'Items' })).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('button', { name: 'Items' })).toHaveAttribute('aria-pressed', 'true');
   });
 
-  it('is a registered surface with a room route', () => {
-    const help = SURFACES.find((s) => s.id === 'help');
-    expect(help?.label).toBe('Help');
-    expect(help?.route?.('room-1')).toBe('/room/room-1/help');
-  });
 });
 
 describe('AppShell menu', () => {

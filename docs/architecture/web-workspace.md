@@ -23,9 +23,8 @@ defines, in keyboard-shortcut order:
 | `Cmd/Ctrl+3` | Workshop | `/room/:roomId/workshop` |
 | `Cmd/Ctrl+4` | Fights | `/room/:roomId/fights` |
 | `Cmd/Ctrl+5` | Leaders | `/room/:roomId/leaderboard` |
-| `Cmd/Ctrl+6` | Help | `/room/:roomId/help` (also `/help`, no room) |
 
-Workshop, Fight Log, Leaderboard, and Help are layout-agnostic panels. A route host wraps the
+Workshop, Fight Log, and Leaderboard are layout-agnostic panels. A route host wraps the
 panel as a full page; `Terminal` can render the same panel in a slot. Do not create a
 second implementation for a pane.
 
@@ -34,9 +33,12 @@ Other routes remain outside the workspace: `/rooms`, `/room/:roomId/settings`, `
 
 ## Help and guides
 
-`HelpPanel` (`components/HelpPanel.tsx`) is the **Help** surface; `HelpView` hosts it full
-page at `/room/:roomId/help` and, outside a room, `/help`. The header menu (desktop nav and
+`HelpPanel` (`components/HelpPanel.tsx`) is the Help page; `HelpView` hosts it full page at `/room/:roomId/help` and, outside a room, `/help`. The header menu (desktop nav and
 the ☰ menu) has a **Help and guides** link to those routes, like Workshop and Fight log.
+
+Help is **deliberately not a registered surface**: the phone tab bar already overflows at
+390px with five tabs, so a sixth would make it worse. It is a route only, and `App.tsx`
+lazy-loads `HelpView` so the bundled guides are a separate chunk.
 
 Its text is not fetched. `PLAYER_HANDBOOK.md`, `MONSTERS.md`, `CARDS.md` and `ITEMS.md` at
 the repo root are imported with Vite `?raw` and bundled at build time, so **`pnpm run

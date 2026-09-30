@@ -159,10 +159,10 @@ describe('Terminal pane slots (docs/architecture/web-workspace.md)', () => {
 
     // Left slot shows ring; its own value must stay selectable, but it must not offer
     // console again — that is the sibling (right) slot's surface.
-    expect(leftOptions.sort()).toEqual(['fights', 'help', 'leaderboard', 'ring', 'workshop']);
+    expect(leftOptions.sort()).toEqual(['fights', 'leaderboard', 'ring', 'workshop']);
     // Right slot shows console; it must not offer ring again — that is the sibling
     // (left) slot's surface.
-    expect(rightOptions.sort()).toEqual(['console', 'fights', 'help', 'leaderboard', 'workshop']);
+    expect(rightOptions.sort()).toEqual(['console', 'fights', 'leaderboard', 'workshop']);
   });
 
   it('puts host actions in each visible surface and never renders the removed extra header row', () => {

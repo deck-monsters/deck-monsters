@@ -1028,7 +1028,7 @@
 /* Help and guides (roadmap 39). Wide content (tables, ASCII art) scrolls inside its own box,
    never the page: the panel is a query container that can be as narrow as a 390px phone. */
 .help-sections { display: flex; flex-wrap: wrap; gap: .4rem; margin: .75rem 0 1rem; }
-.help-sections .btn[aria-current='page'] { color: var(--color-fg-bright); border-color: var(--color-accent); }
+.help-sections .btn[aria-pressed='true'] { color: var(--color-fg-bright); border-color: var(--color-accent); }
 .help-guide { overflow-wrap: anywhere; line-height: 1.5; }
 .help-guide h2 { font-size: 1.15rem; color: var(--color-fg-bright); margin: 1.25rem 0 .5rem; }
 .help-guide h3 { font-size: 1rem; color: var(--color-fg-bright); margin: 1.1rem 0 .4rem; }

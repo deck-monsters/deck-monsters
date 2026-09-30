@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, type ReactNode } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import { COMMAND_CATALOG } from '@deck-monsters/engine';
 import handbook from '../../../../PLAYER_HANDBOOK.md?raw';
 import monsters from '../../../../MONSTERS.md?raw';
@@ -81,21 +81,17 @@ export default function HelpPanel({ headerActions }: HelpPanelProps) {
     bodyRef.current?.scrollTo?.({ top: 0 });
   }
 
-  const guide = useMemo(
-    () => section.markdown === undefined ? null : (
-      <div className="help-guide">
-        <Markdown
-          source={stripGeneratedNotice(section.markdown)}
-          guideFiles={GUIDE_FILES}
-          onGuideLink={(file) => {
-            const target = SECTIONS.find((s) => s.file === file);
-            if (target) show(target.id);
-          }}
-        />
-      </div>
-    ),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [section],
+  const guide = section.markdown === undefined ? null : (
+    <div className="help-guide">
+      <Markdown
+        source={stripGeneratedNotice(section.markdown)}
+        guideFiles={GUIDE_FILES}
+        onGuideLink={(file) => {
+          const target = SECTIONS.find((s) => s.file === file);
+          if (target) show(target.id);
+        }}
+      />
+    </div>
   );
 
   return (
@@ -112,7 +108,7 @@ export default function HelpPanel({ headerActions }: HelpPanelProps) {
               key={s.id}
               type="button"
               className="btn"
-              aria-current={s.id === active ? 'page' : undefined}
+              aria-pressed={s.id === active}
               onClick={() => show(s.id)}
             >
               {s.label}

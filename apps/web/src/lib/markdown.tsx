@@ -1,6 +1,10 @@
 import { Fragment, type ReactNode } from 'react';
 
 /**
+ * DELIBERATELY SUPPORTS ONLY WHAT THE GENERATED GUIDES USE. `markdown.guides.test.tsx` renders
+ * the four real guides and fails if raw Markdown leaks through, so a generator change that
+ * adds new syntax shows up there rather than in a player's browser.
+ *
  * A deliberately small Markdown renderer for the generated guides at the repo root
  * (PLAYER_HANDBOOK.md, MONSTERS.md, CARDS.md, ITEMS.md — see
  * `packages/engine/src/build/markdown.ts`). It supports only the shapes those files use:
