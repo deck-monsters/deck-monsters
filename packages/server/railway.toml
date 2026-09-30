@@ -6,7 +6,7 @@ watchPatterns = ["packages/server/**", "packages/engine/**", "supabase/migration
 [deploy]
 # Applies pending supabase/migrations before the new release takes traffic; a failure fails the
 # deploy and the old release keeps serving.
-preDeployCommand = ["node packages/server/dist/migrate.js"]
+preDeployCommand = ["node packages/server/dist/migrate-cli.js"]
 healthcheckPath = "/health"
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 3

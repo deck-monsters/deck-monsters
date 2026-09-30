@@ -160,4 +160,46 @@ suite('runMigrations against Postgres', () => {
 		const n = await withDb((p) => p.query('select count(*)::int as n from supabase_migrations.schema_migrations'));
 		expect(n.rows[0].n).to.equal(2);
 	});
+
+	it('fails clearly within the lock timeout when a table lock is held elsewhere', async () => {
+		await withDb((p) => p.query('create table locked_t (id int)'));
+		const holder = new pg.Client({ connectionString: dbUrl });
+		await holder.connect();
+		try {
+			await holder.query('begin');
+			await holder.query('lock table locked_t in access exclusive mode');
+			const dir = tempDir({ '20260101000000_alter.sql': 'alter table locked_t add column x int;' });
+			const started = Date.now();
+			const report = await runMigrations({ connectionString: dbUrl, dir, log: quiet, lockTimeoutMs: 500 });
+			expect(Date.now() - started).to.be.lessThan(8000);
+			expect(report.ok).to.equal(false);
+			expect(report.failed?.filename).to.equal('20260101000000_alter.sql');
+			expect(report.failed?.error).to.match(/lock timeout/);
+		} finally {
+			await holder.query('rollback').catch(() => undefined);
+			await holder.end();
+		}
+	});
+
+	it('refuses a pending file that manages its own transaction, before applying anything', async () => {
+		const dir = tempDir({
+			'20260101000000_ok.sql': 'create table ok_t (id int);',
+			'20260102000000_tx.sql': 'begin; create table tx_t (id int); commit;',
+		});
+		const report = await runMigrations({ connectionString: dbUrl, dir, log: quiet });
+		expect(report.ok).to.equal(false);
+		expect(report.applied).to.have.length(0);
+		expect(report.failed?.error).to.match(/20260102000000_tx\.sql contains "begin".*own transaction/);
+	});
+
+	it('returns a failed report, not a hang, for an unreachable host', async () => {
+		const dir = tempDir({ '20260101000000_a.sql': 'select 1;' });
+		const report = await runMigrations({
+			connectionString: 'postgres://x@127.0.0.1:1/db',
+			dir,
+			log: quiet,
+		});
+		expect(report.ok).to.equal(false);
+		expect(report.failed?.filename).to.equal('(setup)');
+	});
 });
