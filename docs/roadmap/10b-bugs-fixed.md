@@ -4907,6 +4907,47 @@ next save, while the room keeps running. Tests: every registered card refuses fo
 
 **Status**: Fixed.
 
+### 208. A reset in one process did not reach another process's copy of the room — FIXED
+
+The web server and the Discord connector each run a `RoomManager`, with their own cache of
+loaded rooms, over one `rooms` table. A reset through the web detached the server's copy and
+wrote a tombstone version (bug 202), but the connector's loaded copy kept saving with newer
+clock versions, which landed and brought the old room back. Found by the roadmap 37
+whole-branch review (roadmap 10, item G).
+
+Root cause: a room's live state had one owner per process, not one owner overall, and nothing
+told the other process a reset happened.
+
+**Fix** (roadmap 40 task 4): `rooms.state_generation`. A load reads it with the state; every
+save also requires it to match; a reset (and a load's quarantine) bumps it in the same update
+as the tombstone. A save refused because the generation moved makes that process drop its copy
+(counted in `dm_room_state_generation_drops_total`), so its next request reloads the reset room.
+The drop only acts on the copy whose save was refused, never a newer load. An action taken on
+the stale copy is lost: the reset wins by design. Tests: two `RoomManager`s over real Postgres
+(`room-manager.pg.test.ts`). A process on an older release still sees only the tombstone.
+What a reset leaves behind (a running fight, open prompts, connector subscriptions) is open as
+item J.
+
+**Status**: Fixed.
+
+### 209. Long simulations leaked about 130 KB a fight — FIXED
+
+A `sim-gauntlet` process grew by about 2.5 GB per 12,000 fights (roadmap 10, item I), so
+roadmap 38's study ran one process per cell.
+
+Root cause: `simulate` builds its own contestants and removes them from the game after each
+fight. The ring disposes only boss contestants (a player's monster belongs to its
+beastmaster), and `game.dispose()` only sees monsters a beastmaster holds, so a
+`role: 'human'` sim monster's 30 s healing interval was never cleared. Its closure held the
+monster, and through its cards the whole ring, which held the previous fight's monster in turn.
+Production is not affected: every player monster there belongs to a beastmaster.
+
+**Fix** (roadmap 40 task 3): `simulate` disposes every contestant's timers after each fight.
+Memory stays flat (16 MB at 2,000 fights, against 279 MB before). The harness test checks every
+contestant's healing interval is cleared, and fails without the fix.
+
+**Status**: Fixed.
+
 ## Closed without a fix
 
 These were open investigations the owner closed on 2026-09-28. Reopen with new evidence.

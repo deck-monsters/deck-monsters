@@ -13,14 +13,14 @@ completed reasoning belongs in the [archive](../archive/README.md).
 
 | Area | Actionable work |
 |---|---|
-| [10 — Bug fixes](10-bug-fixes.md) | Indentation and spacing in feed messages (first example captured in the fight log); a room reset does not reach the Discord connector's copy of the room; a long simulation leaks memory |
+| [10 — Bug fixes](10-bug-fixes.md) | Indentation and spacing in feed messages (first example captured in the fight log); what a reset leaves behind (a running fight, open prompts, connector subscriptions); some simulation runs take far longer than expected |
 | [11 — Balance and mechanics](11-balance-and-mechanics.md) | The leftovers of the balance pass 36 closed (the level 1 Dragon's Faceswap watch, the level 5 Weeping Angel against the Minotaur, a group-fight card); simulation, telemetry, healing prices, crit ticks, fight threads, and combat decisions |
 | [12 — New content](12-new-content-backlog.md) | Dragon follow-ups (counter cards, flavour pass, live check); counters to the big swing cards (Sandstorm, Faceswap, Blink); concrete cards, monsters, card authoring, equipment, world, and endgame proposals |
 | [Item follow-ups](item-followups.md) | Prompt transport for items that ask a question |
 | [22 — Small leftovers](22-small-leftovers.md) | Cross-cutting decisions, manual verification gates, and small Workshop features |
 | [34 — Balance methodology](34-balance-methodology.md) | In progress: PR A (#408) and PR B (#409, catalogue and contexts, chassis and collections, lean best-hand search) merged. Still open: idealized action classes (task 5), excitement tooling (8), rings (10), the method reference doc (11) |
 | [37 — Room state as Postgres `jsonb`](37-room-state-in-postgres.md) | In progress (expand shipped; the close-out is [40](40-room-state-close-out-and-bugs.md)): replace the gzip+base64 `rooms.state_blob` with a queryable `jsonb` column (key-order and NUL risks, ordered saves, dual-write rollout with rollback, backfill, read-only views) |
-| [40 — Room state close-out and open bugs](40-room-state-close-out-and-bugs.md) | In progress: finish roadmap 37 (stop the dual-write, query views, then drop the blob) and fix bug items G, H (done) and I |
+| [40 — Room state close-out and open bugs](40-room-state-close-out-and-bugs.md) | Tasks done (release 2, query views, CI Postgres, the save crash, cross-process reset, the sim leak); the `state_blob` drop follows after deploy |
 | [39 — In-game help for every control](39-in-game-help.md) | Next (owner): the Workshop fixes a new player needed, Help inside the game, and Cursor browser passes ([39a](39a-cursor-first-pass.md)); then explain every option, command, button, screen and fight mechanic inside the game, with a guided start and a check that no new control ships unexplained |
 | [27 — Next passes](27-next-passes.md) | The order of the next passes: command and workshop bugs, the Dragon, realistic rings with boss balance, and the mega boss (done), then later work |
 

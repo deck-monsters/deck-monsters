@@ -437,7 +437,9 @@ safe even for a room the backfill has not converted (`state` null, blob present)
 the blob (logged at warn, counted as `source="blob"`), never writes the blob, and the room's
 next save fills `state`. Stop-writing and drop are separate deploys (roadmap 40).
 
-1. Apply no schema change for this release (there is none).
+1. The pre-deploy runner applies this release's two migrations (roadmap 40): the read-only
+   query views with `card_types`, and `rooms.state_generation` (a metadata-only column add).
+   Neither changes what the old release reads or writes.
 2. Deploy release 2 to **both** services, the server and the Discord connector. Saves write
    `state` and `state_version` only, so `state_blob` is stale for every room from the first
    save on. A reset or a load-time quarantine moves a present blob to `quarantined_blob` and
@@ -445,6 +447,9 @@ next save fills `state`. Stop-writing and drop are separate deploys (roadmap 40)
    data.
 3. Watch `dm_room_state_source_total{source="blob"}`: it should stop rising as rooms save.
    Run the backfill (default mode, safe while live) for any straggler.
+4. A reset reaches another process's copy only when both run this release (bug 208): until
+   the connector is upgraded, only the tombstone version protects a reset from its saves.
+   No connector is deployed today.
 
 **Before the DROP migration** (a later, separate PR that also removes the fallback, the
 schema column, the reset/quarantine nulling and the leaderboard/backfill blob reads;
