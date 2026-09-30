@@ -64,8 +64,8 @@ agent in. To get a fight going from the console in a few commands:
 - `equip <monster> with "Hit", "Hit", "Heal", …` equips in one shot. Card names go in double
   quotes, comma-separated; unavailable names are reported and skipped, and any slots left
   over reopen the interactive prompt (answer with **Done equipping**). While that prompt is
-  open, a command typed into the console is refused ("… isn't one of the cards") and the
-  prompt is asked again; finish the equip before sending the monster anywhere.
+  open, a command typed into the console is refused ("… is a command, not a card. Cancel this
+  question first, then run it.") and the prompt is asked again; finish the equip before sending the monster anywhere.
 - `equip` **rebuilds the hand from scratch** (`monster.cards = cards`), returning the old hand
   to your deck. Equipping one card onto a monster that held eight leaves it holding one.
 - A monster may only enter the ring with a **full** deck (`cards.length === cardSlots`,
