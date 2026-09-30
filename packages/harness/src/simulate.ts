@@ -769,6 +769,15 @@ export async function simulate(config: SimConfig): Promise<SimResult> {
 				removeHitListeners();
 				for (const c of contestants) {
 					stableIdToLabel.delete(c.monster.stableId as string);
+					// Roadmap 10 item I. The harness owns every contestant it builds, but the ring
+					// only disposes `isBoss` ones (`disposeTransientContestant`: a player's monster
+					// belongs to its beastmaster in play), and `game.dispose()` never sees these
+					// because no beastmaster holds them. A `role: 'human'` monster's 30s healing
+					// interval therefore stayed in Node's timer list, and its closure kept the
+					// monster, its deck, and through the cards the whole Ring alive: about 130 KB
+					// per fight (2.5 GB per 12,000). Bosses are disposed twice, harmlessly.
+					(c.monster as { disposeTimers?: () => void }).disposeTimers?.();
+					(c.character as { disposeTimers?: () => void }).disposeTimers?.();
 				}
 				for (const uid of simUserIds) {
 					delete charMap.characters[uid];
