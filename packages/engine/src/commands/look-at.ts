@@ -1,7 +1,13 @@
 import type { registerHandler } from './index.js';
 
+// The trailing group is `( .+|(?<= )\S.*)?`. It used to be `( .+)?`, which broke the bare
+// `look at <name>` form (`look at Fluffy`, `look at Hit`): `(?:at )?` had already eaten the
+// only space, so nothing matched and the catalogued commands were unreachable. The lookbehind
+// lets the name start right after a space the pattern already consumed, while a type word
+// such as `monster` still needs its own space — `look at monstrous` falls through to the
+// default `game.lookAt` instead of being read as type `monster`.
 const LOOK_AT_REGEX =
-	/look (?:at )?(?:the )?(monster(?:s)? manual|player(?:s)? handbook|(?:dungeon master(?:s)|dm)? guide|monsters in|monsters|monster|character|cards in|card inventory|all cards|inventory|cards|card|deck|item|items|ring|dmg)?( .+)?$/i;
+	/^look (?:at )?(?:the )?(monster(?:s)? manual|player(?:s)? handbook|(?:dungeon master(?:s)|dm)? guide|monsters in|monsters|monster|character|cards in|card inventory|all cards|inventory|cards|card|deck|item|items|ring|dmg)?( .+|(?<= )\S.*)?$/i;
 
 function lookAtAction({ channel, character, game, results, user }: any): Promise<unknown> {
 	return Promise.resolve()

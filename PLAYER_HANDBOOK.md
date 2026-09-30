@@ -178,11 +178,11 @@ Some fights bring a ring event that changes the teams for that fight only: Commo
 ### Items
 
 - `look at items` — View your items
-- `look at [item name]` — View details about a specific item (e.g. `look at Potion`)
+- `look at [item name]` — View details about a specific item (e.g. `look at Potion of Healing`)
 - `use item` — Use one of your items on yourself
-- `use [item] on [monster]` — Use an item on one of your monsters (e.g. `use Potion on Fluffy`)
-- `give [item] to [monster]` — Give an item to a monster to carry (e.g. `give Healing Potion to Fluffy`)
-- `take [item] from [monster]` — Retrieve an item from a monster (e.g. `take Healing Potion from Fluffy`)
+- `use [item] on [monster]` — Use an item on one of your monsters (e.g. `use Potion of Healing on Fluffy`)
+- `give [item] to [monster]` — Give an item to a monster to carry (e.g. `give Potion of Healing to Fluffy`)
+- `take [item] from [monster]` — Retrieve an item from a monster (e.g. `take Potion of Healing from Fluffy`)
 
 ### The Shop
 

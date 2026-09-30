@@ -45,11 +45,11 @@ export const COMMAND_CATALOG: CommandEntry[] = [
 
 	// Items
 	{ command: 'look at items', description: 'View your items', category: 'items' },
-	{ command: 'look at [item name]', description: 'View details about a specific item', category: 'items', example: 'look at Potion' },
+	{ command: 'look at [item name]', description: 'View details about a specific item', category: 'items', example: 'look at Potion of Healing' },
 	{ command: 'use item', description: 'Use one of your items on yourself', category: 'items' },
-	{ command: 'use [item] on [monster]', description: 'Use an item on one of your monsters', category: 'items', example: 'use Potion on Fluffy' },
-	{ command: 'give [item] to [monster]', description: 'Give an item to a monster to carry', category: 'items', example: 'give Healing Potion to Fluffy' },
-	{ command: 'take [item] from [monster]', description: 'Retrieve an item from a monster', category: 'items', example: 'take Healing Potion from Fluffy' },
+	{ command: 'use [item] on [monster]', description: 'Use an item on one of your monsters', category: 'items', example: 'use Potion of Healing on Fluffy' },
+	{ command: 'give [item] to [monster]', description: 'Give an item to a monster to carry', category: 'items', example: 'give Potion of Healing to Fluffy' },
+	{ command: 'take [item] from [monster]', description: 'Retrieve an item from a monster', category: 'items', example: 'take Potion of Healing from Fluffy' },
 
 	// Shop
 	{ command: 'visit the shop', description: 'Browse and buy items from the merchant', category: 'shop' },

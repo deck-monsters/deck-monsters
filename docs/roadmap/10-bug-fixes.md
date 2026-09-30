@@ -8,26 +8,10 @@ tags: [bugs, roadmap, open]
 ---
 # Bug Fixes and Code Quality
 
-**Status:** Active — open items. Fixed work and its root causes live only in
+**Status:** Active — one open item. Fixed work and its root causes live only in
 [`10b-bugs-fixed.md`](10b-bugs-fixed.md).
 
 ## Open items
-
-### G. `look at <monster|card|item name>` matches no handler
-
-**Owner:** Engine commands. Found by the catalogue handler test in
-`packages/engine/src/commands/help.test.ts` (roadmap 39, C1). The catalogue lists
-`look at [monster]`, `look at [card name]` and `look at [item name]` (and `help` tells
-players to use `look at [monster]`), but `look at Fluffy`, `look at Hit` and `look at Potion`
-are not recognised. Root cause: `LOOK_AT_REGEX` in `commands/look-at.ts` is
-`look (?:at )?(...type words...)?( .+)?$`; `(?:at )?` consumes the space that `( .+)?`
-requires, so a name with no type word (`look at fluffy`) fails to match. Only the typed forms
-(`look at monster fluffy`, `look at card heal`) work. The handler's `default:` branch
-(`game.lookAt`) shows the bare form was intended. Likely fix: `look (?:at)?(?:\s+the)?` with
-the optional type group and `(\s+.+)?` adjusted to match. The three entries are listed in
-`KNOWN_UNREACHABLE` in that test, which fails once they work so the list gets emptied.
-
-- [ ] Fix the regex, add `look-at.test.ts` cases for the bare forms, empty `KNOWN_UNREACHABLE`.
 
 ### F. Indentation and spacing in feed messages
 

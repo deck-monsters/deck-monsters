@@ -124,7 +124,7 @@ implementers, one independent review each, the orchestrator writes every player-
 
 | # | Task | Status |
 |---|---|---|
-| C1 | **Command help** (task 7, commands): `help <word>`; the full list says it exists; a test that every catalogue entry (its example, or the command itself) reaches a real handler, and that every entry with a `[name]` has an example | Done: `help <word>` and the catalogue handler test are in `commands/help.test.ts`; the test found `look at <name>` unreachable (see `10-bug-fixes.md`) |
+| C1 | **Command help** (task 7, commands): `help <word>`; the full list says it exists; a test that every catalogue entry (its example, or the command itself) reaches a real handler, and that every entry with a `[name]` has an example | Done: `help <word>` and the catalogue handler test are in `commands/help.test.ts`; the test found `look at <name>` unreachable (bug 211, fixed) |
 | C2 | **Every button and place explains itself** (tasks 4, 5, 7 on the web): a `title` on every button, the surface descriptions, subtitles on Fights and Leaders, the Ring's empty state says how a fight starts; the walk's leftovers (OWNER and MEMBER, placeholders that look filled in); a test that fails on a button without a `title` | Planned |
 | C3 | **A guided start** (task 6): the Console's getting-started steps also show in the Workshop, where most new players start on a phone; the waiting step says a boss can be summoned; a last step changes a card | Planned, after C2 (same files) |
 | C4 | **First-time mechanic notes** (task 4, mechanics): engine tags on the four announcements; the web shows each rule once per player | Planned, after C2 (RingPane) |
