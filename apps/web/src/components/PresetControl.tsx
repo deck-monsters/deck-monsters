@@ -45,7 +45,7 @@ export default function PresetControl({
           ))}
         </select>
         <button
-          title="Put this preset's cards on the monster"
+          title="Replace the monster's deck with this preset's cards"
           type="button"
           className="btn"
           disabled={disabled || !selectedPreset}

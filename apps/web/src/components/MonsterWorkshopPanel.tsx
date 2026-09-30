@@ -295,8 +295,9 @@ export default function MonsterWorkshopPanel({
           type="button"
           className="btn"
           disabled={busy || locked || monster.cards.length < 1}
+          // No aria-label: the visible words are the accessible name, so voice control's
+          // "click Unequip all" works (WCAG 2.5.3); the title adds the detail.
           title={`Move all of ${monster.name}'s cards back to your cards`}
-          aria-label={`Move all of ${monster.name}'s cards back to your cards`}
           onClick={() => onUnequipAll()}
         >
           Unequip all

@@ -11,7 +11,8 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
 // vitest runs with apps/web as the working directory (jsdom, so import.meta.url is not a file URL).
-const SRC = join(process.cwd(), 'src');
+// Resolved from this file, not the working directory, so running from the repo root works too.
+const SRC = join(__dirname, '..');
 
 function tsxFiles(dir: string): string[] {
   const out: string[] = [];
