@@ -1,13 +1,14 @@
 #!/usr/bin/env node
 /**
- * Roadmap 38: a human against the Gauntlet, per candidate fix.
+ * Roadmap 38: a human against the Gauntlet, shipped rules against the "before" variants.
  *
  * `node dist/scripts/sim-gauntlet.js --variant <name|none|reference> --out result.json
  *   [--fights 1000] [--pair-fights 3000] [--batch 20] [--lone 0,1,3,5] [--pair 1,3] [--ambush 1,3]`
- * (`--ambush` needs no event, so use it with `--variant none` or `rivals-outnumbered`).
+ * (`--ambush` needs no event, so use it with `--variant none` (shipped) or `no-rivals-outnumbered` (before)).
  *
  * `reference` is the same human(s) against the ring's normal bosses with no event. Any other
- * value is a variant from `balance/variants.ts` (`none` applies nothing) with the Gauntlet
+ * value is a variant from `balance/variants.ts` (`none` applies nothing, so it measures the shipped rules;
+ * `no-rivals-outnumbered` and `event-weights-eligible` are the before) with the Gauntlet
  * forced (`SimConfig.forceRingEvent`), so the extras are spawned by the ring's own rules.
  *
  * Lone human: one row per monster type per level 0/1/3/5, a likely deck, the ring's first

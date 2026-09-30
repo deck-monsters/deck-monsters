@@ -17,24 +17,28 @@ import {
 } from '../helpers/targeting-strategies.js';
 
 /**
- * Switches for the harness's before/after on the Gauntlet (roadmap 38; `balance/variants.ts`).
- * All OFF in play: flipping one changes the game, so only a harness variant does, and undoes it.
- * - `rivalsWhenAlone`: with exactly one human in the fight, an armed Gauntlet drops team
- *   alignment for targeting (as Blood Feud's `freeForAll` does), so its bosses may hit each other.
- * - `rivalsWhenOutnumbered`: in any fight (not a mega boss's), when bosses (minions included)
- *   outnumber the non-boss contestants at fight start, targeting drops team alignment as above.
- * - `extrasAsMinions`: the Gauntlet's extra bosses arrive as minions (a third of their HP, as
- *   an ambush's do) instead of at full strength.
+ * The Gauntlet rule (roadmap 38; `balance/variants.ts`). On in play, like `PIN_RULES`; the
+ * harness switches it off for before/after.
+ * - `rivalsWhenOutnumbered`: in any fight except a mega boss's, when bosses (ambush minions
+ *   included) outnumber the humans at fight start, targeting drops team alignment (as Blood
+ *   Feud's `freeForAll` does), so the bosses may hit each other and every monster fights for
+ *   itself. Equal numbers keep their teams.
+ *
+ * Why: a lone human against the Gauntlet won 0-8% before and 25/36/60/71% at beginner/1/3/5
+ * after; two humans went 1%/14% to 36%/50% at levels 1/3; an ordinary ambush went 15%/35% to
+ * 59%/68% at levels 1/3. See `docs/roadmap/38-gauntlet.md`.
  */
-export const GAUNTLET_RULES = { rivalsWhenAlone: false, rivalsWhenOutnumbered: false, extrasAsMinions: false };
+export const GAUNTLET_RULES = { rivalsWhenOutnumbered: true };
 
 /**
- * Harness switch (roadmap 38), off in play. When on, `selectRingEvent` picks by weight among
- * ALL events and returns no event when the pick is ineligible, instead of picking among the
- * eligible ones only (which makes a rarely-eligible event as likely as its weight share of
- * whatever happens to be eligible, e.g. the Gauntlet is 100% of a 1-human, 0-boss roster's rolls).
+ * Ring event frequency (roadmap 38). On in play; the harness switches it off for before/after.
+ * When on, `selectRingEvent` picks by weight among ALL events and fires nothing if the pick is
+ * ineligible. When off it picks among the eligible events only, which made a rarely-eligible
+ * event as likely as its weight share of whatever happened to be eligible: the Gauntlet was
+ * 100% of a lone player's countdowns and is now 30% of the rolls (7.5% of countdowns, once the
+ * event chance is applied, down from 25%). See `docs/roadmap/38-gauntlet.md`.
  */
-export const RING_EVENT_RULES = { globalWeights: false };
+export const RING_EVENT_RULES = { globalWeights: true };
 
 export type RingEventId =
 	| 'gauntlet'

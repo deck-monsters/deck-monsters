@@ -133,7 +133,7 @@ About once a day a mega boss comes to the ring. You get half an hour's warning a
 
 While any boss is still fighting, every challenger without a team stands together as The Challengers and never attacks another challenger. When the last boss falls the alliance ends, and it is every monster for itself.
 
-Some fights bring a ring event that changes the teams for that fight only: Common Cause (every challenger against the bosses, and the survivors win together), House War (two houses, and the last house standing wins together), and Blood Feud (no teams at all).
+Some fights bring a ring event that changes the teams for that fight only: Common Cause (every challenger against the bosses, and the survivors win together), House War (two houses, and the last house standing wins together), and Blood Feud (no teams at all). Whenever the bosses outnumber the challengers, as they do in The Gauntlet or an ambush, they turn on each other too, and every monster fights for itself.
 
 ## All Commands
 

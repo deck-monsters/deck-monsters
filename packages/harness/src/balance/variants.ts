@@ -183,42 +183,12 @@ export const VARIANTS: Record<string, Variant> = {
 			};
 		},
 	},
-	'gauntlet-rivals-alone': {
-		about: 'Roadmap 38 candidate: with one human in a Gauntlet, bosses ignore teams and may hit each other',
-		apply: () => toggle(GAUNTLET_RULES, 'rivalsWhenAlone'),
-	},
-	'gauntlet-minions': {
-		about: 'Roadmap 38 candidate: the Gauntlet\'s extra bosses arrive as minions (a third of their HP)',
-		apply: () => toggle(GAUNTLET_RULES, 'extrasAsMinions'),
-	},
-	'gauntlet-rivals-minions': {
-		about: 'Roadmap 38 candidate: both Gauntlet changes at once',
-		apply: () => {
-			const undoRivals = toggle(GAUNTLET_RULES, 'rivalsWhenAlone');
-			const undoMinions = toggle(GAUNTLET_RULES, 'extrasAsMinions');
-			return () => {
-				undoMinions();
-				undoRivals();
-			};
-		},
-	},
-	'rivals-outnumbered': {
-		about: 'Roadmap 38 candidate: when bosses (minions included) outnumber the humans at fight start, bosses ignore teams and may hit each other',
+	'no-rivals-outnumbered': {
+		about: 'Roadmap 38 before: bosses outnumbering the humans keep their teams, so they never hit each other',
 		apply: () => toggle(GAUNTLET_RULES, 'rivalsWhenOutnumbered'),
 	},
-	'rivals-outnumbered-minions': {
-		about: 'Roadmap 38 candidate: rivals-outnumbered plus the Gauntlet\'s extras as minions',
-		apply: () => {
-			const undoRivals = toggle(GAUNTLET_RULES, 'rivalsWhenOutnumbered');
-			const undoMinions = toggle(GAUNTLET_RULES, 'extrasAsMinions');
-			return () => {
-				undoMinions();
-				undoRivals();
-			};
-		},
-	},
-	'event-weights-global': {
-		about: 'Roadmap 38 candidate: a ring event is picked by weight among all events, and none fires if the pick is ineligible',
+	'event-weights-eligible': {
+		about: 'Roadmap 38 before: a ring event is picked among the eligible ones only, so a lone player always rolled the Gauntlet',
 		apply: () => toggle(RING_EVENT_RULES, 'globalWeights'),
 	},
 	'rest-3d4': { about: 'Gloaming Rest: an undisturbed rest heals 3d4 (the old heal), not 4 to all missing', apply: () => cardStatic('Gloaming Rest', 'restShape', 'dice') },

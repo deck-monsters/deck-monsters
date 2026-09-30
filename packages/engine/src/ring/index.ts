@@ -280,8 +280,8 @@ export class Ring extends BaseClass {
 	 */
 	ringEvent?: RingEventDefinition;
 	/**
-	 * Roadmap 38 harness switch (`GAUNTLET_RULES.rivalsWhenAlone`): decided once at fight start
-	 * from the human count, so a human dying mid-fight cannot flip targeting. Cleared with the
+	 * Roadmap 38 (`GAUNTLET_RULES.rivalsWhenOutnumbered`): decided once at fight start from the
+	 * boss and human counts, so a human dying mid-fight cannot flip targeting. Cleared with the
 	 * encounter.
 	 */
 	private gauntletRivals = false;
@@ -686,13 +686,21 @@ export class Ring extends BaseClass {
 		this.ringEvent?.apply(this.contestants);
 		const humanCount = this.contestants.filter(contestant => !contestant.isBoss).length;
 		const bossCount = this.contestants.filter(contestant => contestant.isBoss).length;
+		// Bosses that outnumber the humans (minions count as bosses) turn on each other too.
+		// A mega boss's party is a designed pack and keeps its alliance. With no human in the fight
+		// there is nobody to be outnumbered, and a boss-only fight (the harness's team fights, or
+		// every challenger withdrawn) keeps whatever teams it was given.
 		this.gauntletRivals =
-			(GAUNTLET_RULES.rivalsWhenAlone && this.ringEvent?.id === 'gauntlet' && humanCount === 1) ||
-			// Bosses that outnumber the humans (minions count as bosses) turn on each other too.
-			// A mega boss's party is a designed pack and keeps its alliance.
-			(GAUNTLET_RULES.rivalsWhenOutnumbered &&
-				bossCount > humanCount &&
-				!this.contestants.some(contestant => contestant.mega));
+			GAUNTLET_RULES.rivalsWhenOutnumbered &&
+			humanCount > 0 &&
+			bossCount > humanCount &&
+			!this.contestants.some(contestant => contestant.mega);
+		if (this.gauntletRivals) {
+			this.emit('narration', {
+				narration:
+					'Outnumbered is not outmatched. The bosses turn on one another, and every monster in the ring now fights for itself.',
+			});
+		}
 
 		this.contestants.forEach(({ userId, monster, minion }) => {
 			if (minion) monster.hp = Math.min(monster.hp, minionHp(monster));
@@ -1822,11 +1830,7 @@ export class Ring extends BaseClass {
 		// come out of the level budget, so they are weaker the more of them there are.
 		for (let i = 0; i < (ringEvent.extraBosses ?? 0); i++) {
 			if (!this.canAcceptBoss({ ignoreQuota: true }).ok) break;
-			this.spawnBoss({
-				deferFightTimer: true,
-				ignoreQuota: true,
-				asMinion: GAUNTLET_RULES.extrasAsMinions,
-			});
+			this.spawnBoss({ deferFightTimer: true, ignoreQuota: true });
 		}
 	}
 
@@ -1925,11 +1929,8 @@ export class Ring extends BaseClass {
 		summonedAt,
 		ambush,
 		ignoreQuota,
-		asMinion,
 	}: {
 		deferFightTimer?: boolean;
-		/** Force a lesser minion (a third of its HP) whatever the quota says. Roadmap 38's Gauntlet switch. */
-		asMinion?: boolean;
 		/** A timer spawn that may bring one boss beyond one per human. */
 		ambush?: boolean;
 		/** The Gauntlet's extra bosses. */
@@ -1943,7 +1944,7 @@ export class Ring extends BaseClass {
 		const contestant = this.getSpawnedBossContestant();
 		// A boss beyond one per human is an ambush's lesser minion.
 		const humans = this.contestants.filter(c => !c.isBoss).length;
-		const minion = asMinion || (ambush && humans > 0 && this.bossCount >= humans);
+		const minion = ambush && humans > 0 && this.bossCount >= humans;
 		// Weakened on arrival, so the roster shows it, and again as the fight starts.
 		if (minion) contestant.monster.hp = minionHp(contestant.monster);
 
@@ -1987,9 +1988,8 @@ export class Ring extends BaseClass {
 		// withdrew, the matchup the quota exists to prevent (a Codex review of PR #403).
 		const humans = this.contestants.filter(contestant => !contestant.isBoss).length;
 		const gauntletExtras = this.ringEvent?.extraBosses ?? 0;
-		const asMinions = GAUNTLET_RULES.extrasAsMinions;
-		const fullAllowance = this.bossAllowance(false) + (asMinions ? 0 : gauntletExtras);
-		const minionAllowance = (humans > 0 ? 1 : 0) + (asMinions ? gauntletExtras : 0);
+		const fullAllowance = this.bossAllowance(false) + gauntletExtras;
+		const minionAllowance = humans > 0 ? 1 : 0;
 		const kept = [
 			...bosses.filter(boss => !boss.minion).slice(0, fullAllowance),
 			...bosses.filter(boss => boss.minion).slice(0, minionAllowance),
