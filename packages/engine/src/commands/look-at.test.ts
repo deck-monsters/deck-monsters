@@ -67,6 +67,11 @@ describe('commands/look-at.ts', () => {
 			expect(parse('look at player handbook')).to.deep.equal(['player handbook', '']);
 		});
 
+		it('leaves a bare look at, and look, unrecognised', () => {
+			expect(parse('look at')).to.equal(null);
+			expect(parse('look')).to.equal(null);
+		});
+
 		it('sends a bare name to game.lookAt', async () => {
 			const game = { lookAt: sinon.stub().resolves(), log: sinon.stub() };
 			await action({ channel: sinon.stub(), character: {}, game, results: 'look at fluffy'.match(regex), user: { id: 'u1' } });

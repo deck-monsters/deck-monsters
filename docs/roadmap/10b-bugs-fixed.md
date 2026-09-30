@@ -4995,6 +4995,24 @@ pins how the bare and typed forms parse, and the catalogue test now passes for e
 
 **Status**: Fixed.
 
+### 212. Discord `/status` and `/monsters` sent commands no handler matched — FIXED
+
+Found by the C1 review once the bare `look at <name>` form (bug 211) started claiming their
+text. `/status` sent `look at me` and `/monsters` sent `look at my monsters`; neither was ever a
+catalogue command, so the engine found no handler and the slash commands replied "Could not
+retrieve your status." / "Could not list your monsters." every time. After bug 211 they would
+have "succeeded" with a check mark while the engine announced "I don't see a me here."
+
+Root cause: the slash commands sent free text that was never checked against the dispatcher.
+
+**Fix**: `/status` sends `look at character` and `/monsters` sends `look at monsters`, both
+catalogue commands. `look-commands.test.ts` in the Discord connector pins the text each sends.
+The same change guards a bare `look at` (the name cannot be `at` alone) and adds a test that
+`look at presets for <monster>` reaches the presets action, since that depends on presets
+registering before look-at.
+
+**Status**: Fixed.
+
 ## Closed without a fix
 
 These were open investigations the owner closed on 2026-09-28. Reopen with new evidence.

@@ -16,8 +16,8 @@ The owner (2026-09-30): "we need way better in game documentation / narration of
 single option, command, button, screen, etc does so that it's really clear to people how to get
 started playing and what controls are available to them."
 
-- `help` prints the command catalogue (`packages/engine/src/commands/catalog.ts`); `help <word>` lists the commands containing that word with an example, and `commands/help.test.ts` checks every entry reaches a real handler;
-- `help` prints the command catalogue (`packages/engine/src/commands/catalog.ts`);
+Today the help is scattered:
+- `help` prints the command catalogue (`packages/engine/src/commands/catalog.ts`); `help <word>` narrows it to matching commands, and a test checks every entry reaches a handler;
 - the player handbook (`PLAYER_HANDBOOK.md`, generated from `packages/engine/src/build`) lives
   outside the game;
 - the first-run flow trains a first monster (see

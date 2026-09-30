@@ -140,8 +140,7 @@ export function loadHandlers(): void {
 	handlersLoaded = true;
 	preCharacterHandlers.push(helpHandler);
 	historyHandlers();
-	// Presets before look-at: `look at presets for X` would otherwise be read by look-at's
-	// bare `look at <name>` form as a thing called "presets for X".
+	// Presets must register before look-at: its bare `look at <name>` form would claim `look at presets for X`.
 	presetHandlers(registerHandler);
 	lookAtHandlers(registerHandler);
 	monsterHandlers(registerHandler);

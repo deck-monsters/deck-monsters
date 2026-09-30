@@ -198,3 +198,28 @@ describe('help <word>', () => {
 		expect(out).to.include('Type help and a word to see those commands with an example, like help preset.\n\n-- One Thing Worth Knowing --');
 	});
 });
+
+describe('command registration order', () => {
+	it('look at presets for <monster> reaches the presets action, not look-at', async () => {
+		loadHandlers();
+		const calls: string[] = [];
+		const character = {
+			getPresets: (name: string) => {
+				calls.push(`presets:${name}`);
+				return {};
+			},
+		};
+		const game = {
+			getCharacter: () => Promise.resolve(character),
+			lookAt: () => {
+				calls.push('lookAt');
+				return Promise.resolve();
+			},
+			log: () => undefined,
+		};
+		const action = listen({ command: 'look at presets for fluffy', game });
+		await action!({ channel: () => Promise.resolve(''), channelName: 'test', isDM: true, user: { id: 'u1', name: 'T' } });
+		expect(calls).to.include('presets:fluffy');
+		expect(calls).not.to.include('lookAt');
+	});
+});
