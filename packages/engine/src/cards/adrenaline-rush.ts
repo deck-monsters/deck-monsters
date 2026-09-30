@@ -10,8 +10,9 @@ export class AdrenalineRushCard extends EcdysisCard {
 		...EcdysisCard.defaults,
 	};
 
-	constructor({ boosts, icon = '❗️', ...rest }: Record<string, any> = {}) {
-		super({ boosts, icon, ...rest });
+	// Same rule as Ecdysis: keep only this card's own options, never a caller's `...rest`.
+	constructor({ boosts, icon = '❗️' }: Record<string, any> = {}) {
+		super({ boosts, icon });
 	}
 }
 

@@ -108,7 +108,11 @@ const hydrateCharacter = (characterObj: CharacterObj, log?: (msg: string) => voi
 	const character = new CharacterClass(options as Record<string, unknown>) as any;
 
 	// If minimum deck size increased since last save, fill it up
-	character.deck = _fillDeck((options as any).deck as unknown[], options, character);
+	// Draw options are CARD options, not the character's. Passing the character's whole options
+	// here (2026-09-24 production crash) let cards that keep their rest options (Ecdysis, Adrenaline
+	// Rush) capture `deck`, the array they were pushed into: a circular structure that made every
+	// save of the room throw.
+	character.deck = _fillDeck((options as any).deck as unknown[], {}, character);
 
 	return character;
 };
