@@ -53,6 +53,8 @@ export const rooms = pgTable('rooms', {
 	state: jsonb('state').$type<SerializedGame>(),
 	/** Monotonic save stamp: a save lands only when newer, and it never rewinds (roadmap 37). */
 	stateVersion: bigint('state_version', { mode: 'number' }).notNull().default(0),
+	/** Bumped by a reset; every save must match the generation its process loaded (bug G). */
+	stateGeneration: bigint('state_generation', { mode: 'number' }).notNull().default(0),
 	quarantinedState: jsonb('quarantined_state').$type<SerializedGame>(),
 	fightCounter: integer('fight_counter').notNull().default(0),
 	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),

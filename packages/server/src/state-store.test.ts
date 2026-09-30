@@ -98,4 +98,55 @@ describe('PostgresStateStore', () => {
 		returningStub.rejects(new Error('boom'));
 		await expect(new PostgresStateStore(db).save('r', state)).to.be.rejectedWith('boom');
 	});
+
+	describe('generation guard (bug G)', () => {
+		function dbWithProbe(probe: Array<{ generation: number }>) {
+			const { db, where } = makeDbStub2();
+			const limit = sinon.stub().resolves(probe);
+			const select = sinon.stub().returns({ from: () => ({ where: () => ({ limit }) }) });
+			return { db: Object.assign(db, { select }) as never, where, select };
+		}
+		function makeDbStub2() {
+			const m = makeDb([]);
+			return { db: (m.db as unknown) as Record<string, unknown>, where: m.where };
+		}
+
+		it('adds state_generation to the guarded update', async () => {
+			const { db, where } = dbWithProbe([]);
+			await new PostgresStateStore(db, { generation: 7 }).save('r', state);
+			const rendered = new PgDialect().sqlToQuery(where.firstCall.args[0] as SQL);
+			expect(rendered.sql).to.contain('"state_generation" =');
+			expect(rendered.params).to.include(7);
+		});
+
+		it('omits the generation guard when none is set', async () => {
+			const { db, where } = makeDb([]);
+			await new PostgresStateStore(db).save('r', state);
+			expect(new PgDialect().sqlToQuery(where.firstCall.args[0] as SQL).sql).to.not.contain('state_generation');
+		});
+
+		it('calls onGenerationMoved once when the row is at another generation', async () => {
+			const { db } = dbWithProbe([{ generation: 8 }]);
+			const moved = sinon.spy();
+			const store = new PostgresStateStore(db, { generation: 7, onGenerationMoved: moved });
+			await store.save('r', state);
+			await store.save('r', state);
+			expect(moved.calledOnce).to.be.true;
+		});
+
+		it('does not call it for a same-generation stale save, a deleted row, or a landed save', async () => {
+			for (const probe of [[{ generation: 7 }], []]) {
+				const { db } = dbWithProbe(probe);
+				const moved = sinon.spy();
+				await new PostgresStateStore(db, { generation: 7, onGenerationMoved: moved }).save('r', state);
+				expect(moved.called).to.be.false;
+			}
+			const { db, select } = dbWithProbe([{ generation: 9 }]);
+			(db as any).update = (makeDb([{ id: 'r' }]).db as any).update;
+			const moved = sinon.spy();
+			await new PostgresStateStore(db, { generation: 7, onGenerationMoved: moved }).save('r', state);
+			expect(moved.called).to.be.false;
+			expect(select.called).to.be.false;
+		});
+	});
 });

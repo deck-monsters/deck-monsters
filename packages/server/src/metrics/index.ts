@@ -264,6 +264,12 @@ export const roomStateSavesStale = new Counter({
 	registers: [registry],
 });
 
+export const roomStateGenerationDrops = new Counter({
+	name: 'dm_room_state_generation_drops_total',
+	help: 'Loaded rooms dropped because another process reset the room (its state generation moved)',
+	registers: [registry],
+});
+
 export const roomStateSource = new Counter({
 	name: 'dm_room_state_source_total',
 	help: 'Room loads that restored from the jsonb state column (source is always state since roadmap 37 release 2)',
