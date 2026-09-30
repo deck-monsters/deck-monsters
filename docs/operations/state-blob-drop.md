@@ -8,7 +8,7 @@ tags: [deployment, postgres, roadmap-37]
 ---
 # Step B: dropping `rooms.state_blob`
 
-Status: **in the PR after #417.** Step A (#417: no code references the column, and stale blobs
+Status: **shipped in #418** (live 2026-09-30 22:15 UTC; the column is gone in production). Step A (#417: no code references the column, and stale blobs
 are cleared) went live on both services on 2026-09-30. A read-only check before this migration
 was written found 7 rooms, all with `state` and none with a blob. Context:
 [deployment runbook](deployment.md#room-state-migration-to-jsonb-roadmap-37).

@@ -136,7 +136,7 @@ owner decision in [11](11-balance-and-mechanics.md).
   roadmap 36 closed the pin rule, Mesmerize, Harden, the level 7 Dragon, and the per-fight
   split. The Faceswap watch, the level 5 Weeping Angel against the Minotaur, and a group-fight
   card remain.
-- **Room state as `jsonb`, not a gzip blob** ([37](37-room-state-in-postgres.md), owner
+- **Room state as `jsonb`, not a gzip blob** ([37](../archive/roadmap/37-room-state-in-postgres.md), owner
   2026-09-29). The plan is ready to pick up after PR #412. It is one expand PR (key-order
   independence, the engine serializing an object, the schema, a versioned dual-write server
   store, a backfill script, and read-only query views), then a small contract PR that drops

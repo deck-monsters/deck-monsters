@@ -161,6 +161,11 @@ recorded in `supabase_migrations.schema_migrations`.
   `CONCURRENTLY` is refused before anything runs. A plpgsql `begin` inside a `$$` body is fine.
 - **It says what it did.** The deploy log starts with `migrate: N files in <dir>, M recorded`
   and ends with `migration run finished`, with the count applied and skipped.
+- **Removing a column takes three deploys.** Stop writing it, then stop referencing it (code
+  *and* the Drizzle schema, because a Drizzle `insert` lists every schema column), then drop it.
+  The runner applies a migration while the previous release still serves, so a drop that ships
+  with the code change breaks that release's queries during the overlap, or for good if the new
+  release fails its healthcheck. Found while dropping `rooms.state_blob` (roadmap 37).
 - A change under `supabase/migrations/**` triggers a deploy (`watchPatterns`).
 - `supabase db push` still works for local or manual use: both write the same history table.
   `MIGRATIONS_DIR` points the runner at another directory.
@@ -406,7 +411,7 @@ Why step B cannot ship with step A: release 2 names the column, and Drizzle list
 schema column in an `insert` (as `default`), so even release-2 code that never mentions it
 fails with `column "state_blob" does not exist` on room load, create, reset and quarantine
 once it is dropped. A failed healthcheck after the migration committed would leave release 2
-serving against that schema. The plan is in [roadmap 37](../roadmap/37-room-state-in-postgres.md).
+serving against that schema. The plan is in [roadmap 37](../archive/roadmap/37-room-state-in-postgres.md).
 
 **Two services write room state:** the server and the Discord connector. Each runs its own
 `RoomManager` over the same `rooms` table. Every deploy or rollback here means both, on the

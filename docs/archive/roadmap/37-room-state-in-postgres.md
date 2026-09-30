@@ -1,16 +1,16 @@
 ---
-type: Roadmap
+type: Archive
 title: Room state as Postgres jsonb
 description: Plan to replace the gzip and base64 room state blob with a queryable jsonb column, covering key order, NUL bytes, ordered saves, a reversible dual-write rollout, a backfill script, and read-only query views.
-status: draft
+status: deprecated
 audience: internal
 tags: [roadmap, database, persistence, server, engine]
 ---
 # 37 — Room state as Postgres `jsonb`
 
-**Status:** In progress (2026-09-29) on branch `claude/unicorn-monster-cards-cigpmw`. Read
-[rooms and identity](../architecture/rooms-and-identity.md) and
-[engine concurrency and timing](../architecture/engine-concurrency-and-timing.md) first. Every
+**Status:** Shipped and archived (2026-09-30). The close-out was [40](40-room-state-close-out-and-bugs.md); `state_blob` was dropped in #418. Current contract: [rooms and identity](../../architecture/rooms-and-identity.md) and the [deployment runbook](../../operations/deployment.md#room-state-migration-to-jsonb-roadmap-37). Originally in progress (2026-09-29) on branch `claude/unicorn-monster-cards-cigpmw`. Read
+[rooms and identity](../../architecture/rooms-and-identity.md) and
+[engine concurrency and timing](../../architecture/engine-concurrency-and-timing.md) first. Every
 query here stays scoped to one room, and saves are part of the timing contract.
 
 **PRs.** The budget rule is four or five tasks a PR, so the pass ships in three:
@@ -93,7 +93,7 @@ Facts from the code on 2026-09-29, with file references so the next pass can che
 - Drizzle mirrors both in `packages/server/src/db/schema.ts`. The driver is `node-postgres`
   (`drizzle-orm/node-postgres`).
 - Migrations are applied with `supabase db push --linked`
-  ([deployment](../operations/deployment.md)).
+  ([deployment](../../operations/deployment.md)).
 - The RLS policy "Room members can view rooms" lets a member select their room's row, blob
   included, through the Supabase API. The web app does not read `rooms` directly; it goes through
   tRPC. This plan does not change what a member can read.
@@ -329,7 +329,7 @@ comment on column public.rooms.state_blob is
     - `_loadRoom` awaits any pending flush for the room **before** it selects the row, so a
       reload never reads state older than the flush.
   - This ties into the per-room lanes in
-    [engine concurrency and timing](../architecture/engine-concurrency-and-timing.md). Read that
+    [engine concurrency and timing](../../architecture/engine-concurrency-and-timing.md). Read that
     doc first, and add the flush to its unload section.
 - **`_loadRoom`:**
   - It selects `state` and `state_blob`, and prefers `state`, falling back to `state_blob`.
@@ -341,7 +341,7 @@ comment on column public.rooms.state_blob is
   `state_version = nextStateVersion()`. The version is a tombstone and never rewinds to 0.
   Today's order, database first and detach second, is the race in risk 3.
 - **`backfill-leaderboard-from-state.ts`:** read `state ?? state_blob`.
-- **Metrics** (`packages/server/src/metrics/index.ts`, and in [observability](../operations/observability.md)),
+- **Metrics** (`packages/server/src/metrics/index.ts`, and in [observability](../../operations/observability.md)),
   with the `dm_` prefix every other metric uses:
   - `dm_room_state_save_bytes` (histogram, from `Buffer.byteLength(JSON.stringify(state))`);
   - `dm_room_state_save_failures_total`;
@@ -437,7 +437,7 @@ production deck holds `HitCard`, `BattleFocusCard`, and `DelayedHit`. So `card_t
 registry. A test in task 7 fails when a registered card is missing from it, so a new card cannot
 fall out of the view silently. Document the
 views in a short "Querying room state" section of
-[rooms and identity](../architecture/rooms-and-identity.md). The section says these views are for
+[rooms and identity](../../architecture/rooms-and-identity.md). The section says these views are for
 read-only operator use, and that app code keeps querying through a room id.
 
 ## Tasks
@@ -452,8 +452,8 @@ after the window.
 | 3 | **Schema.** The migration and the Drizzle columns | `supabase/migrations/`, `packages/server/src/db/schema.ts` | `supabase db reset` locally applies cleanly. Drizzle types compile | 1, 2 | Done: every migration applies in order on a local Postgres 16 (Supabase `auth` schema and roles stubbed), and the new one re-runs as a no-op. Drizzle types compile | a54bceff |
 | 4 | **Server store and load path.** Clock-versioned dual-write, the `pendingFlush` wait on unload and load, load preferring `state`, quarantine and reset for both columns with a tombstone version (reset detaches and flushes first), the leaderboard backfill script, and metrics | `packages/server/src/state-store.ts`, `room-manager.ts`, `metrics.ts`, `scripts/backfill-leaderboard-from-state.ts`; tests | Unit tests: prefer `state`, fall back to the blob, quarantine each source, and the stale-save guard (an older version does not overwrite). **Race tests,** with the store write held open: an unload then an immediate reload reads the flushed state, not the older one; a reset while an old save is in flight is not undone by it; two saves from one game landing in reverse order keep the newer. **Against local Postgres** (`supabase start`): a saved row's `jsonb_typeof(state) = 'object'`, not `'string'`, and a restart restores it. Server tests pass | none (after 2, 3) | Done. Server 284 passing with `TEST_DATABASE_URL` at the end of the pass (the three real-Postgres tests: a jsonb object not a string, an older write after a newer one does not land, a tombstone blocks an earlier save). One deliberate change from the design: a failed restore of `state` also quarantines a dual-written `state_blob` into `quarantined_blob`, instead of nulling it unkept. `PostgresStateStore.write(roomId, state, version)` is public only as a test seam. Bugs 200–202 in the ledger | ae089093, 6f0ba8dd, c4a9a35c |
 | 4b | **Flush every room on shutdown** (found in this pass). The server has no `SIGTERM` handler, so a deploy kills the process with up to 30 s of debounced changes unsaved in every active room. On `SIGTERM` or `SIGINT`: stop taking requests, `flushState()` every active room (without unloading a fight in progress), await the flushes within the platform's grace period, then close the pool | `packages/server/src/index.ts`, `room-manager.ts` | A test: shutdown awaits every room's flush before the pool closes; a flush that hangs past the deadline does not block exit | 5 | Done: `RoomManager.flushAll` and `createShutdown` (`shutdown.ts`), wired for SIGTERM and SIGINT. Also from task 4's review: a reset now waits out concurrent loads (`resetting` gate plus load-epoch invalidation), with tests | c4a9a35c, b4cfd58b |
-| 5 | **The backfill script and runbook** | `packages/server/scripts/migrate-room-state-to-jsonb.ts`; [deployment](../operations/deployment.md) runbook section | A dry run and a real run on local data seeded with legacy blobs, including one corrupt blob, which is reported and not written. A second run converts 0. With a room loaded in a running release 1, the script does not change `state_version`, and the live save after it still lands. A blob changed between read and write is not overwritten | 7 | Done: `room-state-backfill.ts` (tested module) and the CLI. 11 real-Postgres tests, including a live save during the backfill, a blob changed between read and write, and `--from-blob`. Review fixes: `--from-blob` sets `state_version + 1` (a laptop clock ahead of Railway's would have made the server's saves look stale), failure reasons carry no player data, unknown flags are refused. The engine repair now also replaces unpaired surrogates. The runbook is in [deployment](../operations/deployment.md#room-state-migration-to-jsonb-roadmap-37) | 0a1ca6b6, 1a32efb4, 9262fc28, 129a8dd6 |
-| 6 | **Contract** (second PR, after the window). Stop dual-writing, drop the load fallback, back up, and drop `state_blob` | Server, migration, docs | Production shows `room_state_source_total{source="blob"}` at 0 for the whole window. A backup exists. Tests pass | — | Three deploys, tracked in [40](40-room-state-close-out-and-bugs.md): release 2 stopped writing (PR #416, live 2026-09-30); 40 task 6a stops referencing the column (#417, live 2026-09-30); 40 task 6b drops it (done, in the PR after #417) ([state-blob drop](../operations/state-blob-drop.md)) | |
+| 5 | **The backfill script and runbook** | `packages/server/scripts/migrate-room-state-to-jsonb.ts`; [deployment](../../operations/deployment.md) runbook section | A dry run and a real run on local data seeded with legacy blobs, including one corrupt blob, which is reported and not written. A second run converts 0. With a room loaded in a running release 1, the script does not change `state_version`, and the live save after it still lands. A blob changed between read and write is not overwritten | 7 | Done: `room-state-backfill.ts` (tested module) and the CLI. 11 real-Postgres tests, including a live save during the backfill, a blob changed between read and write, and `--from-blob`. Review fixes: `--from-blob` sets `state_version + 1` (a laptop clock ahead of Railway's would have made the server's saves look stale), failure reasons carry no player data, unknown flags are refused. The engine repair now also replaces unpaired surrogates. The runbook is in [deployment](../../operations/deployment.md#room-state-migration-to-jsonb-roadmap-37) | 0a1ca6b6, 1a32efb4, 9262fc28, 129a8dd6 |
+| 6 | **Contract** (second PR, after the window). Stop dual-writing, drop the load fallback, back up, and drop `state_blob` | Server, migration, docs | Production shows `room_state_source_total{source="blob"}` at 0 for the whole window. A backup exists. Tests pass | — | Three deploys, tracked in [40](40-room-state-close-out-and-bugs.md): release 2 stopped writing (PR #416, live 2026-09-30); 40 task 6a stops referencing the column (#417, live 2026-09-30); 40 task 6b drops it (#418, live 2026-09-30) ([state-blob drop](../../operations/state-blob-drop.md)) | |
 | 7 | **Read-only query views** and the "Querying room state" doc section | A migration with the views; `rooms-and-identity.md` | The Faceswap query above returns the same answer as decoding by hand, on local data | 5 | Done in [40](40-room-state-close-out-and-bugs.md) task 2. The join is on `(room_id, owner_user_id, monster_index)`, not `stable_id` as written above: a monster's id is saved only once something has read it | 3005521b, 7f74d621 |
 
 ### Task 1 audit (2026-09-29)
@@ -502,7 +502,7 @@ change once, at deploy.
 
 - `pnpm build`, `pnpm lint`, `pnpm test`, `pnpm run build:docs`, and `pnpm docs:check`.
 - A local end-to-end check with `supabase start` and the server
-  ([local testing](../operations/local-testing.md)):
+  ([local testing](../../operations/local-testing.md)):
   - create a room;
   - play a fight;
   - make presets whose names sort differently by length and by alphabet;
@@ -545,13 +545,13 @@ rollback to release 1 is safe (it prefers `state`), and `--from-blob` is gone.
 
 ## Docs to update in the same PRs
 
-- [rooms and identity](../architecture/rooms-and-identity.md): the load, quarantine, and reset
+- [rooms and identity](../../architecture/rooms-and-identity.md): the load, quarantine, and reset
   paths (lines about `rooms.state_blob`), plus the new "Querying room state" section.
-- [engine concurrency and timing](../architecture/engine-concurrency-and-timing.md): the
+- [engine concurrency and timing](../../architecture/engine-concurrency-and-timing.md): the
   save-ordering guard next to the unload flush.
-- [boss encounters](../architecture/boss-encounters.md): the "room's state blob" wording.
-- [observability](../operations/observability.md): the new metrics.
-- [deployment](../operations/deployment.md): the rollout runbook and the contract-release warning.
+- [boss encounters](../../architecture/boss-encounters.md): the "room's state blob" wording.
+- [observability](../../operations/observability.md): the new metrics.
+- [deployment](../../operations/deployment.md): the rollout runbook and the contract-release warning.
 - [`README.md`](../../README.md): the connector note on `restoreGame` and saving, which accepts an
   object or a JSON string.
 - `10b-bugs-fixed.md`: the out-of-order save race, as fixed, with its root cause, and the NUL
