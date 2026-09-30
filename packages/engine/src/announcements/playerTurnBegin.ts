@@ -23,10 +23,14 @@ export function announceTurnBegin(
 		? monsterTurnLine(monster, isRivalTeam(contestant.team) ? undefined : contestant.team)
 		: `${contestant.character.identity} plays the following monster:\n${monsterCard(monster, true)}`;
 
+	// A boss's character is the shared "The Editor", which names nobody in the roster or the
+	// feed; the monster's own given name is what a player can match to the roster row.
+	const turnName = contestant.isBoss ? monster.givenName : contestant.character.givenName;
+
 	eb.publish({
 		type: 'announce',
 		scope: 'public',
-		text: `*It's ${contestant.character.givenName}'s turn.*\n\n${body}`,
+		text: `*It's ${turnName}'s turn.*\n\n${body}`,
 		payload: { contestant },
 	});
 

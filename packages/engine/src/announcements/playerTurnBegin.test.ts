@@ -47,6 +47,17 @@ describe('./announcements/playerTurnBegin.ts', () => {
 		expect(text).to.include('Fights: 0 · Won: 0');
 	});
 
+	it("names a boss's monster, not The Editor, on a boss's turn", () => {
+		const { eb, published } = capture();
+		const contestant = { ...makeContestant(), isBoss: true };
+		contestant.character = { givenName: 'The Editor', identity: '👑 The Editor' };
+
+		announceTurnBegin(eb as never, 'Ring', {}, { contestant });
+
+		expect(published[0]!.text).to.include("It's Killer Killer's turn.");
+		expect(published[0]!.text).to.not.include("It's The Editor's turn.");
+	});
+
 	it('collapses to a one-line summary on a repeat turn', () => {
 		// The old "short" form was not shorter: formatCard only swapped which of
 		// description/stats it rendered, so a repeat still printed the whole stat block.
