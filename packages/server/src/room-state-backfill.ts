@@ -74,6 +74,8 @@ const KNOWN_FLAGS = new Set(['--dry-run']);
  */
 export const FROM_BLOB_REMOVED =
 	'--from-blob was removed: since roadmap 37 release 2 the server no longer writes state_blob, so blobs are stale and must not overwrite state';
+export const STOPPED_SERVICE_REMOVED =
+	'--i-stopped-the-service was removed along with --from-blob (it only confirmed the service was stopped for that mode); the default mode is safe while the service is live';
 
 export interface ParsedArgs {
 	dryRun: boolean;
@@ -92,8 +94,10 @@ export function parseBackfillArgs(args: string[]): ParsedArgs | { error: string 
 			i += 1;
 		} else if (KNOWN_FLAGS.has(arg)) {
 			parsed.dryRun = true;
-		} else if (arg === '--from-blob' || arg === '--i-stopped-the-service') {
+		} else if (arg === '--from-blob') {
 			return { error: FROM_BLOB_REMOVED };
+		} else if (arg === '--i-stopped-the-service') {
+			return { error: STOPPED_SERVICE_REMOVED };
 		} else {
 			return { error: `unrecognised argument: ${arg.slice(0, 50)}` };
 		}

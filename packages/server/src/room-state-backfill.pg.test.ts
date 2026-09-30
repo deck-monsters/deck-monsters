@@ -7,7 +7,7 @@ import pg from 'pg';
 
 import type { Db } from './db/index.js';
 import * as schema from './db/schema.js';
-import { backfillRoomState, decodeStateBlob, FROM_BLOB_REMOVED, parseBackfillArgs } from './room-state-backfill.js';
+import { backfillRoomState, decodeStateBlob, FROM_BLOB_REMOVED, parseBackfillArgs, STOPPED_SERVICE_REMOVED } from './room-state-backfill.js';
 import { nextStateVersion, PostgresStateStore } from './state-store.js';
 
 // Real-Postgres check for roadmap 37 task 5 (same gating and setup as state-store.pg.test.ts).
@@ -40,7 +40,7 @@ describe('parseBackfillArgs', () => {
 		expect(parseBackfillArgs(['--dry-run', '--room', 'r1'])).to.deep.equal({ dryRun: true, roomId: 'r1' });
 		// Removed in release 2: blobs are stale, so a rollback roll-forward would lose data.
 		expect(parseBackfillArgs(['--from-blob'])).to.deep.equal({ error: FROM_BLOB_REMOVED });
-		expect(parseBackfillArgs(['--i-stopped-the-service'])).to.deep.equal({ error: FROM_BLOB_REMOVED });
+		expect(parseBackfillArgs(['--i-stopped-the-service'])).to.deep.equal({ error: STOPPED_SERVICE_REMOVED });
 	});
 
 	it('rejects typos and a missing room id', () => {

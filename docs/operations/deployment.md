@@ -432,17 +432,33 @@ would be read stale and then overwritten.
 
 ### Release 2 (stop using `state_blob`)
 
-- **Before deploying:** every room must already have `state` (`unconverted = 0` in the check
-  above, apart from rooms reported as failed). Release 2 starts a room with `state` null as a
-  fresh game; it does not read the blob. Run the backfill first if any room is unconverted.
-- Deploy release 2 to both services. Saves write `state` and `state_version` only. `state_blob`
-  is stale for every room from the first save on. A reset or a load-time quarantine still sets
-  `state_blob = null` (a harmless write), so a rollback to release 1 cannot resurrect
-  pre-reset data from an old blob.
-- `dm_room_state_source_total` now only ever has `source="state"`.
-- **Next:** once release 2 has been live and stable on both services, ship a separate
-  migration that drops `state_blob` (and the code that still names it: the schema column, the
-  reset/quarantine nulling, the backfill script). `quarantined_blob` stays.
+Release 2 stops writing `state_blob` but keeps a **read-only** blob fallback on load, so it is
+safe even for a room the backfill has not converted (`state` null, blob present): it loads from
+the blob (logged at warn, counted as `source="blob"`), never writes the blob, and the room's
+next save fills `state`. Stop-writing and drop are separate deploys (roadmap 40).
+
+1. Apply no schema change for this release (there is none).
+2. Deploy release 2 to **both** services, the server and the Discord connector. Saves write
+   `state` and `state_version` only, so `state_blob` is stale for every room from the first
+   save on. A reset or a load-time quarantine moves a present blob to `quarantined_blob` and
+   nulls `state_blob`, so neither the fallback nor a rollback to release 1 can resurrect reset
+   data.
+3. Watch `dm_room_state_source_total{source="blob"}`: it should stop rising as rooms save.
+   Run the backfill (default mode, safe while live) for any straggler.
+
+**Before the DROP migration** (a later, separate PR that also removes the fallback, the
+schema column, the reset/quarantine nulling and the leaderboard/backfill blob reads;
+`quarantined_blob` stays):
+
+1. Both services are on release 2.
+2. Run the read-only check; `unconverted` must be 0 (list the ids of any that are not, and
+   backfill or reset them first):
+
+   ```sql
+   select id from rooms where state is null and state_blob is not null;
+   ```
+
+3. The drop migration refuses to run while that query returns rows.
 
 ### Rollback
 

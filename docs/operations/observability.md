@@ -200,7 +200,7 @@ All custom metrics are prefixed `dm_` and carry a `service="deck-monsters"` defa
 | `dm_commands_total` | Counter | Commands processed; labels: `result` (`ok` / `rejected` / `error`) |
 | `dm_ws_connections_active` | Gauge | Active WebSocket ringFeed subscribers |
 | `dm_room_state_save_bytes` | Histogram | Size of the JSON room state on each save |
-| `dm_room_state_source_total` | Counter | Room loads, by where the state came from; label `source`. Only `state` since roadmap 37 release 2 (the `blob` source was removed with the blob fallback); the label is kept so dashboards keep working |
+| `dm_room_state_source_total` | Counter | Room loads, by where the state came from; label `source`. `state`, or `blob` for the read-only legacy fallback (roadmap 37 release 2; a room not yet converted). `blob` should reach 0 and the fallback goes with the column drop |
 
 ### Errors & warnings
 

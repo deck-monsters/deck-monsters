@@ -524,19 +524,21 @@ export class RoomManager {
 		// Quarantine current state, start fresh on next load. The new version is a tombstone
 		// (never 0), so a save stamped before this point can no longer land.
 		const rows = await this.db
-			.select({ state: rooms.state })
+			.select({ state: rooms.state, stateBlob: rooms.stateBlob })
 			.from(rooms)
 			.where(eq(rooms.id, roomId))
 			.limit(1);
 
 		const quarantine: Partial<typeof rooms.$inferInsert> = {};
 		if (rows[0]?.state) quarantine.quarantinedState = rows[0].state;
+		// A blob-only room (roadmap 37: the read-only blob fallback still loads it) has its only
+		// copy in state_blob, so keep it recoverable in quarantined_blob before nulling it.
+		if (rows[0]?.stateBlob) quarantine.quarantinedBlob = rows[0].stateBlob;
 		await this.db.update(rooms).set({
 			...quarantine,
 			state: null,
-			// Nothing reads or writes state_blob any more (roadmap 37 release 2), but the column
-			// still holds a pre-reset blob. Null it so a rollback to the expand release (which
-			// falls back to the blob when `state` is null) cannot resurrect reset data.
+			// Null the blob so neither this release's read-only blob fallback nor a rollback to the
+			// expand release (both fall back to it when `state` is null) can resurrect reset data.
 			stateBlob: null,
 			stateVersion: nextStateVersion(),
 			updatedAt: new Date(),
@@ -907,7 +909,7 @@ export class RoomManager {
 		}
 
 		const rows = await this.db
-			.select({ state: rooms.state })
+			.select({ state: rooms.state, stateBlob: rooms.stateBlob })
 			.from(rooms)
 			.where(eq(rooms.id, roomId))
 			.limit(1);
@@ -916,21 +918,25 @@ export class RoomManager {
 			throw new TRPCError({ code: 'NOT_FOUND', message: 'Room not found' });
 		}
 
-		// Only `state` is read. A room with only a legacy `state_blob` starts fresh, which is safe
-		// only because every production room already has `state` before this release ships (the
-		// task 5 backfill plus release 1's dual-write; verified in roadmap 40). Do not add a blob
-		// fallback back: `state_blob` is stale from release 2 on and would restore old data.
-		const hasState = rows[0].state != null;
-		log.debug('loading room from DB', { roomId, hasState });
+		// Prefer `state`. READ-ONLY blob fallback (roadmap 37 release 2): stopping the blob writes
+		// and dropping the column are separate deploys (roadmap 40), so until the drop a room the
+		// backfill has not converted (state null, blob present) must still load from its blob,
+		// not start fresh, or its first save would overwrite the only copy. The blob is never
+		// written here; the room's next save fills `state`, so it converts itself. The later
+		// drop PR removes this fallback, and its migration refuses to run while any room has
+		// `state` null and a blob.
+		const source = rows[0].state != null ? 'state' : rows[0].stateBlob ? 'blob' : null;
+		if (source === 'blob') log.warn('room has no jsonb state, restoring from legacy state_blob', { roomId });
+		log.debug('loading room from DB', { roomId, source });
 
 		const stateStore = new PostgresStateStore(this.db);
 		const roomLog = this._makeRoomLogger(roomId);
 		let game: Game;
 
-		if (hasState) {
+		if (source) {
 			try {
-				game = this.deps.restoreGame(rows[0].state!, roomLog);
-				roomStateSource.inc({ source: 'state' });
+				game = this.deps.restoreGame((rows[0].state ?? rows[0].stateBlob)!, roomLog);
+				roomStateSource.inc({ source });
 				(game.options as Record<string, unknown>).roomId = roomId;
 				log.debug('room restored from state', { roomId });
 			} catch (err) {
@@ -938,16 +944,16 @@ export class RoomManager {
 				// then start a fresh game so the room is usable again immediately.
 				roomHydrationFailures.inc({ room_id: roomId });
 				const message = err instanceof Error ? err.message : String(err);
-				log.error('room hydration failed, quarantining state and starting fresh', {
+				log.error('room hydration failed, quarantining and starting fresh', {
 					roomId,
 					error: message,
 				});
 				this.log(err);
-				// The bad state goes to quarantined_state and the live column is cleared with the
-				// version bumped, so a save still in flight from before is stale. state_blob is
-				// nulled for the same rollback reason as in _resetRoomState.
+				// Each source goes to its own quarantine column; both live columns are cleared and
+				// the version bumped so a save still in flight from before is stale.
 				await this.db.update(rooms).set({
-					quarantinedState: rows[0].state,
+					...(rows[0].state ? { quarantinedState: rows[0].state } : {}),
+					...(rows[0].stateBlob ? { quarantinedBlob: rows[0].stateBlob } : {}),
 					state: null,
 					stateBlob: null,
 					stateVersion: nextStateVersion(),
@@ -1008,7 +1014,7 @@ export class RoomManager {
 
 		this.active.set(roomId, entry);
 		roomsActive.set(this.active.size);
-		log.info('room loaded and active', { roomId, restored: hasState, activeRooms: this.active.size });
+		log.info('room loaded and active', { roomId, restored: source !== null, activeRooms: this.active.size });
 		return entry;
 	}
 }

@@ -59,11 +59,12 @@ export class PostgresStateStore implements StateStore {
 
 	async load(roomId: string): Promise<SerializedGame | string | null> {
 		const rows = await this.db
-			.select({ state: rooms.state })
+			.select({ state: rooms.state, stateBlob: rooms.stateBlob })
 			.from(rooms)
 			.where(eq(rooms.id, roomId))
 			.limit(1);
 
-		return rows[0]?.state ?? null;
+		// Read-only blob fallback, same reason as RoomManager._loadRoom; removed with the drop.
+		return rows[0]?.state ?? rows[0]?.stateBlob ?? null;
 	}
 }
