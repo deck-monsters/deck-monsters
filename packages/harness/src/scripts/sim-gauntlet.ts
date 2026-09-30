@@ -8,8 +8,10 @@
  *
  * `reference` is the same human(s) against the ring's normal bosses with no event. Any other
  * value is a variant from `balance/variants.ts` (`none` applies nothing, so it measures the shipped rules;
- * `no-rivals-outnumbered` and `event-weights-eligible` are the before) with the Gauntlet
- * forced (`SimConfig.forceRingEvent`), so the extras are spawned by the ring's own rules.
+ * `no-rivals-outnumbered` is the before) with the Gauntlet forced (`SimConfig.forceRingEvent`),
+ * so the extras are spawned by the ring's own rules. A forced event skips `selectRingEvent`, so
+ * `event-weights-eligible` would change nothing here and is refused; how often the Gauntlet
+ * fires was measured by arithmetic (see the 2026-09-29 Gauntlet report).
  *
  * Lone human: one row per monster type per level 0/1/3/5, a likely deck, the ring's first
  * boss (level rules as in `sim-rings.ts`), boss type random per batch. Two humans: levels 1
@@ -29,6 +31,13 @@ const arg = (name: string, fallback: string): string => {
 	return i >= 0 ? process.argv[i + 1]! : fallback;
 };
 const VARIANT = arg('variant', 'none');
+// Codex review of #415: this variant only changes which event is picked, and every fight here
+// forces the Gauntlet, so it silently reproduced `none` under another label.
+const SELECTION_ONLY_VARIANTS = new Set(['event-weights-eligible']);
+if (SELECTION_ONLY_VARIANTS.has(VARIANT)) {
+	console.error(`sim-gauntlet forces the Gauntlet, so --variant ${VARIANT} (event selection) has no effect here.`);
+	process.exit(2);
+}
 const OUT = arg('out', 'gauntlet.json');
 const FIGHTS = Number(arg('fights', '1000'));
 const PAIR_FIGHTS = Number(arg('pair-fights', '3000'));

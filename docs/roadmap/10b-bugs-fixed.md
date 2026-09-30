@@ -4851,8 +4851,10 @@ looked plausible because the study's first tables came from an earlier commit wh
 switches were still off by default.
 
 **Fix** (f141231c): `setSwitch(rules, key, value)` takes the value, and both variants write
-`false`. The re-measurement in `2026-09-29-gauntlet.md` ran each variant and checked it differs
-from `--variant none`.
+`false`. The re-measurement in `2026-09-29-gauntlet.md` checks `no-rivals-outnumbered` against
+`--variant none` (0.05% against 36%). Codex then found that `event-weights-eligible` still could
+not work in `sim-gauntlet`: every fight there forces the Gauntlet, which skips event selection.
+The script now refuses it; the frequency numbers were always arithmetic, not simulation.
 
 **Status**: Fixed.
 
