@@ -8,7 +8,7 @@ tags: [roadmap, onboarding, help, web, commands, wording]
 ---
 # 39 — In-game help for every control
 
-**Status:** In progress (2026-09-30). Tasks 1–3 done; Cursor's live check of 1 and 2 passed on everything it could reach ([help check](../reference/help-check.md)); batch 2 from the walk is being built and reviewed.
+**Status:** In progress (2026-09-30). Tasks 1–3 and batch 2 done; batch 3 (tasks 4, 6, 7) below is being built; Cursor's live check of 1 and 2 passed on everything it could reach ([help check](../reference/help-check.md)); batch 2 from the walk is being built and reviewed.
 
 ## Why
 
@@ -59,7 +59,7 @@ Tasks 1 and 2 are specified in [39a](39a-cursor-first-pass.md), which Claude imp
 | 1 | **Workshop quick wins,** from the findings above: the wallet moves to the Shop; Train monster gets its own row and a line of help; Sync goes, with event and focus refresh in its place; zero prices read **Free**; the Sorting Hat's description leads with its purpose; a revival in progress shows **Reviving…** and its return time | Done (2026-09-30): f9f8fc0d, c359cd4a; the Sorting Hat text 8f260bb8. Needs the live check (Prompt B in 39a) |
 | 2 | **Help in the game:** a Help entry in the menu that opens the player handbook, the monster, card and item guides, and the command list, readable on a phone | Done (2026-09-30): a Help and guides page from the ☰ menu, not a tab (the phone tab bar already overflows); lazy-loaded; 57563764, 9e31cf05. Needs the live check |
 | 3 | **Inventory,** by walking the game as a new player in a real browser at phone and desktop widths (a Cursor prompt is below): every tab, panel, button, menu, header counter, Console command and prompt, and every mechanic a player meets in a fight. For each, what explains it today (a label, a tooltip, a help line, a handbook section, or nothing) and what confused the walker | Done (2026-09-30): Cursor's walk at phone and desktop widths, [help inventory](../reference/help-inventory.md) (fc23174f). Its top ten are triaged below |
-| 4 | **Decide the forms of help,** per kind of control: a short description on each button and menu item (tooltip, or long-press on a phone); a one-line "what is this" for each tab and panel, shown the first time and reachable after; `help <command>` with an example for every command; and a narration line the first time a player meets a mechanic in a fight (a ring event, a boss's temperament, an ambush, bosses turning on each other). Keep it short, and never block play | Planned |
+| 4 | **Decide the forms of help,** per kind of control: a short description on each button and menu item (tooltip, or long-press on a phone); a one-line "what is this" for each tab and panel, shown the first time and reachable after; `help <command>` with an example for every command; and a narration line the first time a player meets a mechanic in a fight (a ring event, a boss's temperament, an ambush, bosses turning on each other). Keep it short, and never block play | Decided (batch 3, below) |
 | 5 | **Write the text.** The orchestrator writes every line in the game's voice, from the inventory, in batches by surface | Planned |
 | 6 | **A guided start,** from joining a room to a first fight and a first card change, built on the existing first-run training | Planned |
 | 7 | **Keep it complete:** a test that fails when a catalogue command, or a button in the web app, has no help text | Planned |
@@ -96,6 +96,38 @@ page, placeholders that look filled in, the long room name colliding with the lo
 phone, the closed command reference still read by screen readers, and the desktop theme
 circle with no word. The walk did not see a fight end, revival, death, an item used, a hold,
 an ambush, or a team; Prompt B's live check should cover a fight end and a revival.
+
+## Batch 3: tasks 4, 6 and 7 (2026-09-30)
+
+Owner: "Go ahead and start those next tasks, no need for a separate PR." Built on
+`claude/unicorn-monster-cards-cigpmw` after #418, with the same rules as batch 2: Sonnet
+implementers, one independent review each, the orchestrator writes every player-facing line.
+
+**Task 4, the forms of help (decided):**
+
+- **Buttons:** every `<button>` in the web app carries a `title`: one line saying what it does,
+  shown on hover on a desktop and read by screen readers. A phone never shows a `title`, and a
+  long-press is a gesture nobody finds, so there is no long-press tooltip. Instead, on a phone
+  **the visible label must say it**: an icon-only control is a universal one (☰, ✕, ↓) or
+  gets words (⟲ becomes **Unequip all**).
+- **Places:** each tab has a one-line description in the surface registry. It is the tab's
+  `title`, and the panel shows it under its heading (the Workshop already does). A line that
+  is always there costs one line and never needs a "seen it" flag.
+- **Commands:** `help <word>` lists every catalogue command containing that word, with its
+  example (`help preset`). Every command that takes a name already has an example; a command
+  with nothing to fill in is its own example.
+- **Mechanics:** the first time a player sees a ring event, a boss's temperament, an ambush,
+  or bosses turning on each other, one short line under it says what the rule is. The
+  engine tags those lines with the mechanic; the web remembers per player (local storage)
+  which it has explained. Discord players see the narration without the note.
+- **Never block play:** no modal, no forced tour; every note can be ignored.
+
+| # | Task | Status |
+|---|---|---|
+| C1 | **Command help** (task 7, commands): `help <word>`; the full list says it exists; a test that every catalogue entry (its example, or the command itself) reaches a real handler, and that every entry with a `[name]` has an example | Planned |
+| C2 | **Every button and place explains itself** (tasks 4, 5, 7 on the web): a `title` on every button, the surface descriptions, subtitles on Fights and Leaders, the Ring's empty state says how a fight starts; the walk's leftovers (OWNER and MEMBER, placeholders that look filled in); a test that fails on a button without a `title` | Planned |
+| C3 | **A guided start** (task 6): the Console's getting-started steps also show in the Workshop, where most new players start on a phone; the waiting step says a boss can be summoned; a last step changes a card | Planned, after C2 (same files) |
+| C4 | **First-time mechanic notes** (task 4, mechanics): engine tags on the four announcements; the web shows each rule once per player | Planned, after C2 (RingPane) |
 
 ## Cursor prompt for task 3 (paste whole)
 
