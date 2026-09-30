@@ -127,7 +127,7 @@ implementers, one independent review each, the orchestrator writes every player-
 | C1 | **Command help** (task 7, commands): `help <word>`; the full list says it exists; a test that every catalogue entry (its example, or the command itself) reaches a real handler, and that every entry with a `[name]` has an example | Planned |
 | C2 | **Every button and place explains itself** (tasks 4, 5, 7 on the web): a `title` on every button, the surface descriptions, subtitles on Fights and Leaders, the Ring's empty state says how a fight starts; the walk's leftovers (OWNER and MEMBER, placeholders that look filled in); a test that fails on a button without a `title` | Done: a `title` on all 54 buttons, surface descriptions as tab titles and subtitles, ⟲ is **Unequip all**, the Ring's empty state, the lobby's role tags and placeholders, `button-titles.test.ts`. Review: approved; fixes to Unequip all's accessible name, the Load title and the test's path (87dee75f, 3865adeb, 1009e9d6) |
 | C3 | **A guided start** (task 6): the Console's getting-started steps also show in the Workshop, where most new players start on a phone; the waiting step says a boss can be summoned; a last step changes a card | Planned, after C2 (same files) |
-| C4 | **First-time mechanic notes** (task 4, mechanics): engine tags on the four announcements; the web shows each rule once per player | Planned, after C2 (RingPane) |
+| C4 | **First-time mechanic notes** (task 4, mechanics): engine tags on the four announcements; the web shows each rule once per player | Built, awaiting review: `payload.mechanic` on the ambush, boss-rivals and temperament lines; `lib/mechanic-notes.ts`; notes in both feeds |
 
 ## Cursor prompt for task 3 (paste whole)
 

@@ -713,6 +713,7 @@ export class Ring extends BaseClass {
 			});
 			this.emit('narration', {
 				narration: 'Outnumbered is not outmatched. The bosses turn on one another.',
+				mechanic: 'boss-rivals',
 			});
 		}
 
@@ -1971,6 +1972,7 @@ export class Ring extends BaseClass {
 		if (minion) {
 			this.emit('narration', {
 				narration: `An ambush! ${contestant.monster.givenName} slinks in behind the others: a lesser minion, weaker, but one more set of claws.`,
+				mechanic: 'ambush',
 			});
 		}
 

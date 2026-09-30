@@ -14,6 +14,17 @@ function makeEb(onPublish?: (text: string) => void): RoomEventBus {
 }
 
 describe('./announcements/narration.ts', () => {
+	describe('mechanic tag (roadmap 39 C4)', () => {
+		it('carries the tag in the payload, and leaves the payload empty without one', () => {
+			const published: Array<{ payload: Record<string, unknown> }> = [];
+			const eb = { publish: (e: any) => published.push(e) } as unknown as RoomEventBus;
+			announceNarration(eb, '', {}, { narration: 'a', mechanic: 'ambush' });
+			announceNarration(eb, '', {}, { narration: 'b' });
+			expect(published[0]!.payload).to.deep.equal({ mechanic: 'ambush' });
+			expect(published[1]!.payload).to.deep.equal({});
+		});
+	});
+
 	describe('narration', () => {
 		it('can announce to public channel', () => {
 			const narration = 'success';

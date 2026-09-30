@@ -46,4 +46,14 @@ describe('mapConsoleHistoryEvent', () => {
       text: '── missed ──',
     });
   });
+
+  it('carries only the mechanic slice of a tagged announce payload (roadmap 39 C4)', () => {
+    const mapped = mapConsoleHistoryEvent({
+      id: 'evt-m',
+      type: 'announce',
+      text: 'An ambush!',
+      payload: { mechanic: 'ambush', contestant: { big: 'object' } },
+    });
+    expect(mapped).toEqual({ id: 'evt-m', type: 'announce', text: 'An ambush!', payload: { mechanic: 'ambush' } });
+  });
 });
