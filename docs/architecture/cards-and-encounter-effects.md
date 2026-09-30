@@ -278,6 +278,9 @@ new card or monster must reach. Check each one.
   name, and an unmatched card shows as Utility.
 - Tests: permissions, stats text, hit and miss, natural 1 and 20, confusion
   (`target === player`), encounter cleanup, and a JSON hydration round trip.
+- Add a `card_types` row in a new migration (class name to display name) so the operator
+  views can name it; `room-state-views.test.ts` fails without it
+  ([querying room state](rooms-and-identity.md#querying-room-state)).
 - Regenerate `CARDS.md`, `DMG.md`, `cards.html`, and the
   [strings inventories](../reference/strings/README.md) with `pnpm run build:docs`. A card
   whose permitted types name a monster appears in that monster's inventory by itself, and

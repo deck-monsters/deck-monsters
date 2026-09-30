@@ -127,6 +127,38 @@ and monster-stat snapshots remain historical.
 Room leaderboards prefer the current room character name. Global player leaderboards use
 the profile display name.
 
+## Querying room state
+
+Each room's whole game is stored as jsonb in `rooms.state` (roadmap 37). Three views flatten
+it for **read-only operator use** in the SQL editor: `room_state_monsters`,
+`room_state_monster_cards`, and `room_state_characters`. They span every room on purpose, so
+they are the one place a query may leave out `room_id`. App code must not use them: it keeps
+reading state through a room id (the room's `Game`, or a query with `where room_id = ?`).
+
+They are `security_invoker` and revoked from `anon` and `authenticated`, so the Supabase API
+cannot reach them. `card_types` (class name to display name) is the same, with RLS on and no
+policy. Which Dragons own Enchanted Faceswap:
+
+```sql
+select m.room_id, m.given_name, m.level
+  from room_state_monsters m
+  join room_state_monster_cards c using (room_id, stable_id)
+ where m.monster_type = 'Dragon' and c.card_type = 'Enchanted Faceswap';
+```
+
+- **`level` is computed** by `room_state_level_for_xp`, which holds the engine's XP thresholds
+  (`helpers/levels.ts`), not read from `room_monster_stats`. That table updates only after a
+  fight, so it lags or misses a monster. A test compares the function with `getLevel` at every
+  threshold; retuning the curve means a new migration.
+- **`stable_id` can be null.** The engine mints it on the first read of `monster.stableId`, so
+  a monster nobody has looked at since it was created has none. Join on
+  `(room_id, owner_user_id, monster_index)` when that matters.
+- **A new card needs a `card_types` row.** Add a migration with
+  `insert into public.card_types (class_name, card_type) values (...) on conflict (class_name) do update ...`.
+  The class name is the JavaScript class (`HitCard`, `DelayedHit`; not uniform), and the display
+  name is the card's static `cardType`. `room-state-views.test.ts` fails when a card in
+  `allCards` has no row; until it exists, the view shows the raw class name.
+
 ## Common failures
 
 | Symptom | Boundary that was missed |
