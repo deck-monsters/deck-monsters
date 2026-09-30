@@ -68,7 +68,10 @@ Tasks 1 and 2 are specified in [39a](39a-cursor-first-pass.md), which Claude imp
 
 Cursor's [help inventory](../reference/help-inventory.md) ranked ten confusions. Items 6
 (the wallet beside Train monster, Sync) and the Workshop subtitle were already fixed by
-task 1. The rest, grouped into tasks that do not share files:
+task 1. The rest, grouped into tasks that do not share files. The live check is
+[help-check batch 2](../reference/help-check-batch2.md): the shipped sentences matched,
+and the remaining gaps (the banner over a long question, the Console's older equip
+line, `Unequipped 1 cards`, and a fight row that says `HealCard`) are listed there.
 
 | # | Task | From the walk | Status |
 |---|---|---|---|
