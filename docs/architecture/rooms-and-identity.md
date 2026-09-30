@@ -62,16 +62,18 @@ debug subscribers, and adds the room to the active cache.
 
 Rooms load lazily. `_getOrLoad()` joins concurrent loads for one `roomId`. `_loadRoom()`
 first awaits any unload flush still in flight for the room (`pendingFlush`), then restores
-`rooms.state` (`jsonb`), falling back to the legacy `rooms.state_blob` (roadmap 37). If the
-state cannot hydrate, it quarantines each source column into its own quarantine column
-(`quarantined_state`, `quarantined_blob`), stamps a new `state_version`, and starts fresh.
+`rooms.state` (`jsonb`) (roadmap 37). Only when `state` is null and a legacy `state_blob`
+exists does it restore, read-only, from the blob (warn log, `source="blob"`); the blob is
+never written and the room's next save fills `state`. Removed with the column drop. If the
+source cannot hydrate, it moves it to its own quarantine column (`quarantined_state` or
+`quarantined_blob`), stamps a new `state_version`, and starts fresh.
 A deletion epoch prevents an in-flight load from publishing a room after its database row
 was deleted.
 
 State changes schedule debounced snapshots. Each save is stamped with `nextStateVersion()`,
 a process-wide monotonic clock, and only lands where the stored `state_version` is lower, so
-an older snapshot never overwrites a newer one. Until the contract release, each save also
-writes `state_blob`, so the previous release can still be redeployed. `unloadRoom()`
+an older snapshot never overwrites a newer one. Saves write `state` and
+`state_version` only; `state_blob` is no longer written (it is dropped by a later migration). `unloadRoom()`
 removes the cache entry, detaches subscribers, flushes with `Game.flushState()`, disposes
 the game, and awaits the flush before it returns. It refuses to unload while
 `ring.inEncounter`, because the timer-driven fight and its projection subscribers must

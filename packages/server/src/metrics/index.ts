@@ -266,7 +266,7 @@ export const roomStateSavesStale = new Counter({
 
 export const roomStateSource = new Counter({
 	name: 'dm_room_state_source_total',
-	help: 'Room loads that restored from the jsonb state column or the legacy blob column',
+	help: 'Room loads that restored from the jsonb state column (source is always state since roadmap 37 release 2)',
 	labelNames: ['source'] as const,
 	registers: [registry],
 });
