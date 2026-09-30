@@ -14,7 +14,7 @@
 do $$
 begin
   if exists (select 1 from rooms where state is null and state_blob is not null) then
-    raise exception 'rooms still unconverted (state null, state_blob present): run the room-state backfill first (roadmap 37)';
+    raise exception 'rooms still unconverted (state null, state_blob present): convert or reset them first; see "The drop" in docs/operations/deployment.md';
   end if;
 end $$;
 
