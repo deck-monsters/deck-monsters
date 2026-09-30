@@ -250,3 +250,15 @@ describe('MonsterWorkshopPanel header — HP first, no slot bar (10b-bugs-fixed.
     expect(screen.queryByText('fallen')).toBeNull();
   });
 });
+
+describe('MonsterWorkshopPanel fighting line (roadmap 39 B2)', () => {
+  it('says the monster is in a fight and when its cards unlock', () => {
+    renderPanel({ inEncounter: true });
+    expect(screen.getByText('Stonefang is in a fight. Cards unlock when it ends.')).toBeTruthy();
+  });
+
+  it('shows no fighting line when the monster is not in an encounter', () => {
+    renderPanel();
+    expect(screen.queryByText(/is in a fight/)).toBeNull();
+  });
+});
