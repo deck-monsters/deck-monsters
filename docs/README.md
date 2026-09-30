@@ -59,6 +59,7 @@ Generated and authored player references remain at the repository root:
 | Trigger | Canonical document |
 |---|---|
 | Player-facing prompt, help, announcement, label, description, or game term | [Voice and wording](reference/voice-and-wording.md) |
+| What a new player can see in the web app, and what explains it | [New-player help inventory](reference/help-inventory.md) |
 | Reviewing monster flavour strings or signature-card narration (generated inventories) | [Monster and card strings](reference/strings/README.md) |
 | `channel({ question, choices })` call site or connector answer encoding | [Prompt/answer contract](reference/prompt-answer-contract.md) |
 | Sprite maps, Canvas/CSS pixel art, scaling, palettes, animation construction | [Pixel art](reference/pixel-art.md) |
