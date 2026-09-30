@@ -1,7 +1,8 @@
 import { expect } from 'chai';
 import { helpersReady } from '../characters/helpers/random.js';
 import { COMMAND_CATALOG, formatCommandList } from './catalog.js';
-import { listen, loadHandlers } from './index.js';
+import { getArray } from '../helpers/get-array.js';
+import { isCommand, listen, loadHandlers } from './index.js';
 
 describe('COMMAND_CATALOG', () => {
 	before(async () => {
@@ -85,5 +86,35 @@ describe('COMMAND_CATALOG', () => {
 		// copy did exactly that. Assert the caveat, not just the headline.
 		expect(announcements[0]).to.match(/already carrying/i);
 		expect(announcements[0]).to.match(/give \[item\] to \[monster\]/i);
+	});
+});
+
+describe('isCommand', () => {
+	before(() => {
+		loadHandlers();
+	});
+
+	it('recognises commands the dispatcher runs, and not card names', () => {
+		expect(isCommand('send Pip to the ring')).to.equal(true);
+		expect(isCommand('help')).to.equal(true);
+		expect(isCommand('Hit')).to.equal(false);
+		expect(isCommand('banana')).to.equal(false);
+	});
+});
+
+describe('command reference equip example', () => {
+	it('does not tell the player to type a JSON array', () => {
+		for (const entry of COMMAND_CATALOG) {
+			expect(entry.description).not.to.match(/JSON|\[\"/);
+		}
+	});
+
+	it('uses a cards list the parser splits into one entry per card', () => {
+		const entry = COMMAND_CATALOG.find((e) => e.command.startsWith('equip [monster] with'));
+		const list = /^equip \S+ with (.+)$/.exec(entry?.example ?? '')?.[1];
+		expect(list).to.be.a('string');
+		expect(getArray(list)).to.deep.equal(['Hit', 'Hit', 'Heal']);
+		// The example is a real command: the dispatcher recognises it.
+		expect(listen({ command: entry?.example, game: {} })).to.not.be.null;
 	});
 });
