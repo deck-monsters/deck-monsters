@@ -85,7 +85,7 @@ export {
 	summonAllowance,
 } from './helpers/boss-summons.js';
 export type { BossSummonLedger, SummonAllowance } from './helpers/boss-summons.js';
-export { RING_EVENTS, buildRingEventContext, getRingEvent, selectRingEvent } from './ring/ring-events.js';
+export { GAUNTLET_RULES, RING_EVENT_RULES, RING_EVENTS, buildRingEventContext, getRingEvent, selectRingEvent } from './ring/ring-events.js';
 export type { RingEventDefinition, RingEventId, VictoryMode } from './ring/ring-events.js';
 export { allMonsters } from './monsters/index.js';
 /** Roadmap 36's pinned-advantage rule and its harness switch. */

@@ -12,7 +12,7 @@
  * Applying them now stacks on top of the engine's change; they stay as the record of what was
  * measured and to test further steps.
  */
-import { PIN_RULES, allMonsters, getCardClassByTypeName } from '@deck-monsters/engine';
+import { GAUNTLET_RULES, PIN_RULES, RING_EVENT_RULES, allMonsters, getCardClassByTypeName } from '@deck-monsters/engine';
 
 type Undo = () => void;
 export interface Variant {
@@ -103,6 +103,15 @@ const d20 = (): number => Math.floor(Math.random() * 20) + 1;
 
 type Monster = { dexModifier: number; hit(damage: number, by: unknown, card: unknown): Promise<boolean> };
 
+/** Turns a boolean module switch on and returns the undo. */
+const toggle = <T extends object>(rules: T, key: keyof T & string): Undo => {
+	const before = rules[key];
+	(rules as Record<string, unknown>)[key] = true;
+	return () => {
+		(rules as Record<string, unknown>)[key] = before;
+	};
+};
+
 export const VARIANTS: Record<string, Variant> = {
 	'dragon-hp+3': { about: 'Dragon: 3 more HP', apply: () => staticBonus('Dragon', 'hpVariance', 3) },
 	'dragon-ac+1': { about: 'Dragon: 1 more AC', apply: () => staticBonus('Dragon', 'acVariance', 1) },
@@ -173,6 +182,29 @@ export const VARIANTS: Record<string, Variant> = {
 				PIN_RULES.advantage = before;
 			};
 		},
+	},
+	'gauntlet-rivals-alone': {
+		about: 'Roadmap 38 candidate: with one human in a Gauntlet, bosses ignore teams and may hit each other',
+		apply: () => toggle(GAUNTLET_RULES, 'rivalsWhenAlone'),
+	},
+	'gauntlet-minions': {
+		about: 'Roadmap 38 candidate: the Gauntlet\'s extra bosses arrive as minions (a third of their HP)',
+		apply: () => toggle(GAUNTLET_RULES, 'extrasAsMinions'),
+	},
+	'gauntlet-rivals-minions': {
+		about: 'Roadmap 38 candidate: both Gauntlet changes at once',
+		apply: () => {
+			const undoRivals = toggle(GAUNTLET_RULES, 'rivalsWhenAlone');
+			const undoMinions = toggle(GAUNTLET_RULES, 'extrasAsMinions');
+			return () => {
+				undoMinions();
+				undoRivals();
+			};
+		},
+	},
+	'event-weights-global': {
+		about: 'Roadmap 38 candidate: a ring event is picked by weight among all events, and none fires if the pick is ineligible',
+		apply: () => toggle(RING_EVENT_RULES, 'globalWeights'),
 	},
 	'rest-3d4': { about: 'Gloaming Rest: an undisturbed rest heals 3d4 (the old heal), not 4 to all missing', apply: () => cardStatic('Gloaming Rest', 'restShape', 'dice') },
 
