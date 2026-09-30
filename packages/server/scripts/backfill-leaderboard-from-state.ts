@@ -10,10 +10,14 @@ import { db } from '../src/db/index.js';
 import { rooms, roomPlayerStats, roomMonsterStats } from '../src/db/schema.js';
 
 async function main(): Promise<void> {
-	const rows = await db.select({ id: rooms.id, state: rooms.state }).from(rooms);
+	const rows = await db.select({ id: rooms.id, state: rooms.state, stateBlob: rooms.stateBlob }).from(rooms);
 
 	for (const row of rows) {
-		const source = row.state;
+		// Prefer `state`. A room the jsonb backfill has not converted (state null) still has a
+		// current blob, and release 2's load path reads it the same way, so skipping it would
+		// leave that room's leaderboard rows missing (Codex review of #416). Goes with the
+		// state_blob drop (roadmap 40 task 6).
+		const source = row.state ?? row.stateBlob;
 		if (!source) continue;
 		let game: ReturnType<typeof restoreGame>;
 		try {
