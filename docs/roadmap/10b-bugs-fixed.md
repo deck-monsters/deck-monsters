@@ -4948,6 +4948,28 @@ contestant's healing interval is cleared, and fails without the fix.
 
 **Status**: Fixed.
 
+### 210. The phone Workshop had a screen-high gap above Train monster — FIXED
+
+Reported by the owner from production on a phone (2026-09-30, after #416): under the Workshop
+subtitle a lone ⤢ sat on its own line, then the Train sentence, then an empty stretch about a
+third of the screen tall before the **Train monster** button.
+
+Root cause: roadmap 39a moved Train monster into its own row. On desktop that row is a flex
+row, and the sentence has `flex: 1 1 12rem` so it wraps beside the button. At phone width the
+container query turns the row into a column, and in a column a flex basis is a *height*: the
+sentence was given 12rem (192px) whatever its text. The header's phone rule stacked the title
+above the actions row. That row once held the coins, Sync and Train monster, but after 39a it
+held only the pane's "open as a full page" link (⤢), alone on a line.
+
+**Fix**: at phone width the Train sentence is `flex: 0 0 auto`, and the header stays a row with
+the title taking the free width and ⤢ top-right. Checked in Chromium at 390 × 844 with the real
+stylesheet: the sentence measures 36px (was 192px), the button sits right under it, and ⤢ is
+level with the title. jsdom does not lay out, so `workshop-header-actions-flex.test.ts` checks
+the stylesheet itself: at phone width the header has no `flex-direction: column` and the
+sentence is `flex: 0 0 auto`. Both checks fail without the fix.
+
+**Status**: Fixed.
+
 ## Closed without a fix
 
 These were open investigations the owner closed on 2026-09-28. Reopen with new evidence.

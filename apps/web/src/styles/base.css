@@ -272,7 +272,7 @@ button {
 }
 
 /*
-  Declared completely here so the phone-width `justify-content`/`flex-wrap` override below
+  Declared completely here so the phone-width `flex-wrap` override below
   has a flex row to act on. The class used to get `display: flex` only by sharing a selector
   with `.pane-header-actions` in terminal.css, while this rule carried a comment saying it was
   not a flex container — so the mobile rule was misreported as dead CSS (#177). Keep the
@@ -1003,12 +1003,26 @@ button {
 @container workshop (max-width: 520px) {
   .shop-stock-row { align-items: stretch; flex-direction: column; }
   .shop-buy-button { width: 100%; }
-  .workshop-header {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  .workshop-header-actions { justify-content: space-between; flex-wrap: wrap; }
+  /*
+    The header stays a row on a phone: title on the left, the pane's actions (the ⤢ full-page
+    link) top-right. It used to stack, which was fine while coins, Sync and Train monster
+    shared the actions row; once they moved out (roadmap 39), the ⤢ sat alone on a line of
+    its own under the subtitle.
+  */
+  /*
+    It wraps rather than squeezing the title: in a narrow split pane the actions also hold
+    the pane selector, which then drops under the title instead of crushing it. The 12rem
+    basis is a width here (the header is a row), so only a wide actions group wraps.
+  */
+  .workshop-header { align-items: flex-start; flex-wrap: wrap; }
+  .workshop-header > :first-child { flex: 1 1 12rem; min-width: 0; }
+  .workshop-header-actions { flex-wrap: wrap; }
   .workshop-train-row { flex-direction: column; align-items: stretch; }
+  /*
+    In a column the line's desktop `flex: 1 1 12rem` basis is a height, so the sentence was
+    given 12rem and left a screen-high gap above Train monster. Natural height here.
+  */
+  .workshop-train-line { flex: 0 0 auto; }
   .workshop-train-row .btn { min-height: 44px; }
   .workshop-section-header,
   .workshop-item-row-main,
