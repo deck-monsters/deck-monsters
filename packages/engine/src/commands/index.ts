@@ -40,12 +40,13 @@ export function listen(options: { command?: string; game: any } | null): ((actio
 		command = aliasCheck[1];
 	}
 
-	command = command.trim().toLowerCase();
+	const typedCommand = command.trim();
+	command = typedCommand.toLowerCase();
 
 	// Check pre-character handlers first (they don't need a character to exist).
 	for (const { matcher, action } of preCharacterHandlers) {
 		if (matcher.test(command)) {
-			return (actionOptions: ActionOptions) => action(actionOptions);
+			return (actionOptions: ActionOptions) => action({ ...actionOptions, command: typedCommand });
 		}
 	}
 

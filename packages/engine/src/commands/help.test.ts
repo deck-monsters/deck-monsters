@@ -118,3 +118,99 @@ describe('command reference equip example', () => {
 		expect(listen({ command: entry?.example, game: {} })).to.not.be.null;
 	});
 });
+
+describe('command catalogue reaches real handlers', () => {
+	before(async () => {
+		await helpersReady;
+		loadHandlers();
+	});
+
+	// Real bug found by this test, not a catalogue typo: `LOOK_AT_REGEX` in look-at.ts has
+	// `look (?:at )?...( .+)?$`, and `(?:at )?` eats the space `( .+)?` needs, so the bare
+	// `look at <name>` form (no type word) matches nothing. Listed here so the suite stays
+	// green; the last test in this block fails once the regex is fixed, so remove the entries
+	// then. Tracked in docs/roadmap/10-bug-fixes.md.
+	const KNOWN_UNREACHABLE = new Set(['look at [monster]', 'look at [card name]', 'look at [item name]']);
+
+	it('every entry (its example, or the command itself) matches a handler', () => {
+		for (const entry of COMMAND_CATALOG) {
+			if (KNOWN_UNREACHABLE.has(entry.command)) continue;
+			const typed = entry.example ?? entry.command;
+			expect(typed, `"${entry.command}" has no example but contains a placeholder`).not.to.match(/\[[^\]]*\]/);
+			expect(listen({ command: typed, game: {} }), `"${entry.command}" (typed as "${typed}") reaches no handler`).to.not.equal(null);
+		}
+	});
+
+	it('the known-unreachable entries are still unreachable (remove them once fixed)', () => {
+		for (const command of KNOWN_UNREACHABLE) {
+			const entry = COMMAND_CATALOG.find((e) => e.command === command);
+			expect(entry, command).to.not.equal(undefined);
+			expect(listen({ command: entry!.example, game: {} }), `"${command}" now works: drop it from KNOWN_UNREACHABLE`).to.equal(null);
+		}
+	});
+
+	it('every entry with a [placeholder] has an example', () => {
+		for (const entry of COMMAND_CATALOG) {
+			if (/\[[^\]]*\]/.test(entry.command)) {
+				expect(entry.example, `"${entry.command}" needs an example`).to.be.a('string').and.not.equal('');
+			}
+		}
+	});
+});
+
+describe('help <word>', () => {
+	const ask = async (command: string): Promise<string> => {
+		loadHandlers();
+		const action = listen({ command, game: {} });
+		expect(action).to.not.equal(null);
+		const out: string[] = [];
+		await action!({
+			channel: ({ announce }: { announce?: string }) => {
+				if (announce) out.push(announce);
+				return Promise.resolve('');
+			},
+			channelName: 'test',
+			isDM: true,
+			user: { id: 'u1', name: 'Tester' },
+		});
+		return out[0];
+	};
+
+	it('help preset lists the four preset commands with examples', async () => {
+		const out = await ask('help preset');
+		expect(out).to.match(/^Commands with "preset":\n\n/);
+		for (const example of ['save preset tank for Fluffy', 'load preset tank on Fluffy', 'look at presets for Fluffy', 'delete preset tank for Fluffy']) {
+			expect(out).to.include(`Try: ${example}`);
+		}
+		expect(out).not.to.include('train a monster');
+	});
+
+	it('echoes the word as typed and ignores extra spaces', async () => {
+		const out = await ask('  HELP   Preset ');
+		expect(out).to.match(/^Commands with "Preset":/);
+		expect(out).to.include('save preset [name] for [monster]');
+	});
+
+	it('ignores bracketed placeholders when matching', async () => {
+		const out = await ask('help monster');
+		expect(out).to.include('train a monster');
+		expect(out).to.include('look at monsters');
+		expect(out).not.to.include('dismiss [monster]');
+	});
+
+	it('omits the Try line when an entry has no example', async () => {
+		const out = await ask('help train');
+		expect(out).to.include('train a monster');
+		expect(out).not.to.include('Try:');
+	});
+
+	it('says so when nothing matches', async () => {
+		expect(await ask('help zzz')).to.equal('No command has "zzz" in it. Type help to see them all.');
+	});
+
+	it('bare help keeps the items note and ends the list with the pointer', async () => {
+		const out = await ask('help');
+		expect(out).to.include('-- One Thing Worth Knowing --');
+		expect(out).to.include('Type help and a word to see those commands with an example, like help preset.\n\n-- One Thing Worth Knowing --');
+	});
+});

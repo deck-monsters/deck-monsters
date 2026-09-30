@@ -105,5 +105,34 @@ export function formatCommandList(): string {
 		lines.push('');
 	}
 
+	lines.push('Type help and a word to see those commands with an example, like help preset.');
+
 	return lines.join('\n').trim();
+}
+
+/** A command with its `[placeholders]` removed and spaces squeezed, lowercased, for `help <word>`. */
+function searchableText(command: string): string {
+	return command.replace(/\[[^\]]*\]/g, ' ').replace(/\s+/g, ' ').trim().toLowerCase();
+}
+
+/**
+ * `help <word>`: every catalogue entry whose command text (placeholders removed, so
+ * `help monster` does not match every `[monster]`) contains the word(s).
+ */
+export function formatCommandSearch(word: string): string {
+	const typed = word.trim();
+	const needle = typed.replace(/\s+/g, ' ').toLowerCase();
+	const matches = COMMAND_CATALOG.filter((e) => searchableText(e.command).includes(needle));
+
+	if (!needle || matches.length === 0) {
+		return `No command has "${typed}" in it. Type help to see them all.`;
+	}
+
+	const blocks = matches.map((e) => {
+		const lines = [`  ${e.command}`, `    ${e.description}`];
+		if (e.example) lines.push(`    Try: ${e.example}`);
+		return lines.join('\n');
+	});
+
+	return `Commands with "${typed}":\n\n${blocks.join('\n\n')}`;
 }
