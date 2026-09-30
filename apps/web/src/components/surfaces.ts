@@ -4,6 +4,7 @@ import ConsolePane from './ConsolePane.js';
 import WorkshopPanel from './WorkshopPanel.js';
 import FightLogPanel from './FightLogPanel.js';
 import LeaderboardPanel from './LeaderboardPanel.js';
+import HelpPanel from './HelpPanel.js';
 
 /**
  * The set of surfaces `Terminal` can place into a pane slot (or, on a narrow screen, show
@@ -18,7 +19,7 @@ import LeaderboardPanel from './LeaderboardPanel.js';
  * (or a URL entered directly); adding a route must not turn ordinary surface selection
  * into navigation.
  */
-export type SurfaceId = 'ring' | 'console' | 'workshop' | 'fights' | 'leaderboard';
+export type SurfaceId = 'ring' | 'console' | 'workshop' | 'fights' | 'leaderboard' | 'help';
 
 export interface SurfaceRenderProps {
   roomId: string;
@@ -77,6 +78,12 @@ export const SURFACES: SurfaceDefinition[] = [
     label: 'Leaders',
     route: (roomId) => `/room/${roomId}/leaderboard`,
     render: ({ roomId, headerActions }) => createElement(LeaderboardPanel, { roomId, initialScope: 'room', headerActions }),
+  },
+  {
+    id: 'help',
+    label: 'Help',
+    route: (roomId) => `/room/${roomId}/help`,
+    render: ({ headerActions }) => createElement(HelpPanel, { headerActions }),
   },
 ];
 

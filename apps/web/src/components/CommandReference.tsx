@@ -7,7 +7,7 @@ interface CommandReferenceProps {
   onInsertCommand: (command: string) => void;
 }
 
-const CATEGORY_LABELS: Record<CommandCategory, string> = {
+export const CATEGORY_LABELS: Record<CommandCategory, string> = {
   monsters: 'Monsters',
   ring: 'The Ring',
   cards: 'Cards',
@@ -17,7 +17,7 @@ const CATEGORY_LABELS: Record<CommandCategory, string> = {
   info: 'Reference',
 };
 
-const CATEGORY_ORDER: CommandCategory[] = [
+export const CATEGORY_ORDER: CommandCategory[] = [
   'monsters', 'ring', 'cards', 'items', 'shop', 'character', 'info',
 ];
 

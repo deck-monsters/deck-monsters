@@ -23,13 +23,33 @@ defines, in keyboard-shortcut order:
 | `Cmd/Ctrl+3` | Workshop | `/room/:roomId/workshop` |
 | `Cmd/Ctrl+4` | Fights | `/room/:roomId/fights` |
 | `Cmd/Ctrl+5` | Leaders | `/room/:roomId/leaderboard` |
+| `Cmd/Ctrl+6` | Help | `/room/:roomId/help` (also `/help`, no room) |
 
-Workshop, Fight Log, and Leaderboard are layout-agnostic panels. A route host wraps the
+Workshop, Fight Log, Leaderboard, and Help are layout-agnostic panels. A route host wraps the
 panel as a full page; `Terminal` can render the same panel in a slot. Do not create a
 second implementation for a pane.
 
 Other routes remain outside the workspace: `/rooms`, `/room/:roomId/settings`, `/account`,
 `/leaderboard`, authentication/reset pages, and invite links.
+
+## Help and guides
+
+`HelpPanel` (`components/HelpPanel.tsx`) is the **Help** surface; `HelpView` hosts it full
+page at `/room/:roomId/help` and, outside a room, `/help`. The header menu (desktop nav and
+the ☰ menu) has a **Help and guides** link to those routes, like Workshop and Fight log.
+
+Its text is not fetched. `PLAYER_HANDBOOK.md`, `MONSTERS.md`, `CARDS.md` and `ITEMS.md` at
+the repo root are imported with Vite `?raw` and bundled at build time, so **`pnpm run
+build:docs` (then a web build) refreshes what players read**; `apps/web/railway.toml` lists
+those files in `watchPatterns` so a regeneration redeploys the web service. Railway builds
+from the monorepo root, so they are in the build context. The **Commands** section renders
+`COMMAND_CATALOG`, the same data as the Console's `CommandReference`, which also supplies
+its category labels and order.
+
+`lib/markdown.tsx` is a small purpose-built renderer for the shapes those guides use (no
+Markdown dependency; it emits React elements, never HTML strings). Tables and code blocks
+scroll inside their own focusable `.help-table-region` / `.help-pre` box, never the page.
+Adding Markdown syntax to a generator means checking the renderer handles it.
 
 ## Two slots and the breakpoint
 
