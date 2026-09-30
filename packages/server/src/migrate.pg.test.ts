@@ -8,7 +8,7 @@ import { expect } from 'chai';
 import pg from 'pg';
 
 import { createLogger } from './logger.js';
-import { runMigrations } from './migrate.js';
+import { MIGRATION_LOCK_KEY, runMigrations } from './migrate.js';
 
 // Real-Postgres check of the pre-deploy migration runner. Skipped unless TEST_DATABASE_URL is set.
 // Each test gets a FRESH database on that server so the shared dev database is never touched.
@@ -174,6 +174,26 @@ suite('runMigrations against Postgres', () => {
 			expect(Date.now() - started).to.be.lessThan(8000);
 			expect(report.ok).to.equal(false);
 			expect(report.failed?.filename).to.equal('20260101000000_alter.sql');
+			expect(report.failed?.error).to.match(/lock timeout/);
+		} finally {
+			await holder.query('rollback').catch(() => undefined);
+			await holder.end();
+		}
+	});
+
+	it('gives up within the lock timeout when another run holds the migration lock during setup', async () => {
+		// A stalled deploy holding the runner's advisory lock must not block the next deploy's
+		// setup step forever.
+		const holder = new pg.Client({ connectionString: dbUrl });
+		await holder.connect();
+		try {
+			await holder.query('begin');
+			await holder.query('select pg_advisory_xact_lock($1)', [MIGRATION_LOCK_KEY]);
+			const dir = tempDir({ '20260101000000_ok.sql': 'create table setup_t (id int);' });
+			const started = Date.now();
+			const report = await runMigrations({ connectionString: dbUrl, dir, log: quiet, lockTimeoutMs: 500 });
+			expect(Date.now() - started).to.be.lessThan(8000);
+			expect(report.ok).to.equal(false);
 			expect(report.failed?.error).to.match(/lock timeout/);
 		} finally {
 			await holder.query('rollback').catch(() => undefined);

@@ -164,10 +164,15 @@ export function listMigrationFiles(dir: string): MigrationFile[] {
 	return files;
 }
 
-async function ensureHistoryTable(pool: pg.Pool): Promise<void> {
+async function ensureHistoryTable(pool: pg.Pool, lockMs: number, stmtMs: number): Promise<void> {
 	const client = await pool.connect();
 	try {
 		await client.query('BEGIN');
+		// Timeouts before the lock, as in each migration's transaction: a second deploy waiting
+		// here on a stalled first one must give up, not hold its deploy forever (Codex review of
+		// #414).
+		await client.query(`set local lock_timeout = ${Math.floor(lockMs)}`);
+		await client.query(`set local statement_timeout = ${Math.floor(stmtMs)}`);
 		await client.query('select pg_advisory_xact_lock($1)', [MIGRATION_LOCK_KEY]);
 		// Only create when missing: never alter Supabase's own table, and avoid needing
 		// create-schema privileges when it already exists.
@@ -208,7 +213,7 @@ export async function runMigrations(options: RunMigrationsOptions = {}): Promise
 
 	try {
 		const files = listMigrationFiles(dir);
-		await ensureHistoryTable(pool);
+		await ensureHistoryTable(pool, lockMs, stmtMs);
 
 		const recorded = await pool.query<{ version: string; name: string | null }>(
 			'select version, name from supabase_migrations.schema_migrations'
