@@ -58,11 +58,33 @@ Tasks 1 and 2 are specified in [39a](39a-cursor-first-pass.md), which Claude imp
 |---|---|---|
 | 1 | **Workshop quick wins,** from the findings above: the wallet moves to the Shop; Train monster gets its own row and a line of help; Sync goes, with event and focus refresh in its place; zero prices read **Free**; the Sorting Hat's description leads with its purpose; a revival in progress shows **Reviving…** and its return time | Done (2026-09-30): f9f8fc0d, c359cd4a; the Sorting Hat text 8f260bb8. Needs the live check (Prompt B in 39a) |
 | 2 | **Help in the game:** a Help entry in the menu that opens the player handbook, the monster, card and item guides, and the command list, readable on a phone | Done (2026-09-30): a Help and guides page from the ☰ menu, not a tab (the phone tab bar already overflows); lazy-loaded; 57563764, 9e31cf05. Needs the live check |
-| 3 | **Inventory,** by walking the game as a new player in a real browser at phone and desktop widths (a Cursor prompt is below): every tab, panel, button, menu, header counter, Console command and prompt, and every mechanic a player meets in a fight. For each, what explains it today (a label, a tooltip, a help line, a handbook section, or nothing) and what confused the walker | Planned |
+| 3 | **Inventory,** by walking the game as a new player in a real browser at phone and desktop widths (a Cursor prompt is below): every tab, panel, button, menu, header counter, Console command and prompt, and every mechanic a player meets in a fight. For each, what explains it today (a label, a tooltip, a help line, a handbook section, or nothing) and what confused the walker | Done (2026-09-30): Cursor's walk at phone and desktop widths, [help inventory](../reference/help-inventory.md) (fc23174f). Its top ten are triaged below |
 | 4 | **Decide the forms of help,** per kind of control: a short description on each button and menu item (tooltip, or long-press on a phone); a one-line "what is this" for each tab and panel, shown the first time and reachable after; `help <command>` with an example for every command; and a narration line the first time a player meets a mechanic in a fight (a ring event, a boss's temperament, an ambush, bosses turning on each other). Keep it short, and never block play | Planned |
 | 5 | **Write the text.** The orchestrator writes every line in the game's voice, from the inventory, in batches by surface | Planned |
 | 6 | **A guided start,** from joining a room to a first fight and a first card change, built on the existing first-run training | Planned |
 | 7 | **Keep it complete:** a test that fails when a catalogue command, or a button in the web app, has no help text | Planned |
+
+## Batch 2: from the walk (2026-09-30)
+
+Cursor's [help inventory](../reference/help-inventory.md) ranked ten confusions. Items 6
+(the wallet beside Train monster, Sync) and the Workshop subtitle were already fixed by
+task 1. The rest, grouped into tasks that do not share files:
+
+| # | Task | From the walk | Status |
+|---|---|---|---|
+| B1 | **The Console on a phone.** While a prompt is open, the suggestion chips and the getting-started guide step aside, so the question is on screen; the banner no longer says suggestions are paused while they still show. The name suggestions read as suggestions, not buttons. A command typed into a card prompt is recognised as a command, with a line saying how to cancel first. The equip example no longer says to type a JSON array | 2, 8 | Planned |
+| B2 | **Say what is happening now.** The fight log and the leaderboard stop saying nothing has happened while a fight is on the ring. The Workshop's fighting line says the cards are locked until the monster returns, instead of implying a queue | 1, 3 | Planned |
+| B3 | **The ring header and the boss.** While a fight is on, the boss countdown and the summons count are hidden (owner); on a clear ring, summons read as what is left. The roster shows a boss's whole name. A boss's turn names the boss, not The Editor | 4, 7 | Planned |
+| B4 | **One name per place** (owner: the tab names win): The Ring, Console, Workshop, Fights, Leaders in the tabs, the menu, and page headings; all five tabs fit at 390 px | 8 | Planned |
+| B5 | **Training and card moves say why.** Each monster type gets a one-line description in both training paths; the Console path asks the player's name as the form does; "You have 10 of 10 monsters left to train" reads as what it means. A refused card move says why, and a successful one says what the count counts | 9, 10 | Planned |
+| B6 | **A glossary.** The fight's numbers (`ac`, `hp`, `dex`, `str`, `int`, dice like `1d20`, `XP`, level and "beginner", bloodied, a natural 1 and 20) explained in the handbook, reachable from Help | 5 | Planned |
+
+Also from the walk, smaller: the boss arriving with `Fights: 102` in a new room (boss history
+is global; say so or show this room's count), `OWNER` and `MEMBER` undefined on the rooms
+page, placeholders that look filled in, the long room name colliding with the logo on a
+phone, the closed command reference still read by screen readers, and the desktop theme
+circle with no word. The walk did not see a fight end, revival, death, an item used, a hold,
+an ambush, or a team; Prompt B's live check should cover a fight end and a revival.
 
 ## Cursor prompt for task 3 (paste whole)
 
