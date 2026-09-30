@@ -24,7 +24,7 @@ suite('PostgresStateStore against Postgres', () => {
 
 	async function row() {
 		const res = await pool.query(
-			`select jsonb_typeof(state) as type, state, state_version, state_blob from rooms where id = $1`,
+			`select jsonb_typeof(state) as type, state, state_version from rooms where id = $1`,
 			[roomId]
 		);
 		return res.rows[0];
@@ -45,17 +45,16 @@ suite('PostgresStateStore against Postgres', () => {
 		await pool.end();
 	});
 
-	it('stores a jsonb object and a version, leaves state_blob untouched; load returns the object', async () => {
+	it('stores a jsonb object and a version, load returns the object, with no state_blob column', async () => {
 		const state = { name: 'Game', options: { roomId, characters: { a: { name: 'A', options: { xp: 3 } } } } };
-		await pool.query(`update rooms set state_blob = 'stale-blob' where id = $1`, [roomId]);
+		const col = await pool.query(`select 1 from information_schema.columns where table_name = 'rooms' and column_name = 'state_blob'`);
+		expect(col.rowCount, 'the roadmap 37 contract migration dropped state_blob').to.equal(0);
 		await store.save(roomId, state);
 
 		const r = await row();
 		expect(r.type).to.equal('object');
 		expect(Number(r.state_version)).to.be.greaterThan(0);
 		expect(r.state).to.deep.equal(state);
-		// Release 2 of roadmap 37: a save no longer touches the legacy column.
-		expect(r.state_blob).to.equal('stale-blob');
 		expect(await store.load(roomId)).to.deep.equal(state);
 	});
 
@@ -76,7 +75,7 @@ suite('PostgresStateStore against Postgres', () => {
 	it('a tombstone version blocks a save stamped before it', async () => {
 		const stale = nextStateVersion();
 		const tombstone = nextStateVersion();
-		await pool.query(`update rooms set state = null, state_blob = null, state_version = $2 where id = $1`, [roomId, tombstone]);
+		await pool.query(`update rooms set state = null, state_version = $2 where id = $1`, [roomId, tombstone]);
 
 		await store.write(roomId, { name: 'Game', options: {} }, stale);
 

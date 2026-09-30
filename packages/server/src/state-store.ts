@@ -58,8 +58,6 @@ export class PostgresStateStore implements StateStore {
 		try {
 			const json = JSON.stringify(state);
 			roomStateSaveBytes.observe(Buffer.byteLength(json));
-			// `state_blob` is deliberately NOT written (roadmap 37 release 2): it is stale from the
-			// first save of this release on, and a later migration drops the column.
 			// `state` is passed as the object itself: node-postgres + Drizzle JSON.stringify it once
 			// into a jsonb object (a pre-stringified value would be stored as a jsonb string).
 			const { generation } = this.options;
@@ -115,12 +113,11 @@ export class PostgresStateStore implements StateStore {
 
 	async load(roomId: string): Promise<SerializedGame | string | null> {
 		const rows = await this.db
-			.select({ state: rooms.state, stateBlob: rooms.stateBlob })
+			.select({ state: rooms.state })
 			.from(rooms)
 			.where(eq(rooms.id, roomId))
 			.limit(1);
 
-		// Read-only blob fallback, same reason as RoomManager._loadRoom; removed with the drop.
-		return rows[0]?.state ?? rows[0]?.stateBlob ?? null;
+		return rows[0]?.state ?? null;
 	}
 }

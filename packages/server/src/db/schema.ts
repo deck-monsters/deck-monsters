@@ -47,7 +47,6 @@ export const rooms = pgTable('rooms', {
 	/** DEPRECATED (roadmap 37): base64(gzip(JSON)). App code no longer writes it except a reset or
 	 * quarantine nulling it (see `_resetRoomState`); stale for every room, read only as a fallback
 	 * where `state` is null. Dropped by a later migration (roadmap 40). */
-	stateBlob: text('state_blob'),
 	quarantinedBlob: text('quarantined_blob'),
 	/** The serialized Game as jsonb (roadmap 37). Guarded by `stateVersion`. */
 	state: jsonb('state').$type<SerializedGame>(),

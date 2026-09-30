@@ -386,97 +386,52 @@ no handler, and each deploy lost up to 30 s of unsaved changes in every active r
 
 ## Room state migration to jsonb (roadmap 37)
 
-Room state moves from `rooms.state_blob` (base64 gzip JSON) to `rooms.state` (`jsonb`) in
-three steps. **Release 1** (expand) writes both columns. **Release 2** (this one, "stop
-using the blob") writes and reads `state` only. A **later migration** then drops `state_blob`;
-it must not ship with release 2, because the migration runner applies migrations while the old
-release is still serving and still writing the column. The plan and its reasoning are in
-[roadmap 37](../roadmap/37-room-state-in-postgres.md).
-
-Commands run from `packages/server` with `DATABASE_URL` set to the production database.
+Room state moved from `rooms.state_blob` (base64 gzip JSON) to `rooms.state` (`jsonb`) in
+three steps: **release 1** (expand) wrote both columns, **release 2** stopped writing the blob
+and kept a read-only load fallback, and the **drop** (this release) removes the column and the
+fallback. The drop must not ship with release 2, because the migration runner applies
+migrations while the old release is still serving and still writing the column. The plan and
+its reasoning are in [roadmap 37](../roadmap/37-room-state-in-postgres.md).
 
 **Two services write room state:** the server and the Discord connector. Each runs its own
-`RoomManager` over the same `rooms` table. Every step below that deploys, rolls back, stops or
-starts "the services" means both, on the same release. A connector left on the old release
-keeps writing only `state_blob`, and release 1 prefers `state`, so its rooms' later changes
-would be read stale and then overwritten.
+`RoomManager` over the same `rooms` table. Every deploy or rollback below means both, on the
+same release.
 
-### Rollout
+### The drop (`20260930140000_drop_state_blob.sql`)
 
-1. Apply the migration: `supabase db push --linked`. It only adds columns, so the running
-   release keeps working.
-2. Deploy release 1 to both services. They write `state` and `state_blob`, and loads prefer
-   `state`. Run the backfill only after both are on release 1.
-3. Dry run: `pnpm exec tsx scripts/migrate-room-state-to-jsonb.ts --dry-run`. Expect
-   `failed: 0`. A failed room has a corrupt blob: the script reports it and does not write it,
-   and the server quarantines it the next time the room loads. The script exits 1 while such a
-   room is left. A dry run does not attempt the database write, so a write Postgres refuses
-   shows up only in the real run; failure reasons are short and never include room data.
-4. Real run: the same command without `--dry-run`. It is safe while the service is live: it
-   writes only rooms whose `state` is still null, compares the blob it read before writing, and
-   never touches `state_version`, so a live save always lands after it. A second run converts
-   0.
-5. Read-only checks:
+The pre-deploy runner applies it in one transaction:
 
-   ```sql
-   select count(*) filter (where state is null and state_blob is not null) as unconverted,
-          count(*) filter (where state is not null) as converted
-     from rooms;
-   select id, jsonb_typeof(state), pg_column_size(state), state_version from rooms;
-   ```
+1. **Guard.** It raises `rooms still unconverted (state null, state_blob present): run the
+   room-state backfill first (roadmap 37)` if any room has `state` null and a blob, because
+   that blob is the room's only copy. The transaction rolls back, the deploy fails and the
+   previous release keeps serving. The backfill script it names was deleted with the drop,
+   since it only converted blobs; an unconverted room would have to be converted by hand
+   (`base64 -d | gunzip` of the blob into `rooms.state`) or reset. Every production room
+   already had `state` when the drop shipped.
+2. `alter table rooms drop column if exists state_blob;`. `quarantined_blob` stays, so blobs
+   recovered earlier remain inspectable.
 
-   `unconverted` should be 0, apart from rooms the script reported as failed, and
-   `jsonb_typeof` must be `object` for every row.
-6. Watch for a week before the contract release: `dm_room_state_saves_stale_total` should stay
-   near 0 and `dm_room_state_save_failures_total` at 0.
+The code in this release no longer reads or writes `state_blob`: no load fallback, no reset
+or quarantine nulling, and the leaderboard backfill reads `state` only. The engine's
+`restoreGame` still decodes a legacy blob string (public API). `dm_room_state_source_total`
+now only ever reports `source="state"`.
 
-### Release 2 (stop using `state_blob`)
+**Before shipping the drop:** both services are on release 2 (nothing still writes the
+blob), and this returns no rows:
 
-Release 2 stops writing `state_blob` but keeps a **read-only** blob fallback on load, so it is
-safe even for a room the backfill has not converted (`state` null, blob present): it loads from
-the blob (logged at warn, counted as `source="blob"`), never writes the blob, and the room's
-next save fills `state`. Stop-writing and drop are separate deploys (roadmap 40).
-
-1. The pre-deploy runner applies this release's two migrations (roadmap 40): the read-only
-   query views with `card_types`, and `rooms.state_generation` (a metadata-only column add).
-   Neither changes what the old release reads or writes.
-2. Deploy release 2 to **both** services, the server and the Discord connector. Saves write
-   `state` and `state_version` only, so `state_blob` is stale for every room from the first
-   save on. A reset or a load-time quarantine moves a present blob to `quarantined_blob` and
-   nulls `state_blob`, so neither the fallback nor a rollback to release 1 can resurrect reset
-   data.
-3. Watch `dm_room_state_source_total{source="blob"}`: it should stop rising as rooms save.
-   Run the backfill (default mode, safe while live) for any straggler.
-4. A reset reaches another process's copy only when both run this release (bug 208): until
-   the connector is upgraded, only the tombstone version protects a reset from its saves.
-   No connector is deployed today.
-
-**Before the DROP migration** (a later, separate PR that also removes the fallback, the
-schema column, the reset/quarantine nulling and the leaderboard/backfill blob reads;
-`quarantined_blob` stays):
-
-1. Both services are on release 2.
-2. Run the read-only check; `unconverted` must be 0 (list the ids of any that are not, and
-   backfill or reset them first):
-
-   ```sql
-   select id from rooms where state is null and state_blob is not null;
-   ```
-
-3. The drop migration refuses to run while that query returns rows.
+```sql
+select id from rooms where state is null and state_blob is not null;
+```
 
 ### Rollback
 
-- **Release 2 to release 1:** safe. Release 1 prefers `state`, which release 2 kept current.
-  It only falls back to `state_blob` where `state` is null, and a reset nulls both.
-- **Contract warning: release 2 to a pre-37 release is NOT safe.** A pre-37 release reads only
-  `state_blob`, which release 2 no longer writes, so every room would load from a stale blob
-  and later saves would overwrite the current `state` lineage. Do not roll back past release 1.
-  If it is unavoidable, stop both services first and rebuild the blobs from `state` by hand
-  (`base64(gzip(JSON))` of each room's `state`).
-- `--from-blob` was removed from the backfill script with release 2, because it treated the
-  blob as the truth. The script now only converts stragglers (`state` null, blob present) and
-  refuses `--from-blob` with an explanation.
+- **A rollback to a release before release 2 is impossible once the drop has run.** Those
+  releases read (and, before release 2, write) `state_blob`. Going back means first
+  restoring the column and its contents from a backup (Supabase daily backups), which would
+  also discard every room save since that backup. Plan to roll **forward**: fix the release
+  and redeploy.
+- Release 2 and later do not use the column, so rolling between them is safe.
+- If the guard fails the deploy, nothing changed; the previous release keeps serving.
 
 ## 4. Local development
 

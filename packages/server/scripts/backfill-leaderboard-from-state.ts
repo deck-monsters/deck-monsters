@@ -1,5 +1,5 @@
 /**
- * One-off: seed room_player_stats / room_monster_stats from serialized room state blobs.
+ * One-off: seed room_player_stats / room_monster_stats from serialized room state.
  * Run with: DATABASE_URL=... pnpm exec tsx scripts/backfill-leaderboard-from-state.ts
  *
  * Does not infer win/loss history (starts at 0); updates XP/levels/names from current state.
@@ -10,14 +10,10 @@ import { db } from '../src/db/index.js';
 import { rooms, roomPlayerStats, roomMonsterStats } from '../src/db/schema.js';
 
 async function main(): Promise<void> {
-	const rows = await db.select({ id: rooms.id, state: rooms.state, stateBlob: rooms.stateBlob }).from(rooms);
+	const rows = await db.select({ id: rooms.id, state: rooms.state }).from(rooms);
 
 	for (const row of rows) {
-		// Prefer `state`. A room the jsonb backfill has not converted (state null) still has a
-		// current blob, and release 2's load path reads it the same way, so skipping it would
-		// leave that room's leaderboard rows missing (Codex review of #416). Goes with the
-		// state_blob drop (roadmap 40 task 6).
-		const source = row.state ?? row.stateBlob;
+		const source = row.state;
 		if (!source) continue;
 		let game: ReturnType<typeof restoreGame>;
 		try {
