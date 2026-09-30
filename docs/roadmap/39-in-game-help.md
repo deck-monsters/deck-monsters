@@ -24,7 +24,7 @@ Today the help is scattered:
   [workshop and items](../architecture/workshop-and-items.md)).
 
 Much of the web workspace, though, explains itself only by its labels: the Ring, Console,
-Workshop, Fights and Leaderboard tabs; the ring roster and its "Use an item" row; the Workshop
+Workshop, Fights and Leaders tabs; the ring roster and its "Use an item" row; the Workshop
 panels; presets; the boss countdown and summons counter in the ring header. Mechanics such as
 ring events, bosses, ambushes, teams, and revival are explained only if a player reads the
 handbook.
