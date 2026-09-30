@@ -7,6 +7,8 @@ import { randomContestant } from '../helpers/bosses.js';
 import {
 	buildRingEventContext,
 	CHALLENGERS_TEAM,
+	RIVAL_TEAM_PREFIX,
+	isRivalTeam,
 	GAUNTLET_RULES,
 	getRingEvent,
 	selectRingEvent,
@@ -281,8 +283,9 @@ export class Ring extends BaseClass {
 	ringEvent?: RingEventDefinition;
 	/**
 	 * Roadmap 38 (`GAUNTLET_RULES.rivalsWhenOutnumbered`): decided once at fight start from the
-	 * boss and human counts, so a human dying mid-fight cannot flip targeting. Cleared with the
-	 * encounter.
+	 * boss and human counts, so a human dying mid-fight cannot flip targeting. It gives each boss
+	 * a team of its own (see `startEncounter`) and stops the Challengers alliance forming.
+	 * Cleared with the encounter, along with the bosses' teams.
 	 */
 	private gauntletRivals = false;
 
@@ -686,19 +689,30 @@ export class Ring extends BaseClass {
 		this.ringEvent?.apply(this.contestants);
 		const humanCount = this.contestants.filter(contestant => !contestant.isBoss).length;
 		const bossCount = this.contestants.filter(contestant => contestant.isBoss).length;
-		// Bosses that outnumber the humans (minions count as bosses) turn on each other too.
-		// A mega boss's party is a designed pack and keeps its alliance. With no human in the fight
-		// there is nobody to be outnumbered, and a boss-only fight (the harness's team fights, or
-		// every challenger withdrawn) keeps whatever teams it was given.
+		// Bosses that outnumber the humans (minions count as bosses) turn on each other too: each
+		// gets a team of its own for this fight, so humans keep their real teams and teamless
+		// humans are their own faction, as ever. A mega boss's party is a designed pack and keeps
+		// its alliance. With no human in the fight there is nobody to be outnumbered, and a
+		// boss-only fight (the harness's team fights, or every challenger withdrawn) keeps
+		// whatever teams it was given. Blood Feud is already a free-for-all, the team events
+		// decide the sides themselves, and The Reckoning's bosses hunt the strongest challenger.
+		const event = this.ringEvent;
 		this.gauntletRivals =
 			GAUNTLET_RULES.rivalsWhenOutnumbered &&
 			humanCount > 0 &&
 			bossCount > humanCount &&
-			!this.contestants.some(contestant => contestant.mega);
+			!this.contestants.some(contestant => contestant.mega) &&
+			!event?.freeForAll &&
+			event?.victoryMode !== 'last-team' &&
+			event?.id !== 'the-reckoning';
 		if (this.gauntletRivals) {
+			this.contestants.forEach((contestant, index) => {
+				if (contestant.isBoss && !contestant.team) {
+					contestant.team = `${RIVAL_TEAM_PREFIX}${contestant.monster.stableId ?? index}`;
+				}
+			});
 			this.emit('narration', {
-				narration:
-					'Outnumbered is not outmatched. The bosses turn on one another, and every monster in the ring now fights for itself.',
+				narration: 'Outnumbered is not outmatched. The bosses turn on one another.',
 			});
 		}
 
@@ -724,6 +738,10 @@ export class Ring extends BaseClass {
 		this.contestants.forEach(contestant => contestant.monster.endEncounter());
 		this.inEncounter = false;
 		this.gauntletRivals = false;
+		// The bosses' one-boss teams are for this fight only.
+		for (const contestant of this.contestants) {
+			if (isRivalTeam(contestant.team)) delete contestant.team;
+		}
 		delete this.encounter;
 		this.activeContestant = undefined;
 		// Post-fight HP is what players check between rounds; publish the final board.
@@ -756,7 +774,7 @@ export class Ring extends BaseClass {
 			ac: monster.ac,
 			dead: monster.dead,
 			isBoss: Boolean(isBoss),
-			team: team ?? null,
+			team: isRivalTeam(team) ? null : (team ?? null),
 			owner: isBoss ? null : (character?.givenName ?? null),
 			userId: isBoss ? null : (userId ?? null),
 			acting: this.inEncounter && this.activeContestant?.monster === monster,
@@ -991,7 +1009,7 @@ export class Ring extends BaseClass {
 		 * itself rule, and a team a player or ring event already set is never replaced.
 		 */
 		let challengers: Contestant[] =
-			!this.encounterFreeForAll && contestants.some(contestant => contestant.isBoss)
+			!this.encounterFreeForAll && !this.gauntletRivals && contestants.some(contestant => contestant.isBoss)
 				? contestants.filter(
 						contestant =>
 							!contestant.isBoss &&
@@ -1794,7 +1812,7 @@ export class Ring extends BaseClass {
 	 * docs/architecture/boss-encounters.md §5.
 	 */
 	get encounterFreeForAll(): boolean {
-		return this.ringEvent?.freeForAll === true || this.gauntletRivals;
+		return this.ringEvent?.freeForAll === true;
 	}
 
 	/**

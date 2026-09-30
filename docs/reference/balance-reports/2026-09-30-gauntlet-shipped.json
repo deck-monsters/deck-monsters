@@ -1,0 +1,726 @@
+{
+ "lone0": {
+  "variant": "none",
+  "fightsPerCell": 1000,
+  "pairFights": 3000,
+  "batch": 20,
+  "types": [
+   "Basilisk",
+   "Gladiator",
+   "Jinn",
+   "Minotaur",
+   "WeepingAngel",
+   "Unicorn",
+   "Dragon"
+  ],
+  "cells": [
+   {
+    "humans": 1,
+    "kind": "gauntlet",
+    "level": 0,
+    "type": "Basilisk",
+    "fights": 1000,
+    "humanWins": 232,
+    "draws": 105,
+    "gauntlets": 1000,
+    "extraBossWins": 610,
+    "avgRounds": 2.08
+   },
+   {
+    "humans": 1,
+    "kind": "gauntlet",
+    "level": 0,
+    "type": "Gladiator",
+    "fights": 1000,
+    "humanWins": 288,
+    "draws": 94,
+    "gauntlets": 1000,
+    "extraBossWins": 528,
+    "avgRounds": 2.286
+   },
+   {
+    "humans": 1,
+    "kind": "gauntlet",
+    "level": 0,
+    "type": "Jinn",
+    "fights": 1000,
+    "humanWins": 211,
+    "draws": 98,
+    "gauntlets": 1000,
+    "extraBossWins": 509,
+    "avgRounds": 2.312
+   },
+   {
+    "humans": 1,
+    "kind": "gauntlet",
+    "level": 0,
+    "type": "Minotaur",
+    "fights": 1000,
+    "humanWins": 247,
+    "draws": 105,
+    "gauntlets": 1000,
+    "extraBossWins": 574,
+    "avgRounds": 2.124
+   },
+   {
+    "humans": 1,
+    "kind": "gauntlet",
+    "level": 0,
+    "type": "WeepingAngel",
+    "fights": 1000,
+    "humanWins": 277,
+    "draws": 100,
+    "gauntlets": 1000,
+    "extraBossWins": 418,
+    "avgRounds": 2.102
+   },
+   {
+    "humans": 1,
+    "kind": "gauntlet",
+    "level": 0,
+    "type": "Unicorn",
+    "fights": 1000,
+    "humanWins": 232,
+    "draws": 95,
+    "gauntlets": 1000,
+    "extraBossWins": 609,
+    "avgRounds": 2.037
+   },
+   {
+    "humans": 1,
+    "kind": "gauntlet",
+    "level": 0,
+    "type": "Dragon",
+    "fights": 1000,
+    "humanWins": 236,
+    "draws": 109,
+    "gauntlets": 1000,
+    "extraBossWins": 508,
+    "avgRounds": 2.05
+   }
+  ]
+ },
+ "lone1": {
+  "variant": "none",
+  "fightsPerCell": 1000,
+  "pairFights": 3000,
+  "batch": 20,
+  "types": [
+   "Basilisk",
+   "Gladiator",
+   "Jinn",
+   "Minotaur",
+   "WeepingAngel",
+   "Unicorn",
+   "Dragon"
+  ],
+  "cells": [
+   {
+    "humans": 1,
+    "kind": "gauntlet",
+    "level": 1,
+    "type": "Basilisk",
+    "fights": 1000,
+    "humanWins": 311,
+    "draws": 99,
+    "gauntlets": 1000,
+    "extraBossWins": 533,
+    "avgRounds": 1.997
+   },
+   {
+    "humans": 1,
+    "kind": "gauntlet",
+    "level": 1,
+    "type": "Gladiator",
+    "fights": 1000,
+    "humanWins": 401,
+    "draws": 81,
+    "gauntlets": 1000,
+    "extraBossWins": 454,
+    "avgRounds": 2.125
+   },
+   {
+    "humans": 1,
+    "kind": "gauntlet",
+    "level": 1,
+    "type": "Jinn",
+    "fights": 1000,
+    "humanWins": 420,
+    "draws": 88,
+    "gauntlets": 1000,
+    "extraBossWins": 349,
+    "avgRounds": 2.3
+   },
+   {
+    "humans": 1,
+    "kind": "gauntlet",
+    "level": 1,
+    "type": "Minotaur",
+    "fights": 1000,
+    "humanWins": 270,
+    "draws": 87,
+    "gauntlets": 1000,
+    "extraBossWins": 533,
+    "avgRounds": 2.054
+   },
+   {
+    "humans": 1,
+    "kind": "gauntlet",
+    "level": 1,
+    "type": "WeepingAngel",
+    "fights": 1000,
+    "humanWins": 461,
+    "draws": 76,
+    "gauntlets": 1000,
+    "extraBossWins": 344,
+    "avgRounds": 2.018
+   },
+   {
+    "humans": 1,
+    "kind": "gauntlet",
+    "level": 1,
+    "type": "Unicorn",
+    "fights": 1000,
+    "humanWins": 348,
+    "draws": 75,
+    "gauntlets": 1000,
+    "extraBossWins": 498,
+    "avgRounds": 1.997
+   },
+   {
+    "humans": 1,
+    "kind": "gauntlet",
+    "level": 1,
+    "type": "Dragon",
+    "fights": 1000,
+    "humanWins": 330,
+    "draws": 102,
+    "gauntlets": 1000,
+    "extraBossWins": 362,
+    "avgRounds": 2.138
+   }
+  ]
+ },
+ "lone3": {
+  "variant": "none",
+  "fightsPerCell": 1000,
+  "pairFights": 3000,
+  "batch": 20,
+  "types": [
+   "Basilisk",
+   "Gladiator",
+   "Jinn",
+   "Minotaur",
+   "WeepingAngel",
+   "Unicorn",
+   "Dragon"
+  ],
+  "cells": [
+   {
+    "humans": 1,
+    "kind": "gauntlet",
+    "level": 3,
+    "type": "Basilisk",
+    "fights": 1000,
+    "humanWins": 621,
+    "draws": 55,
+    "gauntlets": 1000,
+    "extraBossWins": 244,
+    "avgRounds": 2.053
+   },
+   {
+    "humans": 1,
+    "kind": "gauntlet",
+    "level": 3,
+    "type": "Gladiator",
+    "fights": 1000,
+    "humanWins": 634,
+    "draws": 71,
+    "gauntlets": 1000,
+    "extraBossWins": 251,
+    "avgRounds": 1.931
+   },
+   {
+    "humans": 1,
+    "kind": "gauntlet",
+    "level": 3,
+    "type": "Jinn",
+    "fights": 1000,
+    "humanWins": 665,
+    "draws": 59,
+    "gauntlets": 1000,
+    "extraBossWins": 176,
+    "avgRounds": 2.039
+   },
+   {
+    "humans": 1,
+    "kind": "gauntlet",
+    "level": 3,
+    "type": "Minotaur",
+    "fights": 1000,
+    "humanWins": 504,
+    "draws": 82,
+    "gauntlets": 1000,
+    "extraBossWins": 307,
+    "avgRounds": 1.906
+   },
+   {
+    "humans": 1,
+    "kind": "gauntlet",
+    "level": 3,
+    "type": "WeepingAngel",
+    "fights": 1000,
+    "humanWins": 611,
+    "draws": 55,
+    "gauntlets": 1000,
+    "extraBossWins": 110,
+    "avgRounds": 1.951
+   },
+   {
+    "humans": 1,
+    "kind": "gauntlet",
+    "level": 3,
+    "type": "Unicorn",
+    "fights": 1000,
+    "humanWins": 656,
+    "draws": 54,
+    "gauntlets": 1000,
+    "extraBossWins": 184,
+    "avgRounds": 2.12
+   },
+   {
+    "humans": 1,
+    "kind": "gauntlet",
+    "level": 3,
+    "type": "Dragon",
+    "fights": 1000,
+    "humanWins": 487,
+    "draws": 78,
+    "gauntlets": 1000,
+    "extraBossWins": 168,
+    "avgRounds": 2.003
+   }
+  ]
+ },
+ "lone5": {
+  "variant": "none",
+  "fightsPerCell": 1000,
+  "pairFights": 3000,
+  "batch": 20,
+  "types": [
+   "Basilisk",
+   "Gladiator",
+   "Jinn",
+   "Minotaur",
+   "WeepingAngel",
+   "Unicorn",
+   "Dragon"
+  ],
+  "cells": [
+   {
+    "humans": 1,
+    "kind": "gauntlet",
+    "level": 5,
+    "type": "Basilisk",
+    "fights": 1000,
+    "humanWins": 693,
+    "draws": 54,
+    "gauntlets": 1000,
+    "extraBossWins": 137,
+    "avgRounds": 1.912
+   },
+   {
+    "humans": 1,
+    "kind": "gauntlet",
+    "level": 5,
+    "type": "Gladiator",
+    "fights": 1000,
+    "humanWins": 761,
+    "draws": 36,
+    "gauntlets": 1000,
+    "extraBossWins": 124,
+    "avgRounds": 1.766
+   },
+   {
+    "humans": 1,
+    "kind": "gauntlet",
+    "level": 5,
+    "type": "Jinn",
+    "fights": 1000,
+    "humanWins": 818,
+    "draws": 37,
+    "gauntlets": 1000,
+    "extraBossWins": 62,
+    "avgRounds": 1.898
+   },
+   {
+    "humans": 1,
+    "kind": "gauntlet",
+    "level": 5,
+    "type": "Minotaur",
+    "fights": 1000,
+    "humanWins": 672,
+    "draws": 62,
+    "gauntlets": 1000,
+    "extraBossWins": 172,
+    "avgRounds": 1.791
+   },
+   {
+    "humans": 1,
+    "kind": "gauntlet",
+    "level": 5,
+    "type": "WeepingAngel",
+    "fights": 1000,
+    "humanWins": 707,
+    "draws": 36,
+    "gauntlets": 1000,
+    "extraBossWins": 45,
+    "avgRounds": 1.983
+   },
+   {
+    "humans": 1,
+    "kind": "gauntlet",
+    "level": 5,
+    "type": "Unicorn",
+    "fights": 1000,
+    "humanWins": 718,
+    "draws": 33,
+    "gauntlets": 1000,
+    "extraBossWins": 99,
+    "avgRounds": 1.966
+   },
+   {
+    "humans": 1,
+    "kind": "gauntlet",
+    "level": 5,
+    "type": "Dragon",
+    "fights": 1000,
+    "humanWins": 578,
+    "draws": 66,
+    "gauntlets": 1000,
+    "extraBossWins": 107,
+    "avgRounds": 1.954
+   }
+  ]
+ },
+ "pair1": {
+  "variant": "none",
+  "fightsPerCell": 1000,
+  "pairFights": 3000,
+  "batch": 20,
+  "types": [
+   "Basilisk",
+   "Gladiator",
+   "Jinn",
+   "Minotaur",
+   "WeepingAngel",
+   "Unicorn",
+   "Dragon"
+  ],
+  "cells": [
+   {
+    "humans": 2,
+    "kind": "gauntlet",
+    "level": 1,
+    "type": "mixed",
+    "fights": 3000,
+    "humanWins": 1068,
+    "draws": 307,
+    "gauntlets": 3000,
+    "extraBossWins": 1074,
+    "avgRounds": 2.126
+   }
+  ]
+ },
+ "pair3": {
+  "variant": "none",
+  "fightsPerCell": 1000,
+  "pairFights": 3000,
+  "batch": 20,
+  "types": [
+   "Basilisk",
+   "Gladiator",
+   "Jinn",
+   "Minotaur",
+   "WeepingAngel",
+   "Unicorn",
+   "Dragon"
+  ],
+  "cells": [
+   {
+    "humans": 2,
+    "kind": "gauntlet",
+    "level": 3,
+    "type": "mixed",
+    "fights": 3000,
+    "humanWins": 1509,
+    "draws": 237,
+    "gauntlets": 3000,
+    "extraBossWins": 678,
+    "avgRounds": 1.9976666666666667
+   }
+  ]
+ },
+ "team1": {
+  "variant": "none",
+  "fightsPerCell": 1000,
+  "pairFights": 3000,
+  "batch": 20,
+  "types": [
+   "Basilisk",
+   "Gladiator",
+   "Jinn",
+   "Minotaur",
+   "WeepingAngel",
+   "Unicorn",
+   "Dragon"
+  ],
+  "cells": [
+   {
+    "humans": 2,
+    "kind": "gauntlet",
+    "level": 1,
+    "type": "mixed",
+    "fights": 3000,
+    "humanWins": 2021,
+    "draws": 297,
+    "gauntlets": 3000,
+    "extraBossWins": 544,
+    "avgRounds": 2.2596666666666665,
+    "pairTeam": "Gryffindor"
+   }
+  ]
+ },
+ "team3": {
+  "variant": "none",
+  "fightsPerCell": 1000,
+  "pairFights": 3000,
+  "batch": 20,
+  "types": [
+   "Basilisk",
+   "Gladiator",
+   "Jinn",
+   "Minotaur",
+   "WeepingAngel",
+   "Unicorn",
+   "Dragon"
+  ],
+  "cells": [
+   {
+    "humans": 2,
+    "kind": "gauntlet",
+    "level": 3,
+    "type": "mixed",
+    "fights": 3000,
+    "humanWins": 2485,
+    "draws": 218,
+    "gauntlets": 3000,
+    "extraBossWins": 181,
+    "avgRounds": 2.232666666666667,
+    "pairTeam": "Gryffindor"
+   }
+  ]
+ },
+ "amb1": {
+  "variant": "none",
+  "fightsPerCell": 1000,
+  "pairFights": 3000,
+  "batch": 20,
+  "types": [
+   "Basilisk",
+   "Gladiator",
+   "Jinn",
+   "Minotaur",
+   "WeepingAngel",
+   "Unicorn",
+   "Dragon"
+  ],
+  "cells": [
+   {
+    "humans": 1,
+    "kind": "ambush",
+    "level": 1,
+    "type": "Basilisk",
+    "fights": 1000,
+    "humanWins": 605,
+    "draws": 60,
+    "gauntlets": 0,
+    "extraBossWins": 0,
+    "avgRounds": 1.453
+   },
+   {
+    "humans": 1,
+    "kind": "ambush",
+    "level": 1,
+    "type": "Gladiator",
+    "fights": 1000,
+    "humanWins": 667,
+    "draws": 71,
+    "gauntlets": 0,
+    "extraBossWins": 0,
+    "avgRounds": 1.663
+   },
+   {
+    "humans": 1,
+    "kind": "ambush",
+    "level": 1,
+    "type": "Jinn",
+    "fights": 1000,
+    "humanWins": 633,
+    "draws": 55,
+    "gauntlets": 0,
+    "extraBossWins": 0,
+    "avgRounds": 2.033
+   },
+   {
+    "humans": 1,
+    "kind": "ambush",
+    "level": 1,
+    "type": "Minotaur",
+    "fights": 1000,
+    "humanWins": 572,
+    "draws": 98,
+    "gauntlets": 0,
+    "extraBossWins": 0,
+    "avgRounds": 1.509
+   },
+   {
+    "humans": 1,
+    "kind": "ambush",
+    "level": 1,
+    "type": "WeepingAngel",
+    "fights": 1000,
+    "humanWins": 615,
+    "draws": 34,
+    "gauntlets": 0,
+    "extraBossWins": 0,
+    "avgRounds": 1.917
+   },
+   {
+    "humans": 1,
+    "kind": "ambush",
+    "level": 1,
+    "type": "Unicorn",
+    "fights": 1000,
+    "humanWins": 604,
+    "draws": 61,
+    "gauntlets": 0,
+    "extraBossWins": 0,
+    "avgRounds": 1.532
+   },
+   {
+    "humans": 1,
+    "kind": "ambush",
+    "level": 1,
+    "type": "Dragon",
+    "fights": 1000,
+    "humanWins": 428,
+    "draws": 82,
+    "gauntlets": 0,
+    "extraBossWins": 0,
+    "avgRounds": 2.057
+   }
+  ]
+ },
+ "amb3": {
+  "variant": "none",
+  "fightsPerCell": 1000,
+  "pairFights": 3000,
+  "batch": 20,
+  "types": [
+   "Basilisk",
+   "Gladiator",
+   "Jinn",
+   "Minotaur",
+   "WeepingAngel",
+   "Unicorn",
+   "Dragon"
+  ],
+  "cells": [
+   {
+    "humans": 1,
+    "kind": "ambush",
+    "level": 3,
+    "type": "Basilisk",
+    "fights": 1000,
+    "humanWins": 710,
+    "draws": 40,
+    "gauntlets": 0,
+    "extraBossWins": 0,
+    "avgRounds": 1.533
+   },
+   {
+    "humans": 1,
+    "kind": "ambush",
+    "level": 3,
+    "type": "Gladiator",
+    "fights": 1000,
+    "humanWins": 773,
+    "draws": 33,
+    "gauntlets": 0,
+    "extraBossWins": 0,
+    "avgRounds": 1.363
+   },
+   {
+    "humans": 1,
+    "kind": "ambush",
+    "level": 3,
+    "type": "Jinn",
+    "fights": 1000,
+    "humanWins": 764,
+    "draws": 37,
+    "gauntlets": 0,
+    "extraBossWins": 0,
+    "avgRounds": 1.668
+   },
+   {
+    "humans": 1,
+    "kind": "ambush",
+    "level": 3,
+    "type": "Minotaur",
+    "fights": 1000,
+    "humanWins": 578,
+    "draws": 56,
+    "gauntlets": 0,
+    "extraBossWins": 0,
+    "avgRounds": 1.352
+   },
+   {
+    "humans": 1,
+    "kind": "ambush",
+    "level": 3,
+    "type": "WeepingAngel",
+    "fights": 1000,
+    "humanWins": 707,
+    "draws": 26,
+    "gauntlets": 0,
+    "extraBossWins": 0,
+    "avgRounds": 1.841
+   },
+   {
+    "humans": 1,
+    "kind": "ambush",
+    "level": 3,
+    "type": "Unicorn",
+    "fights": 1000,
+    "humanWins": 717,
+    "draws": 30,
+    "gauntlets": 0,
+    "extraBossWins": 0,
+    "avgRounds": 1.708
+   },
+   {
+    "humans": 1,
+    "kind": "ambush",
+    "level": 3,
+    "type": "Dragon",
+    "fights": 1000,
+    "humanWins": 527,
+    "draws": 59,
+    "gauntlets": 0,
+    "extraBossWins": 0,
+    "avgRounds": 1.886
+   }
+  ]
+ }
+}

@@ -9,7 +9,7 @@ import { RoomEventBus } from '../events/index.js';
 import { engineReady } from '../helpers/engine-ready.js';
 import { ALLIANCE_TEAM, GAUNTLET_RULES, RING_EVENTS } from './ring-events.js';
 import { SNAPSHOT_APPEARANCE_MAX } from './index.js';
-import { getTarget, TARGET_NEXT_PLAYER } from '../helpers/targeting-strategies.js';
+import { getTarget, TARGET_NEXT_PLAYER, TARGET_RANDOM_PLAYER } from '../helpers/targeting-strategies.js';
 import { addPendingSummon, recordSummon } from '../helpers/boss-summons.js';
 import { TIME_TO_HEAL_MS, TIME_TO_RESURRECT_MS } from '../constants/timing.js';
 
@@ -809,10 +809,14 @@ describe('ring/index.ts', () => {
 				GAUNTLET_RULES.rivalsWhenOutnumbered = before;
 			});
 
-			const OUTNUMBERED_LINE =
-				'Outnumbered is not outmatched. The bosses turn on one another, and every monster in the ring now fights for itself.';
+			const OUTNUMBERED_LINE = 'Outnumbered is not outmatched. The bosses turn on one another.';
 
-			const fightWith = (humans: number, bosses: number, minions = 0, on = true) => {
+			/** Starts (and ends) an encounter and reports what the ring did at fight start. */
+			const startWith = (
+				humans: number,
+				bosses: number,
+				{ minions = 0, on = true, eventId }: { minions?: number; on?: boolean; eventId?: string } = {}
+			) => {
 				GAUNTLET_RULES.rivalsWhenOutnumbered = on;
 				const game = new Game();
 				const ring = game.getRing();
@@ -822,54 +826,76 @@ describe('ring/index.ts', () => {
 				for (let i = 0; i < bosses; i++) ring.spawnBoss({ ignoreQuota: true, deferFightTimer: true });
 				// A boss beyond one per human is an ambush's minion.
 				for (let i = 0; i < minions; i++) ring.spawnBoss({ ignoreQuota: true, deferFightTimer: true, ambush: true });
+				if (eventId) ring.ringEvent = ringEventFor(eventId);
 				narrations.length = 0;
 				ring.startEncounter();
-				const freeForAll = ring.encounterFreeForAll;
+				const bossTeams = ring.contestants.filter(c => c.isBoss).map(c => c.team);
+				const humanTeams = ring.contestants.filter(c => !c.isBoss).map(c => c.team);
+				const result = {
+					rivals: bossTeams.length > 0 && bossTeams.every(t => typeof t === 'string' && t.startsWith('rival:')),
+					distinct: new Set(bossTeams).size === bossTeams.length,
+					humanTeams,
+					freeForAll: ring.encounterFreeForAll,
+					told: narrations.filter(line => line === OUTNUMBERED_LINE).length,
+				};
 				ring.endEncounter();
+				const cleared = ring.contestants.every(c => !c.team?.startsWith('rival:'));
 				game.dispose();
-				return { freeForAll, told: narrations.filter(line => line === OUTNUMBERED_LINE).length };
+				return { ...result, cleared };
 			};
 
 			it('defaults on in play', () => {
 				expect(before).to.equal(true);
 			});
 
-			it('1 human vs 3 bosses and 2 vs 4 are free-for-alls, cleared with the encounter', () => {
-				expect(fightWith(1, 3).freeForAll).to.equal(true);
-				expect(fightWith(2, 4).freeForAll).to.equal(true);
-				const game = new Game();
-				const ring = game.getRing();
-				expect(ring.encounterFreeForAll).to.equal(false);
-				game.dispose();
+			it('1 human vs 3 bosses and 2 vs 4: each boss gets a team of its own, cleared at the end', () => {
+				for (const [humans, bosses] of [[1, 3], [2, 4]]) {
+					const result = startWith(humans!, bosses!);
+					expect(result.rivals).to.equal(true);
+					expect(result.distinct).to.equal(true);
+					expect(result.humanTeams.every(t => t === undefined)).to.equal(true); // no Challengers, no forced team
+					expect(result.freeForAll, 'not a Blood Feud style free-for-all').to.equal(false);
+					expect(result.cleared).to.equal(true);
+				}
 			});
 
 			it('equal numbers keep teams, 1 v 1 and 2 v 2 included', () => {
-				expect(fightWith(1, 1).freeForAll).to.equal(false);
-				expect(fightWith(2, 2).freeForAll).to.equal(false);
+				expect(startWith(1, 1).rivals).to.equal(false);
+				expect(startWith(2, 2).rivals).to.equal(false);
 			});
 
 			it('an ambush minion counts as a boss (1 human, 1 boss, 1 minion)', () => {
-				const ring = fightWith(1, 1, 1);
-				expect(ring.freeForAll).to.equal(true);
+				expect(startWith(1, 1, { minions: 1 }).rivals).to.equal(true);
 			});
 
-			it('the Gauntlet against one human is outnumbered; against two it is not', () => {
+			it('a real Gauntlet roster (2 humans, 2 base bosses, the extras) applies it', () => {
 				GAUNTLET_RULES.rivalsWhenOutnumbered = true;
-				for (const [humans, expected] of [[1, true], [2, false]] as const) {
-					const game = new Game();
-					const ring = game.getRing();
-					for (let i = 0; i < humans; i++) addPlayer(ring, `user-${i}`);
-					ring.activateRingEvent(ringEventFor('gauntlet'));
-					ring.startEncounter();
-					expect(ring.encounterFreeForAll).to.equal(expected);
-					ring.endEncounter();
-					game.dispose();
+				const game = new Game();
+				const ring = game.getRing();
+				addPlayer(ring, 'a');
+				addPlayer(ring, 'b');
+				ring.spawnBoss({ deferFightTimer: true });
+				ring.spawnBoss({ deferFightTimer: true });
+				ring.activateRingEvent(ringEventFor('gauntlet'));
+				const bosses = ring.contestants.filter(c => c.isBoss);
+				expect(bosses.length).to.be.greaterThan(2);
+				ring.startEncounter();
+				expect(bosses.every(c => c.team?.startsWith('rival:'))).to.equal(true);
+				ring.endEncounter();
+				expect(bosses.some(c => c.team)).to.equal(false);
+				game.dispose();
+			});
+
+			it('skips Blood Feud (already a free-for-all), Common Cause and The Reckoning, and says nothing', () => {
+				for (const eventId of ['blood-feud', 'common-cause', 'the-reckoning']) {
+					const result = startWith(2, 3, { eventId });
+					expect(result.rivals, eventId).to.equal(false);
+					expect(result.told, eventId).to.equal(0);
 				}
 			});
 
 			it('a fight with no human in it keeps its teams (nobody is outnumbered)', () => {
-				const ring = fightWith(0, 3);
-				expect(ring).to.deep.equal({ freeForAll: false, told: 0 });
+				expect(startWith(0, 3)).to.include({ rivals: false, told: 0 });
 			});
 
 			it('a mega boss fight keeps its alliance', () => {
@@ -877,29 +903,117 @@ describe('ring/index.ts', () => {
 				const game = new Game();
 				const ring = game.getRing();
 				addPlayer(ring, 'user-1');
-				ring.spawnBoss({ ignoreQuota: true, deferFightTimer: true });
-				ring.spawnBoss({ ignoreQuota: true, deferFightTimer: true });
-				ring.spawnBoss({ ignoreQuota: true, deferFightTimer: true });
+				for (let i = 0; i < 3; i++) ring.spawnBoss({ ignoreQuota: true, deferFightTimer: true });
 				ring.contestants.filter(c => c.isBoss).forEach(c => {
 					c.mega = true;
 				});
 				ring.startEncounter();
-				expect(ring.encounterFreeForAll).to.equal(false);
+				expect(ring.contestants.some(c => c.team?.startsWith('rival:'))).to.equal(false);
 				ring.endEncounter();
 				game.dispose();
 			});
 
 			it('off: nothing changes and nothing is said', () => {
-				expect(fightWith(1, 3, 0, false)).to.deep.equal({ freeForAll: false, told: 0 });
-				expect(fightWith(1, 1, 1, false)).to.deep.equal({ freeForAll: false, told: 0 });
+				expect(startWith(1, 3, { on: false })).to.include({ rivals: false, told: 0 });
+				expect(startWith(1, 1, { on: false, minions: 1 })).to.include({ rivals: false, told: 0 });
 			});
 
 			it('says so once, room-wide, when the rule applies, and not otherwise', () => {
-				expect(fightWith(1, 3).told).to.equal(1);
-				expect(fightWith(1, 1, 1).told).to.equal(1);
-				expect(fightWith(1, 1).told).to.equal(0);
-				expect(fightWith(2, 2).told).to.equal(0);
-				expect(fightWith(2, 1).told).to.equal(0);
+				expect(startWith(1, 3).told).to.equal(1);
+				expect(startWith(1, 1, { minions: 1 }).told).to.equal(1);
+				expect(startWith(1, 1).told).to.equal(0);
+				expect(startWith(2, 2).told).to.equal(0);
+			});
+
+			it('hides the rival teams from the roster snapshot', () => {
+				GAUNTLET_RULES.rivalsWhenOutnumbered = true;
+				const game = new Game();
+				const ring = game.getRing();
+				addPlayer(ring, 'a');
+				for (let i = 0; i < 3; i++) ring.spawnBoss({ ignoreQuota: true, deferFightTimer: true });
+				ring.startEncounter();
+				expect(ring.contestantSnapshots().every(c => c.team === null)).to.equal(true);
+				ring.endEncounter();
+				game.dispose();
+			});
+
+			describe('real fights', function () {
+				this.timeout(30000);
+
+				const teamGetTarget = (ring: any, contestant: any) =>
+					getTarget({
+						contestants: ring.contestants,
+						playerContestant: contestant,
+						strategy: TARGET_RANDOM_PLAYER,
+						ring,
+					}) as any;
+
+				it('a boss hits another boss; nobody holds the Challengers team; the overrides are gone afterwards', async () => {
+					GAUNTLET_RULES.rivalsWhenOutnumbered = true;
+					let bossOnBoss = 0;
+					let challengers = 0;
+					let fights = 0;
+					while (bossOnBoss === 0 && fights < 25) {
+						fights += 1;
+						const game = new Game();
+						const ring = game.getRing();
+						addPlayer(ring, 'solo');
+						for (let i = 0; i < 3; i++) ring.spawnBoss({ ignoreQuota: true, deferFightTimer: true });
+						const held = [...ring.contestants];
+						const bossMonsters = new Set(held.filter(c => c.isBoss).map(c => c.monster));
+						for (const c of held.filter(x => x.isBoss)) {
+							const hit = c.monster.hit.bind(c.monster);
+							c.monster.hit = async (damage: number, by: any, card: any) => {
+								if (bossMonsters.has(by) && by !== c.monster) bossOnBoss += 1;
+								return hit(damage, by, card);
+							};
+						}
+						ring.on('fight', (_className: string, _ring: any, data: any) => {
+							challengers += data.contestants.filter((c: any) => c.team === 'The Challengers').length;
+						});
+						await ring.fight();
+						expect(held.some(c => c.team?.startsWith('rival:'))).to.equal(false);
+						expect(ring.encounterFreeForAll).to.equal(false);
+						game.dispose();
+					}
+					expect(challengers).to.equal(0);
+					expect(bossOnBoss, `boss-on-boss hits in ${fights} fights`).to.be.greaterThan(0);
+				});
+
+				it('humans on the same team never target each other; teamless humans can', () => {
+					GAUNTLET_RULES.rivalsWhenOutnumbered = true;
+					const game = new Game();
+					const ring = game.getRing();
+					const a = addPlayer(ring, 'a');
+					const b = addPlayer(ring, 'b');
+					a.monster.team = 'Gryffindor';
+					b.monster.team = 'Gryffindor';
+					for (let i = 0; i < 3; i++) ring.spawnBoss({ ignoreQuota: true, deferFightTimer: true });
+					ring.startEncounter();
+					const [ca, cb] = ring.contestants.filter(c => !c.isBoss);
+					const bosses = ring.contestants.filter(c => c.isBoss);
+					for (let i = 0; i < 200; i++) {
+						expect(teamGetTarget(ring, ca!)).to.not.equal(cb);
+						expect(teamGetTarget(ring, cb!)).to.not.equal(ca);
+					}
+					// Bosses target each other too: each other boss turns up as a target.
+					const seen = new Set<any>();
+					for (let i = 0; i < 300; i++) seen.add(teamGetTarget(ring, bosses[0]!));
+					expect(seen.has(bosses[1]) || seen.has(bosses[2])).to.equal(true);
+					expect(seen.has(bosses[0])).to.equal(false);
+					ring.endEncounter();
+
+					a.monster.team = undefined;
+					b.monster.team = undefined;
+					ring.startEncounter();
+					const [ta, tb] = ring.contestants.filter(c => !c.isBoss);
+					expect(ta!.team).to.equal(undefined);
+					let hitEachOther = false;
+					for (let i = 0; i < 300 && !hitEachOther; i++) hitEachOther = teamGetTarget(ring, ta!) === tb;
+					expect(hitEachOther).to.equal(true);
+					ring.endEncounter();
+					game.dispose();
+				});
 			});
 		});
 

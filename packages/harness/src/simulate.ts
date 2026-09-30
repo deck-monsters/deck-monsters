@@ -79,6 +79,12 @@ export interface SimMonsterSpec {
 	 */
 	team?: string;
 	/**
+	 * A team on a `human`'s monster and character, as a Sorting Hat house gives a player, WITHOUT
+	 * the harness's `last-team` victory mode or the loss of ring events that `team` brings.
+	 * Roadmap 38 uses it to measure two allied humans against the Gauntlet.
+	 */
+	sharedTeam?: string;
+	/**
 	 * What kind of contestant this is. Omitted: the harness's classic sim contestant (built
 	 * like a boss for its deck, but with its own faction and default targeting). `human`: a
 	 * player, with a starting deck (`getInitialDeck`) and a few fills per level, equipped at
@@ -657,7 +663,7 @@ export async function simulate(config: SimConfig): Promise<SimResult> {
 					// A human with no team stays teamless, as a player's monster is, so the ring's
 					// own rules (humans unite against bosses) apply to it. Classic sim contestants
 					// were built as bosses and need a faction of their own.
-					const faction = m.team ?? (m.role === 'human' ? undefined : `solo:${names[i]!}`);
+					const faction = m.team ?? m.sharedTeam ?? (m.role === 'human' ? undefined : `solo:${names[i]!}`);
 					c.character.team = faction;
 					c.monster.team = faction;
 					// `randomContestant` gives every boss a boss targeting strategy. With no human

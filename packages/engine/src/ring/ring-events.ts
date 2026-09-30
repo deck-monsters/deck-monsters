@@ -19,10 +19,14 @@ import {
 /**
  * The Gauntlet rule (roadmap 38; `balance/variants.ts`). On in play, like `PIN_RULES`; the
  * harness switches it off for before/after.
- * - `rivalsWhenOutnumbered`: in any fight except a mega boss's, when bosses (ambush minions
- *   included) outnumber the humans at fight start, targeting drops team alignment (as Blood
- *   Feud's `freeForAll` does), so the bosses may hit each other and every monster fights for
- *   itself. Equal numbers keep their teams.
+ * - `rivalsWhenOutnumbered`: in a fight with a human in it, when bosses (ambush minions
+ *   included) outnumber the humans at fight start, each boss gets a team of its own for that
+ *   fight (`RIVAL_TEAM_PREFIX`, a contestant-level override like a ring event's), so the
+ *   bosses may hit each other. Humans keep their real teams, teamless humans stay their own
+ *   faction (the Challengers alliance is not formed), and equal numbers change nothing. A
+ *   mega boss's fight, Blood Feud (already a free-for-all) and the team events (Common Cause,
+ *   House War) skip it, and so does The Reckoning, whose bosses keep hunting the strongest
+ *   challenger.
  *
  * Why: a lone human against the Gauntlet won 0-8% before and 25/36/60/71% at beginner/1/3/5
  * after; two humans went 1%/14% to 36%/50% at levels 1/3; an ordinary ambush went 15%/35% to
@@ -102,6 +106,14 @@ export const ALLIANCE_TEAM = 'The Alliance';
  * Also distinct from the Sorting Hat houses.
  */
 export const CHALLENGERS_TEAM = 'The Challengers';
+
+/**
+ * Prefix of the one-boss teams the outnumbered rule (`GAUNTLET_RULES`) gives each boss for a
+ * fight. Never shown to players: the roster snapshot and the turn line hide it.
+ */
+export const RIVAL_TEAM_PREFIX = 'rival:';
+export const isRivalTeam = (team: string | null | undefined): boolean =>
+	typeof team === 'string' && team.startsWith(RIVAL_TEAM_PREFIX);
 
 const bosses = (contestants: RingEventContestant[]): RingEventContestant[] =>
 	contestants.filter(contestant => contestant.isBoss);

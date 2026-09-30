@@ -3,7 +3,7 @@
  * Roadmap 38: a human against the Gauntlet, shipped rules against the "before" variants.
  *
  * `node dist/scripts/sim-gauntlet.js --variant <name|none|reference> --out result.json
- *   [--fights 1000] [--pair-fights 3000] [--batch 20] [--lone 0,1,3,5] [--pair 1,3] [--ambush 1,3]`
+ *   [--fights 1000] [--pair-fights 3000] [--batch 20] [--lone 0,1,3,5] [--pair 1,3] [--ambush 1,3] [--pair-team NAME]`
  * (`--ambush` needs no event, so use it with `--variant none` (shipped) or `no-rivals-outnumbered` (before)).
  *
  * `reference` is the same human(s) against the ring's normal bosses with no event. Any other
@@ -38,6 +38,8 @@ const BATCH = Number(arg('batch', '20'));
 const LONE_LEVELS = arg('lone', '0,1,3,5').split(',').filter(Boolean).map(Number);
 // Ambush cells: one human against a boss and an ambush minion (a third of its HP), no event.
 const AMBUSH_LEVELS = arg('ambush', '').split(',').filter(Boolean).map(Number);
+// `--pair-team Reds` puts both humans of a pair cell on that team (else they are teamless).
+const PAIR_TEAM = arg('pair-team', '');
 const PAIR_LEVELS = arg('pair', '1,3').split(',').filter(Boolean).map(Number);
 
 /** Boss levels as the ring picks them (see `sim-rings.ts`): XP evenly up to the cap's XP. */
@@ -68,6 +70,8 @@ interface Cell {
 	gauntlets: number;
 	extraBossWins: number;
 	avgRounds: number;
+	/** The team both humans of a pair cell shared, if any. */
+	pairTeam?: string;
 }
 
 async function cell(humans: number, level: number, typeIndex: number | null, seedBase: number, fights: number, ambush = false): Promise<Cell> {
@@ -88,6 +92,7 @@ async function cell(humans: number, level: number, typeIndex: number | null, see
 			level,
 			role: 'human' as const,
 			deckStyle: 'likely' as const,
+			...(humans === 2 && PAIR_TEAM ? { sharedTeam: PAIR_TEAM } : {}),
 		}));
 		const bosses: SimMonsterSpec[] = bossLevels(new Array(humans).fill(level), ambush ? 2 : humans, pick).map((l, i) => ({
 			type: anyType(),
@@ -121,6 +126,7 @@ async function cell(humans: number, level: number, typeIndex: number | null, see
 		gauntlets: fired,
 		extraBossWins: Math.round(extra),
 		avgRounds: rounds / done,
+		...(humans === 2 && PAIR_TEAM ? { pairTeam: PAIR_TEAM } : {}),
 	};
 }
 
