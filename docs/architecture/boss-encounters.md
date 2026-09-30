@@ -313,11 +313,18 @@ bigger rings are barely changed (the full table is in the
 
 ### Bosses that outnumber the humans turn on each other
 
-At fight start, if the bosses outnumber the humans (ambush minions count as bosses), the fight
-is a free-for-all, as Blood Feud is (`GAUNTLET_RULES.rivalsWhenOutnumbered`, roadmap 38; the
-`gauntletRivals` flag behind `encounterFreeForAll`). The room sees one line before the first
-turn: "Outnumbered is not outmatched. The bosses turn on one another, and every monster in the
-ring now fights for itself."
+At fight start, if the bosses outnumber the humans (ambush minions count as bosses), every boss
+fights for itself (`GAUNTLET_RULES.rivalsWhenOutnumbered`, roadmap 38; `Ring.gauntletRivals`).
+Each boss gets its own team, `rival:<its id>`, so boss personalities, which already respect
+teams, turn on one another. No Challengers alliance forms. The humans keep their real teams:
+two players already on one team stay allies, and teamless players fight for themselves. The
+room sees one line before the first turn: "Outnumbered is not outmatched. The bosses turn on
+one another."
+
+It is not a free-for-all like Blood Feud: an earlier version was, and it broke up teamed
+players, which the owner did not want ("if the players are already allies we don't have to
+break that"). `RIVAL_TEAM_PREFIX` and `isRivalTeam` keep these one-boss teams out of the
+roster snapshot and the turn line, where they would read as noise.
 
 - **Why:** a lone human won 1 Gauntlet in 25 in production, because three bosses on one team all
   went for the one challenger. Measured on the harness, the rule moves a lone human against the
@@ -326,10 +333,15 @@ ring now fights for itself."
   35% to 59% and 68%. It stays harder than a plain boss fight, as a scare should.
 - **Decided once**, from the roster when the fight starts; withdrawals and deaths do not change
   it mid-fight.
-- **Not for a mega boss's fight:** its party is a designed pack that keeps the Challengers'
-  alliance.
+- **Skipped for:** a mega boss's fight (its party is a designed pack that keeps the
+  Challengers' alliance); Blood Feud and any other `freeForAll` event (already every monster
+  for itself); `last-team` events such as Common Cause and House War (their factions are the
+  point); and The Reckoning.
 - **Not without a human:** a fight with no human has nobody to be outnumbered, and keeps its
   teams (the harness's boss-only team fights rely on this).
+- **Teamed players:** two humans on one team win 67% and 83% against the Gauntlet at levels 1
+  and 3, against 36% and 50% for two teamless humans. Level 3 is near the top of the band; the
+  owner chose to ship it as is (2026-09-30).
 - **Considered and dropped:** rivals only when exactly one human is in the fight (does nothing for
   two humans against the Gauntlet), and the Gauntlet's extras arriving as minions (on its own it
   left a beginner at 1%; with rivals it made the Gauntlet no harder than a plain boss fight).
@@ -561,6 +573,7 @@ same two level 1s now win 29% (with boss temperaments), level with a pre-arrange
 28%.
 
 - A team a player or ring event set is never replaced; Blood Feud keeps its free-for-all.
+- No alliance forms when the bosses outnumber the humans: the bosses are rivals then (§4).
 - This replaced a forced Common Cause (shared win) whenever two or more bosses met two or
   more teamless humans; the owner chose "unite, then settle" over a shared win. Common Cause
   remains an ordinary ring event.
@@ -598,8 +611,8 @@ event's intent.
    etc.): cards that call `getTarget()` internally now pass the ring instance. `getTarget()`
    accepts an optional `ring?: { encounterFreeForAll?: boolean }` parameter; if
    `ring.encounterFreeForAll` is `true`, it forces `team: false` for that call.
-   `Ring.encounterFreeForAll` is a getter: `this.ringEvent?.freeForAll === true`, or the
-   fight's bosses outnumber its humans (`gauntletRivals`, see §4).
+   `Ring.encounterFreeForAll` is a getter: `this.ringEvent?.freeForAll === true`. Bosses that
+   outnumber the humans do not use it; they get one-boss teams instead (see §4).
 
 Both layers are needed because the primary targeting call in `Ring.fight()` and the secondary
 calls inside cards are separate `getTarget()` invocations. Normal team targeting is unaffected

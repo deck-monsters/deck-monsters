@@ -120,3 +120,21 @@ outnumbered (the harness's boss-only team fights caught it).
 | 1 | Engine switches for the variants (class or module settings, off by default) and a harness plan: a lone human at beginner and levels 1, 3, 5 against the ring's own boss spawns with the Gauntlet forced, plus two-human rings; 2,000 fights a cell | Done at 1,000 fights a cell per monster type (above) | 91153eda, ffb6048a (study branch) |
 | 2 | Frequency: measure the event mix per roster shape under today's rule and `event-weights-global`, by simulation or by counting eligible sets | Done by arithmetic (in the study report) | ffb6048a (study branch) |
 | 3 | The owner picks from the results; ship the chosen rules on, remove the losers, update `boss-encounters.md` and the handbook text | Done: rivals when outnumbered and global weights on; rivals-when-alone and minion extras removed; the fight-start line and a handbook sentence | 6df9ac0a |
+| 4 | Fix round: the free-for-all broke up teamed players and made the Reckoning's hunt random; bosses get one-boss `rival:` teams instead, humans keep theirs, the Reckoning and `last-team` events are skipped, and the harness's "before" variants really switch off | Done; re-measured (below); the owner shipped the teamed pair as is | f141231c |
+
+## Shipped mechanism, re-measured (2026-09-30)
+
+The free-for-all version above made teamed players fight each other. The fix gives each boss its
+own team instead, so humans keep theirs. 1,000 fights per monster type for lone humans, 3,000 per
+pair cell, one process per cell (`2026-09-30-gauntlet-shipped.json`):
+
+| Case | Win % |
+|---|---|
+| Lone human, beginner / 1 / 3 / 5 | 25 / 36 / 60 / 71 |
+| Two teamless humans, level 1 / 3 | 36 / 50 |
+| Two humans on one team, level 1 / 3 | 67 / 83 |
+| Ambush, level 1 / 3 | 59 / 68 |
+
+Teamless numbers match the free-for-all study within noise. The teamed pair at level 3 sits
+near the top of the band; **the owner chose to ship it as is.**
+

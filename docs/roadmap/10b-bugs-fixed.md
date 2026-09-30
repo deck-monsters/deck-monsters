@@ -4838,6 +4838,24 @@ re-run, and a failure stops the deploy. See [deployment](../operations/deploymen
 
 **Status**: Fixed.
 
+### 205. The Gauntlet's "before" harness variants measured the shipped rules — FIXED
+
+Roadmap 38 shipped with two harness variants, `no-rivals-outnumbered` and
+`event-weights-eligible`, meant to reproduce the rules before the fix so the report could show
+the difference. Both ran the shipped rules instead.
+
+Root cause: the variants shared a `toggle()` helper that always wrote `true`, written back when
+every variant switched a rule *on* that was off in play. The two roadmap 38 switches default to
+`true`, so each "before" variant wrote the value already there. Nothing failed, and the numbers
+looked plausible because the study's first tables came from an earlier commit where the
+switches were still off by default.
+
+**Fix** (f141231c): `setSwitch(rules, key, value)` takes the value, and both variants write
+`false`. The re-measurement in `2026-09-29-gauntlet.md` ran each variant and checked it differs
+from `--variant none`.
+
+**Status**: Fixed.
+
 ## Closed without a fix
 
 These were open investigations the owner closed on 2026-09-28. Reopen with new evidence.
