@@ -4858,6 +4858,27 @@ The script now refuses it; the frequency numbers were always arithmetic, not sim
 
 **Status**: Fixed.
 
+### 206. The real-Postgres tests passed in CI by being skipped — FIXED
+
+`state-store.pg.test.ts`, `room-state-backfill.pg.test.ts` and `migrate.pg.test.ts` prove save
+ordering, the backfill and the migration runner against real Postgres. They run only when
+`TEST_DATABASE_URL` is set, and CI had no database, so they had only ever run on a developer's
+machine. Found by the review of the migration runner (roadmap 10, item H).
+
+Root cause: the suites skip themselves without a database (right for a laptop), and nothing
+made a skip visible. Turbo 2 would also have hidden the variable: its strict environment mode
+drops variables a task does not declare, so setting it in the workflow alone would not have
+reached the tests.
+
+**Fix** (roadmap 40): the Tests job has a `postgres:16` service. Before the suite it runs
+`packages/server/scripts/ci-supabase-stubs.sql` (the Supabase roles and `auth` schema the
+migrations need) and applies every migration with the same runner Railway uses before a deploy,
+which also tests that runner on each PR. `turbo.json` passes `CI` and `TEST_DATABASE_URL`
+through. `pg-tests-required.test.ts` fails the run when CI has no `TEST_DATABASE_URL`, so the
+suites cannot quietly skip again.
+
+**Status**: Fixed.
+
 ## Closed without a fix
 
 These were open investigations the owner closed on 2026-09-28. Reopen with new evidence.
