@@ -1009,8 +1009,13 @@ button {
     shared the actions row; once they moved out (roadmap 39), the ⤢ sat alone on a line of
     its own under the subtitle.
   */
-  .workshop-header { align-items: flex-start; }
-  .workshop-header > :first-child { flex: 1 1 auto; min-width: 0; }
+  /*
+    It wraps rather than squeezing the title: in a narrow split pane the actions also hold
+    the pane selector, which then drops under the title instead of crushing it. The 12rem
+    basis is a width here (the header is a row), so only a wide actions group wraps.
+  */
+  .workshop-header { align-items: flex-start; flex-wrap: wrap; }
+  .workshop-header > :first-child { flex: 1 1 12rem; min-width: 0; }
   .workshop-header-actions { flex-wrap: wrap; }
   .workshop-train-row { flex-direction: column; align-items: stretch; }
   /*
