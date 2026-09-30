@@ -930,7 +930,12 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
       )}
       </div>
 
-      {quickActions.length > 0 && (
+      {/*
+        * The chips and the getting-started guide step aside while a prompt is open: on a
+        * phone they covered the question (help inventory, phone-name-covered.png). They
+        * return when the prompt closes. The guide is not dismissed, only not rendered.
+        */}
+      {!activePromptId && quickActions.length > 0 && (
         <nav className="quick-actions" aria-label="Quick action suggestions">
           {quickActions.map((qa, i) => (
             <button
@@ -945,7 +950,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
         </nav>
       )}
 
-      {ftuxPhase !== 'hidden' && (
+      {!activePromptId && ftuxPhase !== 'hidden' && (
         <section
           className="ftux-guide"
           aria-label="Getting started guide"
