@@ -650,7 +650,7 @@ export default function RingPane({
       {!isAtBottom && (
         <button
           // DRAFT(39): jumps the ring event feed to its newest event (same as the Console's "↓ Latest"); not in the brief.
-          title="DRAFT"
+          title="Jump to the newest events"
           className="jump-to-bottom"
           onClick={scrollToBottom}
           aria-label="Jump to latest events"

@@ -149,8 +149,7 @@ export default function LoginView() {
             )}
 
             <button
-              // DRAFT(39): in 'forgot' mode this sends a password-reset email; that mode's title is not approved yet.
-              title={mode === 'signin' ? 'Sign in with this email and password' : mode === 'signup' ? 'Make an account with this email and password' : 'DRAFT'}
+              title={mode === 'signin' ? 'Sign in with this email and password' : mode === 'signup' ? 'Make an account with this email and password' : 'Email me a link to set a new password'}
               type="submit"
               className="btn btn-primary"
               style={{ width: '100%', justifyContent: 'center' }}
