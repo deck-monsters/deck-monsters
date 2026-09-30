@@ -382,7 +382,8 @@ A one-off script, `packages/server/scripts/migrate-room-state-to-jsonb.ts`, run 
 - Flags:
   - `--dry-run`: decode and report only.
   - `--room <id>`: one room.
-  - `--from-blob`: the rollback case below. It converts rooms whose `state` is already set, and
+  - `--from-blob` (removed in release 2, roadmap 40: blobs are no longer written, so they
+    are stale and must not overwrite `state`): the rollback case below. It converted rooms whose `state` is already set, and
     swaps the null check for `state_blob = $blobRead` alone. It sets
     `state_version = state_version + 1`, not a clock stamp: the script runs on the operator's
     machine, and a clock ahead of Railway's would make the server's next saves look stale
@@ -452,7 +453,7 @@ after the window.
 | 4 | **Server store and load path.** Clock-versioned dual-write, the `pendingFlush` wait on unload and load, load preferring `state`, quarantine and reset for both columns with a tombstone version (reset detaches and flushes first), the leaderboard backfill script, and metrics | `packages/server/src/state-store.ts`, `room-manager.ts`, `metrics.ts`, `scripts/backfill-leaderboard-from-state.ts`; tests | Unit tests: prefer `state`, fall back to the blob, quarantine each source, and the stale-save guard (an older version does not overwrite). **Race tests,** with the store write held open: an unload then an immediate reload reads the flushed state, not the older one; a reset while an old save is in flight is not undone by it; two saves from one game landing in reverse order keep the newer. **Against local Postgres** (`supabase start`): a saved row's `jsonb_typeof(state) = 'object'`, not `'string'`, and a restart restores it. Server tests pass | none (after 2, 3) | Done. Server 284 passing with `TEST_DATABASE_URL` at the end of the pass (the three real-Postgres tests: a jsonb object not a string, an older write after a newer one does not land, a tombstone blocks an earlier save). One deliberate change from the design: a failed restore of `state` also quarantines a dual-written `state_blob` into `quarantined_blob`, instead of nulling it unkept. `PostgresStateStore.write(roomId, state, version)` is public only as a test seam. Bugs 200–202 in the ledger | ae089093, 6f0ba8dd, c4a9a35c |
 | 4b | **Flush every room on shutdown** (found in this pass). The server has no `SIGTERM` handler, so a deploy kills the process with up to 30 s of debounced changes unsaved in every active room. On `SIGTERM` or `SIGINT`: stop taking requests, `flushState()` every active room (without unloading a fight in progress), await the flushes within the platform's grace period, then close the pool | `packages/server/src/index.ts`, `room-manager.ts` | A test: shutdown awaits every room's flush before the pool closes; a flush that hangs past the deadline does not block exit | 5 | Done: `RoomManager.flushAll` and `createShutdown` (`shutdown.ts`), wired for SIGTERM and SIGINT. Also from task 4's review: a reset now waits out concurrent loads (`resetting` gate plus load-epoch invalidation), with tests | c4a9a35c, b4cfd58b |
 | 5 | **The backfill script and runbook** | `packages/server/scripts/migrate-room-state-to-jsonb.ts`; [deployment](../operations/deployment.md) runbook section | A dry run and a real run on local data seeded with legacy blobs, including one corrupt blob, which is reported and not written. A second run converts 0. With a room loaded in a running release 1, the script does not change `state_version`, and the live save after it still lands. A blob changed between read and write is not overwritten | 7 | Done: `room-state-backfill.ts` (tested module) and the CLI. 11 real-Postgres tests, including a live save during the backfill, a blob changed between read and write, and `--from-blob`. Review fixes: `--from-blob` sets `state_version + 1` (a laptop clock ahead of Railway's would have made the server's saves look stale), failure reasons carry no player data, unknown flags are refused. The engine repair now also replaces unpaired surrogates. The runbook is in [deployment](../operations/deployment.md#room-state-migration-to-jsonb-roadmap-37) | 0a1ca6b6, 1a32efb4, 9262fc28, 129a8dd6 |
-| 6 | **Contract** (second PR, after the window). Stop dual-writing, drop the load fallback, back up, and drop `state_blob` | Server, migration, docs | Production shows `room_state_source_total{source="blob"}` at 0 for the whole window. A backup exists. Tests pass | — | Planned | |
+| 6 | **Contract** (second PR, after the window). Stop dual-writing, drop the load fallback, back up, and drop `state_blob` | Server, migration, docs | Production shows `room_state_source_total{source="blob"}` at 0 for the whole window. A backup exists. Tests pass | — | In progress in [40](40-room-state-close-out-and-bugs.md): release 2 stops writing the blob and keeps a read-only load fallback (40 task 1); the drop, with a migration that refuses while any room is unconverted, follows once release 2 is live (40 task 6) | |
 | 7 | **Read-only query views** and the "Querying room state" doc section | A migration with the views; `rooms-and-identity.md` | The Faceswap query above returns the same answer as decoding by hand, on local data | 5 | Planned | |
 
 ### Task 1 audit (2026-09-29)
@@ -539,7 +540,8 @@ script's read and its write:
 3. Deploy release 1.
 
 This is a minute or two of downtime, only in the rare case of rolling forward after a rollback.
-The runbook in task 5 carries these steps.
+The runbook in task 5 carried these steps. **From release 2 on it no longer applies:** a
+rollback to release 1 is safe (it prefers `state`), and `--from-blob` is gone.
 
 ## Docs to update in the same PRs
 

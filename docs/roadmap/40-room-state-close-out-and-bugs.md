@@ -15,12 +15,12 @@ tackle 39 next."
 
 | # | Task | Area / files | Can run beside | Status | Commit |
 |---|---|---|---|---|---|
-| 1 | **Roadmap 37 task 6, release 2:** stop writing `state_blob`, load from `state` only, drop the blob quarantine and the server's legacy-blob builder. The column stays until task 5 | Server: `state-store.ts`, `room-manager.ts`, `db/schema.ts`; tests | 2, 3 | Planned | |
+| 1 | **Roadmap 37 task 6, release 2:** stop writing `state_blob`, load from `state` only, drop the blob quarantine and the server's legacy-blob builder. The column stays until task 5 | Server: `state-store.ts`, `room-manager.ts`, `db/schema.ts`; tests | 2, 3 | Done. Review found a blocker: a blob-only room loaded as a fresh game, and its first save lost the room. Release 2 therefore keeps a **read-only** blob fallback (the room converts on its next save), a reset still keeps the blob in `quarantined_blob`, `--from-blob` is removed, and the leaderboard backfill reads `state` only. Server 308 passing with Postgres | 40254ac2, d177d7d9 |
 | 2 | **Roadmap 37 task 7:** read-only query views, the `card_types` table, and a test that fails when a registered card is missing | A migration; a server test; `rooms-and-identity.md` | 1, 3 | Planned | |
 | 3 | **Item I:** find and fix the simulation memory leak | Harness `simulate.ts`, engine | 1, 2 | Planned | |
 | 4 | **Item G:** a reset reaches every process's copy of the room (a generation in the save guard) | Server: `state-store.ts`, `room-manager.ts`, a migration | after 1 | Planned | |
 | 5 | **Item H:** real-Postgres tests run in CI | `.github/workflows/ci.yml` | any | Done: bug 206. Checked by running the CI steps on a fresh local database (13 migrations applied, server 312 passing with no pg suite skipped) | (this commit) |
-| 6 | **Roadmap 37 task 6, the drop:** a migration drops `state_blob` | Migration, Drizzle, docs | A separate PR after task 1 is deployed | Planned | |
+| 6 | **Roadmap 37 task 6, the drop:** a migration drops `state_blob` | Migration, Drizzle, docs | A separate PR after task 1 is deployed. It also removes the read-only fallback, and the migration refuses to run while any room has `state` null and a blob | Planned | |
 
 ## Decisions
 
