@@ -152,6 +152,7 @@ export default function AppShell({ children, roomName, roomId }: AppShellProps) 
           </button>
           {user && (
             <button
+              title="Sign out on this device"
               className="btn"
               style={{ fontSize: '0.8rem' }}
               onClick={() => void handleSignOut()}
@@ -163,6 +164,7 @@ export default function AppShell({ children, roomName, roomId }: AppShellProps) 
 
         {/* Mobile hamburger */}
         <button
+          title="Open the menu"
           className="btn header-hamburger"
           aria-label="Open menu"
           aria-expanded={menuOpen}
@@ -232,17 +234,18 @@ export default function AppShell({ children, roomName, roomId }: AppShellProps) 
             </Link>
             <Link to="/account" className="btn" onClick={() => setMenuOpen(false)}>Account</Link>
             <button
+              title="Every command you can type in the Console"
               className="btn"
               onClick={() => { setRefOpen(true); setMenuOpen(false); }}
               aria-label="Open command reference"
             >
               Help / Commands
             </button>
-            <button className="btn" onClick={() => { setTheme(nextTheme); setMenuOpen(false); }}>
+            <button title="Change the theme" className="btn" onClick={() => { setTheme(nextTheme); setMenuOpen(false); }}>
               Theme: {theme}
             </button>
             {user && (
-              <button className="btn" onClick={() => { void handleSignOut(); setMenuOpen(false); }}>
+              <button title="Sign out on this device" className="btn" onClick={() => { void handleSignOut(); setMenuOpen(false); }}>
                 Sign out
               </button>
             )}

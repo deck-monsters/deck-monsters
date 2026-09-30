@@ -226,6 +226,7 @@ export default function RingRoster({
   return (
     <section className="ring-roster" aria-label="Monsters in the ring">
       <button
+        title="Show or hide the monsters in the ring"
         type="button"
         className="roster-toggle"
         onClick={onToggle}

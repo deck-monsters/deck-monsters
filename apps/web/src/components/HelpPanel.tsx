@@ -23,17 +23,19 @@ type SectionId = 'how-to-play' | 'monsters' | 'cards' | 'items' | 'commands';
 interface Section {
   id: SectionId;
   label: string;
+  /** One line for the button's `title`: what the section holds. */
+  hint: string;
   /** Repo-root filename, so guides' cross-links (`[ITEMS.md](ITEMS.md)`) can switch section. */
   file?: string;
   markdown?: string;
 }
 
 const SECTIONS: Section[] = [
-  { id: 'how-to-play', label: 'How to play', file: 'PLAYER_HANDBOOK.md', markdown: handbook },
-  { id: 'monsters', label: 'Monsters', file: 'MONSTERS.md', markdown: monsters },
-  { id: 'cards', label: 'Cards', file: 'CARDS.md', markdown: cards },
-  { id: 'items', label: 'Items', file: 'ITEMS.md', markdown: items },
-  { id: 'commands', label: 'Commands' },
+  { id: 'how-to-play', label: 'How to play', hint: 'The player handbook: every rule, start to finish', file: 'PLAYER_HANDBOOK.md', markdown: handbook },
+  { id: 'monsters', label: 'Monsters', hint: 'Every monster type, its stats and its cards', file: 'MONSTERS.md', markdown: monsters },
+  { id: 'cards', label: 'Cards', hint: 'Every card and what it does', file: 'CARDS.md', markdown: cards },
+  { id: 'items', label: 'Items', hint: 'Items and scrolls, and how to use them', file: 'ITEMS.md', markdown: items },
+  { id: 'commands', label: 'Commands', hint: 'Every command you can type in the Console' },
 ];
 
 const GUIDE_FILES = SECTIONS.flatMap((s) => (s.file ? [s.file] : []));
@@ -105,6 +107,7 @@ export default function HelpPanel({ headerActions }: HelpPanelProps) {
         <nav className="help-sections" aria-label="Help sections">
           {SECTIONS.map((s) => (
             <button
+              title={s.hint}
               key={s.id}
               type="button"
               className="btn"

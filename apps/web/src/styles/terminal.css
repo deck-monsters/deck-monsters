@@ -1028,6 +1028,7 @@
 .ring-items-message { color: var(--color-fg-bright) !important; }
 .surface-panel-actions { display: flex; align-items: center; gap: .4rem; flex: 0 0 auto; }
 .surface-panel h1 { margin: 0; font-size: 1.25rem; color: var(--color-fg-bright); }
+.surface-panel-subtitle { margin: 0.25rem 0 0; color: var(--color-fg-dim); font-size: 0.85rem; }
 .surface-muted { color: var(--color-fg-dim); }
 .fight-log-list { list-style: none; padding: 0; margin: 0; }
 .fight-log-card { border: 1px solid var(--color-border); border-radius: 6px; padding: .75rem; margin-bottom: .5rem; background: var(--color-bg-elevated, var(--color-bg)); }

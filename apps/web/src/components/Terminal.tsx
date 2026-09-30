@@ -252,6 +252,7 @@ export default function Terminal({ roomId }: TerminalProps) {
         <div className="terminal-tabs" role="tablist" aria-label="Switch panes">
           {SURFACES.map((surface) => (
             <button
+              title={surface.description}
               key={surface.id}
               className={`terminal-tab${isVisible(surface.id) ? ' active' : ''}`}
               role="tab"

@@ -300,7 +300,7 @@ describe('MonsterWorkshopPanel drag/drop lock behavior', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Unequip all cards from Stonefang' }));
+    fireEvent.click(screen.getByRole('button', { name: "Move all of Stonefang's cards back to your cards" }));
     expect(onUnequipAll).toHaveBeenCalledTimes(1);
   });
 });

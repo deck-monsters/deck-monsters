@@ -269,7 +269,7 @@ export default function MonsterWorkshopPanel({
       </div>
       <div className="workshop-monster-actions">
         {monster.dead ? (
-          <button type="button" className="btn" disabled={busy || monster.inEncounter || reviving} onClick={onRevive}>
+          <button title={reviving ? `${monster.name} is on the way back` : `Bring ${monster.name} back. Above level 0 it takes a few minutes`} type="button" className="btn" disabled={busy || monster.inEncounter || reviving} onClick={onRevive}>
             {reviving ? 'Reviving…' : 'Revive'}
           </button>
         ) : !monster.inRing ? (
@@ -293,13 +293,13 @@ export default function MonsterWorkshopPanel({
         ) : null}
         <button
           type="button"
-          className="btn workshop-btn-icon"
+          className="btn"
           disabled={busy || locked || monster.cards.length < 1}
-          title={`Unequip all cards from ${monster.name}`}
-          aria-label={`Unequip all cards from ${monster.name}`}
+          title={`Move all of ${monster.name}'s cards back to your cards`}
+          aria-label={`Move all of ${monster.name}'s cards back to your cards`}
           onClick={() => onUnequipAll()}
         >
-          ⟲
+          Unequip all
         </button>
       </div>
 

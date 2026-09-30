@@ -921,6 +921,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
 
       {!isAtBottom && (
         <button
+          title="Jump to the newest messages"
           className="jump-to-bottom"
           onClick={scrollToBottom}
           aria-label="Jump to latest messages"
@@ -982,7 +983,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
           </p>
           {ftuxAction && (
             <div className="ftux-guide-actions">
-              <button className="quick-action-chip" onClick={() => handleQuickAction(ftuxAction.command)}>
+              <button title={`Run: ${ftuxAction.command}`} className="quick-action-chip" onClick={() => handleQuickAction(ftuxAction.command)}>
                 {ftuxAction.label}
               </button>
             </div>
@@ -1024,7 +1025,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
       {activePromptId && !activePromptInView && (
         <div className="command-blocked-banner" role="status">
           <span>A command is waiting for your answer. Command suggestions are paused.</span>
-          <button type="button" className="btn" onClick={() => void handleCancelFlow()}>
+          <button title="Cancel current action" type="button" className="btn" onClick={() => void handleCancelFlow()}>
             Cancel action
           </button>
         </div>

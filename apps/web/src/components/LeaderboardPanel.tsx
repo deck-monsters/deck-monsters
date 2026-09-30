@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react';
+import { surfaceDescription } from './surface-descriptions.js';
 import { trpc } from '../lib/trpc.js';
 import { useFightOnRing } from '../hooks/useFightOnRing.js';
 
@@ -63,7 +64,7 @@ export default function LeaderboardPanel({ roomId, initialScope = roomId ? 'room
   return (
     <div className="surface-panel-host">
     <section className="surface-panel leaderboard-panel">
-        <header className="surface-panel-heading"><h1>Leaders</h1><div className="surface-panel-actions">{headerActions}</div></header>
+        <header className="surface-panel-heading"><div><h1>Leaders</h1><p className="surface-panel-subtitle">{surfaceDescription('leaderboard')}</p></div><div className="surface-panel-actions">{headerActions}</div></header>
 
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1rem', alignItems: 'center' }}>
           <label style={{ display: 'flex', gap: '0.35rem', alignItems: 'center', fontSize: '0.85rem' }}>

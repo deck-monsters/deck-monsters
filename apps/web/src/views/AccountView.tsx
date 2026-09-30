@@ -79,7 +79,7 @@ export default function AccountView() {
               autoComplete="nickname"
               style={{ flex: 1 }}
             />
-            <button className="btn" type="submit" disabled={updateDisplayName.isPending}>
+            <button title="Save your display name. Other players see it" className="btn" type="submit" disabled={updateDisplayName.isPending}>
               {updateDisplayName.isPending ? 'Saving…' : 'Save'}
             </button>
           </div>
@@ -218,6 +218,7 @@ export default function AccountView() {
       <div className="panel">
         <p className="panel-title">Session</p>
         <button
+          title="Sign out on this device"
           className="btn"
           onClick={() => void handleSignOut()}
           style={{ borderColor: 'var(--color-fg-dim)' }}

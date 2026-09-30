@@ -60,11 +60,12 @@ export default function RoomLobbyView() {
                 type="text"
                 value={newRoomName}
                 onChange={(e) => setNewRoomName(e.target.value)}
-                placeholder="The Editor's Ring"
+                placeholder="e.g. The Editor's Ring"
                 required
               />
             </div>
             <button
+              title="Make a new room and invite others with its code"
               type="submit"
               className="btn btn-primary"
               disabled={createRoom.isPending}
@@ -84,13 +85,14 @@ export default function RoomLobbyView() {
                 type="text"
                 value={inviteCode}
                 onChange={(e) => setInviteCode(e.target.value)}
-                placeholder="ABC12345"
+                placeholder="e.g. ABC12345"
                 maxLength={8}
                 style={{ textTransform: 'uppercase' }}
                 required
               />
             </div>
             <button
+              title="Join the room this invite code belongs to"
               type="submit"
               className="btn btn-primary"
               disabled={joinRoom.isPending}
@@ -128,10 +130,16 @@ export default function RoomLobbyView() {
                   {room.name}
                 </div>
                 <div style={{ fontSize: 12, color: 'var(--color-fg-dim)' }}>
-                  <span className="tag">{room.role}</span>
+                  <span
+                    className="tag"
+                    title={room.role === 'owner'
+                      ? 'You made this room: you can invite players, reset it or delete it'
+                      : 'You joined this room with its invite code'}
+                  >{room.role}</span>
                 </div>
               </div>
               <button
+                title={`Go to ${room.name}`}
                 className="btn"
                 onClick={(e) => { e.stopPropagation(); navigate(`/room/${room.roomId}`); }}
                 aria-label={`Enter ${room.name}`}

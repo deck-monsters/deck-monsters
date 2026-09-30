@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { surfaceDescription } from './surface-descriptions.js';
 import { trpc } from '../lib/trpc.js';
 import { formatEventText, truncateEventText } from '../utils/format-event-text.js';
 import { useMonsterMentions } from '../hooks/useMonsterMentions.js';
@@ -60,7 +61,7 @@ export default function FightLogPanel({ roomId, headerActions }: FightLogPanelPr
   }, [fights.data]);
 
   return <div className="surface-panel-host"><section className="surface-panel fight-log-panel">
-    <header className="surface-panel-heading"><h1>Fights</h1><div className="surface-panel-actions">{headerActions}</div></header>
+    <header className="surface-panel-heading"><div><h1>Fights</h1><p className="surface-panel-subtitle">{surfaceDescription('fights')}</p></div><div className="surface-panel-actions">{headerActions}</div></header>
     {fights.isLoading && <p className="surface-muted">Loading…</p>}
     {/*
       A room with no fights yet rendered the heading and then nothing at all — the same
@@ -84,7 +85,7 @@ export default function FightLogPanel({ roomId, headerActions }: FightLogPanelPr
         .filter((streak) => streak.count >= 3);
       const open = expanded === fight.fightNumber;
       return <li className="fight-log-card" key={fight.id}>
-        <button className="fight-log-summary" type="button" aria-expanded={open}
+        <button title="Show or hide this fight's play-by-play" className="fight-log-summary" type="button" aria-expanded={open}
           onClick={() => setExpanded(open ? null : fight.fightNumber)}>
           <strong>#{fight.fightNumber} {fightTitleOneLine(summary)}</strong>{' '}
           <span className="surface-muted">{relTime(new Date(fight.endedAt))}</span>

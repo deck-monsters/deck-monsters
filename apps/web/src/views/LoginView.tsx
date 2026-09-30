@@ -90,6 +90,7 @@ export default function LoginView() {
         <div className="panel">
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
             <button
+              title="Sign in with your Discord account"
               className="btn btn-primary"
               style={{ width: '100%', justifyContent: 'center' }}
               onClick={() => void signInWithDiscord()}
@@ -97,6 +98,7 @@ export default function LoginView() {
               Sign in with Discord
             </button>
             <button
+              title="Sign in with your Google account"
               className="btn btn-primary"
               style={{ width: '100%', justifyContent: 'center' }}
               onClick={() => void signInWithGoogle()}
@@ -147,6 +149,8 @@ export default function LoginView() {
             )}
 
             <button
+              // DRAFT(39): in 'forgot' mode this sends a password-reset email; that mode's title is not approved yet.
+              title={mode === 'signin' ? 'Sign in with this email and password' : mode === 'signup' ? 'Make an account with this email and password' : 'DRAFT'}
               type="submit"
               className="btn btn-primary"
               style={{ width: '100%', justifyContent: 'center' }}
@@ -165,6 +169,7 @@ export default function LoginView() {
           {mode === 'signin' && (
             <p style={{ textAlign: 'center', fontSize: 12, color: 'var(--color-fg-dim)', marginTop: 8 }}>
               <button
+                title="Get an email with a link to set a new password"
                 type="button"
                 style={{
                   background: 'none',
@@ -192,6 +197,7 @@ export default function LoginView() {
               <>
                 Remember your password?{' '}
                 <button
+                  title="Sign in to an account you already have"
                   type="button"
                   style={{
                     background: 'none',
@@ -215,6 +221,7 @@ export default function LoginView() {
               <>
                 No account?{' '}
                 <button
+                  title="Make a new account"
                   type="button"
                   style={{
                     background: 'none',
@@ -238,6 +245,7 @@ export default function LoginView() {
               <>
                 Already have an account?{' '}
                 <button
+                  title="Sign in to an account you already have"
                   type="button"
                   style={{
                     background: 'none',

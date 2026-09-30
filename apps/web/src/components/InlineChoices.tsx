@@ -158,6 +158,7 @@ export default function InlineChoices({
           return (
             <li key={idx} role="option" aria-selected={isSelected}>
               <button
+                title={multi ? (isSelected ? `Take ${choice} back out` : `Add ${choice}`) : `Choose ${choice}`}
                 data-choice={idx}
                 disabled={isDone}
                 aria-pressed={isSelected}
@@ -220,6 +221,7 @@ export default function InlineChoices({
       {multi && !isDone && (
         <div style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
           <button
+            title="Equip the cards you picked, in the order you picked them"
             onClick={handleConfirm}
             disabled={selectionOrder.length === 0}
             style={{
@@ -236,6 +238,7 @@ export default function InlineChoices({
           </button>
           {showDoneEquipping && (
             <button
+              title="Stop here and keep the cards equipped so far"
               onClick={handleDoneEquipping}
               style={{
                 padding: '0.3rem 0.75rem',
@@ -257,6 +260,7 @@ export default function InlineChoices({
           )}
           {onCancel && (
             <button
+              title="Cancel this question"
               onClick={() => onCancel(requestId)}
               style={{
                 padding: '0.3rem 0.75rem',
@@ -277,6 +281,7 @@ export default function InlineChoices({
       {!multi && !isDone && onCancel && (
         <div style={{ marginTop: '0.25rem' }}>
           <button
+            title="Cancel this question"
             onClick={() => onCancel(requestId)}
             style={{
               padding: '0.2rem 0.5rem',

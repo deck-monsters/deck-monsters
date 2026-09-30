@@ -45,6 +45,7 @@ export default function PresetControl({
           ))}
         </select>
         <button
+          title="Put this preset's cards on the monster"
           type="button"
           className="btn"
           disabled={disabled || !selectedPreset}
@@ -53,6 +54,7 @@ export default function PresetControl({
           Load
         </button>
         <button
+          title="Delete this preset. The cards stay where they are"
           type="button"
           className="btn"
           disabled={disabled || !selectedPreset}
@@ -71,6 +73,7 @@ export default function PresetControl({
           onChange={(event) => setNewPresetName(event.target.value)}
         />
         <button
+          title="Save the monster's deck as a preset with this name"
           type="button"
           className="btn"
           disabled={disabled || newPresetName.trim().length < 1}

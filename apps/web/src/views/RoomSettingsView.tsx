@@ -94,10 +94,10 @@ export default function RoomSettingsView() {
           >
             {room.inviteCode}
           </code>
-          <button className="btn" onClick={() => void copyInviteCode()}>
+          <button title="Copy the invite code to send to a friend" className="btn" onClick={() => void copyInviteCode()}>
             {copied ? 'Copied!' : 'Copy Code'}
           </button>
-          <button className="btn" onClick={() => void copyInviteLink()}>
+          <button title="Copy a link that invites a friend to this room" className="btn" onClick={() => void copyInviteLink()}>
             {copiedLink ? 'Copied!' : 'Copy Link'}
           </button>
         </div>
@@ -148,6 +148,7 @@ export default function RoomSettingsView() {
                   Reset the game state for this room. All monsters, characters, and ring progress will be erased, but the room and its members will be kept.
                 </p>
                 <button
+                  title="Start this room's game over. Asks first"
                   className="btn"
                   style={{ borderColor: 'var(--color-accent)', color: 'var(--color-accent)' }}
                   onClick={() => setConfirmReset(true)}
@@ -162,6 +163,7 @@ export default function RoomSettingsView() {
                 </p>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                   <button
+                    title="Reset the game now. This cannot be undone"
                     className="btn"
                     style={{ borderColor: 'var(--color-accent)', color: 'var(--color-accent)' }}
                     disabled={resetRoom.isPending}
@@ -169,7 +171,7 @@ export default function RoomSettingsView() {
                   >
                     {resetRoom.isPending ? 'Resetting…' : 'Yes, reset it'}
                   </button>
-                  <button className="btn" onClick={() => setConfirmReset(false)}>
+                  <button title="Keep the room as it is" className="btn" onClick={() => setConfirmReset(false)}>
                     Cancel
                   </button>
                 </div>
@@ -181,6 +183,7 @@ export default function RoomSettingsView() {
         {isOwner && (
           !confirmDelete ? (
             <button
+              title="Delete this room for everyone. Asks first"
               className="btn"
               style={{ borderColor: 'var(--color-error)', color: 'var(--color-error)' }}
               onClick={() => setConfirmDelete(true)}
@@ -194,6 +197,7 @@ export default function RoomSettingsView() {
               </p>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
                 <button
+                  title="Delete the room now. This cannot be undone"
                   className="btn"
                   style={{ borderColor: 'var(--color-error)', color: 'var(--color-error)' }}
                   disabled={deleteRoom.isPending}
@@ -201,7 +205,7 @@ export default function RoomSettingsView() {
                 >
                   {deleteRoom.isPending ? 'Deleting…' : 'Yes, delete it'}
                 </button>
-                <button className="btn" onClick={() => setConfirmDelete(false)}>
+                <button title="Keep the room as it is" className="btn" onClick={() => setConfirmDelete(false)}>
                   Cancel
                 </button>
               </div>

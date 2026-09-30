@@ -4,6 +4,9 @@ import ConsolePane from './ConsolePane.js';
 import WorkshopPanel from './WorkshopPanel.js';
 import FightLogPanel from './FightLogPanel.js';
 import LeaderboardPanel from './LeaderboardPanel.js';
+import { surfaceDescription } from './surface-descriptions.js';
+
+export { surfaceDescription };
 
 /**
  * The set of surfaces `Terminal` can place into a pane slot (or, on a narrow screen, show
@@ -30,6 +33,8 @@ export interface SurfaceDefinition {
   id: SurfaceId;
   /** Short label for the tab bar and the pane selector. */
   label: string;
+  /** One line saying what the place is for: the tab's `title` and the panel's subtitle. */
+  description: string;
   /**
    * The surface's full-page route, for the pane header's "open full page" link (§3.1).
    * `undefined` when the surface has no route of its own — the ring and console are the
@@ -51,30 +56,35 @@ export const SURFACES: SurfaceDefinition[] = [
   {
     id: 'ring',
     label: 'The Ring',
+    description: surfaceDescription('ring'),
     route: undefined,
     render: ({ roomId, isActive, headerActions }) => createElement(RingPane, { roomId, isActive, headerActions }),
   },
   {
     id: 'console',
     label: 'Console',
+    description: surfaceDescription('console'),
     route: undefined,
     render: ({ roomId, isActive, headerActions }) => createElement(ConsolePane, { roomId, isActive, headerActions }),
   },
   {
     id: 'workshop',
     label: 'Workshop',
+    description: surfaceDescription('workshop'),
     route: (roomId) => `/room/${roomId}/workshop`,
     render: ({ roomId, headerActions }) => createElement(WorkshopPanel, { roomId, headerActions }),
   },
   {
     id: 'fights',
     label: 'Fights',
+    description: surfaceDescription('fights'),
     route: (roomId) => `/room/${roomId}/fights`,
     render: ({ roomId, headerActions }) => createElement(FightLogPanel, { roomId, headerActions }),
   },
   {
     id: 'leaderboard',
     label: 'Leaders',
+    description: surfaceDescription('leaderboard'),
     route: (roomId) => `/room/${roomId}/leaderboard`,
     render: ({ roomId, headerActions }) => createElement(LeaderboardPanel, { roomId, initialScope: 'room', headerActions }),
   },

@@ -604,7 +604,7 @@ export default function RingPane({
           List: FeedList,
           EmptyPlaceholder: () => (
             <li className="event event-system event-feed-empty">
-              <p>Waiting for fight events…</p>
+              <p>No fight yet. A fight starts when two monsters are in the ring: send one of yours, or summon a boss.</p>
             </li>
           ),
         }}
@@ -649,6 +649,8 @@ export default function RingPane({
       )}
       {!isAtBottom && (
         <button
+          // DRAFT(39): jumps the ring event feed to its newest event (same as the Console's "↓ Latest"); not in the brief.
+          title="DRAFT"
           className="jump-to-bottom"
           onClick={scrollToBottom}
           aria-label="Jump to latest events"

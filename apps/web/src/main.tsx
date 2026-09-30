@@ -60,6 +60,7 @@ class ErrorBoundary extends Component<
             {this.state.error.message}
           </p>
           <button
+            title="Reload the page"
             onClick={() => window.location.reload()}
             style={{
               padding: '0.4rem 1rem',

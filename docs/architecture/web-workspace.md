@@ -47,6 +47,18 @@ second implementation for a pane.
 Other routes remain outside the workspace: `/rooms`, `/room/:roomId/settings`, `/account`,
 `/leaderboard`, authentication/reset pages, and invite links.
 
+## Every button and place says what it is for
+
+Every `<button>` carries a `title`: one line saying what it does, shown on hover and read by
+screen readers. A phone never shows a `title`, so on a phone the **visible label** has to
+carry the meaning (an icon-only control is a universal one such as ☰, ✕ or ↓, or it gets
+words: ⟲ became "Unequip all"). Each surface also has a `description` in the registry
+(`surface-descriptions.ts`, re-exported as `surfaceDescription` from `surfaces.ts`; a
+separate file because the panels import it and `surfaces.ts` imports the panels). It is the
+tab's `title` and the subtitle under the panel heading. `button-titles.test.ts` fails, naming
+`file:line`, on any `<button` without a `title=`, so a new button needs its line decided
+(roadmap 39 batch 3).
+
 ## The Console while a prompt is open
 
 While `ConsolePane` has an open prompt (`activePromptId`), it renders neither the
