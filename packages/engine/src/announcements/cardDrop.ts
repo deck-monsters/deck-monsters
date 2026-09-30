@@ -13,7 +13,10 @@ export function announceCardDrop(
 	{ contestant, card }: CardDropOpts,
 ): void {
 	const cardDropped = actionCard(card, true);
-	const cardDropName = (card?.name ?? (card?.constructor as { name?: string })?.name ?? 'Card') as string;
+	// The display name ("Heal"), not the class name ("HealCard"): this is what the Fights list
+	// shows as a fight's card drop (Cursor's live check, roadmap 39). Rows written before this
+	// keep the class name.
+	const cardDropName = (card?.cardType ?? card?.name ?? (card?.constructor as { name?: string })?.name ?? 'Card') as string;
 
 	const text = `${contestant.monster.identity} finds a card for ${contestant.character.identity} in the dust of the ring:\n\n${cardDropped}`;
 

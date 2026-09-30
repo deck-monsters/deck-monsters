@@ -484,7 +484,7 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
       const skipped = result.failures.length > 0
         ? ` Skipped: ${result.failures.map((f) => f.cardName).join(', ')}.`
         : '';
-      setMessage(`Unequipped ${result.removedCount} cards from ${source.monsterName}.${skipped}`);
+      setMessage(`Unequipped ${result.removedCount} ${result.removedCount === 1 ? 'card' : 'cards'} from ${source.monsterName}.${skipped}`);
       return;
     }
 

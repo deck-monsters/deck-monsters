@@ -82,6 +82,14 @@ line, `Unequipped 1 cards`, and a fight row that says `HealCard`) are listed the
 | B5 | **Training and card moves say why.** Each monster type gets a one-line description in both training paths; the Console path asks the player's name as the form does; "You have 10 of 10 monsters left to train" reads as what it means. A refused card move says why, and a successful one says what the count counts | 9, 10 | Done: a line per monster type in both training paths; the Console asks a new player's name (`type ok to be {suggested}`, since an empty answer cannot be sent); the place count; one equip line and refusal reasons everywhere (e69c9567, 759de2cc, 1c1d776c). Needs the live check |
 | B6 | **A glossary.** The fight's numbers (`ac`, `hp`, `dex`, `str`, `int`, dice like `1d20`, `XP`, level and "beginner", bloodied, a natural 1 and 20) explained in the handbook, reachable from Help | 5 | Done: "Reading a Fight" in the handbook, so also in Help. Found on the way: the handbook's XP table predated the early-level discount (Level 1 said 50 XP; the game asks 28), now generated from `levels.ts` |
 
+**Live check of batch 2** (Cursor, [help check, batch 2](../reference/help-check-batch2.md)):
+B2–B6 passed. B1 failed on one point: the "A command is waiting for your answer" banner covered
+the lower choices of a long prompt, because it was drawn over the feed and shows exactly when
+the prompt's end is off screen; it now sits in the layout above the input. The check also found
+a fight's card drop listed by class name ("HealCard"), "Protector Of Creatures's turn", and
+"Unequipped 1 cards"; all fixed. Not yet seen live: a timed revival, a balance of 1 coin, a
+full roster.
+
 Also from the walk, smaller: the boss arriving with `Fights: 102` in a new room (boss history
 is global; say so or show this room's count), `OWNER` and `MEMBER` undefined on the rooms
 page, placeholders that look filled in, the long room name colliding with the logo on a

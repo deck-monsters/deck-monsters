@@ -391,11 +391,8 @@
 }
 
 .command-blocked-banner {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 100%;
-  z-index: 12;
+  /* In the layout above the command dock, not overlaid on the feed: see ConsolePane. */
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;

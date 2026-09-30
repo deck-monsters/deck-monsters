@@ -1551,7 +1551,7 @@ export function createRouter(roomManager: RoomManager) {
 				publishPrivateAnnouncement({
 					eventBus,
 					userId: ctx.userId,
-					text: `Unequipped ${result.removedCount} ${input.cardName} from ${result.monsterName}.`,
+					text: `Unequipped ${result.removedCount} ${input.cardName}${result.removedCount === 1 ? '' : ' cards'} from ${result.monsterName}.`,
 					operation: 'unequipCard',
 				});
 				eventBus.publish({
@@ -1873,8 +1873,8 @@ export function createRouter(roomManager: RoomManager) {
 					eventBus,
 					userId: ctx.userId,
 					text: failures.length > 0
-						? `Unequipped ${removedCount} cards from ${monsterName}. Could not unequip: ${failures.map((f) => f.cardName).join(', ')}.`
-						: `Unequipped ${removedCount} cards from ${monsterName}.`,
+						? `Unequipped ${removedCount} ${removedCount === 1 ? 'card' : 'cards'} from ${monsterName}. Could not unequip: ${failures.map((f) => f.cardName).join(', ')}.`
+						: `Unequipped ${removedCount} ${removedCount === 1 ? 'card' : 'cards'} from ${monsterName}.`,
 					operation: 'unequipMany',
 				});
 				eventBus.publish({

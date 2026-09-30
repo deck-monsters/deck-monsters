@@ -2,6 +2,9 @@ import { monsterCard, monsterTurnLine } from '../helpers/card.js';
 import { isRivalTeam } from '../ring/ring-events.js';
 import type { RoomEventBus } from '../events/index.js';
 
+/** "Pip's", but "Protector Of Creatures'": a name ending in s takes a bare apostrophe (Cursor's live check, roadmap 39). */
+export const possessive = (name: string): string => (/s$/i.test(name) ? `${name}'` : `${name}'s`);
+
 /**
  * Announces whose turn it is.
  *
@@ -30,7 +33,7 @@ export function announceTurnBegin(
 	eb.publish({
 		type: 'announce',
 		scope: 'public',
-		text: `*It's ${turnName}'s turn.*\n\n${body}`,
+		text: `*It's ${possessive(turnName)} turn.*\n\n${body}`,
 		payload: { contestant },
 	});
 
