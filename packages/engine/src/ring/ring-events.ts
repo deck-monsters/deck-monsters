@@ -26,7 +26,7 @@ import {
  *
  * Why: a lone human against the Gauntlet won 0-8% before and 25/36/60/71% at beginner/1/3/5
  * after; two humans went 1%/14% to 36%/50% at levels 1/3; an ordinary ambush went 15%/35% to
- * 59%/68% at levels 1/3. See `docs/roadmap/38-gauntlet.md`.
+ * 59%/68% at levels 1/3. See `docs/archive/roadmap/38-gauntlet.md`.
  */
 export const GAUNTLET_RULES = { rivalsWhenOutnumbered: true };
 
@@ -36,7 +36,7 @@ export const GAUNTLET_RULES = { rivalsWhenOutnumbered: true };
  * ineligible. When off it picks among the eligible events only, which made a rarely-eligible
  * event as likely as its weight share of whatever happened to be eligible: the Gauntlet was
  * 100% of a lone player's countdowns and is now 30% of the rolls (7.5% of countdowns, once the
- * event chance is applied, down from 25%). See `docs/roadmap/38-gauntlet.md`.
+ * event chance is applied, down from 25%). See `docs/archive/roadmap/38-gauntlet.md`.
  */
 export const RING_EVENT_RULES = { globalWeights: true };
 

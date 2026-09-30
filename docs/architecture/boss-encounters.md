@@ -303,7 +303,36 @@ Defined declaratively in `packages/engine/src/ring/ring-events.ts`.
 | **House War** | Players split round-robin across two Sorting Hat houses | `last-team` | ≥3 players **and 0 bosses** |
 | **The Reckoning** | Bosses switch to `TARGET_HIGHEST_XP_PLAYER` — they hunt the strongest | `last-contestant` (default) | ≥1 boss, ≥2 players |
 
-`RING_EVENT_CHANCE_PERCENT` is 25.
+`RING_EVENT_CHANCE_PERCENT` is 25. **The pick is by weight among all events**
+(`RING_EVENT_RULES.globalWeights`, roadmap 38): if the event picked is not eligible for the
+roster, no event fires. It used to pick among the eligible events only, so in a ring with one
+human and one boss (only the Gauntlet eligible) every event roll was a Gauntlet: a quarter of
+all lone boss fights. Now a lone player meets it at 25% × 30/100 = 7.5% of countdowns, and
+bigger rings are barely changed (the full table is in the
+[Gauntlet report](../reference/balance-reports/2026-09-29-gauntlet.md)).
+
+### Bosses that outnumber the humans turn on each other
+
+At fight start, if the bosses outnumber the humans (ambush minions count as bosses), the fight
+is a free-for-all, as Blood Feud is (`GAUNTLET_RULES.rivalsWhenOutnumbered`, roadmap 38; the
+`gauntletRivals` flag behind `encounterFreeForAll`). The room sees one line before the first
+turn: "Outnumbered is not outmatched. The bosses turn on one another, and every monster in the
+ring now fights for itself."
+
+- **Why:** a lone human won 1 Gauntlet in 25 in production, because three bosses on one team all
+  went for the one challenger. Measured on the harness, the rule moves a lone human against the
+  Gauntlet from 0/0/1/8% to 25/36/60/71% at beginner and levels 1, 3 and 5; two humans from 1%
+  and 14% to 36% and 50% at levels 1 and 3; and an ambush (one boss and one minion) from 15% and
+  35% to 59% and 68%. It stays harder than a plain boss fight, as a scare should.
+- **Decided once**, from the roster when the fight starts; withdrawals and deaths do not change
+  it mid-fight.
+- **Not for a mega boss's fight:** its party is a designed pack that keeps the Challengers'
+  alliance.
+- **Not without a human:** a fight with no human has nobody to be outnumbered, and keeps its
+  teams (the harness's boss-only team fights rely on this).
+- **Considered and dropped:** rivals only when exactly one human is in the fight (does nothing for
+  two humans against the Gauntlet), and the Gauntlet's extras arriving as minions (on its own it
+  left a beginner at 1%; with rivals it made the Gauntlet no harder than a plain boss fight).
 
 ### Victory modes: `last-contestant` vs `last-team`
 
@@ -569,7 +598,8 @@ event's intent.
    etc.): cards that call `getTarget()` internally now pass the ring instance. `getTarget()`
    accepts an optional `ring?: { encounterFreeForAll?: boolean }` parameter; if
    `ring.encounterFreeForAll` is `true`, it forces `team: false` for that call.
-   `Ring.encounterFreeForAll` is a getter: `this.ringEvent?.freeForAll === true`.
+   `Ring.encounterFreeForAll` is a getter: `this.ringEvent?.freeForAll === true`, or the
+   fight's bosses outnumber its humans (`gauntletRivals`, see §4).
 
 Both layers are needed because the primary targeting call in `Ring.fight()` and the secondary
 calls inside cards are separate `getTarget()` invocations. Normal team targeting is unaffected

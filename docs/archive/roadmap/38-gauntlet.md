@@ -1,15 +1,14 @@
 ---
-type: Roadmap
+type: Archive
 title: The Gauntlet against a lone player
 description: Plan to fix the Gauntlet ring event, which a lone human wins about 4% of the time and which fires in about a fifth of all fights.
-status: draft
+status: deprecated
 audience: internal
 tags: [roadmap, balance, bosses, ring-events]
 ---
 # 38 — The Gauntlet against a lone player
 
-**Status:** In progress (2026-09-30). First measurements done; the owner chose to measure
-"rivals when outnumbered" before anything ships.
+**Status:** Done (2026-09-30), archived. The current rules are in [boss encounters](../../architecture/boss-encounters.md#bosses-that-outnumber-the-humans-turn-on-each-other).
 
 ## Why
 
@@ -88,6 +87,24 @@ per monster type per level per variant (7,000 per mean, standard error under 1 p
 whenever they outnumber the humans, which covers one human against three and two against four),
 with and without minion extras, and the ambush case it also touches, before shipping.
 
+## Rivals when outnumbered, and the decision (2026-09-30)
+
+Same sizes as the first results. The rule: bosses (ambush minions included) outnumbering the
+humans makes the fight a free-for-all.
+
+| Case | Today | Rivals when outnumbered | + minion extras | Plain boss fight |
+|---|---|---|---|---|
+| Lone human, beginner / 1 / 3 / 5 | 0 / 0 / 1 / 8 | 25 / 36 / 60 / 71 | 48 / 57 / 69 / 74 | 45 / 59 / 70 / 72 |
+| Two humans, level 1 / 3 | 1 / 14 | 36 / 50 | 51 / 57 | 65 / 77 |
+| Ambush (1 boss + 1 minion), level 1 / 3 | 15 / 35 | 59 / 68 | — | 59 / 70 |
+
+**The owner chose rivals when outnumbered, with ambush minions counting, and the global event
+weights; no minion extras.** Every case is inside the 20–80% band, and the Gauntlet stays harder
+than a plain boss fight. The shipped rules, and why the others were dropped, are in
+[boss encounters](../../architecture/boss-encounters.md#bosses-that-outnumber-the-humans-turn-on-each-other).
+One guard was added while shipping: a fight with no human keeps its teams, since nobody is
+outnumbered (the harness's boss-only team fights caught it).
+
 ## Acceptance
 
 - A lone human's Gauntlet win rate inside the owner's 20–80% band at beginner level and at
@@ -100,6 +117,6 @@ with and without minion extras, and the ambush case it also touches, before ship
 
 | # | Task | Status | Commit |
 |---|---|---|---|
-| 1 | Engine switches for the variants (class or module settings, off by default) and a harness plan: a lone human at beginner and levels 1, 3, 5 against the ring's own boss spawns with the Gauntlet forced, plus two-human rings; 2,000 fights a cell | First pass done at 1,000 a cell (above); "rivals when outnumbered" being measured | 91153eda, ffb6048a (study branch) |
+| 1 | Engine switches for the variants (class or module settings, off by default) and a harness plan: a lone human at beginner and levels 1, 3, 5 against the ring's own boss spawns with the Gauntlet forced, plus two-human rings; 2,000 fights a cell | Done at 1,000 fights a cell per monster type (above) | 91153eda, ffb6048a (study branch) |
 | 2 | Frequency: measure the event mix per roster shape under today's rule and `event-weights-global`, by simulation or by counting eligible sets | Done by arithmetic (in the study report) | ffb6048a (study branch) |
-| 3 | The owner picks from the results; ship the chosen rules on, remove the losers, update `boss-encounters.md` and the handbook text | Planned | |
+| 3 | The owner picks from the results; ship the chosen rules on, remove the losers, update `boss-encounters.md` and the handbook text | Done: rivals when outnumbered and global weights on; rivals-when-alone and minion extras removed; the fight-start line and a handbook sentence | 6df9ac0a |
