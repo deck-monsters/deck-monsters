@@ -17,8 +17,10 @@ function relTime(d: Date): string {
 
 export default function FightLogPanel({ roomId, headerActions }: FightLogPanelProps) {
   const [expanded, setExpanded] = useState<number | null>(null);
-  const fightOnRing = useFightOnRing(roomId);
-  // While a fight is on, refetch so it appears here soon after it ends.
+  const utils = trpc.useUtils();
+  // Refetch once when the fight ends: the list is only polled while a fight is on, so
+  // the last fetch predates the summary of the fight that just finished.
+  const fightOnRing = useFightOnRing(roomId, () => { void utils.game.recentFights.invalidate({ roomId }); });
   const fights = trpc.game.recentFights.useQuery({ roomId, limit: 80 }, { refetchInterval: fightOnRing ? 5_000 : false });
   // Monster sprites in place of their emoji, as in the Ring feed (roadmap 24). The history
   // records its own participants rather than relying on the Ring pane having run: opened

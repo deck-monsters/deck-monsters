@@ -120,7 +120,7 @@ tab becomes visible so browser timer suspension is not mistaken for a dead conne
 - `ringHistory` and `consoleHistory` populate pane history on page load. They read up to
   24 hours first and fall back to a small 7-day minimum.
 - reconnect replay resumes one continuous event stream from an event id.
-- `catchUp` and the Fight Log read completed `fight_summaries`, answering what happened
+- `catchUp` and the Fights panel read completed `fight_summaries`, answering what happened
   over a longer absence without replaying every narration line.
 
 See [analytics and history](analytics-and-history.md) for summaries and projections.

@@ -17,7 +17,9 @@ function LeaderboardTableRegion({ label, children }: { label: string; children: 
 }
 
 export default function LeaderboardPanel({ roomId, initialScope = roomId ? 'room' : 'global', headerActions }: LeaderboardPanelProps) {
-  const fightOnRing = useFightOnRing(roomId);
+  const utils = trpc.useUtils();
+  // Rankings change when a fight ends; refetch once then (see useFightOnRing).
+  const fightOnRing = useFightOnRing(roomId, () => { void utils.leaderboard.invalidate(); });
   const [scope, setScope] = useState<Scope>(initialScope);
   const [kind, setKind] = useState<Kind>('players');
   const [sortBy, setSortBy] = useState<Sort>('xp');

@@ -16,7 +16,10 @@ describe('one name per place', () => {
   it('the menus and headings no longer use the old names', () => {
     const shell = src('components/AppShell.tsx');
     expect(shell).not.toMatch(/>\s*(Terminal|Leaderboard|Fight log)\s*</);
-    for (const name of ['The Ring', 'Leaders', 'Workshop', 'Fights']) expect(shell).toContain(name);
+    // Exact link text, so "Deck Workshop" would fail: a bare `toContain('Workshop')` passes it.
+    for (const name of ['The Ring', 'Leaders', 'Workshop', 'Fights']) {
+      expect(shell).toMatch(new RegExp(`>\\s*${name}\\s*<`));
+    }
     expect(src('components/WorkshopPanel.tsx')).toContain('<h1>Workshop</h1>');
     expect(src('components/FightLogPanel.tsx')).toContain('<h1>Fights</h1>');
     expect(src('components/LeaderboardPanel.tsx')).toContain('<h1>Leaders</h1>');

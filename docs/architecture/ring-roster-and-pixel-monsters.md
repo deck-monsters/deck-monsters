@@ -110,9 +110,9 @@ assistive technology, and never delays or replaces game state.
 
 ## Room-known monsters and narration portraits
 
-Ring, Console, and Fight Log all render narration through the same formatter. A small
+Ring, Console, and Fights all render narration through the same formatter. A small
 external store records monsters seen in `ring.state`; fight history also records its
-participant rows so a direct Fight Log route works without the Ring mounted.
+participant rows so a direct Fights route works without the Ring mounted.
 
 The store:
 
