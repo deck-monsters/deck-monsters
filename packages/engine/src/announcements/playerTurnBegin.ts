@@ -1,4 +1,5 @@
 import { monsterCard, monsterTurnLine } from '../helpers/card.js';
+import { isRivalTeam } from '../ring/ring-events.js';
 import type { RoomEventBus } from '../events/index.js';
 
 /**
@@ -19,7 +20,7 @@ export function announceTurnBegin(
 	const alreadySeen = contestant.lastMonsterPlayed === monster;
 
 	const body = alreadySeen
-		? monsterTurnLine(monster, contestant.team)
+		? monsterTurnLine(monster, isRivalTeam(contestant.team) ? undefined : contestant.team)
 		: `${contestant.character.identity} plays the following monster:\n${monsterCard(monster, true)}`;
 
 	eb.publish({

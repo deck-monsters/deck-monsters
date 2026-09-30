@@ -3,6 +3,7 @@ import { expect } from 'chai';
 import {
 	ALLIANCE_TEAM,
 	RING_EVENTS,
+	RING_EVENT_RULES,
 	buildRingEventContext,
 	getRingEvent,
 	selectRingEvent,
@@ -80,7 +81,15 @@ describe('ring/ring-events.ts', () => {
 		});
 	});
 
-	describe('selection', () => {
+	describe('selection (eligible events only: the globalWeights rule is off)', () => {
+		const before = RING_EVENT_RULES.globalWeights;
+		beforeEach(() => {
+			RING_EVENT_RULES.globalWeights = false;
+		});
+		afterEach(() => {
+			RING_EVENT_RULES.globalWeights = before;
+		});
+
 		it('returns undefined when nothing is eligible', () => {
 			expect(selectRingEvent(buildRingEventContext([]), 0)).to.equal(undefined);
 		});
@@ -104,6 +113,64 @@ describe('ring/ring-events.ts', () => {
 
 			expect(selectRingEvent(context, 0)?.id).to.equal(eligible[0].id);
 			expect(selectRingEvent(context, 0.999)?.id).to.equal(eligible[eligible.length - 1].id);
+		});
+	});
+
+	describe('RING_EVENT_RULES.globalWeights (roadmap 38)', () => {
+		const before = RING_EVENT_RULES.globalWeights;
+		afterEach(() => {
+			RING_EVENT_RULES.globalWeights = before;
+		});
+
+		it('defaults on in play', () => {
+			expect(before).to.equal(true);
+		});
+
+		it('off: a lone human with no boss always gets the Gauntlet (the only eligible event)', () => {
+			RING_EVENT_RULES.globalWeights = false;
+			const context = buildRingEventContext([player()]);
+			for (const pick of [0, 0.3, 0.99]) {
+				expect(selectRingEvent(context, pick)?.id).to.equal('gauntlet');
+			}
+		});
+
+		it('on: picks among all events and returns nothing when the pick is ineligible', () => {
+			RING_EVENT_RULES.globalWeights = true;
+			const context = buildRingEventContext([player()]);
+			const total = RING_EVENTS.reduce((sum, event) => sum + event.weight, 0);
+			// The Gauntlet is first with weight 30: the first 30 of the weight range.
+			expect(selectRingEvent(context, 10)?.id).to.equal('gauntlet');
+			// Blood Feud's slice (30-50) is ineligible for one monster: no event.
+			expect(selectRingEvent(context, 40)).to.equal(undefined);
+			expect(selectRingEvent(context, total - 1)).to.equal(undefined);
+			// A 0-1 fraction scales to the global total.
+			expect(selectRingEvent(context, 0.1)?.id).to.equal('gauntlet');
+			expect(selectRingEvent(context, 0.9)).to.equal(undefined);
+		});
+
+		it('on: a lone-player roster gets the Gauntlet at 30% of event rolls and no event otherwise', () => {
+			RING_EVENT_RULES.globalWeights = true;
+			const context = buildRingEventContext([player()]);
+			const total = RING_EVENTS.reduce((sum, event) => sum + event.weight, 0);
+			expect(RING_EVENTS.find(event => event.id === 'gauntlet')?.weight).to.equal(30);
+			let gauntlets = 0;
+			let nothing = 0;
+			for (let offset = 0; offset < total; offset += 1) {
+				const picked = selectRingEvent(context, offset);
+				if (picked === undefined) nothing += 1;
+				else {
+					expect(picked.id).to.equal('gauntlet');
+					gauntlets += 1;
+				}
+			}
+			expect(gauntlets).to.equal(30);
+			expect(nothing).to.equal(total - 30);
+			expect(30 / total).to.be.closeTo(0.3, 1e-9);
+		});
+
+		it('on: still returns nothing for an empty roster', () => {
+			RING_EVENT_RULES.globalWeights = true;
+			expect(selectRingEvent(buildRingEventContext([]), 0)).to.equal(undefined);
 		});
 	});
 

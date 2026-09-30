@@ -141,6 +141,9 @@ owner decision in [11](11-balance-and-mechanics.md).
   independence, the engine serializing an object, the schema, a versioned dual-write server
   store, a backfill script, and read-only query views), then a small contract PR that drops
   `state_blob` after a week.
+- **In-game help for every control** ([39](39-in-game-help.md), owner 2026-09-30): an
+  inventory of every control and mechanic, help text and first-time narration for each, a
+  guided start, and a check that new controls cannot ship unexplained.
 - **Combat design** (11): stat reform, initiative, crit failures and crit ticks, card
   balance by tier, Team XP, and fight threads.
 

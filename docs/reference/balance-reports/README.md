@@ -15,6 +15,7 @@ are not checked in; rerun the plan to reproduce them.
 
 | Report | What it measured |
 |---|---|
+| [2026-09-29 Gauntlet candidate fixes](2026-09-29-gauntlet.md) | Roadmap 38: a lone human wins 0-8% of Gauntlets today (levels 0-5), 25-71% with rivals-alone, 1-32% with minions, 48-74% with both; two humans 1-14% today, 36-50% when outnumbered bosses become rivals; the ambush case; how often each ring event fires |
 | [2026-09-29 roadmap 36 confirmation](2026-09-29-confirm-36.md) | The owner's before and after of the pin rule, Take Wing's area dodge, and Mesmerize's natural-1 self-catch on PR D's hands: every field average in band, the level 7 Dragon 38% → 48%, and the level 1 Dragon vs Basilisk 85.2% (the pin rule; the Faceswap ceiling, left as it is) |
 | [2026-09-29 roadmap 35 PR D confirmation](2026-09-29-confirm-35d.md) | The owner's run, in two parts: the branch's code on PR C's hands (nothing else moved), then a new search where the Dragon and Unicorn own their new cards (the Dragon 63% / 63% / 59% / 38% at levels 1-7, every field average in band) |
 | `2026-09-29-collection-35d.json` (input) | The Layer 3 collection with one change for PR D's confirmation run: the Dragon and the Unicorn also own their new and reworked cards (Tail Lash, Asinine Companion, Enchanted Faceswap, Lucky Strike, Helm of Awe; Unconquerable Horn, Dissonant Voice, Horn of Proof, Gloaming Rest) at share 1 at every level that can hold them. New cards are in no real player's collection yet, so the search could not otherwise try them |

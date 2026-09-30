@@ -16,6 +16,34 @@ import {
 	TARGET_RANDOM_PLAYER,
 } from '../helpers/targeting-strategies.js';
 
+/**
+ * The Gauntlet rule (roadmap 38; `balance/variants.ts`). On in play, like `PIN_RULES`; the
+ * harness switches it off for before/after.
+ * - `rivalsWhenOutnumbered`: in a fight with a human in it, when bosses (ambush minions
+ *   included) outnumber the humans at fight start, each boss gets a team of its own for that
+ *   fight (`RIVAL_TEAM_PREFIX`, a contestant-level override like a ring event's), so the
+ *   bosses may hit each other. Humans keep their real teams, teamless humans stay their own
+ *   faction (the Challengers alliance is not formed), and equal numbers change nothing. A
+ *   mega boss's fight, Blood Feud (already a free-for-all) and the team events (Common Cause,
+ *   House War) skip it, and so does The Reckoning, whose bosses keep hunting the strongest
+ *   challenger.
+ *
+ * Why: a lone human against the Gauntlet won 0-8% before and 25/36/60/71% at beginner/1/3/5
+ * after; two humans went 1%/14% to 36%/50% at levels 1/3; an ordinary ambush went 15%/35% to
+ * 59%/68% at levels 1/3. See `docs/archive/roadmap/38-gauntlet.md`.
+ */
+export const GAUNTLET_RULES = { rivalsWhenOutnumbered: true };
+
+/**
+ * Ring event frequency (roadmap 38). On in play; the harness switches it off for before/after.
+ * When on, `selectRingEvent` picks by weight among ALL events and fires nothing if the pick is
+ * ineligible. When off it picks among the eligible events only, which made a rarely-eligible
+ * event as likely as its weight share of whatever happened to be eligible: the Gauntlet was
+ * 100% of a lone player's countdowns and is now 30% of the rolls (7.5% of countdowns, once the
+ * event chance is applied, down from 25%). See `docs/archive/roadmap/38-gauntlet.md`.
+ */
+export const RING_EVENT_RULES = { globalWeights: true };
+
 export type RingEventId =
 	| 'gauntlet'
 	| 'blood-feud'
@@ -78,6 +106,14 @@ export const ALLIANCE_TEAM = 'The Alliance';
  * Also distinct from the Sorting Hat houses.
  */
 export const CHALLENGERS_TEAM = 'The Challengers';
+
+/**
+ * Prefix of the one-boss teams the outnumbered rule (`GAUNTLET_RULES`) gives each boss for a
+ * fight. Never shown to players: the roster snapshot and the turn line hide it.
+ */
+export const RIVAL_TEAM_PREFIX = 'rival:';
+export const isRivalTeam = (team: string | null | undefined): boolean =>
+	typeof team === 'string' && team.startsWith(RIVAL_TEAM_PREFIX);
 
 const bosses = (contestants: RingEventContestant[]): RingEventContestant[] =>
 	contestants.filter(contestant => contestant.isBoss);
@@ -199,6 +235,17 @@ export const selectRingEvent = (
 ): RingEventDefinition | undefined => {
 	const eligible = RING_EVENTS.filter(event => event.eligible(context));
 	if (eligible.length <= 0) return undefined;
+
+	if (RING_EVENT_RULES.globalWeights) {
+		const totalAll = RING_EVENTS.reduce((total, event) => total + event.weight, 0);
+		const targetAll = pick >= 0 && pick < 1 ? pick * totalAll : pick;
+		let at = 0;
+		for (const event of RING_EVENTS) {
+			at += event.weight;
+			if (targetAll < at) return event.eligible(context) ? event : undefined;
+		}
+		return undefined;
+	}
 
 	const totalWeight = eligible.reduce((total, event) => total + event.weight, 0);
 	// Accept either an absolute weight offset or a 0–1 fraction.

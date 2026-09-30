@@ -12,7 +12,7 @@
  * Applying them now stacks on top of the engine's change; they stay as the record of what was
  * measured and to test further steps.
  */
-import { PIN_RULES, allMonsters, getCardClassByTypeName } from '@deck-monsters/engine';
+import { GAUNTLET_RULES, PIN_RULES, RING_EVENT_RULES, allMonsters, getCardClassByTypeName } from '@deck-monsters/engine';
 
 type Undo = () => void;
 export interface Variant {
@@ -103,6 +103,19 @@ const d20 = (): number => Math.floor(Math.random() * 20) + 1;
 
 type Monster = { dexModifier: number; hit(damage: number, by: unknown, card: unknown): Promise<boolean> };
 
+/**
+ * Sets a boolean module switch and returns the undo. A "before" variant turns a rule that is
+ * on in play OFF; the first version always wrote `true`, so both roadmap 38 variants did
+ * nothing (the switches already default to true).
+ */
+const setSwitch = <T extends object>(rules: T, key: keyof T & string, value: boolean): Undo => {
+	const before = rules[key];
+	(rules as Record<string, unknown>)[key] = value;
+	return () => {
+		(rules as Record<string, unknown>)[key] = before;
+	};
+};
+
 export const VARIANTS: Record<string, Variant> = {
 	'dragon-hp+3': { about: 'Dragon: 3 more HP', apply: () => staticBonus('Dragon', 'hpVariance', 3) },
 	'dragon-ac+1': { about: 'Dragon: 1 more AC', apply: () => staticBonus('Dragon', 'acVariance', 1) },
@@ -173,6 +186,14 @@ export const VARIANTS: Record<string, Variant> = {
 				PIN_RULES.advantage = before;
 			};
 		},
+	},
+	'no-rivals-outnumbered': {
+		about: 'Roadmap 38 before: bosses outnumbering the humans stay one team, so they never hit each other',
+		apply: () => setSwitch(GAUNTLET_RULES, 'rivalsWhenOutnumbered', false),
+	},
+	'event-weights-eligible': {
+		about: 'Roadmap 38 before: a ring event is picked among the eligible ones only, so a lone player always rolled the Gauntlet',
+		apply: () => setSwitch(RING_EVENT_RULES, 'globalWeights', false),
 	},
 	'rest-3d4': { about: 'Gloaming Rest: an undisturbed rest heals 3d4 (the old heal), not 4 to all missing', apply: () => cardStatic('Gloaming Rest', 'restShape', 'dice') },
 
