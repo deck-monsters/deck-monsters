@@ -10,3 +10,4 @@
  */
 export { COMMAND_CATALOG, formatCommandList } from './commands/catalog.js';
 export type { CommandEntry, CommandCategory } from './commands/catalog.js';
+export { MAX_CARD_COPIES_IN_HAND } from './constants/card-management.js';

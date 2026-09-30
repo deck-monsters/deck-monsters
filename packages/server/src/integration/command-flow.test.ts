@@ -30,10 +30,11 @@ const USER_B = 'user-b';
 // Scripted answers for character creation.
 // NOTE: the character's *display name* comes from the `userName` option passed
 // to runCommand (propagated as `user.name` → `game.getCharacter({ name })`).
-// createCharacter skips the name prompt when `name` is already defined, and it no
-// longer asks which class while there is only one (see characters/helpers/create.ts),
-// so only two prompts need to be answered: gender, avatar.
-const NEW_CHARACTER_ANSWERS = ['0', '0']; // gender=0, avatar=0
+// The Console path asks "What should we call you?" offering that display name (roadmap
+// 39 batch 2), and an empty answer takes it. It no longer asks which class while there
+// is only one (see characters/helpers/create.ts), so three prompts are answered:
+// name, gender, avatar.
+const NEW_CHARACTER_ANSWERS = ['', '0', '0']; // name=take suggestion, gender=0, avatar=0
 
 // Scripted answers for monster spawn that follows character creation.
 // spawn.ts DOES prompt for the monster name (free text) because no `name` is
@@ -90,7 +91,7 @@ describe('integration: command flow', function () {
 			await runCommand(game, { command: 'look at monsters', userId: USER_A });
 			responder2.unsubscribe();
 
-			expect(firstCount, 'should have answered character creation prompts').to.be.at.least(2);
+			expect(firstCount, 'should have answered character creation prompts').to.be.at.least(3);
 			expect(responder2.promptsAnswered, 'no prompts on second command').to.equal(0);
 		});
 	});
@@ -117,7 +118,7 @@ describe('integration: command flow', function () {
 		it('creates a monster when the user answers all spawn prompts', async () => {
 			const game = createTestGame();
 
-			// Combine character creation answers (2 prompts: gender, avatar)
+			// Combine character creation answers (3 prompts: name, gender, avatar)
 			// + spawn answers (4 prompts: type, gender, name, color)
 			const allAnswers = [...NEW_CHARACTER_ANSWERS, ...SPAWN_ANSWERS];
 			const responder = createAutoResponder(game.eventBus, USER_A, allAnswers);

@@ -52,6 +52,19 @@ export const beastmasterReady = loadHelpers().catch((err) => {
 // Raised from 7 to 10 in September 2026.
 export const DEFAULT_MONSTER_SLOTS = 10;
 
+/** Why `equipCards` left a card out. The web maps each code to the sentence a player reads. */
+export type EquipSkipReason = 'cannot_hold' | 'deck_full' | 'max_copies' | 'not_in_inventory';
+export interface EquipSkip { cardName: string; reason: EquipSkipReason }
+export interface EquipCardsResult {
+	equipped: number;
+	requested: number;
+	skippedCards: string[];
+	skipped: EquipSkip[];
+	cardCount: number;
+	cardSlots: number;
+	monsterName: string;
+}
+
 
 const normalize = (value: string): string => value.trim().toLowerCase();
 const getCardName = (card: CardInstance): string =>
@@ -174,7 +187,9 @@ class Beastmaster extends BaseCharacter {
 			return Promise.resolve()
 				.then(() =>
 					channel({
-						announce: `You have ${remainingSlots} of ${this.monsterSlots} monsters left to train.`,
+						// Same wording as the Workshop Train row (help-inventory #9): the old
+						// "10 of 10 left" read as a fraction of something, not as a count of places.
+						announce: `You can train ${remainingSlots} more ${remainingSlots === 1 ? 'monster' : 'monsters'}.`,
 					}),
 				)
 				.then(() => spawn(channel, options as any))
@@ -191,7 +206,11 @@ class Beastmaster extends BaseCharacter {
 				});
 		}
 
-		return announceAndThrow(channel, "You're all out space for new monsters!");
+		// Same wording as the Workshop Train row when no places are left.
+		return announceAndThrow(
+			channel,
+			`Every place at your side is taken (${this.monsterSlots} ${this.monsterSlots === 1 ? 'monster' : 'monsters'}).`,
+		);
 	}
 
 	chooseMonster({
@@ -871,7 +890,7 @@ class Beastmaster extends BaseCharacter {
 		cardNames: string[];
 		replaceAll?: boolean;
 		channel: ChannelFn;
-	}): Promise<{ equipped: number; requested: number; skippedCards: string[]; monsterName: string }> {
+	}): Promise<EquipCardsResult> {
 		return Promise.resolve()
 			.then(() =>
 				this.chooseMonster({
@@ -891,6 +910,11 @@ class Beastmaster extends BaseCharacter {
 
 				const requested = cardNames.length;
 				const skippedCards: string[] = [];
+				const skipped: EquipSkip[] = [];
+				const skip = (cardName: string, reason: EquipSkipReason) => {
+					skippedCards.push(cardName);
+					skipped.push({ cardName, reason });
+				};
 				let deck = [...this.deck];
 				let nextCards = replaceAll ? [] : [...monster.cards];
 
@@ -901,7 +925,7 @@ class Beastmaster extends BaseCharacter {
 
 				cardNames.forEach((cardName) => {
 					if (nextCards.length >= monster.cardSlots) {
-						skippedCards.push(cardName);
+						skip(cardName, 'deck_full');
 						return;
 					}
 
@@ -909,7 +933,9 @@ class Beastmaster extends BaseCharacter {
 						isSameCardName(card, cardName) && monster.canHoldCard(card),
 					);
 					if (cardIndex < 0) {
-						skippedCards.push(cardName);
+						// Tell "this kind of monster can't hold it" from "you have none left":
+						// the player is shown the reason (roadmap 39, help-inventory #10).
+						skip(cardName, deck.some(card => isSameCardName(card, cardName)) ? 'cannot_hold' : 'not_in_inventory');
 						return;
 					}
 
@@ -918,7 +944,7 @@ class Beastmaster extends BaseCharacter {
 						card => getItemKey(card) === getItemKey(selectedCard),
 					).length;
 					if (cardCount >= MAX_CARD_COPIES_IN_HAND) {
-						skippedCards.push(cardName);
+						skip(cardName, 'max_copies');
 						return;
 					}
 
@@ -929,10 +955,15 @@ class Beastmaster extends BaseCharacter {
 				monster.cards = nextCards;
 
 				const equipped = requested - skippedCards.length;
-				const summary = {
+				const summary: EquipCardsResult = {
 					equipped,
 					requested,
 					skippedCards,
+					skipped,
+					// What the deck holds now, so a caller can say "holds k of n cards" without a
+					// second read (the old "1/1" counted cards moved this call, not the deck).
+					cardCount: monster.cards.length,
+					cardSlots: monster.cardSlots,
 					monsterName: monster.givenName,
 				};
 

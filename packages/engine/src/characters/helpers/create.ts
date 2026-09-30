@@ -68,9 +68,18 @@ export const randomAvatarChoices = (count: number): string[] => {
 	return choices;
 };
 
+/** Same limit as the Workshop form's "Your name" field and the spawnMonster input. */
+export const CHARACTER_NAME_MAX_LENGTH = 40;
+
 interface CreateCharacterOptions {
 	type?: number | string;
 	name?: string;
+	/**
+	 * The player's display name, offered as the default when no `name` was supplied. Only the
+	 * Console path passes it: it silently used the display name and never asked, while the
+	 * Workshop form asks "Your name" (help-inventory #9).
+	 */
+	suggestedName?: string;
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	game?: any;
 	gender?: string;
@@ -79,7 +88,7 @@ interface CreateCharacterOptions {
 
 const createCharacter = (
 	channel: ChannelFn,
-	{ type, name, game, gender, icon }: CreateCharacterOptions = {},
+	{ type, name, suggestedName, game, gender, icon }: CreateCharacterOptions = {},
 ): Promise<BaseCharacter> => {
 	const options: Record<string, unknown> = {};
 
@@ -146,6 +155,11 @@ const createCharacter = (
 				let question = '';
 				if (alreadyTaken) question += 'That name is already taken, please choose a different name. ';
 
+				if (suggestedName) {
+					question += `What should we call you? Type a name, or take this one: ${suggestedName}.`;
+					return channel({ question });
+				}
+
 				const name1 = names((Character as any).creatureType, options.gender as string);
 				const name2 = names((Character as any).creatureType, options.gender as string, [name1]);
 
@@ -155,8 +169,11 @@ const createCharacter = (
 				return channel({ question });
 			})
 			.then((answer: unknown) => {
-				// Strip first so the taken-name check sees the name that will be stored.
-				const cleanName = stripControlCharacters(String(answer));
+				// Strip first so the taken-name check sees the name that will be stored. The
+				// length cap and control-character strip match the Workshop form; an empty
+				// answer takes the suggestion.
+				const typed = stripControlCharacters(String(answer ?? '')).trim().slice(0, CHARACTER_NAME_MAX_LENGTH).trim();
+				const cleanName = typed || (suggestedName ? stripControlCharacters(suggestedName).trim().slice(0, CHARACTER_NAME_MAX_LENGTH) : '');
 				if (game && game.findCharacterByName(cleanName)) {
 					return askForName(Character, true);
 				}
@@ -204,8 +221,12 @@ const createCharacter = (
 			Character = Type;
 			return Character;
 		})
+		// Name first when we are suggesting one, so the sequence matches the Workshop form
+		// (name, pronouns, avatar). Without a suggestion the name prompt offers generated
+		// names based on the chosen pronouns, so it stays after them.
+		.then(() => (suggestedName && name === undefined ? askForName(Character) : undefined))
 		.then(() => askForGender(Character))
-		.then(() => askForName(Character))
+		.then(() => (options.name === undefined ? askForName(Character) : undefined))
 		.then(() => askForAvatar())
 		.then(() => new Character(options));
 };

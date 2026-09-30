@@ -722,6 +722,7 @@ export class Game extends BaseClass {
 		icon,
 		id,
 		name,
+		askName = false,
 		type,
 	}: {
 		channel: any;
@@ -729,6 +730,10 @@ export class Game extends BaseClass {
 		icon?: string;
 		id: string;
 		name: string;
+		// Ask a new player what to call them, offering `name` as the default, instead of
+		// silently using it. The Console path sets this; connectors that resolve a name
+		// themselves and the Workshop form (which asks up front) do not.
+		askName?: boolean;
 		// An index (what a caller that already knows the class sends) as well as a label,
 		// because `createCharacter` resolves either form.
 		type?: string | number;
@@ -738,7 +743,7 @@ export class Game extends BaseClass {
 		return Promise.resolve(this.characters[id]).then(existingCharacter => {
 			if (!existingCharacter) {
 				return createCharacter(channel, {
-					name,
+					...(askName ? { suggestedName: name } : { name }),
 					type,
 					gender,
 					icon,

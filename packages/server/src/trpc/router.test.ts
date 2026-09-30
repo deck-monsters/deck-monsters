@@ -951,6 +951,9 @@ describe('trpc/router card management procedures', () => {
 				equipped: 1,
 				requested: 2,
 				skippedCards: ['Heal'],
+				skipped: [{ cardName: 'Heal', reason: 'cannot_hold' }],
+				cardCount: 3,
+				cardSlots: 9,
 				monsterName: 'Stonefang',
 			};
 		};
@@ -982,6 +985,10 @@ describe('trpc/router card management procedures', () => {
 			equippedCount: 1,
 			requestedCount: 2,
 			skippedCards: ['Heal'],
+			skipped: [{ cardName: 'Heal', reason: 'cannot_hold' }],
+			monsterName: 'Stonefang',
+			cardCount: 3,
+			cardSlots: 9,
 		});
 	});
 
@@ -1117,6 +1124,8 @@ describe('trpc/router monster lifecycle procedures', () => {
 		expect(options.types.map((type) => type.label)).to.deep.equal([
 			'Basilisk', 'Gladiator', 'Jinn', 'Minotaur', 'Weeping Angel', 'Unicorn', 'Dragon',
 		]);
+		// The same one-liner the Console prompt shows, one per type.
+		expect(options.types.every((type) => typeof type.summary === 'string' && type.summary.length > 0)).to.equal(true);
 		expect(options.pronouns).to.deep.equal([
 			{ key: 'male', label: 'he/him' },
 			{ key: 'female', label: 'she/her' },

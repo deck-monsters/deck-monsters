@@ -125,6 +125,7 @@ vi.mock('../components/MonsterWorkshopPanel.js', () => ({
     showSelectionHint,
     onDropCard,
     compatibilityHint,
+    refusalSentence,
     onToggleFilter,
     isFilterTarget,
     onReorderCard,
@@ -139,6 +140,7 @@ vi.mock('../components/MonsterWorkshopPanel.js', () => ({
       targetSelectionId?: string,
     ) => Promise<void> | void;
     compatibilityHint?: 'none' | 'eligible' | 'ineligible';
+    refusalSentence?: string;
     onToggleFilter?: () => void;
     isFilterTarget?: boolean;
     onReorderCard?: (sourceSelectionId: string, targetSelectionId: string) => Promise<void> | void;
@@ -147,6 +149,7 @@ vi.mock('../components/MonsterWorkshopPanel.js', () => ({
     <section>
       <div data-testid={`hint-${monster.name}`}>{showSelectionHint ? 'hint-on' : 'hint-off'}</div>
       <div data-testid={`compat-${monster.name}`}>{compatibilityHint ?? 'none'}</div>
+      <div data-testid={`refusal-${monster.name}`}>{refusalSentence ?? ''}</div>
       <div data-testid={`filter-target-${monster.name}`}>{isFilterTarget ? 'yes' : 'no'}</div>
       <button type="button" onClick={() => onToggleFilter?.()}>
         Toggle filter {monster.name}
@@ -216,6 +219,47 @@ describe('WorkshopView review regressions', () => {
     expect(screen.getByTestId('hint-Emberclaw')).toHaveTextContent('hint-on');
     expect(screen.getByTestId('compat-Stonefang')).toHaveTextContent('eligible');
     expect(screen.getByTestId('compat-Emberclaw')).toHaveTextContent('ineligible');
+  });
+
+  it('says why a card cannot go on a monster, with the reason code placeholder', () => {
+    renderWorkshop();
+    fireEvent.click(screen.getByRole('button', { name: 'Select inventory card' }));
+
+    expect(screen.getByTestId('refusal-Stonefang')).toHaveTextContent('');
+    expect(screen.getByTestId('refusal-Emberclaw')).toHaveTextContent("Hit can't go on Emberclaw: DRAFT(39) cannot_hold.");
+  });
+
+  it('says the deck is full before the tap when every slot is taken', () => {
+    workshopMock.monsters[0]!.cards = ['Heal', 'Heal'] as never;
+    try {
+      renderWorkshop();
+      fireEvent.click(screen.getByRole('button', { name: 'Select inventory card' }));
+      expect(screen.getByTestId('compat-Stonefang')).toHaveTextContent('ineligible');
+      expect(screen.getByTestId('refusal-Stonefang')).toHaveTextContent("Hit can't go on Stonefang: DRAFT(39) deck_full.");
+    } finally {
+      workshopMock.monsters[0]!.cards = [] as never;
+    }
+  });
+
+  it('says what an equip did and what the deck holds now, not a bare 1/1', async () => {
+    workshopMock.equipCards.mockResolvedValueOnce({
+      equippedCount: 1, requestedCount: 1, skippedCards: [], skipped: [], cardCount: 1, cardSlots: 2,
+    } as never);
+    renderWorkshop();
+    fireEvent.click(screen.getByRole('button', { name: 'Drop on Stonefang' }));
+
+    expect(await screen.findByText('Equipped Hit on Stonefang. Stonefang holds 1 of 2 cards.')).toBeInTheDocument();
+  });
+
+  it('names the reason for a card the equip skipped', async () => {
+    workshopMock.equipCards.mockResolvedValueOnce({
+      equippedCount: 0, requestedCount: 1, skippedCards: ['Hit'],
+      skipped: [{ cardName: 'Hit', reason: 'deck_full' }], cardCount: 2, cardSlots: 2,
+    } as never);
+    renderWorkshop();
+    fireEvent.click(screen.getByRole('button', { name: 'Drop on Stonefang' }));
+
+    expect(await screen.findByText("Hit can't go on Stonefang: DRAFT(39) deck_full.")).toBeInTheDocument();
   });
 
   it('clears selected banner after drag/drop actions', async () => {

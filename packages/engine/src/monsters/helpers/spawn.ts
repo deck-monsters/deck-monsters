@@ -6,6 +6,7 @@ import { announceAndThrow } from '../../helpers/announce-and-throw.js';
 import type { ChannelFn, CardInstance } from '../../creatures/base.js';
 import type BaseMonster from '../base.js';
 import allMonsters from './all.js';
+import { monsterTypeSummary } from './type-summaries.js';
 // The answer contract (0-based index from web, label text from Discord) lives in
 // exactly one place. This used to be a per-file copy behind the lazy loader below,
 // and three copies of a rule that must agree is how the shop menus drifted out of
@@ -83,8 +84,17 @@ const spawnMonster = (
 			.then(() => {
 				if (type !== undefined) return type;
 
+				// The descriptions ride in the question text, not in `choices`: choices are the
+				// labels an answer is matched against (docs/reference/prompt-answer-contract.md),
+				// so a label with a description glued on would break the Discord button answer.
+				const lines = allMonsters
+					.map((m, i) => {
+						const summary = monsterTypeSummary(m as { creatureType?: string });
+						return summary ? `${creatureTypeLabels[i]}: ${summary}` : '';
+					})
+					.filter(Boolean);
 				return channel({
-					question: `Which type of monster would you like to train?`,
+					question: ['Which type of monster would you like to train?', ...lines].join('\n'),
 					choices: creatureTypeLabels,
 				});
 			})

@@ -61,6 +61,8 @@ type MonsterPanelProps = {
   isFilterActive?: boolean;
   isFilterTarget?: boolean;
   compatibilityHint?: MonsterCompatibilityHint;
+  /** `{Card} can't go on {Monster}: {reason}.` shown when the hint is 'ineligible'. */
+  refusalSentence?: string;
   onToggleFilter?: () => void;
 };
 
@@ -95,6 +97,7 @@ export default function MonsterWorkshopPanel({
   isFilterActive = false,
   isFilterTarget = false,
   compatibilityHint = 'none',
+  refusalSentence,
   onToggleFilter,
 }: MonsterPanelProps) {
   const [now, setNow] = useState(() => Date.now());
@@ -306,7 +309,7 @@ export default function MonsterWorkshopPanel({
         <p className="workshop-compatibility-hint eligible">Can use selected inventory card.</p>
       )}
       {compatibilityHint === 'ineligible' && (
-        <p className="workshop-compatibility-hint ineligible">Cannot use selected inventory card.</p>
+        <p className="workshop-compatibility-hint ineligible">{refusalSentence ?? 'Cannot use selected inventory card.'}</p>
       )}
 
       {locked && (

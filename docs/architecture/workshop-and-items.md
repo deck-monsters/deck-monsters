@@ -122,6 +122,43 @@ otherwise re-prompt on the silent channel. It supplies every answer the engine c
 name, class index, persisted pronoun key, and avatar. If training later fails, the created
 character remains intentionally.
 
+The Console path asks the same question the form does. `Game.getCharacter({ askName })`
+(set by `commands/index.ts`, not for admin aliases) hands the display name to
+`createCharacter` as `suggestedName` instead of `name`, so a new player is asked
+`What should we call you? Type a name, or take this one: {suggested}.` before pronouns. An
+empty answer takes the suggestion; the answer gets the form's validation (control characters
+stripped, `CHARACTER_NAME_MAX_LENGTH` = 40). Callers that supply `name` (the Workshop, the
+Discord slash commands) are never asked. Before roadmap 39 the Console silently used the
+display name, which is how a player ended up with a name they never chose.
+
+## Training: type descriptions and place count
+
+Each monster type has one line in `monsters/helpers/type-summaries.ts`
+(`MONSTER_TYPE_SUMMARIES`). The classes' own `description` is long lore, so it is not reused.
+The Workshop reads the line from `spawnOptions` (`types[].summary`) and shows it under the
+Type select; the Console prompt puts `Label: line` rows in the *question text*. The lines are
+not in `choices`: choices are the labels an answer is matched against
+([prompt answer contract](../reference/prompt-answer-contract.md)), and a label with a
+description glued on would stop the Discord button answer from resolving. The lines are
+`DRAFT(39)` placeholders until the owner writes them.
+
+`Beastmaster.spawnMonster` opens with `You can train {n} more {monster|monsters}.` and, with
+no places left, refuses with `Every place at your side is taken ({slots} {monster|monsters}).`,
+the Workshop Train row's wording.
+
+## Card moves say why
+
+`Beastmaster.equipCards` returns `skipped: [{ cardName, reason }]` (reason is
+`cannot_hold` class restriction, `deck_full`, `max_copies`, or `not_in_inventory`) plus
+`cardCount` and `cardSlots`, the deck after the equip; `equipCards` passes them through.
+`apps/web/src/lib/cardRefusal.ts` maps codes to sentences (`{Card} can't go on {Monster}:
+{reason}.`, reasons are `DRAFT(39)` placeholders) and to the success line
+`Equipped {Card} on {Monster}. {Monster} holds {k} of {slots} cards.` The old `(1/1)` was
+cards equipped of cards requested in that one call, not the deck. The pre-tap hint on a
+monster panel uses the same `cardRefusalReason` (also `fighting`), checked in the order
+`equipCards` checks, so the hint and the refusal agree. Monster-to-monster moves already
+carry the engine's reason text and are unchanged.
+
 Before a character exists, the Workshop leaves `game.shop` off: it answers `NOT_FOUND`
 without a character, and polling it made a first-run room look broken (10b #188). The
 query turns on when `myInventory` reports `hasCharacter`. The "Applying changes…" banner

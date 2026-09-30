@@ -90,6 +90,7 @@ export type { BossSummonLedger, SummonAllowance } from './helpers/boss-summons.j
 export { GAUNTLET_RULES, RING_EVENT_RULES, RING_EVENTS, buildRingEventContext, getRingEvent, selectRingEvent } from './ring/ring-events.js';
 export type { RingEventDefinition, RingEventId, VictoryMode } from './ring/ring-events.js';
 export { allMonsters } from './monsters/index.js';
+export { MONSTER_TYPE_SUMMARIES, monsterTypeSummary } from './monsters/helpers/type-summaries.js';
 /** Roadmap 36's pinned-advantage rule and its harness switch. */
 export { PIN_RULES, isPinned } from './cards/helpers/pinned.js';
 /** Every item class the engine knows about, for lookup by `itemType` — mirrors `allMonsters`. */

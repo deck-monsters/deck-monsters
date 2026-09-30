@@ -13,6 +13,7 @@ import {
 	PROMPT_CANCELLED,
 	PromptCancelledError,
 	allMonsters,
+	monsterTypeSummary,
 	getXpCapForLevel,
 	isCommandRefusal,
 	purchaseShopItem,
@@ -1139,6 +1140,8 @@ export function createRouter(roomManager: RoomManager) {
 					types: allMonsters.map((Monster, index) => ({
 						index,
 						label: String((Monster as unknown as { creatureType?: string }).creatureType ?? Monster.name),
+						// The same one-liner the Console prompt shows.
+						summary: monsterTypeSummary(Monster as unknown as { creatureType?: string }),
 					})),
 					pronouns: PRONOUN_KEYS.map((key, i) => ({ key, label: PRONOUN_CHOICES[i] })),
 				};
@@ -1654,7 +1657,15 @@ export function createRouter(roomManager: RoomManager) {
 						cardNames: input.cardNames,
 						replaceAll: input.replaceAll ?? false,
 					}),
-				) as { equipped: number; requested: number; skippedCards: string[]; monsterName: string };
+				) as {
+					equipped: number;
+					requested: number;
+					skippedCards: string[];
+					skipped?: Array<{ cardName: string; reason: string }>;
+					cardCount?: number;
+					cardSlots?: number;
+					monsterName: string;
+				};
 				eventBus.publish({
 					type: 'card.equipped' as EventType,
 					scope: 'private',
@@ -1696,6 +1707,12 @@ export function createRouter(roomManager: RoomManager) {
 					equippedCount: result.equipped,
 					requestedCount: result.requested,
 					skippedCards: result.skippedCards,
+					// Why each card was left out, and what the deck holds now: the Workshop says
+					// "X can't go on Y: reason" and "Y holds k of n cards" from these.
+					skipped: result.skipped ?? result.skippedCards.map((cardName) => ({ cardName, reason: 'cannot_hold' })),
+					monsterName: result.monsterName,
+					cardCount: result.cardCount ?? null,
+					cardSlots: result.cardSlots ?? null,
 				};
 			}),
 
