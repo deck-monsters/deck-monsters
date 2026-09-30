@@ -138,7 +138,7 @@ supabase db push
 ```
 
 **After the first setup, deploys apply migrations themselves.** The server's Railway service
-runs `node packages/server/dist/migrate.js` as a pre-deploy command (`preDeployCommand` in
+runs `node packages/server/dist/migrate-cli.js` as a pre-deploy command (`preDeployCommand` in
 `packages/server/railway.toml`), before the new release takes traffic. It applies every file
 in `supabase/migrations/` (copied into the image at `/app/supabase/migrations`) that is not yet
 recorded in `supabase_migrations.schema_migrations`.
@@ -152,6 +152,15 @@ recorded in `supabase_migrations.schema_migrations`.
 - **A failure stops the deploy.** The failing file's transaction rolls back, the runner exits
   non-zero, and Railway keeps the previous release serving. Earlier files in the same run stay
   applied. Fix the migration and redeploy.
+- **Nothing waits forever.** Each migration's transaction has a 10 s lock timeout and a 120 s
+  statement timeout (`MIGRATE_LOCK_TIMEOUT_MS`, `MIGRATE_STATEMENT_TIMEOUT_MS`), and a connection
+  attempt gives up after 15 s. A timeout fails the deploy like any other migration failure; a
+  migration that must wait on a table the live app is using needs a quieter moment.
+- **Files must not manage their own transactions.** The runner wraps each file in one, so a file
+  containing a top-level `BEGIN`, `COMMIT`, `ROLLBACK`, `SAVEPOINT`, `START TRANSACTION`, or
+  `CONCURRENTLY` is refused before anything runs. A plpgsql `begin` inside a `$$` body is fine.
+- **It says what it did.** The deploy log starts with `migrate: N files in <dir>, M recorded`
+  and ends with `migration run finished`, with the count applied and skipped.
 - A change under `supabase/migrations/**` triggers a deploy (`watchPatterns`).
 - `supabase db push` still works for local or manual use: both write the same history table.
   `MIGRATIONS_DIR` points the runner at another directory.
