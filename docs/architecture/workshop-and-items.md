@@ -266,7 +266,7 @@ never below the roster size) minus the monsters listed: the free-places sentence
 place at your side is taken (1 monster / n monsters)." with the button disabled (Cancel stays
 usable if the form is already open). A first-run player (no character) gets
 the plain button. On a phone the header stays a row, with the pane's ⤢ link top-right, and the
-Train row stacks with the sentence at its natural height (bug 210). A shop price of 0 reads **Free**, with its own confirm and success text.
+Train row stacks with the sentence at its natural height (bug 210) and the button at its own width, left-aligned (owner). A shop price of 0 reads **Free**, with its own confirm and success text.
 A fallen monster with a running revival (`revivesAt`, set only once `respawn()` starts, never
 merely on death) shows a disabled **Reviving…** button and `Fallen · back at {local time}
 ({relative})`, where `{relative}` is `formatRelativeFromNow` ("in 12 min", "in 2 h 15 min").
