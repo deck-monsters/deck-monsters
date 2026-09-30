@@ -20,6 +20,7 @@ tackle 39 next."
 | 3 | **Item I:** find and fix the simulation memory leak | Harness `simulate.ts`, engine | 1, 2 | Planned | |
 | 4 | **Item G:** a reset reaches every process's copy of the room (a generation in the save guard) | Server: `state-store.ts`, `room-manager.ts`, a migration | after 1 | Planned | |
 | 5 | **Item H:** real-Postgres tests run in CI | `.github/workflows/ci.yml` | any | Done: bug 206. Checked by running the CI steps on a fresh local database (13 migrations applied, server 312 passing with no pg suite skipped) | (this commit) |
+| 7 | **Save crash (found in this pass):** a restored room's refilled deck could hold a card whose options pointed back at the deck, so the next save threw "circular structure" from a timer and killed the server (production, 2026-09-24). Fix the draw options, stop two cards keeping foreign options, and keep a save failure from crashing the process | Engine: `characters/helpers/hydrate.ts`, `cards/ecdysis.ts`, `game.ts`; tests | 1, 2 | In progress | |
 | 6 | **Roadmap 37 task 6, the drop:** a migration drops `state_blob` | Migration, Drizzle, docs | A separate PR after task 1 is deployed. It also removes the read-only fallback, and the migration refuses to run while any room has `state` null and a blob | Planned | |
 
 ## Decisions
@@ -35,3 +36,7 @@ tackle 39 next."
   the new release takes traffic, while the old release still serves. A release that dropped
   `state_blob` would fail the old release's last saves, including its shutdown flush. So
   release 2 stops using the column, and the drop ships after it is live.
+- **The save crash was found by the views task.** Its test seeds hit a circular-structure error
+  that matched a real crash in the production logs (2026-09-24 13:18 UTC; the server restarted).
+  No saved room holds a bad card, because every save that met one threw; so the fix needs no data
+  repair.
