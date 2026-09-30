@@ -31,6 +31,15 @@ second implementation for a pane.
 Other routes remain outside the workspace: `/rooms`, `/room/:roomId/settings`, `/account`,
 `/leaderboard`, authentication/reset pages, and invite links.
 
+## The Console while a prompt is open
+
+While `ConsolePane` has an open prompt (`activePromptId`), it renders neither the
+quick-action chips nor the getting-started guide, so the question is on screen on a
+phone (roadmap 39 B1; the walk found both covering it). They come back when the prompt
+closes; the guide is only unrendered, not dismissed, and a `quick_actions` event that
+arrives meanwhile is kept. The "A command is waiting for your answer. Command suggestions
+are paused." banner still shows when the prompt is scrolled out of view, and is now true.
+
 ## Help and guides
 
 `HelpPanel` (`components/HelpPanel.tsx`) is the Help page; `HelpView` hosts it full page at `/room/:roomId/help` and, outside a room, `/help`. The header menu (desktop nav and

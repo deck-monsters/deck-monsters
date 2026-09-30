@@ -238,7 +238,7 @@ describe('Terminal shared ringFeed subscription (#63)', () => {
     expect(latestCall().input).toEqual({ roomId: 'room-shared', lastEventId: undefined, resumeAttempt: 0 });
   });
 
-  it('delivers private prompt and quick_actions to ConsolePane', () => {
+  it('delivers private prompt and quick_actions to ConsolePane, hiding the chips while the prompt is open', () => {
     installResizeObserver(1200);
     render(<Terminal roomId="room-console" />);
 
@@ -279,7 +279,9 @@ describe('Terminal shared ringFeed subscription (#63)', () => {
     });
 
     expect(screen.getByText('Pick a color')).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'look at ring' })).toBeTruthy();
+    // The chips step aside while a prompt is open (B1); the quick_actions event was
+    // still delivered, so they show once the prompt closes (see consolePane-prompt-banner).
+    expect(screen.queryByRole('button', { name: 'look at ring' })).toBeNull();
   });
 
   it('reconnects from the shared cursor and resets on room change', () => {

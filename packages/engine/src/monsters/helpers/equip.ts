@@ -133,7 +133,7 @@ const equipMonster = ({ deck, monster, cardSelection, channel }: EquipOptions): 
 				const channelForChoose: ChannelFn = (opts) => {
 					if (!opts.question) return channel(opts);
 					const ask = (): Promise<unknown> =>
-						Promise.resolve(channel(opts)).then((answer) => {
+						Promise.resolve(channel(opts)).then(async (answer) => {
 							// chooseItems turns the sentinel into PromptCancelledError.
 							if (answer === PROMPT_CANCELLED) return answer;
 							if (isEquipControlAnswer(answer)) {
@@ -142,10 +142,22 @@ const equipMonster = ({ deck, monster, cardSelection, channel }: EquipOptions): 
 							const { choices } = opts;
 							const choiceKeys = Array.isArray(choices) ? choices : Object.keys(choices ?? {});
 							if (!namesAnyChoice(answer, choiceKeys)) {
+								const typed = String(answer).trim();
+								// A command typed into the card box (#189, help inventory "phone-equip-rejected"):
+								// say so and how to get out, rather than "isn't one of the cards". The prompt
+								// stays open. Imported lazily: commands/ imports the monsters that import this file.
+								const isTypedCommand = await import('../../commands/index.js').then((m) => m.isCommand(typed));
+								if (isTypedCommand) {
+									return Promise.resolve(
+										channel({
+											announce: `"${typed}" is a command, not a card. Cancel this question first, then run it.`,
+										}),
+									).then(ask);
+								}
 								const finish = cards.length > 0 ? ', or reply "done" to finish' : '';
 								return Promise.resolve(
 									channel({
-										announce: `"${String(answer).trim()}" isn't one of the cards. Pick cards by name or number${finish}.`,
+										announce: `"${typed}" isn't one of the cards. Pick cards by name or number${finish}.`,
 									}),
 								).then(ask);
 							}

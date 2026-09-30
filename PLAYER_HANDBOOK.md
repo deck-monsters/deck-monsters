@@ -141,7 +141,7 @@ Some fights bring a ring event that changes the teams for that fight only: Commo
 
 - `train a monster` — Train a new monster
 - `equip [monster]` — Equip a monster with your cards (e.g. `equip Fluffy`)
-- `equip [monster] with "Card", "Card"` — Equip a monster with specific cards. For a card name containing a quote character, use a JSON array instead: `["Card"]` (e.g. `equip Fluffy with "Hit", "Hit", "Heal"`)
+- `equip [monster] with "Card", "Card"` — Equip a monster with the cards you name, separated by commas (e.g. `equip Fluffy with "Hit", "Hit", "Heal"`)
 - `dismiss [monster]` — Part ways with a monster for good (e.g. `dismiss Fluffy`)
 - `revive [monster]` — Revive a fallen monster (e.g. `revive Fluffy`)
 - `look at monsters` — View all your monsters

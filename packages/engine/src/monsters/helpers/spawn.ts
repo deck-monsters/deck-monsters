@@ -115,7 +115,7 @@ const spawnMonster = (
 				const name1 = names((Monster as any).creatureType, options.gender as string, monsterNames);
 				const name2 = names((Monster as any).creatureType, options.gender as string, [name1, ...monsterNames]);
 
-				question += `What would you like to name ${(PRONOUNS as any)[(options.gender as string) ?? 'male']?.him ?? 'them'}? ${name1}? ${name2}? Something else?`;
+				question += `What would you like to name ${(PRONOUNS as any)[(options.gender as string) ?? 'male']?.him ?? 'them'}? Type a name, or take one of these: ${name1}, ${name2}.`;
 
 				return channel({ question });
 			})

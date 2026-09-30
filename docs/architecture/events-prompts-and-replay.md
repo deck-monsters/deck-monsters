@@ -56,6 +56,12 @@ Console history explicitly filters private scope and the current target user.
 
 ## Prompts
 
+A line typed into the equip card prompt is not always an answer. `equipMonster`'s chooser
+re-asks (prompt stays open) when the line names no card. If the line is a command
+(`isCommand()` in `commands/index.ts`, which asks the real dispatcher), the reply is
+`"<text>" is a command, not a card. Cancel this question first, then run it.`; otherwise
+it says the text isn't one of the cards. Neither answer finishes the hand (10b #189).
+
 `sendPrompt(userId, question, choices)` publishes a private `prompt.request`, records the
 request in memory, and returns a promise:
 
