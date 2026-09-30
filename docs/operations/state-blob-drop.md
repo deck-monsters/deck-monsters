@@ -1,8 +1,8 @@
 ---
 type: Runbook
 title: State Blob Drop (Step B)
-description: The staged, not-yet-shipped migration that drops rooms.state_blob, with its guard, tests, lock note and rollback.
-status: draft
+description: The staged migration that drops the legacy state_blob column, with its guard, tests, lock note and rollback.
+status: stable
 audience: internal
 tags: [deployment, postgres, roadmap-37]
 ---
