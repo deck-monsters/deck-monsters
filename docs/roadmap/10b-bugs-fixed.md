@@ -4879,6 +4879,34 @@ suites cannot quietly skip again.
 
 **Status**: Fixed.
 
+### 207. A restored room could crash the server on its next save — FIXED
+
+On 2026-09-24 at 13:18 UTC the production server died with "Converting circular structure to
+JSON … property 'deck' closes the circle", thrown by `Game.persistState` from the debounced save
+timer, just after a player's Unequip all. The process restarted and the room reloaded from its
+last good save, so recent changes were lost, and every other room restarted with it. Found while
+writing the roadmap 37 query views, whose test seeds hit the same error.
+
+Root cause, three layers:
+- `characters/helpers/hydrate.ts` tops a character's unequipped cards back up to 20 on every
+  restore, and passed the **character's** options as the new cards' options.
+- Ecdysis and Adrenaline Rush forward any option they are given into their own options, so a
+  drawn copy held `options.deck`: the array it was about to be pushed into.
+- Serializing that cycle threw, and nothing caught a throw from the save timer, so it was an
+  uncaught exception. It needs fewer than 20 unequipped cards (normal once cards are equipped)
+  and a monster able to hold those cards (level 2 or more), so it was a chance draw on any
+  restore. No saved room ever held a bad card: every save that met one threw.
+
+**Fix** (roadmap 40 task 7): the top-up passes empty card options, as every other caller does;
+the two cards keep only their own options; and `persistState` never throws. A failed save is
+logged as an error with context `game.persistState`, counted by the server, and retried by the
+next save, while the room keeps running. Tests: every registered card refuses foreign options
+(`card-options-isolation.test.ts`), a restore that draws Ecdysis serializes
+(`hydrate.test.ts`), and a cyclic save neither escapes its timer nor stops later saves
+(`game.test.ts`).
+
+**Status**: Fixed.
+
 ## Closed without a fix
 
 These were open investigations the owner closed on 2026-09-28. Reopen with new evidence.

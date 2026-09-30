@@ -25,11 +25,10 @@ export interface SeedCharacter {
 	monsters?: SeedMonster[];
 }
 
-// Twenty cards is the engine's DEFAULT_MINIMUM_CARDS. A shorter saved deck makes
-// characters/helpers/hydrate.ts fill it with `fillDeck(deck, options, character)`, which passes the
-// character's own options to `new Card(options)`; the card then holds `options.deck`, the deck it
-// sits in, and JSON.stringify(game) throws "circular structure" about half the time. Production
-// decks are always full, so only under-filled test seeds hit it.
+// Twenty cards is the engine's DEFAULT_MINIMUM_CARDS. A shorter saved deck is topped up with
+// random cards on restore, which would make the seeds' contents vary from run to run. (Writing
+// these tests is also how bug 207 was found: the top-up used to hand the character's own options
+// to each new card, and a card that kept them held the deck it sat in, so saving threw.)
 const FULL_DECK = Array.from({ length: 20 }, () => 'HitCard');
 
 export async function buildSerializedGame(roomId: string, characters: SeedCharacter[]): Promise<SerializedGame> {
