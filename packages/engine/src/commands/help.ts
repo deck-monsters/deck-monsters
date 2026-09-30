@@ -1,6 +1,6 @@
-import { formatCommandList } from './catalog.js';
+import { formatCommandList, formatCommandSearch } from './catalog.js';
 
-const HELP_REGEX = /^(?:help|commands?)$/i;
+const HELP_REGEX = /^(?:(?:help|commands?)|help\s+\S.*)$/i;
 
 // Fights are otherwise hands-off once a monster is in the ring: no re-equipping, no calling
 // it back and in again, no changing its cards. Items are the deliberate exception —
@@ -19,7 +19,13 @@ const ITEMS_NOTE = `-- One Thing Worth Knowing --
   (use [scroll] on [monster]), and the choice sticks — "look at [monster]" shows its
   current Strategy.`;
 
-function helpAction({ channel }: any): Promise<unknown> {
+// `listen` lowercases the command for matching, so it hands the trimmed text as typed in
+// `command` — the "Commands with ..." heading echoes what the player typed.
+function helpAction({ channel, command = '' }: any): Promise<unknown> {
+	const word = String(command).replace(/^help\s+/i, '').trim();
+	if (/^help\s+\S/i.test(String(command).trim())) {
+		return channel({ announce: formatCommandSearch(word) });
+	}
 	return channel({ announce: `${formatCommandList()}\n\n${ITEMS_NOTE}` });
 }
 

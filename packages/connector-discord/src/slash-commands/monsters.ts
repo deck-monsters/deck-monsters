@@ -15,7 +15,7 @@ export const monsters: SlashCommand = {
 
 		const recognized = await dispatchCommand(
 			interaction,
-			'look at my monsters',
+			'look at monsters',
 			ctx,
 			supabaseUserId,
 			roomId

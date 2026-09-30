@@ -4970,6 +4970,49 @@ sentence is `flex: 0 0 auto`. Both checks fail without the fix.
 
 **Status**: Fixed.
 
+### 211. `look at <name>` matched no handler, so four catalogue examples did nothing — FIXED
+
+Found by the catalogue test in `commands/help.test.ts` (roadmap 39, C1), which types every
+catalogue entry's example and asserts a real handler claims it. `look at Fluffy`, `look at Hit`
+and `look at Potion` were all unrecognised, though the command reference, `help`, and the
+Discord help tell players to type them.
+
+Root cause: `LOOK_AT_REGEX` in `commands/look-at.ts` was `look (?:at )?(type words)?( .+)?$`.
+For a bare name the pattern consumes `look at ` and the name group then needs its own leading
+space, which the `(?:at )?` had already eaten, so nothing matched. Only the typed forms
+(`look at monster Fluffy`, `look at card Heal`) worked. The handler's `default:` branch
+(`game.lookAt`) shows the bare form was always intended.
+
+**Fix**: the trailing group is `( .+|(?<= )\S.*)?`: a name may start right after a space the
+pattern already consumed, while a type word such as `monster` still needs its own space
+(`look at monstrous` is a name, not type `monster`). The pattern is also anchored with `^`,
+because a bare name would otherwise let any sentence containing "look " count as a command.
+Two knock-on changes: `presetHandlers` now registers before `lookAtHandlers` (else `look at
+presets for X` would be read as a thing called "presets for X"), and the catalogue's item
+examples use a real item (`Potion of Healing`; `Potion` and `Healing Potion` are not item
+names, and `use`, `give`, `take` and `look` compare names exactly). Tests: `look-at.test.ts`
+pins how the bare and typed forms parse, and the catalogue test now passes for every entry.
+
+**Status**: Fixed.
+
+### 212. Discord `/status` and `/monsters` sent commands no handler matched — FIXED
+
+Found by the C1 review once the bare `look at <name>` form (bug 211) started claiming their
+text. `/status` sent `look at me` and `/monsters` sent `look at my monsters`; neither was ever a
+catalogue command, so the engine found no handler and the slash commands replied "Could not
+retrieve your status." / "Could not list your monsters." every time. After bug 211 they would
+have "succeeded" with a check mark while the engine announced "I don't see a me here."
+
+Root cause: the slash commands sent free text that was never checked against the dispatcher.
+
+**Fix**: `/status` sends `look at character` and `/monsters` sends `look at monsters`, both
+catalogue commands. `look-commands.test.ts` in the Discord connector pins the text each sends.
+The same change guards a bare `look at` (the name cannot be `at` alone) and adds a test that
+`look at presets for <monster>` reaches the presets action, since that depends on presets
+registering before look-at.
+
+**Status**: Fixed.
+
 ## Closed without a fix
 
 These were open investigations the owner closed on 2026-09-28. Reopen with new evidence.
