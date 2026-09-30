@@ -401,11 +401,11 @@ same release.
 
 The pre-deploy runner applies it in one transaction:
 
-1. **Guard.** It raises `rooms still unconverted (state null, state_blob present): run the
-   room-state backfill first (roadmap 37)` if any room has `state` null and a blob, because
-   that blob is the room's only copy. The transaction rolls back, the deploy fails and the
-   previous release keeps serving. The backfill script it names was deleted with the drop,
-   since it only converted blobs; an unconverted room would have to be converted by hand
+1. **Guard.** It raises `rooms still unconverted (state null, state_blob present): convert or
+   reset them first` if any room has `state` null and a blob, because that blob is the room's
+   only copy. The transaction rolls back, the deploy fails and the previous release keeps
+   serving. The backfill script was deleted with the drop, since it only converted blobs; an
+   unconverted room would have to be converted by hand
    (`base64 -d | gunzip` of the blob into `rooms.state`) or reset. Every production room
    already had `state` when the drop shipped.
 2. `alter table rooms drop column if exists state_blob;`. `quarantined_blob` stays, so blobs
