@@ -60,6 +60,21 @@ tells the other process a reset happened.
 Read [rooms and identity](../architecture/rooms-and-identity.md) and
 [engine concurrency and timing](../architecture/engine-concurrency-and-timing.md).
 
+### H. The real-Postgres tests never run in CI
+
+**Owner:** CI. Found by the review of the migration runner (2026-09-29).
+
+`state-store.pg.test.ts`, `room-state-backfill.pg.test.ts` and `migrate.pg.test.ts` run only when
+`TEST_DATABASE_URL` is set, and the CI workflow has no database. So the tests that prove save
+ordering, the backfill, and migrations against real Postgres pass in CI by being skipped. They
+have only ever run on a developer's machine.
+
+- [ ] Add a `postgres:16` service to the Tests job and set `TEST_DATABASE_URL`.
+- [ ] Before the suite, apply the repo's migrations to it with the migration runner, after
+  creating the Supabase `auth` stubs and roles the migrations need (`migrate.pg.test.ts` shows
+  them), so the shared test database has the schema the other suites expect.
+- [ ] Make a skipped pg suite visible in CI output, so a missing database cannot hide again.
+
 ## Historical detail
 
 The removed September incident diary was resolved work and duplicated
