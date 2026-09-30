@@ -77,6 +77,6 @@ describe('listMigrationFiles', () => {
 
 describe('defaultMigrationsDir', () => {
 	it('finds the repo migrations regardless of working directory', () => {
-		expect(listMigrationFiles(defaultMigrationsDir())).to.have.length(13);
+		expect(listMigrationFiles(defaultMigrationsDir())).to.have.length(14);
 	});
 });

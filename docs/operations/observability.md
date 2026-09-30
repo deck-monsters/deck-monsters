@@ -214,6 +214,7 @@ All custom metrics are prefixed `dm_` and carry a `service="deck-monsters"` defa
 | `dm_db_idle_client_errors_total` | Counter | An idle database connection was dropped (often by the Supabase pooler); the pool replaces it. Before this was handled, each one crashed the server |
 | `dm_room_state_save_failures_total` | Counter | A room state save threw; the engine logs the error |
 | `dm_room_state_saves_stale_total` | Counter | A save skipped because a newer snapshot or a reset had already landed. Expect about 0; a steady rise means saves race |
+| `dm_room_state_generation_drops_total` | Counter | A loaded room was dropped because another process reset it (its `state_generation` moved). Expect a bump only after a reset while a second process (the Discord connector) had the room loaded; the drop is also logged at warn |
 | `dm_prompt_timeouts_total` | Counter | Interactive prompts that timed out |
 
 Node.js process metrics (`go_*`, `process_*`, `nodejs_*`) are also collected via `collectDefaultMetrics`.

@@ -375,8 +375,9 @@ walk is ever reworked; `cards/boss-feed.test.ts` pins it with a real fight.
   that, a load in the gap would restore the old room, and its next save would
   outrank the tombstone. On shutdown, `RoomManager.flushAll` saves every active room within a
   deadline before the pool closes. All of this is per process: the server and the Discord
-  connector each have a `RoomManager`, and a reset in one does not reach the other's copy of
-  the room (open, item G in `docs/roadmap/10-bug-fixes.md`). It also refuses to unload a room
+  connector each have a `RoomManager`, and a reset in one reaches the other's copy through
+  `rooms.state_generation`: the reset bumps it in the tombstone update, and the other process's
+  next save is refused and it drops its copy (see rooms-and-identity, bug G). It also refuses to unload a room
   whose `ring.inEncounter` is true — a fight in progress keeps the room in
   the active cache until the next sweep.
 - **Ring events**: `Ring.rollRingEvent()` fires from inside `startFightTimer()` when the

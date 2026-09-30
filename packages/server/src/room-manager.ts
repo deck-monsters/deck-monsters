@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { TRPCError } from '@trpc/server';
-import { eq, and, count, gte, desc, gt, asc } from 'drizzle-orm';
+import { eq, and, count, gte, desc, gt, asc, sql } from 'drizzle-orm';
 import { createLogger } from './logger.js';
 
 const log = createLogger('room-manager');
@@ -52,6 +52,7 @@ import {
 	roomsCreated,
 	roomsActive,
 	roomHydrationFailures,
+	roomStateGenerationDrops,
 	roomStateSource,
 	roomHydrationWarnings,
 	cardErrors,
@@ -146,6 +147,33 @@ export class RoomManager {
 	}
 
 	/**
+	 * The store for one loaded copy of a room, pinned to the generation it loaded (bug G). When a
+	 * save finds the generation moved, another process reset the room: drop this copy so the next
+	 * request reloads the reset room.
+	 */
+	private _makeStateStore(roomId: string, getGame: () => Game, generation: number): PostgresStateStore {
+		return new PostgresStateStore(this.db, {
+			generation,
+			onGenerationMoved: () => this._dropSupersededRoom(roomId, getGame()),
+		});
+	}
+
+	/**
+	 * Drop a loaded copy without flushing: its saves are refused, so a flush would be too. Only
+	 * acts if `game` is still the active copy. The process that ran the reset never gets here,
+	 * because it detached its copy before bumping the generation.
+	 */
+	private _dropSupersededRoom(roomId: string, game: Game): void {
+		const entry = this.active.get(roomId);
+		if (!entry || entry.game !== game) return;
+		this.active.delete(roomId);
+		roomsActive.set(this.active.size);
+		roomStateGenerationDrops.inc();
+		log.warn('room was reset by another process, dropping this process\'s copy', { roomId });
+		this._detachRoomEntry(roomId, entry);
+	}
+
+	/**
 	 * Returns a log callback scoped to a room that increments the relevant
 	 * error counter before delegating to the base logger.
 	 */
@@ -222,10 +250,10 @@ export class RoomManager {
 			role: 'owner',
 		});
 
-		const stateStore = new PostgresStateStore(this.db);
 		const roomLog = this._makeRoomLogger(roomId);
 		const game = new this.deps.Game({ roomId }, roomLog);
-		game.stateStore = stateStore;
+		// A new row starts at generation 0 (the column default).
+		game.stateStore = this._makeStateStore(roomId, () => game, 0);
 
 		const eventBus = game.eventBus;
 		const unsubscribePersister = attachEventPersister(eventBus, this.db, this.log);
@@ -541,6 +569,10 @@ export class RoomManager {
 			// expand release (both fall back to it when `state` is null) can resurrect reset data.
 			stateBlob: null,
 			stateVersion: nextStateVersion(),
+			// Reaches other processes' loaded copies: their saves carry the old generation, match
+			// no row and make them drop the room (bug G). Bumped only after our own copy is
+			// detached and flushed above, so our own saves are never refused by it.
+			stateGeneration: sql`${rooms.stateGeneration} + 1`,
 			updatedAt: new Date(),
 		}).where(eq(rooms.id, roomId));
 	}
@@ -909,7 +941,7 @@ export class RoomManager {
 		}
 
 		const rows = await this.db
-			.select({ state: rooms.state, stateBlob: rooms.stateBlob })
+			.select({ state: rooms.state, stateBlob: rooms.stateBlob, stateGeneration: rooms.stateGeneration })
 			.from(rooms)
 			.where(eq(rooms.id, roomId))
 			.limit(1);
@@ -929,7 +961,8 @@ export class RoomManager {
 		if (source === 'blob') log.warn('room has no jsonb state, restoring from legacy state_blob', { roomId });
 		log.debug('loading room from DB', { roomId, source });
 
-		const stateStore = new PostgresStateStore(this.db);
+		// Read with the state in the same row, so state and generation are one snapshot.
+		let generation = Number(rows[0].stateGeneration ?? 0);
 		const roomLog = this._makeRoomLogger(roomId);
 		let game: Game;
 
@@ -951,14 +984,17 @@ export class RoomManager {
 				this.log(err);
 				// Each source goes to its own quarantine column; both live columns are cleared and
 				// the version bumped so a save still in flight from before is stale.
-				await this.db.update(rooms).set({
+				// The generation moves too, so another process's loaded copy of the bad state drops.
+				const bumped = await this.db.update(rooms).set({
 					...(rows[0].state ? { quarantinedState: rows[0].state } : {}),
 					...(rows[0].stateBlob ? { quarantinedBlob: rows[0].stateBlob } : {}),
 					state: null,
 					stateBlob: null,
 					stateVersion: nextStateVersion(),
+					stateGeneration: sql`${rooms.stateGeneration} + 1`,
 					updatedAt: new Date(),
-				}).where(eq(rooms.id, roomId));
+				}).where(eq(rooms.id, roomId)).returning({ stateGeneration: rooms.stateGeneration });
+				if (bumped[0]) generation = Number(bumped[0].stateGeneration);
 				game = new this.deps.Game({ roomId }, roomLog);
 			}
 		} else {
@@ -974,7 +1010,7 @@ export class RoomManager {
 			throw new TRPCError({ code: 'NOT_FOUND', message: 'Room not found' });
 		}
 
-		game.stateStore = stateStore;
+		game.stateStore = this._makeStateStore(roomId, () => game, generation);
 		// Private reward events were historically invisible to the stats projection. The
 		// restored character balance is an authoritative lower bound for lifetime earnings,
 		// so repair zero/stale rows before exposing this room to leaderboard queries.

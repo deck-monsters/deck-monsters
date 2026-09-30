@@ -4,7 +4,7 @@ import { Game } from '@deck-monsters/engine';
 import { TRPCError } from '@trpc/server';
 
 import { RoomManager } from './room-manager.js';
-import { roomStateSource } from './metrics/index.js';
+import { roomStateGenerationDrops, roomStateSource } from './metrics/index.js';
 
 // ---- Drizzle stub helpers ----
 
@@ -49,7 +49,7 @@ function makeDbStub(opts: DbStubOpts = {}) {
 	const deleteWhereStub = sinon.stub().resolves([]);
 	const deleteStub = sinon.stub().returns({ where: deleteWhereStub });
 
-	const updateWhereStub = sinon.stub().resolves([]);
+	const updateWhereStub = sinon.stub().callsFake(() => Object.assign(Promise.resolve([]), { returning: () => Promise.resolve([]) }));
 	const updateSetStub = sinon.stub().returns({ where: updateWhereStub });
 	const updateStub = sinon.stub().returns({ set: updateSetStub });
 
@@ -879,6 +879,65 @@ describe('RoomManager', () => {
 			const game = await b;
 			expect(game).to.exist;
 			expect(GameStub.called).to.be.true; // fresh game, built after the tombstone
+		});
+	});
+
+	describe('room generation (bug G)', () => {
+		// Load a room at generation 3 whose saves are refused, and whose generation probe reads
+		// `probeGeneration` (a row that no longer exists is `null`).
+		async function loadedRoom(probeGeneration: number | null) {
+			const { deps, mockGame } = makeEngineDeps();
+			const db = makeDbStub();
+			let n = 0;
+			(db as any).select = sinon.stub().callsFake(() => {
+				const rows = n++ === 0
+					? [{ state: { name: 'Game', options: {} }, stateGeneration: 3 }]
+					: probeGeneration === null ? [] : [{ generation: probeGeneration }];
+				return { from: () => ({ where: () => Object.assign(Promise.resolve(rows), { limit: () => Promise.resolve(rows) }) }) };
+			});
+			const returning = sinon.stub().resolves([]);
+			db._stubs.updateSetStub.returns({ where: sinon.stub().returns({ returning }) });
+			const rm = new RoomManager(db as never, () => {}, deps);
+			await rm.getGame(ROOM_ID);
+			return { rm, mockGame };
+		}
+		const drops = async () => (await roomStateGenerationDrops.get()).values[0]?.value ?? 0;
+
+		it('drops its copy without flushing when a refused save finds the generation moved', async () => {
+			const { rm, mockGame } = await loadedRoom(4);
+			const before = await drops();
+			mockGame.dispose.resetHistory();
+			mockGame.flushState.resetHistory();
+
+			await (mockGame.stateStore as { save(id: string, s: unknown): Promise<void> }).save(ROOM_ID, { name: 'Game', options: {} });
+
+			expect((rm as any).active.has(ROOM_ID)).to.be.false;
+			expect(mockGame.dispose.calledOnce).to.be.true;
+			expect(mockGame.flushState.called).to.be.false;
+			expect(await drops()).to.equal(before + 1);
+		});
+
+		it('keeps its copy when the refused save was merely stale (same generation) or the row is gone', async () => {
+			for (const probe of [3, null]) {
+				const { rm, mockGame } = await loadedRoom(probe);
+				const before = await drops();
+				await (mockGame.stateStore as { save(id: string, s: unknown): Promise<void> }).save(ROOM_ID, { name: 'Game', options: {} });
+				expect((rm as any).active.has(ROOM_ID)).to.be.true;
+				expect(await drops()).to.equal(before);
+			}
+		});
+
+		it('a reset bumps the generation in the tombstone update', async () => {
+			const { deps } = makeEngineDeps();
+			const db = makeDbStub();
+			(db as any).select = sinon.stub().callsFake(() => {
+				const rows = [{ state: null, stateBlob: null }];
+				return { from: () => ({ where: () => Object.assign(Promise.resolve(rows), { limit: () => Promise.resolve(rows) }) }) };
+			});
+			await new RoomManager(db as never, () => {}, deps).resetRoomState(ROOM_ID);
+			const tombstone = db._stubs.updateSetStub.getCalls().map((c) => c.args[0]).find((v) => 'stateVersion' in v);
+			expect(tombstone).to.have.property('stateGeneration');
+			expect(tombstone.state).to.equal(null);
 		});
 	});
 
