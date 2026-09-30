@@ -226,9 +226,12 @@ export class Game extends BaseClass {
 		try {
 			this.persistStateUnsafe();
 		} catch (err) {
-			this.log(
-				`error: room state save failed for roomId ${this.roomId}: ${err instanceof Error ? err.message : String(err)}`
-			);
+			// An Error with a context, so the server's room logger can count it by `context`.
+			const failure = new Error(
+				`room state save failed for roomId ${this.roomId}: ${err instanceof Error ? err.message : String(err)}`
+			) as Error & { context?: string };
+			failure.context = 'game.persistState';
+			this.log(failure);
 			// A serialize failure never reached the store, so flushState() must not wait on a stale save.
 			this._lastSave = Promise.resolve(false);
 		}

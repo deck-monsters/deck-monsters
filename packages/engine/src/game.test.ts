@@ -347,8 +347,10 @@ describe('game.ts', () => {
 			expect(() => clock.tick(30_000)).not.to.throw();
 			expect(saved).to.have.length(0);
 			expect(logs).to.have.length(1);
-			expect(String(logs[0])).to.include('circ-room');
-			expect(String(logs[0])).to.match(/circular/i);
+			expect(logs[0]).to.be.instanceOf(Error);
+			expect((logs[0] as any).context).to.equal('game.persistState');
+			expect((logs[0] as Error).message).to.include('circ-room');
+			expect((logs[0] as Error).message).to.match(/circular/i);
 
 			delete (game as any).optionsStore.cycle;
 			(game as any).scheduleSave();
