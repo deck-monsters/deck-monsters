@@ -77,7 +77,7 @@ task 1. The rest, grouped into tasks that do not share files:
 | B3 | **The ring header and the boss.** While a fight is on, the boss countdown and the summons count are hidden (owner); on a clear ring, summons read as what is left. The roster shows a boss's whole name. A boss's turn names the boss, not The Editor | 4, 7 | Planned |
 | B4 | **One name per place** (owner: the tab names win): The Ring, Console, Workshop, Fights, Leaders in the tabs, the menu, and page headings; all five tabs fit at 390 px | 8 | Planned |
 | B5 | **Training and card moves say why.** Each monster type gets a one-line description in both training paths; the Console path asks the player's name as the form does; "You have 10 of 10 monsters left to train" reads as what it means. A refused card move says why, and a successful one says what the count counts | 9, 10 | Planned |
-| B6 | **A glossary.** The fight's numbers (`ac`, `hp`, `dex`, `str`, `int`, dice like `1d20`, `XP`, level and "beginner", bloodied, a natural 1 and 20) explained in the handbook, reachable from Help | 5 | Planned |
+| B6 | **A glossary.** The fight's numbers (`ac`, `hp`, `dex`, `str`, `int`, dice like `1d20`, `XP`, level and "beginner", bloodied, a natural 1 and 20) explained in the handbook, reachable from Help | 5 | Done: "Reading a Fight" in the handbook, so also in Help. Found on the way: the handbook's XP table predated the early-level discount (Level 1 said 50 XP; the game asks 28), now generated from `levels.ts` |
 
 Also from the walk, smaller: the boss arriving with `Fights: 102` in a new room (boss history
 is global; say so or show this room's count), `OWNER` and `MEMBER` undefined on the rooms
