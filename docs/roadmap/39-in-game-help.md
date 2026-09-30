@@ -8,7 +8,7 @@ tags: [roadmap, onboarding, help, web, commands, wording]
 ---
 # 39 — In-game help for every control
 
-**Status:** In progress (2026-09-30). Tasks 1 and 2 are built and reviewed; Cursor's live check (Prompt B in [39a](39a-cursor-first-pass.md)) and walk (Prompt A) come next, then tasks 3–7.
+**Status:** In progress (2026-09-30). Tasks 1–3 done; Cursor's live check of 1 and 2 passed on everything it could reach ([help check](../reference/help-check.md)); batch 2 from the walk is being built and reviewed.
 
 ## Why
 

@@ -44,3 +44,6 @@ tackle 39 next."
   tasks each added a migration and each bumped the hard-coded count from 13 to 14; git merged
   them without a conflict, so the count had to be set to 15 by hand. The full gate caught it
   only because it runs every migration on a fresh database.
+- **Every production room is on `state` (2026-09-30, 17:30 UTC).** A read-only check found all
+  seven rooms with `state` set; Test Room A and B converted when Cursor opened them for the help
+  walk and check. Task 6 (the drop) can follow as soon as this PR's release 2 is deployed.
