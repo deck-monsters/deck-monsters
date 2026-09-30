@@ -142,7 +142,7 @@ policy. Which Dragons own Enchanted Faceswap:
 ```sql
 select m.room_id, m.given_name, m.level
   from room_state_monsters m
-  join room_state_monster_cards c using (room_id, stable_id)
+  join room_state_monster_cards c using (room_id, owner_user_id, monster_index)
  where m.monster_type = 'Dragon' and c.card_type = 'Enchanted Faceswap';
 ```
 
@@ -151,8 +151,11 @@ select m.room_id, m.given_name, m.level
   fight, so it lags or misses a monster. A test compares the function with `getLevel` at every
   threshold; retuning the curve means a new migration.
 - **`stable_id` can be null.** The engine mints it on the first read of `monster.stableId`, so
-  a monster nobody has looked at since it was created has none. Join on
-  `(room_id, owner_user_id, monster_index)` when that matters.
+  a monster nothing has read yet is saved without one, and `null = null` never joins. Join
+  monsters to their cards on `owner_user_id` + `monster_index`, as above; `stable_id` is only
+  for cross-referencing with `room_monster_stats.monster_id`.
+- **`given_name` is the raw saved name.** The game displays it title-cased, and a monster with
+  no saved name shows a generated one; here it is the stored string or null.
 - **A new card needs a `card_types` row.** Add a migration with
   `insert into public.card_types (class_name, card_type) values (...) on conflict (class_name) do update ...`.
   The class name is the JavaScript class (`HitCard`, `DelayedHit`; not uniform), and the display

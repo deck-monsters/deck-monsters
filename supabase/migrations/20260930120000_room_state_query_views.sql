@@ -14,7 +14,8 @@
 --   monster            : { name: "<class>", options: { stableId?, name (given name), xp, cards: [card...] } }
 --   card               : { name: "<class name>", options }
 -- The serializer strips options equal to their defaults, so xp/coins/deck can be absent: read
--- them with coalesce. stableId is minted on first read of the getter, so a monster nobody has
+-- them with coalesce (a non-number value reads as 0 rather than failing the whole view).
+-- stableId is minted on first read of the getter, so a monster nobody has
 -- looked at since it was created has none; the views also expose owner_user_id + monster_index
 -- so cards can be joined to their monster without it.
 
@@ -122,8 +123,8 @@ create or replace view public.room_state_characters
 with (security_invoker = true) as
 select r.id as room_id,
        c.key as user_id,
-       coalesce((c.value #>> '{options,coins}')::numeric, 0) as coins,
-       coalesce((c.value #>> '{options,xp}')::numeric, 0) as xp,
+       coalesce(case when jsonb_typeof(c.value #> '{options,coins}') = 'number' then (c.value #>> '{options,coins}')::numeric end, 0) as coins,
+       coalesce(case when jsonb_typeof(c.value #> '{options,xp}') = 'number' then (c.value #>> '{options,xp}')::numeric end, 0) as xp,
        case when jsonb_typeof(c.value #> '{options,deck}') = 'array'
             then jsonb_array_length(c.value #> '{options,deck}') else 0 end as deck_size
   from public.rooms r
@@ -140,8 +141,8 @@ select r.id as room_id,
        m.value ->> 'name' as monster_type,
        m.value #>> '{options,stableId}' as stable_id,
        m.value #>> '{options,name}' as given_name,
-       coalesce((m.value #>> '{options,xp}')::numeric, 0) as xp,
-       public.room_state_level_for_xp(coalesce((m.value #>> '{options,xp}')::numeric, 0)) as level
+       coalesce(case when jsonb_typeof(m.value #> '{options,xp}') = 'number' then (m.value #>> '{options,xp}')::numeric end, 0) as xp,
+       public.room_state_level_for_xp(coalesce(case when jsonb_typeof(m.value #> '{options,xp}') = 'number' then (m.value #>> '{options,xp}')::numeric end, 0)) as level
   from public.rooms r
  cross join lateral jsonb_each(
    case when jsonb_typeof(r.state #> '{options,characters}') = 'object'

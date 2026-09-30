@@ -26,6 +26,10 @@ const SUPABASE_STUBS = `
 		if not exists (select 1 from pg_roles where rolname = 'authenticated') then create role authenticated; end if;
 		if not exists (select 1 from pg_roles where rolname = 'service_role') then create role service_role; end if;
 	exception when duplicate_object then null; end $$;
+	-- Supabase grants every new public table and function to the API roles. Without this the
+	-- "not exposed" checks pass even when the migration's revokes are deleted.
+	alter default privileges in schema public grant all on tables to anon, authenticated, service_role;
+	alter default privileges in schema public grant all on functions to anon, authenticated, service_role;
 	create schema auth;
 	create table auth.users (id uuid primary key, email text, raw_user_meta_data jsonb);
 	create function auth.uid() returns uuid language sql as $$ select null::uuid $$;
@@ -99,7 +103,11 @@ suite('room_state_* views against Postgres', () => {
 				type: 'Beastmaster',
 				name: 'Bob',
 				coins: 7,
-				monsters: [{ type: 'Dragon', name: 'Ember', xp: 5000, cards: ['HitCard', 'DelayedHit'] }],
+				monsters: [
+					{ type: 'Dragon', name: 'Ember', xp: 5000, cards: ['HitCard', 'DelayedHit'] },
+					// Never read, so it is saved without a stableId (stable_id is null in the views).
+					{ type: 'Dragon', name: 'Wisp', cards: ['EnchantedFaceswapCard'], skipStableId: true },
+				],
 			},
 		]);
 		await pool.query(`update rooms set state = $2::jsonb where id = $1`, [roomA, JSON.stringify(stateA)]);
@@ -123,13 +131,15 @@ suite('room_state_* views against Postgres', () => {
 			['Fang', 'Gladiator', roomA, alice, 1050],
 			['Puff', 'Dragon', roomA, alice, 0],
 			['Smaug', 'Dragon', roomA, alice, 60],
+			['Wisp', 'Dragon', roomB, bob, 0],
 		]);
 		res.rows.forEach((r) => {
-			expect(r.stable_id, r.given_name).to.be.a('string').with.length.greaterThan(0);
+			if (r.given_name === 'Wisp') expect(r.stable_id).to.equal(null);
+			else expect(r.stable_id, r.given_name).to.be.a('string').with.length.greaterThan(0);
 			expect(r.level, r.given_name).to.equal(getLevel(Number(r.xp)));
 		});
 		expect(res.rows.find((r) => r.given_name === 'Fang').level).to.equal(7);
-		expect(res.rows.map((r) => r.monster_index).sort()).to.deep.equal([0, 0, 1, 2]);
+		expect(res.rows.map((r) => r.monster_index).sort()).to.deep.equal([0, 0, 1, 1, 2]);
 	});
 
 	it('room_state_level_for_xp agrees with the engine at and around every threshold', async () => {
@@ -167,8 +177,9 @@ suite('room_state_* views against Postgres', () => {
 			['A', 2, 'EnchantedFaceswapCard', 'Enchanted Faceswap'],
 			['B', 0, 'HitCard', 'Hit'],
 			['B', 0, 'DelayedHit', 'Delayed Hit'],
+			['B', 1, 'EnchantedFaceswapCard', 'Enchanted Faceswap'],
 		]);
-		expect(rows).to.have.length(6);
+		expect(rows).to.have.length(7);
 	});
 
 	it('room_state_characters returns coins, xp and deck size per user, defaults as zero', async () => {
@@ -191,11 +202,14 @@ suite('room_state_* views against Postgres', () => {
 		const res = await pool.query(
 			`select m.room_id, m.given_name, m.level
 			   from room_state_monsters m
-			   join room_state_monster_cards c using (room_id, stable_id)
+			   join room_state_monster_cards c using (room_id, owner_user_id, monster_index)
 			  where m.monster_type = 'Dragon' and c.card_type = 'Enchanted Faceswap'`
 		);
-		expect(res.rows).to.have.length(1);
+		// Smaug has a stable_id; Wisp has none, and the owner + index join still finds it.
+		res.rows.sort((a, b) => a.given_name.localeCompare(b.given_name));
+		expect(res.rows).to.have.length(2);
 		expect(res.rows[0]).to.include({ room_id: roomA, given_name: 'Smaug', level: getLevel(60) });
+		expect(res.rows[1]).to.include({ room_id: roomB, given_name: 'Wisp', level: 0 });
 	});
 
 	it('is not exposed to the API roles', async () => {
