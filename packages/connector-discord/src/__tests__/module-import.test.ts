@@ -2,7 +2,12 @@ import { expect } from 'chai';
 import { spawnSync } from 'node:child_process';
 
 describe('connector module imports', () => {
-	it('imports DiscordBot without requiring server database configuration', () => {
+	// A fresh Node process compiles the bot's whole module graph with tsx, which alone can
+	// pass mocha's 10 s default when `pnpm test` runs every package at once (two runs timed
+	// out that way on 2026-09-30 and passed alone). The limit is generous; a real failure
+	// here is an import error, which reports at once.
+	it('imports DiscordBot without requiring server database configuration', function () {
+		this.timeout(60_000);
 		const env = { ...process.env };
 		delete env['DATABASE_URL'];
 
