@@ -575,10 +575,8 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
     try {
       setError(null);
       const result = await loadPreset({ monsterName, presetName });
-      const skipped = result.skippedCards.length > 0 ? ` Skipped: ${result.skippedCards.join(', ')}.` : '';
-      setMessage(
-        `Loaded "${presetName}" on ${monsterName} (${result.equippedCount}/${result.requestedCount}).${skipped}`,
-      );
+      const requested = monsters.find((monster) => monster.name === monsterName)?.presets[presetName] ?? [];
+      setMessage(equipResultMessage({ monsterName, cardNames: requested, result }));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not load preset');
     }
@@ -733,7 +731,16 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
         </div>
       ) : (
       <div className="workshop-monster-row" ref={monsterRowRef} onScroll={handleMonsterRowScroll}>
-        {monsters.map((monster) => (
+        {monsters.map((monster) => {
+          // Once per monster per render: the reason, then the sentence built from it.
+          const reason = selectedInventoryCardName ? refusalFor(selectedInventoryCardName, monster) : null;
+          const hint = {
+            reason,
+            sentence: selectedInventoryCardName && reason
+              ? cardRefusalSentence(selectedInventoryCardName, monster.name, reason)
+              : undefined,
+          };
+          return (
           <MonsterWorkshopPanel
             key={monster.name}
             monster={monster}
@@ -770,19 +777,12 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
             }}
             isFilterActive={Boolean(activeMonsterFilter)}
             isFilterTarget={activeMonsterFilter === monster.name}
-            compatibilityHint={
-              selectedInventoryCardName
-                ? (refusalFor(selectedInventoryCardName, monster) ? 'ineligible' : 'eligible')
-                : 'none'
-            }
-            refusalSentence={
-              selectedInventoryCardName && refusalFor(selectedInventoryCardName, monster)
-                ? cardRefusalSentence(selectedInventoryCardName, monster.name, refusalFor(selectedInventoryCardName, monster)!)
-                : undefined
-            }
+            compatibilityHint={hint.reason === null ? (selectedInventoryCardName ? 'eligible' : 'none') : 'ineligible'}
+            refusalSentence={hint.sentence}
             onToggleFilter={() => handleToggleMonsterFilter(monster.name)}
           />
-        ))}
+          );
+        })}
       </div>
       )}
 

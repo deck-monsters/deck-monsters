@@ -10,4 +10,11 @@
  */
 export { COMMAND_CATALOG, formatCommandList } from './commands/catalog.js';
 export type { CommandEntry, CommandCategory } from './commands/catalog.js';
-export { MAX_CARD_COPIES_IN_HAND } from './constants/card-management.js';
+export {
+	CARD_REFUSAL_REASON_TEXT,
+	cardRefusalReason,
+	cardRefusalSentence,
+	equipResultMessage,
+	isCardRefusalReason,
+} from './characters/helpers/equip-message.js';
+export type { CardRefusalReason } from './characters/helpers/equip-message.js';

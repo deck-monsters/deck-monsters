@@ -144,19 +144,36 @@ const createCharacter = (
 		});
 	};
 
+	// The same clean-up a typed name gets, and the Workshop form's: control characters out,
+	// trimmed, at most CHARACTER_NAME_MAX_LENGTH characters.
+	const cleanCharacterName = (raw: unknown): string =>
+		stripControlCharacters(String(raw ?? '')).trim().slice(0, CHARACTER_NAME_MAX_LENGTH).trim();
+
+	// Nobody can send an empty message in the web Console or Discord, so "take the suggestion"
+	// needs a word to type. An empty answer still counts (scripted callers, defensive).
+	const ACCEPT_SUGGESTION = ['ok', 'okay', 'yes', 'y'];
+
 	const askForName = (
 		Character: CharacterConstructor,
 		alreadyTaken = false,
-	): Promise<Record<string, unknown>> =>
-		Promise.resolve()
+		clashed = alreadyTaken,
+	): Promise<Record<string, unknown>> => {
+		// Offered only when usable: not empty after cleaning and not already someone's name.
+		// After a clash we never offer it again, since it is usually the name that clashed.
+		const suggestion = suggestedName ? cleanCharacterName(suggestedName) : '';
+		const offerSuggestion = !alreadyTaken && suggestion !== '' && !(game && game.findCharacterByName(suggestion));
+
+		return Promise.resolve()
 			.then(() => {
 				if (name !== undefined && !alreadyTaken) return name;
 
 				let question = '';
-				if (alreadyTaken) question += 'That name is already taken, please choose a different name. ';
+				if (clashed) question += 'That name is already taken, please choose a different name. ';
 
 				if (suggestedName) {
-					question += `What should we call you? Type a name, or take this one: ${suggestedName}.`;
+					question += offerSuggestion
+						? `What should we call you? Type a name, or type ok to be ${suggestion}.`
+						: 'What should we call you? Type a name.';
 					return channel({ question });
 				}
 
@@ -169,17 +186,17 @@ const createCharacter = (
 				return channel({ question });
 			})
 			.then((answer: unknown) => {
-				// Strip first so the taken-name check sees the name that will be stored. The
-				// length cap and control-character strip match the Workshop form; an empty
-				// answer takes the suggestion.
-				const typed = stripControlCharacters(String(answer ?? '')).trim().slice(0, CHARACTER_NAME_MAX_LENGTH).trim();
-				const cleanName = typed || (suggestedName ? stripControlCharacters(suggestedName).trim().slice(0, CHARACTER_NAME_MAX_LENGTH) : '');
-				if (game && game.findCharacterByName(cleanName)) {
-					return askForName(Character, true);
-				}
+				// Strip first so the taken-name check sees the name that will be stored.
+				const typed = cleanCharacterName(answer);
+				const takesSuggestion = offerSuggestion && (typed === '' || ACCEPT_SUGGESTION.includes(typed.toLowerCase()));
+				const cleanName = takesSuggestion ? suggestion : typed;
+				// An empty answer with nothing to fall back on is asked again without the clash line.
+				if (!cleanName) return askForName(Character, true, false);
+				if (game && game.findCharacterByName(cleanName)) return askForName(Character, true);
 				options.name = cleanName;
 				return options;
 			});
+	};
 
 	const askForAvatar = (): Promise<Record<string, unknown>> => {
 		// A supplied icon is the emoji itself, not an answer to the prompt below. It used

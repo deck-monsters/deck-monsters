@@ -124,17 +124,21 @@ character remains intentionally.
 
 The Console path asks the same question the form does. `Game.getCharacter({ askName })`
 (set by `commands/index.ts`, not for admin aliases) hands the display name to
-`createCharacter` as `suggestedName` instead of `name`, so a new player is asked
-`What should we call you? Type a name, or take this one: {suggested}.` before pronouns. An
-empty answer takes the suggestion; the answer gets the form's validation (control characters
-stripped, `CHARACTER_NAME_MAX_LENGTH` = 40). Callers that supply `name` (the Workshop, the
-Discord slash commands) are never asked. Before roadmap 39 the Console silently used the
-display name, which is how a player ended up with a name they never chose.
+`createCharacter` as `suggestedName` instead of `name`, so a new player is asked, before
+pronouns, `What should we call you? Type a name, or type ok to be {suggested}.` The answer
+`ok`, `okay`, `yes`, `y` (any case) or an empty one takes the suggestion. The word exists
+because neither the web Console nor Discord can send an empty message, so "take this one"
+needs something to type. The suggestion gets the typed name's clean-up (control characters
+stripped, trimmed, `CHARACTER_NAME_MAX_LENGTH` = 40). If it is empty after that, or already
+another character's name, the question is `What should we call you? Type a name.` with no
+`ok`; after a clash it is re-asked in that form, so the taken name is never offered again.
+Callers that supply `name` (the Workshop, the Discord slash commands) are never asked. Before
+roadmap 39 the Console silently used the display name, which is how a player ended up with a
+name they never chose.
 
 ## Training: type descriptions and place count
 
-Each monster type has one line in `monsters/helpers/type-summaries.ts`
-(`MONSTER_TYPE_SUMMARIES`). The classes' own `description` is long lore, so it is not reused.
+Each monster type has one line in `MONSTER_TYPE_SUMMARIES`. The classes' own `description` is long lore, so it is not reused.
 The Workshop reads the line from `spawnOptions` (`types[].summary`) and shows it under the
 Type select; the Console prompt puts `Label: line` rows in the *question text*. The lines are
 not in `choices`: choices are the labels an answer is matched against
@@ -148,16 +152,21 @@ the Workshop Train row's wording.
 
 ## Card moves say why
 
-`Beastmaster.equipCards` returns `skipped: [{ cardName, reason }]` (reason is
+`Beastmaster.equipCards` and `loadPreset` return `skipped: [{ cardName, reason }]` (reason is
 `cannot_hold` class restriction, `deck_full`, `max_copies`, or `not_in_inventory`) plus
-`cardCount` and `cardSlots`, the deck after the equip; `equipCards` passes them through.
-`apps/web/src/lib/cardRefusal.ts` maps codes to sentences (`{Card} can't go on {Monster}:
-{reason}.`, each reason written without pronouns) and to the success line
-`Equipped {Card} on {Monster}. {Monster} holds {k} of {slots} cards.` The old `(1/1)` was
-cards equipped of cards requested in that one call, not the deck. The pre-tap hint on a
-monster panel uses the same `cardRefusalReason` (also `fighting`), checked in the order
-`equipCards` checks, so the hint and the refusal agree. Monster-to-monster moves already
-carry the engine's reason text and are unchanged.
+`cardCount` and `cardSlots`, the deck after the call; the router passes them through.
+`characters/helpers/equip-message.ts` is the one home for the reason texts, the refusal
+sentence (`{Card} can't go on {Monster}: {reason}.`) and the result line
+(`Equipped {Card} on {Monster}. {Monster} holds {k} of {slots} cards.`, or `Equipped {n} cards
+on ...`). The engine's announce, the server's private announcement, the Workshop's equip and
+preset messages all call `equipResultMessage`, so they cannot drift; one sentence is written
+per distinct card and reason, not per copy. The old `(1/1)` was cards equipped of cards
+requested in that one call, not the deck. The pre-tap hint on a monster panel uses
+`cardRefusalReason` (also `fighting`), which checks in the order `equipCards` does: fight, free
+slot, class, copies. A `cardSlots` of 0 is the server's fallback for an unreadable record and
+means unknown, not full. `loadPreset` checks copies before class, so its reason can differ
+from the hint's when a card fails both. Monster-to-monster moves already carry the engine's
+reason text and are unchanged.
 
 Before a character exists, the Workshop leaves `game.shop` off: it answers `NOT_FOUND`
 without a character, and polling it made a first-run room look broken (10b #188). The

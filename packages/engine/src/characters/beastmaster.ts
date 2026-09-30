@@ -13,6 +13,7 @@ import { getItemKey } from '../items/helpers/counts.js';
 import { matchesCardLookupName } from '../cards/helpers/matches-lookup-name.js';
 import { formatRelative } from '../helpers/time.js';
 import { eachSeries } from '../helpers/promise.js';
+import { equipResultMessage } from './helpers/equip-message.js';
 import { MAX_PRESETS } from '../constants/card-management.js';
 import { announceAndThrow } from '../helpers/announce-and-throw.js';
 import type { ChannelFn, ChannelWithManager, CardInstance, ItemInstance } from '../creatures/base.js';
@@ -968,7 +969,7 @@ class Beastmaster extends BaseCharacter {
 				};
 
 				return Promise.resolve(channel({
-					announce: `Equipped ${monster.givenName}: ${equipped}/${requested}${skippedCards.length > 0 ? ` (skipped: ${skippedCards.join(', ')})` : ''}.`,
+					announce: equipResultMessage({ monsterName: monster.givenName, cardNames, result: summary }),
 				})).then(() => summary);
 			});
 	}
@@ -1034,7 +1035,7 @@ class Beastmaster extends BaseCharacter {
 		presetName: string;
 		monsterName?: string;
 		channel: ChannelFn;
-	}): Promise<{ equipped: number; requested: number; skippedCards: string[]; presetName: string; monsterName: string }> {
+	}): Promise<EquipCardsResult & { presetName: string }> {
 		const trimmedName = presetName.trim();
 		if (!trimmedName) {
 			return announceAndThrow(channel, 'Preset name is required.');
@@ -1072,10 +1073,15 @@ class Beastmaster extends BaseCharacter {
 				let deck = [...this.deck];
 				const nextCards: CardInstance[] = [];
 				const skippedCards: string[] = [];
+				const skipped: EquipSkip[] = [];
+				const skip = (cardName: string, reason: EquipSkipReason) => {
+					skippedCards.push(cardName);
+					skipped.push({ cardName, reason });
+				};
 
 				requestedCards.forEach((requestedCard) => {
 					if (nextCards.length >= monster.cardSlots) {
-						skippedCards.push(requestedCard);
+						skip(requestedCard, 'deck_full');
 						return;
 					}
 
@@ -1084,7 +1090,7 @@ class Beastmaster extends BaseCharacter {
 						card => normalize(getItemKey(card)) === requestedKey,
 					).length;
 					if (selectedCount >= MAX_CARD_COPIES_IN_HAND) {
-						skippedCards.push(requestedCard);
+						skip(requestedCard, 'max_copies');
 						return;
 					}
 
@@ -1092,7 +1098,7 @@ class Beastmaster extends BaseCharacter {
 						isSameCardName(card, requestedCard) && monster.canHoldCard(card),
 					);
 					if (cardIndex < 0) {
-						skippedCards.push(requestedCard);
+						skip(requestedCard, deck.some(card => isSameCardName(card, requestedCard)) ? 'cannot_hold' : 'not_in_inventory');
 						return;
 					}
 
@@ -1106,12 +1112,15 @@ class Beastmaster extends BaseCharacter {
 					equipped: nextCards.length,
 					requested: requestedCards.length,
 					skippedCards,
+					skipped,
+					cardCount: monster.cards.length,
+					cardSlots: monster.cardSlots,
 					presetName: trimmedName,
 					monsterName: monster.givenName,
 				};
 
 				return Promise.resolve(channel({
-					announce: `Loaded preset "${trimmedName}" on ${monster.givenName}: equipped ${summary.equipped}/${summary.requested}${skippedCards.length > 0 ? ` (skipped: ${skippedCards.join(', ')})` : ''}.`,
+					announce: equipResultMessage({ monsterName: monster.givenName, cardNames: requestedCards, result: summary }),
 				})).then(() => summary);
 			});
 	}

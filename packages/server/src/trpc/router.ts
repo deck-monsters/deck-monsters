@@ -14,6 +14,7 @@ import {
 	PromptCancelledError,
 	allMonsters,
 	monsterTypeSummary,
+	equipResultMessage,
 	getXpCapForLevel,
 	isCommandRefusal,
 	purchaseShopItem,
@@ -1681,13 +1682,10 @@ export function createRouter(roomManager: RoomManager) {
 					},
 				});
 
-				const skippedText = result.skippedCards.length > 0
-					? ` Skipped: ${result.skippedCards.join(', ')}.`
-					: '';
 				publishPrivateAnnouncement({
 					eventBus,
 					userId: ctx.userId,
-					text: `Equipped ${result.monsterName}: ${result.equipped}/${result.requested}.${skippedText}`,
+					text: equipResultMessage({ monsterName: result.monsterName, cardNames: input.cardNames, result }),
 					operation: 'equipCards',
 				});
 				eventBus.publish({
@@ -2124,7 +2122,15 @@ export function createRouter(roomManager: RoomManager) {
 						monsterName: input.monsterName,
 						presetName: input.presetName,
 					}),
-				) as { equipped: number; requested: number; skippedCards: string[] };
+				) as {
+					equipped: number;
+					requested: number;
+					skippedCards: string[];
+					skipped?: Array<{ cardName: string; reason: string }>;
+					cardCount?: number;
+					cardSlots?: number;
+					monsterName?: string;
+				};
 				eventBus.publish({
 					type: 'card.presetLoaded' as EventType,
 					scope: 'private',
@@ -2149,6 +2155,9 @@ export function createRouter(roomManager: RoomManager) {
 					equippedCount: result.equipped,
 					requestedCount: result.requested,
 					skippedCards: result.skippedCards,
+					skipped: result.skipped ?? result.skippedCards.map((cardName) => ({ cardName, reason: 'cannot_hold' })),
+					cardCount: result.cardCount ?? null,
+					cardSlots: result.cardSlots ?? null,
 				};
 			}),
 

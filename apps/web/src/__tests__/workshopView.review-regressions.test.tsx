@@ -221,7 +221,7 @@ describe('WorkshopView review regressions', () => {
     expect(screen.getByTestId('compat-Emberclaw')).toHaveTextContent('ineligible');
   });
 
-  it('says why a card cannot go on a monster, with the reason code placeholder', () => {
+  it('says why a card cannot go on a monster, with the reason', () => {
     renderWorkshop();
     fireEvent.click(screen.getByRole('button', { name: 'Select inventory card' }));
 
