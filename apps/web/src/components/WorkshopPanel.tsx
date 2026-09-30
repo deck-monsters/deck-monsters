@@ -625,7 +625,7 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
     <div className="workshop-view">
       <div className="workshop-header">
         <div>
-          <h1>Deck Workshop</h1>
+          <h1>Workshop</h1>
           <p>Train monsters, choose their cards, and spend your coins.</p>
         </div>
         <div className="workshop-header-actions">

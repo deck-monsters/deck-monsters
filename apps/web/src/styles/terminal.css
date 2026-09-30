@@ -529,6 +529,23 @@
   }
 }
 
+/* Phone: all five tabs (The Ring, Console, Workshop, Fights, Leaders) share the bar's width
+   instead of scrolling it sideways. The 1023px rule above sizes each tab to its label with
+   1rem side padding, which at 390px pushed the fifth tab off-screen (roadmap 39 B4). Five
+   labels are ~35 characters; at 0.8rem that is well under 390px with 0.25rem side padding.
+   min-height keeps the 44px touch target that the smaller padding would otherwise shrink. */
+@media (max-width: 480px) {
+  .terminal-tab {
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 44px;
+    padding: 0.5rem 0.25rem;
+    font-size: 0.8rem;
+    letter-spacing: 0;
+    white-space: nowrap;
+  }
+}
+
 /* Reconnection status banner */
 .connection-banner {
   padding: 0.25rem var(--pane-padding);
