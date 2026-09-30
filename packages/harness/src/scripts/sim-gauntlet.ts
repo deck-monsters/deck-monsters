@@ -3,7 +3,8 @@
  * Roadmap 38: a human against the Gauntlet, per candidate fix.
  *
  * `node dist/scripts/sim-gauntlet.js --variant <name|none|reference> --out result.json
- *   [--fights 1000] [--pair-fights 3000] [--batch 20] [--lone 0,1,3,5] [--pair 1,3]`
+ *   [--fights 1000] [--pair-fights 3000] [--batch 20] [--lone 0,1,3,5] [--pair 1,3] [--ambush 1,3]`
+ * (`--ambush` needs no event, so use it with `--variant none` or `rivals-outnumbered`).
  *
  * `reference` is the same human(s) against the ring's normal bosses with no event. Any other
  * value is a variant from `balance/variants.ts` (`none` applies nothing) with the Gauntlet
@@ -34,6 +35,8 @@ const BATCH = Number(arg('batch', '20'));
 // Which cells this process runs. A long run leaks memory (about 2.5 GB per 12,000 fights, and
 // five at once swapped a 16 GB box to a crawl), so the driver runs a few levels per process.
 const LONE_LEVELS = arg('lone', '0,1,3,5').split(',').filter(Boolean).map(Number);
+// Ambush cells: one human against a boss and an ambush minion (a third of its HP), no event.
+const AMBUSH_LEVELS = arg('ambush', '').split(',').filter(Boolean).map(Number);
 const PAIR_LEVELS = arg('pair', '1,3').split(',').filter(Boolean).map(Number);
 
 /** Boss levels as the ring picks them (see `sim-rings.ts`): XP evenly up to the cap's XP. */
@@ -54,6 +57,7 @@ function bossLevels(humanLevels: number[], count: number, pick: () => number): n
 
 interface Cell {
 	humans: number;
+	kind: 'gauntlet' | 'ambush';
 	level: number;
 	type: string;
 	fights: number;
@@ -65,8 +69,8 @@ interface Cell {
 	avgRounds: number;
 }
 
-async function cell(humans: number, level: number, typeIndex: number | null, seedBase: number, fights: number): Promise<Cell> {
-	const isReference = VARIANT === 'reference';
+async function cell(humans: number, level: number, typeIndex: number | null, seedBase: number, fights: number, ambush = false): Promise<Cell> {
+	const isReference = VARIANT === 'reference' || ambush;
 	let wins = 0;
 	let draws = 0;
 	let extra = 0;
@@ -84,10 +88,11 @@ async function cell(humans: number, level: number, typeIndex: number | null, see
 			role: 'human' as const,
 			deckStyle: 'likely' as const,
 		}));
-		const bosses: SimMonsterSpec[] = bossLevels(new Array(humans).fill(level), humans, pick).map(l => ({
+		const bosses: SimMonsterSpec[] = bossLevels(new Array(humans).fill(level), ambush ? 2 : humans, pick).map((l, i) => ({
 			type: anyType(),
 			level: l,
 			role: 'boss' as const,
+			...(ambush && i === 1 ? { minion: true } : {}),
 		}));
 		const res = await simulate({
 			monsters: [...humanSpecs, ...bosses],
@@ -106,6 +111,7 @@ async function cell(humans: number, level: number, typeIndex: number | null, see
 	}
 	return {
 		humans,
+		kind: ambush ? 'ambush' : 'gauntlet',
 		level,
 		type: typeIndex === null ? 'mixed' : SIM_MONSTER_TYPES[typeIndex]!,
 		fights: done,
@@ -126,6 +132,12 @@ async function main(): Promise<void> {
 			for (let t = 0; t < SIM_MONSTER_TYPES.length; t += 1) {
 				cells.push(await cell(1, level, t, 100_000 + level * 10_007 + t * 1009, FIGHTS));
 				process.stderr.write(`${VARIANT} lone L${level} ${SIM_MONSTER_TYPES[t]} ${cells.at(-1)!.humanWins}/${FIGHTS}\n`);
+			}
+		}
+		for (const level of AMBUSH_LEVELS) {
+			for (let t = 0; t < SIM_MONSTER_TYPES.length; t += 1) {
+				cells.push(await cell(1, level, t, 500_000 + level * 10_007 + t * 1009, FIGHTS, true));
+				process.stderr.write(`${VARIANT} ambush L${level} ${SIM_MONSTER_TYPES[t]} ${cells.at(-1)!.humanWins}/${FIGHTS}\n`);
 			}
 		}
 		for (const level of PAIR_LEVELS) {

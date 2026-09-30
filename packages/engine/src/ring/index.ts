@@ -684,10 +684,15 @@ export class Ring extends BaseClass {
 		// Apply the ring event against the final roster — contestants may have joined or
 		// withdrawn since it was rolled during the countdown.
 		this.ringEvent?.apply(this.contestants);
+		const humanCount = this.contestants.filter(contestant => !contestant.isBoss).length;
+		const bossCount = this.contestants.filter(contestant => contestant.isBoss).length;
 		this.gauntletRivals =
-			GAUNTLET_RULES.rivalsWhenAlone &&
-			this.ringEvent?.id === 'gauntlet' &&
-			this.contestants.filter(contestant => !contestant.isBoss).length === 1;
+			(GAUNTLET_RULES.rivalsWhenAlone && this.ringEvent?.id === 'gauntlet' && humanCount === 1) ||
+			// Bosses that outnumber the humans (minions count as bosses) turn on each other too.
+			// A mega boss's party is a designed pack and keeps its alliance.
+			(GAUNTLET_RULES.rivalsWhenOutnumbered &&
+				bossCount > humanCount &&
+				!this.contestants.some(contestant => contestant.mega));
 
 		this.contestants.forEach(({ userId, monster, minion }) => {
 			if (minion) monster.hp = Math.min(monster.hp, minionHp(monster));

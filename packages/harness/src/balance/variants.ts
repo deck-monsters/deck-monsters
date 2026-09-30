@@ -202,6 +202,21 @@ export const VARIANTS: Record<string, Variant> = {
 			};
 		},
 	},
+	'rivals-outnumbered': {
+		about: 'Roadmap 38 candidate: when bosses (minions included) outnumber the humans at fight start, bosses ignore teams and may hit each other',
+		apply: () => toggle(GAUNTLET_RULES, 'rivalsWhenOutnumbered'),
+	},
+	'rivals-outnumbered-minions': {
+		about: 'Roadmap 38 candidate: rivals-outnumbered plus the Gauntlet\'s extras as minions',
+		apply: () => {
+			const undoRivals = toggle(GAUNTLET_RULES, 'rivalsWhenOutnumbered');
+			const undoMinions = toggle(GAUNTLET_RULES, 'extrasAsMinions');
+			return () => {
+				undoMinions();
+				undoRivals();
+			};
+		},
+	},
 	'event-weights-global': {
 		about: 'Roadmap 38 candidate: a ring event is picked by weight among all events, and none fires if the pick is ineligible',
 		apply: () => toggle(RING_EVENT_RULES, 'globalWeights'),

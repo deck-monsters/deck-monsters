@@ -806,6 +806,7 @@ describe('ring/index.ts', () => {
 		describe('Gauntlet harness switches (roadmap 38)', () => {
 			afterEach(() => {
 				GAUNTLET_RULES.rivalsWhenAlone = false;
+				GAUNTLET_RULES.rivalsWhenOutnumbered = false;
 				GAUNTLET_RULES.extrasAsMinions = false;
 			});
 
@@ -855,6 +856,39 @@ describe('ring/index.ts', () => {
 				expect(ring.encounterFreeForAll).to.equal(false);
 				ring.endEncounter();
 				game.dispose();
+			});
+
+			const outnumberedFree = (humans: number, bosses: number, minions = 0, on = true) => {
+				GAUNTLET_RULES.rivalsWhenOutnumbered = on;
+				const game = new Game();
+				const ring = game.getRing();
+				for (let i = 0; i < humans; i++) addPlayer(ring, `user-${i}`);
+				for (let i = 0; i < bosses; i++) ring.spawnBoss({ ignoreQuota: true, deferFightTimer: true });
+				for (let i = 0; i < minions; i++) ring.spawnBoss({ ignoreQuota: true, deferFightTimer: true, asMinion: true });
+				ring.startEncounter();
+				const result = ring.encounterFreeForAll;
+				ring.endEncounter();
+				game.dispose();
+				return result;
+			};
+
+			it('rivalsWhenOutnumbered on: 1 human vs 3 bosses and 2 vs 4 are free-for-alls', () => {
+				expect(outnumberedFree(1, 3)).to.equal(true);
+				expect(outnumberedFree(2, 4)).to.equal(true);
+			});
+
+			it('rivalsWhenOutnumbered on: equal numbers keep teams, 1 vs 1 included', () => {
+				expect(outnumberedFree(1, 1)).to.equal(false);
+				expect(outnumberedFree(2, 2)).to.equal(false);
+			});
+
+			it('rivalsWhenOutnumbered on: an ambush minion counts as a boss (1 human, 1 boss, 1 minion)', () => {
+				expect(outnumberedFree(1, 1, 1)).to.equal(true);
+			});
+
+			it('rivalsWhenOutnumbered off: nothing changes', () => {
+				expect(outnumberedFree(1, 3, 0, false)).to.equal(false);
+				expect(outnumberedFree(1, 1, 1, false)).to.equal(false);
 			});
 
 			it('extrasAsMinions off: the Gauntlet\'s extras are full-strength bosses', () => {

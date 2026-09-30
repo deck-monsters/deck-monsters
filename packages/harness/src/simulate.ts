@@ -88,6 +88,8 @@ export interface SimMonsterSpec {
 	 * Bosses are only realistic beside at least one human.
 	 */
 	role?: 'human' | 'boss';
+	/** A `boss` that is a lesser minion (a third of its HP), as an ambush's is. Roadmap 38. */
+	minion?: boolean;
 	/**
 	 * How a `human` builds its hand. `random` (the default) equips legal cards at random
 	 * from a starting deck plus fills; `likely` prefers its monster's signature cards and
@@ -688,6 +690,7 @@ export async function simulate(config: SimConfig): Promise<SimResult> {
 					character: c.character,
 					userId: c.userId,
 					isBoss: c.isBoss,
+					...(monsters[contestants.indexOf(c)]!.minion ? { minion: true } : {}),
 				});
 			}
 

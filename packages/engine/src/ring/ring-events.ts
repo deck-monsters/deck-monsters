@@ -21,10 +21,12 @@ import {
  * All OFF in play: flipping one changes the game, so only a harness variant does, and undoes it.
  * - `rivalsWhenAlone`: with exactly one human in the fight, an armed Gauntlet drops team
  *   alignment for targeting (as Blood Feud's `freeForAll` does), so its bosses may hit each other.
+ * - `rivalsWhenOutnumbered`: in any fight (not a mega boss's), when bosses (minions included)
+ *   outnumber the non-boss contestants at fight start, targeting drops team alignment as above.
  * - `extrasAsMinions`: the Gauntlet's extra bosses arrive as minions (a third of their HP, as
  *   an ambush's do) instead of at full strength.
  */
-export const GAUNTLET_RULES = { rivalsWhenAlone: false, extrasAsMinions: false };
+export const GAUNTLET_RULES = { rivalsWhenAlone: false, rivalsWhenOutnumbered: false, extrasAsMinions: false };
 
 /**
  * Harness switch (roadmap 38), off in play. When on, `selectRingEvent` picks by weight among
