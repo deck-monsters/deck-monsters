@@ -78,6 +78,29 @@ describe('@deck-monsters/harness', () => {
 		}
 	});
 
+	// Roadmap 10 item I: a `role: 'human'` monster is not `isBoss`, so neither `clearRing()` nor
+	// `game.dispose()` stopped its healing interval; the live timer's closure kept the monster,
+	// its deck, and the whole Ring of that fight in memory (~130 KB a fight).
+	it('simulate() leaves no live healing timers on the contestants it built', async function () {
+		this.timeout(60_000);
+		const built: any[] = [];
+		await simulate({
+			monsters: [
+				{ type: 'Gladiator', level: 2, role: 'human' },
+				{ type: 'Minotaur', level: 1, role: 'boss' },
+			],
+			fights: 3,
+			seed: 3,
+			roomId: 'harness-timer-release',
+			onContestants: contestants => built.push(...(contestants as any[])),
+		});
+		expect(built).to.have.length(6);
+		for (const c of built) {
+			// Node marks a cleared Timeout `_destroyed`; a live one stays in the process timer list.
+			expect(c.monster.healingInterval._destroyed, c.monster.givenName).to.equal(true);
+		}
+	});
+
 	it('simulate() fields humans with player decks and bosses exactly as the ring spawns them', async function () {
 		this.timeout(60_000);
 		const seen: Array<{ isBoss: boolean; team?: string; strategy?: string; cards: string[] }> = [];
