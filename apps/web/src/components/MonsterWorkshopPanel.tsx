@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { formatRelativeFromNow } from '../utils/format-relative.js';
 import CardSlot, { type WorkshopCardLocation } from './CardSlot.js';
 import PresetControl from './PresetControl.js';
 // Reusing the ring roster's own hp math/bands rather than re-deriving them here — the two
@@ -69,11 +70,11 @@ type MonsterPanelProps = {
  */
 function revivalStatus(revivesAt: number, now: number): string {
   const remainingMs = revivesAt - now;
-  // DRAFT(39): wording for a revival whose time has passed but the client has not refetched.
-  if (remainingMs <= 0) return 'Fallen · back any moment';
-  if (remainingMs < 60_000) return `Fallen · back in ${Math.ceil(remainingMs / 1000)} s`;
+  if (remainingMs <= 0) return 'Fallen · almost back';
+  // Under 60 s left, count seconds; clamp so rounding up never shows "60 s".
+  if (remainingMs < 60_000) return `Fallen · back in ${Math.min(59, Math.ceil(remainingMs / 1000))} s`;
   const time = new Date(revivesAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-  return `Fallen · back at ${time} (in ${Math.floor(remainingMs / 60_000)} min)`;
+  return `Fallen · back at ${time} (${formatRelativeFromNow(revivesAt, now)})`;
 }
 
 export default function MonsterWorkshopPanel({

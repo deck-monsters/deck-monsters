@@ -217,11 +217,14 @@ Coins are shown in the Shop only; the header carries no balance (a new player re
 the price of levelling up the monster beside it, roadmap 39a). "Train monster" has its own
 row with a line built from `myInventory.monsterSlots` (the engine's `Beastmaster.monsterSlots`,
 never below the roster size) minus the monsters listed: the free-places sentence, or "Every
-place at your side is taken" with the button disabled. A first-run player (no character) gets
+place at your side is taken (1 monster / n monsters)." with the button disabled (Cancel stays
+usable if the form is already open). A first-run player (no character) gets
 the plain button. A shop price of 0 reads **Free**, with its own confirm and success text.
 A fallen monster with a running revival (`revivesAt`, set only once `respawn()` starts, never
-merely on death) shows a disabled **Reviving…** button and "back at {local time} (in {m}
-min)", counting seconds in the final minute.
+merely on death) shows a disabled **Reviving…** button and `Fallen · back at {local time}
+({relative})`, where `{relative}` is `formatRelativeFromNow` ("in 12 min", "in 2 h 15 min").
+Under 60 s it reads `Fallen · back in {s} s` (never above 59, ticking every second), and once
+the time has passed but the client has not refetched, `Fallen · almost back`.
 
 Server validation remains authoritative. Optimistic UI must roll back or refetch when
 state changes between render and mutation.

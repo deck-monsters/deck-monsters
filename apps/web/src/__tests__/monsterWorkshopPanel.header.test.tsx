@@ -95,6 +95,32 @@ describe('MonsterWorkshopPanel header — HP first, no slot bar (10b-bugs-fixed.
     expect(screen.getByText('Fallen · back in 41 s')).toBeTruthy();
   });
 
+  it('uses the compact hours-and-minutes form for a long revival', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(NOW);
+    renderPanel({ dead: true, hp: 0, revivesAt: NOW + 135 * MINUTE });
+    expect(screen.getByText(/^Fallen · back at .* \(in 2 h 15 min\)$/)).toBeTruthy();
+  });
+
+  it('clears the last-minute flip timeout and interval on unmount', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(NOW);
+    const clearTimeoutSpy = vi.spyOn(globalThis, 'clearTimeout');
+    const { unmount } = renderPanel({ dead: true, hp: 0, revivesAt: NOW + 5 * MINUTE });
+    // Flip timeout (to the last minute) and interval are both pending.
+    expect(vi.getTimerCount()).toBe(2);
+    unmount();
+    expect(clearTimeoutSpy).toHaveBeenCalled();
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('never shows more than 59 s', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(NOW);
+    renderPanel({ dead: true, hp: 0, revivesAt: NOW + 59_500 });
+    expect(screen.getByText('Fallen · back in 59 s')).toBeTruthy();
+  });
+
   it('keeps Revive enabled on a fallen monster with no timer running', () => {
     renderPanel({ dead: true, hp: 0, revivesAt: null });
     const button = screen.getByRole('button', { name: 'Revive' }) as HTMLButtonElement;
@@ -110,7 +136,7 @@ describe('MonsterWorkshopPanel header — HP first, no slot bar (10b-bugs-fixed.
 
     expect(screen.getByText(/\(in 2 min\)$/)).toBeTruthy();
     act(() => vi.advanceTimersByTime(2 * MINUTE));
-    expect(screen.getByText('Fallen · back any moment')).toBeTruthy();
+    expect(screen.getByText('Fallen · almost back')).toBeTruthy();
     const fill = container.querySelector('.roster-bar-fill') as HTMLElement;
     expect(fill.style.width).toBe('0%');
     expect(fill.className).toContain('roster-bar-critical');

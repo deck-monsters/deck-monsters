@@ -89,7 +89,7 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
       ? null
       : freePlaces > 0
         ? `Train a new monster to fight at your side. You can train ${freePlaces} more.`
-        : `Every place at your side is taken (${monsterSlots} monsters).`;
+        : `Every place at your side is taken (${monsterSlots} ${monsterSlots === 1 ? 'monster' : 'monsters'}).`;
 
   /*
    * Bug: "I still see only 0 coins in the workshop view." Coins are awarded the instant a

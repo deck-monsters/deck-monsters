@@ -82,6 +82,23 @@ describe('WorkshopPanel: Train monster row', () => {
     expect(screen.getByRole('button', { name: 'Train monster' })).toBeDisabled();
   });
 
+  it('uses the singular for a one-slot roster', () => {
+    hookMock.monsters = [monster('Ash')];
+    hookMock.monsterSlots = 1;
+    render(<WorkshopPanel roomId="room-1" />);
+    expect(screen.getByText('Every place at your side is taken (1 monster).')).toBeInTheDocument();
+  });
+
+  it('keeps Cancel usable when the roster fills while the training form is open', () => {
+    hookMock.monsters = [monster('Ash')];
+    hookMock.monsterSlots = 2;
+    const { rerender } = render(<WorkshopPanel roomId="room-1" />);
+    fireEvent.click(screen.getByRole('button', { name: 'Train monster' }));
+    hookMock.monsters = [monster('Ash'), monster('Bran')];
+    rerender(<WorkshopPanel roomId="room-1" />);
+    expect(screen.getByRole('button', { name: 'Cancel' })).toBeEnabled();
+  });
+
   it('keeps the first-run behaviour for a player with no character: no count line', () => {
     hookMock.hasCharacter = false;
     hookMock.monsters = [];

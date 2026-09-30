@@ -199,6 +199,16 @@ describe('trpc/router card management procedures', () => {
 		expect((await withSlots({ monsters: [monster], deck: [], items: [], monsterSlots: 3 })).monsterSlots).to.equal(3);
 		// A character object without the getter (older doubles) falls back to the roster size.
 		expect((await withSlots({ monsters: [monster], deck: [], items: [] })).monsterSlots).to.equal(1);
+		// Never fewer places than monsters already on the roster.
+		expect((await withSlots({ monsters: [monster, monster], deck: [], items: [], monsterSlots: 1 })).monsterSlots).to.equal(2);
+	});
+
+	it('reports zero monsterSlots when the member has no character', async () => {
+		const game = { characters: {}, ring: { contestants: [] } };
+		const roomManager = { assertMember: async () => undefined, getGame: async () => game } as unknown as Parameters<typeof createRouter>[0];
+		const result = await createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false }).game.myInventory({ roomId: ROOM_ID });
+		expect(result.hasCharacter).to.equal(false);
+		expect(result.monsterSlots).to.equal(0);
 	});
 
 	it('preserves a restored monster’s original revival completion epoch', async () => {
