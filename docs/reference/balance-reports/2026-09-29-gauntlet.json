@@ -25,6 +25,16 @@
     "fightsPerCell": 1000,
     "pairFights": 3000,
     "batch": 20
+   },
+   "rivals-outnumbered": {
+    "fightsPerCell": 1000,
+    "pairFights": 3000,
+    "batch": 20
+   },
+   "rivals-outnumbered-minions": {
+    "fightsPerCell": 1000,
+    "pairFights": 3000,
+    "batch": 20
    }
   },
   "lone": {
@@ -130,6 +140,56 @@
      "fights": 7000
     },
     "gauntlet-rivals-minions": {
+     "mean": 48.17142857142858,
+     "se": 0.5972145255302932,
+     "worst": [
+      "Dragon",
+      40.1
+     ],
+     "best": [
+      "Basilisk",
+      54.0
+     ],
+     "draws": 8.200000000000001,
+     "extraBossWinShare": 9.414285714285715,
+     "avgRounds": 1.8202857142857145,
+     "perType": {
+      "Basilisk": 54.0,
+      "Gladiator": 53.8,
+      "Jinn": 42.6,
+      "Minotaur": 48.0,
+      "WeepingAngel": 46.1,
+      "Unicorn": 52.6,
+      "Dragon": 40.1
+     },
+     "fights": 7000
+    },
+    "rivals-outnumbered": {
+     "mean": 24.77142857142857,
+     "se": 0.515962233345685,
+     "worst": [
+      "Jinn",
+      21.5
+     ],
+     "best": [
+      "Gladiator",
+      28.5
+     ],
+     "draws": 9.985714285714286,
+     "extraBossWinShare": 53.628571428571426,
+     "avgRounds": 2.137857142857143,
+     "perType": {
+      "Basilisk": 23.3,
+      "Gladiator": 28.5,
+      "Jinn": 21.5,
+      "Minotaur": 24.8,
+      "WeepingAngel": 28.3,
+      "Unicorn": 23.3,
+      "Dragon": 23.7
+     },
+     "fights": 7000
+    },
+    "rivals-outnumbered-minions": {
      "mean": 48.17142857142858,
      "se": 0.5972145255302932,
      "worst": [
@@ -280,6 +340,56 @@
       "Dragon": 41.1
      },
      "fights": 7000
+    },
+    "rivals-outnumbered": {
+     "mean": 36.114285714285714,
+     "se": 0.5741063787407236,
+     "worst": [
+      "Minotaur",
+      26.6
+     ],
+     "best": [
+      "WeepingAngel",
+      46.1
+     ],
+     "draws": 8.628571428571428,
+     "extraBossWinShare": 44.08571428571428,
+     "avgRounds": 2.0904285714285717,
+     "perType": {
+      "Basilisk": 31.2,
+      "Gladiator": 39.8,
+      "Jinn": 42.1,
+      "Minotaur": 26.6,
+      "WeepingAngel": 46.1,
+      "Unicorn": 35.1,
+      "Dragon": 31.9
+     },
+     "fights": 7000
+    },
+    "rivals-outnumbered-minions": {
+     "mean": 56.97142857142858,
+     "se": 0.5917768864884165,
+     "worst": [
+      "Dragon",
+      41.1
+     ],
+     "best": [
+      "WeepingAngel",
+      67.3
+     ],
+     "draws": 7.057142857142858,
+     "extraBossWinShare": 9.22857142857143,
+     "avgRounds": 1.708857142857143,
+     "perType": {
+      "Basilisk": 58.3,
+      "Gladiator": 62.7,
+      "Jinn": 61.9,
+      "Minotaur": 48.9,
+      "WeepingAngel": 67.3,
+      "Unicorn": 58.6,
+      "Dragon": 41.1
+     },
+     "fights": 7000
     }
    },
    "3": {
@@ -384,6 +494,56 @@
      "fights": 7000
     },
     "gauntlet-rivals-minions": {
+     "mean": 68.72857142857143,
+     "se": 0.5541068246988504,
+     "worst": [
+      "Dragon",
+      56.6
+     ],
+     "best": [
+      "Gladiator",
+      75.3
+     ],
+     "draws": 4.3999999999999995,
+     "extraBossWinShare": 4.885714285714285,
+     "avgRounds": 1.6338571428571431,
+     "perType": {
+      "Basilisk": 73.5,
+      "Gladiator": 75.3,
+      "Jinn": 74.3,
+      "Minotaur": 62.9,
+      "WeepingAngel": 66.1,
+      "Unicorn": 72.4,
+      "Dragon": 56.6
+     },
+     "fights": 7000
+    },
+    "rivals-outnumbered": {
+     "mean": 59.58571428571429,
+     "se": 0.5865290251778622,
+     "worst": [
+      "Dragon",
+      48.6
+     ],
+     "best": [
+      "Jinn",
+      66.3
+     ],
+     "draws": 6.514285714285714,
+     "extraBossWinShare": 20.62857142857143,
+     "avgRounds": 2.0005714285714284,
+     "perType": {
+      "Basilisk": 61.7,
+      "Gladiator": 63.4,
+      "Jinn": 66.3,
+      "Minotaur": 50.4,
+      "WeepingAngel": 61.1,
+      "Unicorn": 65.6,
+      "Dragon": 48.6
+     },
+     "fights": 7000
+    },
+    "rivals-outnumbered-minions": {
      "mean": 68.72857142857143,
      "se": 0.5541068246988504,
      "worst": [
@@ -534,6 +694,56 @@
       "Dragon": 60.5
      },
      "fights": 7000
+    },
+    "rivals-outnumbered": {
+     "mean": 70.64285714285714,
+     "se": 0.5443045955265952,
+     "worst": [
+      "Dragon",
+      57.8
+     ],
+     "best": [
+      "Jinn",
+      81.8
+     ],
+     "draws": 4.628571428571428,
+     "extraBossWinShare": 10.671428571428573,
+     "avgRounds": 1.8954285714285715,
+     "perType": {
+      "Basilisk": 69.3,
+      "Gladiator": 75.9,
+      "Jinn": 81.8,
+      "Minotaur": 67.2,
+      "WeepingAngel": 70.7,
+      "Unicorn": 71.8,
+      "Dragon": 57.8
+     },
+     "fights": 7000
+    },
+    "rivals-outnumbered-minions": {
+     "mean": 73.67142857142856,
+     "se": 0.526397930601088,
+     "worst": [
+      "Dragon",
+      60.5
+     ],
+     "best": [
+      "Gladiator",
+      81.4
+     ],
+     "draws": 3.8571428571428568,
+     "extraBossWinShare": 2.4428571428571426,
+     "avgRounds": 1.5368571428571427,
+     "perType": {
+      "Basilisk": 74.0,
+      "Gladiator": 81.4,
+      "Jinn": 80.5,
+      "Minotaur": 74.0,
+      "WeepingAngel": 72.4,
+      "Unicorn": 72.9,
+      "Dragon": 60.5
+     },
+     "fights": 7000
     }
    }
   },
@@ -573,6 +783,20 @@
      "draws": 9.366666666666667,
      "fights": 3000,
      "extraBossWinShare": 15.233333333333333
+    },
+    "rivals-outnumbered": {
+     "winRate": 35.9,
+     "se": 0.875821519108393,
+     "draws": 10.433333333333334,
+     "fights": 3000,
+     "extraBossWinShare": 35.53333333333333
+    },
+    "rivals-outnumbered-minions": {
+     "winRate": 50.8,
+     "se": 0.9127540742171463,
+     "draws": 9.2,
+     "fights": 3000,
+     "extraBossWinShare": 3.2
     }
    },
    "3": {
@@ -610,6 +834,110 @@
      "draws": 8.233333333333333,
      "fights": 3000,
      "extraBossWinShare": 11.0
+    },
+    "rivals-outnumbered": {
+     "winRate": 50.2,
+     "se": 0.9128636261786314,
+     "draws": 7.8,
+     "fights": 3000,
+     "extraBossWinShare": 22.7
+    },
+    "rivals-outnumbered-minions": {
+     "winRate": 57.266666666666666,
+     "se": 0.9031787485607994,
+     "draws": 8.266666666666667,
+     "fights": 3000,
+     "extraBossWinShare": 2.1666666666666665
+    }
+   }
+  },
+  "ambush": {
+   "1": {
+    "none": {
+     "mean": 15.442857142857141,
+     "se": 0.43190671571384165,
+     "worst": [
+      "Minotaur",
+      7.2
+     ],
+     "best": [
+      "WeepingAngel",
+      26.4
+     ],
+     "perType": {
+      "Basilisk": 9.7,
+      "Gladiator": 10.2,
+      "Jinn": 21.7,
+      "Minotaur": 7.2,
+      "WeepingAngel": 26.4,
+      "Unicorn": 10.2,
+      "Dragon": 22.7
+     }
+    },
+    "rivals-outnumbered": {
+     "mean": 58.871428571428574,
+     "se": 0.5881323654589089,
+     "worst": [
+      "Dragon",
+      42.8
+     ],
+     "best": [
+      "Gladiator",
+      66.7
+     ],
+     "perType": {
+      "Basilisk": 60.5,
+      "Gladiator": 66.7,
+      "Jinn": 63.3,
+      "Minotaur": 57.2,
+      "WeepingAngel": 61.5,
+      "Unicorn": 60.1,
+      "Dragon": 42.8
+     }
+    }
+   },
+   "3": {
+    "none": {
+     "mean": 34.9,
+     "se": 0.5697104527740385,
+     "worst": [
+      "Minotaur",
+      14.5
+     ],
+     "best": [
+      "WeepingAngel",
+      54.3
+     ],
+     "perType": {
+      "Basilisk": 23.8,
+      "Gladiator": 35.5,
+      "Jinn": 47.5,
+      "Minotaur": 14.5,
+      "WeepingAngel": 54.3,
+      "Unicorn": 27.4,
+      "Dragon": 41.3
+     }
+    },
+    "rivals-outnumbered": {
+     "mean": 68.22857142857143,
+     "se": 0.5564837545663035,
+     "worst": [
+      "Dragon",
+      52.7
+     ],
+     "best": [
+      "Gladiator",
+      77.3
+     ],
+     "perType": {
+      "Basilisk": 71.0,
+      "Gladiator": 77.3,
+      "Jinn": 76.4,
+      "Minotaur": 57.8,
+      "WeepingAngel": 70.7,
+      "Unicorn": 71.7,
+      "Dragon": 52.7
+     }
     }
    }
   }
