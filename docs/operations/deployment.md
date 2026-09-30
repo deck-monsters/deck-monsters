@@ -137,6 +137,39 @@ Push the migrations:
 supabase db push
 ```
 
+**After the first setup, deploys apply migrations themselves.** The server's Railway service
+runs `node packages/server/dist/migrate-cli.js` as a pre-deploy command (`preDeployCommand` in
+`packages/server/railway.toml`), before the new release takes traffic. It applies every file
+in `supabase/migrations/` (copied into the image at `/app/supabase/migrations`) that is not yet
+recorded in `supabase_migrations.schema_migrations`.
+
+- **One at a time.** Each pending file runs in its own transaction under a
+  `pg_advisory_xact_lock`, so two deploys cannot migrate at once. A transaction-level lock is
+  the one that holds through the Supabase transaction-mode pooler (port 6543).
+- **Never twice.** A file also counts as applied when a row with the same name is recorded
+  under another version (a hand-applied migration); the runner logs a warning and does not
+  re-run it.
+- **A failure stops the deploy.** The failing file's transaction rolls back, the runner exits
+  non-zero, and Railway keeps the previous release serving. Earlier files in the same run stay
+  applied. Fix the migration and redeploy.
+- **Nothing waits forever.** Each migration's transaction has a 10 s lock timeout and a 120 s
+  statement timeout (`MIGRATE_LOCK_TIMEOUT_MS`, `MIGRATE_STATEMENT_TIMEOUT_MS`), and a connection
+  attempt gives up after 15 s. A timeout fails the deploy like any other migration failure; a
+  migration that must wait on a table the live app is using needs a quieter moment.
+- **Files must not manage their own transactions.** The runner wraps each file in one, so a file
+  containing a top-level `BEGIN`, `COMMIT`, `ROLLBACK`, `SAVEPOINT`, `START TRANSACTION`, or
+  `CONCURRENTLY` is refused before anything runs. A plpgsql `begin` inside a `$$` body is fine.
+- **It says what it did.** The deploy log starts with `migrate: N files in <dir>, M recorded`
+  and ends with `migration run finished`, with the count applied and skipped.
+- A change under `supabase/migrations/**` triggers a deploy (`watchPatterns`).
+- `supabase db push` still works for local or manual use: both write the same history table.
+  `MIGRATIONS_DIR` points the runner at another directory.
+
+Why: on 2026-09-29 a release that needed new columns went live before anyone ran
+`supabase db push`, and a privacy migration from 2026-09-17 had never reached production at
+all. Five hand-applied migrations were recorded under versions that did not match their files,
+which also made `supabase db push` try to re-run them; that history was repaired the same day.
+
 Verify the tables exist in **Table Editor**.
 
 ---
