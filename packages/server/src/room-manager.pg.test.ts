@@ -8,9 +8,9 @@ import type { Db } from './db/index.js';
 import * as schema from './db/schema.js';
 import { RoomManager } from './room-manager.js';
 
-// Real-Postgres check (roadmap 37 release 2): a reset nulls the stale `state_blob` (so neither
-// the read-only blob fallback nor a rollback can resurrect reset data) but keeps the last copy
-// recoverable in `quarantined_blob`. Skipped unless TEST_DATABASE_URL is set.
+// Real-Postgres check: create, load and reset never read or write `state_blob` (it stays in the
+// database until the step-B drop, docs/operations/state-blob-drop.md). A reset nulls `state` and keeps the last copy recoverable in
+// `quarantined_state`. Skipped unless TEST_DATABASE_URL is set.
 const url = process.env['TEST_DATABASE_URL'];
 const suite = url ? describe : describe.skip;
 
@@ -24,8 +24,8 @@ suite('RoomManager reset against Postgres', () => {
 		await pool.query(`insert into auth.users (id) values ($1)`, [userId]);
 		await pool.query(`insert into profiles (id, display_name) values ($1, 'pg-test') on conflict (id) do nothing`, [userId]);
 		await pool.query(
-			`insert into rooms (id, name, owner_id, invite_code, state_blob) values ($1, 'pg-test', $2, $3, 'the-only-copy')`,
-			[roomId, userId, roomId.slice(0, 8)]
+			`insert into rooms (id, name, owner_id, invite_code, state, state_blob) values ($1, 'pg-test', $2, $3, $4, 'untouched')`,
+			[roomId, userId, roomId.slice(0, 8), JSON.stringify({ name: 'Game', options: { roomId, marker: 'the-only-copy' } })]
 		);
 	});
 
@@ -35,17 +35,36 @@ suite('RoomManager reset against Postgres', () => {
 		await pool.end();
 	});
 
-	it('nulls state_blob, keeps it in quarantined_blob, and leaves state null with a tombstone version', async () => {
+	it('moves state into quarantined_state and leaves state null with a tombstone version', async () => {
 		await new RoomManager(db).resetRoomState(roomId);
 
 		const { rows } = await pool.query(
-			`select state, state_blob, quarantined_blob, state_version from rooms where id = $1`,
+			`select state, state_blob, quarantined_blob, quarantined_state, state_version from rooms where id = $1`,
 			[roomId]
 		);
 		expect(rows[0].state).to.equal(null);
-		expect(rows[0].state_blob).to.equal(null);
-		expect(rows[0].quarantined_blob).to.equal('the-only-copy');
+		expect(rows[0].state_blob, 'reset leaves the legacy column alone').to.equal('untouched');
+		expect(rows[0].quarantined_blob).to.equal(null);
+		expect(rows[0].quarantined_state.options.marker).to.equal('the-only-copy');
 		expect(Number(rows[0].state_version)).to.be.greaterThan(0);
+	});
+
+	it('creates a room, saves and reloads it without touching state_blob', async () => {
+		const rm = new RoomManager(db);
+		const created = await rm.createRoom(userId, 'created');
+		try {
+			const game = await rm.getGame(created.roomId);
+			game.setOptions({ marker: 'saved' } as never);
+			await game.flushState();
+			await rm.unloadRoom(created.roomId);
+			const again = await rm.getGame(created.roomId);
+			expect((again.options as Record<string, unknown>)['marker']).to.equal('saved');
+			await rm.unloadRoom(created.roomId);
+			const { rows } = await pool.query(`select state_blob from rooms where id = $1`, [created.roomId]);
+			expect(rows[0].state_blob).to.equal(null);
+		} finally {
+			await pool.query(`delete from rooms where id = $1`, [created.roomId]);
+		}
 	});
 });
 

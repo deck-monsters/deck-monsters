@@ -239,7 +239,7 @@ export const dbIdleClientErrors = new Counter({
 
 export const roomHydrationFailures = new Counter({
 	name: 'dm_room_hydration_failures_total',
-	help: 'State blob hydration failures (blob quarantined, fresh game started)',
+	help: 'Room state hydration failures (state quarantined, fresh game started)',
 	labelNames: ['room_id'] as const,
 	registers: [registry],
 });
@@ -272,7 +272,7 @@ export const roomStateGenerationDrops = new Counter({
 
 export const roomStateSource = new Counter({
 	name: 'dm_room_state_source_total',
-	help: 'Room loads by where the state came from: state (the jsonb column) or blob (the read-only legacy fallback for a room not yet converted; goes with the state_blob drop)',
+	help: 'Room loads by where the state came from (always state, the jsonb column; the label stays so dashboards keep working)',
 	labelNames: ['source'] as const,
 	registers: [registry],
 });

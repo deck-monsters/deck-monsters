@@ -1,5 +1,5 @@
 import { randomBytes } from 'node:crypto';
-import { mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -85,7 +85,7 @@ suite('runMigrations against Postgres', () => {
 	it('applies all real repo migrations in order, records them, and a second run applies none', async () => {
 		await stubSupabase();
 		const files = readdirSync(repoMigrations).filter((f) => f.endsWith('.sql')).sort();
-		expect(files).to.have.length(15);
+		expect(files).to.have.length(16);
 
 		const first = await runMigrations({ connectionString: dbUrl, dir: repoMigrations, log: quiet });
 		expect(first.ok).to.equal(true);
@@ -101,6 +101,37 @@ suite('runMigrations against Postgres', () => {
 		expect(second.ok).to.equal(true);
 		expect(second.applied).to.have.length(0);
 		expect(second.skipped).to.deep.equal(files);
+	});
+
+	it('clears the stale blob of a converted room and keeps an unconverted room\'s blob (roadmap 40 task 6a)', async () => {
+		await stubSupabase();
+		const all = readdirSync(repoMigrations).filter((f) => f.endsWith('.sql')).sort();
+		const clear = '20260930140000_clear_stale_state_blobs.sql';
+		expect(all).to.include(clear);
+		const before = all.filter((f) => f < clear);
+		const dir = tempDir(Object.fromEntries(before.map((f) => [f, readFileSync(path.join(repoMigrations, f), 'utf8')])));
+		expect((await runMigrations({ connectionString: dbUrl, dir, log: quiet })).ok).to.equal(true);
+
+		const owner = '11111111-1111-1111-1111-111111111111';
+		await withDb(async (p) => {
+			await p.query(`insert into auth.users (id) values ($1)`, [owner]);
+			await p.query(`insert into profiles (id, display_name) values ($1, 'owner') on conflict (id) do nothing`, [owner]);
+			await p.query(
+				`insert into rooms (id, name, owner_id, invite_code, state, state_blob) values
+				 ('aaaaaaaa-0000-0000-0000-000000000001', 'converted', $1, 'AAAA0001', '{"name":"Game"}', 'stale'),
+				 ('aaaaaaaa-0000-0000-0000-000000000002', 'unconverted', $1, 'AAAA0002', null, 'only-copy')`,
+				[owner]
+			);
+		});
+
+		writeFileSync(path.join(dir, clear), readFileSync(path.join(repoMigrations, clear), 'utf8'));
+		expect((await runMigrations({ connectionString: dbUrl, dir, log: quiet })).applied).to.deep.equal([clear]);
+
+		const rows = await withDb((p) => p.query(`select name, state_blob from rooms order by name`));
+		expect(rows.rows).to.deep.equal([
+			{ name: 'converted', state_blob: null },
+			{ name: 'unconverted', state_blob: 'only-copy' },
+		]);
 	});
 
 	it('rolls back a failing migration, keeps the earlier one, and reports failure', async () => {

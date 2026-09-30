@@ -49,6 +49,7 @@ Generated and authored player references remain at the repository root:
 | Trigger | Canonical document |
 |---|---|
 | Railway/Supabase deployment, production auth URLs, service configuration, production env vars | [Deployment](operations/deployment.md) |
+| The staged `rooms.state_blob` column drop (step B, not yet shipped) | [State blob drop](operations/state-blob-drop.md) |
 | Metrics endpoint, metrics variables, Grafana scrape, metric names, alerts | [Observability](operations/observability.md) |
 | Cursor Cloud setup, remote/local Supabase in Cloud, Docker/start scripts | [Cloud development](operations/cloud-development.md) |
 | Manual end-to-end testing, service startup, reusable test rooms, throwaway cleanup | [Local testing](operations/local-testing.md) |

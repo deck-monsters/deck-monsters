@@ -686,36 +686,17 @@ describe('RoomManager', () => {
 			expect(await sourceCount('state')).to.equal(before + 1);
 		});
 
-		it('falls back read-only to the legacy blob when state is null and counts the source', async () => {
-			// Stop-writing and drop are separate deploys (roadmap 40): a not-yet-converted room
-			// must load from its blob, never start fresh.
-			const db = makeDbStub({ selectResults: [[{ state: null, stateBlob: 'oldblob' }]] });
+		it('starts a fresh game, without writing, when the room has no state', async () => {
+			// state_blob is gone (roadmap 37 contract): null state is a new or reset room.
+			const db = makeDbStub({ selectResults: [[{ state: null }]] });
 			const { deps, restoreGameStub, GameStub } = makeEngineDeps();
 			const rm = new RoomManager(db as never, () => {}, deps);
-			const before = await sourceCount('blob');
 
 			await rm.getGame(ROOM_ID);
 
-			expect(restoreGameStub.firstCall.args[0]).to.equal('oldblob');
-			expect(GameStub.called).to.be.false;
-			expect(await sourceCount('blob')).to.equal(before + 1);
-			expect(db._stubs.updateSetStub.called, 'the blob fallback must not write').to.be.false;
-		});
-
-		it('quarantines a failed legacy blob into quarantined_blob with a new version', async () => {
-			const db = makeDbStub({ selectResults: [[{ state: null, stateBlob: 'badblob' }]] });
-			const { deps, restoreGameStub } = makeEngineDeps();
-			restoreGameStub.throws(new Error('bad blob'));
-			const rm = new RoomManager(db as never, () => {}, deps);
-
-			await rm.getGame(ROOM_ID);
-
-			const set = db._stubs.updateSetStub.firstCall.args[0];
-			expect(set.quarantinedBlob).to.equal('badblob');
-			expect(set).to.not.have.property('quarantinedState');
-			expect(set.state).to.equal(null);
-			expect(set.stateBlob).to.equal(null);
-			expect(set.stateVersion).to.be.greaterThan(0);
+			expect(restoreGameStub.called).to.be.false;
+			expect(GameStub.calledOnce).to.be.true;
+			expect(db._stubs.updateSetStub.called).to.be.false;
 		});
 
 		it('quarantines a failed jsonb state into quarantined_state with a new version', async () => {
@@ -729,8 +710,7 @@ describe('RoomManager', () => {
 
 			const set = db._stubs.updateSetStub.firstCall.args[0];
 			expect(set.quarantinedState).to.equal(state);
-				expect(set.state).to.equal(null);
-			expect(set.stateBlob).to.equal(null);
+			expect(set.state).to.equal(null);
 			expect(set.stateVersion).to.be.greaterThan(0);
 			expect(GameStub.calledOnce).to.be.true;
 		});
@@ -786,7 +766,7 @@ describe('RoomManager', () => {
 
 		it('a reset writes the DB only after the old game flush has settled', async () => {
 			const { deps, flushStateFn } = makeEngineDeps();
-			const db = makeDbStub({ selectResults: [[{ state: { name: 'Game', options: {} }, stateBlob: 'blob' }]] });
+			const db = makeDbStub({ selectResults: [[{ state: { name: 'Game', options: {} } }]] });
 			const rm = new RoomManager(db as never, () => {}, deps);
 			const { roomId } = await rm.createRoom(OWNER_ID, 'Room');
 			db._stubs.deleteStub.resetHistory();
@@ -805,8 +785,6 @@ describe('RoomManager', () => {
 
 			const tombstone = db._stubs.updateSetStub.lastCall.args[0];
 			expect(tombstone.state).to.equal(null);
-			expect(tombstone.stateBlob).to.equal(null);
-			expect(tombstone.quarantinedBlob).to.equal('blob');
 			expect(tombstone.quarantinedState).to.deep.equal({ name: 'Game', options: {} });
 			expect(tombstone.stateVersion).to.be.greaterThan(0);
 			expect((rm as any).active.has(roomId)).to.be.false;
@@ -972,7 +950,7 @@ describe('RoomManager', () => {
 			const { deps } = makeEngineDeps();
 			const db = makeDbStub();
 			(db as any).select = sinon.stub().callsFake(() => {
-				const rows = [{ state: null, stateBlob: null }];
+				const rows = [{ state: null }];
 				return { from: () => ({ where: () => Object.assign(Promise.resolve(rows), { limit: () => Promise.resolve(rows) }) }) };
 			});
 			await new RoomManager(db as never, () => {}, deps).resetRoomState(ROOM_ID);

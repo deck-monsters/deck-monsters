@@ -8,7 +8,7 @@ tags: [roadmap, pass, database, ci, harness]
 ---
 # 40 — Room state close-out and open bugs
 
-**Status:** Tasks 1–5 and 7 done (2026-09-30); task 6, the drop, is a separate PR after this one is deployed. Owner: "Do the 37 close out and bug fixes and then let's
+**Status:** Tasks 1–5, 7 and 6a done; PR #416 deployed 2026-09-30. Task 6b, the drop itself, ships after 6a is live. Owner: "Do the 37 close out and bug fixes and then let's
 tackle 39 next."
 
 ## Tasks
@@ -21,7 +21,8 @@ tackle 39 next."
 | 4 | **Item G:** a reset reaches every process's copy of the room (a generation in the save guard) | Server: `state-store.ts`, `room-manager.ts`, a migration | after 1 | Done: bug 208. Review: no data-integrity issue; what a reset leaves behind (a fight, prompts, connector subscriptions) was already true of resets and is open as item J | 97064586, 8d2deecb |
 | 5 | **Item H:** real-Postgres tests run in CI | `.github/workflows/ci.yml` | any | Done: bug 206. Checked by running the CI steps on a fresh local database (13 migrations applied, server 312 passing with no pg suite skipped) | (this commit) |
 | 7 | **Save crash (found in this pass):** a restored room's refilled deck could hold a card whose options pointed back at the deck, so the next save threw "circular structure" from a timer and killed the server (production, 2026-09-24). Fix the draw options, stop two cards keeping foreign options, and keep a save failure from crashing the process | Engine: `characters/helpers/hydrate.ts`, `cards/ecdysis.ts`, `game.ts`; tests | 1, 2 | Done: bug 207. The server counter for `game.persistState` rides with task 4 (same file) | 0de59968, 9ca4193c |
-| 6 | **Roadmap 37 task 6, the drop:** a migration drops `state_blob` | Migration, Drizzle, docs | A separate PR after task 1 is deployed. It also removes the read-only fallback, and the migration refuses to run while any room has `state` null and a blob | Planned | |
+| 6a | **Roadmap 37 task 6, stop referencing:** no code or Drizzle schema names `state_blob`; load reads `state` only; the backfill script goes; a migration clears the stale blob of every converted room, so a reset cannot be undone by a release-2 fallback (Codex review of #417). The column stays | Server, docs; `docs/operations/state-blob-drop.md` holds step B | After release 2 is live | Done (#417) | 163ed40f…2e92b8c7, and the stale-blob migration |
+| 6b | **Roadmap 37 task 6, the drop:** the guarded `drop column` migration from `docs/operations/state-blob-drop.md` | A migration and its tests | After 6a is live on both services | Planned | |
 
 ## Decisions
 
@@ -47,3 +48,10 @@ tackle 39 next."
 - **Every production room is on `state` (2026-09-30, 17:30 UTC).** A read-only check found all
   seven rooms with `state` set; Test Room A and B converted when Cursor opened them for the help
   walk and check. Task 6 (the drop) can follow as soon as this PR's release 2 is deployed.
+- **The drop needs three deploys, not two.** Release 2 stopped *writing* the blob but still
+  selected it (the read-only fallback), nulled it on reset, and Drizzle's `insert` lists every
+  column in the schema even when the code never names it. Dropping the column while release 2
+  served would have broken room load, create and reset during the deploy overlap, or for good if
+  the new release then failed its health check. The review of task 6 caught it before it shipped
+  (2026-09-30). The order for any column removal here: stop writing, stop referencing (code and
+  schema), then drop. Recorded in `docs/operations/state-blob-drop.md` and deployment.md.

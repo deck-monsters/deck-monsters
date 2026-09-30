@@ -556,22 +556,16 @@ export class RoomManager {
 		// Quarantine current state, start fresh on next load. The new version is a tombstone
 		// (never 0), so a save stamped before this point can no longer land.
 		const rows = await this.db
-			.select({ state: rooms.state, stateBlob: rooms.stateBlob })
+			.select({ state: rooms.state })
 			.from(rooms)
 			.where(eq(rooms.id, roomId))
 			.limit(1);
 
 		const quarantine: Partial<typeof rooms.$inferInsert> = {};
 		if (rows[0]?.state) quarantine.quarantinedState = rows[0].state;
-		// A blob-only room (roadmap 37: the read-only blob fallback still loads it) has its only
-		// copy in state_blob, so keep it recoverable in quarantined_blob before nulling it.
-		if (rows[0]?.stateBlob) quarantine.quarantinedBlob = rows[0].stateBlob;
 		await this.db.update(rooms).set({
 			...quarantine,
 			state: null,
-			// Null the blob so neither this release's read-only blob fallback nor a rollback to the
-			// expand release (both fall back to it when `state` is null) can resurrect reset data.
-			stateBlob: null,
 			stateVersion: nextStateVersion(),
 			// Reaches other processes' loaded copies: their saves carry the old generation, match
 			// no row and make them drop the room (bug G). Bumped only after our own copy is
@@ -948,7 +942,7 @@ export class RoomManager {
 		}
 
 		const rows = await this.db
-			.select({ state: rooms.state, stateBlob: rooms.stateBlob, stateGeneration: rooms.stateGeneration })
+			.select({ state: rooms.state, stateGeneration: rooms.stateGeneration })
 			.from(rooms)
 			.where(eq(rooms.id, roomId))
 			.limit(1);
@@ -957,15 +951,11 @@ export class RoomManager {
 			throw new TRPCError({ code: 'NOT_FOUND', message: 'Room not found' });
 		}
 
-		// Prefer `state`. READ-ONLY blob fallback (roadmap 37 release 2): stopping the blob writes
-		// and dropping the column are separate deploys (roadmap 40), so until the drop a room the
-		// backfill has not converted (state null, blob present) must still load from its blob,
-		// not start fresh, or its first save would overwrite the only copy. The blob is never
-		// written here; the room's next save fills `state`, so it converts itself. The later
-		// drop PR removes this fallback, and its migration refuses to run while any room has
-		// `state` null and a blob.
-		const source = rows[0].state != null ? 'state' : rows[0].stateBlob ? 'blob' : null;
-		if (source === 'blob') log.warn('room has no jsonb state, restoring from legacy state_blob', { roomId });
+		// Only `state` is read: every room was on it before this release, and nothing here names
+		// `state_blob`, so the column can be dropped later without breaking this release (a Drizzle
+		// insert lists every schema column; docs/operations/state-blob-drop.md). A null `state` is
+		// a new or reset room.
+		const source = rows[0].state != null ? 'state' : null;
 		log.debug('loading room from DB', { roomId, source });
 
 		// Read with the state in the same row, so state and generation are one snapshot.
@@ -975,7 +965,7 @@ export class RoomManager {
 
 		if (source) {
 			try {
-				game = this.deps.restoreGame((rows[0].state ?? rows[0].stateBlob)!, roomLog);
+				game = this.deps.restoreGame(rows[0].state!, roomLog);
 				roomStateSource.inc({ source });
 				(game.options as Record<string, unknown>).roomId = roomId;
 				log.debug('room restored from state', { roomId });
@@ -989,14 +979,12 @@ export class RoomManager {
 					error: message,
 				});
 				this.log(err);
-				// Each source goes to its own quarantine column; both live columns are cleared and
-				// the version bumped so a save still in flight from before is stale.
+				// The bad state goes to quarantined_state, the live column is cleared and the
+				// version bumped so a save still in flight from before is stale.
 				// The generation moves too, so another process's loaded copy of the bad state drops.
 				const bumped = await this.db.update(rooms).set({
 					...(rows[0].state ? { quarantinedState: rows[0].state } : {}),
-					...(rows[0].stateBlob ? { quarantinedBlob: rows[0].stateBlob } : {}),
 					state: null,
-					stateBlob: null,
 					stateVersion: nextStateVersion(),
 					stateGeneration: sql`${rooms.stateGeneration} + 1`,
 					updatedAt: new Date(),

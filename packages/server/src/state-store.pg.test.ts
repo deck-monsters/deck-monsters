@@ -24,7 +24,7 @@ suite('PostgresStateStore against Postgres', () => {
 
 	async function row() {
 		const res = await pool.query(
-			`select jsonb_typeof(state) as type, state, state_version, state_blob from rooms where id = $1`,
+			`select jsonb_typeof(state) as type, state, state_version from rooms where id = $1`,
 			[roomId]
 		);
 		return res.rows[0];
@@ -45,18 +45,19 @@ suite('PostgresStateStore against Postgres', () => {
 		await pool.end();
 	});
 
-	it('stores a jsonb object and a version, leaves state_blob untouched; load returns the object', async () => {
+	it('stores a jsonb object and a version, load returns the object, and state_blob is never written', async () => {
 		const state = { name: 'Game', options: { roomId, characters: { a: { name: 'A', options: { xp: 3 } } } } };
-		await pool.query(`update rooms set state_blob = 'stale-blob' where id = $1`, [roomId]);
+		// The column stays in the database until the step-B drop (docs/operations/state-blob-drop.md);
+		// code must neither reference nor write it, or the drop would break the running release.
+		await pool.query(`update rooms set state_blob = 'untouched' where id = $1`, [roomId]);
 		await store.save(roomId, state);
 
 		const r = await row();
 		expect(r.type).to.equal('object');
 		expect(Number(r.state_version)).to.be.greaterThan(0);
 		expect(r.state).to.deep.equal(state);
-		// Release 2 of roadmap 37: a save no longer touches the legacy column.
-		expect(r.state_blob).to.equal('stale-blob');
 		expect(await store.load(roomId)).to.deep.equal(state);
+		expect((await pool.query(`select state_blob from rooms where id = $1`, [roomId])).rows[0].state_blob).to.equal('untouched');
 	});
 
 	it('an older snapshot that lands after a newer one does not overwrite it', async () => {
@@ -76,7 +77,7 @@ suite('PostgresStateStore against Postgres', () => {
 	it('a tombstone version blocks a save stamped before it', async () => {
 		const stale = nextStateVersion();
 		const tombstone = nextStateVersion();
-		await pool.query(`update rooms set state = null, state_blob = null, state_version = $2 where id = $1`, [roomId, tombstone]);
+		await pool.query(`update rooms set state = null, state_version = $2 where id = $1`, [roomId, tombstone]);
 
 		await store.write(roomId, { name: 'Game', options: {} }, stale);
 

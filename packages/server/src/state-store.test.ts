@@ -29,15 +29,13 @@ describe('PostgresStateStore', () => {
 	afterEach(() => sinon.restore());
 	const state = { name: 'Game', options: { roomId: 'r' } };
 
-	it('writes the object itself (not a string) and a version, and never state_blob', async () => {
+	it('writes the object itself (not a string) and a version', async () => {
 		const { db, set } = makeDb();
 		await new PostgresStateStore(db).save('r', state);
 
 		const written = set.firstCall.args[0];
 		expect(written.state).to.equal(state);
 		expect(written.stateVersion).to.be.a('number').greaterThan(0);
-		// Release 2 of roadmap 37: the legacy blob is no longer written.
-		expect(written).to.not.have.property('stateBlob');
 	});
 
 	it('stamps versions at call time, so writes landing in reverse order keep the newer state', async () => {

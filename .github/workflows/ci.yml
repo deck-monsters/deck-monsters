@@ -49,7 +49,7 @@ jobs:
   test:
     name: Tests
     runs-on: ubuntu-latest
-    # Real Postgres for the *.pg.test.ts suites (save ordering, the room-state backfill, the
+    # Real Postgres for the *.pg.test.ts suites (save ordering, the
     # migration runner). Without it they skipped and "passed" (roadmap 10, item H).
     services:
       postgres:
