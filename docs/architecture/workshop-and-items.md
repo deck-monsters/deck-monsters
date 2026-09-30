@@ -197,9 +197,31 @@ the authoritative price the same way, from the shop it re-reads at commit time.
 ## Client invalidation
 
 Every Workshop query and invalidation includes the active `roomId`. Successful mutations
-refresh only that room's inventory, ring state, or shop as applicable. Live private
-`ring.xp` events trigger a room-local inventory/shop refresh so wallet rewards do not wait
-for polling.
+refresh only that room's inventory, ring state, or shop as applicable.
+
+There is no Sync button. The Workshop refreshes (inventory, `myMonsters`, and the shop once a
+character exists) from these triggers:
+
+- the 30 s poll on `myInventory` and `shop`;
+- every Workshop mutation, and coins arriving;
+- a private `ring.xp` event, which the room sends the moment a fight the player was in pays
+  out (this also covers level-ups, which come from the same XP);
+- the tab or window regaining focus (`refetchOnWindowFocus` on both queries);
+- a timer the panel sets for the soonest running revival (`revivesAt` + 1 s). No room event
+  reaches the web when a revival timer fires (the engine's `respawn` is a creature emit,
+  not a bus event), so the panel schedules its own refresh.
+
+## Workshop header, Train row and Shop labels
+
+Coins are shown in the Shop only; the header carries no balance (a new player read it as
+the price of levelling up the monster beside it, roadmap 39a). "Train monster" has its own
+row with a line built from `myInventory.monsterSlots` (the engine's `Beastmaster.monsterSlots`,
+never below the roster size) minus the monsters listed: the free-places sentence, or "Every
+place at your side is taken" with the button disabled. A first-run player (no character) gets
+the plain button. A shop price of 0 reads **Free**, with its own confirm and success text.
+A fallen monster with a running revival (`revivesAt`, set only once `respawn()` starts, never
+merely on death) shows a disabled **Reviving…** button and "back at {local time} (in {m}
+min)", counting seconds in the final minute.
 
 Server validation remains authoritative. Optimistic UI must roll back or refetch when
 state changes between render and mutation.

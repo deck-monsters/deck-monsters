@@ -32,11 +32,17 @@ describe('ShopPanel', () => {
     expect(screen.getByRole('button', { name: '80 coins' })).toBeDisabled();
   });
 
+  it('shows the balance singular-aware', () => {
+    render(<ShopPanel shop={{ ...shop, coins: 1 }} onBuy={vi.fn()} />);
+    expect(screen.getByText('1 coin')).toBeInTheDocument();
+    expect(screen.queryByText('1 coins')).toBeNull();
+  });
+
   it('exposes rare stock and passes the exact stock token when buying', () => {
     const onBuy = vi.fn();
     render(<ShopPanel shop={shop} onBuy={onBuy} />);
     fireEvent.click(screen.getByText(/Back room/));
-    fireEvent.click(screen.getByRole('button', { name: '0 coins' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Free' }));
     expect(onBuy).toHaveBeenCalledWith(shop.backRoom[0]);
   });
 

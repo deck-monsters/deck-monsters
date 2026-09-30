@@ -29,6 +29,9 @@ type WorkshopInventory = {
   // "No character in this room yet" is not the same as "a character with no monsters",
   // and the workshop's first-run form depends on telling them apart.
   hasCharacter: boolean;
+  // Monster places at the character's side (engine `Beastmaster.monsterSlots`); the Train
+  // row says how many are free.
+  monsterSlots: number;
   monsters: WorkshopMonster[];
   unequippedDeck: string[];
   // Raw shop cost per unequipped card, keyed by display name — see `ItemSummary.cost` and
@@ -43,6 +46,7 @@ type WorkshopInventory = {
 
 const EMPTY_INVENTORY: WorkshopInventory = {
   hasCharacter: false,
+  monsterSlots: 0,
   monsters: [],
   unequippedDeck: [],
   cardCosts: {},
@@ -66,6 +70,9 @@ export function useDeckWorkshop(roomId?: string) {
     {
       enabled: !!roomId,
       refetchInterval: 30_000,
+      // Coming back to the tab is the Workshop's manual "Sync" (removed): stale data is
+      // refetched the moment the tab or window regains focus.
+      refetchOnWindowFocus: true,
     },
   );
   // `game.shop` answers NOT_FOUND until the member has a character, so a first-run room
@@ -73,7 +80,11 @@ export function useDeckWorkshop(roomId?: string) {
   // inventory says a character exists; spawning invalidates the inventory, which flips it.
   const shopQuery = trpc.game.shop.useQuery(
     { roomId: validRoomId },
-    { enabled: !!roomId && inventoryQuery.data?.hasCharacter === true, refetchInterval: 30_000 },
+    {
+      enabled: !!roomId && inventoryQuery.data?.hasCharacter === true,
+      refetchInterval: 30_000,
+      refetchOnWindowFocus: true,
+    },
   );
   const spawnOptionsQuery = trpc.game.spawnOptions.useQuery(
     { roomId: validRoomId },
@@ -207,6 +218,7 @@ export function useDeckWorkshop(roomId?: string) {
     roomName: roomQuery.data?.name,
     inventory,
     hasCharacter: inventoryQuery.data?.hasCharacter,
+    monsterSlots: inventoryQuery.data?.monsterSlots,
     characterCreation: characterCreationQuery.data ?? { pronouns: [], avatars: [], suggestedName: '' },
     shuffleAvatars: () => characterCreationQuery.refetch(),
     monsters,
@@ -241,11 +253,14 @@ export function useDeckWorkshop(roomId?: string) {
       sendMonsterToRingMutation.error?.message ??
       buyShopItemMutation.error?.message ??
       sellShopItemsMutation.error?.message,
-    // A manual refetch runs even while the query is disabled, so Sync must skip the shop
-    // until a character exists, or it re-creates the first-run 404 (10b #188).
+    // Used when the room reports a fight result or a revival completes. A manual refetch
+    // runs even while the query is disabled, so the shop is skipped until a character
+    // exists, or it re-creates the first-run 404 (10b #188). `myMonsters` is invalidated
+    // (not refetched) so only mounted observers reload it.
     refresh: () =>
       Promise.all([
         inventoryQuery.refetch(),
+        roomId ? utils.game.myMonsters.invalidate({ roomId }) : undefined,
         inventoryQuery.data?.hasCharacter === true ? shopQuery.refetch() : undefined,
       ]),
     spawnMonster: (input: {

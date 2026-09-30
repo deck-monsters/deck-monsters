@@ -257,7 +257,21 @@ describe('useDeckWorkshop', () => {
 
     expect(mocks.inventoryRefetch).toHaveBeenCalledOnce();
     expect(mocks.shopRefetch).toHaveBeenCalledOnce();
+    // The player's monsters list reloads too (Sync is gone; this is what replaces it).
+    expect(mocks.monstersInvalidate).toHaveBeenCalledWith({ roomId: 'room-123' });
 	});
+
+  it('refetches inventory and shop when the tab regains focus, and exposes monsterSlots', () => {
+    mocks.myInventoryUseQuery.mockReturnValue({
+      data: { hasCharacter: true, monsterSlots: 3, monsters: [], unequippedDeck: [], cardCompatibility: {}, items: { character: [], monsters: [] } },
+      isLoading: false, isFetching: false, refetch: mocks.inventoryRefetch,
+    });
+    const { result } = renderHook(() => useDeckWorkshop('room-123'));
+
+    expect(mocks.myInventoryUseQuery.mock.calls[0]![1]).toMatchObject({ refetchOnWindowFocus: true });
+    expect(mocks.shopUseQuery.mock.calls[0]![1]).toMatchObject({ refetchOnWindowFocus: true });
+    expect(result.current.monsterSlots).toBe(3);
+  });
 
   it('skips the shop on refresh until a character exists', async () => {
     mocks.myInventoryUseQuery.mockReturnValue({

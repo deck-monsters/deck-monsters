@@ -42,6 +42,7 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
     hasCharacter,
     characterCreation,
     shuffleAvatars,
+    monsterSlots,
     loading,
     busy,
 	consoleFlowActive,
@@ -76,6 +77,20 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
    */
   const needsCharacter = hasCharacter === false;
 
+  // Places at the player's side. Absent while the inventory loads (and in older test
+  // doubles), in which case no line is shown rather than a wrong count.
+  const freePlaces =
+    hasCharacter === true && typeof monsterSlots === 'number'
+      ? Math.max(monsterSlots - monsters.length, 0)
+      : undefined;
+  const trainingFull = freePlaces === 0;
+  const trainLine =
+    freePlaces === undefined
+      ? null
+      : freePlaces > 0
+        ? `Train a new monster to fight at your side. You can train ${freePlaces} more.`
+        : `Every place at your side is taken (${monsterSlots} monsters).`;
+
   /*
    * Bug: "I still see only 0 coins in the workshop view." Coins are awarded the instant a
    * fight resolves (`Game.awardFightCoins`, `packages/engine/src/game.ts`), but the wallet
@@ -106,6 +121,26 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
       }
     });
   }, [ringFeed]);
+
+  /*
+   * No event reaches the web when a monster's revival timer fires (the engine's 'respawn'
+   * is a creature-level emit, not a room event), so the Workshop schedules its own refresh
+   * for the moment the soonest running revival completes. Without it the "Fallen · back in
+   * 0 s" line stayed until the next 30 s poll.
+   */
+  const nextRevivalAt = monsters.reduce<number | undefined>((soonest, monster) => {
+    const at = monster.dead && typeof monster.revivesAt === 'number' ? monster.revivesAt : undefined;
+    if (at === undefined) return soonest;
+    return soonest === undefined || at < soonest ? at : soonest;
+  }, undefined);
+  useEffect(() => {
+    if (nextRevivalAt === undefined) return;
+    // +1 s so the engine's own timer has fired before we ask; capped so a far-off revival
+    // does not overflow setTimeout (the 30 s poll covers anything longer anyway).
+    const delay = Math.min(Math.max(nextRevivalAt - Date.now() + 1_000, 1_000), 2_147_000_000);
+    const timer = setTimeout(() => void refreshRef.current(), delay);
+    return () => clearTimeout(timer);
+  }, [nextRevivalAt]);
 
 	async function handleCancelConsoleFlow() {
 	  try {
@@ -214,7 +249,8 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
       setError('The shop is still loading. Try again in a moment.');
       return;
     }
-    if (!window.confirm(`Buy ${item.displayName} for ${item.price} coins?`)) return;
+    const isFree = item.price === 0;
+    if (!window.confirm(isFree ? `Take the ${item.displayName}? It's free.` : `Buy ${item.displayName} for ${item.price} coins?`)) return;
     try {
       setError(null);
       const result = await buyShopItem({
@@ -223,7 +259,7 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
         expectedItemType: item.displayName,
         expectedClosingTime: shop.closingTime,
       });
-      setMessage(`Bought ${result.itemName} for ${result.price} coins. ${result.remainingCoins} coins remain.`);
+      setMessage(isFree ? `You took the ${result.itemName}. It was free.` : `Bought ${result.itemName} for ${result.price} coins. ${result.remainingCoins} coins remain.`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not complete that purchase');
     }
@@ -590,30 +626,29 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
       <div className="workshop-header">
         <div>
           <h1>Deck Workshop</h1>
-          <p>Manage equipped and unequipped cards in one view.</p>
+          <p>Train monsters, choose their cards, and spend your coins.</p>
         </div>
         <div className="workshop-header-actions">
-          {/*
-           * The coin balance used to be visible only inside the shop section, which the
-           * player has to scroll past the monster row and inventory to reach. Surfacing it
-           * here too means a player can see their wallet — and that it just moved after a
-           * fight — without opening the shop at all. `shop` is undefined until the first
-           * shop query resolves, so this renders nothing rather than a misleading "0 coins"
-           * during that brief window.
-           */}
-          {shop && (
-            <strong className="workshop-wallet" title="Coins">
-              {shop.coins} {shop.coins === 1 ? 'coin' : 'coins'}
-            </strong>
-          )}
-          <button className="btn" onClick={() => setShowSpawn((shown) => !shown)} disabled={!roomId || busy}>
-            {showSpawn ? 'Cancel' : 'Train monster'}
-          </button>
-          <button className="btn" onClick={() => void refresh()} disabled={!roomId || loading || busy}>
-            Sync
-          </button>
           {headerActions}
         </div>
+      </div>
+
+      {/*
+        Train monster has its own row. It used to sit beside the coin balance, and a new
+        player read "196 coins  Train monster" as the price of levelling up the monster
+        below. Coins now live in the Shop only. The line says how many places are free
+        (`monsterSlots` from the inventory query); a first-run player has no character and
+        so no places to count, and keeps the plain button.
+      */}
+      <div className="workshop-train-row">
+        {trainLine && <p className="workshop-train-line">{trainLine}</p>}
+        <button
+          className="btn"
+          onClick={() => setShowSpawn((shown) => !shown)}
+          disabled={!roomId || busy || (trainingFull && !showSpawn)}
+        >
+          {showSpawn ? 'Cancel' : 'Train monster'}
+        </button>
       </div>
 
       {message && <div className="success-msg" role="status" aria-live="polite">{message}</div>}

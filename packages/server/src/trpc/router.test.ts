@@ -185,6 +185,22 @@ describe('trpc/router card management procedures', () => {
 		expect(result.monsters[0]).to.include({ dead: true, hp: 0, maxHp: 30, revivesAt: 6_000 });
 	});
 
+	it('reports the character’s monster places as monsterSlots on game.myInventory', async () => {
+		const monster = {
+			givenName: 'Solo', creatureType: 'Minotaur', level: 1, inEncounter: false, cardSlots: 9,
+			cards: [], items: [], options: {}, hp: 10, maxHp: 10, battles: { wins: 0, losses: 0, total: 0 },
+		};
+		const withSlots = (character: Record<string, unknown>) => {
+			const game = { characters: { [USER_ID]: character }, ring: { contestants: [] } };
+			const roomManager = { assertMember: async () => undefined, getGame: async () => game } as unknown as Parameters<typeof createRouter>[0];
+			return createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false }).game.myInventory({ roomId: ROOM_ID });
+		};
+
+		expect((await withSlots({ monsters: [monster], deck: [], items: [], monsterSlots: 3 })).monsterSlots).to.equal(3);
+		// A character object without the getter (older doubles) falls back to the roster size.
+		expect((await withSlots({ monsters: [monster], deck: [], items: [] })).monsterSlots).to.equal(1);
+	});
+
 	it('preserves a restored monster’s original revival completion epoch', async () => {
 		const fallenMonster = {
 			givenName: 'Ashfall',

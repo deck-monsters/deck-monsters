@@ -126,6 +126,9 @@ type InventorySummary = {
 	// not tell "no character yet" from "character with no monsters", and so could not
 	// offer first-run character creation — see `spawnMonster`'s `character` input.
 	hasCharacter: boolean;
+	// How many monsters this character may have at their side (engine `Beastmaster.monsterSlots`,
+	// never fewer than the roster). The Workshop's Train row says how many places are free.
+	monsterSlots: number;
 	monsters: InventoryMonsterSummary[];
 	unequippedDeck: string[];
 	// Raw shop cost for each unequipped card, keyed by display name (see `ItemSummary.cost`
@@ -458,6 +461,10 @@ const summarizeInventory = ({
 
 	return {
 		hasCharacter: true,
+		monsterSlots:
+			typeof character.monsterSlots === 'number' && Number.isFinite(character.monsterSlots)
+				? Math.max(character.monsterSlots, monsterSummaries.length)
+				: monsterSummaries.length,
 		monsters: monsterSummaries,
 		unequippedDeck: deck.map((card) => getDisplayName(card)),
 		cardCosts,
@@ -1231,6 +1238,7 @@ export function createRouter(roomManager: RoomManager) {
 				if (!character || typeof character !== 'object') {
 					return {
 						hasCharacter: false,
+						monsterSlots: 0,
 						monsters: [],
 						unequippedDeck: [],
 						cardCosts: {},
