@@ -3,7 +3,10 @@ import { and, eq, lt } from 'drizzle-orm';
 
 import type { Db } from './db/index.js';
 import { rooms } from './db/schema.js';
+import { createLogger } from './logger.js';
 import { roomStateSaveBytes, roomStateSaveFailures, roomStateSavesStale } from './metrics/index.js';
+
+const log = createLogger('state-store');
 
 let lastStateVersion = 0;
 
@@ -102,8 +105,11 @@ export class PostgresStateStore implements StateStore {
 				this.generationMoved = true;
 				this.options.onGenerationMoved();
 			}
-		} catch {
-			// see above
+		} catch (err) {
+			log.warn('generation probe failed after a refused save; will retry on the next refusal', {
+				roomId,
+				error: err instanceof Error ? err.message : String(err),
+			});
 		}
 	}
 

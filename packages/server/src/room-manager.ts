@@ -590,7 +590,7 @@ export class RoomManager {
 			timer = setTimeout(() => resolve(timedOut), timeoutMs);
 		});
 		await Promise.allSettled(
-			[...this.active.values()].map(async (entry) => {
+			[...this.active.entries()].map(async ([roomId, entry]) => {
 				const result = await Promise.race([
 					// flushState resolves false when the store write failed (it never rejects).
 					entry.game.flushState().then(
@@ -599,7 +599,10 @@ export class RoomManager {
 					),
 					deadline,
 				]);
-				if (result === 'ok') outcome.flushed++;
+				// A save refused because another process reset the room resolves true (the store
+				// swallows a stale save), but the drop it triggered removed this copy: not flushed.
+				if (result === 'ok' && this.active.get(roomId)?.game !== entry.game) outcome.failed++;
+				else if (result === 'ok') outcome.flushed++;
 				else if (result === 'failed') outcome.failed++;
 				else outcome.timedOut++;
 			})

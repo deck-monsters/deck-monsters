@@ -103,6 +103,12 @@ room has a **generation** (`rooms.state_generation`, bug G):
   `RoomManager` drops that copy without flushing (a flush would be refused too), counts
   `dm_room_state_generation_drops_total`, and logs a warning. The next request reloads the reset
   room. A missing row (deleted room) or an unchanged generation is an ordinary stale save.
+- A drop tears the copy down exactly as a same-process reset does (`_detachRoomEntry`, no
+  flush), so what a reset leaves behind (a running fight timer chain, unanswered prompts,
+  long-lived bus subscribers) a drop leaves behind too.
+- The reset wins by design. The other process serves its stale copy until that copy next saves,
+  so an action taken on it in that window (a command that reported success) is lost when the
+  save is refused and the copy dropped.
 - Overlaps: a save in flight when the reset lands is refused by the tombstone version and
   the generation both, and the drop is a no-op if the room already left `active`. A fight in
   the dropped copy is discarded, since the room it belonged to no longer exists.

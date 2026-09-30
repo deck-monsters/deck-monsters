@@ -927,6 +927,31 @@ describe('RoomManager', () => {
 			}
 		});
 
+		it('a drop is a no-op when the active copy was replaced by a newer load', async () => {
+			const { rm, mockGame } = await loadedRoom(4);
+			const newer = { game: { dispose: sinon.stub() } };
+			(rm as any).active.set(ROOM_ID, newer);
+			const before = await drops();
+			mockGame.dispose.resetHistory();
+
+			await (mockGame.stateStore as { save(id: string, s: unknown): Promise<void> }).save(ROOM_ID, { name: 'Game', options: {} });
+
+			expect((rm as any).active.get(ROOM_ID)).to.equal(newer);
+			expect(newer.game.dispose.called).to.be.false;
+			expect(mockGame.dispose.called).to.be.false;
+			expect(await drops()).to.equal(before);
+		});
+
+		it('flushAll counts a copy dropped by a refused generation save as failed, not flushed', async () => {
+			const { rm, mockGame } = await loadedRoom(4);
+			mockGame.flushState.callsFake(() =>
+				(mockGame.stateStore as { save(id: string, s: unknown): Promise<void> })
+					.save(ROOM_ID, { name: 'Game', options: {} })
+					.then(() => true)
+			);
+			expect(await rm.flushAll(1000)).to.deep.equal({ flushed: 0, failed: 1, timedOut: 0 });
+		});
+
 		it('a reset bumps the generation in the tombstone update', async () => {
 			const { deps } = makeEngineDeps();
 			const db = makeDbStub();
