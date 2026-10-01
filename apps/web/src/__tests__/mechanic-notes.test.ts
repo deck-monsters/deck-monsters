@@ -5,6 +5,7 @@ import {
   mechanicKeyOf,
   mechanicNoteFor,
   mechanicPayloadOf,
+  newestEventIdByKey,
   resetMechanicClaimsForTests,
 } from '../lib/mechanic-notes.js';
 import { RING_EVENTS } from '../../../../packages/engine/src/ring/ring-events.js';
@@ -83,5 +84,24 @@ describe('mechanic notes (roadmap 39 C4)', () => {
     expect(mechanicPayloadOf({ contestant: {}, mechanic: 'ambush' })).toEqual({ mechanic: 'ambush' });
     expect(mechanicPayloadOf(ringEvent('gauntlet'))).toEqual({ ringEvent: { id: 'gauntlet' } });
     expect(mechanicPayloadOf({ damage: 3 })).toBeUndefined();
+  });
+
+  it('an older row of a key claims nothing until the newest row renders (roadmap 39 C4)', () => {
+    const feed = [
+      { id: 'old', payload: { mechanic: 'ambush' } },
+      { id: 'new', payload: { mechanic: 'ambush' } },
+    ];
+    const newest = newestEventIdByKey(feed);
+    expect(newest.get('ambush')).toBe('new');
+
+    // The transient index-0 render draws the old row first.
+    expect(mechanicNoteFor('u1', 'ring', 'old', feed[0]!.payload, newest.get('ambush') === 'old')).toBeUndefined();
+    expect(localStorage.getItem('mechanicsExplained:u1')).toBeNull();
+
+    expect(mechanicNoteFor('u1', 'ring', 'new', feed[1]!.payload, newest.get('ambush') === 'new')).toBe(
+      MECHANIC_NOTES.ambush,
+    );
+    // A row that owns the claim keeps its note on re-render even if a newer row arrives.
+    expect(mechanicNoteFor('u1', 'ring', 'new', feed[1]!.payload, false)).toBe(MECHANIC_NOTES.ambush);
   });
 });

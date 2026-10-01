@@ -14,7 +14,7 @@ import { Virtuoso } from 'react-virtuoso';
 import type { VirtuosoHandle } from 'react-virtuoso';
 import type { GameEvent } from '@deck-monsters/server/types';
 import { trpc } from '../lib/trpc.js';
-import { mechanicNoteFor } from '../lib/mechanic-notes.js';
+import { mechanicKeyOf, mechanicNoteFor, newestEventIdByKey } from '../lib/mechanic-notes.js';
 import { useRingFeedListener, type TrackedRingFeedEvent } from '../hooks/useRingFeed.js';
 import { useRingKeyTimestamps } from '../hooks/useRingKeyTimestamps.js';
 import { usePixelMonsters } from '../hooks/usePixelMonsters.js';
@@ -173,6 +173,9 @@ export default function RingPane({
   const { pixelMonstersEnabled: pixelArtEnabled } = usePixelMonsters();
   const PixelSprites = useMemo(() => lazy(pixelSpritesLoader), [pixelSpritesLoader]);
   const [events, setEvents] = useState<GameEvent[]>([]);
+  // Only the newest tagged row per mechanic may claim its note: the list mounts at index 0
+  // and snaps to LAST a frame later, so older rows render transiently (see mechanicNoteFor).
+  const newestMechanicRows = useMemo(() => newestEventIdByKey(events), [events]);
   // Virtuoso applies `heightEstimates` only while its size tree is empty, and the empty
   // placeholder is enough to fill that tree. Mounting the list before history arrives
   // therefore drops the guesses, and scrolling up measures card boxes against a narration
@@ -624,7 +627,13 @@ export default function RingPane({
           // Wait for the handshake's user id: the explained set is per player, and a note
           // claimed under no id would be written to a key no later session reads.
           const mechanicNote = myUserId
-            ? mechanicNoteFor(myUserId, 'ring', event.id, event.payload)
+            ? mechanicNoteFor(
+                myUserId,
+                'ring',
+                event.id,
+                event.payload,
+                newestMechanicRows.get(mechanicKeyOf(event.payload) ?? '') === event.id,
+              )
             : undefined;
           return (
             <li

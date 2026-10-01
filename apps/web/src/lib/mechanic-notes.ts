@@ -93,6 +93,7 @@ export function mechanicNoteFor(
   surface: MechanicSurface,
   eventId: string,
   payload: unknown,
+  mayClaim = true,
 ): string | undefined {
   const key = mechanicKeyOf(payload);
   if (!key) return undefined;
@@ -103,12 +104,28 @@ export function mechanicNoteFor(
   const claimed = playerClaims.get(key);
   if (claimed !== undefined) return claimed === owner ? MECHANIC_NOTES[key] : undefined;
 
+  // Only the newest row for a key may claim. The feeds mount their list at index 0 and
+  // snap to the last row a frame later, so old rows are drawn transiently; if they could
+  // claim, they would persist the key as explained before the player ever saw a note.
+  if (!mayClaim) return undefined;
   const explained = readExplained(userId);
   if (explained.has(key)) return undefined;
   playerClaims.set(key, owner);
   explained.add(key);
   writeExplained(userId, explained);
   return MECHANIC_NOTES[key];
+}
+
+/** For each mechanic key in a feed, the id of its newest row (the only one allowed to claim). */
+export function newestEventIdByKey(
+  events: ReadonlyArray<{ id?: string; payload?: unknown }>,
+): Map<string, string> {
+  const newest = new Map<string, string>();
+  for (const event of events) {
+    const key = mechanicKeyOf(event.payload);
+    if (key && event.id) newest.set(key, event.id);
+  }
+  return newest;
 }
 
 /** Test seam: forget this session's claims (storage is the test's to clear). */

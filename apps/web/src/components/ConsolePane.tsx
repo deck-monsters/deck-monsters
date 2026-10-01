@@ -19,7 +19,7 @@ import {
   type FightHighlight,
 } from '../utils/fight-highlights.js';
 import FeedList from './FeedList.js';
-import { mechanicNoteFor, mechanicPayloadOf } from '../lib/mechanic-notes.js';
+import { mechanicKeyOf, mechanicNoteFor, mechanicPayloadOf, newestEventIdByKey } from '../lib/mechanic-notes.js';
 import { mapConsoleHistoryEvent } from '../utils/console-history-event-map.js';
 import { AT_BOTTOM_THRESHOLD_PX, useFeedAutoScroll } from '../hooks/useFeedAutoScroll.js';
 
@@ -132,6 +132,8 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
   const { registerInsertFn } = useCommandInsert();
 
   const [consoleEvents, setConsoleEvents] = useState<ConsoleEvent[]>([]);
+  // Only the newest tagged row per mechanic may claim its note (see mechanicNoteFor).
+  const newestMechanicRows = useMemo(() => newestEventIdByKey(consoleEvents), [consoleEvents]);
   // Per-attacker damage baseline for the "big hit" highlight. A ref, not state: it feeds
   // a classification decision and must never itself trigger a render.
   const damageHistoryRef = useRef(createDamageHistory());
@@ -842,7 +844,13 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
             );
           }
           // No user id yet: claim nothing, or the Ring's note would be suppressed for the session.
-          const mechanicNote = user?.id ? mechanicNoteFor(user.id, 'console', ev.id, ev.payload) : undefined;
+          const mechanicNote = user?.id ? mechanicNoteFor(
+                user.id,
+                'console',
+                ev.id,
+                ev.payload,
+                newestMechanicRows.get(mechanicKeyOf(ev.payload) ?? '') === ev.id,
+              ) : undefined;
           const noteLine = mechanicNote ? <div className="mechanic-note">ⓘ {mechanicNote}</div> : null;
           if (ev.type === 'highlight' && ev.highlight) {
             return (
