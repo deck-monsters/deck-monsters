@@ -140,7 +140,7 @@ function joinNames(names: string[]): string {
  */
 export type DmPreviewText = { lead: string; name: string | null; tail: string };
 
-// DRAFT(41): "are" for several names; the plan's text only has the single-name form.
+// "is" for one other name, "are" for several (accepted by the orchestrator).
 export function dmPreviewText(target: DmTarget): DmPreviewText | null {
   if (target.kind === 'none') return null;
   if (target.kind === 'usage') return { lead: DM_TEXT.usage, name: null, tail: '' };

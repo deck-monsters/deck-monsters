@@ -5028,6 +5028,25 @@ either holds something. `router.ts`, in the `ringFeed` loop, with a comment.
 
 **Status**: Fixed.
 
+### 214. A boss entered the ring as "Error (erin, Kind/good)" — FIXED
+
+Found by Cursor's live chat check (roadmap 41a), in a local room: the boss's name and its win
+line read `Error (erin, Kind/good)`.
+
+Root cause: monster names come from the `fantasy-names` package, and two of its lists are not
+clean. The Dothraki list, used for Gladiators, returns a dictionary entry: the word plus its
+gloss, for example `Aggo (Aggendat, To rip something)`. The female Lizardmen list, used for
+Basilisks, sometimes splices in a literal `null` (`nullauihtza`). `chooseName` used whatever
+came back. Players name their own monsters, so the generated names reach players mostly as
+boss names and suggestions. A read-only check found no saved monster in production with
+such a name.
+
+**Fix**: `chooseName` (`helpers/names.ts`) keeps only the word before a parenthesis, and
+draws again (at most 25 times) when a name is empty or contains `null` or `undefined`. A
+test draws 300 names of every type and gender and finds none dirty.
+
+**Status**: Fixed.
+
 ## Closed without a fix
 
 These were open investigations the owner closed on 2026-09-28. Reopen with new evidence.

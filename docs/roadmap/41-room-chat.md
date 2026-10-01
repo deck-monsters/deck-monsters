@@ -8,7 +8,7 @@ tags: [roadmap, chat, web, server, social]
 ---
 # 41 — Room chat
 
-**Status:** In progress (2026-10-01): M1–M4 built and reviewed. Cursor's live check is recorded in [chat-check](../reference/chat-check.md) (all 17 items passed; no new player-facing text). The PR is still open.
+**Status:** In progress (2026-10-01): M1–M4 built and reviewed. Cursor's live check is recorded in [chat-check](../reference/chat-check.md) (all 17 items passed; no new player-facing text). From its notes: `m …` is no longer claimed by the engine's chat fallback, so it stays an answer to an open question, and bug 214 (generated names with a dictionary gloss or a stray `null`) is fixed. In PR #420.
 
 ## Why
 

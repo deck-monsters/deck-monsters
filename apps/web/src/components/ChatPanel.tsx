@@ -15,7 +15,6 @@ interface ChatPanelProps {
 // How close to the bottom still counts as "at the bottom" (sub-pixel rounding, momentum).
 const BOTTOM_SLOP_PX = 24;
 
-// DRAFT(41): the message box's accessible name is not in the plan's text.
 const INPUT_LABEL = 'Your message';
 
 function localDayKey(d: Date): string {

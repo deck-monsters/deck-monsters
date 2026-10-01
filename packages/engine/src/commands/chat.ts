@@ -7,7 +7,11 @@
  */
 export const CHAT_FALLBACK_TEXT = "Room chat is in the web app's Chat tab. Here on Discord, talk in the channel.";
 
-const CHAT_REGEX = /^(?:(?:msg|message|m)|dm)(?:\s+.*)?$/i;
+// Not `m`: the web's open-question routing asks the real dispatcher whether a line is a
+// command, and a handler that claimed `m …` made an answer like "m Jones" read as one ("is a
+// command, not a card"), against the rule that `m` stays an answer while a question is open
+// (Cursor's live check, 41a). The server still catches `m …` as chat outside questions.
+const CHAT_REGEX = /^(?:msg|message|dm)(?:\s+.*)?$/i;
 
 function chatAction({ channel }: any): Promise<unknown> {
 	return channel({ announce: CHAT_FALLBACK_TEXT });

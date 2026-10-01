@@ -247,8 +247,8 @@ describe('chat commands without a chat connector', () => {
 		return out;
 	};
 
-	it('msg, message, m and dm each get the fallback line', async () => {
-		for (const command of ['msg hello', 'message hello there', 'm hi', 'MSG Hi', 'dm Ada good luck', 'dm', 'msg']) {
+	it('msg, message and dm each get the fallback line', async () => {
+		for (const command of ['msg hello', 'message hello there', 'MSG Hi', 'dm Ada good luck', 'dm', 'msg']) {
 			expect(await ask(command), command).to.deep.equal([
 				"Room chat is in the web app's Chat tab. Here on Discord, talk in the channel.",
 			]);
@@ -256,7 +256,9 @@ describe('chat commands without a chat connector', () => {
 	});
 
 	it('does not swallow words that merely start with the same letters', () => {
-		for (const command of ['monsters', 'message-board', 'dmx', 'mm hi', 'dismiss Fluffy', 'mmsg hi']) {
+		// `m …` is not claimed either: while a question is open it must stay an answer ("m Jones"), and
+		// the web's question routing asks this dispatcher whether a line is a command (41a).
+		for (const command of ['monsters', 'message-board', 'dmx', 'mm hi', 'dismiss Fluffy', 'mmsg hi', 'm Jones', 'm']) {
 			expect(chatHandler.matcher.test(command), command).to.equal(false);
 		}
 	});
