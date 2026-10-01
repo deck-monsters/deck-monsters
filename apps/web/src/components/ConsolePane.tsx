@@ -4,6 +4,8 @@ import type { VirtuosoHandle } from 'react-virtuoso';
 
 import { trpc } from '../lib/trpc.js';
 import { useAuth } from '../lib/auth-context.js';
+import { useGuidedStart } from '../hooks/useGuidedStart.js';
+import GuidedStartBox from './GuidedStartBox.js';
 import { useRingFeedListener, type TrackedRingFeedEvent } from '../hooks/useRingFeed.js';
 import { useCommandInsert } from '../lib/command-insert-context.js';
 import { useCommandAutocomplete } from '../hooks/useCommandAutocomplete.js';
@@ -150,8 +152,6 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
   const [isAtBottom, setIsAtBottom] = useState(true);
   const [quickActions, setQuickActions] = useState<QuickAction[]>([]);
   const [suggestionIndex, setSuggestionIndex] = useState(-1);
-  const [ftuxComplete, setFtuxComplete] = useState(false);
-  const [hasFoughtFirstFight, setHasFoughtFirstFight] = useState(false);
 
   // The prompt timeout/cancel handlers live in a subscription callback that closes over
   // the render in which it was created, so reading `activePromptId` there went stale and
@@ -166,18 +166,6 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
   const historyApplied = useRef(false);
   const reconnectNoticeShownRef = useRef(false);
   const autoScroll = useFeedAutoScroll(virtuosoRef);
-  const ftuxStorageKey = useMemo(
-    () => (user?.id ? `ftuxComplete:${user.id}` : 'ftuxComplete'),
-    [user?.id]
-  );
-
-  useEffect(() => {
-    if (typeof localStorage === 'undefined') return;
-    if (localStorage.getItem(ftuxStorageKey) === 'true') {
-      setFtuxComplete(true);
-    }
-  }, [ftuxStorageKey]);
-
   // Register command-insert function so external callers (CommandReference, etc.) can populate the input
   useEffect(() => {
     // The unregister matters: without it a dead console's setter stays registered and
@@ -263,54 +251,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
       monsterItems,
     }
   );
-  const hasMonsters = monsterRows.length > 0;
-  const hasMonsterInRing = monsterRows.some((m) => m.inRing);
-  const hasDeadMonster = monsterRows.some((m) => m.dead);
-  const hasBattleExperiencedMonsters = monsterRows.some((m) => m.battlesTotal > 0);
-  const hasRingOutcomeHistory = useMemo(
-    () => (history ?? []).some((ev) => MONSTER_REFRESH_EVENT_TYPES.has(ev.type)),
-    [history]
-  );
-  const isEstablishedRoomState = hasBattleExperiencedMonsters || hasRingOutcomeHistory || monsterRows.length > 1;
-
-  useEffect(() => {
-    if (ftuxComplete || !isEstablishedRoomState || typeof localStorage === 'undefined') return;
-    setFtuxComplete(true);
-    localStorage.setItem(ftuxStorageKey, 'true');
-  }, [ftuxComplete, ftuxStorageKey, isEstablishedRoomState]);
-
-  type FtuxPhase = 'spawn' | 'equip_send' | 'waiting' | 'post_fight' | 'hidden';
-  const ftuxPhase = useMemo((): FtuxPhase => {
-    if (ftuxComplete) return 'hidden';
-    if (!hasMonsters) return 'spawn';
-    if (hasFoughtFirstFight && !hasDeadMonster) return 'hidden';
-    if (hasFoughtFirstFight && hasDeadMonster) return 'post_fight';
-    if (hasMonsterInRing) return 'waiting';
-    return 'equip_send';
-  }, [ftuxComplete, hasMonsters, hasMonsterInRing, hasFoughtFirstFight, hasDeadMonster]);
-
-  // Monster names used by FTUX chips — pick first available in each category.
-  const ftuxSendableName = sendableMonsterNames[0] ?? monsterNames.find((n) => !deadMonsterNames.includes(n)) ?? '';
-  const ftuxInRingName = monsterRows.find((m) => m.inRing)?.name ?? '';
-  const ftuxDeadName = deadMonsterNames[0] ?? '';
-  const ftuxAction = useMemo((): { label: string; command: string } | null => {
-    switch (ftuxPhase) {
-      case 'spawn':
-        return { label: 'train a monster', command: 'train a monster' };
-      case 'equip_send':
-        return ftuxSendableName
-          ? { label: `equip ${ftuxSendableName}`, command: `equip ${ftuxSendableName}` }
-          : { label: 'look at monsters', command: 'look at monsters' };
-      case 'waiting':
-        return { label: 'look at ring', command: 'look at ring' };
-      case 'post_fight':
-        return ftuxDeadName
-          ? { label: `revive ${ftuxDeadName}`, command: `revive ${ftuxDeadName}` }
-          : { label: 'look at monsters', command: 'look at monsters' };
-      default:
-        return null;
-    }
-  }, [ftuxDeadName, ftuxPhase, ftuxSendableName]);
+  const guide = useGuidedStart(roomId);
 
   const sendCommand = trpc.game.command.useMutation();
   const respondToPrompt = trpc.game.respondToPrompt.useMutation();
@@ -441,7 +382,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
 
     if (MONSTER_REFRESH_EVENT_TYPES.has(event.type)) {
       void refetchMyMonsters();
-      setHasFoughtFirstFight(true);
+      void refetchMyInventory();
     }
 
     const payload = event.payload as Record<string, unknown>;
@@ -539,7 +480,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
       const { actions } = event.payload as { actions: QuickAction[] };
       setQuickActions(actions ?? []);
     }
-  }, [refetchMyMonsters, user?.id]);
+  }, [refetchMyMonsters, refetchMyInventory, user?.id]);
 
   const { reconnecting, seedCursor } = useRingFeedListener(onLiveEvent);
 
@@ -799,13 +740,6 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
     void handleSubmitCommand(command);
   }
 
-  function dismissFtux() {
-    setFtuxComplete(true);
-    if (typeof localStorage !== 'undefined') {
-      localStorage.setItem(ftuxStorageKey, 'true');
-    }
-  }
-
   const placeholder = activePromptId
     ? 'Type your answer or click a choice above…'
     : inputLocked
@@ -961,64 +895,8 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
         </nav>
       )}
 
-      {!activePromptId && ftuxPhase !== 'hidden' && (
-        <section
-          className="ftux-guide"
-          aria-label="Getting started guide"
-        >
-          <button
-            onClick={dismissFtux}
-            aria-label="Dismiss guide"
-            title="Dismiss guide"
-            style={{
-              position: 'absolute',
-              top: 0,
-              right: 0,
-              background: 'transparent',
-              border: 'none',
-              color: 'var(--color-fg-dim)',
-              cursor: 'pointer',
-              fontSize: '0.75rem',
-              padding: '0 0.25rem',
-              lineHeight: 1,
-            }}
-          >
-            ✕
-          </button>
-          <p className="ftux-guide-copy">
-            {ftuxPhase === 'spawn' && 'Welcome, Beastmaster. Train your first monster to begin your journey.'}
-            {ftuxPhase === 'equip_send' && `Outfit ${ftuxSendableName} with cards, then send them to the ring.`}
-            {ftuxPhase === 'waiting' && `${ftuxInRingName} is in the ring. Fights begin once there are 2 or more monsters.`}
-            {ftuxPhase === 'post_fight' && `${ftuxDeadName} has fallen. Revive them to fight again.`}
-          </p>
-          {ftuxAction && (
-            <div className="ftux-guide-actions">
-              <button title={`Run: ${ftuxAction.command}`} className="quick-action-chip" onClick={() => handleQuickAction(ftuxAction.command)}>
-                {ftuxAction.label}
-              </button>
-            </div>
-          )}
-          {ftuxPhase === 'equip_send' && (
-            <p className="ftux-guide-hint">
-              Once equipped, run <code>send {ftuxSendableName || '[monster]'} to the ring</code>.
-            </p>
-          )}
-          {ftuxPhase === 'post_fight' && (
-            <p className="ftux-guide-hint">
-              Dead monsters can still be inspected with <code>look at monsters</code>.
-            </p>
-          )}
-          {ftuxPhase === 'waiting' && (
-            <p className="ftux-guide-hint">
-              Add another monster to start fights faster.
-            </p>
-          )}
-          {ftuxPhase === 'spawn' && (
-            <p className="ftux-guide-hint">
-              Need help first? Try <code>look at player handbook</code>.
-            </p>
-          )}
-        </section>
+      {!activePromptId && guide.phase !== 'hidden' && (
+        <GuidedStartBox surface="console" {...guide} onRun={handleQuickAction} />
       )}
 
       {/*

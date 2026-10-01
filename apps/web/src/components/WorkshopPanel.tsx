@@ -5,6 +5,8 @@ import ItemsPanel from './ItemsPanel.js';
 import ShopPanel, { type SellableGroup, type SellSelection, type ShopStockItem } from './ShopPanel.js';
 import MonsterWorkshopPanel from './MonsterWorkshopPanel.js';
 import type { WorkshopCardLocation } from './CardSlot.js';
+import GuidedStartBox from './GuidedStartBox.js';
+import { useGuidedStart } from '../hooks/useGuidedStart.js';
 import { useDeckWorkshop } from '../hooks/useDeckWorkshop.js';
 import { RingFeedContext, type TrackedRingFeedEvent } from '../hooks/useRingFeed.js';
 import { cardRefusalReason, cardRefusalSentence, equipResultMessage } from '../lib/cardRefusal.js';
@@ -79,6 +81,7 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
    * Compared against `false` explicitly: undefined means the inventory has not loaded yet.
    */
   const needsCharacter = hasCharacter === false;
+  const guide = useGuidedStart(roomId);
 
   // Places at the player's side. Absent while the inventory loads (and in older test
   // doubles), in which case no line is shown rather than a wrong count.
@@ -671,6 +674,10 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
 		</div>
 	  )}
 	  {busy && !consoleFlowActive && <div className="workshop-banner">Applying changes…</div>}
+      {/* Same guide as the Console. Not on `spawn`: the first-run form already covers training. */}
+      {!consoleFlowActive && guide.phase !== 'hidden' && guide.phase !== 'spawn' && (
+        <GuidedStartBox surface="workshop" {...guide} />
+      )}
       {showSpawn && (
         <form className="workshop-spawn-form" onSubmit={(event) => void handleSpawn(event)}>
           {needsCharacter && (
