@@ -122,6 +122,8 @@ implementers, one independent review each, the orchestrator writes every player-
   which it has explained. Discord players see the narration without the note.
 - **Never block play:** no modal, no forced tour; every note can be ignored.
 
+**Live check:** Cursor's checklist and paste-whole prompt are in [39c](39c-cursor-batch3-check.md); results go to `docs/reference/help-check-batch3.md`.
+
 | # | Task | Status |
 |---|---|---|
 | C1 | **Command help** (task 7, commands): `help <word>`; the full list says it exists; a test that every catalogue entry (its example, or the command itself) reaches a real handler, and that every entry with a `[name]` has an example | Done: `help <word>` with examples; tests that every catalogue entry reaches a handler and every `[name]` has an example. Found and fixed on the way: a bare `look at <name>` matched no handler (bug 211); Discord `/status` and `/monsters` sent text no handler matched (bug 212); the item examples named items that don't exist (now Potion of Healing). Review: two rounds (e05df511, f442a436, 4adf98bd) |
