@@ -9,6 +9,8 @@
  * compiled dist/ output.
  */
 export { COMMAND_CATALOG, formatCommandList } from './commands/catalog.js';
+// Pure constant: the guided start's "You can summon N bosses a day." reads it so the copy cannot drift from the quota.
+export { BOSS_SUMMON_LIMIT } from './helpers/boss-summons.js';
 export type { CommandEntry, CommandCategory } from './commands/catalog.js';
 export {
 	CARD_REFUSAL_REASON_TEXT,

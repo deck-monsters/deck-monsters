@@ -68,6 +68,29 @@ closes; the guide is only unrendered, not dismissed, and a `quick_actions` event
 arrives meanwhile is kept. The "A command is waiting for your answer. Command suggestions
 are paused." banner still shows when the prompt is scrolled out of view, and is now true.
 
+## The getting-started guide
+
+One hook, `hooks/useGuidedStart.ts`, decides the step; `components/GuidedStartBox.tsx`
+renders it in the Console (command chip and hint, hidden while a prompt is open) and in the
+Workshop (words only, under the Train row, hidden while a Console flow is running, never on
+`spawn`). Steps, from `myInventory`: `spawn` (no monster), `equip` (a living monster outside
+the ring with fewer cards than slots; the old `equip_send` step suggested sending a monster
+whose deck was not full and the send was refused), `send` (full deck, none in the ring),
+`waiting` (a monster in the ring, no fight yet; says a boss can be summoned, with
+`BOSS_SUMMON_LIMIT` from the engine), `fallen`, `change_card`, `hidden`. `fallen` wins over
+`change_card`. `change_card` ends when the deck fingerprint (each monster's cards, order
+ignored) differs from the one taken as the step began, which is how the web sees an equip,
+unequip or move however it was made (Console or Workshop); in-memory baseline, so a reload
+re-takes it.
+
+Dismissal and completion are one per-user flag in local storage, `ftuxComplete:${userId}`
+(plain `ftuxComplete` with no user), so dismissing in either surface hides both. Whether the
+player is *established* (a monster that has fought, past ring outcomes in console history, or
+more than one monster) is decided **once**, from the first load of inventory and history,
+and a new player is marked `ftuxStarted:${userId}`. Testing it on every change ended the guide
+the moment a new player's first fight made `battles > 0`, so no step could follow the first
+fight. The guide stays hidden until that first load settles.
+
 ## Help and guides
 
 `HelpPanel` (`components/HelpPanel.tsx`) is the Help page; `HelpView` hosts it full page at `/room/:roomId/help` and, outside a room, `/help`. The header menu (desktop nav and

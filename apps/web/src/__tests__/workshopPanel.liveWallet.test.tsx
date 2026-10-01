@@ -41,6 +41,11 @@ vi.mock('../lib/trpc.js', () => ({
   },
 }));
 
+// The guided-start box has its own tests (guidedStart.test.tsx); it needs auth, which these do not set up.
+vi.mock('../hooks/useGuidedStart.js', () => ({
+  useGuidedStart: () => ({ phase: 'hidden', name: '', slots: 0, dismiss: () => undefined }),
+}));
+
 import WorkshopPanel from '../components/WorkshopPanel.js';
 import { RingFeedProvider } from '../hooks/useRingFeed.js';
 

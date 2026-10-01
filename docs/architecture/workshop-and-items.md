@@ -110,6 +110,16 @@ the summary, which a player read as the game moving cards on its own (10b #195).
 all answers in the form first, or use the interactive per-user command flow described in
 [engine concurrency and timing](engine-concurrency-and-timing.md).
 
+## The guided start in the Workshop
+
+After the first-run form, the Workshop shows the same getting-started box as the Console,
+under the Train row and above the monsters, for every step except `spawn` (the form already
+covers training). Both surfaces read `hooks/useGuidedStart.ts`; the box is
+`components/GuidedStartBox.tsx` (the Workshop version has words only, no chips). It is hidden
+while a Console flow is in progress, like the Workshop's other controls. The steps, the
+shared dismissal flag and why "established" is decided once are in
+[web workspace](web-workspace.md#the-getting-started-guide).
+
 ## First-run character creation
 
 Training from the Workshop must also work when the member has no room character.
