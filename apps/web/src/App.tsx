@@ -10,6 +10,7 @@ import RoomSettingsView from './views/RoomSettingsView.js';
 import AccountView from './views/AccountView.js';
 import LeaderboardView from './views/LeaderboardView.js';
 import FightLogView from './views/FightLogView.js';
+import ChatView from './views/ChatView.js';
 import WorkshopView from './views/WorkshopView.js';
 const HelpView = lazy(() => import('./views/HelpView.js'));
 import { trpc } from './lib/trpc.js';
@@ -200,6 +201,15 @@ export default function App() {
         element={
           <RequireAuth>
             <LeaderboardView />
+          </RequireAuth>
+        }
+      />
+
+      <Route
+        path="/room/:roomId/chat"
+        element={
+          <RequireAuth>
+            <ChatView />
           </RequireAuth>
         }
       />

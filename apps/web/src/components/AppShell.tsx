@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth-context.js';
 import { useTheme } from '../hooks/useTheme.js';
 import { useCommandInsert } from '../lib/command-insert-context.js';
+import { surfaceDescription } from './surface-descriptions.js';
 import CommandReference from './CommandReference.js';
 
 interface AppShellProps {
@@ -118,6 +119,16 @@ export default function AppShell({ children, roomName, roomId }: AppShellProps) 
           <Link to="/rooms" className="btn" style={{ fontSize: '0.8rem' }}>
             Rooms
           </Link>
+          {roomId && (
+            <Link
+              to={`/room/${roomId}/chat`}
+              className="btn"
+              style={{ fontSize: '0.8rem' }}
+              title={surfaceDescription('chat')}
+            >
+              Chat
+            </Link>
+          )}
           <Link
             to={roomId ? `/room/${roomId}/leaderboard` : '/leaderboard'}
             className="btn"
@@ -206,6 +217,16 @@ export default function AppShell({ children, roomName, roomId }: AppShellProps) 
             {roomId && (
               <Link to={`/room/${roomId}`} className="btn" onClick={() => setMenuOpen(false)}>
                 The Ring
+              </Link>
+            )}
+            {roomId && (
+              <Link
+                to={`/room/${roomId}/chat`}
+                className="btn"
+                title={surfaceDescription('chat')}
+                onClick={() => setMenuOpen(false)}
+              >
+                Chat
               </Link>
             )}
             <Link

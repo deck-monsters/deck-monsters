@@ -21,6 +21,7 @@ vi.mock('../hooks/useChat.js', () => ({
     send: async () => null,
     members: [],
     subscribeLive: () => () => undefined,
+    loaded: true,
   }),
   ChatProvider: ({ children }: { children: unknown }) => children,
 }));

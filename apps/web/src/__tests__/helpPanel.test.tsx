@@ -64,6 +64,28 @@ describe('AppShell menu', () => {
     for (const link of links) expect(link).toHaveAttribute('href', '/room/room-1/help');
   });
 
+  it('lists Chat with the surface description as its title, in the room only', () => {
+    const { unmount } = render(
+      <MemoryRouter>
+        <AppShell roomId="room-1"><div /></AppShell>
+      </MemoryRouter>,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Open menu' }));
+    const links = screen.getAllByRole('link', { name: 'Chat' });
+    expect(links.length).toBeGreaterThan(1);
+    for (const link of links) {
+      expect(link).toHaveAttribute('href', '/room/room-1/chat');
+      expect(link).toHaveAttribute('title', 'Talk with everyone in this room, or send a message to one player.');
+    }
+    unmount();
+    render(
+      <MemoryRouter>
+        <AppShell><div /></AppShell>
+      </MemoryRouter>,
+    );
+    expect(screen.queryByRole('link', { name: 'Chat' })).toBeNull();
+  });
+
   it('links to /help outside a room', () => {
     render(
       <MemoryRouter>
