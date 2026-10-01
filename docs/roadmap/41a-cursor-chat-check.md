@@ -8,9 +8,10 @@ tags: [roadmap, chat, web, cursor]
 ---
 # 41a — Room chat live check (Cursor)
 
-**Status:** Ready to run (2026-10-01) on `claude/unicorn-monster-cards-cigpmw`. Claude built
-[room chat](41-room-chat.md). Cursor drives a real browser, so it checks chat live and fixes
-small failures. Claude reviews the branch and writes any new player-facing text.
+**Status:** Checked (2026-10-01). Results are in
+[the room chat live check](../reference/chat-check.md). Claude built
+[room chat](41-room-chat.md). Cursor drove a real browser. Claude reviews the branch and
+writes any new player-facing text. This check drafted none.
 
 ## Rules
 

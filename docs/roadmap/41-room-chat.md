@@ -8,7 +8,7 @@ tags: [roadmap, chat, web, server, social]
 ---
 # 41 — Room chat
 
-**Status:** In progress (2026-10-01): M1–M4 built and reviewed; awaiting Cursor's live check (41a) and the PR.
+**Status:** In progress (2026-10-01): M1–M4 built and reviewed. Cursor's live check is recorded in [chat-check](../reference/chat-check.md) (all 17 items passed; no new player-facing text). The PR is still open.
 
 ## Why
 
