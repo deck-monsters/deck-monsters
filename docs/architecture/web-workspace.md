@@ -20,22 +20,54 @@ defines, in keyboard-shortcut order:
 |---|---|---|
 | `Cmd/Ctrl+1` | Ring | workspace only |
 | `Cmd/Ctrl+2` | Console | workspace only |
-| `Cmd/Ctrl+3` | Workshop | `/room/:roomId/workshop` |
-| `Cmd/Ctrl+4` | Fights | `/room/:roomId/fights` |
-| `Cmd/Ctrl+5` | Leaders | `/room/:roomId/leaderboard` |
+| `Cmd/Ctrl+3` | Chat | `/room/:roomId/chat` |
+| `Cmd/Ctrl+4` | Workshop | `/room/:roomId/workshop` |
+| `Cmd/Ctrl+5` | Fights | `/room/:roomId/fights` |
+| `Cmd/Ctrl+6` | Leaders | `/room/:roomId/leaderboard` |
+
+Shortcuts are registry indexes, so inserting a surface renumbers the ones after it (Chat took 3
+in roadmap 41; Workshop, Fights and Leaders moved up one). Nothing in the app's help text names
+a shortcut number.
+
+### The Chat surface (roadmap 41)
+
+`ChatPanel` renders the room's chat from `useChat()` (`hooks/useChat.ts`); it never calls
+`chat.*` itself. `Terminal` mounts `RingFeedProvider` and `ChatProvider` around the tab bar
+and every pane, so the Console, the Chat tab and the unread badge share one state. The
+standalone route (`views/ChatView.tsx`) brings its own providers because it never mounts
+`Terminal`. Row building (time dividers at a 30-minute gap or a new local day, fight dividers
+when `fightNumber` changes, the new-since marker) is the pure `utils/chat-rows.ts`.
+
+- **Mark-read rule.** The panel calls `markRead(newest id)` only when it is the visible
+  surface (`isActive`), the document is visible, and the list is scrolled to the bottom. A
+  panel left mounted behind another tab, or in a background browser tab, never marks messages
+  seen. A message you send scrolls you to the bottom.
+- **New-since marker.** It uses the read position captured when the panel became visible,
+  not the live one (which moves as you read). It waits for the first history to load, since
+  `lastReadId` is 0 until then. It goes before the first later message from someone else, and
+  is omitted when nothing was ever read.
+- **Tab badge hook.** A surface may define `badge(state) => number` (and `badgeNoun`) in the
+  registry; `state` is `{ chatUnread }`, read by `TerminalTabs` (the tab bar, a component of
+  its own so it can call `useChat`). A positive count draws `.terminal-tab-badge` (capped
+  `99+`, `aria-hidden`) and sets the tab's `aria-label` to `Chat, {n} unread`. `useChat`
+  already excludes your own messages from `unread`. The badge exists only in the tabbed
+  layout; side by side there is no tab bar.
 
 ## One name per place
 
-The tab names win (roadmap 39 B4): **The Ring, Console, Workshop, Fights, Leaders**. The
+The tab names win (roadmap 39 B4): **The Ring, Console, Chat, Workshop, Fights, Leaders**. The
 tabs, pane selectors, ☰ menu, desktop nav links, panel headings and aria-labels use them;
 the routes keep their old paths (`/fights`, `/leaderboard`) so links do not break. The
 menu's former "Terminal" link goes to `/room/:roomId`, which renders the workspace whose
 default is The Ring, so it is labelled "The Ring". "Help and guides" and the command
 reference `?` keep their names.
 
-On a phone (`max-width: 480px`) the five tabs share the bar's width (`flex: 1 1 0`,
-0.25rem side padding, 0.8rem font, `min-height: 44px`) instead of scrolling it. Covered by
-`tab-names-css.test.ts`; widths at 390px still need a live check.
+On a phone (`max-width: 480px`) the six tabs share the bar's width instead of scrolling it:
+`flex: 1 1 auto` (each tab starts from its label's width; equal shares starved "Workshop" once
+there were six), 0.15rem side padding, 0.75rem font, `min-height: 44px`. Measured in Chromium:
+at 390px the tabs are 75, 67, 46, 75, 60 and 67 px wide with no scrolling (360px and 320px also
+fit). The unread badge is positioned over the tab's corner so it adds no width. Covered by
+`tab-names-css.test.ts`.
 
 Fights and Leaders also read `game.ringState` (via `useFightOnRing`) so their empty states
 say "A fight is on in the ring" instead of claiming nothing has happened.

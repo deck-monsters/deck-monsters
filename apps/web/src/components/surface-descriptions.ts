@@ -6,11 +6,12 @@
  * `surfaces.ts` reads this table for each `SurfaceDefinition.description` and re-exports
  * `surfaceDescription`, so the tab title and the panel subtitle are the same text.
  */
-export type DescribedSurfaceId = 'ring' | 'console' | 'workshop' | 'fights' | 'leaderboard';
+export type DescribedSurfaceId = 'ring' | 'console' | 'chat' | 'workshop' | 'fights' | 'leaderboard';
 
 export const SURFACE_DESCRIPTIONS: Record<DescribedSurfaceId, string> = {
   ring: 'Watch the fight as it happens: who is in, whose turn it is, and every card played.',
   console: "Type commands and answer the game's questions. Type help to see them all.",
+  chat: 'Talk with everyone in this room, or send a message to one player.',
   workshop: 'Train monsters, choose their cards, and spend your coins.',
   fights: 'Every fight in this room, with its play-by-play.',
   leaderboard: 'Who is winning, in this room and across every room.',
