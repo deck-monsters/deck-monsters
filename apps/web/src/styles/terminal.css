@@ -558,16 +558,18 @@
 .terminal-tab { position: relative; }
 .terminal-tab-badge {
   position: absolute;
-  top: 1px;
-  right: 0;
-  min-width: 1rem;
+  top: 0;
+  right: -3px;
+  min-width: 0.85rem;
   padding: 0 0.2rem;
   border-radius: 999px;
   background: var(--color-accent);
   color: var(--color-bg);
-  font-size: 0.6rem;
+  /* 13px tall: it ends above the label's line box (which starts 14px down in the 44px tab),
+     so it sits in the corner and never covers a letter. */
+  font-size: 0.55rem;
   font-weight: 700;
-  line-height: 1rem;
+  line-height: 0.8rem;
   text-align: center;
   pointer-events: none;
 }
@@ -1121,7 +1123,7 @@
    the Console's command dock does. */
 .chat-panel { display: flex; flex-direction: column; overflow: hidden; padding-bottom: 0; }
 .chat-list {
-  flex: 1;
+  flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -1132,7 +1134,6 @@
 .chat-message { padding: 0.15rem 0; overflow-wrap: anywhere; line-height: var(--line-height, 1.5); }
 .chat-sender { color: var(--color-fg-bright); margin-right: 0.4rem; }
 .chat-sender::after { content: ':'; }
-.chat-dm-tag { color: var(--color-accent); font-size: 0.8rem; margin-right: 0.4rem; }
 .chat-message-dm .chat-text { font-style: italic; }
 .chat-divider {
   display: flex;
@@ -1171,10 +1172,11 @@
 .chat-input { flex: 1; caret-color: var(--color-accent); }
 .chat-input:focus-visible, .chat-composer-to select:focus-visible { outline: 2px solid var(--color-accent); outline-offset: -1px; }
 .chat-composer-row .btn { min-height: 44px; justify-content: center; }
-.chat-to-preview { margin: 0 0 0.4rem; font-size: 0.85rem; color: var(--color-fg-dim); }
-/* The player a message goes to, in the Chat composer and the Console's DM preview (M2 reuses
-   this class), so the person can see who will get it before sending. */
+/* The player a message goes to: the Chat composer's To picker once a player is chosen, and
+   the Console's DM preview (M2 reuses this class), so the person can see who will get it
+   before sending. */
 .dm-preview-name { color: var(--color-accent); font-weight: 700; }
+.chat-composer-to select.chat-to-picked { border-color: var(--color-accent); }
 .chat-refusal { margin: 0.4rem 0 0; color: var(--color-error); font-size: 0.85rem; }
 
 /* Prevent iOS Safari auto-zoom on focus (threshold is 16px). */

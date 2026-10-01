@@ -39,19 +39,32 @@ standalone route (`views/ChatView.tsx`) brings its own providers because it neve
 when `fightNumber` changes, the new-since marker) is the pure `utils/chat-rows.ts`.
 
 - **Mark-read rule.** The panel calls `markRead(newest id)` only when it is the visible
-  surface (`isActive`), the document is visible, and the list is scrolled to the bottom. A
-  panel left mounted behind another tab, or in a background browser tab, never marks messages
-  seen. A message you send scrolls you to the bottom.
-- **New-since marker.** It uses the read position captured when the panel became visible,
-  not the live one (which moves as you read). It waits for the first history to load, since
-  `lastReadId` is 0 until then. It goes before the first later message from someone else, and
+  surface (`isActive`), the document is visible, and the list is scrolled to the bottom, and
+  never before the opening scroll has settled. A panel left mounted behind another tab, or in
+  a background browser tab, never marks messages seen. A message you send scrolls you to the
+  bottom. While scrolled up, new messages show a `↓ New messages` button
+  (`jump-to-bottom`, title `Jump to the newest messages`).
+- **Opening.** The new-since position is captured when the panel becomes visible and
+  `useChat().loaded` is true (a live frame can arrive before history, when `lastReadId` is
+  still 0), and again each time it returns to screen. The list then scrolls to the
+  `New since you were last here` marker, not the bottom, and the player marks it read by
+  reaching the bottom. The marker goes before the first later message from someone else, and
   is omitted when nothing was ever read.
+- **Midnight.** `ChatPanel` re-renders its dividers when the local date changes, so
+  `Today` / `Yesterday` never go stale.
+- **Composer.** The input clears when a send starts (a ref guards a second Enter); a refusal
+  gives the text back unless the player typed something newer, and editing clears the
+  refusal. A chosen recipient highlights the To picker itself (`dm-preview-name`, shared with
+  the Console's DM preview) rather than adding a line. DM rows read like the Console:
+  `✉️ Ben to you: …`, `✉️ You to Ben: …`. `ChatView` keys its providers and panel by room.
 - **Tab badge hook.** A surface may define `badge(state) => number` (and `badgeNoun`) in the
   registry; `state` is `{ chatUnread }`, read by `TerminalTabs` (the tab bar, a component of
   its own so it can call `useChat`). A positive count draws `.terminal-tab-badge` (capped
   `99+`, `aria-hidden`) and sets the tab's `aria-label` to `Chat, {n} unread`. `useChat`
-  already excludes your own messages from `unread`. The badge exists only in the tabbed
-  layout; side by side there is no tab bar.
+  already excludes your own messages from `unread`. The badge sits in the tab's top-right
+  corner, 13px tall so it ends above the label. It exists only in the tabbed layout; side by
+  side `PaneSelector` writes the same count into the option (`Chat · 3 unread`). The ☰ menu and
+  desktop nav also link Chat (title: the surface description).
 
 ## One name per place
 

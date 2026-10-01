@@ -27,9 +27,10 @@ export default function ChatView() {
 
   return (
     <AppShell roomName={room?.name} roomId={roomId}>
-      <RingFeedProvider roomId={roomId}>
+      {/* Keyed by room: the panel's opening marker/scroll state must not carry over from another room. */}
+      <RingFeedProvider key={roomId} roomId={roomId}>
         <ChatProvider roomId={roomId}>
-          <ChatPanel roomId={roomId} />
+          <ChatPanel key={roomId} roomId={roomId} />
         </ChatProvider>
       </RingFeedProvider>
     </AppShell>
