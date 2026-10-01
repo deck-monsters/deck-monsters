@@ -59,8 +59,9 @@ Made by the orchestrator, from the survey of the code:
     and warns when another player's name also fits;
   - quotes force an exact name: `dm "Anthony" Bourdain is too powerful`;
   - the matcher has one home (engine, browser-safe), shared by the server and the preview;
-  - suggestions after `dm ` order players by most recent DM with you, then players in the
-    current fight, then alphabetically.
+  - suggestions after `dm ` list, without repeats: the player you last sent a DM to; the
+    player who last sent you one, if different; players with a monster in the ring; then
+    everyone else alphabetically (owner).
 - **Limits.** A message is at most 500 characters. A player can send at most 5 messages in any
   10 seconds.
 - **Fight stamp.** A message sent while a fight is on records that fight's number, which is
