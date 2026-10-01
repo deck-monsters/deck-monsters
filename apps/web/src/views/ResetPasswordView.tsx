@@ -201,6 +201,7 @@ export default function ResetPasswordView() {
               />
             </div>
             <button
+              title="Make this your new password"
               type="submit"
               className="btn btn-primary"
               style={{ width: '100%', justifyContent: 'center' }}

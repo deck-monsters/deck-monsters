@@ -47,6 +47,18 @@ second implementation for a pane.
 Other routes remain outside the workspace: `/rooms`, `/room/:roomId/settings`, `/account`,
 `/leaderboard`, authentication/reset pages, and invite links.
 
+## Every button and place says what it is for
+
+Every `<button>` carries a `title`: one line saying what it does, shown on hover and read by
+screen readers. A phone never shows a `title`, so on a phone the **visible label** has to
+carry the meaning (an icon-only control is a universal one such as ☰, ✕ or ↓, or it gets
+words: ⟲ became "Unequip all"). Each surface also has a `description` in the registry
+(`surface-descriptions.ts`, re-exported as `surfaceDescription` from `surfaces.ts`; a
+separate file because the panels import it and `surfaces.ts` imports the panels). It is the
+tab's `title` and the subtitle under the panel heading. `button-titles.test.ts` fails, naming
+`file:line`, on any `<button` without a `title=`, so a new button needs its line decided
+(roadmap 39 batch 3).
+
 ## The Console while a prompt is open
 
 While `ConsolePane` has an open prompt (`activePromptId`), it renders neither the
@@ -55,6 +67,42 @@ phone (roadmap 39 B1; the walk found both covering it). They come back when the 
 closes; the guide is only unrendered, not dismissed, and a `quick_actions` event that
 arrives meanwhile is kept. The "A command is waiting for your answer. Command suggestions
 are paused." banner still shows when the prompt is scrolled out of view, and is now true.
+
+## The getting-started guide
+
+One hook, `hooks/useGuidedStart.ts`, decides the step; `components/GuidedStartBox.tsx`
+renders it in the Console (command chip and hint, hidden while a prompt is open) and in the
+Workshop (words only, under the Train row, hidden while a Console flow is running, never on
+`spawn`). Steps, from `myInventory`: `spawn` (no monster), `equip` (a living monster outside
+the ring with fewer cards than slots; the old `equip_send` step suggested sending a monster
+whose deck was not full and the send was refused), `send` (full deck, none in the ring),
+`waiting` (a monster in the ring, no fight yet; says a boss can be summoned, with
+`BOSS_SUMMON_LIMIT` from the engine), `fallen`, `change_card`, `hidden`. `fallen` wins over
+`change_card`. `change_card` ends when the deck fingerprint (each monster's cards, order
+ignored) differs from the one taken as the step began, which is how the web sees an equip,
+unequip or move however it was made (Console or Workshop); in-memory baseline, so a reload
+re-takes it.
+
+Dismissal and completion are one flag per user **and room** in local storage,
+`ftuxComplete:${userId}:${roomId}`, shared by both surfaces, so dismissing in either hides
+both while another room is unaffected. The older per-user `ftuxComplete:${userId}` (and the
+plain `ftuxComplete`) still count as complete in every room, so nobody who dismissed the
+guide before sees it again. Whether the player is *established* (a monster that has fought,
+past ring outcomes in console history, or more than one monster) is decided **once per
+room**, from the first load of inventory and history; a new player is marked
+`ftuxStarted:${userId}:${roomId}`. Testing it on every change ended the guide the moment a
+new player's first fight made `battles > 0`, so no step could follow the first fight. The
+guide stays hidden until that first load settles, and stays hidden if the history query
+fails (a veteran cannot be told from a new player without it).
+
+Details that were reviewed: `waiting` outranks `equip` (a monster already in the ring means
+the player is waiting on a fight, whatever another monster's deck is); every dead monster in
+the inventory is revivable, because a permanently destroyed monster is dropped from the
+character (`Ring.handleLoser`'s `dropMonster`) and so never appears, and `revivesAt` is null
+until a revival is started; "a fight was fought" is sticky for the session, so burying the
+only monster that fought does not rewind the guide; and `change_card` compares only monsters
+present in both the baseline and the current inventory (by name), so training or burying a
+monster is not read as changing a card.
 
 ## Help and guides
 
@@ -77,6 +125,20 @@ its category labels and order.
 Markdown dependency; it emits React elements, never HTML strings). Tables and code blocks
 scroll inside their own focusable `.help-table-region` / `.help-pre` box, never the page.
 Adding Markdown syntax to a generator means checking the renderer handles it.
+
+## First-time mechanic notes
+
+The first time a player sees a ring event, an ambush, bosses turning on each other or a
+boss temperament, one dim `.mechanic-note` line (prefixed `ⓘ `) appears under that line in
+the Ring feed and the Console feed. The engine tags the lines (`payload.mechanic`, or
+`payload.ringEvent.id`); `lib/mechanic-notes.ts` holds the note text, keyed `ring-event:<id>`,
+`ambush`, `boss-rivals`, `boss-temperament`, and a test fails for any ring event without one.
+State is a per-player set in local storage, `mechanicsExplained:${userId}`, shared by both
+feeds. The first row to ask for a key claims it in memory for the session, because the feeds
+are virtualized and a row re-renders: without the claim, showing the note would hide it on
+the next render. The Ring waits for the handshake's user id before claiming. Nothing is
+blocked or delayed; there is no modal. The Console only has the lines it is given (private
+events, highlights and console history), so a public-only line reaches it via history.
 
 ## Two slots and the breakpoint
 

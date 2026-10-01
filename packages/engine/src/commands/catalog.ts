@@ -45,11 +45,11 @@ export const COMMAND_CATALOG: CommandEntry[] = [
 
 	// Items
 	{ command: 'look at items', description: 'View your items', category: 'items' },
-	{ command: 'look at [item name]', description: 'View details about a specific item', category: 'items', example: 'look at Potion' },
+	{ command: 'look at [item name]', description: 'View details about a specific item', category: 'items', example: 'look at Potion of Healing' },
 	{ command: 'use item', description: 'Use one of your items on yourself', category: 'items' },
-	{ command: 'use [item] on [monster]', description: 'Use an item on one of your monsters', category: 'items', example: 'use Potion on Fluffy' },
-	{ command: 'give [item] to [monster]', description: 'Give an item to a monster to carry', category: 'items', example: 'give Healing Potion to Fluffy' },
-	{ command: 'take [item] from [monster]', description: 'Retrieve an item from a monster', category: 'items', example: 'take Healing Potion from Fluffy' },
+	{ command: 'use [item] on [monster]', description: 'Use an item on one of your monsters', category: 'items', example: 'use Potion of Healing on Fluffy' },
+	{ command: 'give [item] to [monster]', description: 'Give an item to a monster to carry', category: 'items', example: 'give Potion of Healing to Fluffy' },
+	{ command: 'take [item] from [monster]', description: 'Retrieve an item from a monster', category: 'items', example: 'take Potion of Healing from Fluffy' },
 
 	// Shop
 	{ command: 'visit the shop', description: 'Browse and buy items from the merchant', category: 'shop' },
@@ -105,5 +105,34 @@ export function formatCommandList(): string {
 		lines.push('');
 	}
 
+	lines.push('Type help and a word to see those commands with an example, like help preset.');
+
 	return lines.join('\n').trim();
+}
+
+/** A command with its `[placeholders]` removed and spaces squeezed, lowercased, for `help <word>`. */
+function searchableText(command: string): string {
+	return command.replace(/\[[^\]]*\]/g, ' ').replace(/\s+/g, ' ').trim().toLowerCase();
+}
+
+/**
+ * `help <word>`: every catalogue entry whose command text (placeholders removed, so
+ * `help monster` does not match every `[monster]`) contains the word(s).
+ */
+export function formatCommandSearch(word: string): string {
+	const typed = word.trim();
+	const needle = typed.replace(/\s+/g, ' ').toLowerCase();
+	const matches = COMMAND_CATALOG.filter((e) => searchableText(e.command).includes(needle));
+
+	if (!needle || matches.length === 0) {
+		return `No command has "${typed}" in it. Type help to see them all.`;
+	}
+
+	const blocks = matches.map((e) => {
+		const lines = [`  ${e.command}`, `    ${e.description}`];
+		if (e.example) lines.push(`    Try: ${e.example}`);
+		return lines.join('\n');
+	});
+
+	return `Commands with "${typed}":\n\n${blocks.join('\n\n')}`;
 }

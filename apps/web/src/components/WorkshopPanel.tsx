@@ -1,9 +1,12 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import { surfaceDescription } from './surface-descriptions.js';
 import InventoryPanel from './InventoryPanel.js';
 import ItemsPanel from './ItemsPanel.js';
 import ShopPanel, { type SellableGroup, type SellSelection, type ShopStockItem } from './ShopPanel.js';
 import MonsterWorkshopPanel from './MonsterWorkshopPanel.js';
 import type { WorkshopCardLocation } from './CardSlot.js';
+import GuidedStartBox from './GuidedStartBox.js';
+import { useGuidedStart } from '../hooks/useGuidedStart.js';
 import { useDeckWorkshop } from '../hooks/useDeckWorkshop.js';
 import { RingFeedContext, type TrackedRingFeedEvent } from '../hooks/useRingFeed.js';
 import { cardRefusalReason, cardRefusalSentence, equipResultMessage } from '../lib/cardRefusal.js';
@@ -78,6 +81,7 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
    * Compared against `false` explicitly: undefined means the inventory has not loaded yet.
    */
   const needsCharacter = hasCharacter === false;
+  const guide = useGuidedStart(roomId);
 
   // Places at the player's side. Absent while the inventory loads (and in older test
   // doubles), in which case no line is shown rather than a wrong count.
@@ -632,7 +636,7 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
       <div className="workshop-header">
         <div>
           <h1>Workshop</h1>
-          <p>Train monsters, choose their cards, and spend your coins.</p>
+          <p>{surfaceDescription('workshop')}</p>
         </div>
         <div className="workshop-header-actions">
           {headerActions}
@@ -649,6 +653,7 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
       <div className="workshop-train-row">
         {trainLine && <p className="workshop-train-line">{trainLine}</p>}
         <button
+          title={showSpawn ? 'Close the form without training' : 'Choose a type, a name and a look for a new monster'}
           className="btn"
           onClick={() => setShowSpawn((shown) => !shown)}
           disabled={!roomId || busy || (trainingFull && !showSpawn)}
@@ -665,10 +670,14 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
 			<strong>Workshop controls are paused by a Console action.</strong>
 			<p>{pendingPrompt ? 'Answer the waiting question in the Console, or cancel it here.' : 'The previous command is still processing. Workshop controls will unlock when it finishes.'}</p>
 		  </div>
-		  {pendingPrompt && <button className="btn" onClick={() => void handleCancelConsoleFlow()}>Cancel Console action</button>}
+		  {pendingPrompt && <button title="Cancel what the Console is asking, so the Workshop can make changes" className="btn" onClick={() => void handleCancelConsoleFlow()}>Cancel Console action</button>}
 		</div>
 	  )}
 	  {busy && !consoleFlowActive && <div className="workshop-banner">Applying changes…</div>}
+      {/* Same guide as the Console. Not on `spawn`: the first-run form already covers training. */}
+      {!consoleFlowActive && guide.phase !== 'hidden' && guide.phase !== 'spawn' && (
+        <GuidedStartBox surface="workshop" {...guide} />
+      )}
       {showSpawn && (
         <form className="workshop-spawn-form" onSubmit={(event) => void handleSpawn(event)}>
           {needsCharacter && (
@@ -685,7 +694,7 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
                   </label>
                 ))}
                 {/* The list is generated per request, so a new one is just a refetch. */}
-                <button type="button" className="btn workshop-inline-btn" onClick={() => void shuffleAvatars()}>Shuffle</button>
+                <button title="Show other icons to choose from" type="button" className="btn workshop-inline-btn" onClick={() => void shuffleAvatars()}>Shuffle</button>
               </fieldset>
             </fieldset>
           )}
@@ -698,14 +707,14 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
           <label>Pronouns<select name="gender" defaultValue="androgynous">{spawnOptions.pronouns.map(({ key, label }) => <option key={key} value={key}>{label}</option>)}</select></label>
           <label>Name<input name="name" required maxLength={40} autoComplete="off" /></label>
           <label>Appearance<input name="color" required maxLength={100} placeholder="gold and black" /></label>
-          <button type="submit" className="btn" disabled={busy}>Train</button>
+          <button title="Train a monster with these choices" type="submit" className="btn" disabled={busy}>Train</button>
         </form>
       )}
       {selectedCards.length > 0 && (
         <div className="workshop-mobile-hint">
           {selectedCards.length} selected: {selectedSummary}. Tap destination slot or inventory drop zone.
           {' '}
-          <button type="button" className="btn workshop-inline-btn" onClick={() => setSelectedCards([])}>
+          <button title="Deselect the cards you picked" type="button" className="btn workshop-inline-btn" onClick={() => setSelectedCards([])}>
             Clear
           </button>
         </div>
@@ -790,6 +799,7 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
         <div className="workshop-monster-dots" role="tablist" aria-label="Monsters">
           {monsters.map((monster, index) => (
             <button
+              title={`Show ${monster.name}`}
               key={monster.name}
               type="button"
               role="tab"

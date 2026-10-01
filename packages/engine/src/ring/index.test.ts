@@ -821,7 +821,11 @@ describe('ring/index.ts', () => {
 				const game = new Game();
 				const ring = game.getRing();
 				const narrations: string[] = [];
-				ring.on('narration', (_className: string, _ring: any, data: any) => narrations.push(data.narration));
+				const tags: unknown[] = [];
+				ring.on('narration', (_className: string, _ring: any, data: any) => {
+					narrations.push(data.narration);
+					if (data.narration === OUTNUMBERED_LINE) tags.push(data.mechanic);
+				});
 				for (let i = 0; i < humans; i++) addPlayer(ring, `user-${i}`);
 				for (let i = 0; i < bosses; i++) ring.spawnBoss({ ignoreQuota: true, deferFightTimer: true });
 				// A boss beyond one per human is an ambush's minion.
@@ -837,6 +841,7 @@ describe('ring/index.ts', () => {
 					humanTeams,
 					freeForAll: ring.encounterFreeForAll,
 					told: narrations.filter(line => line === OUTNUMBERED_LINE).length,
+					tags,
 				};
 				ring.endEncounter();
 				const cleared = ring.contestants.every(c => !c.team?.startsWith('rival:'));
@@ -857,6 +862,10 @@ describe('ring/index.ts', () => {
 					expect(result.freeForAll, 'not a Blood Feud style free-for-all').to.equal(false);
 					expect(result.cleared).to.equal(true);
 				}
+			});
+
+			it('tags the outnumbered line as the boss-rivals mechanic', () => {
+				expect(startWith(1, 3).tags).to.deep.equal(['boss-rivals']);
 			});
 
 			it('equal numbers keep teams, 1 v 1 and 2 v 2 included', () => {
@@ -1174,6 +1183,22 @@ describe('ring/index.ts', () => {
 			addPlayer(ring, 'user-3');
 			expect(ring.canAcceptBoss().ok).to.equal(true);
 			game.dispose();
+		});
+
+		it('tags the ambush line as the ambush mechanic (roadmap 39 C4)', () => {
+			const game = new Game({}, () => {});
+			const ring = game.getRing();
+			const tagged: Array<{ narration: string; mechanic?: string }> = [];
+			ring.on('narration', (_className: string, _ring: any, data: any) => tagged.push(data));
+			try {
+				addPlayer(ring, 'user-1');
+				ring.spawnBoss();
+				ring.spawnBoss({ ambush: true });
+				const line = tagged.find(data => data.narration.startsWith('An ambush!'));
+				expect(line?.mechanic).to.equal('ambush');
+			} finally {
+				game.dispose();
+			}
 		});
 
 		it('fights an ambush minion at a third of its HP even if it healed during the countdown', () => {

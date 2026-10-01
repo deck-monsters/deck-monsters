@@ -14,6 +14,7 @@ import { Virtuoso } from 'react-virtuoso';
 import type { VirtuosoHandle } from 'react-virtuoso';
 import type { GameEvent } from '@deck-monsters/server/types';
 import { trpc } from '../lib/trpc.js';
+import { mechanicKeyOf, mechanicNoteFor, newestEventIdByKey } from '../lib/mechanic-notes.js';
 import { useRingFeedListener, type TrackedRingFeedEvent } from '../hooks/useRingFeed.js';
 import { useRingKeyTimestamps } from '../hooks/useRingKeyTimestamps.js';
 import { usePixelMonsters } from '../hooks/usePixelMonsters.js';
@@ -172,6 +173,9 @@ export default function RingPane({
   const { pixelMonstersEnabled: pixelArtEnabled } = usePixelMonsters();
   const PixelSprites = useMemo(() => lazy(pixelSpritesLoader), [pixelSpritesLoader]);
   const [events, setEvents] = useState<GameEvent[]>([]);
+  // Only the newest tagged row per mechanic may claim its note: the list mounts at index 0
+  // and snaps to LAST a frame later, so older rows render transiently (see mechanicNoteFor).
+  const newestMechanicRows = useMemo(() => newestEventIdByKey(events), [events]);
   // Virtuoso applies `heightEstimates` only while its size tree is empty, and the empty
   // placeholder is enough to fill that tree. Mounting the list before history arrives
   // therefore drops the guesses, and scrolling up measures card boxes against a narration
@@ -604,7 +608,7 @@ export default function RingPane({
           List: FeedList,
           EmptyPlaceholder: () => (
             <li className="event event-system event-feed-empty">
-              <p>Waiting for fight events…</p>
+              <p>No fight yet. A fight starts when two monsters are in the ring: send one of yours, or summon a boss.</p>
             </li>
           ),
         }}
@@ -620,6 +624,17 @@ export default function RingPane({
           const iso = eventTimestampIso(event.timestamp);
           const hoverTitle = formatEventHoverTitle(event.timestamp);
           const showKeyColumn = ringKeyTimestampsEnabled && keyMeta;
+          // Wait for the handshake's user id: the explained set is per player, and a note
+          // claimed under no id would be written to a key no later session reads.
+          const mechanicNote = myUserId
+            ? mechanicNoteFor(
+                myUserId,
+                'ring',
+                event.id,
+                event.payload,
+                newestMechanicRows.get(mechanicKeyOf(event.payload) ?? '') === event.id,
+              )
+            : undefined;
           return (
             <li
               className={`event ${eventClass(event.type)}`}
@@ -637,6 +652,7 @@ export default function RingPane({
               ) : (
                 <div className="event-text">{formatEventText(event.text ?? '', mentions)}</div>
               )}
+              {mechanicNote && <div className="mechanic-note">ⓘ {mechanicNote}</div>}
             </li>
           );
         }}
@@ -649,6 +665,7 @@ export default function RingPane({
       )}
       {!isAtBottom && (
         <button
+          title="Jump to the newest events"
           className="jump-to-bottom"
           onClick={scrollToBottom}
           aria-label="Jump to latest events"

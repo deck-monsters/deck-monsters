@@ -33,6 +33,8 @@ export function announceContestant(
 		type: 'ring.add',
 		scope: 'public',
 		text: `${arrival}\n${monsterCard(monster)}`,
-		payload: { contestant },
+		// `mechanic` lets the web explain temperaments once (roadmap 39 C4); only set when the
+		// line actually says one.
+		payload: temperament ? { contestant, mechanic: 'boss-temperament' } : { contestant },
 	});
 }

@@ -58,6 +58,7 @@ export default function InventoryPanel({
           <span>{cards.length} unequipped cards</span>
           {activeMonsterFilterName && onEquipSelected && selectedCards.length > 0 && (
             <button
+              title={`Equip the selected cards to ${activeMonsterFilterName}`}
               type="button"
               className="btn workshop-inline-btn workshop-equip-btn"
               disabled={disabled}
@@ -67,7 +68,7 @@ export default function InventoryPanel({
             </button>
           )}
           {activeMonsterFilterName && (
-            <button type="button" className="btn workshop-inline-btn" onClick={() => onClearMonsterFilter?.()}>
+            <button title={`Show all your cards again, not just the ones ${activeMonsterFilterName} can use`} type="button" className="btn workshop-inline-btn" onClick={() => onClearMonsterFilter?.()}>
               Clear filter
             </button>
           )}

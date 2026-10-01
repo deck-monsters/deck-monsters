@@ -405,7 +405,7 @@ describe('equip helpers', () => {
 			const deck = [makeCard('Hit'), makeCard('Heal')];
 			const monster = makeMonster(1) as any;
 			const announcements: string[] = [];
-			const answers = ['look at brass', 'hit'];
+			const answers = ['brass', 'hit'];
 			let promptRound = 0;
 
 			const channel = async ({ announce, question }: { announce?: string; question?: string }) => {
@@ -421,7 +421,7 @@ describe('equip helpers', () => {
 			const result = await equipMonster({ deck: deck as any, monster, channel: channel as any });
 
 			expect(result.map((c: { cardType: string }) => c.cardType)).to.deep.equal(['Hit']);
-			expect(announcements).to.include('"look at brass" isn\'t one of the cards. Pick cards by name or number.');
+			expect(announcements).to.include('"brass" isn\'t one of the cards. Pick cards by name or number.');
 		});
 
 		it('still honours a cancel while re-asking', async () => {

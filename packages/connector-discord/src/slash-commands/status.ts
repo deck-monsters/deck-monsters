@@ -15,7 +15,7 @@ export const status: SlashCommand = {
 
 		const recognized = await dispatchCommand(
 			interaction,
-			'look at me',
+			'look at character',
 			ctx,
 			supabaseUserId,
 			roomId

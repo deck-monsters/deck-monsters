@@ -107,6 +107,7 @@ export default function CommandReference({ open, onClose, onInsertCommand }: Com
             COMMAND REFERENCE
           </span>
           <button
+            title="Close the command reference"
             ref={closeRef}
             onClick={onClose}
             aria-label="Close command reference"

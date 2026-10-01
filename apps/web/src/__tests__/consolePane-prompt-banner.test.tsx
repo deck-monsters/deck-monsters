@@ -101,7 +101,7 @@ vi.mock('../lib/trpc.js', () => ({
   trpc: {
     game: {
       consoleHistory: {
-        useQuery: () => ({ data: undefined }),
+        useQuery: () => ({ data: [] }),
       },
       pendingPrompt: {
         useQuery: () => trpcMocks.pendingPromptQuery,
@@ -111,7 +111,7 @@ vi.mock('../lib/trpc.js', () => ({
       },
       myInventory: {
         useQuery: () => ({
-          data: { items: { character: [], monsters: [] } },
+          data: { items: { character: [], monsters: [] }, monsters: [] },
           refetch: vi.fn(async () => ({ data: { items: { character: [], monsters: [] } } })),
         }),
       },
@@ -140,6 +140,7 @@ vi.mock('../utils/console-history-event-map.js', () => ({
 }));
 
 import ConsolePane from '../components/ConsolePane.js';
+import { resetGuidedStartForTests } from '../hooks/useGuidedStart.js';
 
 function TestFeed({ children }: { children: ReactNode }) {
   const value: RingFeedApi = {
@@ -178,6 +179,8 @@ function pushPromptRequest(requestId = 'request-1') {
 
 describe('ConsolePane prompt waiting banner', () => {
   beforeEach(() => {
+    localStorage.clear();
+    resetGuidedStartForTests();
     renderRows = true;
     intersectionCallback = null;
     scrollToIndexMock.mockReset();

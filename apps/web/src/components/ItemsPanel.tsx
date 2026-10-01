@@ -141,6 +141,7 @@ export default function ItemsPanel({ items, monsters, busy, onUseItem }: ItemsPa
                         label, which is the classic ambiguous-button-name problem.
                       */}
                       <button
+                        title={`Use ${entry.item.displayName} on ${targetLabel(target)}`}
                         type="button"
                         className="btn workshop-inline-btn"
                         disabled={busy}

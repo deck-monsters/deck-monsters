@@ -43,4 +43,39 @@ describe('commands/look-at.ts', () => {
 
 		expect(character.lookAtMonsters).to.have.been.calledOnceWith(sinon.match.any, false);
 	});
+
+	describe('parsing', () => {
+		const parse = (command: string) => {
+			const m = command.match(regex);
+			return m && [(m[1] || '').trim().toLowerCase(), (m[2] || '').trim().toLowerCase()];
+		};
+
+		it('reads a bare name as no type, so the default game.lookAt runs', () => {
+			expect(parse('look at Fluffy')).to.deep.equal(['', 'fluffy']);
+			expect(parse('look at Hit')).to.deep.equal(['', 'hit']);
+			expect(parse('look at Healing Potion')).to.deep.equal(['', 'healing potion']);
+			// A type word still needs its own space: this is a name, not type "monster".
+			expect(parse('look at monstrous')).to.deep.equal(['', 'monstrous']);
+		});
+
+		it('keeps the typed forms parsing as before', () => {
+			expect(parse('look at monsters')).to.deep.equal(['monsters', '']);
+			expect(parse('look at monsters in detail')).to.deep.equal(['monsters in', 'detail']);
+			expect(parse('look at the ring')).to.deep.equal(['ring', '']);
+			expect(parse('look at card Heal')).to.deep.equal(['card', 'heal']);
+			expect(parse('look at monster rankings')).to.deep.equal(['monster', 'rankings']);
+			expect(parse('look at player handbook')).to.deep.equal(['player handbook', '']);
+		});
+
+		it('leaves a bare look at, and look, unrecognised', () => {
+			expect(parse('look at')).to.equal(null);
+			expect(parse('look')).to.equal(null);
+		});
+
+		it('sends a bare name to game.lookAt', async () => {
+			const game = { lookAt: sinon.stub().resolves(), log: sinon.stub() };
+			await action({ channel: sinon.stub(), character: {}, game, results: 'look at fluffy'.match(regex), user: { id: 'u1' } });
+			expect(game.lookAt).to.have.been.calledOnceWith(sinon.match.any, 'fluffy');
+		});
+	});
 });

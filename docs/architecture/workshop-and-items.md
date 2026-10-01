@@ -110,6 +110,16 @@ the summary, which a player read as the game moving cards on its own (10b #195).
 all answers in the form first, or use the interactive per-user command flow described in
 [engine concurrency and timing](engine-concurrency-and-timing.md).
 
+## The guided start in the Workshop
+
+After the first-run form, the Workshop shows the same getting-started box as the Console,
+under the Train row and above the monsters, for every step except `spawn` (the form already
+covers training). Both surfaces read `hooks/useGuidedStart.ts`; the box is
+`components/GuidedStartBox.tsx` (the Workshop version has words only, no chips). It is hidden
+while a Console flow is in progress, like the Workshop's other controls. The steps, the
+shared dismissal flag and why "established" is decided once are in
+[web workspace](web-workspace.md#the-getting-started-guide).
+
 ## First-run character creation
 
 Training from the Workshop must also work when the member has no room character.
@@ -266,7 +276,7 @@ never below the roster size) minus the monsters listed: the free-places sentence
 place at your side is taken (1 monster / n monsters)." with the button disabled (Cancel stays
 usable if the form is already open). A first-run player (no character) gets
 the plain button. On a phone the header stays a row, with the pane's ⤢ link top-right, and the
-Train row stacks with the sentence at its natural height (bug 210). A shop price of 0 reads **Free**, with its own confirm and success text.
+Train row stacks with the sentence at its natural height (bug 210) and the button at its own width, left-aligned (owner). A shop price of 0 reads **Free**, with its own confirm and success text.
 A fallen monster with a running revival (`revivesAt`, set only once `respawn()` starts, never
 merely on death) shows a disabled **Reviving…** button and `Fallen · back at {local time}
 ({relative})`, where `{relative}` is `formatRelativeFromNow` ("in 12 min", "in 2 h 15 min").

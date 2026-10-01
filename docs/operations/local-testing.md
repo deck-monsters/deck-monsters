@@ -102,7 +102,7 @@ what is in them — the next agent plans its test from this list.
 
 | Room | `roomId` | Invite | Purpose | State (2026-09-30) |
 |------|----------|--------|---------|--------------------|
-| `Test Room A` | `70cb10d2-4faa-4300-9c20-8befe121a3d1` | `717305BE` | Existing character with trained monsters; fights, workshop, items, feeds | Character present. `Fang` (Basilisk, Lvl 0, alive at 1/30 HP after a level-0 revive during the help check, deck 9/9) and `Chuvvo` (Gladiator, Lvl 0, fallen, deck 9/9; left fallen). One Sorting Hat in items. Unequipped cards still present. The ring was in a boss fight during the check. |
+| `Test Room A` | `70cb10d2-4faa-4300-9c20-8befe121a3d1` | `717305BE` | Existing character with trained monsters; fights, workshop, items, feeds | Character present (2026-10-01). `Fang` (Basilisk, Lvl 0, alive at 30/30 HP, deck 9/9, not in the ring) and `Chuvvo` (Gladiator, Lvl 0, fallen at 0/36, deck 9/9; left fallen). Two boss summons left. A boss was standing in the ring alone at the end of the batch 3 check. One Sorting Hat in items (not used this pass). |
 | `Test Room B` | `227ba78e-bca5-4bd4-a59c-9793fac508bd` | `328F58D2` | **First-run fixture** — the test account has *no character* here | Reserved. Confirmed still empty on 2026-09-30. Do not create a character or monster in it; if a first-run test must actually create one, use a throwaway room instead, or delete and recreate Room B and update this row |
 
 The test account is also a *member* (not owner) of `Game Night`. That is a real room: never

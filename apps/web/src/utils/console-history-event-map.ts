@@ -1,3 +1,5 @@
+import { mechanicPayloadOf } from '../lib/mechanic-notes.js';
+
 export type ConsoleHistoryEvent = {
   id: string;
   type: string;
@@ -6,7 +8,13 @@ export type ConsoleHistoryEvent = {
 };
 
 export type ConsoleHistoryDisplayEvent =
-  | { id: string; type: 'announce' | 'system' | 'input' | 'tombstone'; text: string }
+  | {
+      id: string;
+      type: 'announce' | 'system' | 'input' | 'tombstone';
+      text: string;
+      /** Only the parts of the payload a first-time mechanic note needs; absent on ordinary lines. */
+      payload?: Record<string, unknown>;
+    }
   | null;
 
 /**
@@ -22,7 +30,13 @@ export function mapConsoleHistoryEvent(event: ConsoleHistoryEvent): ConsoleHisto
     return { id: event.id, type: 'system', text: event.text };
   }
   if (event.type === 'announce' || event.type === 'system') {
-    return { id: event.id, type: event.type as 'announce' | 'system', text: event.text };
+    const notePayload = mechanicPayloadOf(payload);
+    return {
+      id: event.id,
+      type: event.type as 'announce' | 'system',
+      text: event.text,
+      ...(notePayload ? { payload: notePayload } : {}),
+    };
   }
   if (event.type === 'prompt.request') {
     return { id: event.id, type: 'announce', text: event.text || String(payload.question ?? '') };
