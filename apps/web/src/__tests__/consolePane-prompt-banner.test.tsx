@@ -106,6 +106,7 @@ vi.mock('../hooks/useChat.js', () => ({
     markRead: () => undefined,
     send: async () => null,
     members: [],
+    dmCandidates: [],
     subscribeLive: () => () => undefined,
   }),
 }));

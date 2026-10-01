@@ -1175,6 +1175,15 @@
 /* The player a message goes to: the Chat composer's To picker once a player is chosen, and
    the Console's DM preview (M2 reuses this class), so the person can see who will get it
    before sending. */
+/* Chat lines in the Console: dimmer than announcements so a fight's narration still leads. */
+.console-chat { color: var(--color-fg-dim); }
+/* The line above the Console input while typing `dm ...`: who the message will go to. */
+.dm-preview {
+  padding: 0.25rem 0.75rem;
+  font-size: 0.85rem;
+  color: var(--color-fg-dim);
+  overflow-wrap: anywhere;
+}
 .dm-preview-name { color: var(--color-accent); font-weight: 700; }
 .chat-composer-to select.chat-to-picked { border-color: var(--color-accent); }
 .chat-refusal { margin: 0.4rem 0 0; color: var(--color-error); font-size: 0.85rem; }

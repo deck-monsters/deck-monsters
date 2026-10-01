@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   send: vi.fn(),
   markRead: vi.fn(),
   members: vi.fn(),
+  dmNames: vi.fn(),
 }));
 
 vi.mock('../lib/auth-context.js', () => ({
@@ -24,6 +25,7 @@ vi.mock('../lib/trpc.js', () => {
       send: { mutate: mocks.send },
       markRead: { mutate: mocks.markRead },
       members: { query: mocks.members },
+      dmNames: { query: mocks.dmNames },
     },
   };
   // Stable identity, like the real utils object: the hook must not refetch on every render.
@@ -90,6 +92,7 @@ describe('useChat', () => {
     mocks.send.mockReset();
     mocks.markRead.mockReset().mockResolvedValue({ lastReadId: 2, unread: 0 });
     mocks.members.mockReset().mockResolvedValue([{ userId: 'user-ben', name: 'Ben' }]);
+    mocks.dmNames.mockReset().mockResolvedValue([{ userId: 'user-ben', name: 'Ben', match: 'Ben' }]);
   });
 
   it('loads history, the read position, the unread count and the To list for the room', async () => {

@@ -211,7 +211,7 @@ It lives in the server (`packages/server/src/chat/chat-service.ts`), in its own 
   email-masked profile display name (`publicDisplayName`); a raw email never reaches chat.
 - **`dm` resolves through one matcher.** `matchRecipient` (`packages/engine/src/helpers/match-recipient.ts`,
   browser-safe) picks the longest name the text starts with, or the exact quoted name, and
-  lists every other player whose name also fits. The server's `resolveRecipient` and the
+  lists every other player whose name also fits, and flags identical names as ambiguous (the typed path is refused; a pick by id is not). The server's `resolveRecipient` and the
   Console's "To:" preview both call it, and the recipient is always checked to be a member of
   the room at send time. A Console pick sends the id and skips matching altogether.
 - **A removed member's open feed keeps receiving until it closes.** Like the game feed, membership is checked when `ringFeed` opens, not on every frame; a player removed mid-session stops getting chat on their next connect, and every `chat.*` call is refused at once.

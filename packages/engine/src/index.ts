@@ -32,7 +32,7 @@ export type {
 	EventsSinceResult,
 };
 export type { StateStore, SerializedGame } from './types/state-store.js';
-export { matchRecipient } from './helpers/match-recipient.js';
+export { DM_TEXT, matchRecipient } from './helpers/match-recipient.js';
 export type { RecipientCandidate, RecipientMatch } from './helpers/match-recipient.js';
 export { stripControlCharacters } from './helpers/strip-control-characters.js';
 export { repairSerializedGame } from './helpers/repair-serialized-game.js';

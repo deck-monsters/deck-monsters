@@ -13,7 +13,7 @@ export { COMMAND_CATALOG, CATEGORY_LABELS, formatCommandList } from './commands/
 export { BOSS_SUMMON_LIMIT } from './helpers/boss-summons.js';
 export type { CommandEntry, CommandCategory } from './commands/catalog.js';
 // One matcher for `dm`: the server resolves with it and the Console previews with it.
-export { matchRecipient } from './helpers/match-recipient.js';
+export { DM_TEXT, matchRecipient } from './helpers/match-recipient.js';
 export type { RecipientCandidate, RecipientMatch } from './helpers/match-recipient.js';
 export {
 	CARD_REFUSAL_REASON_TEXT,

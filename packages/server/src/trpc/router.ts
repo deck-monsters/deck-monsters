@@ -646,8 +646,14 @@ async function sendChatCommand(chat: ChatService, roomId: string, userId: string
 		await chat.send({ roomId, senderUserId: userId, text: command.rest, source: 'web' });
 		return;
 	}
+	// The order is the Console preview's too (apps/web lib/direct-message.ts): usage, no match,
+	// two players with one name, yourself, then an empty message.
+	if (!command.rest) throw new ChatError('dm_usage');
 	const resolved = await chat.resolveRecipient(roomId, command.rest);
-	if ('error' in resolved) throw new ChatError('no_such_player');
+	if ('error' in resolved) {
+		throw resolved.error === 'ambiguous' ? new ChatError('ambiguous', { name: resolved.name }) : new ChatError('no_such_player');
+	}
+	if (resolved.userId === userId) throw new ChatError('self');
 	if (!resolved.message) throw new ChatError('no_message', { name: resolved.name });
 	await chat.send({ roomId, senderUserId: userId, text: resolved.message, toUserId: resolved.userId, source: 'web' });
 }
@@ -877,6 +883,9 @@ export function createRouter(roomManager: RoomManager, chat: ChatService = new C
 					await roomManager.assertMember(ctx.userId, input.roomId);
 					try {
 						await sendChatCommand(chat, input.roomId, ctx.userId, chatCommand);
+						// Chatting is presence: retention keeps a message until the members
+						// seen lately have read it, and that uses last_seen_at.
+						void touchMemberLastSeen(db, input.roomId, ctx.userId).catch(() => {});
 					} catch (err) {
 						if (err instanceof ChatError) {
 							// The same shape every refused command uses; the Console shows it as `! {message}`.

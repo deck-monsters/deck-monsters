@@ -197,7 +197,7 @@ must stay first: chat is not game state, so it cannot interleave with a flow in 
 way, and a player halfway through a question must still be able to talk. Moving the check below
 `activeFlows` would answer a chat line with "A command is already in progress". The engine's
 own `msg`/`dm` handler (`packages/engine/src/commands/chat.ts`) is only the fallback for
-connectors without chat (Discord) and is never reached from the web server. Do not give chat a
+connectors without chat (Discord) and is never reached from the web server. A successful chat send still touches `last_seen_at` (retention rule 3 reads it). Do not give chat a
 lane: it holds no engine state, and a lane would queue it behind a minutes-long prompt.
 
 **Cross-user policy (#62)**: per-user console lanes mean two members can mutate

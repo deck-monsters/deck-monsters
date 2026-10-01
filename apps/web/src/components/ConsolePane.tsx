@@ -13,6 +13,7 @@ import { useChat } from '../hooks/useChat.js';
 import {
   chatLineText,
   dmPreviewText,
+  dmCandidatesOf,
   dmRest,
   isChatLine,
   orderDmSuggestions,
@@ -162,6 +163,9 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
   const resolvedPromptIdsRef = useRef<Set<string>>(new Set());
   const consecutiveEmptyPromptPollsRef = useRef(0);
   const [inputValue, setInputValue] = useState('');
+  // The latest input, for async code that must not overwrite what the player typed meanwhile.
+  const inputValueRef = useRef('');
+  inputValueRef.current = inputValue;
   const [inputLocked, setInputLocked] = useState(false);
   const [isAtBottom, setIsAtBottom] = useState(true);
   const [quickActions, setQuickActions] = useState<QuickAction[]>([]);
@@ -289,9 +293,13 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
       query: dmQuery,
     });
   }, [dmQuery, inputLocked, chat.members, chat.messages, user?.id, ringUserIds]);
+  const dmCandidates = useMemo(
+    () => dmCandidatesOf(chat.dmCandidates, chat.members),
+    [chat.dmCandidates, chat.members],
+  );
   const dmTarget = useMemo(
-    () => resolveDmTarget(inputValue, chat.members, pickedRecipient),
-    [inputValue, chat.members, pickedRecipient],
+    () => resolveDmTarget(inputValue, dmCandidates, pickedRecipient, user?.id),
+    [inputValue, dmCandidates, pickedRecipient, user?.id],
   );
   const dmPreview = dmPreviewText(dmTarget);
   // After `dm ` the list is the room's players, not commands.
@@ -771,23 +779,37 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
    */
   async function handleSubmitChat(line: string) {
     if (!line.trim() || inputLocked) return;
-    const target = resolveDmTarget(line, chat.members, pickedRecipient);
+    const target = resolveDmTarget(line, dmCandidates, pickedRecipient, user?.id);
+    const pickedAtSend = pickedRecipient;
+    // Cleared at once so the player can carry on, and put back if the message is refused, unless
+    // they have already typed something newer (as the Chat tab does).
     setInputValue('');
+    inputValueRef.current = '';
     setPickedRecipient(null);
-    // An empty message falls through to the server, which answers with the plan's
-    // "Add a message after the name" text rather than the web repeating it.
-    if (target.kind === 'player' && target.picked && target.message) {
-      setInputLocked(true);
-      try {
-        const refusal = await chat.send(target.message, target.userId);
-        if (refusal) addConsoleEvent({ id: `sys-${Date.now()}`, type: 'system', text: `! ${refusal}` });
-      } finally {
-        setInputLocked(false);
-        inputRef.current?.focus();
+    setInputLocked(true);
+    let refusal: string | null = null;
+    try {
+      // An empty message falls through to the server, which answers with the plan's
+      // "Add a message after the name" text rather than the web repeating it.
+      if (target.kind === 'player' && target.picked && target.message) {
+        refusal = await chat.send(target.message, target.userId);
+      } else {
+        const result = await sendCommand.mutateAsync({ roomId, command: line, isDM: true });
+        if (!result.ok) refusal = ('message' in result && result.message) || 'Command failed';
       }
-      return;
+    } catch (err) {
+      refusal = err instanceof Error && err.message ? err.message : "That message didn't send. Try again.";
+    } finally {
+      setInputLocked(false);
     }
-    await handleSubmitCommand(line);
+    if (refusal) {
+      addConsoleEvent({ id: `sys-${Date.now()}`, type: 'system', text: `! ${refusal}` });
+      if (inputValueRef.current === '') {
+        setInputValue(line);
+        if (pickedAtSend) setPickedRecipient(pickedAtSend);
+      }
+    }
+    inputRef.current?.focus();
   }
 
   function submitInput() {
@@ -977,7 +999,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
           if (ev.type === 'chat') {
             // Dimmer than announcements so a fight's narration still leads.
             return (
-              <li className="event event-chat console-chat" style={{ color: 'var(--color-fg-dim)' }}>
+              <li className="event event-chat console-chat">
                 <div className="event-text">{ev.text}</div>
               </li>
             );
@@ -1081,6 +1103,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
           value={inputValue}
           onChange={(e) => {
             const next = e.target.value;
+            inputValueRef.current = next;
             setInputValue(next);
             setSuggestionIndex(-1);
             // Editing the picked name forgets the id: the typed text is matched afresh.

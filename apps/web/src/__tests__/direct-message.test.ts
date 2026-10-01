@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import type { ChatMessage, ChatPlayer } from '@deck-monsters/server/types';
 import {
   chatLineText,
+  dmCandidatesOf,
+  dmRest,
   dmPreviewText,
   isChatLine,
   orderDmSuggestions,
@@ -35,6 +37,7 @@ function dm(id: number, from: string, to: string): ChatMessage {
   };
 }
 
+const cands = dmCandidatesOf(undefined, players);
 const names = (list: Array<{ label: string }>) => list.map((s) => s.label);
 
 describe('chatLineText', () => {
@@ -60,17 +63,21 @@ describe('isChatLine', () => {
       expect(isChatLine(line, false), line).toBe(false);
     }
   });
-  it('while a question is open, a bare chat word stays an answer', () => {
-    expect(isChatLine('m', true)).toBe(false);
-    expect(isChatLine('msg', true)).toBe(false);
-    expect(isChatLine('m hello', true)).toBe(true);
-    expect(isChatLine('dm Ada hi', true)).toBe(true);
+  it('while a question is open, only msg, message and dm with text go to chat; m stays an answer', () => {
+    for (const line of ['m', 'msg', 'message', 'dm', 'm hello', 'M Jones', 'dm ', 'msg   ']) {
+      expect(isChatLine(line, true), line).toBe(false);
+    }
+    for (const line of ['msg hello', 'Message hello', 'dm Ada hi', '  msg hi']) {
+      expect(isChatLine(line, true), line).toBe(true);
+    }
+    // And outside a question the one-letter form works.
+    expect(isChatLine('m hello', false)).toBe(true);
   });
 });
 
 describe('resolveDmTarget and the preview', () => {
   it('previews Anthony Bourdain for "dm Anthony Bourdain is too powerful" and warns Anthony fits too', () => {
-    const target = resolveDmTarget('dm Anthony Bourdain is too powerful', players, null);
+    const target = resolveDmTarget('dm Anthony Bourdain is too powerful', cands, null);
     expect(target).toMatchObject({ kind: 'player', userId: 'bou', name: 'Anthony Bourdain', message: 'is too powerful', picked: false });
     expect(dmPreviewText(target)).toEqual({
       lead: 'To: ',
@@ -80,7 +87,7 @@ describe('resolveDmTarget and the preview', () => {
   });
 
   it('shows a plain To: line when nobody else fits', () => {
-    expect(dmPreviewText(resolveDmTarget('dm Cal good luck', players, null))).toEqual({ lead: 'To: ', name: 'Cal', tail: '' });
+    expect(dmPreviewText(resolveDmTarget('dm Cal good luck', cands, null))).toEqual({ lead: 'To: ', name: 'Cal', tail: '' });
   });
 
   it('names several other players joined with "and"', () => {
@@ -89,31 +96,73 @@ describe('resolveDmTarget and the preview', () => {
       { userId: 'b', name: 'Sam Spade' },
       { userId: 'c', name: 'Sam Spade Jr' },
     ];
-    const text = dmPreviewText(resolveDmTarget('dm Sam Spade Jr hi', crowd, null));
+    const text = dmPreviewText(resolveDmTarget('dm Sam Spade Jr hi', dmCandidatesOf(undefined, crowd), null));
     expect(text?.tail).toBe('. Sam and Sam Spade are in this room too. Pick a name from the list to be sure.');
   });
 
   it('says so when no name matches, and is silent for lines that are not dm', () => {
-    expect(dmPreviewText(resolveDmTarget('dm Nob', players, null))).toEqual({ lead: 'No player here by that name yet.', name: null, tail: '' });
-    expect(dmPreviewText(resolveDmTarget('dm ', players, null))?.lead).toBe('No player here by that name yet.');
-    expect(dmPreviewText(resolveDmTarget('msg hello', players, null))).toBeNull();
-    expect(dmPreviewText(resolveDmTarget('dmx hello', players, null))).toBeNull();
+    expect(dmPreviewText(resolveDmTarget('dm Nob', cands, null))).toEqual({ lead: 'No player here by that name yet.', name: null, tail: '' });
+    expect(dmPreviewText(resolveDmTarget('dm ', cands, null))?.lead).toBe(
+      "Type dm, a player's name, and your message, like: dm Ada good luck.",
+    );
+    expect(dmPreviewText(resolveDmTarget('msg hello', cands, null))).toBeNull();
+    expect(dmPreviewText(resolveDmTarget('dmx hello', cands, null))).toBeNull();
   });
 
   it('quotes route to Anthony and show no warning', () => {
-    const target = resolveDmTarget('dm "Anthony" Bourdain is too powerful', players, null);
+    const target = resolveDmTarget('dm "Anthony" Bourdain is too powerful', cands, null);
     expect(target).toMatchObject({ kind: 'player', userId: 'ant', message: 'Bourdain is too powerful', alsoFits: [] });
   });
 
   it('a picked player wins while the name is exactly as inserted, then is forgotten when edited', () => {
     const picked = { userId: 'ant', name: 'Anthony' };
-    const target = resolveDmTarget('dm Anthony Bourdain is too powerful', players, picked);
+    const target = resolveDmTarget('dm Anthony Bourdain is too powerful', cands, picked);
     expect(target).toMatchObject({ kind: 'player', userId: 'ant', picked: true, message: 'Bourdain is too powerful', alsoFits: [] });
     expect(stillPicked('dm Anthony Bourdain is too powerful', picked)).toBe(true);
     expect(stillPicked('dm Anthon', picked)).toBe(false);
     expect(stillPicked('dm anthony hi', picked)).toBe(false);
     // Edited: back to the typed path, which takes the longest name.
-    expect(resolveDmTarget('dm Anthonyx hi', players, picked).kind).toBe('nomatch');
+    expect(resolveDmTarget('dm Anthonyx hi', cands, picked).kind).toBe('nomatch');
+  });
+});
+
+describe('preview parity with the server', () => {
+  const server = [
+    { userId: 'ada', name: 'Ada', match: 'Ada' },
+    { userId: 'me', name: 'Mo', match: 'Mo' },
+    { userId: 'me', name: 'Mo', match: 'mo@account' },
+    { userId: 'ben', name: 'Anthony Bourdain', match: 'Anthony Bourdain' },
+    { userId: 'ben', name: 'Anthony Bourdain', match: 'Ben' },
+  ];
+
+  it('matches an account display name, as the server does', () => {
+    expect(resolveDmTarget('dm Ben hi', server, null, 'me')).toMatchObject({ kind: 'player', userId: 'ben', name: 'Anthony Bourdain', message: 'hi' });
+  });
+
+  it('previews yourself the way the server refuses it', () => {
+    const target = resolveDmTarget('dm Mo hi', server, null, 'me');
+    expect(target.kind).toBe('self');
+    expect(dmPreviewText(target)?.lead).toBe("That's you. Pick someone else.");
+    expect(resolveDmTarget('dm mo@account', server, null, 'me').kind).toBe('self');
+  });
+
+  it('refuses identical names with the server line, but a pick still works', () => {
+    const twins = [
+      { userId: 'a', name: 'Sam', match: 'Sam' },
+      { userId: 'b', name: 'Sam', match: 'Sam' },
+    ];
+    const target = resolveDmTarget('dm Sam hello', twins, null, 'me');
+    expect(target).toEqual({ kind: 'ambiguous', name: 'Sam' });
+    expect(dmPreviewText(target)?.lead).toBe('Two players here go by Sam. Pick one from the list.');
+    expect(resolveDmTarget('dm Sam hello', twins, { userId: 'b', name: 'Sam' }, 'me')).toMatchObject({ kind: 'player', userId: 'b', picked: true });
+  });
+
+  it('ignores leading whitespace, so a stray space cannot hide the preview', () => {
+    expect(dmRest('  dm Ada hi')).toBe('Ada hi');
+    expect(dmRest('\u00A0dm Ada hi')).toBe('Ada hi');
+    expect(dmPreviewText(resolveDmTarget('  dm Anthony Bourdain hi', cands, null))?.name).toBe('Anthony Bourdain');
+    expect(stillPicked('  dm Anthony hi', { userId: 'ant', name: 'Anthony' })).toBe(true);
+    expect(resolveDmTarget('   dm Anthony hi', cands, { userId: 'ant', name: 'Anthony' })).toMatchObject({ picked: true, userId: 'ant' });
   });
 });
 

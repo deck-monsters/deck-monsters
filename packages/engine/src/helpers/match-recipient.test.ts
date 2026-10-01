@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 
-import { matchRecipient, type RecipientCandidate } from './match-recipient.js';
+import { DM_TEXT, matchRecipient, type RecipientCandidate } from './match-recipient.js';
 
 const c = (userId: string, name: string, match = name): RecipientCandidate => ({ userId, name, match });
 const room = [c('ada', 'Ada'), c('ant', 'Anthony'), c('bou', 'Anthony Bourdain'), c('ann', 'Ann')];
@@ -63,5 +63,51 @@ describe('helpers/match-recipient', () => {
 		const dup = [c('a1', 'Sam'), c('a2', 'Sam')];
 		expect(matchRecipient(dup, '"Sam" hi')!.alsoFits).to.deep.equal([{ userId: 'a2', name: 'Sam' }]);
 		expect(matchRecipient(dup, 'Sam hi')!.alsoFits).to.deep.equal([{ userId: 'a2', name: 'Sam' }]);
+	});
+
+	it('treats NBSP and em spaces as one plain space, in the text and in names', () => {
+		expect(matchRecipient(room, 'Anthony\u00A0Bourdain hi')).to.deep.include({ userId: 'bou', message: 'hi' });
+		expect(matchRecipient(room, 'Anthony\u2003 \u00A0Bourdain\u2003hi')).to.deep.include({ userId: 'bou', message: 'hi' });
+		expect(matchRecipient([c('x', 'Anthony\u00A0Bourdain')], 'anthony bourdain hi')).to.deep.include({ userId: 'x', message: 'hi' });
+	});
+
+	it('ignores zero-width characters in names and text', () => {
+		expect(matchRecipient(room, 'Ad\u200Ba hello')).to.deep.include({ userId: 'ada', message: 'hello' });
+		expect(matchRecipient([c('z', 'Z\uFEFFed')], 'Zed hi')).to.deep.include({ userId: 'z', message: 'hi' });
+		expect(matchRecipient([c('z', 'Zed')], 'Z\u2060e\u200Dd hi')).to.deep.include({ userId: 'z', message: 'hi' });
+	});
+
+	it('slices by the matched length in the original text, even where lowercasing changes length', () => {
+		const m = matchRecipient([c('i', '\u0130a')], '\u0130ab c');
+		expect(m).to.equal(null); // "İab" is not the name "İa" followed by a boundary
+		const ok = matchRecipient([c('i', '\u0130a')], '\u0130a b c');
+		expect(ok).to.deep.include({ userId: 'i', message: 'b c' });
+		expect(matchRecipient([c('s', '\u0130sa')], '\u0130sa hello')).to.deep.include({ userId: 's', message: 'hello' });
+		expect(matchRecipient([c('e', '\u{1F600}x')], '\u{1F600}x hi')).to.deep.include({ userId: 'e', message: 'hi' });
+	});
+
+	it('flags identical names as ambiguous, but not one player under two names', () => {
+		const dup = [c('a1', 'Sam'), c('a2', 'Sam')];
+		expect(matchRecipient(dup, 'Sam hi')!.ambiguous).to.equal(true);
+		expect(matchRecipient(dup, '"sam" hi')!.ambiguous).to.equal(true);
+		// A longer name decides it: only the shorter pair would clash, and they are not the pick.
+		expect(matchRecipient([...dup, c('a3', 'Sam Spade')], 'Sam Spade hi')!.ambiguous).to.equal(false);
+		const twoNames = [c('b', 'Ben', 'Ben'), c('b', 'Ben', 'ben')];
+		expect(matchRecipient(twoNames, 'Ben hi')!.ambiguous).to.equal(false);
+		// A character name that equals another player's account name.
+		expect(matchRecipient([c('p', 'Sam'), c('q', 'Quinn', 'Sam')], 'Sam hi')!.ambiguous).to.equal(true);
+		expect(matchRecipient(room, 'Anthony Bourdain hi')!.ambiguous).to.equal(false);
+	});
+
+	it('never lets quotes reach a different player than a name that itself starts with a quote', () => {
+		const list = [c('q', '"Ace"'), c('a', 'Ace')];
+		expect(matchRecipient(list, '"Ace" hi')).to.deep.include({ userId: 'q', quoted: false, message: 'hi' });
+		expect(matchRecipient(list, 'Ace hi')).to.deep.include({ userId: 'a' });
+	});
+
+	it('exports the shared refusal wording', () => {
+		expect(DM_TEXT.self).to.equal("That's you. Pick someone else.");
+		expect(DM_TEXT.ambiguous).to.equal('Two players here go by {name}. Pick one from the list.');
+		expect(DM_TEXT.usage).to.equal("Type dm, a player's name, and your message, like: dm Ada good luck.");
 	});
 });

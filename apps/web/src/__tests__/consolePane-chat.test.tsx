@@ -25,6 +25,7 @@ const mocks = vi.hoisted(() => ({
     messages: [] as unknown[],
     unread: 0,
     members: [] as unknown[],
+    dmCandidates: [] as unknown[],
     live: new Set<(m: unknown) => void>(),
   },
   contestants: [] as Array<{ userId: string | null }>,
@@ -61,6 +62,7 @@ vi.mock('../hooks/useChat.js', () => ({
     markRead: () => undefined,
     send: mocks.send,
     members: mocks.chat.members,
+    dmCandidates: mocks.chat.dmCandidates,
     subscribeLive: (listener: (m: unknown) => void) => {
       mocks.chat.live.add(listener);
       return () => mocks.chat.live.delete(listener);
@@ -157,18 +159,21 @@ async function submit() {
   });
 }
 
+let promptSeq = 0;
 function openPrompt() {
+  promptSeq += 1;
+  const n = promptSeq;
   act(() => {
     for (const listener of listeners) {
       listener({
-        id: 'prompt-1',
+        id: `prompt-${n}`,
         data: {
-          id: 'prompt-1',
+          id: `prompt-${n}`,
           type: 'prompt.request',
           scope: 'private',
           targetUserId: ME,
           text: 'Which card?',
-          payload: { requestId: 'req-1', question: 'Which card?', choices: ['Hit'] },
+          payload: { requestId: `req-${n}`, question: 'Which card?', choices: ['Hit'] },
           timestamp: Date.now(),
           roomId: ROOM,
         },
@@ -189,6 +194,7 @@ beforeEach(() => {
   mocks.chat.messages = [];
   mocks.chat.unread = 0;
   mocks.chat.members = players;
+  mocks.chat.dmCandidates = [];
   mocks.chat.live.clear();
   mocks.contestants = [];
 });
@@ -258,13 +264,24 @@ describe('chat while a question is open', () => {
     expect(screen.queryByText('msg anyone got a spare potion?')).toBeNull();
   });
 
-  it('still answers the question with anything else, including a bare m', async () => {
+  it('still answers the question with m, M Jones, or a bare msg', async () => {
     renderConsole();
     openPrompt();
-    type('m');
-    await submit();
-    expect(mocks.respond).toHaveBeenCalledWith({ roomId: ROOM, requestId: 'req-1', answer: 'm' });
+    for (const answer of ['m', 'M Jones', 'msg']) {
+      mocks.respond.mockClear();
+      type(answer);
+      await submit();
+      expect(mocks.respond, answer).toHaveBeenCalledWith(expect.objectContaining({ roomId: ROOM, answer }));
+      openPrompt();
+    }
     expect(mocks.command).not.toHaveBeenCalled();
+  });
+
+  it('outside a question, m works as chat', async () => {
+    renderConsole();
+    type('m hello');
+    await submit();
+    expect(mocks.command).toHaveBeenCalledWith(expect.objectContaining({ command: 'm hello' }));
   });
 
   it('shows a chat refusal the way a failed command shows', async () => {
@@ -366,5 +383,53 @@ describe('the dm preview and picked names', () => {
     renderConsole();
     type('dm ');
     expect(screen.getAllByRole('option').map((o) => o.textContent).slice(0, 4)).toEqual(['Eve', 'Dee', 'Anthony', 'Cal']);
+  });
+});
+
+describe('previews like the server, and keeps a refused message', () => {
+  it('previews a leading-space dm, and an account-name match, and yourself', () => {
+    mocks.chat.dmCandidates = [
+      { userId: ME, name: 'Mo', match: 'Mo' },
+      { userId: 'ben', name: 'Anthony Bourdain', match: 'Anthony Bourdain' },
+      { userId: 'ben', name: 'Anthony Bourdain', match: 'Ben' },
+    ];
+    renderConsole();
+    type('  dm Ben hi');
+    expect(document.querySelector('.dm-preview')!.textContent).toBe('To: Anthony Bourdain');
+    type('dm Mo hi');
+    expect(document.querySelector('.dm-preview')!.textContent).toBe("That's you. Pick someone else.");
+    type('dm ');
+    expect(document.querySelector('.dm-preview')!.textContent).toBe(
+      "Type dm, a player's name, and your message, like: dm Ada good luck.",
+    );
+  });
+
+  it('puts a refused message back in the input, unless something newer was typed', async () => {
+    mocks.command.mockImplementation(async () => ({ ok: false, message: 'Easy there. Wait a few seconds before the next message.' }));
+    renderConsole();
+    type('msg first try');
+    await submit();
+    expect(input().value).toBe('msg first try');
+    expect(screen.getByText('! Easy there. Wait a few seconds before the next message.')).toBeInTheDocument();
+
+    // Something newer typed while the send was in flight wins over the refused text.
+    mocks.command.mockImplementation(async () => {
+      type('msg newer draft');
+      return { ok: false, message: 'nope' };
+    });
+    type('msg second try');
+    await submit();
+    expect(input().value).toBe('msg newer draft');
+  });
+
+  it('puts a refused picked DM back with its pick', async () => {
+    mocks.send.mockImplementation(async () => "That player isn't in this room any more.");
+    renderConsole();
+    type('dm Cal');
+    fireEvent.mouseDown(screen.getAllByRole('option')[0]!);
+    type('dm Cal good luck');
+    await submit();
+    expect(input().value).toBe('dm Cal good luck');
+    expect(document.querySelector('.dm-preview')!.textContent).toBe('To: Cal');
   });
 });

@@ -126,19 +126,24 @@ room, mounted in `Terminal`; the Console never calls `chat.history` itself, road
 - **Unread line.** Once, on the first non-zero unread count, unless a live chat line has
   already shown: `💬 {n} new {message|messages} in Chat.`
 - **Chat while a question is open.** `submitInput` checks `isChatLine` before the prompt
-  branch, so a line starting `msg`, `message`, `m` or `dm` followed by text goes to
+  branch, so a line starting `msg `, `message ` or `dm ` followed by text goes to
   `game.command` (the server catches it before its flow checks, see
   [the command pipeline](engine-concurrency-and-timing.md#2-server-command-pipeline-packagesserversrctrpcrouterts))
-  and the question stays open. A bare `m` or `msg` with nothing after it stays an answer
-  while a question is open, because a one-letter reply is plausible. The typed line is not
-  echoed; the chat line is the echo.
-- **Who a DM goes to is visible before it is sent.** While the input starts `dm `, a line above
-  the input (`.dm-preview`, in an `aria-live="polite"` region) shows `To: {name}` with the name
-  in `.dm-preview-name`, the warning when another player's name also fits, or "No player here
-  by that name yet." The match is the engine's `matchRecipient`, the same function the server
-  resolves with, so the preview cannot disagree with the send. It knows only the names the Chat
-  tab's To list has, so a player known to the server only by their account display name
-  previews as no match.
+  and the question stays open. While a question is open `m` is NOT a chat command, and neither
+  is a bare `msg`: "M Jones" is a plausible answer to a naming prompt, and posting it to the
+  whole room would be worse than a missed chat. Outside a question `m` works. The typed line is
+  not echoed; the chat line is the echo. The input clears at once and the text is put back on a
+  refusal (with a picked player's pick), unless the player has typed something newer.
+- **Who a DM goes to is visible before it is sent.** While the input starts `dm ` (leading
+  whitespace ignored, as on the server), a line above the input (`.dm-preview`, in an
+  `aria-live="polite"` region) shows `To: {name}` with the name in `.dm-preview-name`, the
+  warning when another player's name also fits, or the same refusal the server would give: no
+  match yet, `That's you`, two players with one name, or the usage hint for a bare `dm `. The
+  match is the engine's `matchRecipient` over the server's own candidate list (`chat.dmNames`:
+  character names and account display names of current members, you included), so the preview
+  cannot disagree with the send. Names are compared with any Unicode space as one space and
+  zero-width characters removed. Two players whose names are identical are refused on the typed
+  path (`ambiguous`); picking from the list still works.
 - **Suggestions after `dm `** are the room's players (`orderDmSuggestions`): the player you
   last sent a DM to, then the player who last sent you one if different, then players with a
   monster in the ring (`game.ringState`), then everyone else A to Z. A player appears once.

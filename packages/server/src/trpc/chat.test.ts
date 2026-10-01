@@ -232,7 +232,13 @@ describe('trpc game.command: chat commands', () => {
 			ok: false,
 			message: 'Nobody in this room goes by that name. Use the name as it shows in Chat, like: dm Ada good luck.',
 		});
-		expect(await refuse('dm')).to.deep.include({ ok: false });
+		expect(await refuse('dm')).to.deep.equal({
+			ok: false,
+			message: "Type dm, a player's name, and your message, like: dm Ada good luck.",
+		});
+		expect(await refuse('dm   ')).to.deep.include({ ok: false });
+		// Yourself, even with no message: the self refusal comes first, as in the preview.
+		expect(await refuse('dm Ada')).to.deep.equal({ ok: false, message: "That's you. Pick someone else." });
 		expect(await refuse('dm Ada hi')).to.deep.equal({ ok: false, message: "That's you. Pick someone else." });
 		expect(await refuse('dm Anthony Bourdain')).to.deep.equal({
 			ok: false,
@@ -248,6 +254,32 @@ describe('trpc game.command: chat commands', () => {
 			ok: false,
 			message: 'Easy there. Wait a few seconds before the next message.',
 		});
+	});
+
+	it('refuses two players with one name, and still sends by id', async () => {
+		const { chat, caller } = buildCommand();
+		chat.players = [player(ADA, 'Ada'), player(BEN, 'Sam'), player(CAL, 'Sam')];
+		expect(await caller.game.command({ roomId: ROOM_ID, command: 'dm Sam hello' })).to.deep.equal({
+			ok: false,
+			message: 'Two players here go by Sam. Pick one from the list.',
+		});
+		expect(await caller.game.command({ roomId: ROOM_ID, command: 'dm "sam" hello' })).to.deep.include({ ok: false });
+		expect(chat.stored).to.have.length(0);
+		// The picker path sends the id (chat.send), which never re-parses the name.
+		await chat.send({ roomId: ROOM_ID, senderUserId: ADA, text: 'hello', toUserId: CAL });
+		expect(chat.stored[0]).to.include({ recipientUserId: CAL });
+	});
+
+	it('exposes the exact names dm matches against, the caller included, via chat.dmNames', async () => {
+		const { chat, caller } = buildCommand();
+		chat.players = [player(ADA, 'Ada', 'ada@x'), player(BEN, 'Anthony Bourdain', 'Ben')];
+		const names = await caller.chat.dmNames({ roomId: ROOM_ID });
+		expect(names).to.deep.equal([
+			{ userId: ADA, name: 'Ada', match: 'Ada' },
+			{ userId: ADA, name: 'Ada', match: 'ada@x' },
+			{ userId: BEN, name: 'Anthony Bourdain', match: 'Anthony Bourdain' },
+			{ userId: BEN, name: 'Anthony Bourdain', match: 'Ben' },
+		]);
 	});
 
 	it('refuses a non-member before anything else', async () => {

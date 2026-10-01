@@ -1,4 +1,4 @@
-import { matchRecipient } from '@deck-monsters/engine';
+import { DM_TEXT, matchRecipient, type RecipientCandidate } from '@deck-monsters/engine';
 import type { ChatMessage, ChatPlayer } from '@deck-monsters/server/types';
 
 /**
@@ -25,24 +25,28 @@ export function unreadChatLine(count: number): string {
 }
 
 const CHAT_WORD = /^(msg|message|m|dm)(?:\s+([\s\S]*))?$/i;
+// While a question is open the one-letter `m` is NOT a chat command: "M Jones" is a plausible
+// answer to a naming prompt, and posting it to the whole room would be worse than a missed chat.
+const CHAT_WORD_DURING_PROMPT = /^(msg|message|dm)\s+\S/i;
 const DM_PREFIX = /^dm\s+/i;
 
 /**
- * True when `line` is a chat command. While a question is open, bare `m` or `msg` (nothing
- * after it) stays an answer rather than a chat command: a one-letter reply to a prompt is
- * plausible, and a chat line with no message would only be refused anyway. Everywhere else the
- * server decides, and answers `msg` with how to use it.
+ * True when `line` is a chat command. Outside a question: `msg`, `message`, `m` and `dm`, with
+ * or without text (the server refuses an empty one with a hint). While a question is open: only
+ * `msg `, `message ` and `dm ` followed by text, so a bare or one-letter reply stays an answer.
  */
 export function isChatLine(line: string, promptOpen: boolean): boolean {
-  const match = CHAT_WORD.exec(line.trim());
-  if (!match) return false;
-  return !promptOpen || (match[2] ?? '').trim() !== '';
+  const trimmed = line.trim();
+  return promptOpen ? CHAT_WORD_DURING_PROMPT.test(trimmed) : CHAT_WORD.test(trimmed);
 }
 
-/** The text after `dm `, or null when the input is not a `dm` line (so no preview, no list). */
+/**
+ * The text after `dm `, or null when the input is not a `dm` line (so no preview, no list).
+ * Leading whitespace is ignored, as the server does, so a stray space cannot hide the preview.
+ */
 export function dmRest(input: string): string | null {
-  const match = DM_PREFIX.exec(input);
-  return match ? input.slice(match[0].length) : null;
+  const match = DM_PREFIX.exec(input.trimStart());
+  return match ? input.trimStart().slice(match[0].length) : null;
 }
 
 export type PickedRecipient = { userId: string; name: string };
@@ -57,8 +61,14 @@ export function stillPicked(input: string, picked: PickedRecipient | null): bool
 export type DmTarget =
   /** Not a `dm` line. */
   | { kind: 'none' }
+  /** `dm ` and nothing else yet. */
+  | { kind: 'usage' }
   /** A `dm` line whose text names nobody (yet). */
   | { kind: 'nomatch' }
+  /** The text names two players who go by the very same name. */
+  | { kind: 'ambiguous'; name: string }
+  /** The text names the sender. */
+  | { kind: 'self' }
   | {
       kind: 'player';
       userId: string;
@@ -72,10 +82,25 @@ export type DmTarget =
     };
 
 /**
- * Who the `dm` being typed goes to. A picked player wins as long as the name is still exactly
- * as inserted; otherwise the typed text is matched the way the server will.
+ * The candidate names a typed `dm` is matched against: the server's own list when it has
+ * loaded, else the To picker's names. Same list, same matcher, same answer as the send.
  */
-export function resolveDmTarget(input: string, members: ChatPlayer[], picked: PickedRecipient | null): DmTarget {
+export function dmCandidatesOf(dmCandidates: RecipientCandidate[] | undefined, members: ChatPlayer[]): RecipientCandidate[] {
+  if (dmCandidates && dmCandidates.length > 0) return dmCandidates;
+  return members.map((p) => ({ userId: p.userId, name: p.name, match: p.name }));
+}
+
+/**
+ * Who the `dm` being typed goes to, in the order the server decides: usage, a picked player,
+ * no match, two players with one name, yourself, then the player. A picked player wins as long
+ * as the name is still exactly as inserted; otherwise the typed text is matched as the server will.
+ */
+export function resolveDmTarget(
+  input: string,
+  candidates: RecipientCandidate[],
+  picked: PickedRecipient | null,
+  myUserId?: string
+): DmTarget {
   const rest = dmRest(input);
   if (rest === null) return { kind: 'none' };
   if (picked && stillPicked(input, picked)) {
@@ -88,11 +113,11 @@ export function resolveDmTarget(input: string, members: ChatPlayer[], picked: Pi
       alsoFits: [],
     };
   }
-  const match = matchRecipient(
-    members.map((p) => ({ userId: p.userId, name: p.name, match: p.name })),
-    rest
-  );
+  if (!rest.trim()) return { kind: 'usage' };
+  const match = matchRecipient(candidates, rest);
   if (!match) return { kind: 'nomatch' };
+  if (match.ambiguous) return { kind: 'ambiguous', name: match.name };
+  if (myUserId !== undefined && match.userId === myUserId) return { kind: 'self' };
   return {
     kind: 'player',
     userId: match.userId,
@@ -118,6 +143,9 @@ export type DmPreviewText = { lead: string; name: string | null; tail: string };
 // DRAFT(41): "are" for several names; the plan's text only has the single-name form.
 export function dmPreviewText(target: DmTarget): DmPreviewText | null {
   if (target.kind === 'none') return null;
+  if (target.kind === 'usage') return { lead: DM_TEXT.usage, name: null, tail: '' };
+  if (target.kind === 'self') return { lead: DM_TEXT.self, name: null, tail: '' };
+  if (target.kind === 'ambiguous') return { lead: DM_TEXT.ambiguous.replaceAll('{name}', target.name), name: null, tail: '' };
   if (target.kind === 'nomatch') return { lead: 'No player here by that name yet.', name: null, tail: '' };
   if (target.alsoFits.length === 0) return { lead: 'To: ', name: target.name, tail: '' };
   const others = joinNames(target.alsoFits);

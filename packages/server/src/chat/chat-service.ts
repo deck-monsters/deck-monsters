@@ -1,6 +1,6 @@
 import { EventEmitter } from 'node:events';
 
-import { matchRecipient, stripControlCharacters } from '@deck-monsters/engine';
+import { DM_TEXT, matchRecipient, stripControlCharacters, type RecipientCandidate } from '@deck-monsters/engine';
 import { and, asc, desc, eq, gt, inArray, lt, or, sql } from 'drizzle-orm';
 
 import type { Db } from '../db/index.js';
@@ -37,6 +37,8 @@ export type ChatErrorCode =
 	| 'rate_limited'
 	| 'no_such_player'
 	| 'self'
+	| 'ambiguous'
+	| 'dm_usage'
 	| 'no_message'
 	| 'not_member';
 
@@ -49,7 +51,10 @@ export const CHAT_ERROR_TEXT: Record<ChatErrorCode, string> = {
 	too_long: 'Messages can be up to 500 characters. That one has {n}.',
 	rate_limited: 'Easy there. Wait a few seconds before the next message.',
 	no_such_player: 'Nobody in this room goes by that name. Use the name as it shows in Chat, like: dm Ada good luck.',
-	self: "That's you. Pick someone else.",
+	// The Console's To: preview shows these same lines, so they live in the engine (DM_TEXT).
+	self: DM_TEXT.self,
+	ambiguous: DM_TEXT.ambiguous,
+	dm_usage: DM_TEXT.usage,
 	no_message: 'Add a message after the name, like: dm {name} good luck.',
 	// The Chat tab's To list can be stale if a player leaves while it is open.
 	not_member: "That player isn't in this room any more.",
@@ -63,7 +68,7 @@ export class ChatError extends Error {
 		super(
 			CHAT_ERROR_TEXT[code]
 				.replace('{n}', String(vars.n ?? ''))
-				.replace('{name}', vars.name ?? '')
+				.replaceAll('{name}', vars.name ?? '')
 		);
 		this.name = 'ChatError';
 	}
@@ -185,21 +190,34 @@ export class ChatService {
 	 * display name match. Returns an error code instead of throwing so `dm`'s caller (M2) can
 	 * pick the refusal; `message` may be empty (`no_message`).
 	 */
-	async resolveRecipient(roomId: string, rest: string): Promise<ResolvedRecipient | { error: 'no_such_player' }> {
+	async resolveRecipient(
+		roomId: string,
+		rest: string
+	): Promise<ResolvedRecipient | { error: 'no_such_player' } | { error: 'ambiguous'; name: string }> {
+		const match = matchRecipient(await this.dmCandidates(roomId), rest);
+		if (!match) return { error: 'no_such_player' };
+		// Two players with the very same name: the text cannot say which was meant.
+		if (match.ambiguous) return { error: 'ambiguous', name: match.name };
+		// The shared matcher also reports who else fits, for the Console's warning; the
+		// server only needs the pick.
+		return { userId: match.userId, name: match.name, message: match.message };
+	}
+
+	/**
+	 * Every current member (the sender included, so "dm <yourself>" can say "That's you"), once
+	 * under the name other players know them by and once under their account display name. This
+	 * is exactly the list `resolveRecipient` matches against, and the Console's preview fetches
+	 * it (`chat.dmNames`) so the two cannot disagree. Names of current room members only.
+	 */
+	async dmCandidates(roomId: string): Promise<RecipientCandidate[]> {
 		const players = await this.loadPlayers(roomId);
-		const candidates = players.flatMap((p) => {
+		return players.flatMap((p) => {
 			const out = [{ userId: p.userId, name: p.name, match: p.name }];
 			if (p.displayName && p.displayName.toLowerCase() !== p.name.toLowerCase()) {
 				out.push({ userId: p.userId, name: p.name, match: p.displayName });
 			}
 			return out;
 		});
-		// The shared matcher (engine) also reports who else fits, for the Console's warning; the
-		// server only needs the pick.
-		const match = matchRecipient(candidates, rest);
-		return match
-			? { userId: match.userId, name: match.name, message: match.message }
-			: { error: 'no_such_player' };
 	}
 
 	// ── Sending ──────────────────────────────────────────────────────────────────────────

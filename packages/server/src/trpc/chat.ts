@@ -84,6 +84,13 @@ export function createChatRouter({ roomManager, chat }: { roomManager: RoomManag
 			};
 		}),
 
+		// What the Console's `dm` preview matches against: the very candidate list the server
+		// resolves with (names of current room members, the caller included).
+		dmNames: protectedProcedure.input(roomInput).query(async ({ input, ctx }) => {
+			await roomManager.assertMember(ctx.userId, input.roomId);
+			return chat.dmCandidates(input.roomId);
+		}),
+
 		members: protectedProcedure.input(roomInput).query(async ({ input, ctx }) => {
 			await roomManager.assertMember(ctx.userId, input.roomId);
 			return chat.members(input.roomId, ctx.userId);
