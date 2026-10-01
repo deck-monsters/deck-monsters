@@ -907,7 +907,8 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
               </li>
             );
           }
-          const mechanicNote = mechanicNoteFor(user?.id, 'console', ev.id, ev.payload);
+          // No user id yet: claim nothing, or the Ring's note would be suppressed for the session.
+          const mechanicNote = user?.id ? mechanicNoteFor(user.id, 'console', ev.id, ev.payload) : undefined;
           const noteLine = mechanicNote ? <div className="mechanic-note">ⓘ {mechanicNote}</div> : null;
           if (ev.type === 'highlight' && ev.highlight) {
             return (

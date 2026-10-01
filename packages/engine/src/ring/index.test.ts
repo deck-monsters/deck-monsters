@@ -1190,12 +1190,15 @@ describe('ring/index.ts', () => {
 			const ring = game.getRing();
 			const tagged: Array<{ narration: string; mechanic?: string }> = [];
 			ring.on('narration', (_className: string, _ring: any, data: any) => tagged.push(data));
-			addPlayer(ring, 'user-1');
-			ring.spawnBoss();
-			ring.spawnBoss({ ambush: true });
-			const line = tagged.find(data => data.narration.startsWith('An ambush!'));
-			expect(line?.mechanic).to.equal('ambush');
-			game.dispose();
+			try {
+				addPlayer(ring, 'user-1');
+				ring.spawnBoss();
+				ring.spawnBoss({ ambush: true });
+				const line = tagged.find(data => data.narration.startsWith('An ambush!'));
+				expect(line?.mechanic).to.equal('ambush');
+			} finally {
+				game.dispose();
+			}
 		});
 
 		it('fights an ambush minion at a third of its HP even if it healed during the countdown', () => {

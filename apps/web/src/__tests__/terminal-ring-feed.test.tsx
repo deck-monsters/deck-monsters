@@ -25,8 +25,10 @@ vi.mock('../hooks/useTimeAgo.js', () => ({
   useTimeAgo: () => 'just now',
 }));
 
+const authState = vi.hoisted(() => ({ user: { id: 'user-1' } as { id: string } | null }));
+
 vi.mock('../lib/auth-context.js', () => ({
-  useAuth: () => ({ user: { id: 'user-1' } }),
+  useAuth: () => ({ user: authState.user }),
 }));
 
 vi.mock('../lib/command-insert-context.js', () => ({
@@ -350,6 +352,7 @@ describe('first-time mechanic notes in the feeds (roadmap 39 C4)', () => {
   }
 
   beforeEach(() => {
+    authState.user = { id: 'user-1' };
     subscriptionCalls.length = 0;
     localStorage.clear();
     resetMechanicClaimsForTests();
@@ -380,5 +383,28 @@ describe('first-time mechanic notes in the feeds (roadmap 39 C4)', () => {
     handshake();
     send('amb-3', 'An ambush! three.', { mechanic: 'ambush' });
     expect(screen.queryByText(NOTE)).toBeNull();
+  });
+
+  it('the Console claims nothing and stores nothing while the user id is unknown', () => {
+    installResizeObserver(1200);
+    authState.user = null;
+    render(<Terminal roomId="room-notes" />);
+    act(() => {
+      latestCall().onData?.({
+        id: 'hl-1',
+        data: {
+          id: 'hl-1',
+          roomId: 'room-notes',
+          timestamp: Date.now(),
+          type: 'announce',
+          scope: 'private',
+          targetUserId: 'user-1',
+          text: 'An ambush! private copy.',
+          payload: { mechanic: 'ambush' },
+        },
+      });
+    });
+    expect(screen.queryByText(NOTE)).toBeNull();
+    expect(Object.keys(localStorage).filter((k) => k.startsWith('mechanicsExplained'))).toEqual([]);
   });
 });
