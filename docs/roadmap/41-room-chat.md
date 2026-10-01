@@ -154,6 +154,12 @@ Implementers use these exactly. Anything else is a `DRAFT(41)` placeholder.
 > Messages show in the Chat tab and in the Console. They stay until everyone who has played in
 > the room lately has had a chance to read them, and never longer than 30 days.
 
+## Actionable remainder
+
+- [ ] A Discord bridge for room chat (see the backlog below).
+- [ ] Reporting and moderation.
+- [ ] Notifications for a DM.
+
 ## Backlog
 
 - **Bridges and connectors** (owner: track it so it isn't lost). Post web chat to a room's
