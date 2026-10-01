@@ -124,6 +124,10 @@ Implementers use these exactly. Anything else is a `DRAFT(41)` placeholder.
 - The resolved player, highlighted: `To: {name}`.
 - When another player's name also fits: `To: {name}. {other} is in this room too. Pick a name from the list to be sure.` If several also fit, name them all, joined with "and".
 - When no name matches yet: `No player here by that name yet.`
+- When two players' names are identical: `Two players here go by {name}. Pick one from the list.` (also the server's refusal for a typed name).
+- A bare `dm`: `Type dm, a player's name, and your message, like: dm Ada good luck.`
+- Yourself: `That's you. Pick someone else.`
+- While a question is open, only `msg`, `message` and `dm` go to chat. A line starting with `m` stays an answer, so "M Jones" can answer a naming question.
 
 **Chat tab:**
 - **Description** (tab title and subtitle): `Talk with everyone in this room, or send a message to one player.`
