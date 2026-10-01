@@ -56,6 +56,7 @@ function TestFeed({ children }: { children: ReactNode }) {
     connected: true,
     reconnecting: false,
     seedCursor: () => undefined,
+    subscribeChat: () => () => undefined,
     subscribe: (listener) => {
       listeners.add(listener);
       return () => listeners.delete(listener);
