@@ -104,6 +104,9 @@ Implementers use these exactly. Anything else is a `DRAFT(41)` placeholder.
 - A message that is too long gets `Messages can be up to 500 characters. That one has {n}.`
 - Sending too fast gets `Easy there. Wait a few seconds before the next message.`
 - The engine fallback, used on Discord, says `Room chat is in the web app's Chat tab. Here on Discord, talk in the channel.`
+- A DM to a player who has left (the To list can be stale) gets `That player isn't in this room any more.`
+- A send that fails outright (offline, server error) gets `That message didn't send. Try again.`
+- When the Console opens with unread chat, it shows `💬 {n} new {message|messages} in Chat.`
 
 **Chat tab:**
 - **Description** (tab title and subtitle): `Talk with everyone in this room, or send a message to one player.`
