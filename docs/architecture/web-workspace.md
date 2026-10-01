@@ -83,13 +83,26 @@ ignored) differs from the one taken as the step began, which is how the web sees
 unequip or move however it was made (Console or Workshop); in-memory baseline, so a reload
 re-takes it.
 
-Dismissal and completion are one per-user flag in local storage, `ftuxComplete:${userId}`
-(plain `ftuxComplete` with no user), so dismissing in either surface hides both. Whether the
-player is *established* (a monster that has fought, past ring outcomes in console history, or
-more than one monster) is decided **once**, from the first load of inventory and history,
-and a new player is marked `ftuxStarted:${userId}`. Testing it on every change ended the guide
-the moment a new player's first fight made `battles > 0`, so no step could follow the first
-fight. The guide stays hidden until that first load settles.
+Dismissal and completion are one flag per user **and room** in local storage,
+`ftuxComplete:${userId}:${roomId}`, shared by both surfaces, so dismissing in either hides
+both while another room is unaffected. The older per-user `ftuxComplete:${userId}` (and the
+plain `ftuxComplete`) still count as complete in every room, so nobody who dismissed the
+guide before sees it again. Whether the player is *established* (a monster that has fought,
+past ring outcomes in console history, or more than one monster) is decided **once per
+room**, from the first load of inventory and history; a new player is marked
+`ftuxStarted:${userId}:${roomId}`. Testing it on every change ended the guide the moment a
+new player's first fight made `battles > 0`, so no step could follow the first fight. The
+guide stays hidden until that first load settles, and stays hidden if the history query
+fails (a veteran cannot be told from a new player without it).
+
+Details that were reviewed: `waiting` outranks `equip` (a monster already in the ring means
+the player is waiting on a fight, whatever another monster's deck is); every dead monster in
+the inventory is revivable, because a permanently destroyed monster is dropped from the
+character (`Ring.handleLoser`'s `dropMonster`) and so never appears, and `revivesAt` is null
+until a revival is started; "a fight was fought" is sticky for the session, so burying the
+only monster that fought does not rewind the guide; and `change_card` compares only monsters
+present in both the baseline and the current inventory (by name), so training or burying a
+monster is not read as changing a card.
 
 ## Help and guides
 

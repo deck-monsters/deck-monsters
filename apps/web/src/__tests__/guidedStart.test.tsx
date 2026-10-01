@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({
   monsters: [] as Array<Record<string, unknown>> | undefined,
   history: [] as Array<{ type: string }> | undefined,
+  historyError: false,
 }));
 
 vi.mock('../lib/auth-context.js', () => ({ useAuth: () => ({ user: { id: 'user-1' } }) }));
@@ -11,14 +12,15 @@ vi.mock('../lib/trpc.js', () => ({
   trpc: {
     game: {
       myInventory: { useQuery: () => ({ data: mocks.monsters ? { monsters: mocks.monsters } : undefined }) },
-      consoleHistory: { useQuery: () => ({ data: mocks.history, isError: false }) },
+      consoleHistory: { useQuery: () => ({ data: mocks.historyError ? undefined : mocks.history, isError: mocks.historyError }) },
     },
   },
 }));
 
 import GuidedStartBox from '../components/GuidedStartBox.js';
 import {
-  deckSignature,
+  deckChanged,
+  deckSnapshot,
   guidedStep,
   isEstablishedPlayer,
   resetGuidedStartForTests,
@@ -56,6 +58,18 @@ describe('guidedStep', () => {
     expect(guidedStep([mon()], true).phase).toBe('hidden');
   });
 
+  it('shows waiting, not equip, when a monster is in the ring and another has a short deck', () => {
+    const step = guidedStep([mon({ name: 'Ring', cards: full, inRing: true }), mon({ name: 'Bare' })], false);
+    expect(step).toMatchObject({ phase: 'waiting', name: 'Ring' });
+  });
+
+  it('only a monster still in the inventory can drive fallen; a buried one neither drives it nor blocks change_card', () => {
+    // A permanently destroyed monster is dropped from the character, so it is simply absent.
+    const survivor = mon({ name: 'Ok', cards: full });
+    expect(guidedStep([survivor], false, true)).toMatchObject({ phase: 'change_card', name: 'Ok' });
+    expect(guidedStep([mon({ name: 'Gone', dead: true, battles: { total: 1 } })], false)).toMatchObject({ phase: 'fallen', name: 'Gone' });
+  });
+
   it('puts fallen ahead of change_card', () => {
     const step = guidedStep([mon({ name: 'Ok', cards: full, battles: { total: 2 } }), mon({ name: 'Gone', dead: true, battles: { total: 2 } })], false);
     expect(step).toMatchObject({ phase: 'fallen', name: 'Gone' });
@@ -70,10 +84,12 @@ describe('isEstablishedPlayer / deckSignature', () => {
     expect(isEstablishedPlayer([mon(), mon({ name: 'B' })], false)).toBe(true);
   });
 
-  it('changes when a card moves or goes, not when a deck is reordered', () => {
-    const base = deckSignature([mon({ cards: ['A', 'B'] })]);
-    expect(deckSignature([mon({ cards: ['B', 'A'] })])).toBe(base);
-    expect(deckSignature([mon({ cards: ['A'] })])).not.toBe(base);
+  it('sees a card move or go, not a reorder, a new monster or a missing one', () => {
+    const base = deckSnapshot([mon({ cards: ['A', 'B'] }), mon({ name: 'Other', cards: ['C'] })]);
+    expect(deckChanged(base, [mon({ cards: ['B', 'A'] }), mon({ name: 'Other', cards: ['C'] })])).toBe(false);
+    expect(deckChanged(base, [mon({ cards: ['A', 'B'] }), mon({ name: 'Other', cards: ['C'] }), mon({ name: 'New' })])).toBe(false);
+    expect(deckChanged(base, [mon({ cards: ['A', 'B'] })])).toBe(false);
+    expect(deckChanged(base, [mon({ cards: ['A'] }), mon({ name: 'Other', cards: ['C'] })])).toBe(true);
   });
 });
 
@@ -83,15 +99,16 @@ describe('useGuidedStart', () => {
     resetGuidedStartForTests();
     mocks.history = [];
     mocks.monsters = [];
+    mocks.historyError = false;
   });
 
-  const run = () => renderHook(() => useGuidedStart('room-1'));
+  const run = (room = 'room-1') => renderHook(() => useGuidedStart(room));
 
   it('is hidden for an established player on first load, and stays hidden', () => {
     mocks.monsters = [{ name: 'Old', cards: full, cardSlots: 3, battles: { total: 4 } }];
     const { result, rerender } = run();
     expect(result.current.phase).toBe('hidden');
-    expect(localStorage.getItem('ftuxComplete:user-1')).toBe('true');
+    expect(localStorage.getItem('ftuxComplete:user-1:room-1')).toBe('true');
     mocks.monsters = [{ name: 'Old', cards: full, cardSlots: 3, dead: true, battles: { total: 4 } }];
     rerender();
     expect(result.current.phase).toBe('hidden');
@@ -126,7 +143,52 @@ describe('useGuidedStart', () => {
     mocks.monsters = [{ name: 'Saffron', cards: ['A', 'B'], cardSlots: 3, battles: { total: 1 } }];
     rerender();
     expect(result.current.phase).toBe('hidden');
-    expect(localStorage.getItem('ftuxComplete:user-1')).toBe('true');
+    expect(localStorage.getItem('ftuxComplete:user-1:room-1')).toBe('true');
+  });
+
+  it('keeps change_card when a second monster is trained, and ends it when a card moves', () => {
+    mocks.monsters = [{ name: 'Saffron', cards: [...full], cardSlots: 3, battles: { total: 0 } }];
+    const { result, rerender } = run();
+    mocks.monsters = [{ name: 'Saffron', cards: [...full], cardSlots: 3, battles: { total: 1 } }];
+    rerender();
+    expect(result.current.phase).toBe('change_card');
+    mocks.monsters = [
+      { name: 'Saffron', cards: [...full], cardSlots: 3, battles: { total: 1 } },
+      { name: 'Newbie', cards: [], cardSlots: 3, battles: { total: 0 } },
+    ];
+    rerender();
+    expect(result.current.phase).toBe('change_card');
+    mocks.monsters = [
+      { name: 'Saffron', cards: ['A', 'B', 'D'], cardSlots: 3, battles: { total: 1 } },
+      { name: 'Newbie', cards: [], cardSlots: 3, battles: { total: 0 } },
+    ];
+    rerender();
+    expect(result.current.phase).toBe('hidden');
+  });
+
+  it('decides and dismisses per room', () => {
+    mocks.monsters = [{ name: 'Saffron', cards: [], cardSlots: 3 }];
+    const a = run('room-a');
+    act(() => a.result.current.dismiss());
+    expect(a.result.current.phase).toBe('hidden');
+    expect(run('room-b').result.current.phase).toBe('equip');
+    // A veteran in room-c does not hide the new player's guide in room-d.
+    mocks.monsters = [{ name: 'Old', cards: full, cardSlots: 3, battles: { total: 4 } }];
+    expect(run('room-c').result.current.phase).toBe('hidden');
+    mocks.monsters = [{ name: 'Saffron', cards: [], cardSlots: 3 }];
+    expect(run('room-d').result.current.phase).toBe('equip');
+  });
+
+  it.each(['ftuxComplete:user-1', 'ftuxComplete'])('still honours the older %s flag in every room', (key) => {
+    localStorage.setItem(key, 'true');
+    mocks.monsters = [{ name: 'Saffron', cards: [], cardSlots: 3 }];
+    expect(run('room-z').result.current.phase).toBe('hidden');
+  });
+
+  it('stays hidden when the console history query fails', () => {
+    mocks.historyError = true;
+    mocks.monsters = [{ name: 'Saffron', cards: [], cardSlots: 3 }];
+    expect(run().result.current.phase).toBe('hidden');
   });
 
   it('hides every surface when one dismisses', () => {

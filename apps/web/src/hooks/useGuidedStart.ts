@@ -9,9 +9,10 @@ import { trpc } from '../lib/trpc.js';
  *
  * Phases, in the order a new player meets them:
  * - `spawn`       no monster yet.
+ * - `waiting`     a monster in the ring, no fight fought yet (wins over equip/send: the
+ *                 player is already waiting on a fight, whatever another monster's deck is).
  * - `equip`       a living monster outside the ring whose deck is not full.
  * - `send`        a living monster outside the ring with a full deck, none in the ring.
- * - `waiting`     a monster in the ring, no fight fought yet.
  * - `fallen`      a monster has fallen after the first fight.
  * - `change_card` the first fight is over, nothing has fallen; ends when the player changes
  *                 a card on any monster (see `deckSignature`) or dismisses.
@@ -41,23 +42,30 @@ const HIDDEN: GuidedStep = { phase: 'hidden', name: '', slots: 0 };
 const hasFought = (monsters: GuidedMonster[]) => monsters.some((m) => m.battles.total > 0);
 
 /** Pure: which step the guide is on. `complete` is the dismissed/done/established flag. */
-export function guidedStep(monsters: GuidedMonster[], complete: boolean): GuidedStep {
+export function guidedStep(monsters: GuidedMonster[], complete: boolean, fought = hasFought(monsters)): GuidedStep {
 	if (complete) return HIDDEN;
 	if (monsters.length === 0) return { phase: 'spawn', name: '', slots: 0 };
 
-	if (hasFought(monsters)) {
-		// Fallen wins over change_card: reviving is what lets the player fight again.
+	if (fought) {
+		/*
+		 * Every dead monster in the inventory can be revived: a permanently destroyed one is
+		 * dropped from the character (`Ring.handleLoser`'s `dropMonster`) and so never
+		 * appears here, and `revivesAt` is null for any fallen monster whose revival has not
+		 * been started yet, so it cannot be the test. Fallen wins over change_card: reviving
+		 * is what lets the player fight again.
+		 */
 		const fallen = monsters.find((m) => m.dead);
 		if (fallen) return { phase: 'fallen', name: fallen.name, slots: fallen.cardSlots };
-		const fought = monsters.find((m) => m.battles.total > 0)!;
-		return { phase: 'change_card', name: fought.name, slots: fought.cardSlots };
+		// `fought` is sticky (see the hook), so the monster that fought may have been buried.
+		const subject = monsters.find((m) => m.battles.total > 0) ?? monsters[0]!;
+		return { phase: 'change_card', name: subject.name, slots: subject.cardSlots };
 	}
-
-	const unequipped = monsters.find((m) => !m.dead && !m.inRing && m.cards.length < m.cardSlots);
-	if (unequipped) return { phase: 'equip', name: unequipped.name, slots: unequipped.cardSlots };
 
 	const inRing = monsters.find((m) => m.inRing);
 	if (inRing) return { phase: 'waiting', name: inRing.name, slots: inRing.cardSlots };
+
+	const unequipped = monsters.find((m) => !m.dead && !m.inRing && m.cards.length < m.cardSlots);
+	if (unequipped) return { phase: 'equip', name: unequipped.name, slots: unequipped.cardSlots };
 
 	// Equipped, not in the ring (a send is refused for a short deck, hence equip came first).
 	const ready = monsters.find((m) => !m.dead && !m.inRing);
@@ -76,25 +84,44 @@ export function isEstablishedPlayer(monsters: GuidedMonster[], hasOutcomeHistory
 	return hasFought(monsters) || hasOutcomeHistory || monsters.length > 1;
 }
 
+/** Each monster's deck as one string per name, ignoring order (a reorder is not a change). */
+export type DeckSnapshot = Record<string, string>;
+
+export function deckSnapshot(monsters: GuidedMonster[]): DeckSnapshot {
+	return Object.fromEntries(monsters.map((m) => [m.name, [...m.cards].sort().join('|')]));
+}
+
 /**
- * Pure: a fingerprint of every monster's deck, ignoring order, so that equipping,
- * unequipping or moving a card changes it and merely reordering within a deck does not.
+ * Pure: did a card change on any monster present in both snapshots? Only shared monsters
+ * count, so training or burying a monster does not read as the player changing a card.
+ * Monsters are matched by name; the inventory has no other stable id.
  */
-export function deckSignature(monsters: GuidedMonster[]): string {
-	return monsters
-		.map((m) => `${m.name}:${[...m.cards].sort().join('|')}`)
-		.sort()
-		.join('\n');
+export function deckChanged(baseline: DeckSnapshot, monsters: GuidedMonster[]): boolean {
+	const now = deckSnapshot(monsters);
+	return Object.keys(baseline).some((name) => name in now && now[name] !== baseline[name]);
 }
 
 const OUTCOME_EVENT_TYPES = new Set(['ring.win', 'ring.loss', 'ring.draw', 'ring.fled', 'ring.permaDeath']);
 
 /* ---- shared state ---------------------------------------------------------------- */
 
-const completeKey = (userId: string | undefined) => (userId ? `ftuxComplete:${userId}` : 'ftuxComplete');
+/*
+ * Per user AND room: each room decides "established" on its own first load, and a dismissal
+ * in one room does not hide the guide in another. The older per-user key
+ * (`ftuxComplete:${userId}`, plain `ftuxComplete` with no user) is still honoured as
+ * complete in every room, so nobody who already dismissed the guide sees it again.
+ */
+const scopeOf = (userId: string | undefined, roomId: string | undefined) => `${userId ?? ''}:${roomId ?? ''}`;
+const completeKey = (userId: string | undefined, roomId: string | undefined) =>
+	userId ? `ftuxComplete:${userId}:${roomId ?? ''}` : `ftuxComplete::${roomId ?? ''}`;
+const legacyCompleteKeys = (userId: string | undefined) =>
+	userId ? [`ftuxComplete:${userId}`, 'ftuxComplete'] : ['ftuxComplete'];
 // "This player was new when the guide first loaded". Without it, a new player's first
 // fight followed by a reload would look like an established player and end the guide.
-const startedKey = (userId: string | undefined) => (userId ? `ftuxStarted:${userId}` : 'ftuxStarted');
+const startedKey = (userId: string | undefined, roomId: string | undefined) =>
+	`ftuxStarted:${userId ?? ''}:${roomId ?? ''}`;
+const isCompleteInStorage = (userId: string | undefined, roomId: string | undefined) =>
+	[completeKey(userId, roomId), ...legacyCompleteKeys(userId)].some(readFlag);
 
 function readFlag(key: string): boolean {
 	try {
@@ -117,31 +144,33 @@ function writeFlag(key: string): void {
 interface Shared {
 	complete: boolean;
 	decided: boolean;
-	baseline: string | null;
+	// A fight has been seen; sticky so burying the only monster that fought cannot rewind the guide.
+	fought: boolean;
+	baseline: DeckSnapshot | null;
 }
 const shared = new Map<string, Shared>();
 const listeners = new Set<() => void>();
 let version = 0;
 
-function sharedFor(userId: string | undefined): Shared {
-	const key = userId ?? '';
+function sharedFor(userId: string | undefined, roomId: string | undefined): Shared {
+	const key = scopeOf(userId, roomId);
 	let entry = shared.get(key);
 	if (!entry) {
-		entry = { complete: readFlag(completeKey(userId)), decided: false, baseline: null };
+		entry = { complete: isCompleteInStorage(userId, roomId), decided: false, fought: false, baseline: null };
 		shared.set(key, entry);
 	}
 	return entry;
 }
 
-function update(userId: string | undefined, patch: Partial<Shared>): void {
-	Object.assign(sharedFor(userId), patch);
+function update(userId: string | undefined, roomId: string | undefined, patch: Partial<Shared>): void {
+	Object.assign(sharedFor(userId, roomId), patch);
 	version += 1;
 	listeners.forEach((listener) => listener());
 }
 
-function complete(userId: string | undefined): void {
-	writeFlag(completeKey(userId));
-	update(userId, { complete: true });
+function complete(userId: string | undefined, roomId: string | undefined): void {
+	writeFlag(completeKey(userId, roomId));
+	update(userId, roomId, { complete: true });
 }
 
 function subscribe(listener: () => void): () => void {
@@ -179,18 +208,19 @@ export function useGuidedStart(roomId: string | undefined): GuidedStep & { dismi
 			battles: { total: m.battles?.total ?? 0 },
 		}));
 	}, [inventory.data]);
-	const historyReady = history.data !== undefined || history.isError;
+	// A failed history query leaves the guide hidden: without it a veteran could not be told
+	// from a new player, and showing the guide to a veteran is worse than not showing it.
+	const historyReady = history.data !== undefined;
 	const hasOutcomeHistory = useMemo(
 		() => (history.data ?? []).some((ev) => OUTCOME_EVENT_TYPES.has(ev.type)),
 		[history.data],
 	);
 
-	const state = sharedFor(userId);
-	const { complete: isComplete, decided, baseline } = state;
+	const { complete: isComplete, decided, fought, baseline } = sharedFor(userId, roomId);
 	// Until the first load settles the guide stays hidden: showing a step to a player
 	// who is about to be classed as established would flash it for nothing.
 	const loaded = monsters !== undefined && historyReady;
-	const step = loaded && decided ? guidedStep(monsters, isComplete) : HIDDEN;
+	const step = loaded && decided ? guidedStep(monsters, isComplete, fought || hasFought(monsters)) : HIDDEN;
 	const phase = step.phase;
 
 	useEffect(() => {
@@ -201,25 +231,28 @@ export function useGuidedStart(roomId: string | undefined): GuidedStep & { dismi
 			 * every inventory change used to end the guide the moment a new player's first
 			 * fight made `battles > 0`, so no step could ever follow the first fight.
 			 */
-			if (!readFlag(startedKey(userId)) && isEstablishedPlayer(monsters, hasOutcomeHistory)) {
-				complete(userId);
+			if (!readFlag(startedKey(userId, roomId)) && isEstablishedPlayer(monsters, hasOutcomeHistory)) {
+				complete(userId, roomId);
 				return;
 			}
-			writeFlag(startedKey(userId));
-			update(userId, { decided: true });
+			writeFlag(startedKey(userId, roomId));
+			update(userId, roomId, { decided: true });
+			return;
+		}
+		if (!fought && hasFought(monsters)) {
+			update(userId, roomId, { fought: true });
 			return;
 		}
 		// The change_card step ends when a deck changes. The baseline is taken as the step
 		// begins and re-taken while a monster is fallen (a card change then is not an answer).
-		const signature = deckSignature(monsters);
 		if (phase === 'change_card') {
-			if (baseline === null) update(userId, { baseline: signature });
-			else if (baseline !== signature) complete(userId);
+			if (baseline === null) update(userId, roomId, { baseline: deckSnapshot(monsters) });
+			else if (deckChanged(baseline, monsters)) complete(userId, roomId);
 		} else if (baseline !== null && phase !== 'hidden') {
-			update(userId, { baseline: null });
+			update(userId, roomId, { baseline: null });
 		}
-	}, [loaded, isComplete, decided, baseline, userId, monsters, hasOutcomeHistory, phase]);
+	}, [loaded, isComplete, decided, fought, baseline, userId, roomId, monsters, hasOutcomeHistory, phase]);
 
-	const dismiss = useCallback(() => complete(userId), [userId]);
+	const dismiss = useCallback(() => complete(userId, roomId), [userId, roomId]);
 	return { ...step, dismiss };
 }

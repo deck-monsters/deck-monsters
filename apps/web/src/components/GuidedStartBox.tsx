@@ -59,7 +59,6 @@ export function guidedCopy(surface: 'console' | 'workshop', phase: GuidedPhase, 
 		case 'change_card':
 			return console_
 				? { text: `${name} has fought a fight. Now try changing a card. Type help unequip to see how, or use the Workshop.`, chip: 'help unequip' }
-				// DRAFT(39): the Workshop moves a card by selecting it and tapping a destination slot or the inventory drop zone (drag and drop on desktop); "tap one of {name}'s cards, then tap an empty slot or your cards" matches that.
 				: { text: `${name} has fought a fight. Now try changing a card: tap one of ${name}'s cards, then tap an empty slot or your cards to move it.` };
 		default:
 			return null;
