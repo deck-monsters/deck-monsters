@@ -40,6 +40,13 @@ export type UseChat = {
   /** The To picker list: every other member of the room. */
   members: ChatPlayer[];
   /**
+   * Re-fetch the member lists (`members`, `dmCandidates`) now, at most once per
+   * `NAMES_REFRESH_MS`. They are also refreshed on every feed handshake. The Console calls this
+   * as a `dm ` line starts, so a join, leave or rename since the room opened is not previewed
+   * from a stale list.
+   */
+  refreshNames: () => void;
+  /**
    * What a typed `dm` is matched against: the server's own candidate list (character names and
    * account display names of current members, the caller included), so the Console's To:
    * preview resolves exactly as the server will. Empty until it loads.
@@ -73,6 +80,12 @@ const SEND_FAILED_TEXT = "That message didn't send. Try again.";
 
 /** Page size for history fetches; matches the server's default limit. */
 export const CHAT_PAGE_SIZE = 100;
+
+/** The room cap on stored messages (server RETENTION_MAX_PER_ROOM): no history is older than this. */
+export const CHAT_ROOM_CAP = 500;
+
+/** Minimum gap between name-list refreshes triggered by typing `dm `. */
+export const NAMES_REFRESH_MS = 10_000;
 
 const ChatContext = createContext<UseChat | null>(null);
 
@@ -110,6 +123,12 @@ function useChatState(roomId: string): UseChat {
   messagesRef.current = messages;
   const lastReadRef = useRef(lastReadId);
   lastReadRef.current = lastReadId;
+  // The read position the server has actually stored. `lastReadId` moves ahead optimistically;
+  // if the write fails the two differ, and the next markRead or handshake retries instead of
+  // returning early (which left the badge stuck, with nothing ever persisted).
+  const persistedReadRef = useRef(0);
+  const readInFlightRef = useRef(false);
+  const lastNamesFetchRef = useRef(0);
 
   // Navigating to another room drops the previous room's chat before anything renders it.
   const [stateRoomId, setStateRoomId] = useState(roomId);
@@ -121,6 +140,8 @@ function useChatState(roomId: string): UseChat {
     setMembers([]);
     setDmCandidates([]);
     setLoaded(false);
+    persistedReadRef.current = 0;
+    lastNamesFetchRef.current = 0;
   }
 
   const liveListenersRef = useRef(new Set<(message: ChatMessage) => void>());
@@ -149,9 +170,14 @@ function useChatState(roomId: string): UseChat {
           if (roomIdRef.current !== forRoom) return; // navigated away while it was loading
           setMessages((current) => mergeChatMessages(current, result.messages));
           setLastReadId((prev) => Math.max(prev, result.lastReadId));
+          persistedReadRef.current = Math.max(persistedReadRef.current, result.lastReadId);
           setUnread(result.unread);
           setLoaded(true);
-          if (cursor === undefined || result.messages.length < CHAT_PAGE_SIZE) return;
+          if (cursor === undefined) {
+            await loadUnreadBacklog(forRoom, result.messages, result.lastReadId);
+            return;
+          }
+          if (result.messages.length < CHAT_PAGE_SIZE) return;
           cursor = result.messages.reduce((max, m) => Math.max(max, m.id), cursor);
         }
       } catch {
@@ -159,28 +185,57 @@ function useChatState(roomId: string): UseChat {
         // handshake tries again.
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- loadUnreadBacklog only uses `client`
     [client, roomId]
   );
 
-  useEffect(() => {
-    void loadHistory();
-    let cancelled = false;
+  /**
+   * The first page is the newest 100. When the player has more than that unread, page BACK
+   * until the oldest loaded message is at or before their read position (bounded by the room
+   * cap), so everything unread is actually rendered. Reaching the bottom of the Chat tab marks
+   * the newest message read; without this it would mark older, never-rendered messages read too.
+   */
+  async function loadUnreadBacklog(forRoom: string, firstPage: ChatMessage[], readId: number) {
+    let loadedCount = firstPage.length;
+    let oldest = firstPage.reduce((min, m) => Math.min(min, m.id), Infinity);
+    let pageLength = firstPage.length;
+    while (pageLength >= CHAT_PAGE_SIZE && oldest > readId && loadedCount < CHAT_ROOM_CAP) {
+      const older = await client.chat.history.query({ roomId: forRoom, beforeId: oldest, limit: CHAT_PAGE_SIZE });
+      if (roomIdRef.current !== forRoom) return;
+      setMessages((current) => mergeChatMessages(current, older.messages));
+      pageLength = older.messages.length;
+      loadedCount += pageLength;
+      if (pageLength === 0) return;
+      oldest = older.messages.reduce((min, m) => Math.min(min, m.id), oldest);
+    }
+  }
+
+  const fetchNames = useCallback(() => {
+    const forRoom = roomId;
+    lastNamesFetchRef.current = Date.now();
     void client.chat.members
-      .query({ roomId })
+      .query({ roomId: forRoom })
       .then((list) => {
-        if (!cancelled) setMembers(list);
+        if (roomIdRef.current === forRoom) setMembers(list);
       })
       .catch(() => {});
     void client.chat.dmNames
-      .query({ roomId })
+      .query({ roomId: forRoom })
       .then((list) => {
-        if (!cancelled) setDmCandidates(list);
+        if (roomIdRef.current === forRoom) setDmCandidates(list);
       })
       .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, [client, roomId, loadHistory]);
+  }, [client, roomId]);
+
+  const refreshNames = useCallback(() => {
+    if (Date.now() - lastNamesFetchRef.current < NAMES_REFRESH_MS) return;
+    fetchNames();
+  }, [fetchNames]);
+
+  useEffect(() => {
+    void loadHistory();
+    fetchNames();
+  }, [loadHistory, fetchNames]);
 
   useEffect(
     () =>
@@ -189,6 +244,10 @@ function useChatState(roomId: string): UseChat {
           // First connect and every reconnect. The mount fetch above may still be in flight,
           // in which case newestId() is 0 and this is a harmless duplicate of it.
           void loadHistory(newestId() || undefined);
+          // Joins, leaves and renames since the last connection.
+          fetchNames();
+          // A read position that failed to save is retried now the connection is back.
+          if (lastReadRef.current > persistedReadRef.current) persistRead(lastReadRef.current);
           return;
         }
         const { message } = item;
@@ -200,13 +259,38 @@ function useChatState(roomId: string): UseChat {
           setUnread((n) => n + 1);
         }
       }),
-    [subscribeChat, loadHistory]
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- persistRead is stable per room
+    [subscribeChat, loadHistory, fetchNames]
   );
+
+  /** Write the read position to the server; the optimistic value stays until it is saved. */
+  function persistRead(id: number) {
+    const forRoom = roomId;
+    readInFlightRef.current = true;
+    client.chat.markRead
+      .mutate({ roomId: forRoom, lastReadId: id })
+      .then((result) => {
+        readInFlightRef.current = false;
+        if (roomIdRef.current !== forRoom) return;
+        persistedReadRef.current = Math.max(persistedReadRef.current, id);
+        setUnread(result.unread);
+      })
+      .catch(() => {
+        readInFlightRef.current = false;
+        // Not saved: persistedReadRef stays behind lastReadRef, so the next markRead or
+        // handshake tries again.
+      });
+  }
 
   const markRead = useCallback(
     (id: number) => {
-      if (id <= lastReadRef.current) return;
-      const forRoom = roomId;
+      if (id <= lastReadRef.current) {
+        // Already ahead on screen; only retry if that never reached the server.
+        if (lastReadRef.current > persistedReadRef.current && !readInFlightRef.current) {
+          persistRead(lastReadRef.current);
+        }
+        return;
+      }
       setLastReadId(id);
       lastReadRef.current = id;
       // Optimistic: what is still unread is what we hold from others past `id`, never more
@@ -217,23 +301,22 @@ function useChatState(roomId: string): UseChat {
           messagesRef.current.filter((m) => m.id > id && m.senderUserId !== myUserIdRef.current).length
         )
       );
-      client.chat.markRead
-        .mutate({ roomId: forRoom, lastReadId: id })
-        .then((result) => {
-          if (roomIdRef.current !== forRoom) return;
-          setUnread(result.unread);
-        })
-        .catch(() => {});
+      persistRead(id);
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- persistRead closes over client and roomId only
     [client, roomId]
   );
 
   const send = useCallback(
     async (text: string, toUserId?: string): Promise<string | null> => {
+      const forRoom = roomId;
       try {
         const message = await client.chat.send.mutate(
-          toUserId ? { roomId, text, toUserId } : { roomId, text }
+          toUserId ? { roomId: forRoom, text, toUserId } : { roomId: forRoom, text }
         );
+        // The player may have moved to another room while this was in flight: the message
+        // belongs to the room it was sent in, and must not appear in (or notify) this one.
+        if (roomIdRef.current !== forRoom) return null;
         // Show our own line without waiting for the live frame; the frame dedupes by id.
         setMessages((current) => mergeChatMessages(current, [message]));
         for (const listener of liveListenersRef.current) listener(message);
@@ -246,5 +329,5 @@ function useChatState(roomId: string): UseChat {
     [client, roomId]
   );
 
-  return { messages, unread, lastReadId, loaded, markRead, send, members, dmCandidates, subscribeLive };
+  return { messages, unread, lastReadId, loaded, markRead, send, members, dmCandidates, refreshNames, subscribeLive };
 }

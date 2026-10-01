@@ -283,6 +283,12 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
     [ringStateForDm],
   );
   const dmQuery = dmRest(inputValue);
+  // As a `dm ` line starts, make sure the names are current (throttled inside useChat).
+  const refreshNames = chat.refreshNames;
+  const typingDm = dmQuery !== null;
+  useEffect(() => {
+    if (typingDm) refreshNames?.();
+  }, [typingDm, refreshNames]);
   const dmSuggestions = useMemo<AutocompleteSuggestion[] | null>(() => {
     if (dmQuery === null || inputLocked) return null;
     return orderDmSuggestions({
@@ -791,7 +797,11 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
     try {
       // An empty message falls through to the server, which answers with the plan's
       // "Add a message after the name" text rather than the web repeating it.
-      if (target.kind === 'player' && target.picked && target.message) {
+      // A resolved player is sent BY ID, picked or typed: what the preview showed is what is
+      // sent, never re-parsed on the server against a list that may have changed meanwhile
+      // (the server still checks the player is a member, and refuses with "isn't in this room
+      // any more"). Everything else goes to the server for its refusal text.
+      if (target.kind === 'player' && target.message) {
         refusal = await chat.send(target.message, target.userId);
       } else {
         const result = await sendCommand.mutateAsync({ roomId, command: line, isDM: true });

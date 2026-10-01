@@ -57,6 +57,15 @@ describe('trpc chat router', () => {
 		expect(m).to.include({ senderUserId: ADA, text: 'hello', recipientUserId: null, source: 'web' });
 	});
 
+	it('counts a Chat tab send and a Console msg as presence, but not a refused send', async () => {
+		const { chat, as } = build();
+		await as(ADA).chat.send({ roomId: ROOM_ID, text: 'hello' });
+		expect(chat.seen).to.deep.equal([`${ROOM_ID}:${ADA}`]);
+		await as(BEN).game.command({ roomId: ROOM_ID, command: 'msg hi' }).catch(() => undefined);
+		await as(CAL).chat.send({ roomId: ROOM_ID, text: 'x'.repeat(501) }).catch(() => undefined);
+		expect(chat.seen).to.deep.equal([`${ROOM_ID}:${ADA}`, `${ROOM_ID}:${BEN}`]);
+	});
+
 	it('turns a chat refusal into BAD_REQUEST carrying the player-facing text and code', async () => {
 		const { as } = build();
 		const err = (await as(ADA).chat.send({ roomId: ROOM_ID, text: 'x'.repeat(501) }).catch((e: unknown) => e)) as TRPCError;

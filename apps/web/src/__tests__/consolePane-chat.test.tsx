@@ -20,7 +20,8 @@ const listeners = new Set<(tracked: TrackedRingFeedEvent) => void>();
 const mocks = vi.hoisted(() => ({
   command: vi.fn(async (_input: unknown): Promise<unknown> => ({ ok: true })),
   respond: vi.fn(async () => ({ ok: true })),
-  send: vi.fn(async (): Promise<string | null> => null),
+  send: vi.fn(async (..._args: unknown[]): Promise<string | null> => null),
+  refreshNames: vi.fn(),
   chat: {
     messages: [] as unknown[],
     unread: 0,
@@ -63,6 +64,7 @@ vi.mock('../hooks/useChat.js', () => ({
     send: mocks.send,
     members: mocks.chat.members,
     dmCandidates: mocks.chat.dmCandidates,
+    refreshNames: mocks.refreshNames,
     subscribeLive: (listener: (m: unknown) => void) => {
       mocks.chat.live.add(listener);
       return () => mocks.chat.live.delete(listener);
@@ -190,6 +192,7 @@ beforeEach(() => {
   mocks.command.mockImplementation(async () => ({ ok: true }));
   mocks.respond.mockReset();
   mocks.send.mockReset();
+  mocks.refreshNames.mockReset();
   mocks.send.mockImplementation(async () => null);
   mocks.chat.messages = [];
   mocks.chat.unread = 0;
@@ -341,15 +344,33 @@ describe('the dm preview and picked names', () => {
     // Preview is back to the typed match, with its warning.
     expect(document.querySelector('.dm-preview')!.textContent).toContain('Anthony is in this room too');
     await submit();
-    expect(mocks.send).not.toHaveBeenCalled();
-    expect(mocks.command).toHaveBeenCalledWith(expect.objectContaining({ command: 'dm Anthony Bourdain is too powerful' }));
+    // The typed name the preview resolved is sent by its id, not re-parsed by the server.
+    expect(mocks.send).toHaveBeenCalledWith('is too powerful', 'bou');
+    expect(mocks.command).not.toHaveBeenCalled();
   });
 
-  it('a typed dm goes to game.command, quotes included', async () => {
+  it('a typed dm, quotes included, is sent by the id the preview resolved', async () => {
     renderConsole();
     type('dm "Anthony" Bourdain is too powerful');
     await submit();
-    expect(mocks.command).toHaveBeenCalledWith(expect.objectContaining({ command: 'dm "Anthony" Bourdain is too powerful' }));
+    expect(mocks.send).toHaveBeenCalledWith('Bourdain is too powerful', 'ant');
+    expect(mocks.command).not.toHaveBeenCalled();
+  });
+
+  it('a typed dm that names nobody goes to the server for its refusal text', async () => {
+    renderConsole();
+    type('dm Nobody hi');
+    await submit();
+    expect(mocks.send).not.toHaveBeenCalled();
+    expect(mocks.command).toHaveBeenCalledWith(expect.objectContaining({ command: 'dm Nobody hi' }));
+  });
+
+  it('asks for fresh names as a dm line starts, not for other lines', () => {
+    renderConsole();
+    type('msg hi');
+    expect(mocks.refreshNames).not.toHaveBeenCalled();
+    type('dm A');
+    expect(mocks.refreshNames).toHaveBeenCalled();
   });
 
   it('a picked name with no message goes to the server for its refusal text', async () => {

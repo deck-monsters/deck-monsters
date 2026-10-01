@@ -70,8 +70,8 @@ message is deleted when any of these is true:
 1. It is older than 30 days.
 2. It is beyond the newest 500 in its room.
 3. It is older than 7 days and every member seen in the room within the last 14 days has read
-   past it. "Seen" is `room_members.last_seen_at`, touched when a feed opens and when the
-   player sends chat. For a DM, only its recipient counts, since a sender has read their own
+   past it. "Seen" is `room_members.last_seen_at`, touched when a feed opens and by
+   `ChatService.send` (so the Console and the Chat tab both count). For a DM, only its recipient counts, since a sender has read their own
    message.
 
 The owner chose "keep until seen, within limits": someone away for a few days still finds the
@@ -89,6 +89,8 @@ Bourdain, and a player could rename themselves to catch messages on purpose. So:
 
 - picking a name from the suggestions sends by that player's id, and the text is never
   re-parsed;
+- a typed name the preview resolves to one player is sent by that id as well, so the preview
+  and the send cannot differ if the member list changed meanwhile;
 - a typed name shows a highlighted **To:** preview, from the same engine matcher and the same
   candidate names as the server (`chat.dmNames`). The preview warns when another name also
   fits, and the typed path refuses identical names;

@@ -151,8 +151,12 @@ room, mounted in `Terminal`; the Console never calls `chat.history` itself, road
 - **Picked means exact.** Choosing a suggestion remembers that player's id. While the input
   still begins `dm {that exact name} `, submit sends with `useChat().send(message, toUserId)`:
   the id, never re-parsed from text, so a player renamed to catch messages cannot steal a pick.
-  Editing the name forgets the id and falls back to the typed line and the server's matching.
-  A picked name with no message goes to the server so the refusal text has one home.
+  Editing the name forgets the id. A TYPED name the preview resolved to one player is sent by
+  that player's id too, so what the preview showed is what is sent even if the member list
+  changed meanwhile (the server still checks the player is a member). Names are re-fetched on
+  every feed handshake and, throttled to once per 10 s, as a `dm ` line starts. A line the
+  preview could not resolve, or a name with no message, goes to the server so each refusal text
+  has one home.
 
 ## The getting-started guide
 

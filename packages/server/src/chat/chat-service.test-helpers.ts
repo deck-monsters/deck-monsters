@@ -23,6 +23,13 @@ export class FakeChatService extends ChatService {
 		return (this as unknown as { emitter: { listenerCount(e: string): number } }).emitter.listenerCount(roomId);
 	}
 
+	/** (roomId:userId) of each presence touch, to assert chat counts as being seen. */
+	seen: string[] = [];
+
+	protected override touchPresence(roomId: string, userId: string) {
+		this.seen.push(`${roomId}:${userId}`);
+	}
+
 	protected override async loadPlayers() {
 		return this.players;
 	}

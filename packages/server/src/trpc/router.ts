@@ -883,9 +883,7 @@ export function createRouter(roomManager: RoomManager, chat: ChatService = new C
 					await roomManager.assertMember(ctx.userId, input.roomId);
 					try {
 						await sendChatCommand(chat, input.roomId, ctx.userId, chatCommand);
-						// Chatting is presence: retention keeps a message until the members
-						// seen lately have read it, and that uses last_seen_at.
-						void touchMemberLastSeen(db, input.roomId, ctx.userId).catch(() => {});
+						// (ChatService.send touches last_seen_at: chatting is presence.)
 					} catch (err) {
 						if (err instanceof ChatError) {
 							// The same shape every refused command uses; the Console shows it as `! {message}`.

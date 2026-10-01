@@ -3,6 +3,7 @@ import { EventEmitter } from 'node:events';
 import { DM_TEXT, matchRecipient, stripControlCharacters, type RecipientCandidate } from '@deck-monsters/engine';
 import { and, asc, desc, eq, gt, inArray, lt, or, sql } from 'drizzle-orm';
 
+import { touchMemberLastSeen } from '../analytics-queries.js';
 import type { Db } from '../db/index.js';
 import { profiles, roomMembers, roomMessageReads, roomMessages, rooms } from '../db/schema.js';
 import { createLogger } from '../logger.js';
@@ -247,6 +248,11 @@ export class ChatService {
 		this.sends.set(key, recent);
 	}
 
+	/** Fire and forget; overridable seam for tests. */
+	protected touchPresence(roomId: string, userId: string): void {
+		void touchMemberLastSeen(this.db, roomId, userId).catch(() => {});
+	}
+
 	/** Overridable seam for tests. */
 	protected async insertMessage(row: {
 		roomId: string;
@@ -317,6 +323,10 @@ export class ChatService {
 			createdAt: stored.createdAt.toISOString(),
 		};
 		this.emitter.emit(input.roomId, message);
+		// Chatting is presence, whichever door the message came through (the Console's
+		// msg/dm or the Chat tab): retention rule 3 keeps a message until the members SEEN lately
+		// have read it, and that is room_members.last_seen_at.
+		this.touchPresence(input.roomId, input.senderUserId);
 		return message;
 	}
 
