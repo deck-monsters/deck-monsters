@@ -8,7 +8,7 @@ tags: [roadmap, chat, web, server, social]
 ---
 # 41 — Room chat
 
-**Status:** In progress (2026-10-01): M1 done; M2 and M3 next, side by side.
+**Status:** In progress (2026-10-01): M1 and M3 done; M2 in its review fix round.
 
 ## Why
 
@@ -89,7 +89,7 @@ sees a marker line, **New since you were last here**, at their last read positio
 | # | Task | Area | Can run beside | Status | Commit |
 |---|---|---|---|---|---|
 | M1 | **Chat core.** Migration (`room_messages`, `room_message_reads`); `ChatService` (send, history, mark read, unread count, name resolution, limits, retention sweep); a `chat` tRPC router with membership checks; chat frames merged into `ringFeed`; and a web `useChat` hook (history, live frames deduped by id, unread count, mark read). Includes pg tests | Server, migration, web hook | — | Done. Review: no privacy or room-scoping finding. Fixes: newlines become spaces; zero-width-only text counts as empty; the limit counts code points; reconnect catch-up pages until done; chat subscribes before the handshake; a single `ChatProvider`. Found on the way: bug 213 | 528d9a39, f33e602d |
-| M2 | **The Console and commands.** Catalogue entries in a new **Chat** category; an engine fallback handler for connectors without chat (Discord); `game.command` catches `msg`, `message`, `m` and `dm` before the flow check, without echoing them; the Console shows chat lines, and while a question is open, a line starting with a chat command goes to chat, not to the answer | Engine catalogue, server router, ConsolePane | M3 | Planned, after M1 | |
+| M2 | **The Console and commands.** Catalogue entries in a new **Chat** category; an engine fallback handler for connectors without chat (Discord); `game.command` catches `msg`, `message`, `m` and `dm` before the flow check, without echoing them; the Console shows chat lines, and while a question is open, a line starting with a chat command goes to chat, not to the answer | Engine catalogue, server router, ConsolePane | M3 | Done. Six tabs fit at 390 px (and 320). The unread badge sits at the tab's corner; side by side, the pane picker shows `Chat · {n} unread`. Chat is in the menu. The chosen recipient is highlighted in the To picker. DMs read like the Console's. Opening with unread scrolls to the marker. Review: approved; fixes to composer races, a room key, marker timing, a jump cue and midnight rollover | aa7e9f5c, 07fe53d9 |
 | M3 | **The Chat tab.** Surface and description; the panel with time and fight dividers, the new-since marker, DM styling, a To picker, and an unread badge on the tab; marks read while visible; six tabs fit at 390 px | Web | M2 | Planned, after M1 | |
 | M4 | **Help and docs.** A "Talking to other players" handbook section; a new `docs/architecture/room-chat.md`; help inventory; and Cursor's live checklist | Engine build, docs | — | Planned, last | |
 
