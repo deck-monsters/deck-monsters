@@ -39,6 +39,11 @@ These apply to every task in this repo, not just the one you were asked to do.
    or should update documentation, use
    `.cursor/skills/maintaining-repository-docs/SKILL.md` before editing docs. This includes
    behavior changes, roadmap status, generated references, runbooks, and durable findings.
+8. **Think like a first-time player.** For any change a player can see or do (a web
+   control or screen, a Console command or prompt, an announcement, a mechanic, a Discord
+   command), use `.cursor/skills/player-help-and-ux/SKILL.md`. Make the change explain
+   itself to someone new, on a phone, and put its help where that kind of help lives.
+   Owner's standing order (2026-10-01).
 
 ## Working with subagents
 

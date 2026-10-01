@@ -60,9 +60,19 @@ Tasks 1 and 2 are specified in [39a](39a-cursor-first-pass.md), which Claude imp
 | 2 | **Help in the game:** a Help entry in the menu that opens the player handbook, the monster, card and item guides, and the command list, readable on a phone | Done (2026-09-30): a Help and guides page from the ☰ menu, not a tab (the phone tab bar already overflows); lazy-loaded; 57563764, 9e31cf05. Needs the live check |
 | 3 | **Inventory,** by walking the game as a new player in a real browser at phone and desktop widths (a Cursor prompt is below): every tab, panel, button, menu, header counter, Console command and prompt, and every mechanic a player meets in a fight. For each, what explains it today (a label, a tooltip, a help line, a handbook section, or nothing) and what confused the walker | Done (2026-09-30): Cursor's walk at phone and desktop widths, [help inventory](../reference/help-inventory.md) (fc23174f). Its top ten are triaged below |
 | 4 | **Decide the forms of help,** per kind of control: a short description on each button and menu item (tooltip, or long-press on a phone); a one-line "what is this" for each tab and panel, shown the first time and reachable after; `help <command>` with an example for every command; and a narration line the first time a player meets a mechanic in a fight (a ring event, a boss's temperament, an ambush, bosses turning on each other). Keep it short, and never block play | Done in batch 3: the decisions below (C1–C4) |
-| 5 | **Write the text.** The orchestrator writes every line in the game's voice, from the inventory, in batches by surface | Planned |
+| 5 | **Write the text, and keep writing it.** The orchestrator writes every line in the game's voice. Since 2026-10-01 this is a standing order for every visible change (`.cursor/skills/player-help-and-ux`). Known gaps go in the list below | Ongoing |
 | 6 | **A guided start,** from joining a room to a first fight and a first card change, built on the existing first-run training | Done in batch 3 (C3) |
 | 7 | **Keep it complete:** a test that fails when a catalogue command, or a button in the web app, has no help text | Done in batch 3: `button-titles.test.ts` (web) and the catalogue tests (C1, C2) |
+
+### Known gaps (task 5)
+
+Things that still confuse a new player, with where. Add to this list when a change can't fix one; strike an item when it ships.
+
+- The boss arriving with `Fights: 102` in a new room: boss history is global. Either say so, or show this room's count.
+- The closed command reference is still read by screen readers.
+- The desktop theme circle has no word.
+- The long room name collides with the logo on a phone.
+- The three first-time fight notes nobody has seen live yet: ring events, ambush, and bosses turning on each other ([batch 3 check](../reference/help-check-batch3.md)).
 
 ## Batch 2: from the walk (2026-09-30)
 
