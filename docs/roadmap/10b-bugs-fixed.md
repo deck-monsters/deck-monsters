@@ -5013,6 +5013,21 @@ registering before look-at.
 
 **Status**: Fixed.
 
+### 213. A feed event could wait up to 20 s to reach the browser — FIXED
+
+Found while building room chat (roadmap 41, M1). It was latent in every live feed.
+
+Root cause: the `ringFeed` subscription drains its queue, yields each frame, and then waits for
+a new event or the 20 s heartbeat. The wait only resolved on a *new* push. An event pushed
+while a frame was being yielded landed in the queue before the wait began, so nothing woke the
+wait, and that event sat until the heartbeat fired. In a busy fight this showed up as a line
+arriving late, in a burst with the next one.
+
+**Fix**: the wait checks both queues (game events and chat) first and returns at once when
+either holds something. `router.ts`, in the `ringFeed` loop, with a comment.
+
+**Status**: Fixed.
+
 ## Closed without a fix
 
 These were open investigations the owner closed on 2026-09-28. Reopen with new evidence.
