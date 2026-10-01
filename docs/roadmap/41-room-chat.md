@@ -50,6 +50,17 @@ Made by the orchestrator, from the survey of the code:
 - **Names.** `dm` matches the longest player name, either character name or display name, that
   the rest of the line starts with, ignoring case. That handles names with spaces, such as
   "Anthony Bourdain". The recipient must be a member of the room.
+- **Who a DM goes to must be visible before it is sent** (owner, 2026-10-01). Longest-match
+  alone can't tell "dm Anthony Bourdain is too powerful" from a message to a player named
+  Anthony Bourdain, and a player could rename themselves to catch messages on purpose, for
+  example by adding "the" to a common name. So:
+  - picking a name from the suggestions sends to that player's id, never re-parsed from text;
+  - a typed name shows a highlighted **To:** preview of the resolved player before sending,
+    and warns when another player's name also fits;
+  - quotes force an exact name: `dm "Anthony" Bourdain is too powerful`;
+  - the matcher has one home (engine, browser-safe), shared by the server and the preview;
+  - suggestions after `dm ` order players by most recent DM with you, then players in the
+    current fight, then alphabetically.
 - **Limits.** A message is at most 500 characters. A player can send at most 5 messages in any
   10 seconds.
 - **Fight stamp.** A message sent while a fight is on records that fight's number, which is
@@ -107,6 +118,11 @@ Implementers use these exactly. Anything else is a `DRAFT(41)` placeholder.
 - A DM to a player who has left (the To list can be stale) gets `That player isn't in this room any more.`
 - A send that fails outright (offline, server error) gets `That message didn't send. Try again.`
 - When the Console opens with unread chat, it shows `💬 {n} new {message|messages} in Chat.`
+
+**DM preview** (Console, while typing `dm …`):
+- The resolved player, highlighted: `To: {name}`.
+- When another player's name also fits: `To: {name}. {other} is in this room too. Pick a name from the list to be sure.` If several also fit, name them all, joined with "and".
+- When no name matches yet: `No player here by that name yet.`
 
 **Chat tab:**
 - **Description** (tab title and subtitle): `Talk with everyone in this room, or send a message to one player.`
