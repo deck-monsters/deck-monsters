@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { COMMAND_CATALOG, type CommandCategory } from '@deck-monsters/engine';
+import { CATEGORY_LABELS, COMMAND_CATALOG, type CommandCategory } from '@deck-monsters/engine';
 
 interface CommandReferenceProps {
   open: boolean;
@@ -7,19 +7,10 @@ interface CommandReferenceProps {
   onInsertCommand: (command: string) => void;
 }
 
-export const CATEGORY_LABELS: Record<CommandCategory, string> = {
-  monsters: 'Monsters',
-  ring: 'The Ring',
-  cards: 'Cards',
-  items: 'Items',
-  shop: 'The Shop',
-  character: 'Your Character',
-  info: 'Reference',
-};
-
-export const CATEGORY_ORDER: CommandCategory[] = [
-  'monsters', 'ring', 'cards', 'items', 'shop', 'character', 'info',
-];
+// One home for the labels and their order: the engine's `CATEGORY_LABELS` (object key order is
+// the display order), so a new category cannot be added there and missing here.
+export { CATEGORY_LABELS };
+export const CATEGORY_ORDER = Object.keys(CATEGORY_LABELS) as CommandCategory[];
 
 export default function CommandReference({ open, onClose, onInsertCommand }: CommandReferenceProps) {
   const panelRef = useRef<HTMLDivElement>(null);

@@ -2,6 +2,7 @@ import { expect } from 'chai';
 import { helpersReady } from '../characters/helpers/random.js';
 import { COMMAND_CATALOG, formatCommandList } from './catalog.js';
 import { getArray } from '../helpers/get-array.js';
+import { chatHandler } from './chat.js';
 import { isCommand, listen, loadHandlers } from './index.js';
 
 describe('COMMAND_CATALOG', () => {
@@ -221,5 +222,50 @@ describe('command registration order', () => {
 		await action!({ channel: () => Promise.resolve(''), channelName: 'test', isDM: true, user: { id: 'u1', name: 'T' } });
 		expect(calls).to.include('presets:fluffy');
 		expect(calls).not.to.include('lookAt');
+	});
+});
+
+describe('chat commands without a chat connector', () => {
+	before(async () => {
+		await helpersReady;
+		loadHandlers();
+	});
+
+	const ask = async (command: string): Promise<string[]> => {
+		const action = listen({ command, game: {} });
+		expect(action, command).to.not.equal(null);
+		const out: string[] = [];
+		await action!({
+			channel: ({ announce }: { announce?: string }) => {
+				if (announce) out.push(announce);
+				return Promise.resolve('');
+			},
+			channelName: 'test',
+			isDM: true,
+			user: { id: 'u1', name: 'Tester' },
+		});
+		return out;
+	};
+
+	it('msg, message, m and dm each get the fallback line', async () => {
+		for (const command of ['msg hello', 'message hello there', 'm hi', 'MSG Hi', 'dm Ada good luck', 'dm', 'msg']) {
+			expect(await ask(command), command).to.deep.equal([
+				"Room chat is in the web app's Chat tab. Here on Discord, talk in the channel.",
+			]);
+		}
+	});
+
+	it('does not swallow words that merely start with the same letters', () => {
+		for (const command of ['monsters', 'message-board', 'dmx', 'mm hi', 'dismiss Fluffy', 'mmsg hi']) {
+			expect(chatHandler.matcher.test(command), command).to.equal(false);
+		}
+	});
+
+	it('lists the Chat category in the command reference', () => {
+		expect(formatCommandList()).to.include('-- Chat --');
+		expect(COMMAND_CATALOG.filter((e) => e.category === 'chat').map((e) => e.command)).to.deep.equal([
+			'msg [message]',
+			'dm [player] [message]',
+		]);
 	});
 });

@@ -68,6 +68,42 @@ closes; the guide is only unrendered, not dismissed, and a `quick_actions` event
 arrives meanwhile is kept. The "A command is waiting for your answer. Command suggestions
 are paused." banner still shows when the prompt is scrolled out of view, and is now true.
 
+## Chat in the Console
+
+`ConsolePane` reads the room's shared chat state with `useChat()` (one `ChatProvider` per
+room, mounted in `Terminal`; the Console never calls `chat.history` itself, roadmap 41).
+
+- **Live lines only.** It subscribes with `subscribeLive` and adds each message that arrives
+  while it is mounted, deduped by message id (our own send is announced both directly and by
+  its frame). The backlog is not replayed; the Chat tab holds it. Lines read `💬 {name}: {text}`,
+  `💬 You: {text}`, `✉️ {name} to you: {text}` and `✉️ You to {name}: {text}`
+  (`chatLineText`, `lib/direct-message.ts`), and carry the class `console-chat`.
+- **Unread line.** Once, on the first non-zero unread count, unless a live chat line has
+  already shown: `💬 {n} new {message|messages} in Chat.`
+- **Chat while a question is open.** `submitInput` checks `isChatLine` before the prompt
+  branch, so a line starting `msg`, `message`, `m` or `dm` followed by text goes to
+  `game.command` (the server catches it before its flow checks, see
+  [the command pipeline](engine-concurrency-and-timing.md#2-server-command-pipeline-packagesserversrctrpcrouterts))
+  and the question stays open. A bare `m` or `msg` with nothing after it stays an answer
+  while a question is open, because a one-letter reply is plausible. The typed line is not
+  echoed; the chat line is the echo.
+- **Who a DM goes to is visible before it is sent.** While the input starts `dm `, a line above
+  the input (`.dm-preview`, in an `aria-live="polite"` region) shows `To: {name}` with the name
+  in `.dm-preview-name`, the warning when another player's name also fits, or "No player here
+  by that name yet." The match is the engine's `matchRecipient`, the same function the server
+  resolves with, so the preview cannot disagree with the send. It knows only the names the Chat
+  tab's To list has, so a player known to the server only by their account display name
+  previews as no match.
+- **Suggestions after `dm `** are the room's players (`orderDmSuggestions`): the player you
+  last sent a DM to, then the player who last sent you one if different, then players with a
+  monster in the ring (`game.ringState`), then everyone else A to Z. A player appears once.
+  Typing narrows it.
+- **Picked means exact.** Choosing a suggestion remembers that player's id. While the input
+  still begins `dm {that exact name} `, submit sends with `useChat().send(message, toUserId)`:
+  the id, never re-parsed from text, so a player renamed to catch messages cannot steal a pick.
+  Editing the name forgets the id and falls back to the typed line and the server's matching.
+  A picked name with no message goes to the server so the refusal text has one home.
+
 ## The getting-started guide
 
 One hook, `hooks/useGuidedStart.ts`, decides the step; `components/GuidedStartBox.tsx`

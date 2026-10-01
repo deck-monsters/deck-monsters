@@ -32,6 +32,13 @@ export type UseChat = {
   send: (text: string, toUserId?: string) => Promise<string | null>;
   /** The To picker list: every other member of the room. */
   members: ChatPlayer[];
+  /**
+   * Be told about each message as it arrives live (a chat frame, or our own send), not about
+   * history. The Console shows these as chat lines and leaves the backlog to the Chat tab. A
+   * message can be announced twice (our own send, then its frame), so a listener dedupes by id.
+   * Returns the unsubscribe.
+   */
+  subscribeLive: (listener: (message: ChatMessage) => void) => () => void;
 };
 
 /** Merge by id, keep ascending order. Returns the same array when nothing was added. */
@@ -99,6 +106,14 @@ function useChatState(roomId: string): UseChat {
     setMembers([]);
   }
 
+  const liveListenersRef = useRef(new Set<(message: ChatMessage) => void>());
+  const subscribeLive = useCallback((listener: (message: ChatMessage) => void) => {
+    liveListenersRef.current.add(listener);
+    return () => {
+      liveListenersRef.current.delete(listener);
+    };
+  }, []);
+
   const newestId = () => messagesRef.current.reduce((max, m) => Math.max(max, m.id), 0);
 
   /**
@@ -155,6 +170,7 @@ function useChatState(roomId: string): UseChat {
         const { message } = item;
         if (message.roomId !== roomIdRef.current) return;
         const isNew = !messagesRef.current.some((m) => m.id === message.id);
+        for (const listener of liveListenersRef.current) listener(message);
         setMessages((current) => mergeChatMessages(current, [message]));
         if (isNew && message.senderUserId !== myUserIdRef.current && message.id > lastReadRef.current) {
           setUnread((n) => n + 1);
@@ -196,6 +212,7 @@ function useChatState(roomId: string): UseChat {
         );
         // Show our own line without waiting for the live frame; the frame dedupes by id.
         setMessages((current) => mergeChatMessages(current, [message]));
+        for (const listener of liveListenersRef.current) listener(message);
         return null;
       } catch (err) {
         const message = err instanceof Error ? err.message : '';
@@ -205,5 +222,5 @@ function useChatState(roomId: string): UseChat {
     [client, roomId]
   );
 
-  return { messages, unread, lastReadId, markRead, send, members };
+  return { messages, unread, lastReadId, markRead, send, members, subscribeLive };
 }

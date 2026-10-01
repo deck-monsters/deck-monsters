@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 
-import { ChatError, isVisibleTo, matchRecipient, type ChatMessage } from './chat-service.js';
+import { ChatError, isVisibleTo, type ChatMessage } from './chat-service.js';
 import { FakeChatService, player } from './chat-service.test-helpers.js';
 
 const ROOM = 'aaaaaaaa-0000-0000-0000-000000000001';
@@ -136,6 +136,15 @@ describe('ChatService.resolveRecipient', () => {
 		expect(await s.resolveRecipient(ROOM, 'ANTHONY hello there')).to.include({ userId: CAL, message: 'hello there' });
 	});
 
+	it('uses the shared matcher: quotes pick exactly Anthony', async () => {
+		const s = service();
+		expect(await s.resolveRecipient(ROOM, '"Anthony" Bourdain is too powerful')).to.deep.equal({
+			userId: CAL,
+			name: 'Anthony',
+			message: 'Bourdain is too powerful',
+		});
+	});
+
 	it('matches a display name as well as a character name', async () => {
 		const s = service();
 		expect(await s.resolveRecipient(ROOM, 'Ben nice one')).to.include({ userId: BEN, name: 'Anthony Bourdain', message: 'nice one' });
@@ -153,11 +162,6 @@ describe('ChatService.resolveRecipient', () => {
 	});
 });
 
-describe('matchRecipient', () => {
-	it('ignores blank candidate names', () => {
-		expect(matchRecipient([{ userId: 'u', name: '', match: '' }], 'hello')).to.equal(null);
-	});
-});
 
 describe('ChatService.subscribe', () => {
 	it('delivers room messages to everyone in the room, and only that room', async () => {

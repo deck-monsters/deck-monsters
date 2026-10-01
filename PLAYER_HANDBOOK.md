@@ -195,6 +195,11 @@ Some fights bring a ring event that changes the teams for that fight only: Commo
 - `look at character` — View your character stats and info
 - `leave team` — Take yourself and all your monsters off any team (a Sorting Hat, always in the shop, puts you on one)
 
+### Chat
+
+- `msg [message]` — Say something to everyone in the room. message and m work too (e.g. `msg nice hit, Fang!`)
+- `dm [player] [message]` — Send a message only that player can see (e.g. `dm Ada good luck tonight`)
+
 ### Reference
 
 - `help` — Show this command reference

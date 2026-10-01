@@ -209,6 +209,11 @@ It lives in the server (`packages/server/src/chat/chat-service.ts`), in its own 
   retention sweep removes it. Deleting a room cascades to its messages and read positions.
 - **Names are display names.** A sender's name is the engine character's `givenName`, else the
   email-masked profile display name (`publicDisplayName`); a raw email never reaches chat.
+- **`dm` resolves through one matcher.** `matchRecipient` (`packages/engine/src/helpers/match-recipient.ts`,
+  browser-safe) picks the longest name the text starts with, or the exact quoted name, and
+  lists every other player whose name also fits. The server's `resolveRecipient` and the
+  Console's "To:" preview both call it, and the recipient is always checked to be a member of
+  the room at send time. A Console pick sends the id and skips matching altogether.
 - **A removed member's open feed keeps receiving until it closes.** Like the game feed, membership is checked when `ringFeed` opens, not on every frame; a player removed mid-session stops getting chat on their next connect, and every `chat.*` call is refused at once.
 - **One server process.** Live delivery is an in-process emitter inside `ChatService`. If the
   server ever runs more than one instance, live chat needs a shared channel (Postgres

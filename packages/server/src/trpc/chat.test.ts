@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import { TRPCError } from '@trpc/server';
 
 import { FakeChatService, player } from '../chat/chat-service.test-helpers.js';
-import { createRouter } from './router.js';
+import { activeFlows, activePromptFreeMutations, createRouter, parseChatCommand } from './router.js';
 
 const ROOM_ID = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee';
 const ADA = '11111111-2222-3333-4444-555555555551';
@@ -151,5 +151,126 @@ describe('trpc ringFeed chat frames', () => {
 		await it.return?.(undefined);
 		expect(chat.listenerCount(ROOM_ID)).to.equal(0);
 		await chat.send({ roomId: ROOM_ID, senderUserId: BEN, text: 'anyone?' });
+	});
+});
+
+describe('trpc game.command: chat commands', () => {
+	/** A room manager that counts every engine-side touch: chat must make none. */
+	function buildCommand() {
+		const chat = new FakeChatService();
+		chat.players = [
+			player(ADA, 'Ada'),
+			player(BEN, 'Anthony Bourdain'),
+			player(CAL, 'Anthony'),
+		];
+		let engineTouches = 0;
+		const touch = () => {
+			engineTouches += 1;
+			throw new Error('chat must not reach the engine');
+		};
+		const roomManager = {
+			assertMember: async (userId: string) => {
+				if (!members.has(userId)) throw new TRPCError({ code: 'FORBIDDEN', message: 'Not a member of this room' });
+			},
+			getMemberRole: touch,
+			getDisplayName: touch,
+			getGame: touch,
+			getEventBus: touch,
+		} as unknown as Parameters<typeof createRouter>[0];
+		const caller = createRouter(roomManager, chat).createCaller({ userId: ADA, serviceTokenValid: false });
+		return { chat, caller, touches: () => engineTouches };
+	}
+
+	afterEach(() => {
+		activeFlows.clear();
+		activePromptFreeMutations.clear();
+	});
+
+	it('routes msg, message, m (any case) to a room message and dm to a private one', async () => {
+		const { chat, caller, touches } = buildCommand();
+		for (const command of ['msg hello', 'message hello', 'M hello', 'MSG   hello']) {
+			expect(await caller.game.command({ roomId: ROOM_ID, command }), command).to.deep.equal({ ok: true });
+		}
+		expect(chat.stored.map((r) => [r.text, r.recipientUserId])).to.deep.equal([
+			['hello', null],
+			['hello', null],
+			['hello', null],
+			['hello', null],
+		]);
+		expect(await caller.game.command({ roomId: ROOM_ID, command: 'dm Anthony Bourdain good luck' })).to.deep.equal({ ok: true });
+		expect(chat.stored[4]).to.include({ text: 'good luck', recipientUserId: BEN });
+		expect(touches()).to.equal(0);
+	});
+
+	it('dm uses the shared matcher: a name with a space, and quotes for the shorter name', async () => {
+		const { chat, caller } = buildCommand();
+		await caller.game.command({ roomId: ROOM_ID, command: 'dm Anthony Bourdain is too powerful' });
+		await caller.game.command({ roomId: ROOM_ID, command: 'dm "Anthony" Bourdain is too powerful' });
+		expect(chat.stored.map((r) => [r.recipientUserId, r.text])).to.deep.equal([
+			[BEN, 'is too powerful'],
+			[CAL, 'Bourdain is too powerful'],
+		]);
+	});
+
+	it('works while the player has a flow in progress or a workshop mutation running', async () => {
+		const { chat, caller, touches } = buildCommand();
+		activeFlows.set(`${ROOM_ID}:${ADA}`, 'flow-token');
+		activePromptFreeMutations.set(`${ROOM_ID}:${ADA}`, 'mutation-token');
+		expect(await caller.game.command({ roomId: ROOM_ID, command: 'msg still here' })).to.deep.equal({ ok: true });
+		expect(chat.stored).to.have.length(1);
+		expect(touches()).to.equal(0);
+		// The flow's lock is untouched.
+		expect(activeFlows.get(`${ROOM_ID}:${ADA}`)).to.equal('flow-token');
+	});
+
+	it('returns each refusal as the shared failed-command shape with the exact plan text', async () => {
+		const { caller, chat } = buildCommand();
+		const refuse = async (command: string) => caller.game.command({ roomId: ROOM_ID, command });
+		expect(await refuse('msg')).to.deep.equal({ ok: false, message: 'Say something after msg, like: msg nice hit, Fang!' });
+		expect(await refuse('m   ')).to.deep.equal({ ok: false, message: 'Say something after msg, like: msg nice hit, Fang!' });
+		expect(await refuse('dm Nobody hi')).to.deep.equal({
+			ok: false,
+			message: 'Nobody in this room goes by that name. Use the name as it shows in Chat, like: dm Ada good luck.',
+		});
+		expect(await refuse('dm')).to.deep.include({ ok: false });
+		expect(await refuse('dm Ada hi')).to.deep.equal({ ok: false, message: "That's you. Pick someone else." });
+		expect(await refuse('dm Anthony Bourdain')).to.deep.equal({
+			ok: false,
+			message: 'Add a message after the name, like: dm Anthony Bourdain good luck.',
+		});
+		expect(await refuse(`msg ${'x'.repeat(501)}`)).to.deep.equal({
+			ok: false,
+			message: 'Messages can be up to 500 characters. That one has 501.',
+		});
+		chat.stored.length = 0;
+		for (let i = 0; i < 5; i++) await refuse('msg ok');
+		expect(await refuse('msg too fast')).to.deep.equal({
+			ok: false,
+			message: 'Easy there. Wait a few seconds before the next message.',
+		});
+	});
+
+	it('refuses a non-member before anything else', async () => {
+		const { chat, caller } = buildCommand();
+		const outsider = createRouter(
+			{ assertMember: async () => { throw new TRPCError({ code: 'FORBIDDEN', message: 'Not a member of this room' }); } } as never,
+			chat
+		).createCaller({ userId: OUTSIDER, serviceTokenValid: false });
+		const err = await outsider.game.command({ roomId: ROOM_ID, command: 'msg hi' }).catch((e: unknown) => e);
+		expect((err as TRPCError).code).to.equal('FORBIDDEN');
+		expect(caller).to.be.ok;
+		expect(chat.stored).to.have.length(0);
+	});
+});
+
+describe('parseChatCommand', () => {
+	it('recognises the four command words and nothing that merely starts with them', () => {
+		expect(parseChatCommand('msg hi')).to.deep.equal({ kind: 'msg', rest: 'hi' });
+		expect(parseChatCommand('  Message   hi there ')).to.deep.equal({ kind: 'msg', rest: 'hi there' });
+		expect(parseChatCommand('m')).to.deep.equal({ kind: 'msg', rest: '' });
+		expect(parseChatCommand('DM Ada hi')).to.deep.equal({ kind: 'dm', rest: 'Ada hi' });
+		for (const not of ['mm hi', 'dmx hi', 'message-board', 'monsters', 'dismiss Fluffy', 'mmsg', 'help']) {
+			expect(parseChatCommand(not), not).to.equal(null);
+		}
 	});
 });

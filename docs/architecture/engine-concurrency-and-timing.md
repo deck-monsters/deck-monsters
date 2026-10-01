@@ -187,6 +187,19 @@ Three coordination mechanisms exist. Know which one you are touching:
      [Workshop and items](workshop-and-items.md#first-run-character-creation). A partially
      specified call is a latent 400.
 
+**Chat bypasses all three (roadmap 41).** The `command` mutation recognises `msg`, `message`,
+`m` and `dm` (`parseChatCommand`) first, before the `activeFlows` and
+`activePromptFreeMutations` checks, before the console-input echo, and without touching the
+engine or a lane. It `assertMember`s, hands the line to `ChatService`, and returns
+`{ ok: true }` or `{ ok: false, message }` (a `ChatError`'s player-facing text, the same shape
+every refused command uses, which the Console shows as `! {message}`). Why it is safe and why it
+must stay first: chat is not game state, so it cannot interleave with a flow in any harmful
+way, and a player halfway through a question must still be able to talk. Moving the check below
+`activeFlows` would answer a chat line with "A command is already in progress". The engine's
+own `msg`/`dm` handler (`packages/engine/src/commands/chat.ts`) is only the fallback for
+connectors without chat (Discord) and is never reached from the web server. Do not give chat a
+lane: it holds no engine state, and a lane would queue it behind a minutes-long prompt.
+
 **Cross-user policy (#62)**: per-user console lanes mean two members can mutate
 the same `Game` concurrently. That is intentional for interactive flows — each
 user's prompts only block themselves. Workshop mutations that touch shared room

@@ -1,6 +1,6 @@
 import { EventEmitter } from 'node:events';
 
-import { stripControlCharacters } from '@deck-monsters/engine';
+import { matchRecipient, stripControlCharacters } from '@deck-monsters/engine';
 import { and, asc, desc, eq, gt, inArray, lt, or, sql } from 'drizzle-orm';
 
 import type { Db } from '../db/index.js';
@@ -101,34 +101,6 @@ export function isVisibleTo(m: { senderUserId: string; recipientUserId: string |
 	return m.recipientUserId === null || m.recipientUserId === userId || m.senderUserId === userId;
 }
 
-/**
- * Longest-name match for `dm`. `names` maps a candidate name to its player; `rest` must start
- * with the name (case-insensitive) and then end or continue with whitespace, so "Ann" never
- * swallows "Anna's" and "Anthony Bourdain" (with a space) works. Pure, for unit tests.
- */
-export function matchRecipient(
-	candidates: Array<{ userId: string; name: string; match: string }>,
-	rest: string
-): { userId: string; name: string; message: string } | null {
-	const trimmed = rest.trim();
-	const lower = trimmed.toLowerCase();
-	let best: { userId: string; name: string; match: string } | null = null;
-	for (const c of candidates) {
-		const m = c.match.trim().toLowerCase();
-		if (!m) continue;
-		if (!lower.startsWith(m)) continue;
-		const next = trimmed.charAt(m.length);
-		if (next !== '' && !/\s/.test(next)) continue;
-		if (!best || m.length > best.match.trim().length) best = c;
-	}
-	if (!best) return null;
-	return {
-		userId: best.userId,
-		name: best.name,
-		message: trimmed.slice(best.match.trim().length).trim(),
-	};
-}
-
 export type ChatListener = (message: ChatMessage) => void;
 
 export class ChatService {
@@ -222,7 +194,12 @@ export class ChatService {
 			}
 			return out;
 		});
-		return matchRecipient(candidates, rest) ?? { error: 'no_such_player' };
+		// The shared matcher (engine) also reports who else fits, for the Console's warning; the
+		// server only needs the pick.
+		const match = matchRecipient(candidates, rest);
+		return match
+			? { userId: match.userId, name: match.name, message: match.message }
+			: { error: 'no_such_player' };
 	}
 
 	// ── Sending ──────────────────────────────────────────────────────────────────────────
