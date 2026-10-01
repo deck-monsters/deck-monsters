@@ -104,14 +104,31 @@ At 1440px the same destinations are text links: **Terminal**, **?**, **Rooms**,
 | Tab **Fights**, heading **Fight log** | A list of fights | Before any fight, and again while Pip was in a live fight: `No fights yet — send two monsters to the ring and the first one starts on its own.` | That sentence | The sentence disagrees with itself, and it stayed up during the fight that was on The Ring. See [phone-fights-during.png](help-inventory/phone-fights-during.png) and [desk-fights-empty.png](help-inventory/desk-fights-empty.png) |
 | Header **Fight log** vs tab **Fights** | Two different pages | The same page | Both words | The menu, the tab, and the heading use different names |
 
+## Chat
+
+Added by roadmap 41 (M3), after the walk above; checked in Chromium at 390 and 1440 against a mocked chat state.
+
+| Where | Guess | What it does | What explains it | Confusion |
+|---|---|---|---|---|
+| Tab **Chat**, with a count badge | Messages from other players | Opens the room's chat. The badge, in the tab's top-right corner clear of the label, is the number of unread messages from others (`99+` past 99, hidden at 0); the tab's accessible name is `Chat, {n} unread`. Side by side there is no tab bar, so the pane selector's option reads `Chat · {n} unread` instead. The ☰ menu and the desktop nav also list **Chat** | The tab `title`: `Talk with everyone in this room, or send a message to one player.` (also the panel subtitle and the menu links' title) | Unread is easy to miss while a different pane is on screen and the selector is closed; M2's Console line (`{n} new messages in Chat`) helps |
+| Empty list | Nothing has been said | `No messages yet. Say hello, or cheer on a fight.` | That sentence | None known |
+| Divider `Today, 6:42 PM` / `Yesterday, ...` / a dated line | When the next messages were sent | Appears when 30 minutes or more pass, the day changes, and before the first message | The divider itself | The format follows the viewer's locale |
+| Divider `During fight #{n}` | Which fight was on | Appears when the fight number a message was sent during changes | The divider itself | None known |
+| Marker `New since you were last here` | Where the unread messages start | Sits before the first message from someone else after the read position when the tab was opened, and the list opens scrolled to it; it does not move as you read | The marker itself | Not shown when nothing has been read yet |
+| `✉️ Ben to you: …` / `✉️ You to Ben: …` rows | A private message | The Console's wording; the text is italic. Only its two players see it | The row's wording | None known |
+| **To** picker (`Everyone`, then each player) | Who gets the message | A chosen player turns the picker bold with an accent border and the placeholder reads `Message {name}…` | The highlight and the placeholder | A player who left the room is refused with the server's text, not hidden from the list at once |
+| **Send** (title `Send this message`), Enter | Sends | Clears the box at once; on a refusal shows the reason under the input and gives the text back (unless something newer was typed); editing clears the reason | The refusal text, which comes from the server | None known |
+| **↓ New messages** (title `Jump to the newest messages`) | Scrolls down | Shows when messages are below the view, including unread ones below the marker on opening; opening shows the marker, and messages count as read only once you reach the bottom | The button | None known |
+
 ## Leaders
 
 | Where | Guess | What it did | What explains it | Confusion |
 |---|---|---|---|---|
 | Tab **Leaders**, heading **Leaderboard** | Rankings | `This room` / `Global`, `Players` / `Monsters`, `Sort by` XP, Wins, Win rate, Coins. Empty line: `No ranked fights in this room yet — rankings fill in once monsters start fighting.` Columns `# Name XP W L D Win %` | The empty line. `Win %` tooltip: `Wins ÷ (wins + losses). Draws excluded.` | The empty line was still there while a fight was underway. `W L D` are not spelled out. At 390px the tab is a clipped `L` until the tab bar is scrolled, and the table cuts off after `L`. See [phone-leaders.png](help-inventory/phone-leaders.png) and [phone-menu.png](help-inventory/phone-menu.png) |
 
-The tab bar is `overflow-x: auto` with a thin scrollbar. At 390px, **Leaders** does not fit.
-The scrollbar is the only hint.
+The tab bar is `overflow-x: auto` with a thin scrollbar. At 390px, **Leaders** did not fit when this
+was walked. Roadmap 39 B4 fixed that for five tabs, and roadmap 41 M3 kept all six tabs on one line
+(75, 67, 46, 75, 60 and 67 px wide, 44 px tall, no scrolling).
 
 ## Account and settings
 

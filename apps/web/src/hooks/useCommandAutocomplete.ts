@@ -4,6 +4,8 @@ import { COMMAND_CATALOG } from '@deck-monsters/engine';
 export interface AutocompleteSuggestion {
   label: string;
   insertValue: string;
+  /** Set on a `dm ` player suggestion: picking it sends to this player by id (roadmap 41). */
+  userId?: string;
 }
 
 const MONSTER_COMMAND_RE = /\[monster\]/i;

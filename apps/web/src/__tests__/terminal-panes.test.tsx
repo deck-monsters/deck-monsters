@@ -5,6 +5,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const PANE_SLOTS_KEY = 'dm:paneSlots';
 
+// Chat has its own tests (useChat.test.tsx); here the provider is a passthrough so the
+// Terminal tests need no chat tRPC client or auth context.
+const chatState = vi.hoisted(() => ({ unread: 0 }));
+vi.mock('../hooks/useChat.js', () => ({
+  ChatProvider: ({ children }: { children: unknown }) => children,
+  useChat: () => ({ unread: chatState.unread }),
+}));
+
 vi.mock('../hooks/useHandshake.js', () => ({
   useHandshake: () => ({
     handshakeStatus: { status: 'ok', buildVersion: 'dev', serverTime: 'now' },
@@ -71,6 +79,7 @@ vi.mock('../components/WorkshopPanel.js', () => ({
     );
   },
 }));
+vi.mock('../components/ChatPanel.js', () => makeSurfaceMock('chat'));
 vi.mock('../components/FightLogPanel.js', () => makeSurfaceMock('fights'));
 vi.mock('../components/LeaderboardPanel.js', () => makeSurfaceMock('leaderboard'));
 
@@ -124,7 +133,9 @@ function installResizeObserver(width: number) {
   };
 }
 
-function pressShortcut(key: '1' | '2' | '3' | '4' | '5') {
+const SURFACE_TEST_IDS = { '3': 'chat', '5': 'fights', '6': 'leaderboard' } as const;
+
+function pressShortcut(key: '1' | '2' | '3' | '4' | '5' | '6') {
   fireEvent.keyDown(document, { key, ctrlKey: true });
 }
 
@@ -159,10 +170,10 @@ describe('Terminal pane slots (docs/architecture/web-workspace.md)', () => {
 
     // Left slot shows ring; its own value must stay selectable, but it must not offer
     // console again — that is the sibling (right) slot's surface.
-    expect(leftOptions.sort()).toEqual(['fights', 'leaderboard', 'ring', 'workshop']);
+    expect(leftOptions.sort()).toEqual(['chat', 'fights', 'leaderboard', 'ring', 'workshop']);
     // Right slot shows console; it must not offer ring again — that is the sibling
     // (left) slot's surface.
-    expect(rightOptions.sort()).toEqual(['console', 'fights', 'leaderboard', 'workshop']);
+    expect(rightOptions.sort()).toEqual(['chat', 'console', 'fights', 'leaderboard', 'workshop']);
   });
 
   it('puts host actions in each visible surface and never renders the removed extra header row', () => {
@@ -189,11 +200,11 @@ describe('Terminal pane slots (docs/architecture/web-workspace.md)', () => {
     expect(consoleEl.closest('.terminal-slot')).toHaveStyle({ display: 'none' });
   });
 
-  it('Cmd/Ctrl+3 in side-by-side puts the workshop where the console was, leaving the ring alone', () => {
+  it('Cmd/Ctrl+4 in side-by-side puts the workshop where the console was, leaving the ring alone', () => {
     installResizeObserver(1200);
     renderTerminal();
 
-    pressShortcut('3');
+    pressShortcut('4');
 
     expect(screen.getByTestId('surface-ring').closest('.terminal-slot')).not.toHaveStyle({ display: 'none' });
     expect(screen.getByTestId('surface-workshop').closest('.terminal-slot')).not.toHaveStyle({ display: 'none' });
@@ -201,11 +212,11 @@ describe('Terminal pane slots (docs/architecture/web-workspace.md)', () => {
     expect(consoleEl.closest('.terminal-slot')).toHaveStyle({ display: 'none' });
   });
 
-  it('Cmd/Ctrl+3 in tabbed layout selects the workshop tab', () => {
+  it('Cmd/Ctrl+4 in tabbed layout selects the workshop tab', () => {
     installResizeObserver(600);
     renderTerminal();
 
-    pressShortcut('3');
+    pressShortcut('4');
 
     const workshopTab = screen.getByRole('tab', { name: 'Workshop' });
     expect(workshopTab.getAttribute('aria-selected')).toBe('true');
@@ -229,19 +240,19 @@ describe('Terminal pane slots (docs/architecture/web-workspace.md)', () => {
     expect(window.localStorage.getItem(PANE_SLOTS_KEY)).toBe(JSON.stringify(['ring', 'workshop']));
   });
 
-  it.each([['4', 'Fights'], ['5', 'Leaders']] as const)('Cmd/Ctrl+%s lazily mounts %s', (key, label) => {
+  it.each([['3', 'Chat'], ['5', 'Fights'], ['6', 'Leaders']] as const)('Cmd/Ctrl+%s lazily mounts %s', (key, label) => {
     installResizeObserver(600);
     renderTerminal();
-    expect(screen.queryByTestId(`surface-${key === '4' ? 'fights' : 'leaderboard'}`)).toBeNull();
+    expect(screen.queryByTestId(`surface-${SURFACE_TEST_IDS[key]}`)).toBeNull();
     pressShortcut(key);
     expect(screen.getByRole('tab', { name: label }).getAttribute('aria-selected')).toBe('true');
-    expect(screen.getByTestId(`surface-${key === '4' ? 'fights' : 'leaderboard'}`)).toBeTruthy();
+    expect(screen.getByTestId(`surface-${SURFACE_TEST_IDS[key]}`)).toBeTruthy();
   });
 
   it('does not briefly mount optional surfaces for a newly selected room', () => {
     installResizeObserver(600);
     const view = render(terminal('room-1'));
-    pressShortcut('4');
+    pressShortcut('5');
     expect(screen.getByTestId('surface-fights')).toHaveAttribute('data-room', 'room-1');
     pressShortcut('2');
     expect(screen.getByTestId('surface-fights').closest('.terminal-slot')).toHaveAttribute('hidden');
@@ -388,5 +399,41 @@ describe('Terminal pane slots (docs/architecture/web-workspace.md)', () => {
       </MemoryRouter>
     );
     expect(screen.getByTestId('surface-ring').getAttribute('data-room')).toBe('room-b');
+  });
+});
+
+describe('Chat tab badge (roadmap 41)', () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+    installResizeObserver(600);
+  });
+  afterEach(() => {
+    chatState.unread = 0;
+  });
+
+  it('lists six tabs in order, Chat after Console', () => {
+    renderTerminal();
+    expect(screen.getAllByRole('tab').map((t) => t.id)).toEqual([
+      'tab-ring', 'tab-console', 'tab-chat', 'tab-workshop', 'tab-fights', 'tab-leaderboard',
+    ]);
+  });
+
+  it('shows no badge at zero and keeps the plain name', () => {
+    renderTerminal();
+    expect(screen.getByRole('tab', { name: 'Chat' })).toBeTruthy();
+    expect(document.querySelector('.terminal-tab-badge')).toBeNull();
+  });
+
+  it('shows the count and puts it in the accessible name', () => {
+    chatState.unread = 3;
+    renderTerminal();
+    const tab = screen.getByRole('tab', { name: 'Chat, 3 unread' });
+    expect(tab.querySelector('.terminal-tab-badge')?.textContent).toBe('3');
+  });
+
+  it('caps the badge at 99+', () => {
+    chatState.unread = 150;
+    renderTerminal();
+    expect(screen.getByRole('tab', { name: 'Chat, 99+ unread' }).querySelector('.terminal-tab-badge')?.textContent).toBe('99+');
   });
 });

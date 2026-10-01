@@ -85,7 +85,7 @@ suite('runMigrations against Postgres', () => {
 	it('applies all real repo migrations in order, records them, and a second run applies none', async () => {
 		await stubSupabase();
 		const files = readdirSync(repoMigrations).filter((f) => f.endsWith('.sql')).sort();
-		expect(files).to.have.length(17);
+		expect(files).to.have.length(18);
 
 		const first = await runMigrations({ connectionString: dbUrl, dir: repoMigrations, log: quiet });
 		expect(first.ok).to.equal(true);

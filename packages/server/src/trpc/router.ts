@@ -30,6 +30,8 @@ import type { RoomManager } from '../room-manager.js';
 import { ensureConnectorUser } from '../auth/connector-users.js';
 import { publicDisplayName } from '../public-display-name.js';
 import { createProfileRouter } from './profile.js';
+import { createChatRouter } from './chat.js';
+import { ChatError, ChatService, type ChatMessage } from '../chat/chat-service.js';
 import {
 	commandsTotal,
 	wsConnectionsActive,
@@ -624,7 +626,39 @@ function createSilentChannel({
 	};
 }
 
-export function createRouter(roomManager: RoomManager) {
+export type ChatCommand = { kind: 'msg'; rest: string } | { kind: 'dm'; rest: string };
+
+/**
+ * Recognises the chat commands `msg`, `message`, `m` and `dm` (case-insensitive, then a space
+ * or the end of the line). `rest` is everything after the command word. `mm`, `dmx` and
+ * `message-board` are not chat. The web Console applies the same test to decide whether a line
+ * typed during an open question goes to chat (apps/web ConsolePane).
+ */
+export function parseChatCommand(command: string): ChatCommand | null {
+	const match = /^(msg|message|m|dm)(?:\s+([\s\S]*))?$/i.exec(command.trim());
+	if (!match) return null;
+	return { kind: match[1]!.toLowerCase() === 'dm' ? 'dm' : 'msg', rest: (match[2] ?? '').trim() };
+}
+
+/** Runs a parsed chat command through `ChatService`. Throws `ChatError` with the player-facing text. */
+async function sendChatCommand(chat: ChatService, roomId: string, userId: string, command: ChatCommand): Promise<void> {
+	if (command.kind === 'msg') {
+		await chat.send({ roomId, senderUserId: userId, text: command.rest, source: 'web' });
+		return;
+	}
+	// The order is the Console preview's too (apps/web lib/direct-message.ts): usage, no match,
+	// two players with one name, yourself, then an empty message.
+	if (!command.rest) throw new ChatError('dm_usage');
+	const resolved = await chat.resolveRecipient(roomId, command.rest);
+	if ('error' in resolved) {
+		throw resolved.error === 'ambiguous' ? new ChatError('ambiguous', { name: resolved.name }) : new ChatError('no_such_player');
+	}
+	if (resolved.userId === userId) throw new ChatError('self');
+	if (!resolved.message) throw new ChatError('no_message', { name: resolved.name });
+	await chat.send({ roomId, senderUserId: userId, text: resolved.message, toUserId: resolved.userId, source: 'web' });
+}
+
+export function createRouter(roomManager: RoomManager, chat: ChatService = new ChatService(db, roomManager)) {
 	const runSerializedMutation = async <T>(roomId: string, userId: string, fn: () => Promise<T>): Promise<T> => {
 		const flowKey = `${roomId}:${userId}`;
 		// Interactive console flows run in a per-user lane (see the `command`
@@ -839,6 +873,26 @@ export function createRouter(roomManager: RoomManager) {
 				})
 			)
 			.mutation(async ({ input, ctx }) => {
+				// Room chat (roadmap 41) is handled here, before everything below, and never
+				// reaches the engine. It must come BEFORE the activeFlows and prompt-free-mutation
+				// checks: chat is not game state, so it can neither corrupt a flow nor be blocked
+				// by one, and a player halfway through a question must still be able to talk. It
+				// is not echoed as a console input either: the chat line itself is the echo.
+				const chatCommand = parseChatCommand(input.command);
+				if (chatCommand) {
+					await roomManager.assertMember(ctx.userId, input.roomId);
+					try {
+						await sendChatCommand(chat, input.roomId, ctx.userId, chatCommand);
+						// (ChatService.send touches last_seen_at: chatting is presence.)
+					} catch (err) {
+						if (err instanceof ChatError) {
+							// The same shape every refused command uses; the Console shows it as `! {message}`.
+							return { ok: false, message: err.message };
+						}
+						throw err;
+					}
+					return { ok: true };
+				}
 				try {
 				log.debug('command received', {
 					roomId: input.roomId,
@@ -2291,7 +2345,32 @@ export function createRouter(roomManager: RoomManager) {
 					},
 				},
 			};
-			yield tracked(handshakeId, handshakeEvent);
+				// Room chat rides this connection but is not a game event (roadmap 41): it has its
+				// own queue, is delivered live only (a client recovers missed chat from
+				// `chat.history`), and is yielded as an UNTRACKED frame. A tracked frame would make
+				// tRPC remember its id as `lastEventId` and send it back on reconnect, moving the
+				// game cursor onto an id the event log has never heard of. The service delivers only
+				// what this user may see (room messages, and DMs they sent or received). It attaches
+				// BEFORE the handshake is yielded: the client fetches `chat.history` once it sees the
+				// handshake, so anything sent after that fetch must already be buffered here.
+				const queue: GameEvent[] = [];
+				let resolve: (() => void) | null = null;
+				const chatQueue: ChatMessage[] = [];
+				const unsubscribeChat = chat.subscribe(input.roomId, ctx.userId, (message) => {
+					chatQueue.push(message);
+					resolve?.();
+					resolve = null;
+				});
+
+				// A client that disconnects while the handshake is in flight returns the generator at
+				// the yield, before the main try/finally exists, so release the subscription here.
+				let feedOpen = false;
+				try {
+					yield tracked(handshakeId, handshakeEvent);
+					feedOpen = true;
+				} finally {
+					if (!feedOpen) unsubscribeChat();
+				}
 
 				// Attach the live subscriber BEFORE computing the replay. Events
 				// published while the replay is being assembled (the DB fallback is
@@ -2299,9 +2378,6 @@ export function createRouter(roomManager: RoomManager) {
 				// dropped from the buffer via `replayedIds` when the live loop drains.
 				// Subscribing after the replay snapshot left a window where those
 				// in-between events were simply lost.
-				const queue: GameEvent[] = [];
-				let resolve: (() => void) | null = null;
-
 				const unsubscribe = eventBus.subscribe(
 					`trpc:${ctx.userId}:${Date.now()}`,
 					{
@@ -2417,6 +2493,11 @@ export function createRouter(roomManager: RoomManager) {
 							yield tracked(event.id, event);
 						}
 
+						while (chatQueue.length > 0) {
+							const message = chatQueue.shift()!;
+							yield { type: 'chat' as const, id: `chat-${message.id}`, payload: message };
+						}
+
 						// Wait for an event or 20 s, whichever comes first.
 						// The 20-second timeout sends a keep-alive heartbeat frame that
 						// prevents load-balancer idle timeouts (typically 30–60 s).
@@ -2438,6 +2519,12 @@ export function createRouter(roomManager: RoomManager) {
 							};
 
 							onAbort = () => finish();
+							// An event or chat message that landed since the drains above must not
+							// wait out the 20 s heartbeat.
+							if (queue.length > 0 || chatQueue.length > 0) {
+								finish();
+								return;
+							}
 							resolve = finish;
 							heartbeatTimer = setTimeout(finish, 20_000);
 							signal?.addEventListener('abort', onAbort, { once: true });
@@ -2445,7 +2532,7 @@ export function createRouter(roomManager: RoomManager) {
 
 						// If the queue is still empty after the wait it was a 20-s timeout —
 						// yield a private heartbeat frame so the TCP/WS connection stays alive.
-						if (queue.length === 0 && !signal?.aborted) {
+						if (queue.length === 0 && chatQueue.length === 0 && !signal?.aborted) {
 							const hbId = `${Date.now()}-heartbeat`;
 							yield tracked(hbId, {
 								id: hbId,
@@ -2461,6 +2548,7 @@ export function createRouter(roomManager: RoomManager) {
 					}
 				} finally {
 					unsubscribe();
+					unsubscribeChat();
 					wsConnectionsActive.dec({ room_id: input.roomId });
 					log.debug('ringFeed subscription closed', {
 						roomId: input.roomId,
@@ -2587,6 +2675,7 @@ export function createRouter(roomManager: RoomManager) {
 		admin: adminRouter,
 		auth: authRouter,
 		profile: createProfileRouter({ roomManager }),
+		chat: createChatRouter({ roomManager, chat }),
 		health: t.procedure.query(() => ({
 			status: 'ok',
 			timestamp: new Date().toISOString(),

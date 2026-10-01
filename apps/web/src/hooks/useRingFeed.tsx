@@ -8,12 +8,33 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import type { GameEvent } from '@deck-monsters/server/types';
+import type { GameEvent, ChatMessage } from '@deck-monsters/server/types';
 import { trpc } from '../lib/trpc.js';
 import { shouldAdvanceEventCursor } from '../utils/ring-feed-cursor.js';
 import { useHandshake } from './useHandshake.js';
 
 export type TrackedRingFeedEvent = { id: string; data: GameEvent };
+
+/**
+ * What `useChat` hears from the feed. Chat is NOT a game event: the server yields it as an
+ * untracked `{ type: 'chat', id, payload }` frame, and it never reaches pane listeners or the
+ * reconnect cursor (a chat id fed to the cursor would corrupt `lastEventId`).
+ * `connected` fires on every handshake (first connect and each reconnect) so a consumer can
+ * fetch the chat it missed from `chat.history`; chat frames are not replayed.
+ */
+export type ChatFeedItem = { kind: 'message'; message: ChatMessage } | { kind: 'connected' };
+
+/** The raw untracked chat frame the server yields from `ringFeed`. */
+export type ChatFrame = { type: 'chat'; id: string; payload: ChatMessage };
+
+export function isChatFrame(frame: unknown): frame is ChatFrame {
+  return (
+    typeof frame === 'object'
+    && frame !== null
+    && (frame as { type?: unknown }).type === 'chat'
+    && typeof (frame as { payload?: unknown }).payload === 'object'
+  );
+}
 
 export type RingFeedApi = {
   connected: boolean;
@@ -26,6 +47,8 @@ export type RingFeedApi = {
    * a newer live cursor.
    */
   seedCursor: (eventId: string) => void;
+  /** Register a chat listener (see `ChatFeedItem`). Returns unsubscribe. */
+  subscribeChat: (listener: (item: ChatFeedItem) => void) => () => void;
 };
 
 /**
@@ -70,6 +93,7 @@ export function useRingFeed(roomId: string): RingFeedApi {
   // Events that arrive before any pane listener is registered (e.g. sync delivery
   // during the subscribe call in render) are buffered and flushed on subscribe.
   const pendingEventsRef = useRef<TrackedRingFeedEvent[]>([]);
+  const chatListenersRef = useRef(new Set<(item: ChatFeedItem) => void>());
   const roomIdRef = useRef(roomId);
   roomIdRef.current = roomId;
   const heartbeatTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -86,6 +110,7 @@ export function useRingFeed(roomId: string): RingFeedApi {
     setReconnecting(false);
     latestTrackedEventIdRef.current = undefined;
     listenersRef.current.clear();
+    chatListenersRef.current.clear();
     pendingEventsRef.current = [];
     // The previous room's watchdog must die with it. RingFeedProvider is not re-keyed
     // per room, so a timer left armed here fires later against the *new* room and drops
@@ -180,6 +205,17 @@ export function useRingFeed(roomId: string): RingFeedApi {
     };
   }, []);
 
+  const subscribeChat = useCallback((listener: (item: ChatFeedItem) => void) => {
+    chatListenersRef.current.add(listener);
+    return () => {
+      chatListenersRef.current.delete(listener);
+    };
+  }, []);
+
+  const fanOutChat = useCallback((item: ChatFeedItem) => {
+    for (const listener of chatListenersRef.current) listener(item);
+  }, []);
+
   const seedCursor = useCallback((eventId: string) => {
     if (!advanceTrackedCursor(eventId)) return;
     setSubLastEventId((prev) => {
@@ -191,7 +227,19 @@ export function useRingFeed(roomId: string): RingFeedApi {
   trpc.game.ringFeed.useSubscription(
     { roomId, lastEventId: subLastEventId, resumeAttempt },
     {
-      onData(tracked: TrackedRingFeedEvent) {
+      onData(frame: TrackedRingFeedEvent | ChatFrame) {
+        // Chat frames are untracked and carry no `data`. Handle them first and return, so
+        // nothing below (the room guard, the cursor, pane fan-out) ever sees one.
+        if (isChatFrame(frame)) {
+          noteFrameReceived();
+          setConnected((wasConnected) => (wasConnected ? wasConnected : true));
+          setReconnecting((wasReconnecting) => (wasReconnecting ? false : wasReconnecting));
+          if (frame.payload.roomId === roomIdRef.current) {
+            fanOutChat({ kind: 'message', message: frame.payload });
+          }
+          return;
+        }
+        const tracked = frame;
         const event = tracked.data;
 
         // Any frame proves the connection is alive — arm the watchdog before anything
@@ -215,6 +263,7 @@ export function useRingFeed(roomId: string): RingFeedApi {
           handleHandshakeRef.current(event);
           // Fan out so RingPane can seed timer state from the handshake payload.
           fanOut(tracked);
+          fanOutChat({ kind: 'connected' });
           return;
         }
 
@@ -240,7 +289,7 @@ export function useRingFeed(roomId: string): RingFeedApi {
     },
   );
 
-  return { connected, reconnecting, subscribe, seedCursor };
+  return { connected, reconnecting, subscribe, seedCursor, subscribeChat };
 }
 
 export function RingFeedProvider({

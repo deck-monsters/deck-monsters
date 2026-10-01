@@ -40,6 +40,7 @@ Generated and authored player references remain at the repository root:
 | Writing or changing a card or monster, card play resolution, fight-scoped card state, holds | [Cards and encounter effects](architecture/cards-and-encounter-effects.md) |
 | Boss creation/summoning, ring events, teams, targeting, boss timers | [Boss encounters](architecture/boss-encounters.md) |
 | `Terminal`, surfaces, pane slots, routes, 1024px breakpoint, divider, navigation reveal | [Web workspace](architecture/web-workspace.md) |
+| Room chat: `msg` and `dm`, the Chat tab, retention, the bridge seam | [Room chat](architecture/room-chat.md) |
 | Workshop inventory, item use, lifecycle actions, prompt-free mutations, room shop | [Workshop and items](architecture/workshop-and-items.md) |
 | Leaderboards, event history, fight summaries, catch-up, reward projections, retention | [Analytics and history](architecture/analytics-and-history.md) |
 | `ring.state`, roster rows/order, pixel sprites, appearance palettes, feed portraits | [Ring roster and pixel monsters](architecture/ring-roster-and-pixel-monsters.md) |
@@ -64,6 +65,7 @@ Generated and authored player references remain at the repository root:
 | Whether roadmap 39's Workshop fixes and in-game Help match the shipped text | [Live check of Workshop fixes and in-game Help](reference/help-check.md) |
 | Whether roadmap 39 batch 2 matches the shipped text | [Live check of roadmap 39 batch 2](reference/help-check-batch2.md) |
 | Whether roadmap 39 batch 3 matches the shipped text | [Live check of roadmap 39 batch 3](reference/help-check-batch3.md) |
+| Whether roadmap 41 room chat matches the shipped text | [Live check of room chat](reference/chat-check.md) |
 | Reviewing monster flavour strings or signature-card narration (generated inventories) | [Monster and card strings](reference/strings/README.md) |
 | `channel({ question, choices })` call site or connector answer encoding | [Prompt/answer contract](reference/prompt-answer-contract.md) |
 | Sprite maps, Canvas/CSS pixel art, scaling, palettes, animation construction | [Pixel art](reference/pixel-art.md) |

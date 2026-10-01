@@ -5,6 +5,7 @@ import characterHandlers from './character.js';
 import storeHandlers from './store.js';
 import presetHandlers from './presets.js';
 import { helpHandler } from './help.js';
+import { chatHandler } from './chat.js';
 import { commandInputSchema } from '../schemas/command.js';
 
 const ALIAS_REGEX = /(.+) as (.+?)\s*$/i;
@@ -139,6 +140,8 @@ export function loadHandlers(): void {
 	if (handlersLoaded) return;
 	handlersLoaded = true;
 	preCharacterHandlers.push(helpHandler);
+	// No character needed: the fallback answer is the same for everyone (see chat.ts).
+	preCharacterHandlers.push(chatHandler);
 	historyHandlers();
 	// Presets must register before look-at: its bare `look at <name>` form would claim `look at presets for X`.
 	presetHandlers(registerHandler);

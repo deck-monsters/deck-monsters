@@ -227,6 +227,23 @@ The ring narrates every roll. What the words and numbers mean:
 - Strategy: who a boss goes after. Each boss's stat card says it.
 `.trim();
 
+/*
+ * Room chat (roadmap 41). The web app has its own chat now; Discord players keep using the
+ * channel. Keep the commands in step with the catalogue's Chat category.
+ */
+export const TALKING_TO_PLAYERS = `
+── Talking to Other Players ─────────
+
+Every room has its own chat. Open the Chat tab, or type in the Console:
+
+   msg [message]                  — say something to everyone in the room (message and m work too)
+   dm [player] [message]          — send a message only that player can see
+
+Messages show in the Chat tab and in the Console. When you type a dm, the Console shows who it will go to before you send it; pick a name from the list to be sure.
+
+Messages stay until everyone who has played in the room lately has had a chance to read them, and never longer than 30 days.
+`.trim();
+
 export const collectPlayerHandbookSections = (): string[] => [
 	HANDBOOK_HEADER,
 	GETTING_STARTED,
@@ -236,6 +253,7 @@ export const collectPlayerHandbookSections = (): string[] => [
 	COINS_AND_SHOP,
 	YOUR_CHARACTER,
 	TEAMS_AND_BOSSES,
+	TALKING_TO_PLAYERS,
 	`── All Commands ─────────────────────\n\n${formatCommandList()}`,
 	COMBAT_STATS_AND_ROLES,
 	READING_A_FIGHT,

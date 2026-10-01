@@ -8,7 +8,20 @@ import { useGuidedStart } from '../hooks/useGuidedStart.js';
 import GuidedStartBox from './GuidedStartBox.js';
 import { useRingFeedListener, type TrackedRingFeedEvent } from '../hooks/useRingFeed.js';
 import { useCommandInsert } from '../lib/command-insert-context.js';
-import { useCommandAutocomplete } from '../hooks/useCommandAutocomplete.js';
+import { useCommandAutocomplete, type AutocompleteSuggestion } from '../hooks/useCommandAutocomplete.js';
+import { useChat } from '../hooks/useChat.js';
+import {
+  chatLineText,
+  dmPreviewText,
+  dmCandidatesOf,
+  dmRest,
+  isChatLine,
+  orderDmSuggestions,
+  resolveDmTarget,
+  stillPicked,
+  unreadChatLine,
+  type PickedRecipient,
+} from '../lib/direct-message.js';
 import CommandSuggestions from './CommandSuggestions.js';
 import InlineChoices from './InlineChoices.js';
 import { formatEventText } from '../utils/format-event-text.js';
@@ -43,7 +56,7 @@ interface PendingPromptSnapshot {
 
 interface ConsoleEvent {
   id: string;
-  type: 'announce' | 'input' | 'system' | 'prompt' | 'tombstone' | 'highlight';
+  type: 'announce' | 'input' | 'system' | 'prompt' | 'tombstone' | 'highlight' | 'chat';
   text: string;
   promptData?: ActivePrompt;
   /** Set on 'highlight' rows — the tag rendered beside the line. */
@@ -150,10 +163,16 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
   const resolvedPromptIdsRef = useRef<Set<string>>(new Set());
   const consecutiveEmptyPromptPollsRef = useRef(0);
   const [inputValue, setInputValue] = useState('');
+  // The latest input, for async code that must not overwrite what the player typed meanwhile.
+  const inputValueRef = useRef('');
+  inputValueRef.current = inputValue;
   const [inputLocked, setInputLocked] = useState(false);
   const [isAtBottom, setIsAtBottom] = useState(true);
   const [quickActions, setQuickActions] = useState<QuickAction[]>([]);
   const [suggestionIndex, setSuggestionIndex] = useState(-1);
+  // The player picked from the `dm ` list. While the input still begins `dm {name} ` the
+  // message goes to this id, never re-parsed from the text (see lib/direct-message.ts).
+  const [pickedRecipient, setPickedRecipient] = useState<PickedRecipient | null>(null);
 
   // The prompt timeout/cancel handlers live in a subscription callback that closes over
   // the render in which it was created, so reading `activePromptId` there went stale and
@@ -241,7 +260,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
     monsterName: string;
     items: InventoryAutocompleteRow[];
   }>;
-  const suggestions = useCommandAutocomplete(
+  const commandSuggestions = useCommandAutocomplete(
     inputValue,
     !activePromptId && !inputLocked,
     {
@@ -255,6 +274,43 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
   );
   const guide = useGuidedStart(roomId);
 
+  // Room chat (roadmap 41): shared with the Chat tab through the room's ChatProvider. The
+  // Console shows only what arrives while it is mounted; the backlog belongs to the Chat tab.
+  const chat = useChat();
+  const { data: ringStateForDm } = trpc.game.ringState.useQuery({ roomId }, { enabled: !!roomId });
+  const ringUserIds = useMemo(
+    () => (ringStateForDm?.contestants ?? []).map((c) => c.userId),
+    [ringStateForDm],
+  );
+  const dmQuery = dmRest(inputValue);
+  // As a `dm ` line starts, make sure the names are current (throttled inside useChat).
+  const refreshNames = chat.refreshNames;
+  const typingDm = dmQuery !== null;
+  useEffect(() => {
+    if (typingDm) refreshNames?.();
+  }, [typingDm, refreshNames]);
+  const dmSuggestions = useMemo<AutocompleteSuggestion[] | null>(() => {
+    if (dmQuery === null || inputLocked) return null;
+    return orderDmSuggestions({
+      members: chat.members,
+      messages: chat.messages,
+      myUserId: user?.id,
+      ringUserIds,
+      query: dmQuery,
+    });
+  }, [dmQuery, inputLocked, chat.members, chat.messages, user?.id, ringUserIds]);
+  const dmCandidates = useMemo(
+    () => dmCandidatesOf(chat.dmCandidates, chat.members),
+    [chat.dmCandidates, chat.members],
+  );
+  const dmTarget = useMemo(
+    () => resolveDmTarget(inputValue, dmCandidates, pickedRecipient, user?.id),
+    [inputValue, dmCandidates, pickedRecipient, user?.id],
+  );
+  const dmPreview = dmPreviewText(dmTarget);
+  // After `dm ` the list is the room's players, not commands.
+  const suggestions = dmSuggestions ?? commandSuggestions;
+
   const sendCommand = trpc.game.command.useMutation();
   const respondToPrompt = trpc.game.respondToPrompt.useMutation();
   const cancelPromptMutation = trpc.game.cancelPrompt.useMutation();
@@ -263,6 +319,36 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
   function addConsoleEvent(ev: ConsoleEvent) {
     setConsoleEvents(prev => [...prev, ev]);
   }
+
+  // Chat lines that arrive live. Our own send is announced both directly and by its frame, so
+  // dedupe by message id.
+  const shownChatIdsRef = useRef(new Set<number>());
+  const liveChatShownRef = useRef(false);
+  const { subscribeLive } = chat;
+  useEffect(
+    () =>
+      subscribeLive((message) => {
+        if (shownChatIdsRef.current.has(message.id)) return;
+        shownChatIdsRef.current.add(message.id);
+        liveChatShownRef.current = true;
+        setConsoleEvents((prev) => [
+          ...prev,
+          { id: `chat-${message.id}`, type: 'chat', text: chatLineText(message, user?.id) },
+        ]);
+      }),
+    [subscribeLive, user?.id],
+  );
+
+  // One line when the Console opens with unread chat. Unread loads after mount, so this waits
+  // for the first non-zero count, and stays quiet if a live chat line has already shown (the
+  // count would then include it).
+  const unreadAnnouncedRef = useRef(false);
+  useEffect(() => {
+    if (unreadAnnouncedRef.current || chat.unread <= 0) return;
+    unreadAnnouncedRef.current = true;
+    if (liveChatShownRef.current) return;
+    addConsoleEvent({ id: 'chat-unread', type: 'chat', text: unreadChatLine(chat.unread) });
+  }, [chat.unread]);
 
   const upsertPendingPrompt = useCallback((prompt: PendingPromptSnapshot) => {
     consecutiveEmptyPromptPollsRef.current = 0;
@@ -691,6 +777,79 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
     }
   }
 
+  /**
+   * Chat typed in the Console (roadmap 41). A name picked from the `dm ` list is sent by id,
+   * so it can never be re-parsed into a different player; anything else goes to `game.command`,
+   * which the server catches before its flow checks, so this works with a question open and
+   * leaves that question open. The typed line is not echoed: the chat line itself is the echo.
+   */
+  async function handleSubmitChat(line: string) {
+    if (!line.trim() || inputLocked) return;
+    const target = resolveDmTarget(line, dmCandidates, pickedRecipient, user?.id);
+    const pickedAtSend = pickedRecipient;
+    // Cleared at once so the player can carry on, and put back if the message is refused, unless
+    // they have already typed something newer (as the Chat tab does).
+    setInputValue('');
+    inputValueRef.current = '';
+    setPickedRecipient(null);
+    setInputLocked(true);
+    let refusal: string | null = null;
+    try {
+      // An empty message falls through to the server, which answers with the plan's
+      // "Add a message after the name" text rather than the web repeating it.
+      // A resolved player is sent BY ID, picked or typed: what the preview showed is what is
+      // sent, never re-parsed on the server against a list that may have changed meanwhile
+      // (the server still checks the player is a member, and refuses with "isn't in this room
+      // any more"). Everything else goes to the server for its refusal text.
+      if (target.kind === 'player' && target.message) {
+        refusal = await chat.send(target.message, target.userId);
+      } else {
+        const result = await sendCommand.mutateAsync({ roomId, command: line, isDM: true });
+        if (!result.ok) refusal = ('message' in result && result.message) || 'Command failed';
+      }
+    } catch (err) {
+      refusal = err instanceof Error && err.message ? err.message : "That message didn't send. Try again.";
+    } finally {
+      setInputLocked(false);
+    }
+    if (refusal) {
+      addConsoleEvent({ id: `sys-${Date.now()}`, type: 'system', text: `! ${refusal}` });
+      if (inputValueRef.current === '') {
+        setInputValue(line);
+        if (pickedAtSend) setPickedRecipient(pickedAtSend);
+      }
+    }
+    inputRef.current?.focus();
+  }
+
+  function submitInput() {
+    setSuggestionIndex(-1);
+    const trimmed = inputValue.trim().toLowerCase();
+    if (trimmed === 'cancel' || trimmed === 'exit') {
+      setInputValue('');
+      void handleCancelFlow();
+    } else if (isChatLine(inputValue, activePromptId !== null)) {
+      // Before the prompt branch: chat must work while a question is open, and must not be
+      // taken for its answer.
+      void handleSubmitChat(inputValue);
+    } else if (activePromptId) {
+      // Route text input to the active prompt as a free-form answer
+      const answer = inputValue.trim();
+      setInputValue('');
+      if (answer) {
+        addConsoleEvent({ id: `input-${Date.now()}`, type: 'input', text: answer });
+        void handleAnswer(activePromptId, answer);
+      }
+    } else {
+      void handleSubmitCommand(inputValue);
+    }
+  }
+
+  function applySuggestion(value: string, suggestion?: AutocompleteSuggestion) {
+    setInputValue(value);
+    setPickedRecipient(suggestion?.userId ? { userId: suggestion.userId, name: suggestion.label } : null);
+  }
+
   function handleInputKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (suggestions.length > 0) {
       if (e.key === 'ArrowDown') {
@@ -706,34 +865,20 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
       if (e.key === 'Tab') {
         e.preventDefault();
         const target = suggestionIndex >= 0 ? suggestions[suggestionIndex] : suggestions[0];
-        if (target) setInputValue(target.insertValue);
+        if (target) applySuggestion(target.insertValue, target);
         setSuggestionIndex(-1);
         return;
       }
       if (e.key === 'Escape') {
         setSuggestionIndex(-1);
         setInputValue('');
+        setPickedRecipient(null);
         return;
       }
     }
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      setSuggestionIndex(-1);
-      const trimmed = inputValue.trim().toLowerCase();
-      if (trimmed === 'cancel' || trimmed === 'exit') {
-        setInputValue('');
-        void handleCancelFlow();
-      } else if (activePromptId) {
-        // Route text input to the active prompt as a free-form answer
-        const answer = inputValue.trim();
-        setInputValue('');
-        if (answer) {
-          addConsoleEvent({ id: `input-${Date.now()}`, type: 'input', text: answer });
-          void handleAnswer(activePromptId, answer);
-        }
-      } else {
-        void handleSubmitCommand(inputValue);
-      }
+      submitInput();
     }
   }
 
@@ -861,6 +1006,14 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
               </li>
             );
           }
+          if (ev.type === 'chat') {
+            // Dimmer than announcements so a fight's narration still leads.
+            return (
+              <li className="event event-chat console-chat">
+                <div className="event-text">{ev.text}</div>
+              </li>
+            );
+          }
           return (
             <li className={`event event-${ev.type}`}>
               <div className="event-text">{formatEventText(ev.text ?? '', mentions)}</div>
@@ -926,25 +1079,21 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
           </button>
         </div>
       )}
+      {/* A persistent live region, so the preview is announced as it changes (not only when it appears). */}
+      <div aria-live="polite">
+        {dmPreview && (
+          <div className="dm-preview">
+            {dmPreview.lead}
+            {dmPreview.name !== null && <span className="dm-preview-name">{dmPreview.name}</span>}
+            {dmPreview.tail}
+          </div>
+        )}
+      </div>
       <form
         className="command-dock"
         onSubmit={(e) => {
           e.preventDefault();
-          setSuggestionIndex(-1);
-          const trimmed = inputValue.trim().toLowerCase();
-          if (trimmed === 'cancel' || trimmed === 'exit') {
-            setInputValue('');
-            void handleCancelFlow();
-          } else if (activePromptId) {
-            const answer = inputValue.trim();
-            setInputValue('');
-            if (answer) {
-              addConsoleEvent({ id: `input-${Date.now()}`, type: 'input', text: answer });
-              void handleAnswer(activePromptId, answer);
-            }
-          } else {
-            void handleSubmitCommand(inputValue);
-          }
+          submitInput();
         }}
         aria-label="Command input"
         style={{ position: 'relative' }}
@@ -952,7 +1101,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
         <CommandSuggestions
           suggestions={suggestions}
           activeIndex={suggestionIndex}
-          onSelect={(value) => { setInputValue(value); setSuggestionIndex(-1); inputRef.current?.focus(); }}
+          onSelect={(value, suggestion) => { applySuggestion(value, suggestion); setSuggestionIndex(-1); inputRef.current?.focus(); }}
           onDismiss={() => setSuggestionIndex(-1)}
         />
         <label htmlFor="console-input" aria-label="Command prompt">{'>'}</label>
@@ -962,7 +1111,14 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
           type="text"
           className="command-input"
           value={inputValue}
-          onChange={(e) => { setInputValue(e.target.value); setSuggestionIndex(-1); }}
+          onChange={(e) => {
+            const next = e.target.value;
+            inputValueRef.current = next;
+            setInputValue(next);
+            setSuggestionIndex(-1);
+            // Editing the picked name forgets the id: the typed text is matched afresh.
+            if (pickedRecipient && !stillPicked(next, pickedRecipient)) setPickedRecipient(null);
+          }}
           onKeyDown={handleInputKeyDown}
           disabled={inputLocked}
           placeholder={placeholder}

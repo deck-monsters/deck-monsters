@@ -58,6 +58,8 @@ const COMMAND_VERBS = new Set([
 	'train', 'equip', 'unequip', 'dismiss', 'revive', 'send', 'call', 'summon', 'move',
 	'save', 'load', 'delete', 'use', 'give', 'take', 'visit', 'sell', 'edit', 'look',
 	'help', 'leave',
+	// Room chat (roadmap 41). Without these the handbook's chat lines ran together as prose.
+	'msg', 'dm',
 ]);
 
 /**

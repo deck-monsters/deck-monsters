@@ -32,6 +32,8 @@ export type {
 	EventsSinceResult,
 };
 export type { StateStore, SerializedGame } from './types/state-store.js';
+export { DM_TEXT, matchRecipient } from './helpers/match-recipient.js';
+export type { RecipientCandidate, RecipientMatch } from './helpers/match-recipient.js';
 export { stripControlCharacters } from './helpers/strip-control-characters.js';
 export { repairSerializedGame } from './helpers/repair-serialized-game.js';
 export { engineReady, getHydratorStatus } from './helpers/engine-ready.js';
@@ -42,7 +44,7 @@ export { all as allCards } from './cards/index.js';
 export { getInitialDeck } from './cards/index.js';
 /** One weighted card draw, filtered by a creature-shaped `{ level, canHoldCard }` (used by @deck-monsters/harness). */
 export { draw as drawCard } from './cards/index.js';
-export { COMMAND_CATALOG } from './commands/catalog.js';
+export { COMMAND_CATALOG, CATEGORY_LABELS } from './commands/catalog.js';
 export type { CommandEntry, CommandCategory } from './commands/catalog.js';
 export { purchaseShopItem } from './items/store/purchase.js';
 export type { ShopItemSection, ShopPurchaseResult } from './items/store/purchase.js';

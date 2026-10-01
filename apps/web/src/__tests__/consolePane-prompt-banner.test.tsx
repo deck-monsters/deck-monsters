@@ -97,6 +97,21 @@ vi.mock('../components/InlineChoices.js', () => ({
   default: () => null,
 }));
 
+// Chat has its own tests (useChat.test.tsx, consolePane-chat.test.tsx).
+vi.mock('../hooks/useChat.js', () => ({
+  useChat: () => ({
+    messages: [],
+    unread: 0,
+    lastReadId: 0,
+    markRead: () => undefined,
+    send: async () => null,
+    members: [],
+    dmCandidates: [],
+    refreshNames: () => undefined,
+    subscribeLive: () => () => undefined,
+  }),
+}));
+
 vi.mock('../lib/trpc.js', () => ({
   trpc: {
     game: {
@@ -105,6 +120,9 @@ vi.mock('../lib/trpc.js', () => ({
       },
       pendingPrompt: {
         useQuery: () => trpcMocks.pendingPromptQuery,
+      },
+      ringState: {
+        useQuery: () => ({ data: undefined }),
       },
       myMonsters: {
         useQuery: () => ({ data: [], refetch: vi.fn(async () => ({ data: [] })) }),
@@ -147,6 +165,7 @@ function TestFeed({ children }: { children: ReactNode }) {
     connected: true,
     reconnecting: false,
     seedCursor: () => undefined,
+    subscribeChat: () => () => undefined,
     subscribe: (listener) => {
       listeners.add(listener);
       return () => {

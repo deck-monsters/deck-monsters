@@ -5,7 +5,23 @@ import * as TYPES from '../constants/creature-types.js';
 
 const GENDERS = Object.keys(PRONOUNS);
 
-const chooseName = (type: string, gender: string, alreadyTaken: string[] = []): string => {
+/*
+ * `fantasy-names` is not clean for every list (bug 214):
+ * - The Dothraki list (Gladiators) returns a dictionary entry, "Erro (erin, Kind/good)", word
+ *   plus gloss. A boss once entered the ring as "Error (erin, Kind/good)". Keep the word only.
+ * - The female Lizardmen list (Basilisks) sometimes splices in a literal null:
+ *   "nullauihtza". Such a name is drawn again.
+ */
+const cleanName = (raw: unknown): string | undefined => {
+	if (typeof raw !== 'string') return undefined;
+	const name = raw.replace(/\s*\(.*$/, '').trim();
+	if (!name || /null|undefined/i.test(name)) return undefined;
+	return name;
+};
+
+const MAX_DRAWS = 25;
+
+const chooseName = (type: string, gender: string, alreadyTaken: string[] = [], draws = 0): string => {
 	let args: [string, string, number, number?];
 
 	switch (type) {
@@ -45,10 +61,12 @@ const chooseName = (type: string, gender: string, alreadyTaken: string[] = []): 
 
 	args = [args[0], args[1], args[2], genderArg];
 
-	const name = fantasyNames(...args);
+	const name = cleanName(fantasyNames(...args));
 
-	if (alreadyTaken.includes(name)) {
-		return chooseName(type, gender, alreadyTaken);
+	if (name === undefined || alreadyTaken.includes(name)) {
+		// Bounded: a list that kept failing would otherwise recurse forever.
+		if (draws >= MAX_DRAWS) return name ?? `Nameless ${type}`;
+		return chooseName(type, gender, alreadyTaken, draws + 1);
 	}
 
 	return name;

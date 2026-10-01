@@ -4,3 +4,4 @@
  */
 export type { AppRouter } from './trpc/router.js';
 export type { GameEvent, EventType, EventScope } from '@deck-monsters/engine';
+export type { ChatMessage, ChatPlayer } from './chat/chat-service.js';

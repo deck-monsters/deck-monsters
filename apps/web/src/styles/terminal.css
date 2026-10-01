@@ -533,21 +533,45 @@
   }
 }
 
-/* Phone: all five tabs (The Ring, Console, Workshop, Fights, Leaders) share the bar's width
-   instead of scrolling it sideways. The 1023px rule above sizes each tab to its label with
-   1rem side padding, which at 390px pushed the fifth tab off-screen (roadmap 39 B4). Five
-   labels are ~35 characters; at 0.8rem that is well under 390px with 0.25rem side padding.
-   min-height keeps the 44px touch target that the smaller padding would otherwise shrink. */
+/* Phone: all six tabs (The Ring, Console, Chat, Workshop, Fights, Leaders) share the bar's
+   width instead of scrolling it sideways. The 1023px rule above sizes each tab to its label
+   with 1rem side padding, which at 390px pushed the fifth tab off-screen (roadmap 39 B4); the
+   Chat tab (roadmap 41) made it six. Equal shares (`flex: 1 1 0`) were fine for five labels
+   but starve "Workshop" with six, so each tab starts from its label's width (`flex: 1 1 auto`)
+   and the spare room is shared out. The side padding is small, the font a notch smaller, and
+   the unread badge is positioned over the tab's corner so it adds no width. min-height keeps
+   the 44px touch target that the smaller padding would otherwise shrink. */
 @media (max-width: 480px) {
   .terminal-tab {
-    flex: 1 1 0;
+    flex: 1 1 auto;
     min-width: 0;
     min-height: 44px;
-    padding: 0.5rem 0.25rem;
-    font-size: 0.8rem;
+    padding: 0.5rem 0.15rem;
+    font-size: 0.75rem;
     letter-spacing: 0;
     white-space: nowrap;
   }
+}
+
+/* Unread count on a tab (the Chat tab). Over the label's top-right corner, not in the flow,
+   so a badge never changes how wide the tab is or pushes the bar into scrolling. */
+.terminal-tab { position: relative; }
+.terminal-tab-badge {
+  position: absolute;
+  top: 0;
+  right: -3px;
+  min-width: 0.85rem;
+  padding: 0 0.2rem;
+  border-radius: 999px;
+  background: var(--color-accent);
+  color: var(--color-bg);
+  /* 13px tall: it ends above the label's line box (which starts 14px down in the 44px tab),
+     so it sits in the corner and never covers a letter. */
+  font-size: 0.55rem;
+  font-weight: 700;
+  line-height: 0.8rem;
+  text-align: center;
+  pointer-events: none;
 }
 
 /* Reconnection status banner */
@@ -1092,4 +1116,79 @@
   height: 16px;
   vertical-align: -3px;
   image-rendering: pixelated;
+}
+
+/* Chat tab (roadmap 41). The panel is a column: heading, the scrolling list, then the
+   composer pinned under it, so the composer stays above an on-screen keyboard the same way
+   the Console's command dock does. */
+.chat-panel { display: flex; flex-direction: column; overflow: hidden; padding-bottom: 0; }
+.chat-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0.25rem 0;
+}
+.chat-list:focus-visible { outline: 2px solid var(--color-accent); outline-offset: -2px; }
+.chat-empty { margin: 1rem 0; }
+.chat-message { padding: 0.15rem 0; overflow-wrap: anywhere; line-height: var(--line-height, 1.5); }
+.chat-sender { color: var(--color-fg-bright); margin-right: 0.4rem; }
+.chat-sender::after { content: ':'; }
+.chat-message-dm .chat-text { font-style: italic; }
+.chat-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0.6rem 0 0.3rem;
+  color: var(--color-fg-dim);
+  font-size: 0.75rem;
+}
+.chat-divider::before, .chat-divider::after { content: ''; flex: 1; border-top: 1px solid var(--color-border); }
+.chat-divider-fight { color: var(--color-fg); }
+.chat-divider-marker { color: var(--color-accent); }
+.chat-divider-marker::before, .chat-divider-marker::after { border-top-color: var(--color-accent); }
+.chat-composer {
+  flex-shrink: 0;
+  border-top: 1px solid var(--color-border);
+  padding: 0.5rem 0 calc(0.5rem + env(safe-area-inset-bottom, 0px));
+  background: var(--color-bg);
+  position: sticky;
+  bottom: 0;
+}
+.chat-composer-to { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.4rem; }
+.chat-composer-to label { color: var(--color-fg-dim); font-size: 0.85rem; }
+.chat-composer-to select, .chat-input {
+  background: var(--color-input-bg);
+  border: 1px solid var(--color-border);
+  color: var(--color-fg);
+  font-family: var(--font-family);
+  font-size: var(--font-size);
+  min-height: 44px;
+  padding: 0 0.5rem;
+  min-width: 0;
+}
+.chat-composer-to select { flex: 1; max-width: 16rem; }
+.chat-composer-row { display: flex; gap: 0.5rem; }
+.chat-input { flex: 1; caret-color: var(--color-accent); }
+.chat-input:focus-visible, .chat-composer-to select:focus-visible { outline: 2px solid var(--color-accent); outline-offset: -1px; }
+.chat-composer-row .btn { min-height: 44px; justify-content: center; }
+/* The player a message goes to: the Chat composer's To picker once a player is chosen, and
+   the Console's DM preview (M2 reuses this class), so the person can see who will get it
+   before sending. */
+/* Chat lines in the Console: dimmer than announcements so a fight's narration still leads. */
+.console-chat { color: var(--color-fg-dim); }
+/* The line above the Console input while typing `dm ...`: who the message will go to. */
+.dm-preview {
+  padding: 0.25rem 0.75rem;
+  font-size: 0.85rem;
+  color: var(--color-fg-dim);
+  overflow-wrap: anywhere;
+}
+.dm-preview-name { color: var(--color-accent); font-weight: 700; }
+.chat-composer-to select.chat-to-picked { border-color: var(--color-accent); }
+.chat-refusal { margin: 0.4rem 0 0; color: var(--color-error); font-size: 0.85rem; }
+
+/* Prevent iOS Safari auto-zoom on focus (threshold is 16px). */
+@media (pointer: coarse) {
+  .chat-input, .chat-composer-to select { font-size: 16px; }
 }

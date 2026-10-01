@@ -133,6 +133,27 @@ tab becomes visible so browser timer suspension is not mistaken for a dead conne
 
 See [analytics and history](analytics-and-history.md) for summaries and projections.
 
+## Chat frames
+
+Room chat (roadmap 41) rides the `ringFeed` connection but is not a game event. The server
+subscribes to `ChatService` for the room and user when a feed opens, and yields each message
+the user may see as an **untracked** frame, `{ type: 'chat', id: 'chat-<messageId>', payload:
+<ChatMessage> }`, with no `data` wrapper (game frames are `tracked(id, GameEvent)`).
+
+- **It never moves the cursor.** tRPC remembers the id of every *tracked* frame and sends it
+  back as `lastEventId` on reconnect; a tracked chat id would point the game cursor at an id
+  the event log has never heard of. The web `useRingFeed` handles chat frames first and
+  returns: they skip the room guard, the cursor and the pane fan-out, and reach only
+  `subscribeChat` listeners (`useChat`).
+- **The chat subscription attaches before the handshake is yielded**, and frames buffer until it is out, so a message sent after the client's history fetch is never lost between fetch and subscription.
+- **It is not replayed.** Chat frames are not in the bus buffer or `room_events`. After every
+  handshake `useChat` calls `chat.history` with `afterId` set to the newest id it holds and
+  merges by id (paging until a short page, so a long disconnect leaves no gap), so a missed message is recovered and a duplicate is harmless.
+- **Visibility is the service's job.** `ChatService.subscribe(roomId, userId, listener)`
+  delivers only room messages and DMs the user sent or received. See
+  [`rooms-and-identity.md`](rooms-and-identity.md#chat).
+- **A frame still proves the connection is alive**, so it resets the web heartbeat watchdog.
+
 ## Change checklist
 
 - [ ] Payloads remain JSON-safe and narration-independent where clients need structure.

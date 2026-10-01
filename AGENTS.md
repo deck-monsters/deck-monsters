@@ -39,6 +39,11 @@ These apply to every task in this repo, not just the one you were asked to do.
    or should update documentation, use
    `.cursor/skills/maintaining-repository-docs/SKILL.md` before editing docs. This includes
    behavior changes, roadmap status, generated references, runbooks, and durable findings.
+8. **Think like a first-time player.** For any change a player can see or do (a web
+   control or screen, a Console command or prompt, an announcement, a mechanic, a Discord
+   command), use `.cursor/skills/player-help-and-ux/SKILL.md`. Make the change explain
+   itself to someone new, on a phone, and put its help where that kind of help lives.
+   Owner's standing order (2026-10-01).
 
 ## Working with subagents
 
@@ -100,6 +105,7 @@ current contract.
 | [`docs/architecture/boss-encounters.md`](docs/architecture/boss-encounters.md) | Bosses, boss summoning, ring events, teams, or targeting strategies |
 | [`docs/architecture/cards-and-encounter-effects.md`](docs/architecture/cards-and-encounter-effects.md) | Adding or changing a card or monster, or any card state that lasts past one play (holds, wards, rests, curses) |
 | [`docs/architecture/web-workspace.md`](docs/architecture/web-workspace.md) | `Terminal`, workspace surfaces, pane slots, routes, divider, or navigation reveal |
+| [`docs/architecture/room-chat.md`](docs/architecture/room-chat.md) | Room chat: `ChatService`, `msg`/`dm`, the Chat tab, chat retention, or a connector bridge for chat |
 | [`docs/architecture/workshop-and-items.md`](docs/architecture/workshop-and-items.md) | Workshop inventory, item use, prompt-free mutations, first-run training, or room shop |
 | [`docs/architecture/analytics-and-history.md`](docs/architecture/analytics-and-history.md) | Analytics projections, leaderboards, fight summaries, catch-up, or retention |
 | [`docs/architecture/ring-roster-and-pixel-monsters.md`](docs/architecture/ring-roster-and-pixel-monsters.md) | The Ring roster, `ring.state`, pixel sprites, appearance colours, or feed portraits |

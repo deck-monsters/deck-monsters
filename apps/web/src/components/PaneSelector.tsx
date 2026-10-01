@@ -1,3 +1,5 @@
+import { useChat } from '../hooks/useChat.js';
+import { unreadBadgeText } from '../utils/chat-rows.js';
 import { SURFACES, type SurfaceId } from './surfaces.js';
 
 interface PaneSelectorProps {
@@ -17,6 +19,9 @@ interface PaneSelectorProps {
  * would crowd them.
  */
 export default function PaneSelector({ value, excludeSurfaceId, onChange, slotLabel }: PaneSelectorProps) {
+  // Side by side there is no tab bar to carry the Chat unread badge, so the count rides in
+  // the option's text (roadmap 41).
+  const { unread } = useChat();
   const options = SURFACES.filter((surface) => surface.id !== excludeSurfaceId);
 
   return (
@@ -28,9 +33,14 @@ export default function PaneSelector({ value, excludeSurfaceId, onChange, slotLa
     >
       {options.map((surface) => (
         <option key={surface.id} value={surface.id}>
-          {surface.label}
+          {optionLabel(surface, unread)}
         </option>
       ))}
     </select>
   );
+}
+
+function optionLabel(surface: (typeof SURFACES)[number], chatUnread: number): string {
+  const badge = unreadBadgeText(surface.badge?.({ chatUnread }) ?? 0);
+  return badge ? `${surface.label} · ${badge} ${surface.badgeNoun ?? ''}`.trim() : surface.label;
 }
