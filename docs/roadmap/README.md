@@ -20,7 +20,7 @@ completed reasoning belongs in the [archive](../archive/README.md).
 | [22 — Small leftovers](22-small-leftovers.md) | Cross-cutting decisions, manual verification gates, and small Workshop features |
 | [34 — Balance methodology](34-balance-methodology.md) | In progress: PR A (#408) and PR B (#409, catalogue and contexts, chassis and collections, lean best-hand search) merged. Still open: idealized action classes (task 5), excitement tooling (8), rings (10), the method reference doc (11) |
 | [39 — In-game help for every control](39-in-game-help.md) | In progress: Workshop fixes, Help, batch 2, and batch 3 are built and checked in the browser ([help check](../reference/help-check.md), [batch 2](../reference/help-check-batch2.md), [batch 3](../reference/help-check-batch3.md)). Batch 3 adds `help <word>`, a title on every button, a line for each place, first-time fight notes, and a guided start in the Console and the Workshop. The batch 3 check drafted no new lines. Left: writing text for any surface still found wanting |
-| [41 — Room chat](41-room-chat.md) | In progress: `msg` and `dm`, the Chat tab, and dividers are built. The live check passed ([chat check](../reference/chat-check.md)). Still open: the PR, then Discord bridges and moderation |
+| [41 — Room chat](41-room-chat.md) | Shipped in #420: `msg`/`dm`, the Chat tab, retention until seen. Backlog: a Discord bridge, moderation, notifications |
 | [27 — Next passes](27-next-passes.md) | The order of the next passes: command and workshop bugs, the Dragon, realistic rings with boss balance, and the mega boss (done), then later work |
 
 [`10b-bugs-fixed.md`](10b-bugs-fixed.md) remains the stable fixed-bug ledger because code
