@@ -135,6 +135,17 @@ While any boss is still fighting, every challenger without a team stands togethe
 
 Some fights bring a ring event that changes the teams for that fight only: Common Cause (every challenger against the bosses, and the survivors win together), House War (two houses, and the last house standing wins together), and Blood Feud (no teams at all). Whenever the bosses outnumber the challengers, as they do in The Gauntlet or an ambush, they turn on each other too. Challengers who share a team stay allies; the rest fight for themselves.
 
+## Talking to Other Players
+
+Every room has its own chat. Open the Chat tab, or type in the Console:
+
+- `msg [message]` — say something to everyone in the room (message and m work too)
+- `dm [player] [message]` — send a message only that player can see
+
+Messages show in the Chat tab and in the Console. When you type a dm, the Console shows who it will go to before you send it; pick a name from the list to be sure.
+
+Messages stay until everyone who has played in the room lately has had a chance to read them, and never longer than 30 days.
+
 ## All Commands
 
 ### Monsters

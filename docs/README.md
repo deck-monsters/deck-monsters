@@ -40,6 +40,7 @@ Generated and authored player references remain at the repository root:
 | Writing or changing a card or monster, card play resolution, fight-scoped card state, holds | [Cards and encounter effects](architecture/cards-and-encounter-effects.md) |
 | Boss creation/summoning, ring events, teams, targeting, boss timers | [Boss encounters](architecture/boss-encounters.md) |
 | `Terminal`, surfaces, pane slots, routes, 1024px breakpoint, divider, navigation reveal | [Web workspace](architecture/web-workspace.md) |
+| Room chat: `msg` and `dm`, the Chat tab, retention, the bridge seam | [Room chat](architecture/room-chat.md) |
 | Workshop inventory, item use, lifecycle actions, prompt-free mutations, room shop | [Workshop and items](architecture/workshop-and-items.md) |
 | Leaderboards, event history, fight summaries, catch-up, reward projections, retention | [Analytics and history](architecture/analytics-and-history.md) |
 | `ring.state`, roster rows/order, pixel sprites, appearance palettes, feed portraits | [Ring roster and pixel monsters](architecture/ring-roster-and-pixel-monsters.md) |
