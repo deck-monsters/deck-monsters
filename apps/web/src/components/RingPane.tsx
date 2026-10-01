@@ -14,6 +14,7 @@ import { Virtuoso } from 'react-virtuoso';
 import type { VirtuosoHandle } from 'react-virtuoso';
 import type { GameEvent } from '@deck-monsters/server/types';
 import { trpc } from '../lib/trpc.js';
+import { mechanicNoteFor } from '../lib/mechanic-notes.js';
 import { useRingFeedListener, type TrackedRingFeedEvent } from '../hooks/useRingFeed.js';
 import { useRingKeyTimestamps } from '../hooks/useRingKeyTimestamps.js';
 import { usePixelMonsters } from '../hooks/usePixelMonsters.js';
@@ -620,6 +621,11 @@ export default function RingPane({
           const iso = eventTimestampIso(event.timestamp);
           const hoverTitle = formatEventHoverTitle(event.timestamp);
           const showKeyColumn = ringKeyTimestampsEnabled && keyMeta;
+          // Wait for the handshake's user id: the explained set is per player, and a note
+          // claimed under no id would be written to a key no later session reads.
+          const mechanicNote = myUserId
+            ? mechanicNoteFor(myUserId, 'ring', event.id, event.payload)
+            : undefined;
           return (
             <li
               className={`event ${eventClass(event.type)}`}
@@ -637,6 +643,7 @@ export default function RingPane({
               ) : (
                 <div className="event-text">{formatEventText(event.text ?? '', mentions)}</div>
               )}
+              {mechanicNote && <div className="mechanic-note">ⓘ {mechanicNote}</div>}
             </li>
           );
         }}

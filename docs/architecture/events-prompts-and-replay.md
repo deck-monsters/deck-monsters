@@ -34,6 +34,14 @@ subscribes to that room, sends public events to its configured guild channel, an
 matching private events and prompts to the user. Connector rendering may use structured
 payloads, but narration text remains the fallback.
 
+**Mechanic tags.** Four public lines announce a rule a new player may not know: a ring
+event (`payload.ringEvent.id`), an ambush and bosses turning on each other (the ring's
+`narration`), and a boss arrival that says its temperament (`ring.add`). The last three
+carry `payload.mechanic` (`ambush`, `boss-rivals`, `boss-temperament`) so the web can
+show a one-time note without matching prose (`apps/web/src/lib/mechanic-notes.ts`). The
+tag is additive: persistence and replay store it like any payload field, and the Discord
+connector reads payload fields by name, so it ignores it. The engine adds no text for it.
+
 ## Visibility and persistence
 
 `EventPersister` is a trusted `includePrivate` subscriber. It writes room, type, scope,

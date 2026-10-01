@@ -25,8 +25,10 @@ vi.mock('../hooks/useTimeAgo.js', () => ({
   useTimeAgo: () => 'just now',
 }));
 
+const authState = vi.hoisted(() => ({ user: { id: 'user-1' } as { id: string } | null }));
+
 vi.mock('../lib/auth-context.js', () => ({
-  useAuth: () => ({ user: { id: 'user-1' } }),
+  useAuth: () => ({ user: authState.user }),
 }));
 
 vi.mock('../lib/command-insert-context.js', () => ({
@@ -130,6 +132,7 @@ vi.mock('react-virtuoso', () => {
 });
 
 import Terminal from '../components/Terminal.js';
+import { resetMechanicClaimsForTests } from '../lib/mechanic-notes.js';
 
 function latestCall() {
   const call = subscriptionCalls[subscriptionCalls.length - 1];
@@ -308,5 +311,100 @@ describe('Terminal shared ringFeed subscription (#63)', () => {
 
     rerender(<Terminal roomId="room-b" />);
     expect(latestCall().input).toEqual({ roomId: 'room-b', lastEventId: undefined, resumeAttempt: 0 });
+  });
+});
+
+describe('first-time mechanic notes in the feeds (roadmap 39 C4)', () => {
+  const NOTE = /An ambush brings one boss more than usual/;
+
+  function send(id: string, text: string, payload: Record<string, unknown>) {
+    act(() => {
+      latestCall().onData?.({
+        id,
+        data: {
+          id,
+          roomId: 'room-notes',
+          timestamp: Date.now(),
+          type: 'announce',
+          scope: 'public',
+          text,
+          payload,
+        },
+      });
+    });
+  }
+
+  function handshake() {
+    act(() => {
+      latestCall().onData?.({
+        id: 'hs-notes',
+        data: {
+          id: 'hs-notes',
+          roomId: 'room-notes',
+          timestamp: Date.now(),
+          type: 'handshake',
+          scope: 'private',
+          text: '',
+          payload: { protocolVersion: 1, buildVersion: 'dev', serverTime: 'now', yourUserId: 'user-1' },
+        },
+      });
+    });
+  }
+
+  beforeEach(() => {
+    authState.user = { id: 'user-1' };
+    subscriptionCalls.length = 0;
+    localStorage.clear();
+    resetMechanicClaimsForTests();
+  });
+
+  it('explains a tagged line once, never on an untagged line, and not again after a reload', () => {
+    installResizeObserver(1200);
+    const { unmount } = render(<Terminal roomId="room-notes" />);
+    handshake();
+
+    send('plain-1', 'A plain line.', {});
+    expect(screen.queryByText(NOTE)).toBeNull();
+
+    send('amb-1', 'An ambush! one.', { mechanic: 'ambush' });
+    expect(screen.getAllByText(NOTE)).toHaveLength(1);
+    expect(document.querySelector('.mechanic-note')?.textContent?.startsWith('ⓘ ')).toBe(true);
+
+    send('amb-2', 'An ambush! two.', { mechanic: 'ambush' });
+    expect(screen.getAllByText(NOTE)).toHaveLength(1);
+
+    send('ev-1', 'THE GAUNTLET', { ringEvent: { id: 'gauntlet', name: 'The Gauntlet' } });
+    expect(screen.getByText(/In The Gauntlet, extra bosses join/)).toBeTruthy();
+
+    unmount();
+    resetMechanicClaimsForTests();
+    subscriptionCalls.length = 0;
+    render(<Terminal roomId="room-notes" />);
+    handshake();
+    send('amb-3', 'An ambush! three.', { mechanic: 'ambush' });
+    expect(screen.queryByText(NOTE)).toBeNull();
+  });
+
+  it('the Console claims nothing and stores nothing while the user id is unknown', () => {
+    installResizeObserver(1200);
+    authState.user = null;
+    render(<Terminal roomId="room-notes" />);
+    act(() => {
+      latestCall().onData?.({
+        id: 'hl-1',
+        data: {
+          id: 'hl-1',
+          roomId: 'room-notes',
+          timestamp: Date.now(),
+          type: 'announce',
+          scope: 'private',
+          targetUserId: 'user-1',
+          text: 'An ambush! private copy.',
+          payload: { mechanic: 'ambush' },
+        },
+      });
+    });
+    expect(screen.queryByText(NOTE)).toBeNull();
+    expect(Object.keys(localStorage).filter((k) => k.startsWith('mechanicsExplained'))).toEqual([]);
   });
 });

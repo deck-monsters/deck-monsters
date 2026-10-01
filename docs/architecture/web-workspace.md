@@ -90,6 +90,20 @@ Markdown dependency; it emits React elements, never HTML strings). Tables and co
 scroll inside their own focusable `.help-table-region` / `.help-pre` box, never the page.
 Adding Markdown syntax to a generator means checking the renderer handles it.
 
+## First-time mechanic notes
+
+The first time a player sees a ring event, an ambush, bosses turning on each other or a
+boss temperament, one dim `.mechanic-note` line (prefixed `ⓘ `) appears under that line in
+the Ring feed and the Console feed. The engine tags the lines (`payload.mechanic`, or
+`payload.ringEvent.id`); `lib/mechanic-notes.ts` holds the note text, keyed `ring-event:<id>`,
+`ambush`, `boss-rivals`, `boss-temperament`, and a test fails for any ring event without one.
+State is a per-player set in local storage, `mechanicsExplained:${userId}`, shared by both
+feeds. The first row to ask for a key claims it in memory for the session, because the feeds
+are virtualized and a row re-renders: without the claim, showing the note would hide it on
+the next render. The Ring waits for the handshake's user id before claiming. Nothing is
+blocked or delayed; there is no modal. The Console only has the lines it is given (private
+events, highlights and console history), so a public-only line reaches it via history.
+
 ## Two slots and the breakpoint
 
 `Terminal` stores exactly two distinct `SurfaceId`s. Fresh viewers get

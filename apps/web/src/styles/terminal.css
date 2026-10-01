@@ -185,6 +185,13 @@
   white-space: pre-wrap;
 }
 
+.event .mechanic-note {
+  margin: 0.15rem 0 0;
+  color: var(--color-fg-dim);
+  font-size: 0.9em;
+  font-style: italic;
+}
+
 .event-row-inner {
   display: flex;
   align-items: flex-start;

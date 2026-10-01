@@ -17,6 +17,7 @@ import {
   type FightHighlight,
 } from '../utils/fight-highlights.js';
 import FeedList from './FeedList.js';
+import { mechanicNoteFor, mechanicPayloadOf } from '../lib/mechanic-notes.js';
 import { mapConsoleHistoryEvent } from '../utils/console-history-event-map.js';
 import { AT_BOTTOM_THRESHOLD_PX, useFeedAutoScroll } from '../hooks/useFeedAutoScroll.js';
 
@@ -45,6 +46,8 @@ interface ConsoleEvent {
   promptData?: ActivePrompt;
   /** Set on 'highlight' rows — the tag rendered beside the line. */
   highlight?: FightHighlight;
+  /** The slice of the event payload a first-time mechanic note reads (see lib/mechanic-notes.ts). */
+  payload?: Record<string, unknown>;
 }
 
 interface QuickAction {
@@ -429,6 +432,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
         type: 'highlight',
         text: event.text ?? '',
         highlight: fightHighlight,
+        payload: mechanicPayloadOf(event.payload),
       });
       return;
     }
@@ -464,6 +468,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
         id: event.id,
         type: event.type === 'system' ? 'system' : 'announce',
         text: event.text,
+        payload: mechanicPayloadOf(event.payload),
       });
       return;
     }
@@ -902,17 +907,22 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
               </li>
             );
           }
+          // No user id yet: claim nothing, or the Ring's note would be suppressed for the session.
+          const mechanicNote = user?.id ? mechanicNoteFor(user.id, 'console', ev.id, ev.payload) : undefined;
+          const noteLine = mechanicNote ? <div className="mechanic-note">ⓘ {mechanicNote}</div> : null;
           if (ev.type === 'highlight' && ev.highlight) {
             return (
               <li className={`event event-highlight event-highlight-${ev.highlight.kind}`}>
                 <span className="highlight-tag">{ev.highlight.label}</span>
                 <div className="event-text">{formatEventText(ev.text ?? '', mentions)}</div>
+                {noteLine}
               </li>
             );
           }
           return (
             <li className={`event event-${ev.type}`}>
               <div className="event-text">{formatEventText(ev.text ?? '', mentions)}</div>
+              {noteLine}
             </li>
           );
         }}

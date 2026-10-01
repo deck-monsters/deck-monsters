@@ -2,6 +2,7 @@ import { expect } from 'chai';
 
 import { announceContestant } from './contestant.js';
 import { announceBossWillSpawn } from './bossWillSpawn.js';
+import { TARGET_LOWEST_HP_PLAYER } from '../helpers/targeting-strategies.js';
 import { RING_PATRON, RING_PATRON_NAME } from '../constants/lore.js';
 
 function capture() {
@@ -72,6 +73,33 @@ describe('announceContestant', () => {
 		announceContestant(eb, 'Ring', {}, { contestant: makeContestant({ isBoss: true }) });
 
 		expect(published[0]!.text).to.include('Seeskane Orcbane');
+	});
+});
+
+describe('announceContestant mechanic tag (roadmap 39 C4)', () => {
+	const capturePayload = () => {
+		const published: Array<{ text: string; payload: Record<string, unknown> }> = [];
+		return { eb: { publish: (e: any) => published.push(e) } as any, published };
+	};
+
+	it('tags a boss arrival that says a temperament', () => {
+		const { eb, published } = capturePayload();
+		const contestant = makeContestant({ isBoss: true }) as any;
+		contestant.monster.pronouns = { he: 'he', him: 'him', his: 'his', verbSuffix: 's' };
+		contestant.monster.targetingStrategy = TARGET_LOWEST_HP_PLAYER;
+		announceContestant(eb, 'Ring', {}, { contestant });
+
+		expect(published[0]!.text).to.include('picks on whoever looks weakest');
+		expect(published[0]!.payload.mechanic).to.equal('boss-temperament');
+	});
+
+	it('does not tag a boss arrival with no temperament, or a player arrival', () => {
+		const { eb, published } = capturePayload();
+		announceContestant(eb, 'Ring', {}, { contestant: makeContestant({ isBoss: true }) });
+		announceContestant(eb, 'Ring', {}, { contestant: makeContestant({ isBoss: false }) });
+
+		expect(published[0]!.payload).to.not.have.property('mechanic');
+		expect(published[1]!.payload).to.not.have.property('mechanic');
 	});
 });
 
