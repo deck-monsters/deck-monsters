@@ -8,10 +8,10 @@ tags: [roadmap, onboarding, help, web, cursor]
 ---
 # 39c — Batch 3 live check (Cursor)
 
-**Status:** Ready to run (2026-10-01), on PR #419's branch. Claude built
-[batch 3](39-in-game-help.md#batch-3-tasks-4-6-and-7-2026-09-30). Cursor drives a real browser,
-so it checks the batch live and fixes small failures. Claude reviews the branch and writes any
-new player-facing text.
+**Status:** Checked (2026-10-01). Results are in
+[the batch 3 live check](../reference/help-check-batch3.md). Claude built
+[batch 3](39-in-game-help.md#batch-3-tasks-4-6-and-7-2026-09-30). Cursor drove a real browser.
+Claude reviews the branch and writes any new player-facing text. This check drafted none.
 
 ## Rules
 
