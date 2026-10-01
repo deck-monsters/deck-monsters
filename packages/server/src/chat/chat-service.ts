@@ -19,6 +19,7 @@ const log = createLogger('chat');
  */
 
 export const MAX_MESSAGE_LENGTH = 500;
+const ZERO_WIDTH = /[\u200B-\u200D\u2060\uFEFF]/g;
 export const RATE_LIMIT_COUNT = 5;
 export const RATE_LIMIT_WINDOW_MS = 10_000;
 export const DEFAULT_HISTORY_LIMIT = 100;
@@ -273,10 +274,18 @@ export class ChatService {
 	 * nothing. A connector bridging inbound messages calls this with its own `source`.
 	 */
 	async send(input: SendInput): Promise<ChatMessage> {
-		// A NUL is not whitespace and fails the text column, so strip control characters first.
-		const text = stripControlCharacters(input.text).trim();
-		if (!text) throw new ChatError('empty');
-		if (text.length > MAX_MESSAGE_LENGTH) throw new ChatError('too_long', { n: text.length });
+		// Line breaks and tabs become one space and whitespace runs collapse, so a pasted
+		// "hello\nworld" reads as one line. Control characters (a NUL fails the text column) go
+		// after that, so they cannot glue words together first.
+		const text = stripControlCharacters(input.text.replace(/\r\n|[\n\r\t]/g, ' '))
+			.replace(/\s+/g, ' ')
+			.trim();
+		// Zero-width characters are invisible, so a line of only those is empty. Kept in
+		// stored text otherwise: U+200D joins emoji.
+		if (!text.replace(ZERO_WIDTH, '').trim()) throw new ChatError('empty');
+		// Count code points, not UTF-16 units, so an emoji is one character to the player.
+		const length = Array.from(text).length;
+		if (length > MAX_MESSAGE_LENGTH) throw new ChatError('too_long', { n: length });
 
 		const toUserId = input.toUserId ?? null;
 		const players = await this.loadPlayers(input.roomId);

@@ -209,6 +209,7 @@ It lives in the server (`packages/server/src/chat/chat-service.ts`), in its own 
   retention sweep removes it. Deleting a room cascades to its messages and read positions.
 - **Names are display names.** A sender's name is the engine character's `givenName`, else the
   email-masked profile display name (`publicDisplayName`); a raw email never reaches chat.
+- **A removed member's open feed keeps receiving until it closes.** Like the game feed, membership is checked when `ringFeed` opens, not on every frame; a player removed mid-session stops getting chat on their next connect, and every `chat.*` call is refused at once.
 - **One server process.** Live delivery is an in-process emitter inside `ChatService`. If the
   server ever runs more than one instance, live chat needs a shared channel (Postgres
   `LISTEN/NOTIFY`); history and unread counts are already database reads.

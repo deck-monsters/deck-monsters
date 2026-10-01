@@ -2293,7 +2293,32 @@ export function createRouter(roomManager: RoomManager, chat: ChatService = new C
 					},
 				},
 			};
-			yield tracked(handshakeId, handshakeEvent);
+				// Room chat rides this connection but is not a game event (roadmap 41): it has its
+				// own queue, is delivered live only (a client recovers missed chat from
+				// `chat.history`), and is yielded as an UNTRACKED frame. A tracked frame would make
+				// tRPC remember its id as `lastEventId` and send it back on reconnect, moving the
+				// game cursor onto an id the event log has never heard of. The service delivers only
+				// what this user may see (room messages, and DMs they sent or received). It attaches
+				// BEFORE the handshake is yielded: the client fetches `chat.history` once it sees the
+				// handshake, so anything sent after that fetch must already be buffered here.
+				const queue: GameEvent[] = [];
+				let resolve: (() => void) | null = null;
+				const chatQueue: ChatMessage[] = [];
+				const unsubscribeChat = chat.subscribe(input.roomId, ctx.userId, (message) => {
+					chatQueue.push(message);
+					resolve?.();
+					resolve = null;
+				});
+
+				// A client that disconnects while the handshake is in flight returns the generator at
+				// the yield, before the main try/finally exists, so release the subscription here.
+				let feedOpen = false;
+				try {
+					yield tracked(handshakeId, handshakeEvent);
+					feedOpen = true;
+				} finally {
+					if (!feedOpen) unsubscribeChat();
+				}
 
 				// Attach the live subscriber BEFORE computing the replay. Events
 				// published while the replay is being assembled (the DB fallback is
@@ -2301,9 +2326,6 @@ export function createRouter(roomManager: RoomManager, chat: ChatService = new C
 				// dropped from the buffer via `replayedIds` when the live loop drains.
 				// Subscribing after the replay snapshot left a window where those
 				// in-between events were simply lost.
-				const queue: GameEvent[] = [];
-				let resolve: (() => void) | null = null;
-
 				const unsubscribe = eventBus.subscribe(
 					`trpc:${ctx.userId}:${Date.now()}`,
 					{
@@ -2315,19 +2337,6 @@ export function createRouter(roomManager: RoomManager, chat: ChatService = new C
 						},
 					}
 				);
-
-				// Room chat rides this connection but is not a game event (roadmap 41): it has its
-				// own queue, is delivered live only (a client recovers missed chat from
-				// `chat.history`), and is yielded as an UNTRACKED frame. A tracked frame would make
-				// tRPC remember its id as `lastEventId` and send it back on reconnect, moving the
-				// game cursor onto an id the event log has never heard of. The service delivers only
-				// what this user may see (room messages, and DMs they sent or received).
-				const chatQueue: ChatMessage[] = [];
-				const unsubscribeChat = chat.subscribe(input.roomId, ctx.userId, (message) => {
-					chatQueue.push(message);
-					resolve?.();
-					resolve = null;
-				});
 
 				// Ids yielded during replay — bounded by the replay caps below, so this
 				// set stays small for the life of the subscription.

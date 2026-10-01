@@ -48,6 +48,25 @@ describe('ChatService.send validation', () => {
 		expect(s.stored[0]?.['text']).to.equal('hi there');
 	});
 
+	it('turns line breaks and tabs into single spaces and collapses runs', async () => {
+		const s = service();
+		expect((await s.send({ roomId: ROOM, senderUserId: ADA, text: 'hello\nworld' })).text).to.equal('hello world');
+		expect((await s.send({ roomId: ROOM, senderUserId: BEN, text: 'a\r\n\r\nb\t\tc   d\re' })).text).to.equal('a b c d e');
+	});
+
+	it('treats whitespace and zero-width characters alone as empty', async () => {
+		const s = service();
+		expect((await code(s.send({ roomId: ROOM, senderUserId: ADA, text: ' \u200B\u200D\u2060\uFEFF \n' }))).split('|')[0]).to.equal('empty');
+	});
+
+	it('counts the 500 limit in code points, and reports that count', async () => {
+		const s = service();
+		await s.send({ roomId: ROOM, senderUserId: ADA, text: '\u{1F600}'.repeat(500) });
+		expect(await code(s.send({ roomId: ROOM, senderUserId: BEN, text: '\u{1F600}'.repeat(501) }))).to.equal(
+			'too_long|Messages can be up to 500 characters. That one has 501.'
+		);
+	});
+
 	it('refuses a DM to yourself and to a non-member', async () => {
 		const s = service();
 		expect(await code(s.send({ roomId: ROOM, senderUserId: ADA, text: 'hi', toUserId: ADA }))).to.equal(

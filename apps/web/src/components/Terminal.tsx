@@ -4,6 +4,7 @@ import PaneDivider from './PaneDivider.js';
 import PaneSelector from './PaneSelector.js';
 import CatchUpBanner from './CatchUpBanner.js';
 import { RingFeedProvider } from '../hooks/useRingFeed.js';
+import { ChatProvider } from '../hooks/useChat.js';
 import { useCommandInsert } from '../lib/command-insert-context.js';
 import { DEFAULT_SLOTS, SURFACES, isSurfaceId, type SurfaceId } from './surfaces.js';
 
@@ -268,6 +269,8 @@ export default function Terminal({ roomId }: TerminalProps) {
       )}
 
       <RingFeedProvider roomId={roomId}>
+      {/* One chat state for the room's Console and Chat tab (roadmap 41). */}
+      <ChatProvider roomId={roomId}>
         {/*
           Rendered with slot 0's surface first, slot 1's second, and any other
           ever-mounted-but-currently-hidden surface last — deliberately NOT the fixed
@@ -349,6 +352,7 @@ export default function Terminal({ roomId }: TerminalProps) {
         })}
 
         {isSideBySide && <PaneDivider onResize={handleResize} containerRef={containerRef} />}
+      </ChatProvider>
       </RingFeedProvider>
     </div>
   );

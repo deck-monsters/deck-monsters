@@ -145,9 +145,10 @@ the user may see as an **untracked** frame, `{ type: 'chat', id: 'chat-<messageI
   the event log has never heard of. The web `useRingFeed` handles chat frames first and
   returns: they skip the room guard, the cursor and the pane fan-out, and reach only
   `subscribeChat` listeners (`useChat`).
+- **The chat subscription attaches before the handshake is yielded**, and frames buffer until it is out, so a message sent after the client's history fetch is never lost between fetch and subscription.
 - **It is not replayed.** Chat frames are not in the bus buffer or `room_events`. After every
   handshake `useChat` calls `chat.history` with `afterId` set to the newest id it holds and
-  merges by id, so a missed message is recovered and a duplicate is harmless.
+  merges by id (paging until a short page, so a long disconnect leaves no gap), so a missed message is recovered and a duplicate is harmless.
 - **Visibility is the service's job.** `ChatService.subscribe(roomId, userId, listener)`
   delivers only room messages and DMs the user sent or received. See
   [`rooms-and-identity.md`](rooms-and-identity.md#chat).

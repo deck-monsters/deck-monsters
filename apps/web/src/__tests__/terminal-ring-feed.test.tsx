@@ -10,6 +10,12 @@ const subscriptionCalls: Array<{
   onError?: () => void;
 }> = [];
 
+// Chat has its own tests (useChat.test.tsx); here the provider is a passthrough so the
+// Terminal tests need no chat tRPC client or auth context.
+vi.mock('../hooks/useChat.js', () => ({
+  ChatProvider: ({ children }: { children: unknown }) => children,
+}));
+
 vi.mock('../hooks/useHandshake.js', () => ({
   useHandshake: () => ({
     handshakeStatus: { status: 'ok', buildVersion: 'dev', serverTime: 'now' },

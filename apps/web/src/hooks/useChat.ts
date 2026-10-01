@@ -1,16 +1,19 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { createContext, createElement, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import type { ChatMessage, ChatPlayer } from '@deck-monsters/server/types';
 import { useAuth } from '../lib/auth-context.js';
 import { trpc } from '../lib/trpc.js';
 import { useRingFeedContext, type ChatFeedItem } from './useRingFeed.js';
 
 /**
- * Room chat data for one room (roadmap 41, M1) — no UI. Reads and writes go through the
+ * Room chat data for one room (roadmap 41, M1) — no UI. State and effects live ONCE, in
+ * `ChatProvider`, mounted inside `RingFeedProvider` for the room; the Console and the Chat tab
+ * both call `useChat()` and share it. Two independent copies would double-fetch and disagree
+ * about unread. Reads and writes go through the
  * `chat.*` tRPC procedures; live messages arrive as chat frames on the room's single
  * `ringFeed` connection (see `ChatFeedItem` in `useRingFeed`). Chat frames are not replayed by
  * the server, so after every (re)connect this fetches whatever came after the newest id it has.
  *
- * Must be used inside `RingFeedProvider`.
+ * `ChatProvider` must be inside `RingFeedProvider`; `useChat()` must be inside `ChatProvider`.
  */
 
 export type UseChat = {
@@ -48,7 +51,24 @@ export function mergeChatMessages(current: ChatMessage[], incoming: ChatMessage[
 // rules; the refusal texts themselves come from the server.
 const SEND_FAILED_TEXT = "That message didn't send. Try again.";
 
-export function useChat(roomId: string): UseChat {
+/** Page size for history fetches; matches the server's default limit. */
+export const CHAT_PAGE_SIZE = 100;
+
+const ChatContext = createContext<UseChat | null>(null);
+
+/** The room's shared chat state. Throws outside a `ChatProvider` so a missing mount is loud. */
+export function useChat(): UseChat {
+  const ctx = useContext(ChatContext);
+  if (!ctx) throw new Error('useChat must be used within ChatProvider');
+  return ctx;
+}
+
+export function ChatProvider({ roomId, children }: { roomId: string; children: ReactNode }) {
+  const value = useChatState(roomId);
+  return createElement(ChatContext.Provider, { value }, children);
+}
+
+function useChatState(roomId: string): UseChat {
   const { user } = useAuth();
   const myUserId = user?.id;
   const { subscribeChat } = useRingFeedContext();
@@ -81,18 +101,26 @@ export function useChat(roomId: string): UseChat {
 
   const newestId = () => messagesRef.current.reduce((max, m) => Math.max(max, m.id), 0);
 
-  /** Fetch history (all of it on first load, or only what is newer than we have). */
+  /**
+   * Fetch history: the newest page on first load, or everything newer than `afterId`. A
+   * catch-up keeps paging until a page comes back short, so a long disconnect leaves no gap.
+   */
   const loadHistory = useCallback(
     async (afterId?: number) => {
       const forRoom = roomId;
       try {
-        const result = await client.chat.history.query(
-          afterId ? { roomId: forRoom, afterId } : { roomId: forRoom }
-        );
-        if (roomIdRef.current !== forRoom) return; // navigated away while it was loading
-        setMessages((current) => mergeChatMessages(current, result.messages));
-        setLastReadId((prev) => Math.max(prev, result.lastReadId));
-        setUnread(result.unread);
+        let cursor = afterId;
+        for (;;) {
+          const result = await client.chat.history.query(
+            cursor ? { roomId: forRoom, afterId: cursor, limit: CHAT_PAGE_SIZE } : { roomId: forRoom }
+          );
+          if (roomIdRef.current !== forRoom) return; // navigated away while it was loading
+          setMessages((current) => mergeChatMessages(current, result.messages));
+          setLastReadId((prev) => Math.max(prev, result.lastReadId));
+          setUnread(result.unread);
+          if (cursor === undefined || result.messages.length < CHAT_PAGE_SIZE) return;
+          cursor = result.messages.reduce((max, m) => Math.max(max, m.id), cursor);
+        }
       } catch {
         // Chat is secondary to the game: a failed fetch leaves what we have, and the next
         // handshake tries again.

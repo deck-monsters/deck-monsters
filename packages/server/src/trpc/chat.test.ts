@@ -117,6 +117,28 @@ describe('trpc ringFeed chat frames', () => {
 		}
 	});
 
+	it('buffers chat sent right after the handshake, before the client pulls again', async () => {
+		// The client fetches chat.history on seeing the handshake; a message sent after that
+		// fetch but before the feed is pulled again must not fall in a gap.
+		const { chat, as } = build();
+		const it = (await as(ADA).game.ringFeed({ roomId: ROOM_ID })) as AsyncGenerator<unknown>;
+		expect(asFrame((await it.next()).value).value.type).to.equal('handshake');
+		await chat.send({ roomId: ROOM_ID, senderUserId: BEN, text: 'in the gap' });
+		const next = asFrame((await it.next()).value);
+		expect(next.value.type).to.equal('chat');
+		expect(next.value.payload?.text).to.equal('in the gap');
+		await it.return?.(undefined);
+	});
+
+	it('releases the chat subscription when the client leaves during the handshake', async () => {
+		const { chat, as } = build();
+		const it = (await as(ADA).game.ringFeed({ roomId: ROOM_ID })) as AsyncGenerator<unknown>;
+		await it.next();
+		expect(chat.listenerCount(ROOM_ID)).to.equal(1);
+		await it.return?.(undefined);
+		expect(chat.listenerCount(ROOM_ID)).to.equal(0);
+	});
+
 	it('stops listening to chat when the feed closes', async () => {
 		const { chat, as } = build();
 		const it = (await as(ADA).game.ringFeed({ roomId: ROOM_ID })) as AsyncGenerator<unknown>;
