@@ -4,7 +4,8 @@ import PaneDivider from './PaneDivider.js';
 import PaneSelector from './PaneSelector.js';
 import CatchUpBanner from './CatchUpBanner.js';
 import { RingFeedProvider } from '../hooks/useRingFeed.js';
-import { ChatProvider } from '../hooks/useChat.js';
+import { ChatProvider, useChat } from '../hooks/useChat.js';
+import { unreadBadgeText } from '../utils/chat-rows.js';
 import { useCommandInsert } from '../lib/command-insert-context.js';
 import { DEFAULT_SLOTS, SURFACES, isSurfaceId, type SurfaceId } from './surfaces.js';
 
@@ -92,6 +93,44 @@ function orderedMountedSurfaces(
     (surface) => surface.id !== slots[0] && surface.id !== slots[1] && everMounted.has(surface.id)
   );
   return [...bySlot, ...rest];
+}
+
+/** The narrow-screen tab bar. A component of its own so it can read the room's chat state. */
+function TerminalTabs({
+  isVisible,
+  onSelect,
+}: {
+  isVisible: (surfaceId: SurfaceId) => boolean;
+  onSelect: (surfaceId: SurfaceId) => void;
+}) {
+  const { unread } = useChat();
+  return (
+    <div className="terminal-tabs" role="tablist" aria-label="Switch panes">
+      {SURFACES.map((surface) => {
+        const badgeText = unreadBadgeText(surface.badge?.({ chatUnread: unread }) ?? 0);
+        return (
+          <button
+            title={surface.description}
+            key={surface.id}
+            className={`terminal-tab${isVisible(surface.id) ? ' active' : ''}`}
+            role="tab"
+            aria-selected={isVisible(surface.id)}
+            aria-controls={`pane-${surface.id}`}
+            aria-label={badgeText ? `${surface.label}, ${badgeText} ${surface.badgeNoun ?? ''}`.trim() : undefined}
+            id={`tab-${surface.id}`}
+            onClick={() => onSelect(surface.id)}
+          >
+            {surface.label}
+            {badgeText && (
+              <span className="terminal-tab-badge" aria-hidden="true">
+                {badgeText}
+              </span>
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
 }
 
 export default function Terminal({ roomId }: TerminalProps) {
@@ -245,32 +284,17 @@ export default function Terminal({ roomId }: TerminalProps) {
       className="terminal-shell"
       data-layout={isSideBySide ? 'side-by-side' : 'tabbed'}
     >
-      {/* Tab bar — only visible on narrow screens; lists every surface, not just the two
-          remembered slots (§3.2). */}
       <CatchUpBanner roomId={roomId} />
 
-      {!isSideBySide && (
-        <div className="terminal-tabs" role="tablist" aria-label="Switch panes">
-          {SURFACES.map((surface) => (
-            <button
-              title={surface.description}
-              key={surface.id}
-              className={`terminal-tab${isVisible(surface.id) ? ' active' : ''}`}
-              role="tab"
-              aria-selected={isVisible(surface.id)}
-              aria-controls={`pane-${surface.id}`}
-              id={`tab-${surface.id}`}
-              onClick={() => handleTabSelect(surface.id)}
-            >
-              {surface.label}
-            </button>
-          ))}
-        </div>
-      )}
-
       <RingFeedProvider roomId={roomId}>
-      {/* One chat state for the room's Console and Chat tab (roadmap 41). */}
+      {/* One chat state for the room's Console, Chat tab and the tab bar's unread badge (roadmap 41). */}
       <ChatProvider roomId={roomId}>
+        {/* Tab bar — only visible on narrow screens; lists every surface, not just the two
+            remembered slots (§3.2). Inside the providers so the Chat tab can show unread. */}
+        {!isSideBySide && (
+          <TerminalTabs isVisible={isVisible} onSelect={handleTabSelect} />
+        )}
+
         {/*
           Rendered with slot 0's surface first, slot 1's second, and any other
           ever-mounted-but-currently-hidden surface last — deliberately NOT the fixed

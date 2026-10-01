@@ -1,6 +1,7 @@
 import { createElement, type ReactElement, type ReactNode } from 'react';
 import RingPane from './RingPane.js';
 import ConsolePane from './ConsolePane.js';
+import ChatPanel from './ChatPanel.js';
 import WorkshopPanel from './WorkshopPanel.js';
 import FightLogPanel from './FightLogPanel.js';
 import LeaderboardPanel from './LeaderboardPanel.js';
@@ -21,7 +22,7 @@ export { surfaceDescription };
  * (or a URL entered directly); adding a route must not turn ordinary surface selection
  * into navigation.
  */
-export type SurfaceId = 'ring' | 'console' | 'workshop' | 'fights' | 'leaderboard';
+export type SurfaceId = 'ring' | 'console' | 'chat' | 'workshop' | 'fights' | 'leaderboard';
 
 export interface SurfaceRenderProps {
   roomId: string;
@@ -50,6 +51,19 @@ export interface SurfaceDefinition {
    * `Terminal`.
    */
   render: (props: SurfaceRenderProps) => ReactElement;
+  /**
+   * Optional count shown as a small badge on the surface's tab (hidden at 0). The tab bar
+   * supplies the room-level state a badge can draw on; today that is the chat unread count.
+   * A badge also becomes part of the tab's accessible name (`Chat, 3 unread`).
+   */
+  badge?: (state: SurfaceBadgeState) => number;
+  /** Words for the badge's accessible name: `{label}, {n} {badgeNoun}`. */
+  badgeNoun?: string;
+}
+
+/** What a surface's `badge` function may read. */
+export interface SurfaceBadgeState {
+  chatUnread: number;
 }
 
 export const SURFACES: SurfaceDefinition[] = [
@@ -66,6 +80,15 @@ export const SURFACES: SurfaceDefinition[] = [
     description: surfaceDescription('console'),
     route: undefined,
     render: ({ roomId, isActive, headerActions }) => createElement(ConsolePane, { roomId, isActive, headerActions }),
+  },
+  {
+    id: 'chat',
+    label: 'Chat',
+    description: surfaceDescription('chat'),
+    route: (roomId) => `/room/${roomId}/chat`,
+    render: ({ roomId, isActive, headerActions }) => createElement(ChatPanel, { roomId, isActive, headerActions }),
+    badge: ({ chatUnread }) => chatUnread,
+    badgeNoun: 'unread',
   },
   {
     id: 'workshop',

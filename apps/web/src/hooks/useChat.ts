@@ -30,6 +30,12 @@ export type UseChat = {
    * request could not be made at all).
    */
   send: (text: string, toUserId?: string) => Promise<string | null>;
+  /**
+   * True once a history fetch has succeeded for this room. Until then `lastReadId` is 0 only
+   * because nothing has loaded, so the Chat tab waits for it before fixing the new-since
+   * marker (a live frame can arrive first).
+   */
+  loaded: boolean;
   /** The To picker list: every other member of the room. */
   members: ChatPlayer[];
 };
@@ -79,6 +85,7 @@ function useChatState(roomId: string): UseChat {
   const [unread, setUnread] = useState(0);
   const [lastReadId, setLastReadId] = useState(0);
   const [members, setMembers] = useState<ChatPlayer[]>([]);
+  const [loaded, setLoaded] = useState(false);
 
   const roomIdRef = useRef(roomId);
   roomIdRef.current = roomId;
@@ -97,6 +104,7 @@ function useChatState(roomId: string): UseChat {
     setUnread(0);
     setLastReadId(0);
     setMembers([]);
+    setLoaded(false);
   }
 
   const newestId = () => messagesRef.current.reduce((max, m) => Math.max(max, m.id), 0);
@@ -118,6 +126,7 @@ function useChatState(roomId: string): UseChat {
           setMessages((current) => mergeChatMessages(current, result.messages));
           setLastReadId((prev) => Math.max(prev, result.lastReadId));
           setUnread(result.unread);
+          setLoaded(true);
           if (cursor === undefined || result.messages.length < CHAT_PAGE_SIZE) return;
           cursor = result.messages.reduce((max, m) => Math.max(max, m.id), cursor);
         }
@@ -205,5 +214,5 @@ function useChatState(roomId: string): UseChat {
     [client, roomId]
   );
 
-  return { messages, unread, lastReadId, markRead, send, members };
+  return { messages, unread, lastReadId, loaded, markRead, send, members };
 }

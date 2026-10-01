@@ -14,6 +14,7 @@ const subscriptionCalls: Array<{
 // Terminal tests need no chat tRPC client or auth context.
 vi.mock('../hooks/useChat.js', () => ({
   ChatProvider: ({ children }: { children: unknown }) => children,
+  useChat: () => ({ unread: 0 }),
 }));
 
 vi.mock('../hooks/useHandshake.js', () => ({
