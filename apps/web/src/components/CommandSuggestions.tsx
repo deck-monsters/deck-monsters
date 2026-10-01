@@ -4,7 +4,7 @@ import type { AutocompleteSuggestion } from '../hooks/useCommandAutocomplete.js'
 interface CommandSuggestionsProps {
   suggestions: AutocompleteSuggestion[];
   activeIndex: number;
-  onSelect: (value: string) => void;
+  onSelect: (value: string, suggestion: AutocompleteSuggestion) => void;
   onDismiss: () => void;
 }
 
@@ -48,7 +48,7 @@ export default function CommandSuggestions({
     >
       {suggestions.map((s, idx) => (
         <li
-          key={s.label}
+          key={`${s.userId ?? ''}${s.label}`}
           role="option"
           aria-selected={idx === activeIndex}
           style={{
@@ -62,7 +62,7 @@ export default function CommandSuggestions({
           }}
           onMouseDown={(e) => {
             e.preventDefault(); // Don't lose focus from input
-            onSelect(s.insertValue);
+            onSelect(s.insertValue, s);
           }}
           onMouseEnter={() => {}}
         >

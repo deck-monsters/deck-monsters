@@ -1,4 +1,4 @@
-export type CommandCategory = 'monsters' | 'ring' | 'cards' | 'items' | 'shop' | 'character' | 'info';
+export type CommandCategory = 'monsters' | 'ring' | 'cards' | 'items' | 'shop' | 'character' | 'chat' | 'info';
 
 export interface CommandEntry {
 	command: string;
@@ -60,6 +60,10 @@ export const COMMAND_CATALOG: CommandEntry[] = [
 	{ command: 'look at character', description: 'View your character stats and info', category: 'character' },
 	{ command: 'leave team', description: 'Take yourself and all your monsters off any team (a Sorting Hat, always in the shop, puts you on one)', category: 'character' },
 
+	// Chat
+	{ command: 'msg [message]', description: 'Say something to everyone in the room. message and m work too', category: 'chat', example: 'msg nice hit, Fang!' },
+	{ command: 'dm [player] [message]', description: 'Send a message only that player can see', category: 'chat', example: 'dm Ada good luck tonight' },
+
 	// Info
 	{ command: 'help', description: 'Show this command reference', category: 'info' },
 	{ command: 'look at player handbook', description: 'Read the full player handbook', category: 'info' },
@@ -75,6 +79,7 @@ export const CATEGORY_LABELS: Record<CommandCategory, string> = {
 	items: 'Items',
 	shop: 'The Shop',
 	character: 'Your Character',
+	chat: 'Chat',
 	info: 'Reference',
 };
 
@@ -86,6 +91,7 @@ export function formatCommandList(): string {
 		items: [],
 		shop: [],
 		character: [],
+		chat: [],
 		info: [],
 	};
 

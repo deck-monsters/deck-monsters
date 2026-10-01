@@ -1,4 +1,5 @@
 import { createContext, createElement, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
+import type { RecipientCandidate } from '@deck-monsters/engine';
 import type { ChatMessage, ChatPlayer } from '@deck-monsters/server/types';
 import { useAuth } from '../lib/auth-context.js';
 import { trpc } from '../lib/trpc.js';
@@ -38,6 +39,19 @@ export type UseChat = {
   loaded: boolean;
   /** The To picker list: every other member of the room. */
   members: ChatPlayer[];
+  /**
+   * What a typed `dm` is matched against: the server's own candidate list (character names and
+   * account display names of current members, the caller included), so the Console's To:
+   * preview resolves exactly as the server will. Empty until it loads.
+   */
+  dmCandidates: RecipientCandidate[];
+  /**
+   * Be told about each message as it arrives live (a chat frame, or our own send), not about
+   * history. The Console shows these as chat lines and leaves the backlog to the Chat tab. A
+   * message can be announced twice (our own send, then its frame), so a listener dedupes by id.
+   * Returns the unsubscribe.
+   */
+  subscribeLive: (listener: (message: ChatMessage) => void) => () => void;
 };
 
 /** Merge by id, keep ascending order. Returns the same array when nothing was added. */
@@ -85,6 +99,7 @@ function useChatState(roomId: string): UseChat {
   const [unread, setUnread] = useState(0);
   const [lastReadId, setLastReadId] = useState(0);
   const [members, setMembers] = useState<ChatPlayer[]>([]);
+  const [dmCandidates, setDmCandidates] = useState<RecipientCandidate[]>([]);
   const [loaded, setLoaded] = useState(false);
 
   const roomIdRef = useRef(roomId);
@@ -104,8 +119,17 @@ function useChatState(roomId: string): UseChat {
     setUnread(0);
     setLastReadId(0);
     setMembers([]);
+    setDmCandidates([]);
     setLoaded(false);
   }
+
+  const liveListenersRef = useRef(new Set<(message: ChatMessage) => void>());
+  const subscribeLive = useCallback((listener: (message: ChatMessage) => void) => {
+    liveListenersRef.current.add(listener);
+    return () => {
+      liveListenersRef.current.delete(listener);
+    };
+  }, []);
 
   const newestId = () => messagesRef.current.reduce((max, m) => Math.max(max, m.id), 0);
 
@@ -147,6 +171,12 @@ function useChatState(roomId: string): UseChat {
         if (!cancelled) setMembers(list);
       })
       .catch(() => {});
+    void client.chat.dmNames
+      .query({ roomId })
+      .then((list) => {
+        if (!cancelled) setDmCandidates(list);
+      })
+      .catch(() => {});
     return () => {
       cancelled = true;
     };
@@ -164,6 +194,7 @@ function useChatState(roomId: string): UseChat {
         const { message } = item;
         if (message.roomId !== roomIdRef.current) return;
         const isNew = !messagesRef.current.some((m) => m.id === message.id);
+        for (const listener of liveListenersRef.current) listener(message);
         setMessages((current) => mergeChatMessages(current, [message]));
         if (isNew && message.senderUserId !== myUserIdRef.current && message.id > lastReadRef.current) {
           setUnread((n) => n + 1);
@@ -205,6 +236,7 @@ function useChatState(roomId: string): UseChat {
         );
         // Show our own line without waiting for the live frame; the frame dedupes by id.
         setMessages((current) => mergeChatMessages(current, [message]));
+        for (const listener of liveListenersRef.current) listener(message);
         return null;
       } catch (err) {
         const message = err instanceof Error ? err.message : '';
@@ -214,5 +246,5 @@ function useChatState(roomId: string): UseChat {
     [client, roomId]
   );
 
-  return { messages, unread, lastReadId, loaded, markRead, send, members };
+  return { messages, unread, lastReadId, loaded, markRead, send, members, dmCandidates, subscribeLive };
 }
