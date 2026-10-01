@@ -7,6 +7,7 @@ import { db, pool } from './db/index.js';
 import { createShutdown } from './shutdown.js';
 import { RoomManager } from './room-manager.js';
 import { createRouter } from './trpc/router.js';
+import { ChatService } from './chat/chat-service.js';
 import { createContext } from './trpc/context.js';
 import { registry } from './metrics/index.js';
 import { createLogger } from './logger.js';
@@ -60,7 +61,16 @@ async function start(): Promise<void> {
 		});
 	}, SWEEP_INTERVAL_MS).unref();
 
-	const router = createRouter(roomManager);
+	// One ChatService serves the tRPC router (send/history) and the retention sweep.
+	const chatService = new ChatService(db, roomManager);
+	const CHAT_SWEEP_INTERVAL_MS = 60 * 60 * 1000; // hourly
+	setInterval(() => {
+		chatService.sweep().catch((err: unknown) => {
+			fastify.log.error(err, 'chat sweep failed');
+		});
+	}, CHAT_SWEEP_INTERVAL_MS).unref();
+
+	const router = createRouter(roomManager, chatService);
 
 	await fastify.register(fastifyTRPCPlugin, {
 		prefix: '/trpc',

@@ -1,0 +1,181 @@
+import { useCallback, useEffect, useRef, useState } from 'react';
+import type { ChatMessage, ChatPlayer } from '@deck-monsters/server/types';
+import { useAuth } from '../lib/auth-context.js';
+import { trpc } from '../lib/trpc.js';
+import { useRingFeedContext, type ChatFeedItem } from './useRingFeed.js';
+
+/**
+ * Room chat data for one room (roadmap 41, M1) — no UI. Reads and writes go through the
+ * `chat.*` tRPC procedures; live messages arrive as chat frames on the room's single
+ * `ringFeed` connection (see `ChatFeedItem` in `useRingFeed`). Chat frames are not replayed by
+ * the server, so after every (re)connect this fetches whatever came after the newest id it has.
+ *
+ * Must be used inside `RingFeedProvider`.
+ */
+
+export type UseChat = {
+  /** Messages this player may see, ascending by id, deduped by id. */
+  messages: ChatMessage[];
+  /** Messages from others after `lastReadId`, as the server counts them plus live arrivals. */
+  unread: number;
+  lastReadId: number;
+  /** Move the read position forward to `id` (never back). */
+  markRead: (id: number) => void;
+  /**
+   * Send a room message, or a DM when `toUserId` is given. Resolves to `null` on success, or
+   * the refusal text to show the player (the server's own wording, or a generic line if the
+   * request could not be made at all).
+   */
+  send: (text: string, toUserId?: string) => Promise<string | null>;
+  /** The To picker list: every other member of the room. */
+  members: ChatPlayer[];
+};
+
+/** Merge by id, keep ascending order. Returns the same array when nothing was added. */
+export function mergeChatMessages(current: ChatMessage[], incoming: ChatMessage[]): ChatMessage[] {
+  if (incoming.length === 0) return current;
+  const known = new Set(current.map((m) => m.id));
+  const fresh = incoming.filter((m) => {
+    if (known.has(m.id)) return false;
+    known.add(m.id);
+    return true;
+  });
+  if (fresh.length === 0) return current;
+  return [...current, ...fresh].sort((a, b) => a.id - b.id);
+}
+
+// DRAFT(41): fallback when the request itself failed (offline, server error) rather than being
+// refused by the chat rules; the refusal texts themselves come from the server.
+const SEND_FAILED_TEXT = 'Could not send that message. Try again.';
+
+export function useChat(roomId: string): UseChat {
+  const { user } = useAuth();
+  const myUserId = user?.id;
+  const { subscribeChat } = useRingFeedContext();
+  const utils = trpc.useUtils();
+  const client = utils.client;
+
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [unread, setUnread] = useState(0);
+  const [lastReadId, setLastReadId] = useState(0);
+  const [members, setMembers] = useState<ChatPlayer[]>([]);
+
+  const roomIdRef = useRef(roomId);
+  roomIdRef.current = roomId;
+  const myUserIdRef = useRef(myUserId);
+  myUserIdRef.current = myUserId;
+  const messagesRef = useRef(messages);
+  messagesRef.current = messages;
+  const lastReadRef = useRef(lastReadId);
+  lastReadRef.current = lastReadId;
+
+  // Navigating to another room drops the previous room's chat before anything renders it.
+  const [stateRoomId, setStateRoomId] = useState(roomId);
+  if (stateRoomId !== roomId) {
+    setStateRoomId(roomId);
+    setMessages([]);
+    setUnread(0);
+    setLastReadId(0);
+    setMembers([]);
+  }
+
+  const newestId = () => messagesRef.current.reduce((max, m) => Math.max(max, m.id), 0);
+
+  /** Fetch history (all of it on first load, or only what is newer than we have). */
+  const loadHistory = useCallback(
+    async (afterId?: number) => {
+      const forRoom = roomId;
+      try {
+        const result = await client.chat.history.query(
+          afterId ? { roomId: forRoom, afterId } : { roomId: forRoom }
+        );
+        if (roomIdRef.current !== forRoom) return; // navigated away while it was loading
+        setMessages((current) => mergeChatMessages(current, result.messages));
+        setLastReadId((prev) => Math.max(prev, result.lastReadId));
+        setUnread(result.unread);
+      } catch {
+        // Chat is secondary to the game: a failed fetch leaves what we have, and the next
+        // handshake tries again.
+      }
+    },
+    [client, roomId]
+  );
+
+  useEffect(() => {
+    void loadHistory();
+    let cancelled = false;
+    void client.chat.members
+      .query({ roomId })
+      .then((list) => {
+        if (!cancelled) setMembers(list);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [client, roomId, loadHistory]);
+
+  useEffect(
+    () =>
+      subscribeChat((item: ChatFeedItem) => {
+        if (item.kind === 'connected') {
+          // First connect and every reconnect. The mount fetch above may still be in flight,
+          // in which case newestId() is 0 and this is a harmless duplicate of it.
+          void loadHistory(newestId() || undefined);
+          return;
+        }
+        const { message } = item;
+        if (message.roomId !== roomIdRef.current) return;
+        const isNew = !messagesRef.current.some((m) => m.id === message.id);
+        setMessages((current) => mergeChatMessages(current, [message]));
+        if (isNew && message.senderUserId !== myUserIdRef.current && message.id > lastReadRef.current) {
+          setUnread((n) => n + 1);
+        }
+      }),
+    [subscribeChat, loadHistory]
+  );
+
+  const markRead = useCallback(
+    (id: number) => {
+      if (id <= lastReadRef.current) return;
+      const forRoom = roomId;
+      setLastReadId(id);
+      lastReadRef.current = id;
+      // Optimistic: what is still unread is what we hold from others past `id`, never more
+      // than before. The server's answer replaces it.
+      setUnread((n) =>
+        Math.min(
+          n,
+          messagesRef.current.filter((m) => m.id > id && m.senderUserId !== myUserIdRef.current).length
+        )
+      );
+      client.chat.markRead
+        .mutate({ roomId: forRoom, lastReadId: id })
+        .then((result) => {
+          if (roomIdRef.current !== forRoom) return;
+          setUnread(result.unread);
+        })
+        .catch(() => {});
+    },
+    [client, roomId]
+  );
+
+  const send = useCallback(
+    async (text: string, toUserId?: string): Promise<string | null> => {
+      try {
+        const message = await client.chat.send.mutate(
+          toUserId ? { roomId, text, toUserId } : { roomId, text }
+        );
+        // Show our own line without waiting for the live frame; the frame dedupes by id.
+        setMessages((current) => mergeChatMessages(current, [message]));
+        return null;
+      } catch (err) {
+        const message = err instanceof Error ? err.message : '';
+        return message || SEND_FAILED_TEXT;
+      }
+    },
+    [client, roomId]
+  );
+
+  return { messages, unread, lastReadId, markRead, send, members };
+}

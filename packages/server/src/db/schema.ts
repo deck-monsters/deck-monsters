@@ -213,3 +213,43 @@ export const fightSummaries = pgTable(
 		index('fight_summaries_room_loser_monster_idx').on(t.roomId, t.loserMonsterId),
 	]
 );
+
+/**
+ * Room chat (roadmap 41). `recipientUserId` null = the whole room; otherwise a DM visible only
+ * to sender and recipient. No FK on the user columns on purpose: a message outlives a player
+ * who left, until the retention sweep. Server-only (RLS on, no browser grants).
+ */
+export const roomMessages = pgTable(
+	'room_messages',
+	{
+		id: bigserial('id', { mode: 'number' }).primaryKey(),
+		roomId: uuid('room_id')
+			.notNull()
+			.references(() => rooms.id, { onDelete: 'cascade' }),
+		senderUserId: uuid('sender_user_id').notNull(),
+		recipientUserId: uuid('recipient_user_id'),
+		text: text('text').notNull(),
+		fightNumber: integer('fight_number'),
+		source: text('source').notNull().default('web'),
+		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+	},
+	(t) => [
+		index('room_messages_room_id_id_idx').on(t.roomId, t.id),
+		index('room_messages_room_recipient_id_idx').on(t.roomId, t.recipientUserId, t.id),
+		index('room_messages_created_at_idx').on(t.createdAt),
+	]
+);
+
+/** Per player and room: the newest chat message id they have read. */
+export const roomMessageReads = pgTable(
+	'room_message_reads',
+	{
+		roomId: uuid('room_id')
+			.notNull()
+			.references(() => rooms.id, { onDelete: 'cascade' }),
+		userId: uuid('user_id').notNull(),
+		lastReadId: bigint('last_read_id', { mode: 'number' }).notNull().default(0),
+		updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+	},
+	(t) => [primaryKey({ columns: [t.roomId, t.userId] })]
+);

@@ -30,6 +30,8 @@ import type { RoomManager } from '../room-manager.js';
 import { ensureConnectorUser } from '../auth/connector-users.js';
 import { publicDisplayName } from '../public-display-name.js';
 import { createProfileRouter } from './profile.js';
+import { createChatRouter } from './chat.js';
+import { ChatService, type ChatMessage } from '../chat/chat-service.js';
 import {
 	commandsTotal,
 	wsConnectionsActive,
@@ -624,7 +626,7 @@ function createSilentChannel({
 	};
 }
 
-export function createRouter(roomManager: RoomManager) {
+export function createRouter(roomManager: RoomManager, chat: ChatService = new ChatService(db, roomManager)) {
 	const runSerializedMutation = async <T>(roomId: string, userId: string, fn: () => Promise<T>): Promise<T> => {
 		const flowKey = `${roomId}:${userId}`;
 		// Interactive console flows run in a per-user lane (see the `command`
@@ -2314,6 +2316,19 @@ export function createRouter(roomManager: RoomManager) {
 					}
 				);
 
+				// Room chat rides this connection but is not a game event (roadmap 41): it has its
+				// own queue, is delivered live only (a client recovers missed chat from
+				// `chat.history`), and is yielded as an UNTRACKED frame. A tracked frame would make
+				// tRPC remember its id as `lastEventId` and send it back on reconnect, moving the
+				// game cursor onto an id the event log has never heard of. The service delivers only
+				// what this user may see (room messages, and DMs they sent or received).
+				const chatQueue: ChatMessage[] = [];
+				const unsubscribeChat = chat.subscribe(input.roomId, ctx.userId, (message) => {
+					chatQueue.push(message);
+					resolve?.();
+					resolve = null;
+				});
+
 				// Ids yielded during replay — bounded by the replay caps below, so this
 				// set stays small for the life of the subscription.
 				const replayedIds = new Set<string>();
@@ -2417,6 +2432,11 @@ export function createRouter(roomManager: RoomManager) {
 							yield tracked(event.id, event);
 						}
 
+						while (chatQueue.length > 0) {
+							const message = chatQueue.shift()!;
+							yield { type: 'chat' as const, id: `chat-${message.id}`, payload: message };
+						}
+
 						// Wait for an event or 20 s, whichever comes first.
 						// The 20-second timeout sends a keep-alive heartbeat frame that
 						// prevents load-balancer idle timeouts (typically 30–60 s).
@@ -2438,6 +2458,12 @@ export function createRouter(roomManager: RoomManager) {
 							};
 
 							onAbort = () => finish();
+							// An event or chat message that landed since the drains above must not
+							// wait out the 20 s heartbeat.
+							if (queue.length > 0 || chatQueue.length > 0) {
+								finish();
+								return;
+							}
 							resolve = finish;
 							heartbeatTimer = setTimeout(finish, 20_000);
 							signal?.addEventListener('abort', onAbort, { once: true });
@@ -2445,7 +2471,7 @@ export function createRouter(roomManager: RoomManager) {
 
 						// If the queue is still empty after the wait it was a 20-s timeout —
 						// yield a private heartbeat frame so the TCP/WS connection stays alive.
-						if (queue.length === 0 && !signal?.aborted) {
+						if (queue.length === 0 && chatQueue.length === 0 && !signal?.aborted) {
 							const hbId = `${Date.now()}-heartbeat`;
 							yield tracked(hbId, {
 								id: hbId,
@@ -2461,6 +2487,7 @@ export function createRouter(roomManager: RoomManager) {
 					}
 				} finally {
 					unsubscribe();
+					unsubscribeChat();
 					wsConnectionsActive.dec({ room_id: input.roomId });
 					log.debug('ringFeed subscription closed', {
 						roomId: input.roomId,
@@ -2587,6 +2614,7 @@ export function createRouter(roomManager: RoomManager) {
 		admin: adminRouter,
 		auth: authRouter,
 		profile: createProfileRouter({ roomManager }),
+		chat: createChatRouter({ roomManager, chat }),
 		health: t.procedure.query(() => ({
 			status: 'ok',
 			timestamp: new Date().toISOString(),

@@ -678,4 +678,80 @@ describe('useRingFeed: a frame is proof the connection is alive', () => {
       vi.useRealTimers();
     }
   });
+
+  describe('chat frames', () => {
+    const chatMessage = (id: number, roomId = 'room-a') => ({
+      id,
+      roomId,
+      senderUserId: 'u2',
+      senderName: 'Ben',
+      recipientUserId: null,
+      recipientName: null,
+      text: `hello ${id}`,
+      fightNumber: null,
+      source: 'web',
+      createdAt: new Date().toISOString(),
+    });
+    const sendChat = (message: ReturnType<typeof chatMessage>) => {
+      // The server yields chat as an untracked frame: no `data`, just type/id/payload.
+      latestCall().onData?.({ type: 'chat', id: `chat-${message.id}`, payload: message } as never);
+    };
+
+    it('goes to chat listeners only: never to pane listeners, and never moves the game cursor', () => {
+      const { result } = renderHook(() => useRingFeed('room-a'));
+      const paneHandler = vi.fn();
+      const chatHandler = vi.fn();
+      act(() => {
+        result.current.subscribe(paneHandler);
+        result.current.subscribeChat(chatHandler);
+      });
+
+      act(() => {
+        latestCall().onData?.({ id: '5000-evt', data: makeEvent({ id: '5000-evt', type: 'ring.add' }) });
+      });
+      expect(latestCall().input.lastEventId).toBeUndefined();
+
+      const message = chatMessage(7);
+      act(() => sendChat(message));
+      // A chat id is not an event id; even a "newer" looking one must not become the cursor.
+      act(() => sendChat(chatMessage(99999999999999)));
+
+      expect(paneHandler).toHaveBeenCalledTimes(1);
+      expect(chatHandler).toHaveBeenNthCalledWith(1, { kind: 'message', message });
+      expect(chatHandler).toHaveBeenCalledTimes(2);
+
+      // Force a resume: the cursor it resumes from is still the last real event.
+      act(() => latestCall().onError?.());
+      expect(latestCall().input.lastEventId).toBe('5000-evt');
+    });
+
+    it('does not cursor-seed from chat when there are no game events yet', () => {
+      const { result } = renderHook(() => useRingFeed('room-a'));
+      act(() => result.current.subscribeChat(vi.fn()));
+      act(() => sendChat(chatMessage(1)));
+      act(() => latestCall().onError?.());
+      expect(latestCall().input.lastEventId).toBeUndefined();
+    });
+
+    it('drops a chat frame for another room and signals each handshake as connected', () => {
+      const { result } = renderHook(() => useRingFeed('room-a'));
+      const chatHandler = vi.fn();
+      act(() => {
+        result.current.subscribeChat(chatHandler);
+      });
+      act(() => sendChat(chatMessage(1, 'room-b')));
+      expect(chatHandler).not.toHaveBeenCalled();
+
+      act(() => {
+        latestCall().onData?.({ id: '1-handshake', data: makeEvent({ id: '1-handshake', type: 'handshake' }) });
+      });
+      expect(chatHandler).toHaveBeenCalledWith({ kind: 'connected' });
+    });
+
+    it('counts a chat frame as proof of life, like any frame', () => {
+      const { result } = renderHook(() => useRingFeedContextForTest(), { wrapper });
+      act(() => sendChat(chatMessage(1)));
+      expect(result.current.connected).toBe(true);
+    });
+  });
 });

@@ -42,6 +42,7 @@ function TestFeed({ children }: { children: ReactNode }) {
     connected: true,
     reconnecting: false,
     seedCursor: () => undefined,
+    subscribeChat: () => () => undefined,
     subscribe: () => () => undefined,
   };
   return <RingFeedContext.Provider value={value}>{children}</RingFeedContext.Provider>;

@@ -190,6 +190,29 @@ select m.room_id, m.given_name, m.level
   name is the card's static `cardType`. `room-state-views.test.ts` fails when a card in
   `allCards` has no row; until it exists, the view shows the raw class name.
 
+## Chat
+
+Room chat (roadmap 41) is not game state, but the room-scoping rules apply to it unchanged.
+It lives in the server (`packages/server/src/chat/chat-service.ts`), in its own tables
+`room_messages` and `room_message_reads`, never in the engine or on the room's event stream.
+
+- **Every query filters on `room_id`**, and every `chat.*` tRPC procedure calls
+  `assertMember` first. A member of room A cannot read, send to, or mark read in room B.
+- **A DM is visible only to its two players.** `recipient_user_id` null means the whole room.
+  History, unread counts and live delivery all apply the same rule (sender or recipient or no
+  recipient); the room's owner and other members never see a DM. A DM's recipient must be a
+  current member, and a sender cannot DM themselves.
+- **The browser never reads the tables.** RLS is on with no policies and no grants for `anon`
+  or `authenticated`, so a DM cannot leak through the Supabase API; everything goes through
+  tRPC.
+- **No foreign key on the user columns.** A message outlives a player who leaves, until the
+  retention sweep removes it. Deleting a room cascades to its messages and read positions.
+- **Names are display names.** A sender's name is the engine character's `givenName`, else the
+  email-masked profile display name (`publicDisplayName`); a raw email never reaches chat.
+- **One server process.** Live delivery is an in-process emitter inside `ChatService`. If the
+  server ever runs more than one instance, live chat needs a shared channel (Postgres
+  `LISTEN/NOTIFY`); history and unread counts are already database reads.
+
 ## Common failures
 
 | Symptom | Boundary that was missed |
