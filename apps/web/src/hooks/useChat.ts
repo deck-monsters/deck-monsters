@@ -44,9 +44,9 @@ export function mergeChatMessages(current: ChatMessage[], incoming: ChatMessage[
   return [...current, ...fresh].sort((a, b) => a.id - b.id);
 }
 
-// DRAFT(41): fallback when the request itself failed (offline, server error) rather than being
-// refused by the chat rules; the refusal texts themselves come from the server.
-const SEND_FAILED_TEXT = 'Could not send that message. Try again.';
+// When the request itself failed (offline, server error) rather than being refused by the chat
+// rules; the refusal texts themselves come from the server.
+const SEND_FAILED_TEXT = "That message didn't send. Try again.";
 
 export function useChat(roomId: string): UseChat {
   const { user } = useAuth();

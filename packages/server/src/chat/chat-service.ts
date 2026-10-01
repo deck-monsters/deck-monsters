@@ -50,8 +50,8 @@ export const CHAT_ERROR_TEXT: Record<ChatErrorCode, string> = {
 	no_such_player: 'Nobody in this room goes by that name. Use the name as it shows in Chat, like: dm Ada good luck.',
 	self: "That's you. Pick someone else.",
 	no_message: 'Add a message after the name, like: dm {name} good luck.',
-	// DRAFT(41): not in the plan's text; a non-member never reaches the Chat tab.
-	not_member: 'That player is not in this room.',
+	// The Chat tab's To list can be stale if a player leaves while it is open.
+	not_member: "That player isn't in this room any more.",
 };
 
 export class ChatError extends Error {
