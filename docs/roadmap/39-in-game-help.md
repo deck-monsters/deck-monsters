@@ -8,7 +8,7 @@ tags: [roadmap, onboarding, help, web, commands, wording]
 ---
 # 39 — In-game help for every control
 
-**Status:** In progress (2026-09-30). Tasks 1–3 and batch 2 done; batch 3 (tasks 4, 6, 7) is done; task 5, writing the rest of the text, continues as new surfaces are found; Cursor's live check of 1 and 2 passed on everything it could reach ([help check](../reference/help-check.md)); batch 2 from the walk is being built and reviewed.
+**Status:** In progress (2026-10-01). Tasks 1–3, batch 2, and batch 3 (tasks 4, 6, 7) are built. Live checks: [help check](../reference/help-check.md), [batch 2](../reference/help-check-batch2.md), [batch 3](../reference/help-check-batch3.md). The batch 3 check drafted no new lines. Task 5, writing the rest of the text, continues as new surfaces are found.
 
 ## Why
 
