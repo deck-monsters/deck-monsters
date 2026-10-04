@@ -24,6 +24,7 @@ function makeContestant() {
 			maxHp: 35,
 			ac: 7,
 			displayLevel: 'beginner',
+			pronouns: { he: 'she', him: 'her', his: 'her' },
 		},
 		lastMonsterPlayed: undefined as unknown,
 		team: undefined as string | undefined,
@@ -45,6 +46,15 @@ describe('./announcements/playerTurnBegin.ts', () => {
 		// formatCard wraps at 32 chars, so assert on fragments that survive wrapping.
 		expect(text).to.include('powerful');
 		expect(text).to.include('Fights: 0 · Won: 0');
+	});
+
+	it('says the card is played for the player, with the monster\'s pronoun', () => {
+		const { eb, published } = capture();
+		announceTurnBegin(eb as never, 'Ring', {}, { contestant: makeContestant() });
+
+		expect(published[0]!.text).to.include(
+			"*It's Santi Brainer's turn. Santi Brainer plays the next card in her deck.*",
+		);
 	});
 
 	it("names a boss's monster, not The Editor, on a boss's turn", () => {

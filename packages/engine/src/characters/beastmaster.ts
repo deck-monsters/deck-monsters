@@ -11,7 +11,7 @@ import transferItems from '../items/helpers/transfer.js';
 import useItems from '../items/helpers/use.js';
 import { getItemKey } from '../items/helpers/counts.js';
 import { matchesCardLookupName } from '../cards/helpers/matches-lookup-name.js';
-import { formatRelative } from '../helpers/time.js';
+import { reviveAnnouncement } from './helpers/revive-message.js';
 import { eachSeries } from '../helpers/promise.js';
 import { equipResultMessage } from './helpers/equip-message.js';
 import { MAX_PRESETS } from '../constants/card-management.js';
@@ -1323,13 +1323,9 @@ class Beastmaster extends BaseCharacter {
 			})
 			.then((monster: BaseMonster) => {
 				const timeToRevive = (monster as any).respawn();
-				const reviveStatement = (monster as any).respawnTimeoutLength
-					? formatRelative(timeToRevive, (monster as any).respawnTimeoutBegan)
-					: 'instantly';
-
-			return (channel({
-				announce: `${monster.givenName} has begun to revive. ${capitalize(monster.pronouns.he)} ${monster.pronouns.is ?? 'is'} a ${(monster as any).displayLevel} monster, and therefore will be revived ${reviveStatement}.`,
-			}) as Promise<unknown>).then(() => monster);
+				return (channel({
+					announce: reviveAnnouncement(monster as any, timeToRevive),
+				}) as Promise<unknown>).then(() => monster);
 			});
 	}
 }

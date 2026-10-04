@@ -2,8 +2,11 @@ import { monsterCard, monsterTurnLine } from '../helpers/card.js';
 import { isRivalTeam } from '../ring/ring-events.js';
 import type { RoomEventBus } from '../events/index.js';
 
-/** "Pip's", but "Protector Of Creatures'": a name ending in s takes a bare apostrophe (Cursor's live check, roadmap 39). */
-export const possessive = (name: string): string => (/s$/i.test(name) ? `${name}'` : `${name}'s`);
+import { possessive } from '../helpers/possessive.js';
+
+// Kept exported from here for existing importers; it lives in helpers so `monsters/base.ts`
+// can use it without importing an announcement.
+export { possessive };
 
 /**
  * Announces whose turn it is.
@@ -33,7 +36,7 @@ export function announceTurnBegin(
 	eb.publish({
 		type: 'announce',
 		scope: 'public',
-		text: `*It's ${possessive(turnName)} turn.*\n\n${body}`,
+		text: `*It's ${possessive(turnName)} turn. ${turnName} plays the next card in ${monster.pronouns?.his ?? 'their'} deck.*\n\n${body}`,
 		payload: { contestant },
 	});
 

@@ -51,7 +51,8 @@ describe('announceContestant', () => {
 		// `Incredible Swan` is a randomly generated owner, not a player — naming it told
 		// the room someone had sent the boss in when nobody had.
 		expect(published[0]!.text).to.not.include('Incredible Swan');
-		expect(published[0]!.text).to.include(`at the behest of ${RING_PATRON}.`);
+		expect(published[0]!.text).to.include(`enters the ring, sent by the house (${RING_PATRON}).`);
+		expect(published[0]!.text).to.not.include('behest');
 	});
 
 	it('is commanded rather than called, so the two lines cannot be confused', () => {

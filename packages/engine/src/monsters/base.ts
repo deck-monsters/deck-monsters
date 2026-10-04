@@ -6,6 +6,7 @@ import BaseCreature, {
 } from '../creatures/base.js';
 import { actionCard, monsterCard } from '../helpers/card.js';
 import { signedNumber } from '../helpers/signed-number.js';
+import { possessive } from '../helpers/possessive.js';
 import { getStrategyDescription } from '../helpers/targeting-strategies.js';
 
 // Lazy-load cards helpers to avoid circular dependency issues
@@ -110,7 +111,7 @@ class BaseMonster extends BaseCreature {
 
 		const strategyLine = !this.targetingStrategy
 			? ''
-			: `\nStrategy: ${getStrategyDescription(this.targetingStrategy)}`;
+			: `\n${possessive(this.givenName)} orders: ${getStrategyDescription(this.targetingStrategy)}`;
 
 		return `${super.stats}
 

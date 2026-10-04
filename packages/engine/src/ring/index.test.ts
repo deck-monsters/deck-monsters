@@ -2384,7 +2384,7 @@ describe('ring/index.ts', () => {
 							record('fight-banner', event.timestamp);
 						} else if (event.type === 'announce' && /round \d+, turn \d+/.test(text)) {
 							record('startTurn', event.timestamp);
-						} else if (event.type === 'announce' && /'s turn\.\*/.test(text)) {
+						} else if (event.type === 'announce' && /'s? turn\. .* plays the next card in /.test(text)) {
 							record('playerTurnBegin', event.timestamp);
 						}
 					},

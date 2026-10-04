@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useSyncExternalStore } from 'react';
 import { useAuth } from '../lib/auth-context.js';
 import { trpc } from '../lib/trpc.js';
+import { FIGHT_ON_RING_POLL_MS, QUIET_RING_POLL_MS } from './useFightOnRing.js';
 
 /**
  * The getting-started guide's one source of truth. The Console and the Workshop both read
@@ -188,12 +189,22 @@ export function resetGuidedStartForTests(): void {
 
 type InventoryMonster = Partial<GuidedMonster> & { name: string };
 
-export function useGuidedStart(roomId: string | undefined): GuidedStep & { dismiss: () => void } {
+export function useGuidedStart(roomId: string | undefined): GuidedStep & { fightComing: boolean; dismiss: () => void } {
 	const { user } = useAuth();
 	const userId = user?.id;
 	useSyncExternalStore(subscribe, () => version, () => version);
 
 	const inventory = trpc.game.myInventory.useQuery({ roomId: roomId ?? '' }, { enabled: !!roomId, staleTime: 30_000 });
+	// Same room-scoped query, cache entry and cadence as `useFightOnRing`/RingPane. It only
+	// decides whether the `waiting` step still suggests summoning a boss.
+	const ringState = trpc.game.ringState.useQuery(
+		{ roomId: roomId ?? '' },
+		{
+			enabled: !!roomId,
+			refetchInterval: (query: { state: { data?: { inEncounter?: boolean } } }) =>
+				query.state.data?.inEncounter ? FIGHT_ON_RING_POLL_MS : QUIET_RING_POLL_MS,
+		},
+	);
 	const history = trpc.game.consoleHistory.useQuery({ roomId: roomId ?? '' }, { enabled: !!roomId });
 
 	const monsters = useMemo<GuidedMonster[] | undefined>(() => {
@@ -254,5 +265,9 @@ export function useGuidedStart(roomId: string | undefined): GuidedStep & { dismi
 	}, [loaded, isComplete, decided, fought, baseline, userId, roomId, monsters, hasOutcomeHistory, phase]);
 
 	const dismiss = useCallback(() => complete(userId, roomId), [userId, roomId]);
-	return { ...step, dismiss };
+	// The player's own monster is `waiting` in the ring, so a second contestant (a player's
+	// monster or a boss) means a fight is counting down or already on.
+	const ringData = ringState.data as { inEncounter?: boolean; contestants?: unknown[] } | undefined;
+	const fightComing = ringData?.inEncounter === true || (ringData?.contestants?.length ?? 0) > 1;
+	return { ...step, fightComing, dismiss };
 }

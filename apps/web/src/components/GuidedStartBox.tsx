@@ -13,6 +13,8 @@ export interface GuidedStartBoxProps {
 	name: string;
 	slots: number;
 	dismiss: () => void;
+	/** Another monster or a boss is in the ring with the player's: a fight is counting down or on. */
+	fightComing?: boolean;
 	/** Console only: runs the chip's command. */
 	onRun?: (command: string) => void;
 }
@@ -26,7 +28,7 @@ interface Copy {
 const bossLimit: number = BOSS_SUMMON_LIMIT;
 const bosses = `${bossLimit} ${bossLimit === 1 ? 'boss' : 'bosses'}`;
 
-export function guidedCopy(surface: 'console' | 'workshop', phase: GuidedPhase, name: string, slots: number): Copy | null {
+export function guidedCopy(surface: 'console' | 'workshop', phase: GuidedPhase, name: string, slots: number, fightComing = false): Copy | null {
 	const console_ = surface === 'console';
 	switch (phase) {
 		case 'spawn':
@@ -45,6 +47,14 @@ export function guidedCopy(surface: 'console' | 'workshop', phase: GuidedPhase, 
 				? { text: `${name}'s deck is full. Send ${name} to the ring.`, chip: `send ${name} to the ring` }
 				: { text: `${name}'s deck is full. Press Send to ring.` };
 		case 'waiting':
+			/*
+			 * New-player walk 2 (#3): the guide kept saying "Nobody else here? Summon a boss"
+			 * while a boss was standing in the ring. Once anything shares the ring the advice
+			 * is to watch, not to summon, so the chip and the summons hint go.
+			 */
+			if (fightComing) {
+				return { text: `${name} is in the ring. Watch The Ring: a fight starts when the countdown ends.` };
+			}
 			return console_
 				? {
 					text: `${name} is in the ring. A fight starts when a second monster joins. Nobody else here? Summon a boss.`,
@@ -65,8 +75,8 @@ export function guidedCopy(surface: 'console' | 'workshop', phase: GuidedPhase, 
 	}
 }
 
-export default function GuidedStartBox({ surface, phase, name, slots, dismiss, onRun }: GuidedStartBoxProps) {
-	const copy = guidedCopy(surface, phase, name, slots);
+export default function GuidedStartBox({ surface, phase, name, slots, dismiss, fightComing, onRun }: GuidedStartBoxProps) {
+	const copy = guidedCopy(surface, phase, name, slots, fightComing);
 	if (!copy) return null;
 	return (
 		<section className="ftux-guide" aria-label="Getting started guide">
