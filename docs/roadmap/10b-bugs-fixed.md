@@ -2306,7 +2306,7 @@ drops to 2-up in a very narrow pane.
 
 ---
 
-### 122. Nothing said a player had a second monster on a phone — FIXED
+### 122. Nothing said a player had a second monster on a phone — FIXED (superseded by #215)
 
 **Root cause**: below 900px `.workshop-monster-row` becomes a scroll-snapped carousel, and
 the only indication that more monsters existed was the ~44px sliver of the next panel
@@ -5044,6 +5044,96 @@ such a name.
 **Fix**: `chooseName` (`helpers/names.ts`) keeps only the word before a parenthesis, and
 draws again (at most 25 times) when a name is empty or contains `null` or `undefined`. A
 test draws 300 names of every type and gender and finds none dirty.
+
+**Status**: Fixed.
+
+### 215. "Moved 1 cards", and a second monster hidden on a phone — FIXED
+
+Found by Cursor's new-player walk ([walk 2](../reference/new-player-walk-2.md)), pass 43 I1.
+
+- **"Moved 1 cards."** The Workshop's move-many summary in `server/src/trpc/router.ts` had a
+  literal `cards`, and the web client's own toast in `WorkshopPanel.tsx` had the same literal.
+  The single-card path printed `Moved 2 Hit` with no plural. Fixed with `movedSummary`
+  (`server/src/trpc/move-summary.ts`) and `movedToMessage` (`web/src/utils/moved-message.ts`),
+  each tested for one and for many.
+- **A second monster off the right edge at 390.** The fix for #122 kept the phone carousel
+  (a scroll-snapped row) and added dots to show it. A new player still read the dots as
+  decoration and never found the second monster. The carousel is gone: `.workshop-monster-row`
+  is always the auto-fit grid, one column on a phone and side by side on a desktop, so every
+  monster is on the page. This supersedes #122's dots.
+- **Leaders and the header at 390.** Leaders' columns were in a scroll box with nothing to say
+  it scrolled; a right-edge fade now shows there is more. A long room name wrapped to three
+  lines in the fixed-height header, because the flex child had no `min-width: 0`; it now ends
+  in an ellipsis, and the brand and settings links don't shrink.
+
+**Status**: Fixed.
+
+### 216. The guide said "Summon a boss" beside a standing boss, and the header counted down to one — FIXED
+
+Found by Cursor's new-player walk ([walk 2](../reference/new-player-walk-2.md), #3 and #8), pass 43 I2.
+
+- **The guide.** The Console guide's "waiting" step only knew the player's monster was in the
+  ring. It never looked at who else was there, so it kept saying `Nobody else here? Summon a
+  boss.` while a boss stood beside it and the fight counted down. `useGuidedStart` now reads
+  the room's `ring.state` (only during that step) and says `Watch The Ring: a fight starts when
+  the countdown ends.`, or `{name} is fighting. Watch The Ring.` once the fight is on.
+- **The header.** The `boss in ~…` badge looked only at `nextBossSpawnAt`, so it counted down
+  to a boss while one was already in the ring. It now hides while the roster has a boss.
+- **The boss's record.** `BaseCreature.rankings` printed `Fights: 129 · Won: 103` for bosses,
+  which are rebuilt from shared templates, so a first opponent looked like a veteran. Bosses
+  now leave the record out.
+
+The same task reworded what a new player misread: the turn line, the revive line (1 HP, heals
+while resting), the boss arrival (`sent by the house`), and the strategy label (`{name}'s
+orders:`).
+
+**Status**: Fixed.
+
+### 217. A question that was over still took the next line — FIXED
+
+Found by Cursor's new-player walk ([walk 2](../reference/new-player-walk-2.md), #9), pass 43
+I4. On a phone, after an equip question timed out, `help` came back as `! Prompt is no longer
+active` and did nothing; only the next command ran. Old questions kept live-looking buttons.
+
+Root cause, reproduced in `consolePane-prompt-finished.test.tsx`:
+
+1. When a question's timeout or cancel event was missed (a reconnect), the Console waited for
+   two empty `pendingPrompt` polls, 3 s apart, before letting go. For 3–6 s the next line went
+   to the dead question.
+2. A new question never retired an older one, so its buttons stayed clickable.
+3. An answer rejected as stale cleared the typed text and left the question marked answered.
+
+Fix: an empty poll that started after the question arrived clears it at once; a stale
+rejection clears it only when the follow-up poll succeeded, and puts the typed text back
+(never sent on its own); a new question tombstones older ones; the active-question ref is
+written synchronously. The review caught two regressions in the first version, now tested: a
+network failure that read as "nothing pending" buried a live question for good, and a time
+window measured from when a poll *landed* rather than when it *started* reopened #142's
+race. A superseded question shows the existing "Action cancelled." tombstone, even when it
+had timed out. After the PR opened, Codex found that a question cleared by a poll was also
+marked resolved for good, so if the clear was wrong (a question arriving in the moment
+between a poll leaving and its start time being read) the player couldn't answer until the
+server's timeout. A poll-cleared question now comes back when a later poll lists it. See [events, prompts, and replay](../architecture/events-prompts-and-replay.md#prompts).
+
+**Status**: Fixed. Needs a live check on a phone.
+
+### 218. Tapping a fight showed nothing, and its play-by-play lost the opening lines — FIXED
+
+Found by Cursor's new-player walk ([walk 2](../reference/new-player-walk-2.md), Fights row) and
+its review, pass 43 I5.
+
+- **A tap that looked dead.** `FightLogPanel` drew the detail only when `detail.data` existed,
+  so loading, a failed load and a fight with no saved events all drew nothing. Each now has a
+  line (`Loading the play-by-play…`, a retry, `Nothing was saved for this fight.`). The server
+  can return no events for a fight whose begin it never saw (a restart mid-fight leaves a
+  one-millisecond window), so the empty state is real, not just defensive.
+- **The opening lines were cut.** `fight-summary-writer`'s `onRingFight` skipped only
+  `fightConcludes`, so `announceFight`'s later `ring.fight` (no `eventName`, sent after the
+  opening narration) moved `startedAt` forward, and the play-by-play, which loads events by
+  time window, began after the opening. Only `fightBegins` sets the start now; a newer begin
+  still replaces an unresolved one, so one fight's start can't leak into the next. The test
+  fails on the old writer.
+- The row's `Card: Soften` read as the winning card; it says `Card found: Soften`.
 
 **Status**: Fixed.
 

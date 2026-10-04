@@ -44,6 +44,8 @@ export default function AppShell({ children, roomName, roomId }: AppShellProps) 
         <Link
           to="/rooms"
           style={{
+            flexShrink: 0,
+            whiteSpace: 'nowrap',
             color: 'var(--color-fg-bright)',
             textDecoration: 'none',
             fontWeight: 700,
@@ -60,24 +62,27 @@ export default function AppShell({ children, roomName, roomId }: AppShellProps) 
             {roomId ? (
               <Link
                 to={`/room/${roomId}`}
+                className="app-shell-room-name"
                 style={{
                   color: 'var(--color-fg)',
                   fontSize: '0.9rem',
                   textDecoration: 'none',
                   borderBottom: '1px solid transparent',
                 }}
-                title="Back to The Ring and Console"
+                title={`${roomName}: back to The Ring and Console`}
                 aria-label={`Back to ${roomName}: The Ring and Console`}
               >
                 {roomName}
               </Link>
             ) : (
-              <span style={{ color: 'var(--color-fg)', fontSize: '0.9rem' }}>{roomName}</span>
+              <span className="app-shell-room-name" title={roomName} style={{ color: 'var(--color-fg)', fontSize: '0.9rem' }}>{roomName}</span>
             )}
             {roomId && (
               <Link
                 to={`/room/${roomId}/settings`}
                 style={{
+                  flexShrink: 0,
+                  whiteSpace: 'nowrap',
                   color: 'var(--color-fg-dim)',
                   textDecoration: 'none',
                   fontSize: '0.8rem',

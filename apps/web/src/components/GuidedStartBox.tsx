@@ -13,6 +13,10 @@ export interface GuidedStartBoxProps {
 	name: string;
 	slots: number;
 	dismiss: () => void;
+	/** Another monster or a boss is in the ring with the player's: a fight is counting down or on. */
+	fightComing?: boolean;
+	/** A fight is running now, so there is no countdown to wait for. */
+	fightOn?: boolean;
 	/** Console only: runs the chip's command. */
 	onRun?: (command: string) => void;
 }
@@ -26,7 +30,7 @@ interface Copy {
 const bossLimit: number = BOSS_SUMMON_LIMIT;
 const bosses = `${bossLimit} ${bossLimit === 1 ? 'boss' : 'bosses'}`;
 
-export function guidedCopy(surface: 'console' | 'workshop', phase: GuidedPhase, name: string, slots: number): Copy | null {
+export function guidedCopy(surface: 'console' | 'workshop', phase: GuidedPhase, name: string, slots: number, fightComing = false, fightOn = false): Copy | null {
 	const console_ = surface === 'console';
 	switch (phase) {
 		case 'spawn':
@@ -38,13 +42,22 @@ export function guidedCopy(surface: 'console' | 'workshop', phase: GuidedPhase, 
 			};
 		case 'equip':
 			return console_
-				? { text: `Give ${name} a full deck of ${slots} cards.`, chip: `equip ${name}`, hint: 'Or use the Workshop: tap an empty slot to add cards.' }
-				: { text: `Give ${name} a full deck: tap an empty slot to add cards until all ${slots} are filled.` };
+				? { text: `Give ${name} a full deck of ${slots} cards.`, chip: `equip ${name}`, hint: 'Or use the Workshop: tap a card in Your cards, then an empty slot.' }
+				: { text: `Give ${name} a full deck: tap a card in Your cards, then tap one of ${name}'s empty slots. Fill all ${slots}.` };
 		case 'send':
 			return console_
 				? { text: `${name}'s deck is full. Send ${name} to the ring.`, chip: `send ${name} to the ring` }
 				: { text: `${name}'s deck is full. Press Send to ring.` };
 		case 'waiting':
+			/*
+			 * New-player walk 2 (#3): the guide kept saying "Nobody else here? Summon a boss"
+			 * while a boss was standing in the ring. Once anything shares the ring the advice
+			 * is to watch, not to summon, so the chip and the summons hint go.
+			 */
+			if (fightOn) return { text: `${name} is fighting. Watch The Ring.` };
+			if (fightComing) {
+				return { text: `${name} is in the ring. Watch The Ring: a fight starts when the countdown ends.` };
+			}
 			return console_
 				? {
 					text: `${name} is in the ring. A fight starts when a second monster joins. Nobody else here? Summon a boss.`,
@@ -59,14 +72,14 @@ export function guidedCopy(surface: 'console' | 'workshop', phase: GuidedPhase, 
 		case 'change_card':
 			return console_
 				? { text: `${name} has fought a fight. Now try changing a card. Type help unequip to see how, or use the Workshop.`, chip: 'help unequip' }
-				: { text: `${name} has fought a fight. Now try changing a card: tap one of ${name}'s cards, then tap an empty slot or your cards to move it.` };
+				: { text: `${name} has fought a fight. Now try changing a card: tap one of ${name}'s cards, then tap an empty slot, or Your cards, to move it there.` };
 		default:
 			return null;
 	}
 }
 
-export default function GuidedStartBox({ surface, phase, name, slots, dismiss, onRun }: GuidedStartBoxProps) {
-	const copy = guidedCopy(surface, phase, name, slots);
+export default function GuidedStartBox({ surface, phase, name, slots, dismiss, fightComing, fightOn, onRun }: GuidedStartBoxProps) {
+	const copy = guidedCopy(surface, phase, name, slots, fightComing, fightOn);
 	if (!copy) return null;
 	return (
 		<section className="ftux-guide" aria-label="Getting started guide">

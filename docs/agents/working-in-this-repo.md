@@ -113,7 +113,7 @@ their root cause; do not move the ledger itself.
 Player-facing strings are written in a consistent voice, and it carries meaning. The ring
 arrival lines are a deliberate minimal pair: a player's monster **answers the call of** its
 beastmaster (it came willingly; the beastmaster is a companion, not an owner), while a boss
-**enters the ring at the behest of** `👑 The Editor`, the house that commands
+**enters the ring, sent by the house (`👑 The Editor`)**, the house that commands
 (`packages/engine/src/announcements/contestant.ts`, `constants/lore.ts`). Departures pair
 with the same verbs. Keep new strings consistent with this: no invented owners for bosses,
 no possessive framing for players' monsters, singular *they* rather than *it* for creatures

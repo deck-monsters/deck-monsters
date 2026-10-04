@@ -141,6 +141,9 @@ Level: ${this.level || this.displayLevel} | XP: ${this.xp}`;
 	}
 
 	get rankings (): string {
+		// A boss's record (`Fights: 129`) read as a veteran opponent's, but it is the house's
+		// own tally, not a rival to measure up to (new-player walk 2 #8).
+		if (this.isBoss) return '';
 		return `Fights: ${this.battles.total} · Won: ${this.battles.wins}`;
 	}
 

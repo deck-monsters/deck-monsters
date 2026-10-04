@@ -234,4 +234,19 @@ describe('fight summary writer', () => {
 
 		expect(inserted[0]!.startedAt.getTime()).to.equal(begin.timestamp);
 	});
+
+	it('keeps the begin time when a later ring.fight announcement arrives (opening narration stays in the log)', async () => {
+		const { db, inserted } = makeDb();
+		const bus = new RoomEventBus(ROOM_ID);
+		const detach = attachFightSummaryWriter(bus, db as never, () => {}, { retryDelaysMs: [] });
+
+		const begin = publishFightBegins(bus);
+		await new Promise<void>((resolve) => setTimeout(resolve, 5));
+		bus.publish({ type: 'ring.fight', scope: 'public', text: 'Let the games begin!', payload: { contestants: [] } });
+		publishFightResolved(bus);
+		await settle(() => inserted.length === 1);
+		detach();
+
+		expect(inserted[0]!.startedAt.getTime()).to.equal(begin.timestamp);
+	});
 });

@@ -35,7 +35,7 @@ vi.mock('../hooks/useGuidedStart.js', () => ({
 
 import WorkshopPanel from '../components/WorkshopPanel.js';
 
-const equipCopy = 'Give Saffron a full deck: tap an empty slot to add cards until all 5 are filled.';
+const equipCopy = 'Give Saffron a full deck: tap a card in Your cards, then tap one of Saffron\'s empty slots. Fill all 5.';
 
 describe('WorkshopPanel: guided start box', () => {
   beforeEach(() => {

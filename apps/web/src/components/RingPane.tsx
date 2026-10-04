@@ -45,7 +45,7 @@ import {
 import RingRoster, { type RingContestantSnapshot } from './RingRoster.js';
 import FeedList from './FeedList.js';
 import RingItemsPanel from './RingItemsPanel.js';
-import { headerBadgesVisible, summonsLeftLabel } from './ringHeaderBadges.js';
+import { SUMMONS_BADGE_TITLE, headerBadgesVisible, summonsLeftLabel } from './ringHeaderBadges.js';
 
 type PixelSpritesProps = {
   contestants: RingContestantSnapshot[];
@@ -498,9 +498,8 @@ export default function RingPane({
     // An announced mega boss outranks the ordinary boss timer: it is the event people are
     // gathering for, and it only shows in its 30-minute announcement window.
     timerBadge = `MEGA BOSS in ${formatCountdown(timerState.nextMegaBossAt)}`;
-  } else if (timerState.nextBossSpawnAt) {
-    timerBadge = `boss in ~${formatCountdown(timerState.nextBossSpawnAt)}`;
   }
+  // The ordinary boss countdown is decided below, once the roster is known.
 
   // ring.state pushes are authoritative once they start arriving; the ringState
   // query only seeds the roster before the first one lands. An empty live push
@@ -510,6 +509,15 @@ export default function RingPane({
   const rosterContestants: RingContestantSnapshot[] = hasLiveTimerStateRef.current
     ? (timerState.contestants ?? [])
     : ((ringState as { contestants?: RingContestantSnapshot[] } | undefined)?.contestants ?? []);
+
+  /*
+   * New-player walk 2 (#8): the header counted down to the next boss while one was already
+   * standing in the ring, which read as "another is coming". The fight and mega-boss
+   * badges are about different events and stay.
+   */
+  if (!timerBadge && timerState.nextBossSpawnAt && !rosterContestants.some((c) => c.isBoss)) {
+    timerBadge = `boss in ~${formatCountdown(timerState.nextBossSpawnAt)}`;
+  }
 
   // Sprites in the feed in place of each known monster's emoji (roadmap 24). The Ring pane
   // is the one place that sees ring.state, so it records the room's monsters for every pane
@@ -549,7 +557,7 @@ export default function RingPane({
         {showHeaderBadges && summonBadge && (
           <span
             className="pane-header-timer"
-            title="Boss summons you have left today — type `summon a boss` to use one"
+            title={SUMMONS_BADGE_TITLE}
           >
             {summonBadge}
           </span>

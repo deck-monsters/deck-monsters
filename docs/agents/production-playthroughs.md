@@ -45,9 +45,9 @@ come after, and only to explain a finding.
 - Several controls with the same label can be in the DOM. Click the one
   whose box is on screen. A DOM `click()` on a hidden copy submits the
   wrong prompt.
-- The Workshop's monsters are a horizontal row (`.workshop-monster-row`).
-  At 390 the second monster is off to the right. Scroll that row. At 1440
-  both fit.
+- The Workshop's monsters are a wrapping grid (`.workshop-monster-row`).
+  At 390 they stack in one column, so scroll the page down to the second
+  monster. At 1440 they sit side by side.
 - Do not treat a fight as over because a card's flavour contains the word
   "victory". Wait for the win line or a monster at 0 HP.
 

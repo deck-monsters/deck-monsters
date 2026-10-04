@@ -57,7 +57,7 @@ monsters. System and development vocabulary such as `spawn`, `respawn`, `encount
 Why: the distinction tells the story of consent on the player side and authority on the
 house side.
 
-- Good: “A boss enters the ring at the behest of 👑 The Editor.”
+- Good: “A boss enters the ring, sent by the house (👑 The Editor).” ("At the behest of" read as a player's name in new-player walk 2.)
 - Bad: `summon [monster] from the ring`—summoning means bringing something in, not out.
 
 ### Care and sensitivity

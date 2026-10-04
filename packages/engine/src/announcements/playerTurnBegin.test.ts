@@ -24,6 +24,7 @@ function makeContestant() {
 			maxHp: 35,
 			ac: 7,
 			displayLevel: 'beginner',
+			pronouns: { he: 'she', him: 'her', his: 'her' },
 		},
 		lastMonsterPlayed: undefined as unknown,
 		team: undefined as string | undefined,
@@ -45,6 +46,36 @@ describe('./announcements/playerTurnBegin.ts', () => {
 		// formatCard wraps at 32 chars, so assert on fragments that survive wrapping.
 		expect(text).to.include('powerful');
 		expect(text).to.include('Fights: 0 · Won: 0');
+	});
+
+	it('says the card is played for the player, with the monster\'s pronoun', () => {
+		const { eb, published } = capture();
+		announceTurnBegin(eb as never, 'Ring', {}, { contestant: makeContestant() });
+
+		expect(published[0]!.text).to.include(
+			"*It's Santi Brainer's turn. Killer Killer plays the next card in her deck.*",
+		);
+	});
+
+	it('uses the monster\'s name and they-pronoun for a they/them monster, not the player\'s', () => {
+		const { eb, published } = capture();
+		const contestant = makeContestant();
+		contestant.monster.pronouns = { he: 'they', him: 'them', his: 'their' };
+		announceTurnBegin(eb as never, 'Ring', {}, { contestant });
+
+		expect(published[0]!.text).to.include('Killer Killer plays the next card in their deck.*');
+		expect(published[0]!.text).to.not.include('Santi Brainer plays the next card');
+	});
+
+	it('reads "Razeth\'s turn. Razeth plays ... his deck" for a boss', () => {
+		const { eb, published } = capture();
+		const contestant = { ...makeContestant(), isBoss: true };
+		contestant.character = { givenName: 'The Editor', identity: '👑 The Editor' };
+		contestant.monster.givenName = 'Razeth';
+		contestant.monster.pronouns = { he: 'he', him: 'him', his: 'his' };
+		announceTurnBegin(eb as never, 'Ring', {}, { contestant });
+
+		expect(published[0]!.text).to.include("*It's Razeth's turn. Razeth plays the next card in his deck.*");
 	});
 
 	it("names a boss's monster, not The Editor, on a boss's turn", () => {

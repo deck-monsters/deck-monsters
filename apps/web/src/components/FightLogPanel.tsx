@@ -45,6 +45,7 @@ export default function FightLogPanel({ roomId, headerActions }: FightLogPanelPr
     { roomId, fightNumber: expanded ?? 0 },
     { enabled: expanded !== null }
   );
+  const detailNotFound = (detail.error as { data?: { code?: string } } | null | undefined)?.data?.code === 'NOT_FOUND';
   const streakByMonsterId = useMemo(() => {
     const list = fights.data ?? [];
     const ids = new Set(list.flatMap((f) => (f as FightSummaryLike).participants ?? []).map((p) => p.monsterId));
@@ -92,7 +93,31 @@ export default function FightLogPanel({ roomId, headerActions }: FightLogPanelPr
           <span>{fightSubtitle(summary)}</span>
           {streaks.length > 0 && <span className="fight-streak">{streaks.map((s) => `${s.name}: ${s.count}-fight streak`).join(' · ')}</span>}
         </button>
-        {open && detail.data && <div className="fight-log-detail">
+        {/*
+          Only the loaded state used to render; loading, error and empty rendered nothing, so
+          a tap on a row looked dead (new-player walk 2, Fights row). Every state speaks now.
+        */}
+        {/*
+          Fetching wins over the error so a retry tap visibly does something. A NOT_FOUND
+          fight is gone for good, so retrying would only fail again: say nothing was saved.
+        */}
+        {open && !detail.data && detail.isFetching && <div className="fight-log-detail">
+          <p className="surface-muted">Loading the play-by-play…</p>
+        </div>}
+        {open && !detail.data && !detail.isFetching && detail.isError && (detailNotFound
+          ? <div className="fight-log-detail"><p className="surface-muted">Nothing was saved for this fight.</p></div>
+          : <div className="fight-log-detail">
+            <button type="button" title="Try loading this fight's play-by-play again" className="fight-log-retry" onClick={() => { void detail.refetch(); }}>
+              Couldn't load this fight. Tap to try again.
+            </button>
+          </div>)}
+        {open && !detail.data && !detail.isFetching && !detail.isError && <div className="fight-log-detail">
+          <p className="surface-muted">Loading the play-by-play…</p>
+        </div>}
+        {open && detail.data && detail.data.events.length === 0 && <div className="fight-log-detail">
+          <p className="surface-muted">Nothing was saved for this fight.</p>
+        </div>}
+        {open && detail.data && detail.data.events.length > 0 && <div className="fight-log-detail">
           <p className="surface-muted">Events during this fight</p>
           {/*
             The scroll container is this wrapper, not the <ol>. A list whose markers are

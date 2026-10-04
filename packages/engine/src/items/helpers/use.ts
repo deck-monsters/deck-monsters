@@ -105,8 +105,16 @@ const useItems = ({ channel, character, confirmed, itemSelection, itemSource, mo
 		.then((selectedItems: any[]) => {
 			if (confirmed) return selectedItems;
 
+			// An item may say what the question is really asking (`confirmQuestion`). A bare
+			// "Are you sure?" gave a new player nothing to be sure of (new-player walk 2, I3).
+			// Only a single selected item can supply it; several fall back to the generic text.
+			const only = selectedItems.length === 1 ? selectedItems[0] : undefined;
+			const confirmQuestion: string = typeof only?.confirmQuestion === 'function'
+				? only.confirmQuestion({ character, monster })
+				: 'Are you sure? (yes/no)';
+
 			return channel({
-				question: 'Are you sure? (yes/no)'
+				question: confirmQuestion
 			}).then((answer: string = '') => {
 				if (answer.toLowerCase() === 'yes') {
 					return selectedItems;

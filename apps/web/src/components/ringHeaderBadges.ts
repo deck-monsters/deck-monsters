@@ -12,6 +12,14 @@ export function summonsLeftLabel(remaining: number): string {
   return remaining === 1 ? '1 summon left' : `${remaining} summons left`;
 }
 
+/**
+ * The summons badge's tooltip. New-player walk 2 (#8): a player who summoned a boss then
+ * saw a second one arrive on the house's own timer and read it as a miscount. The timer
+ * boss does not spend a summon, so the title says so.
+ */
+export const SUMMONS_BADGE_TITLE =
+  "Bosses you summon. The house also sends one on its own timer, which doesn't use yours.";
+
 export function headerBadgesVisible(inEncounter: boolean | undefined): boolean {
   return !inEncounter;
 }

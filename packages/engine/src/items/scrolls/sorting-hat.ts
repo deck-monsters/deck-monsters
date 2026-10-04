@@ -23,6 +23,19 @@ export class SortingHat extends BaseScroll {
 		super({ icon });
 	}
 
+	/**
+	 * What the shared use-confirmation asks for this item (see `items/helpers/use.ts`).
+	 * Says who is sorted and that the hat is spent, instead of a bare "Are you sure?".
+	 */
+	confirmQuestion({ character, monster }: {
+		character?: Record<string, unknown>;
+		monster?: Record<string, unknown>;
+	} = {}): string {
+		const wearer = monster ?? character;
+		const name = (wearer?.['givenName'] as string | undefined) ?? 'you';
+		return `Put on the Sorting Hat? You choose a new team for ${name}, and the hat is used up. (yes/no)`;
+	}
+
 	action({ channel, channelName, character, monster }: {
 		channel: ChannelFn;
 		channelName?: string;

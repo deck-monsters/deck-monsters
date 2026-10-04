@@ -309,4 +309,20 @@ describe('characters/helpers/create', () => {
 			expect(character.givenName).to.equal('Given');
 		});
 	});
+
+	describe('starting coins', () => {
+		it('gives a newly created character 30 coins', async () => {
+			const { channel } = makeSequencedChannel(['she/her', 'Saffron', '0']);
+			const character = await createCharacter(channel, { type: '0' });
+
+			expect(character.coins).to.equal(30);
+		});
+
+		it('leaves the base default alone, so saved and generated characters keep what they have', async () => {
+			const Beastmaster = (await import('../beastmaster.js')).default;
+
+			expect(new Beastmaster({ name: 'Hydrated' }).coins).to.equal(0);
+			expect(new Beastmaster({ name: 'Hydrated', coins: 7 }).coins).to.equal(7);
+		});
+	});
 });

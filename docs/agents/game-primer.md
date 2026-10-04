@@ -119,8 +119,10 @@ Bosses are house monsters. Their owner is a generated character under `userId: '
 narration credits the house — `RING_PATRON` = `👑 The Editor`
 (`packages/engine/src/constants/lore.ts`) — rather than an invented beastmaster (#102). The
 arrival lines are a deliberate minimal pair: a player's monster "answers the call of" its
-beastmaster, a boss "enters the ring at the behest of" The Editor
-(`packages/engine/src/announcements/contestant.ts`).
+beastmaster, a boss "enters the ring, sent by the house (👑 The Editor)"
+(`packages/engine/src/announcements/contestant.ts`). A boss's stat card leaves off its
+`Fights · Won` record (`BaseCreature.rankings`), and its strategy line reads
+"{name}'s orders: …".
 
 `isBoss` doubles as "nobody owns this", which is why the harness builds its sim monsters as
 bosses and why disposal keys off it. Players may summon a boss `BOSS_SUMMON_LIMIT` = 3 times

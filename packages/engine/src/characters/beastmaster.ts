@@ -11,7 +11,7 @@ import transferItems from '../items/helpers/transfer.js';
 import useItems from '../items/helpers/use.js';
 import { getItemKey } from '../items/helpers/counts.js';
 import { matchesCardLookupName } from '../cards/helpers/matches-lookup-name.js';
-import { formatRelative } from '../helpers/time.js';
+import { reviveAnnouncement } from './helpers/revive-message.js';
 import { eachSeries } from '../helpers/promise.js';
 import { equipResultMessage } from './helpers/equip-message.js';
 import { MAX_PRESETS } from '../constants/card-management.js';
@@ -378,7 +378,7 @@ class Beastmaster extends BaseCharacter {
 				return this.chooseMonster({ channel, monsters, monsterName, action: 'take items from' });
 			})
 			.then(monster =>
-				transferItems({ from: monster as any, to: this as any, itemSelection, channel: channel as any }).then(
+				transferItems({ from: monster as any, to: this as any, itemSelection, channel: channel as any, direction: 'take' }).then(
 					() => monster,
 				),
 			);
@@ -486,6 +486,14 @@ class Beastmaster extends BaseCharacter {
 
 	lookAtItems(channel: ChannelWithManager): Promise<void> {
 		const { channelManager, channelName } = channel;
+
+		// `look at items` with nothing anywhere used to print nothing at all, which reads as a
+		// broken command (new-player walk 2, I3). Say so, and say where items come from.
+		if (this.items.length < 1 && !this.monsters.some(monster => (monster as any).items?.length > 0)) {
+			return Promise.resolve(
+				(channel as any)({ announce: 'You have no items. Visit the shop to buy some, or win them in fights.' }),
+			).then(() => undefined);
+		}
 
 		return Promise.resolve()
 			.then(() => { if (this.items.length) return super.lookAtItems(channel as any); })
@@ -1315,13 +1323,9 @@ class Beastmaster extends BaseCharacter {
 			})
 			.then((monster: BaseMonster) => {
 				const timeToRevive = (monster as any).respawn();
-				const reviveStatement = (monster as any).respawnTimeoutLength
-					? formatRelative(timeToRevive, (monster as any).respawnTimeoutBegan)
-					: 'instantly';
-
-			return (channel({
-				announce: `${monster.givenName} has begun to revive. ${capitalize(monster.pronouns.he)} ${monster.pronouns.is ?? 'is'} a ${(monster as any).displayLevel} monster, and therefore will be revived ${reviveStatement}.`,
-			}) as Promise<unknown>).then(() => monster);
+				return (channel({
+					announce: reviveAnnouncement(monster as any, timeToRevive),
+				}) as Promise<unknown>).then(() => monster);
 			});
 	}
 }

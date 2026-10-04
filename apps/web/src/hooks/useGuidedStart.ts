@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useSyncExternalStore } from 'react';
 import { useAuth } from '../lib/auth-context.js';
 import { trpc } from '../lib/trpc.js';
+import { FIGHT_ON_RING_POLL_MS, QUIET_RING_POLL_MS } from './useFightOnRing.js';
 
 /**
  * The getting-started guide's one source of truth. The Console and the Workshop both read
@@ -188,7 +189,7 @@ export function resetGuidedStartForTests(): void {
 
 type InventoryMonster = Partial<GuidedMonster> & { name: string };
 
-export function useGuidedStart(roomId: string | undefined): GuidedStep & { dismiss: () => void } {
+export function useGuidedStart(roomId: string | undefined): GuidedStep & { fightComing: boolean; fightOn: boolean; dismiss: () => void } {
 	const { user } = useAuth();
 	const userId = user?.id;
 	useSyncExternalStore(subscribe, () => version, () => version);
@@ -223,6 +224,18 @@ export function useGuidedStart(roomId: string | undefined): GuidedStep & { dismi
 	const step = loaded && decided ? guidedStep(monsters, isComplete, fought || hasFought(monsters)) : HIDDEN;
 	const phase = step.phase;
 
+	// Same room-scoped query, cache entry and cadence as `useFightOnRing`/RingPane. It only
+	// decides whether the `waiting` step still suggests summoning a boss.
+	const ringState = trpc.game.ringState.useQuery(
+		{ roomId: roomId ?? '' },
+		{
+			// Only the `waiting` step reads it; everyone else would poll for nothing.
+			enabled: !!roomId && phase === 'waiting',
+			refetchInterval: (query: { state: { data?: { inEncounter?: boolean } } }) =>
+				query.state.data?.inEncounter ? FIGHT_ON_RING_POLL_MS : QUIET_RING_POLL_MS,
+		},
+	);
+
 	useEffect(() => {
 		if (!loaded || isComplete) return;
 		if (!decided) {
@@ -254,5 +267,10 @@ export function useGuidedStart(roomId: string | undefined): GuidedStep & { dismi
 	}, [loaded, isComplete, decided, fought, baseline, userId, roomId, monsters, hasOutcomeHistory, phase]);
 
 	const dismiss = useCallback(() => complete(userId, roomId), [userId, roomId]);
-	return { ...step, dismiss };
+	// The player's own monster is `waiting` in the ring, so a second contestant (a player's
+	// monster or a boss) means a fight is counting down or already on.
+	const ringData = ringState.data as { inEncounter?: boolean; contestants?: unknown[] } | undefined;
+	const fightOn = ringData?.inEncounter === true;
+	const fightComing = !fightOn && (ringData?.contestants?.length ?? 0) > 1;
+	return { ...step, fightComing, fightOn, dismiss };
 }

@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({
   monsters: [] as Array<Record<string, unknown>> | undefined,
   history: [] as Array<{ type: string }> | undefined,
   historyError: false,
+  ring: { inEncounter: false, contestants: [] as unknown[] },
 }));
 
 vi.mock('../lib/auth-context.js', () => ({ useAuth: () => ({ user: { id: 'user-1' } }) }));
@@ -12,6 +13,7 @@ vi.mock('../lib/trpc.js', () => ({
   trpc: {
     game: {
       myInventory: { useQuery: () => ({ data: mocks.monsters ? { monsters: mocks.monsters } : undefined }) },
+      ringState: { useQuery: () => ({ data: mocks.ring }) },
       consoleHistory: { useQuery: () => ({ data: mocks.historyError ? undefined : mocks.history, isError: mocks.historyError }) },
     },
   },
@@ -100,6 +102,7 @@ describe('useGuidedStart', () => {
     mocks.history = [];
     mocks.monsters = [];
     mocks.historyError = false;
+    mocks.ring = { inEncounter: false, contestants: [] };
   });
 
   const run = (room = 'room-1') => renderHook(() => useGuidedStart(room));
@@ -203,10 +206,36 @@ describe('useGuidedStart', () => {
   });
 });
 
+describe('useGuidedStart fightComing', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    resetGuidedStartForTests();
+    mocks.history = [];
+    mocks.historyError = false;
+    mocks.monsters = [{ name: 'Saffron', cards: full, cardSlots: 3, inRing: true, battles: { total: 0 } }];
+  });
+
+  it('is false while the player is alone in the ring', () => {
+    mocks.ring = { inEncounter: false, contestants: [{ name: 'Saffron' }] };
+    const { result } = renderHook(() => useGuidedStart('room-1'));
+    expect(result.current.phase).toBe('waiting');
+    expect(result.current.fightComing).toBe(false);
+  });
+
+  it('is true once a second monster or a boss shares the ring, and a live fight is fightOn instead', () => {
+    mocks.ring = { inEncounter: false, contestants: [{ name: 'Saffron' }, { name: 'Razeth', isBoss: true }] };
+    expect(renderHook(() => useGuidedStart('room-1')).result.current.fightComing).toBe(true);
+    mocks.ring = { inEncounter: true, contestants: [] };
+    const live = renderHook(() => useGuidedStart('room-1')).result.current;
+    expect(live.fightOn).toBe(true);
+    expect(live.fightComing).toBe(false);
+  });
+});
+
 describe('GuidedStartBox', () => {
   it('shows the Workshop equip copy with the name and slots, and no chip', () => {
     render(<GuidedStartBox surface="workshop" phase="equip" name="Saffron" slots={5} dismiss={() => undefined} />);
-    expect(screen.getByText('Give Saffron a full deck: tap an empty slot to add cards until all 5 are filled.')).toBeInTheDocument();
+    expect(screen.getByText('Give Saffron a full deck: tap a card in Your cards, then tap one of Saffron\'s empty slots. Fill all 5.')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /equip/ })).toBeNull();
   });
 
@@ -227,6 +256,28 @@ describe('GuidedStartBox', () => {
     render(<GuidedStartBox surface="console" phase={phase} name={name} slots={3} dismiss={() => undefined} onRun={run} />);
     fireEvent.click(screen.getByRole('button', { name: command }));
     expect(run).toHaveBeenCalledWith(command);
+  });
+
+  it('tells the Console player to watch once a fight is coming, with no summon chip', () => {
+    render(<GuidedStartBox surface="console" phase="waiting" name="Saffron" slots={3} fightComing dismiss={() => undefined} onRun={() => undefined} />);
+    expect(screen.getByText('Saffron is in the ring. Watch The Ring: a fight starts when the countdown ends.')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'summon a boss' })).toBeNull();
+    expect(screen.queryByText(/summon/i)).toBeNull();
+  });
+
+  it('says the fight is on, not that a countdown is running, during a live fight', () => {
+    render(<GuidedStartBox surface="console" phase="waiting" name="Saffron" slots={3} fightOn fightComing dismiss={() => undefined} onRun={() => undefined} />);
+    expect(screen.getByText('Saffron is fighting. Watch The Ring.')).toBeInTheDocument();
+    expect(screen.queryByText(/countdown/)).toBeNull();
+    expect(screen.queryByRole('button', { name: 'summon a boss' })).toBeNull();
+  });
+
+  it('says the same in the Workshop, and keeps the summon advice while alone', () => {
+    const { unmount } = render(<GuidedStartBox surface="workshop" phase="waiting" name="Saffron" slots={3} fightComing dismiss={() => undefined} />);
+    expect(screen.getByText(/Watch The Ring: a fight starts when the countdown ends\./)).toBeInTheDocument();
+    unmount();
+    render(<GuidedStartBox surface="console" phase="waiting" name="Saffron" slots={3} dismiss={() => undefined} onRun={() => undefined} />);
+    expect(screen.getByText(/Nobody else here\? Summon a boss\./)).toBeInTheDocument();
   });
 
   it('dismisses from the ✕', () => {

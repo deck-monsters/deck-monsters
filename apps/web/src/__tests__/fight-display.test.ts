@@ -106,3 +106,12 @@ describe('fight-display: a fled fight accounts for every contestant (#106)', () 
     expect(fightSubtitle(f)).toBe('Everest fled from Ford');
   });
 });
+
+describe('fight-display: card drop label', () => {
+  // "Card: Soften" read as the card that won the match (new-player walk 2).
+  it('says the card was found, not that it was played', () => {
+    const win: FightSummaryLike = { ...baseFight, outcome: 'win', roundCount: 2, cardDropName: 'Soften' };
+    expect(fightSubtitle(win)).toContain(' · Card found: Soften');
+    expect(fightSubtitle({ ...baseFight, outcome: 'mystery', cardDropName: 'Soften' })).toBe('Outcome: mystery · Card found: Soften');
+  });
+});

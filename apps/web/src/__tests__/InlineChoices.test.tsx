@@ -55,6 +55,26 @@ describe('InlineChoices', () => {
       expect(screen.getByText('Equip cards')).toBeTruthy();
     });
 
+    it('labels the shop pick button "Buy n items", not the equip wording', () => {
+      const onAnswer = vi.fn();
+      render(
+        <InlineChoices
+          {...defaultProps}
+          question={'Choose one or more of the following items to buy:\n\n0) Hit [1] - 5 coins'}
+          onAnswer={onAnswer}
+        />
+      );
+      expect(screen.getByText('Buy items')).toBeTruthy();
+      expect(screen.queryByText(/Equip/)).toBeNull();
+
+      fireEvent.click(screen.getByText('Hit'));
+      const one = screen.getByText('Buy 1 item');
+      expect(one.getAttribute('title')).toBe('Buy the items you picked.');
+      fireEvent.click(screen.getByText('Blast'));
+      fireEvent.click(screen.getByText('Buy 2 items'));
+      expect(onAnswer).toHaveBeenCalledWith('req-1', '0, 2');
+    });
+
     it('sends indices in selection order (not sorted) when confirmed', () => {
       const onAnswer = vi.fn();
       render(
