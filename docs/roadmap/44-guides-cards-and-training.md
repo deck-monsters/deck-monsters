@@ -1,10 +1,10 @@
 ---
 type: Roadmap
 title: Card guides, card details and a training wizard
-description: Roadmap 42 A, C and E1 as one pass — a role for every card, guides that show each card's numbers and who can hold it, card details and level unlocks in the Workshop, `look at cards for [monster]`, a step-by-step training wizard with a live look preview, and the shop's last Equip button.
+description: Roadmap 42 A, C and E1 as one pass, covering card roles, guides with full cards and who can hold them, card details in the Workshop, a Console card list per monster, and a step-by-step training wizard.
 status: draft
 audience: internal
-tags: [roadmap, cards, guides, workshop, onboarding, web, console]
+tags: [roadmap, cards, guides, workshop, onboarding]
 ---
 # 44 — Card guides, card details and a training wizard
 
