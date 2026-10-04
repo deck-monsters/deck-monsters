@@ -9,6 +9,8 @@ interface CardDetailSheetProps {
   cardName: string;
   /** One verdict line per monster: the monster in view, or every monster for an unfiltered card. */
   monsters: VerdictMonster[];
+  /** The control that opened the sheet, from the click event; focus returns to it on close. */
+  opener?: HTMLElement | null;
   onClose: () => void;
 }
 
@@ -20,23 +22,58 @@ interface CardDetailSheetProps {
  * whose overflow and stacking would clip a `position: fixed` child. Focus moves to Close on
  * open and returns to the control that opened it; Escape and a tap on the backdrop close it.
  */
-export default function CardDetailSheet({ facts, cardName, monsters, onClose }: CardDetailSheetProps) {
+export default function CardDetailSheet({ facts, cardName, monsters, opener, onClose }: CardDetailSheetProps) {
   const closeRef = useRef<HTMLButtonElement>(null);
+  const sheetRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const opener = document.activeElement as HTMLElement | null;
+    // The opener comes from the click event: Safari does not focus a button on tap, so
+    // document.activeElement would be the body there and focus would be lost on close.
+    const returnTo = opener ?? (document.activeElement as HTMLElement | null);
     closeRef.current?.focus();
+
+    // Everything else is inert while the sheet is open, so a screen reader or Tab cannot
+    // wander behind it, and the page underneath does not scroll. The sheet itself is a
+    // portal on body, outside #root, so it stays live.
+    const root = document.getElementById('root');
+    const wasInert = root?.hasAttribute('inert') ?? false;
+    root?.setAttribute('inert', '');
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
     return () => {
+      if (!wasInert) root?.removeAttribute('inert');
+      document.body.style.overflow = previousOverflow;
       // The opener may have unmounted (the card moved while the sheet was open).
-      if (opener && document.contains(opener)) opener.focus();
+      if (returnTo && document.contains(returnTo)) returnTo.focus();
     };
-  }, []);
+  }, [opener]);
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
       if (event.key === 'Escape') {
         event.stopPropagation();
         onClose();
+        return;
+      }
+      if (event.key !== 'Tab') return;
+      // Keep Tab inside the sheet: wrap between its first and last focusable controls.
+      const focusable = Array.from(
+        sheetRef.current?.querySelectorAll<HTMLElement>('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])') ?? [],
+      ).filter((el) => !el.hasAttribute('disabled'));
+      if (focusable.length === 0) return;
+      const first = focusable[0]!;
+      const last = focusable[focusable.length - 1]!;
+      const active = document.activeElement;
+      if (!sheetRef.current?.contains(active)) {
+        event.preventDefault();
+        first.focus();
+      } else if (event.shiftKey && active === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && active === last) {
+        event.preventDefault();
+        first.focus();
       }
     }
     document.addEventListener('keydown', onKeyDown);
@@ -52,7 +89,7 @@ export default function CardDetailSheet({ facts, cardName, monsters, onClose }: 
         if (event.target === event.currentTarget) onClose();
       }}
     >
-      <div className="card-detail-sheet" role="dialog" aria-modal="true" aria-labelledby="card-detail-title">
+      <div ref={sheetRef} className="card-detail-sheet" role="dialog" aria-modal="true" aria-labelledby="card-detail-title">
         <h2 id="card-detail-title">{title}</h2>
         {facts && (
           <>

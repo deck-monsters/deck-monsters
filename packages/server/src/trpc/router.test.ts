@@ -199,6 +199,10 @@ describe('trpc/router card management procedures', () => {
 		// An unknown type holds nothing, so there is no class and no "At level N" line.
 		expect(mystery!.monsterClass).to.equal('');
 		expect(mystery!.nextCards).to.equal(null);
+
+		// A second call (the 30 s poll) answers the same from the per-type memo.
+		const again = await createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false }).game.myInventory({ roomId: ROOM_ID });
+		expect(again.monsters[0]!.nextCards).to.deep.equal(rex!.nextCards);
 	});
 
 	it('uses the engine revival completion epoch for a fallen monster mid-revival', async () => {

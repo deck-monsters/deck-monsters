@@ -30,7 +30,7 @@ interface CardSlotProps {
    * It stays enabled on a disabled slot (locked monster, filtered-out card) because reading
    * what a card does changes nothing.
    */
-  onShowDetails?: (cardName: string) => void;
+  onShowDetails?: (cardName: string, opener: HTMLElement) => void;
 }
 
 export default function CardSlot({
@@ -129,7 +129,7 @@ export default function CardSlot({
         className="workshop-card-info"
         title="What this card does"
         aria-label={`What ${cardName} does`}
-        onClick={() => onShowDetails(cardName)}
+        onClick={(event) => onShowDetails(cardName, event.currentTarget)}
       >
         ⓘ
       </button>

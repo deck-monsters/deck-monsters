@@ -131,6 +131,40 @@ describe('card details sheet in the Workshop', () => {
     expect(document.activeElement).toBe(opener);
   });
 
+  it('keeps Tab inside the sheet, makes the page inert and locks scroll while open, then restores', () => {
+    setup();
+    const root = document.createElement('div');
+    root.id = 'root';
+    document.body.appendChild(root);
+    render(<WorkshopPanel roomId="room-1" />, { container: root });
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'What Hit does' })[0]!);
+    const close = screen.getByRole('button', { name: 'Close' });
+    expect(root.hasAttribute('inert')).toBe(true);
+    expect(document.body.style.overflow).toBe('hidden');
+
+    // Close is the only focusable control, so Tab and Shift+Tab both stay on it.
+    fireEvent.keyDown(document, { key: 'Tab' });
+    expect(document.activeElement).toBe(close);
+    fireEvent.keyDown(document, { key: 'Tab', shiftKey: true });
+    expect(document.activeElement).toBe(close);
+
+    fireEvent.click(close);
+    expect(root.hasAttribute('inert')).toBe(false);
+    expect(document.body.style.overflow).toBe('');
+    root.remove();
+  });
+
+  it('returns focus to the control that was clicked even when the click did not focus it (Safari)', () => {
+    setup();
+    render(<WorkshopPanel roomId="room-1" />);
+    const opener = screen.getAllByRole('button', { name: 'What Hit does' })[0]!;
+    (document.activeElement as HTMLElement | null)?.blur();
+    fireEvent.click(opener);
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(document.activeElement).toBe(opener);
+  });
+
   it('keeps a tap on the card itself selecting it, not opening the sheet', () => {
     setup();
     render(<WorkshopPanel roomId="room-1" />);

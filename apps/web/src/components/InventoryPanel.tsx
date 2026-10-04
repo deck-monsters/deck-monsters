@@ -27,7 +27,7 @@ interface InventoryPanelProps {
   onEquipSelected?: () => void;
   disabled?: boolean;
   /** Opens the card detail sheet for one of the unequipped cards. */
-  onShowDetails?: (cardName: string) => void;
+  onShowDetails?: (cardName: string, opener: HTMLElement) => void;
 }
 
 export default function InventoryPanel({

@@ -37,7 +37,7 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
   // The card whose details sheet is open, and the monster it is shown for: the monster whose
   // panel the card is in, or for a card in Your cards the highlighted monster. Null for a
   // card in Your cards with nothing highlighted, which shows a verdict for every monster.
-  const [detail, setDetail] = useState<{ cardName: string; monsterName: string | null } | null>(null);
+  const [detail, setDetail] = useState<{ cardName: string; monsterName: string | null; opener: HTMLElement | null } | null>(null);
 
   const {
     monsters,
@@ -769,7 +769,7 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
             compatibilityHint={hint.reason === null ? (selectedInventoryCardName ? 'eligible' : 'none') : 'ineligible'}
             refusalSentence={hint.sentence}
             onToggleFilter={() => handleToggleMonsterFilter(monster.name)}
-            onShowDetails={(cardName) => setDetail({ cardName, monsterName: monster.name })}
+            onShowDetails={(cardName, opener) => setDetail({ cardName, monsterName: monster.name, opener })}
           />
           );
         })}
@@ -783,7 +783,7 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
         activeMonsterFilterName={activeMonsterFilter}
         compatibleCardCount={compatibleCardCount}
         disabled={busy}
-        onShowDetails={(cardName) => setDetail({ cardName, monsterName: activeMonsterFilter })}
+        onShowDetails={(cardName, opener) => setDetail({ cardName, monsterName: activeMonsterFilter, opener })}
         onClearMonsterFilter={() => setActiveMonsterFilter(null)}
         isCardUnavailable={(cardName) =>
           activeMonsterFilter ? !isCardCompatibleWithMonster(cardName, activeMonsterFilter) : false
@@ -821,6 +821,7 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
         <CardDetailSheet
           facts={factsByName.get(stableCardName(detail.cardName)) ?? null}
           cardName={detail.cardName}
+          opener={detail.opener}
           monsters={
             detail.monsterName
               ? monsters.filter((monster) => monster.name === detail.monsterName)

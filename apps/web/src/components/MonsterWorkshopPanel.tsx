@@ -68,7 +68,7 @@ type MonsterPanelProps = {
   refusalSentence?: string;
   onToggleFilter?: () => void;
   /** Opens the card detail sheet for a card in this monster's deck. */
-  onShowDetails?: (cardName: string) => void;
+  onShowDetails?: (cardName: string, opener: HTMLElement) => void;
 };
 
 /**

@@ -346,8 +346,16 @@ const monsterClassOfType = (type: string): string => {
 	return typeof Monster?.class === 'string' ? Monster.class : '';
 };
 
+// holdableByLevel walks every card class per call and myInventory polls every 30 s per member,
+// so compute it once per monster type (it depends on nothing else: the card list is static).
+const holdableByType = new Map<string, ReturnType<typeof holdableByLevel>>();
 const nextCardsFor = (type: string, level: number): InventoryMonsterSummary['nextCards'] => {
-	const next = holdableByLevel(type).find((group) => group.level > level);
+	let groups = holdableByType.get(type);
+	if (!groups) {
+		groups = holdableByLevel(type);
+		holdableByType.set(type, groups);
+	}
+	const next = groups.find((group) => group.level > level);
 	return next ? { level: next.level, cards: next.cards.map((card) => card.name) } : null;
 };
 
