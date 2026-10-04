@@ -110,6 +110,11 @@ describe('look at cards for [monster]', () => {
 		expect(out.join('\n')).to.include('I can find no monster by the name of nobody.');
 	});
 
+	it('asks which monster when no name is given', async () => {
+		const { out } = await runCommand('look at cards for', [monsterOf('Gladiator', 0)]);
+		expect(out.join('\n')).to.include('Which monster? For example: look at cards for Rex.');
+	});
+
 	it('is in the catalogue under cards, with its example', () => {
 		const entry = COMMAND_CATALOG.find(c => c.command === 'look at cards for [monster]');
 		expect(entry).to.deep.include({

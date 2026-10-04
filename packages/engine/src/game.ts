@@ -990,7 +990,11 @@ export class Game extends BaseClass {
 	 * unknown-monster refusal is the same line. "Now" is levels <= the monster's own level.
 	 */
 	lookAtCardsFor(channel: any, monsterName: string): Promise<unknown> {
-		const monster = monsterName ? this.getAllMonstersLookup()[monsterName.toLowerCase()] : undefined;
+		// A bare `look at cards for` used to read "I can find no monster by the name of ." (review of pass 44).
+		if (!monsterName?.trim()) {
+			return announceAndThrow(channel, 'Which monster? For example: look at cards for Rex.', { delay: 'short' });
+		}
+		const monster = this.getAllMonstersLookup()[monsterName.trim().toLowerCase()];
 
 		if (!monster) {
 			return announceAndThrow(channel, `I can find no monster by the name of ${monsterName}.`, { delay: 'short' });

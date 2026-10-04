@@ -299,8 +299,6 @@ new card or monster must reach. Check each one.
   hold is that type's signature card in the guide; that isn't a role.
 - A monster's signature card goes in `getMinimumDeck()` (`cards/helpers/deck.ts`) beside
   the others, and in `docs/agents/game-primer.md`'s starting-deck count.
-- Give the web workshop a badge keyword in `apps/web/src/utils/cards.ts`; it classifies by
-  name, and an unmatched card shows as Utility.
 - Tests: permissions, stats text, hit and miss, natural 1 and 20, confusion
   (`target === player`), encounter cleanup, and a JSON hydration round trip.
 - Add a `card_types` row in a new migration (class name to display name) so the operator

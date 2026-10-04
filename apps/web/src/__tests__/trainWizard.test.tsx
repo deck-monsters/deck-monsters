@@ -244,6 +244,32 @@ describe('TrainWizard', () => {
     expect(screen.getByLabelText('Name')).toHaveValue('Rex');
   });
 
+  it('stays on Name when a first-run name clash makes the character and About you drops out', async () => {
+    // The server creates the character before it checks the monster's name, so after a clash
+    // the next inventory refresh turns needsCharacter off. The step must not shift with it.
+    const onTrain = vi.fn().mockResolvedValue({ message: 'That monster name is already taken.' });
+    const props: TrainWizardProps = {
+      types, pronouns, needsCharacter: true,
+      characterCreation: { pronouns, avatars: ['🦊'], suggestedName: 'Ada' },
+      shuffleAvatars: vi.fn(), busy: false,
+      suggestNames: vi.fn().mockResolvedValue(['Vesper', 'Ember']), onTrain,
+    };
+    const view = render(<TrainWizard {...props} />);
+    next();
+    next();
+    next();
+    fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Rex' } });
+    next();
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'green' } });
+    next();
+    fireEvent.click(screen.getByRole('button', { name: 'Train Rex' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('That monster name is already taken.');
+    expect(screen.getByText('Step 4 of 6')).toBeInTheDocument();
+    view.rerender(<TrainWizard {...props} needsCharacter={false} />);
+    expect(screen.getByRole('heading', { name: 'Name' })).toBeInTheDocument();
+    expect(screen.getByText('Step 3 of 5')).toBeInTheDocument();
+  });
+
   it('maps refusals to the step at fault by exact message or by named field', () => {
     expect(stepForError({ message: 'That monster name is already taken.' }, false)).toBe('name');
     expect(stepForError({ message: 'That name is already taken in this room.' }, true)).toBe('about');

@@ -114,8 +114,17 @@ export default function TrainWizard({
   const steps: StepId[] = needsCharacter
     ? ['about', 'type', 'pronouns', 'name', 'look', 'ready']
     : ['type', 'pronouns', 'name', 'look', 'ready'];
-  const [stepIndex, setStepIndex] = useState(0);
+  // The step is held by name, not index. On a first run the server creates the character before
+  // it checks the monster's name, so a name clash leaves the character made; the next inventory
+  // refresh drops About you from `steps`, and an index would then point one step too far (the
+  // whole-branch review of pass 44 found Name turning into Look).
+  const [stepId, setStepId] = useState<StepId>(steps[0]!);
+  const stepIndex = Math.max(steps.indexOf(stepId), 0);
   const step = steps[stepIndex]!;
+  const setStepIndex = (next: number | ((at: number) => number)) => {
+    const at = typeof next === 'function' ? next(stepIndex) : next;
+    setStepId(steps[Math.min(Math.max(at, 0), steps.length - 1)]!);
+  };
 
   const [characterName, setCharacterName] = useState<string | null>(null);
   const [characterGender, setCharacterGender] = useState<Gender>('androgynous');
