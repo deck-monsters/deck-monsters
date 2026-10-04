@@ -104,7 +104,7 @@ const HORN_ODDITIES = [
 	'tasted a little like a candy cane',
 	'smelled faintly of toast',
 	'whistled a little when the wind blew',
-	'had a sparrow nesting near the tip',
+	'had a piñon jay nesting near the tip',
 ];
 /*
  * `seen` is the line the owner asked for (roadmap 42 B): one authority makes a claim and the

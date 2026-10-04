@@ -40,7 +40,7 @@ Seeded, cycling he, she, and they.
 - `SIGHTINGS`: `in your garden, eating your roses / an enclosed garden`, `in your kitchen, eating the bread`, `at the village well, drinking out of the bucket`, `in your orchard, knocking down the apples`, `asleep in your hayloft`
 - `AUTHORITIES`: `Pliny`, `Aelian`, `Ctesias`, `Solinus`, `Topsell`, `Marco Polo`
 - `COMMONERS`: `a drunken sailor / he`, `a very old woman in the market / she`
-- `HORN_ODDITIES`: `tasted a little like a candy cane`, `smelled faintly of toast`, `whistled a little when the wind blew`, `had a sparrow nesting near the tip`
+- `HORN_ODDITIES`: `tasted a little like a candy cane`, `smelled faintly of toast`, `whistled a little when the wind blew`, `had a piñon jay nesting near the tip`
 - `WITNESS_SHAPES`: `seen`, `seen`, `seen`, `commoner`
 
 ### Templates
