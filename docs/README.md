@@ -66,6 +66,7 @@ Generated and authored player references remain at the repository root:
 | Whether roadmap 39 batch 2 matches the shipped text | [Live check of roadmap 39 batch 2](reference/help-check-batch2.md) |
 | Whether roadmap 39 batch 3 matches the shipped text | [Live check of roadmap 39 batch 3](reference/help-check-batch3.md) |
 | Whether roadmap 41 room chat matches the shipped text | [Live check of room chat](reference/chat-check.md) |
+| What confused a first-time player on production | [New-player walk 2](reference/new-player-walk-2.md) |
 | Reviewing monster flavour strings or signature-card narration (generated inventories) | [Monster and card strings](reference/strings/README.md) |
 | `channel({ question, choices })` call site or connector answer encoding | [Prompt/answer contract](reference/prompt-answer-contract.md) |
 | Sprite maps, Canvas/CSS pixel art, scaling, palettes, animation construction | [Pixel art](reference/pixel-art.md) |
@@ -80,6 +81,7 @@ Generated and authored player references remain at the repository root:
 | First task in the game or unfamiliar gameplay behavior | [Game primer](agents/game-primer.md) |
 | Definition of done, bug numbering, verification, live checks, repository workflow | [Working in this repo](agents/working-in-this-repo.md) |
 | Delegating, choosing a model tier, shared-worktree rules, independent review | [Subagents](agents/subagents.md) |
+| A browser playthrough of production or the local app | [Production playthroughs](agents/production-playthroughs.md) |
 
 ## Planning and history
 
