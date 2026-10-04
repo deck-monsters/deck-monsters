@@ -92,7 +92,22 @@ export default function FightLogPanel({ roomId, headerActions }: FightLogPanelPr
           <span>{fightSubtitle(summary)}</span>
           {streaks.length > 0 && <span className="fight-streak">{streaks.map((s) => `${s.name}: ${s.count}-fight streak`).join(' · ')}</span>}
         </button>
-        {open && detail.data && <div className="fight-log-detail">
+        {/*
+          Only the loaded state used to render; loading, error and empty rendered nothing, so
+          a tap on a row looked dead (new-player walk 2, Fights row). Every state speaks now.
+        */}
+        {open && detail.isError && <div className="fight-log-detail">
+          <button type="button" title="Try loading this fight's play-by-play again" className="surface-muted" onClick={() => { void detail.refetch(); }}>
+            Couldn't load this fight. Tap to try again.
+          </button>
+        </div>}
+        {open && !detail.isError && !detail.data && <div className="fight-log-detail">
+          <p className="surface-muted">Loading the play-by-play…</p>
+        </div>}
+        {open && detail.data && detail.data.events.length === 0 && <div className="fight-log-detail">
+          <p className="surface-muted">Nothing was saved for this fight.</p>
+        </div>}
+        {open && detail.data && detail.data.events.length > 0 && <div className="fight-log-detail">
           <p className="surface-muted">Events during this fight</p>
           {/*
             The scroll container is this wrapper, not the <ol>. A list whose markers are

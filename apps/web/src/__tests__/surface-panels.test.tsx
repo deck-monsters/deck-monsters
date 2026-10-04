@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import FightLogPanel from '../components/FightLogPanel.js';
 import LeaderboardPanel from '../components/LeaderboardPanel.js';
@@ -6,6 +6,7 @@ import LeaderboardPanel from '../components/LeaderboardPanel.js';
 const query = { data: [], isLoading: false };
 const ringState = vi.hoisted(() => ({ inEncounter: false }));
 const invalidate = vi.hoisted(() => ({ fights: vi.fn(), leaderboard: vi.fn() }));
+const fightDetail = vi.hoisted(() => ({ result: {} as Record<string, unknown>, refetch: vi.fn() }));
 const fightRows = vi.hoisted(() => ({ rows: [] as unknown[] }));
 
 vi.mock('../lib/trpc.js', () => ({
@@ -17,7 +18,7 @@ vi.mock('../lib/trpc.js', () => ({
 		game: {
 			ringState: { useQuery: vi.fn(() => ({ data: { inEncounter: ringState.inEncounter } })) },
 			recentFights: { useQuery: vi.fn(() => ({ data: fightRows.rows, isLoading: false })) },
-			fight: { useQuery: vi.fn(() => ({ data: undefined, isLoading: false })) },
+			fight: { useQuery: vi.fn(() => ({ data: undefined, isLoading: false, isError: false, refetch: fightDetail.refetch, ...fightDetail.result })) },
 		},
 		leaderboard: {
 			roomPlayers: { useQuery: vi.fn(() => query) },
@@ -32,6 +33,8 @@ describe('layout-agnostic surface panels', () => {
 	beforeEach(() => {
 		ringState.inEncounter = false;
 		fightRows.rows = [];
+		fightDetail.result = {};
+		fightDetail.refetch.mockClear();
 		invalidate.fights.mockClear();
 		invalidate.leaderboard.mockClear();
 	});
@@ -106,5 +109,37 @@ describe('layout-agnostic surface panels', () => {
 		expect(invalidate.leaderboard).toHaveBeenCalledTimes(1);
 		fights.rerender(<FightLogPanel roomId="room-1" />);
 		expect(invalidate.fights).toHaveBeenCalledTimes(1);
+	});
+
+	describe('opening a fight row', () => {
+		function openRow() {
+			fightRows.rows = [{ id: 'f1', fightNumber: 1, endedAt: new Date().toISOString(), participants: [] }];
+			render(<FightLogPanel roomId="room-1" />);
+			fireEvent.click(screen.getByTitle("Show or hide this fight's play-by-play"));
+		}
+
+		it('says it is loading', () => {
+			openRow();
+			expect(screen.getByText('Loading the play-by-play…')).toBeTruthy();
+		});
+
+		it('offers a retry when the fight fails to load', () => {
+			fightDetail.result = { isError: true };
+			openRow();
+			fireEvent.click(screen.getByText("Couldn't load this fight. Tap to try again."));
+			expect(fightDetail.refetch).toHaveBeenCalledTimes(1);
+		});
+
+		it('says nothing was saved when there are no events', () => {
+			fightDetail.result = { data: { events: [] } };
+			openRow();
+			expect(screen.getByText('Nothing was saved for this fight.')).toBeTruthy();
+		});
+
+		it('lists the events when there are some', () => {
+			fightDetail.result = { data: { events: [{ id: 'e1', type: 'narration', text: 'Rex hits.' }] } };
+			openRow();
+			expect(screen.getByText(/Rex hits\./)).toBeTruthy();
+		});
 	});
 });

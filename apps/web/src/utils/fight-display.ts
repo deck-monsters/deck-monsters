@@ -91,10 +91,10 @@ export function fightSubtitle(f: FightSummaryLike): string {
     const w = winners.length ? nameList(winners) : f.winnerMonsterName ?? '?';
     const l = losers.length ? nameList(losers) : f.loserMonsterName ?? '?';
     let s = `${w} won vs ${l} in ${pluralize(f.roundCount, 'round')}`;
-    if (f.cardDropName) s += ` · Card: ${f.cardDropName}`;
+    if (f.cardDropName) s += ` · Card found: ${f.cardDropName}`;
     return s;
   }
   let s = `Outcome: ${f.outcome}`;
-  if (f.cardDropName) s += ` · Card: ${f.cardDropName}`;
+  if (f.cardDropName) s += ` · Card found: ${f.cardDropName}`;
   return s;
 }
