@@ -93,6 +93,10 @@ Events can be missed during a reconnect, so the `pendingPrompt` poll is the back
   server registers a prompt before it publishes one, so that poll must have seen it;
 - an empty poll that started earlier needs a second empty poll, so an in-flight poll can't
   erase a question that has only just arrived (#142);
+- a question cleared by a poll is **not** marked resolved, so a later poll that still lists it
+  brings it back. The poll's start time is read a render after the request leaves, so a
+  question can arrive in that gap and be cleared wrongly; this keeps that from sticking
+  (Codex on #422);
 - an answer the server rejects as no longer active (`PRECONDITION_FAILED`) clears the
   question, but only when the follow-up poll **succeeded**. On a network failure the cached
   poll can read empty while the question is still live, and burying it would leave the

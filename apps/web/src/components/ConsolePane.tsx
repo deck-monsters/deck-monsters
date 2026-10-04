@@ -258,9 +258,10 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
 
   useEffect(() => {
     // Date.now() is taken a few ms after the request really left, so a prompt arriving in
-    // that gap could be cleared by this poll's one empty answer. Acceptable: the gap is a
-    // render tick against a 3s poll, the server registers a prompt before publishing it, and
-    // the next poll re-arms a prompt that is still pending.
+    // that gap could be cleared by this poll's one empty answer. That is safe only because a
+    // poll-cleared prompt is NOT marked resolved (see the empty-poll effect): the next poll
+    // that still lists it re-arms it. (Codex, on #422: marking it resolved here left the
+    // player unable to answer until the server's timeout.)
     if (pendingPromptFetching) pollStartedAtRef.current = Date.now();
   }, [pendingPromptFetching]);
 
@@ -474,7 +475,9 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
     const old = arrivedAt !== undefined && pollStartedAtRef.current > arrivedAt;
     if (!old && consecutiveEmptyPromptPollsRef.current < 2) return;
 
-    resolvedPromptIdsRef.current.add(staleRequestId);
+    // Deliberately not added to resolvedPromptIdsRef. That set guards ids the player or a
+    // live event settled (#153); a poll's empty answer is weaker evidence, so a later poll
+    // that still lists this id must be free to re-arm it.
     setConsoleEvents(prev => prev.map(ev =>
       ev.promptData?.requestId === staleRequestId
         ? { ...ev, promptData: { ...ev.promptData, cancelled: true } }

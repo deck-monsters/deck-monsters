@@ -333,6 +333,15 @@ describe('ConsolePane: a finished question leaves the input (pass 43, I4)', () =
     expectPromptGone();
   });
 
+  it('(d3) a question cleared by one empty poll comes back if a later poll still lists it', async () => {
+    await sleep(5);
+    poll(null);
+    expectPromptGone();
+    poll({ requestId: 'r1', question: 'Which card?', choices: ['Hit'] });
+    expect(input().placeholder).toMatch(/answer/i);
+    expect(screen.queryAllByTitle(/^Choose /).filter(b => !(b as HTMLButtonElement).disabled)).toHaveLength(1);
+  });
+
   it('(e) the server rejects an answer as no longer active', async () => {
     trpcMocks.respondToPromptMutateAsync.mockRejectedValueOnce(
       new Error('Prompt is no longer active. Please answer the latest prompt.'),

@@ -5110,7 +5110,10 @@ written synchronously. The review caught two regressions in the first version, n
 network failure that read as "nothing pending" buried a live question for good, and a time
 window measured from when a poll *landed* rather than when it *started* reopened #142's
 race. A superseded question shows the existing "Action cancelled." tombstone, even when it
-had timed out. See [events, prompts, and replay](../architecture/events-prompts-and-replay.md#prompts).
+had timed out. After the PR opened, Codex found that a question cleared by a poll was also
+marked resolved for good, so if the clear was wrong (a question arriving in the moment
+between a poll leaving and its start time being read) the player couldn't answer until the
+server's timeout. A poll-cleared question now comes back when a later poll lists it. See [events, prompts, and replay](../architecture/events-prompts-and-replay.md#prompts).
 
 **Status**: Fixed. Needs a live check on a phone.
 
