@@ -38,8 +38,8 @@ export function guidedCopy(surface: 'console' | 'workshop', phase: GuidedPhase, 
 			};
 		case 'equip':
 			return console_
-				? { text: `Give ${name} a full deck of ${slots} cards.`, chip: `equip ${name}`, hint: 'Or use the Workshop: tap an empty slot to add cards.' }
-				: { text: `Give ${name} a full deck: tap an empty slot to add cards until all ${slots} are filled.` };
+				? { text: `Give ${name} a full deck of ${slots} cards.`, chip: `equip ${name}`, hint: 'Or use the Workshop: tap a card in Your cards, then an empty slot.' }
+				: { text: `Give ${name} a full deck: tap a card in Your cards, then tap one of ${name}'s empty slots. Fill all ${slots}.` };
 		case 'send':
 			return console_
 				? { text: `${name}'s deck is full. Send ${name} to the ring.`, chip: `send ${name} to the ring` }
@@ -59,7 +59,7 @@ export function guidedCopy(surface: 'console' | 'workshop', phase: GuidedPhase, 
 		case 'change_card':
 			return console_
 				? { text: `${name} has fought a fight. Now try changing a card. Type help unequip to see how, or use the Workshop.`, chip: 'help unequip' }
-				: { text: `${name} has fought a fight. Now try changing a card: tap one of ${name}'s cards, then tap an empty slot or your cards to move it.` };
+				: { text: `${name} has fought a fight. Now try changing a card: tap one of ${name}'s cards, then tap an empty slot, or Your cards, to move it there.` };
 		default:
 			return null;
 	}

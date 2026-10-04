@@ -206,7 +206,7 @@ describe('useGuidedStart', () => {
 describe('GuidedStartBox', () => {
   it('shows the Workshop equip copy with the name and slots, and no chip', () => {
     render(<GuidedStartBox surface="workshop" phase="equip" name="Saffron" slots={5} dismiss={() => undefined} />);
-    expect(screen.getByText('Give Saffron a full deck: tap an empty slot to add cards until all 5 are filled.')).toBeInTheDocument();
+    expect(screen.getByText('Give Saffron a full deck: tap a card in Your cards, then tap one of Saffron\'s empty slots. Fill all 5.')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /equip/ })).toBeNull();
   });
 

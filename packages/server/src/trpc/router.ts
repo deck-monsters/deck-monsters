@@ -24,6 +24,7 @@ import {
 	type ShopItemSection,
 } from '@deck-monsters/engine';
 import { buildQuickActions } from '../quick-actions.js';
+import { movedSummary } from './move-summary.js';
 import { t } from './trpc.js';
 import { protectedProcedure, serviceProcedure } from './middleware.js';
 import type { RoomManager } from '../room-manager.js';
@@ -1818,7 +1819,7 @@ export function createRouter(roomManager: RoomManager, chat: ChatService = new C
 					// A partial move names why it stopped short (a full hand, a card the monster
 					// cannot hold, the copy limit): the engine's own line saying so is no longer
 					// published (10b #195), so the summary has to.
-					text: `Moved ${result.movedCount} ${input.cardName} from ${result.fromMonsterName} to ${result.toMonsterName}.${result.blockedBy ? ` ${result.blockedBy}` : ''}`,
+					text: `${movedSummary(result.movedCount, result.fromMonsterName, result.toMonsterName, input.cardName)}${result.blockedBy ? ` ${result.blockedBy}` : ''}`,
 					operation: 'moveCard',
 				});
 				eventBus.publish({
@@ -2030,7 +2031,7 @@ export function createRouter(roomManager: RoomManager, chat: ChatService = new C
 					// Reasons ride the summary: the engine's lines that gave them are no longer
 					// published (10b #195). Each distinct reason once.
 					text: [
-						`Moved ${movedCount} cards from ${fromMonsterName} to ${toMonsterName}.`,
+						movedSummary(movedCount, fromMonsterName, toMonsterName),
 						...(failures.length > 0
 							? [`Could not move: ${failures.map((f) => `${f.cardName} (${f.reason.replace(/\.$/, '')})`).join(', ')}.`]
 							: []),

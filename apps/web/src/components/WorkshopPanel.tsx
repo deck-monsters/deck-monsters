@@ -27,8 +27,6 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
   const [selectedCards, setSelectedCards] = useState<SelectionState[]>([]);
   const [activeMonsterFilter, setActiveMonsterFilter] = useState<string | null>(null);
   const inventoryRef = useRef<HTMLDivElement>(null);
-  const monsterRowRef = useRef<HTMLDivElement>(null);
-  const [visibleMonsterIndex, setVisibleMonsterIndex] = useState(0);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showSpawn, setShowSpawn] = useState(false);
@@ -597,40 +595,6 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
     }
   }
 
-  /*
-    Below 900px the monster row becomes a scroll-snapped carousel, so a player with more
-    than one monster sees one panel and a ~44px sliver of the next. The sliver was the only
-    hint that anything else existed, and cut mid-word it read as a rendering fault rather
-    than an affordance. The dots say how many monsters there are and which one you are on.
-    See docs/architecture/web-workspace.md.
-  */
-  const handleMonsterRowScroll = useCallback(() => {
-    const row = monsterRowRef.current;
-    if (!row) return;
-    // Nearest panel to the row's left edge, which is where scroll-snap parks them.
-    let nearest = 0;
-    let best = Infinity;
-    for (const [index, panel] of [...row.children].entries()) {
-      const distance = Math.abs((panel as HTMLElement).offsetLeft - row.scrollLeft - row.clientLeft);
-      if (distance < best) {
-        best = distance;
-        nearest = index;
-      }
-    }
-    setVisibleMonsterIndex(nearest);
-  }, []);
-
-  const scrollToMonster = useCallback((index: number) => {
-    const panel = monsterRowRef.current?.children[index] as HTMLElement | undefined;
-    if (!panel) return;
-    const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-    panel.scrollIntoView({
-      behavior: reduceMotion ? 'auto' : 'smooth',
-      inline: 'start',
-      block: 'nearest',
-    });
-  }, []);
-
   return (
     <div className="workshop-view">
       <div className="workshop-header">
@@ -739,7 +703,7 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
           </p>
         </div>
       ) : (
-      <div className="workshop-monster-row" ref={monsterRowRef} onScroll={handleMonsterRowScroll}>
+      <div className="workshop-monster-row">
         {monsters.map((monster) => {
           // Once per monster per render: the reason, then the sentence built from it.
           const reason = selectedInventoryCardName ? refusalFor(selectedInventoryCardName, monster) : null;
@@ -793,23 +757,6 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
           );
         })}
       </div>
-      )}
-
-      {monsters.length > 1 && (
-        <div className="workshop-monster-dots" role="tablist" aria-label="Monsters">
-          {monsters.map((monster, index) => (
-            <button
-              title={`Show ${monster.name}`}
-              key={monster.name}
-              type="button"
-              role="tab"
-              className={`workshop-monster-dot${index === visibleMonsterIndex ? ' active' : ''}`}
-              aria-selected={index === visibleMonsterIndex}
-              aria-label={monster.name}
-              onClick={() => scrollToMonster(index)}
-            />
-          ))}
-        </div>
       )}
 
       <div ref={inventoryRef}>
