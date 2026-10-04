@@ -112,6 +112,8 @@ current contract.
 | [`docs/operations/observability.md`](docs/operations/observability.md) | Metrics, logging, or Grafana dashboards |
 | [`docs/reference/prompt-answer-contract.md`](docs/reference/prompt-answer-contract.md) | Any `channel({ question, choices })` call site or connector answer encoding |
 | [`docs/operations/local-testing.md`](docs/operations/local-testing.md) | Manual end-to-end verification, including reusable local test rooms |
+| [`docs/agents/production-playthroughs.md`](docs/agents/production-playthroughs.md) | A browser playthrough of production or the local app |
+| [`docs/reference/new-player-walk-2.md`](docs/reference/new-player-walk-2.md) | What a first-time production session actually found confusing |
 | [`docs/operations/deployment.md`](docs/operations/deployment.md) | Railway/Supabase deployment or production environment configuration |
 | [`docs/operations/state-blob-drop.md`](docs/operations/state-blob-drop.md) | Shipping the `rooms.state_blob` drop migration (step B) |
 | [`docs/operations/cloud-development.md`](docs/operations/cloud-development.md) | Cursor Cloud setup, Docker, or remote/local Supabase in Cloud |

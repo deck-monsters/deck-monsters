@@ -8,7 +8,7 @@ tags: [roadmap, chat, web, server, social]
 ---
 # 41 — Room chat
 
-**Status:** In progress (2026-10-01): M1–M4 built and reviewed. Cursor's live check is recorded in [chat-check](../reference/chat-check.md) (all 17 items passed; no new player-facing text). From its notes: `m …` is no longer claimed by the engine's chat fallback, so it stays an answer to an open question, and bug 214 (generated names with a dictionary gloss or a stray `null`) is fixed. In PR #420.
+**Status:** Shipped in #420 (live 2026-10-01: both services deployed, migration applied, RLS on, no errors). M1–M4 done; Cursor's live check passed all 17 items ([chat-check](../reference/chat-check.md)). The plan stays active for its backlog: the Discord bridge, moderation, and notifications.
 
 ## Why
 
@@ -153,6 +153,12 @@ Implementers use these exactly. Anything else is a `DRAFT(41)` placeholder.
 >
 > Messages show in the Chat tab and in the Console. They stay until everyone who has played in
 > the room lately has had a chance to read them, and never longer than 30 days.
+
+## Actionable remainder
+
+- [ ] A Discord bridge for room chat (see the backlog below).
+- [ ] Reporting and moderation.
+- [ ] Notifications for a DM.
 
 ## Backlog
 

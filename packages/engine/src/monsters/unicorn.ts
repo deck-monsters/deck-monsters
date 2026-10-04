@@ -38,7 +38,8 @@ import BaseMonster from './base.js';
  *   - Spenser, The Faerie Queene II.v.10 (1590): "slips aside", "strikes in the stocke, ne
  *     thence can be releast".
  *   - Bosworth-Toller, án-horn: Old English "ānhorn", a unicorn (the rare witness line).
- * The look-at line lets the old authorities quarrel; the pools below are who may swear.
+ * The look-at line has one authority swear to something the unicorn then undoes in front of
+ * you; the pools below are who may swear.
  */
 
 const COATS = ['ivory white', 'winter white', 'tawny', 'white with a dark-red head'];
@@ -73,7 +74,21 @@ const VOICES = ['low as a lowing ox', 'clear as a bell', 'startlingly dissonant'
 // Which detail this monster's "witness" swears to. Only one is shown so `look at` stays
 // to three variant clauses (build and coat, horn, witness detail); the others are still
 // generated and kept in options for later flavour.
-const WITNESS_DETAILS = ['eyes', 'retreat', 'voice'];
+const WITNESS_DETAILS = ['eyes', 'retreat', 'voice', 'horn'];
+
+/*
+ * Where you actually found the unicorn, against an authority's lonely wilderness (owner,
+ * 2026-10-04: "But just this morning you found them in the garden, eating your roses").
+ * The joke is the gap between the grand claim and your own back yard, so a sighting that
+ * would agree with the claim (`unless`) is never paired with it.
+ */
+const SIGHTINGS: { where: string; unless?: string }[] = [
+	{ where: 'in your garden, eating your roses', unless: 'an enclosed garden' },
+	{ where: 'in your kitchen, eating the bread' },
+	{ where: 'at the village well, drinking out of the bucket' },
+	{ where: 'in your orchard, knocking down the apples' },
+	{ where: 'asleep in your hayloft' },
+];
 
 // Who swears to the witness detail, and in what shape. The shape, both authorities, and the
 // commoner are all drawn at spawn and kept in options, so `look at` reads the same after a
@@ -83,7 +98,21 @@ const COMMONERS = [
 	{ who: 'a drunken sailor', pronoun: 'he' },
 	{ who: 'a very old woman in the market', pronoun: 'she' },
 ];
-const WITNESS_SHAPES = ['liar', 'liar', 'saith', 'commoner'];
+// What you noticed about the horn up close, besides its colour. The owner's example was the
+// candy cane; the rest keep the same note of nonsense.
+const HORN_ODDITIES = [
+	'tasted a little like a candy cane',
+	'smelled faintly of toast',
+	'whistled a little when the wind blew',
+	'had a piñon jay nesting near the tip',
+];
+/*
+ * `seen` is the line the owner asked for (roadmap 42 B): one authority makes a claim and the
+ * unicorn, in front of you, undoes it. The quarrel is shown rather than reported. It replaced
+ * `liar` ("Pliny swears…; Aelian calls Pliny a liar") and `saith`, which only told the reader
+ * that two names disagreed. Saved unicorns with either old shape read as `seen`.
+ */
+const WITNESS_SHAPES = ['seen', 'seen', 'seen', 'commoner'];
 
 // About one look-at in twenty ends with the Old English word for the beast.
 const ANHORN_CHANCE = [true, ...Array(19).fill(false)];
@@ -103,12 +132,20 @@ class Unicorn extends BaseMonster {
 			retreat: sample(RETREATS),
 			voice: sample(VOICES),
 			witness: sample(WITNESS_DETAILS),
-			witnessShape: sample(WITNESS_SHAPES),
-			swearer: sample(AUTHORITIES),
-			doubter: sample(AUTHORITIES),
-			commoner: sample(COMMONERS.map(({ who }) => who)),
 			anhorn: sample(ANHORN_CHANCE),
 			icon: '🦄',
+			// How the witness line is told is drawn only for a new unicorn. A saved one that
+			// already has its witness detail but predates these keys must not redraw them on
+			// every restore (hydrateMonster spreads saved options into this constructor), or
+			// its description would change between looks. It reads the getters' fixed
+			// fallbacks instead.
+			...(options.witness === undefined ? {
+				witnessShape: sample(WITNESS_SHAPES),
+				swearer: sample(AUTHORITIES),
+				commoner: sample(COMMONERS.map(({ who }) => who)),
+				// One stored number fixes what you saw and how it is told.
+				sightingRoll: Math.random(),
+			} : {}),
 		};
 
 		super(Object.assign(defaultOptions, options));
@@ -143,39 +180,78 @@ class Unicorn extends BaseMonster {
 	}
 
 	get witnessShape(): string {
-		return (this.options.witnessShape as string) ?? 'liar';
+		return (this.options.witnessShape as string) ?? 'seen';
 	}
 
 	get swearer(): string {
 		return (this.options.swearer as string) ?? AUTHORITIES[0];
 	}
 
-	// Never the swearer: an authority does not call themself a liar. A clash drawn at spawn
-	// falls through to the next name in the pool, so the result is stable across restores.
-	get doubter(): string {
-		const drawn = (this.options.doubter as string) ?? AUTHORITIES[1];
-		if (drawn !== this.swearer) return drawn;
-		return AUTHORITIES[(AUTHORITIES.indexOf(drawn) + 1) % AUTHORITIES.length];
-	}
-
 	get commoner(): { who: string; pronoun: string } {
 		return COMMONERS.find(({ who }) => who === this.options.commoner) ?? COMMONERS[0];
 	}
 
+	/** In [0, 1). Unicorns saved before it existed get 0, so their line is stable too. */
+	get sightingRoll(): number {
+		const roll = Number(this.options.sightingRoll);
+		return Number.isFinite(roll) && roll >= 0 && roll < 1 ? roll : 0;
+	}
+
+	/** Picks from a list with the stored roll; `salt` lets two picks differ. */
+	private pick<T>(list: readonly T[], salt = 0): T {
+		const roll = (this.sightingRoll * (1 + salt * 7)) % 1;
+		return list[Math.floor(roll * list.length) % list.length];
+	}
+
+	/** A value from `pool` that is never the claimed one. */
+	private other(pool: readonly string[], claimed: string, salt = 0): string {
+		const rest = pool.filter(value => value !== claimed);
+		return this.pick(rest.length > 0 ? rest : pool, salt);
+	}
+
 	get witnessLine(): string {
-		const detail = this.witnessDetail;
-		switch (this.witnessShape) {
-			case 'saith':
-				return `So saith ${this.swearer}: ${detail}. ${this.doubter} saith otherwise, and loudly.`;
-			case 'commoner': {
-				const { who, pronoun } = this.commoner;
-				return `${capitalize(who)} swears that ${detail}. ${capitalize(pronoun)} is not believed, but ${pronoun} is not wrong.`;
+		if (this.witnessShape === 'commoner') {
+			const { who, pronoun } = this.commoner;
+			return `${capitalize(who)} swears that ${this.witnessDetail}. ${capitalize(pronoun)} is not believed, but ${pronoun} is not wrong.`;
+		}
+		return this.seenLine;
+	}
+
+	/** An authority's claim, then what the unicorn does in front of you. */
+	get seenLine(): string {
+		const p = this.pronouns;
+		const He = capitalize(p.he);
+		const who = this.swearer;
+		switch (this.witness) {
+			case 'voice': {
+				const heard = this.other(VOICES, this.voice);
+				return this.pick([
+					`${who} says ${p.his} voice is ${this.voice}. But just this morning ${p.he} called across the yard, ${heard}.`,
+					`${who} wrote that ${p.his} voice is ${this.voice}. ${He} ${agree(p, 'hums', 'hum')} at dusk, ${heard}, and the dogs leave the room.`,
+				], 1);
 			}
-			default:
-				return `${this.swearer} swears that ${detail}; ${this.doubter} calls ${this.swearer} a liar.`;
+			case 'retreat': {
+				const sightings = SIGHTINGS.filter(({ unless }) => unless !== this.retreat);
+				const { where } = this.pick(sightings, 2);
+				return `${who} says ${p.he} ${agree(p, 'keeps', 'keep')} to ${this.retreat}. But just this morning you found ${p.him} ${where}.`;
+			}
+			case 'horn': {
+				const claimed = this.other(HORNS, this.horn);
+				// A bit of nonsense keeps the line from reading dry (owner, 2026-10-04).
+				const oddly = this.pick(HORN_ODDITIES, 2);
+				return `${who} swears ${p.his} horn is ${claimed}. You have seen ${p.his} horn up close: ${this.horn}, and ${oddly}.`;
+			}
+			default: {
+				const seen = this.other(EYES, this.eyes);
+				return this.pick([
+					`${who} says ${p.his} eyes are ${this.eyes}. But ${p.he} ${agree(p, 'blinks', 'blink')} slowly, and you would swear they are ${seen}.`,
+					`${who} wrote that ${p.his} eyes are ${this.eyes}. ${He} ${agree(p, 'turns', 'turn')} to look at you, and ${p.his} eyes are ${seen}.`,
+				], 1);
+			}
 		}
 	}
 
+	/** What the commoner swears to: always the truth, which is the joke. */
 	get witnessDetail(): string {
 		const { pronouns } = this;
 		switch (this.witness) {
@@ -183,6 +259,8 @@ class Unicorn extends BaseMonster {
 				return `${pronouns.he} ${agree(pronouns, 'keeps', 'keep')} to ${this.retreat}`;
 			case 'voice':
 				return `${pronouns.his} voice is ${this.voice}`;
+			// No horn case: the description already names the horn, so a commoner who is "not
+			// wrong" about it says nothing new. A horn witness falls back to the eyes.
 			default:
 				return `${pronouns.his} eyes are ${this.eyes}`;
 		}
