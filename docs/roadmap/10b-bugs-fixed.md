@@ -5114,6 +5114,26 @@ had timed out. See [events, prompts, and replay](../architecture/events-prompts-
 
 **Status**: Fixed. Needs a live check on a phone.
 
+### 218. Tapping a fight showed nothing, and its play-by-play lost the opening lines — FIXED
+
+Found by Cursor's new-player walk ([walk 2](../reference/new-player-walk-2.md), Fights row) and
+its review, pass 43 I5.
+
+- **A tap that looked dead.** `FightLogPanel` drew the detail only when `detail.data` existed,
+  so loading, a failed load and a fight with no saved events all drew nothing. Each now has a
+  line (`Loading the play-by-play…`, a retry, `Nothing was saved for this fight.`). The server
+  can return no events for a fight whose begin it never saw (a restart mid-fight leaves a
+  one-millisecond window), so the empty state is real, not just defensive.
+- **The opening lines were cut.** `fight-summary-writer`'s `onRingFight` skipped only
+  `fightConcludes`, so `announceFight`'s later `ring.fight` (no `eventName`, sent after the
+  opening narration) moved `startedAt` forward, and the play-by-play, which loads events by
+  time window, began after the opening. Only `fightBegins` sets the start now; a newer begin
+  still replaces an unresolved one, so one fight's start can't leak into the next. The test
+  fails on the old writer.
+- The row's `Card: Soften` read as the winning card; it says `Card found: Soften`.
+
+**Status**: Fixed.
+
 ## Closed without a fix
 
 These were open investigations the owner closed on 2026-09-28. Reopen with new evidence.

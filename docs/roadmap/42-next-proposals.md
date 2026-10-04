@@ -321,5 +321,5 @@ naming who fell and what each player won (XP, coins, the card). It needs its own
   little easier to reach without tipping the balance.
 - **Order:** I first, as its own PR once #421 merges; then A + C + E1; then H; then D.
 
-I is planned in [43 — Small fixes from the new-player walk](43-walk-fixes.md), with the
+I is built in [43 — Small fixes from the new-player walk](43-walk-fixes.md), with the
 starting coins as part of its task I3.

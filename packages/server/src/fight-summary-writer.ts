@@ -143,13 +143,14 @@ export function attachFightSummaryWriter(
 function onRingFight(roomId: string, event: GameEvent): void {
 	const payload = event.payload as { eventName?: string };
 	/*
-	 * Only the begin event starts the window, and only the first one counts. What broke: the
-	 * guard skipped just `fightConcludes`, so `announceFight`'s later `ring.fight` (no
-	 * eventName, published after the opening narration) overwrote startedAt and the fight log
-	 * lost its opening lines. Any other ring.fight is not a start.
+	 * Only the begin event starts the window. What broke: the guard skipped just
+	 * `fightConcludes`, so `announceFight`'s later `ring.fight` (no eventName, published after
+	 * the opening narration) overwrote startedAt and the fight log lost its opening lines. Any
+	 * other ring.fight is not a start. A new begin still replaces an old pending one: each
+	 * fight has exactly one, and a fight that never resolved must not lend its start time to
+	 * the next fight's window.
 	 */
 	if (payload.eventName !== 'fightBegins') return;
-	if (pendingByRoom.get(roomId)) return;
 
 	const startedAt = new Date(event.timestamp);
 	pendingByRoom.set(roomId, { startedAt });
