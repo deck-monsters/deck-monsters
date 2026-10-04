@@ -17,6 +17,7 @@ import {
 	holdableByLevel,
 	monsterTypeSummary,
 	chooseName,
+	SPAWN_ERRORS,
 	signatureCardType,
 	equipResultMessage,
 	getXpCapForLevel,
@@ -1263,7 +1264,7 @@ export function createRouter(roomManager: RoomManager, chat: ChatService = new C
 				await roomManager.assertMember(ctx.userId, input.roomId);
 				const Monster = allMonsters[input.type] as unknown as { creatureType?: string } | undefined;
 				if (!Monster) {
-					throw new TRPCError({ code: 'BAD_REQUEST', message: 'That monster type is not available.' });
+					throw new TRPCError({ code: 'BAD_REQUEST', message: SPAWN_ERRORS.typeUnavailable });
 				}
 				const game = await roomManager.getGame(input.roomId);
 				const taken = Object.keys(game.getAllMonstersLookup?.() ?? {});
@@ -1313,7 +1314,7 @@ export function createRouter(roomManager: RoomManager, chat: ChatService = new C
 			.mutation(async ({ input, ctx }) => {
 				await roomManager.assertMember(ctx.userId, input.roomId);
 				if (!allMonsters[input.type]) {
-					throw new TRPCError({ code: 'BAD_REQUEST', message: 'That monster type is not available.' });
+					throw new TRPCError({ code: 'BAD_REQUEST', message: SPAWN_ERRORS.typeUnavailable });
 				}
 				const [game, eventBus] = await Promise.all([roomManager.getGame(input.roomId), roomManager.getEventBus(input.roomId)]);
 				const existingCharacter = game.characters?.[ctx.userId];
@@ -1331,7 +1332,7 @@ export function createRouter(roomManager: RoomManager, chat: ChatService = new C
 						// character in this game, and this channel throws on any question — so the
 						// clash has to be caught here, before the engine can ask about it.
 						if (game.findCharacterByName?.(input.character.name)) {
-							throw new TRPCError({ code: 'CONFLICT', message: 'That name is already taken in this room.' });
+							throw new TRPCError({ code: 'CONFLICT', message: SPAWN_ERRORS.characterNameTaken });
 						}
 						// Prompt-free because every question `createCharacter` asks has its answer
 						// supplied: class (index 0, the only one), gender, name and avatar.
@@ -1352,7 +1353,7 @@ export function createRouter(roomManager: RoomManager, chat: ChatService = new C
 						throw new TRPCError({ code: 'NOT_FOUND', message: "You don't have a character in this room yet — fill in the character details to create one." });
 					}
 					const takenNames = Object.keys(game.getAllMonstersLookup?.() ?? {});
-					if (takenNames.includes(input.name.toLowerCase())) throw new TRPCError({ code: 'CONFLICT', message: 'That monster name is already taken.' });
+					if (takenNames.includes(input.name.toLowerCase())) throw new TRPCError({ code: 'CONFLICT', message: SPAWN_ERRORS.monsterNameTaken });
 					return character.spawnMonster(channel, { type: input.type, gender: input.gender, name: input.name, color: input.color, game });
 				}) as { givenName?: unknown; creatureType?: unknown };
 				return { ok: true as const, monsterName: String(monster?.givenName ?? input.name), monsterType: String(monster?.creatureType ?? '') };

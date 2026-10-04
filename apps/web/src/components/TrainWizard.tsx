@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
-import { lookEntry, lookPreview, lookQuestionShort } from '@deck-monsters/engine';
+import { SPAWN_ERRORS, lookEntry, lookPreview, lookQuestionShort } from '@deck-monsters/engine';
 
 /*
  * The Workshop's Train monster wizard (roadmap 44 K4). It replaces a one-screen form that
  * asked for a type, pronouns, a name and "Appearance" (with `gold and black` as the hint for
  * every type) all at once. One question per screen, each with an example, ending in a Ready
  * screen that shows what the look line will read like. The answers still go out as the same
- * `spawnMonster` input the form sent; only how they are gathered changed.
+ * `spawnMonster` input the old form sent; only how they are gathered changed.
  *
  * Every step's answer lives here, not in the step, so Back never loses anything.
  */
@@ -42,8 +42,8 @@ export type TrainWizardProps = {
   busy: boolean;
   /** Two names for this type and pronouns; may reject (the wizard then shows no chips). */
   suggestNames: (input: { type: number; gender: Gender }) => Promise<string[]>;
-  /** Resolves with an error message, or null when the monster was trained. */
-  onTrain: (input: TrainWizardInput) => Promise<string | null>;
+  /** Resolves with what went wrong, or null when the monster was trained. */
+  onTrain: (input: TrainWizardInput) => Promise<TrainFailure | null>;
 };
 
 // The look question and preview take the possessive; "answers" agrees with "he".
@@ -63,12 +63,40 @@ const STEP_HEADINGS: Record<StepId, string> = {
   ready: 'Ready',
 };
 
-// Which step a server message belongs to, so a name clash lands you on Name, not on Ready.
-export const stepForError = (message: string, needsCharacter: boolean): StepId => {
-  if (/monster name/i.test(message)) return 'name';
-  if (needsCharacter && /name is already taken|character/i.test(message)) return 'about';
-  if (/type/i.test(message)) return 'type';
-  return 'ready';
+/** A refused train: the message to show, and the input fields the server named, if it did. */
+export type TrainFailure = { message: string; fields?: string[] };
+
+/**
+ * Reads a thrown tRPC error. A failed input check arrives with a JSON list of issues as its
+ * message; the first path segment of each says which field failed (`name`, `color`, ...).
+ */
+export const toTrainFailure = (err: unknown): TrainFailure => {
+  const raw = err instanceof Error ? err.message : 'Could not train that monster';
+  try {
+    const issues: unknown = JSON.parse(raw);
+    if (Array.isArray(issues) && issues.length > 0) {
+      const fields = issues.map((issue) => String((issue as { path?: unknown[] })?.path?.[0] ?? '')).filter(Boolean);
+      const messages = issues.map((issue) => String((issue as { message?: unknown })?.message ?? '')).filter(Boolean);
+      return { message: messages.join(' ') || raw, fields };
+    }
+  } catch {
+    // Not JSON: an ordinary refusal, matched by its exact wording below.
+  }
+  return { message: raw };
+};
+
+const FIELD_STEPS: Record<string, StepId> = { type: 'type', gender: 'pronouns', name: 'name', color: 'look', character: 'about' };
+
+// Which step a refusal belongs to, so a name clash lands you on Name, not on Ready. Exact
+// messages (shared with the server as SPAWN_ERRORS) and named fields only; anything else
+// stays on Ready with the message, rather than guessing from words in it.
+export const stepForError = (failure: TrainFailure, needsCharacter: boolean): StepId => {
+  const { message, fields = [] } = failure;
+  if (message === SPAWN_ERRORS.monsterNameTaken) return 'name';
+  if (message === SPAWN_ERRORS.characterNameTaken) return needsCharacter ? 'about' : 'ready';
+  if (message === SPAWN_ERRORS.typeUnavailable) return 'type';
+  const step = fields.map((field) => FIELD_STEPS[field]).find((id): id is StepId => id !== undefined);
+  return step === 'about' && !needsCharacter ? 'ready' : (step ?? 'ready');
 };
 
 const asGender = (key: string): Gender => (key === 'male' || key === 'female' ? key : 'androgynous');
@@ -113,13 +141,22 @@ export default function TrainWizard({
   const example = lookEntry(typeLabel).example;
   const previewLine = lookPreview(typeLabel, (trimmedLook || example).toLowerCase(), { his: words.his });
 
+  // Only the newest request may set the chips: a slow answer for the old type or pronouns
+  // must not overwrite the answer for the current ones (or a later "More names").
+  const latestSuggestion = useRef(0);
+  const submitting = useRef(false);
   const fetchSuggestions = useCallback(
     (typeValue: number, genderValue: Gender) => {
       const key = `${typeValue}:${genderValue}`;
+      const request = ++latestSuggestion.current;
       suggestNames({ type: typeValue, gender: genderValue })
-        .then((names) => setSuggestions({ key, names: names.slice(0, 2) }))
+        .then((names) => {
+          if (request === latestSuggestion.current) setSuggestions({ key, names: names.slice(0, 2) });
+        })
         // No chips is fine: the box still works. The name lists are Node-only, so this can fail.
-        .catch(() => setSuggestions({ key, names: [] }));
+        .catch(() => {
+          if (request === latestSuggestion.current) setSuggestions({ key, names: [] });
+        });
     },
     [suggestNames],
   );
@@ -160,20 +197,28 @@ export default function TrainWizard({
   };
 
   async function train() {
-    if (!chosenType || busy) return;
+    // A ref, set before the first await: a double Enter or tap in the same tick would
+    // otherwise send two trainings (`busy` only turns true on the next render).
+    if (!chosenType || busy || submitting.current) return;
+    submitting.current = true;
     setError(null);
-    const message = await onTrain({
-      type: chosenType.index,
-      gender,
-      name: trimmedName,
-      color: trimmedLook,
-      ...(needsCharacter
-        ? { character: { name: effectiveCharacterName.trim(), gender: characterGender, avatar: effectiveAvatar } }
-        : {}),
-    });
-    if (message !== null) {
-      setError(message);
-      goTo(stepForError(message, needsCharacter));
+    let failure: TrainFailure | null;
+    try {
+      failure = await onTrain({
+        type: chosenType.index,
+        gender,
+        name: trimmedName,
+        color: trimmedLook,
+        ...(needsCharacter
+          ? { character: { name: effectiveCharacterName.trim(), gender: characterGender, avatar: effectiveAvatar } }
+          : {}),
+      });
+    } finally {
+      submitting.current = false;
+    }
+    if (failure !== null) {
+      setError(failure.message);
+      goTo(stepForError(failure, needsCharacter));
     }
   }
 
@@ -265,7 +310,7 @@ export default function TrainWizard({
           <div className="train-wizard-suggestions">
             <span>Suggestions:</span>
             {suggestions.names.map((suggestion) => (
-              <button key={suggestion} type="button" className="btn train-wizard-chip" title="DRAFT(44) Use this name" onClick={() => setName(suggestion)}>{suggestion}</button>
+              <button key={suggestion} type="button" className="btn train-wizard-chip" title={`Use ${suggestion} as the name`} onClick={() => setName(suggestion)}>{suggestion}</button>
             ))}
             <button
               type="button"
@@ -305,12 +350,12 @@ export default function TrainWizard({
 
       <div className="train-wizard-actions">
         {stepIndex > 0 && (
-          <button type="button" className="btn" title="DRAFT(44) Go back one step" onClick={() => { setError(null); setStepIndex((at) => Math.max(at - 1, 0)); }}>Back</button>
+          <button type="button" className="btn" title="Go back to the last step" onClick={() => { setError(null); setStepIndex((at) => Math.max(at - 1, 0)); }}>Back</button>
         )}
         {last ? (
-          <button type="submit" className="btn" title="DRAFT(44) Train this monster" disabled={busy}>Train {trimmedName}</button>
+          <button type="submit" className="btn" title={`Train ${trimmedName} with these answers`} disabled={busy}>Train {trimmedName}</button>
         ) : (
-          <button type="submit" className="btn" title="DRAFT(44) Go to the next step" disabled={!canNext}>Next</button>
+          <button type="submit" className="btn" title="Go to the next step" disabled={!canNext}>Next</button>
         )}
       </div>
     </form>

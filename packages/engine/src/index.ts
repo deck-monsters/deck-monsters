@@ -119,6 +119,7 @@ export type { HoldableLevel } from './cards/helpers/holdable.js';
 export { LOOKS, lookEntry, lookPreview, lookQuestion, lookQuestionShort } from './monsters/helpers/looks.js';
 export type { LookEntry, LookPronouns } from './monsters/helpers/looks.js';
 /** Name suggestions (fantasy-names, Node-only) and each type's signature card, for the web training wizard. */
+export { SPAWN_ERRORS } from './helpers/spawn-errors.js';
 export { chooseName } from './helpers/names.js';
 export { signatureCardType } from './cards/helpers/signature.js';
 /** Every item class the engine knows about, for lookup by `itemType` — mirrors `allMonsters`. */

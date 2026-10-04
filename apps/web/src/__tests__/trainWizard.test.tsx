@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import TrainWizard, { stepForError, type TrainWizardProps } from '../components/TrainWizard.js';
+import TrainWizard, { stepForError, toTrainFailure, type TrainWizardProps } from '../components/TrainWizard.js';
 
 // Roadmap 44 K4: the Workshop's training wizard, one question per step.
 const types = [
@@ -230,7 +230,7 @@ describe('TrainWizard', () => {
   });
 
   it('returns to the Name step with the message when the name is taken', async () => {
-    const onTrain = vi.fn().mockResolvedValue('That monster name is already taken.');
+    const onTrain = vi.fn().mockResolvedValue({ message: 'That monster name is already taken.' });
     setup({ onTrain });
     next();
     next();
@@ -244,10 +244,74 @@ describe('TrainWizard', () => {
     expect(screen.getByLabelText('Name')).toHaveValue('Rex');
   });
 
-  it('maps server messages to the step at fault', () => {
-    expect(stepForError('That monster name is already taken.', false)).toBe('name');
-    expect(stepForError('That name is already taken in this room.', true)).toBe('about');
-    expect(stepForError('That monster type is not available.', false)).toBe('type');
-    expect(stepForError('Something else', false)).toBe('ready');
+  it('maps refusals to the step at fault by exact message or by named field', () => {
+    expect(stepForError({ message: 'That monster name is already taken.' }, false)).toBe('name');
+    expect(stepForError({ message: 'That name is already taken in this room.' }, true)).toBe('about');
+    expect(stepForError({ message: 'That name is already taken in this room.' }, false)).toBe('ready');
+    expect(stepForError({ message: 'That monster type is not available.' }, false)).toBe('type');
+    // Loose words no longer steer: a message that merely mentions a type or a name stays on Ready.
+    expect(stepForError({ message: 'Something about your type or name' }, true)).toBe('ready');
+    expect(stepForError({ message: 'x', fields: ['color'] }, false)).toBe('look');
+    expect(stepForError({ message: 'x', fields: ['gender'] }, false)).toBe('pronouns');
+    expect(stepForError({ message: 'x', fields: ['character'] }, true)).toBe('about');
+    expect(stepForError({ message: 'x', fields: ['character'] }, false)).toBe('ready');
+    expect(stepForError({ message: 'x', fields: ['roomId'] }, false)).toBe('ready');
+  });
+
+  it('reads a failed input check as the field it names', () => {
+    const issues = JSON.stringify([{ path: ['color'], message: 'String must contain at most 100 character(s)' }]);
+    expect(toTrainFailure(new Error(issues))).toEqual({
+      message: 'String must contain at most 100 character(s)',
+      fields: ['color'],
+    });
+    expect(toTrainFailure(new Error('That monster name is already taken.'))).toEqual({ message: 'That monster name is already taken.' });
+    expect(toTrainFailure('nope').message).toBe('Could not train that monster');
+  });
+
+  it('ignores a suggestion answer that is not for the latest request', async () => {
+    const resolvers: Array<(names: string[]) => void> = [];
+    const suggestNames = vi.fn(() => new Promise<string[]>((resolve) => { resolvers.push(resolve); }));
+    setup({ suggestNames });
+    next();
+    next();
+    fireEvent.click(screen.getByTitle('Suggest two other names'));
+    await waitFor(() => expect(resolvers).toHaveLength(2));
+    resolvers[1]!(['Newer', 'Fresh']);
+    await screen.findByRole('button', { name: 'Newer' });
+    resolvers[0]!(['Older', 'Stale']);
+    await Promise.resolve();
+    expect(screen.queryByRole('button', { name: 'Older' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Newer' })).toBeInTheDocument();
+  });
+
+  it('sends the training once on a double submit', async () => {
+    let finish: (value: null) => void = () => undefined;
+    const onTrain = vi.fn(() => new Promise<null>((resolve) => { finish = resolve; }));
+    setup({ onTrain });
+    next();
+    next();
+    fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Rex' } });
+    next();
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'green' } });
+    next();
+    const form = screen.getByRole('button', { name: 'Train Rex' }).closest('form')!;
+    fireEvent.submit(form);
+    fireEvent.submit(form);
+    expect(onTrain).toHaveBeenCalledTimes(1);
+    finish(null);
+  });
+
+  it('gives the buttons their titles', async () => {
+    setup();
+    expect(screen.getByRole('button', { name: 'Next' })).toHaveAttribute('title', 'Go to the next step');
+    next();
+    expect(screen.getByRole('button', { name: 'Back' })).toHaveAttribute('title', 'Go back to the last step');
+    next();
+    fireEvent.click(await screen.findByRole('button', { name: 'Vesper' }));
+    expect(screen.getByRole('button', { name: 'Vesper' })).toHaveAttribute('title', 'Use Vesper as the name');
+    next();
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'green' } });
+    next();
+    expect(screen.getByRole('button', { name: 'Train Vesper' })).toHaveAttribute('title', 'Train Vesper with these answers');
   });
 });

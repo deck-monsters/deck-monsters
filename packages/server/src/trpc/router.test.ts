@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { TRPCError } from '@trpc/server';
-import { Game, allItems } from '@deck-monsters/engine';
+import { Game, SPAWN_ERRORS, allItems } from '@deck-monsters/engine';
 
 import { createRouter, activeFlows, activePromptFreeMutations } from './router.js';
 
@@ -1237,6 +1237,33 @@ describe('trpc/router monster lifecycle procedures', () => {
 		expect(names).to.have.length(2);
 		expect(names[0]).not.to.equal(names[1]);
 		expect(names.every((name) => name.length > 0 && !/[()]/.test(name))).to.equal(true);
+	});
+
+	it('never suggests a name taken in the room, whatever its case', async () => {
+		// The room's lookup keys are lowercased; the lists' names are capitalised.
+		const lookup: Record<string, unknown> = {};
+		const roomManager = {
+			assertMember: async () => undefined,
+			getGame: async () => ({ getAllMonstersLookup: () => lookup }),
+		} as unknown as Parameters<typeof createRouter>[0];
+		const caller = createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false });
+		for (let i = 0; i < 15; i++) {
+			const { names } = await caller.game.suggestMonsterNames({ roomId: ROOM_ID, type: 1, gender: 'male' });
+			for (const name of names) {
+				expect(Object.keys(lookup), name).not.to.include(name.toLowerCase());
+				lookup[name.toLowerCase()] = {};
+			}
+		}
+	});
+
+	it('pins the spawn refusal wording the web wizard matches on', () => {
+		// The wizard sends the player back to the step at fault by exact message. Rewording one
+		// must be a deliberate change here and in the wizard's tests.
+		expect(SPAWN_ERRORS).to.deep.equal({
+			monsterNameTaken: 'That monster name is already taken.',
+			characterNameTaken: 'That name is already taken in this room.',
+			typeUnavailable: 'That monster type is not available.',
+		});
 	});
 
 	it('refuses name suggestions for a non-member and for an unknown type', async () => {

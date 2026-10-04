@@ -9,7 +9,7 @@ import CardDetailSheet from './CardDetailSheet.js';
 import { stableCardName, type CardFactsView } from '../utils/cards.js';
 import type { WorkshopCardLocation } from './CardSlot.js';
 import GuidedStartBox from './GuidedStartBox.js';
-import TrainWizard, { type TrainWizardInput } from './TrainWizard.js';
+import TrainWizard, { toTrainFailure, type TrainFailure, type TrainWizardInput } from './TrainWizard.js';
 import { useGuidedStart } from '../hooks/useGuidedStart.js';
 import { useDeckWorkshop } from '../hooks/useDeckWorkshop.js';
 import { RingFeedContext, type TrackedRingFeedEvent } from '../hooks/useRingFeed.js';
@@ -175,7 +175,7 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
 
   // The wizard owns the answers; this sends them and reports back, so a server error (a name
   // clash, say) shows in the wizard at the step at fault instead of closing it.
-  async function handleSpawn(input: TrainWizardInput): Promise<string | null> {
+  async function handleSpawn(input: TrainWizardInput): Promise<TrainFailure | null> {
     try {
       setError(null);
       const result = await spawnMonster(input);
@@ -183,7 +183,7 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
       setShowSpawn(false);
       return null;
     } catch (err) {
-      return err instanceof Error ? err.message : 'Could not train that monster';
+      return toTrainFailure(err);
     }
   }
 
@@ -620,7 +620,7 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
       <div className="workshop-train-row">
         {trainLine && <p className="workshop-train-line">{trainLine}</p>}
         <button
-          title={showSpawn ? 'Close the form without training' : 'Choose a type, a name and a look for a new monster'}
+          title={showSpawn ? 'Close without training' : 'Choose a type, a name and a look for a new monster'}
           className="btn"
           onClick={() => setShowSpawn((shown) => !shown)}
           disabled={!roomId || busy || (trainingFull && !showSpawn)}
@@ -641,7 +641,7 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
 		</div>
 	  )}
 	  {busy && !consoleFlowActive && <div className="workshop-banner">Applying changes…</div>}
-      {/* Same guide as the Console. Not on `spawn`: the first-run form already covers training. */}
+      {/* Same guide as the Console. Not on `spawn`: the first-run wizard already covers training. */}
       {!consoleFlowActive && guide.phase !== 'hidden' && guide.phase !== 'spawn' && (
         <GuidedStartBox surface="workshop" {...guide} />
       )}

@@ -33,7 +33,7 @@ type WorkshopMonster = {
 
 type WorkshopInventory = {
   // "No character in this room yet" is not the same as "a character with no monsters",
-  // and the workshop's first-run form depends on telling them apart.
+  // and the workshop's first-run wizard depends on telling them apart.
   hasCharacter: boolean;
   // Monster places at the character's side (engine `Beastmaster.monsterSlots`); the Train
   // row says how many are free.
@@ -105,7 +105,7 @@ export function useDeckWorkshop(roomId?: string) {
   /*
    * Only a player without a character needs these, and they are what the engine's
    * creation prompts would have asked for — the workshop's spawn mutation is prompt-free
-   * (docs/architecture/engine-concurrency-and-timing.md), so the answers come from the form
+   * (docs/architecture/engine-concurrency-and-timing.md), so the answers come from the wizard
    * instead.
    * The avatar list is random per request, which is what makes "Shuffle" a refetch.
    */

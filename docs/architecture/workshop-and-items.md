@@ -131,12 +131,12 @@ cards and why. A move that stops short (a full hand, a card the monster cannot h
 limit) returns `blockedBy` from `Beastmaster.moveCard`, and the move summaries carry it, since
 the engine's line that said so is no longer published. Publishing both printed an equip twice and a batch move as a line per card type plus
 the summary, which a player read as the game moving cards on its own (10b #195). Never add a prompt to an awaited Workshop path. Collect
-all answers in the form first, or use the interactive per-user command flow described in
+all answers in the wizard first, or use the interactive per-user command flow described in
 [engine concurrency and timing](engine-concurrency-and-timing.md).
 
 ## The guided start in the Workshop
 
-After the first-run form, the Workshop shows the same getting-started box as the Console,
+After the first-run wizard, the Workshop shows the same getting-started box as the Console,
 under the Train row and above the monsters, for every step except `spawn` (the wizard already
 covers training). Both surfaces read `hooks/useGuidedStart.ts`; the box is
 `components/GuidedStartBox.tsx` (the Workshop version has words only, no chips). It is hidden
@@ -197,8 +197,8 @@ The Workshop's Train monster button opens `components/TrainWizard.tsx`, one ques
 screen (About you on a first run only, then Type, Pronouns, Name, Look, Ready), replacing the
 old one-screen form. It still sends the same `spawnMonster` input; only the gathering changed.
 All answers live in the wizard, so Back keeps them. A server refusal returns the wizard to the
-step at fault (`stepForError`: a taken monster name goes to Name, a taken character name to
-About you) instead of closing it.
+step at fault (`stepForError`, by the exact `SPAWN_ERRORS` messages shared with the server, or
+by the field a failed input check names; anything unknown stays on Ready) instead of closing it.
 
 - Type cards read `spawnOptions` (`types[]` carries `summary`, `class` and `signatureCard`).
 - The Look step reads the engine's look table (`monsters/helpers/looks.ts`, browser-safe:
@@ -324,7 +324,7 @@ the price of levelling up the monster beside it, roadmap 39a). "Train monster" h
 row with a line built from `myInventory.monsterSlots` (the engine's `Beastmaster.monsterSlots`,
 never below the roster size) minus the monsters listed: the free-places sentence, or "Every
 place at your side is taken (1 monster / n monsters)." with the button disabled (Cancel stays
-usable if the form is already open). A first-run player (no character) gets
+usable if the wizard is already open). A first-run player (no character) gets
 the plain button. On a phone the header stays a row, with the pane's ⤢ link top-right, and the
 Train row stacks with the sentence at its natural height (bug 210) and the button at its own width, left-aligned (owner). A shop price of 0 reads **Free**, with its own confirm and success text.
 A fallen monster with a running revival (`revivesAt`, set only once `respawn()` starts, never
