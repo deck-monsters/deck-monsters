@@ -190,6 +190,8 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
   // there is no guarantee the updater runs before the code right after the `setState`
   // call that would need to read it.
   const resolvedPromptIdsRef = useRef<Set<string>>(new Set());
+  // Server time of this connection's handshake; null until one arrives.
+  const connectionStartedAtRef = useRef<number | null>(null);
   const consecutiveEmptyPromptPollsRef = useRef(0);
   // When each question first reached this Console, and when the latest poll was sent: a poll
   // sent after the arrival must have seen the prompt (the server registers it before
@@ -495,6 +497,11 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
     // needs to clear its reconnect notice flag when the connection recovers.
     if (event.type === 'handshake') {
       reconnectNoticeShownRef.current = false;
+      // When this connection began, by the server's clock (the same clock that stamps every
+      // event). Anything older than this that arrives next is replay, not news; see the
+      // prompt.request branch.
+      const serverTime = Date.parse(String((event.payload as { serverTime?: unknown } | undefined)?.serverTime ?? ''));
+      connectionStartedAtRef.current = Number.isFinite(serverTime) ? serverTime : event.timestamp;
       return;
     }
 
@@ -557,6 +564,21 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
     }
 
     if (event.type === 'prompt.request') {
+      /*
+       * A fresh connection (a reload, or a reconnect) replays the bus's recent events, and an
+       * ANSWERED question has no closing event: answering publishes nothing, so a replayed
+       * `prompt.request` looks exactly like an open one. Arming it left the Console in answer
+       * mode for a question the server no longer had, so the first command after a reload was
+       * sent as its answer ("Prompt is no longer active"), and the next real question then
+       * retired it as "Action cancelled." (roadmap 44 K6, walk-fixes check). A request stamped
+       * before this connection began is history: the `pendingPrompt` poll is what says whether
+       * it is still open, and it brings the question back if so.
+       */
+      const startedAt = connectionStartedAtRef.current;
+      if (startedAt !== null && event.timestamp < startedAt) {
+        void refetchPendingPrompt();
+        return;
+      }
       const promptPayload = event.payload as {
         requestId: string;
         question: string;
@@ -621,7 +643,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
       const { actions } = event.payload as { actions: QuickAction[] };
       setQuickActions(actions ?? []);
     }
-  }, [refetchMyMonsters, refetchMyInventory, supersedePrompt, setActivePromptId, user?.id]);
+  }, [refetchMyMonsters, refetchMyInventory, refetchPendingPrompt, supersedePrompt, setActivePromptId, user?.id]);
 
   const { reconnecting, seedCursor } = useRingFeedListener(onLiveEvent);
 

@@ -16,7 +16,7 @@ describe('commands/look-at.ts', () => {
 
 	const run = (command: string) => {
 		const character = { lookAtMonsters: sinon.stub().resolves() };
-		const game = { lookAtRing: sinon.stub().resolves(), log: sinon.stub() };
+		const game = { lookAtRing: sinon.stub().resolves(), lookAt: sinon.stub().resolves(), log: sinon.stub() };
 		const results = command.match(regex);
 		expect(results, command).to.not.equal(null);
 		return action({ channel: sinon.stub(), character, game, results, user: { id: 'u1' } }).then(() => ({ character, game }));
@@ -42,6 +42,23 @@ describe('commands/look-at.ts', () => {
 		const { character } = await run('look at monsters');
 
 		expect(character.lookAtMonsters).to.have.been.calledOnceWith(sinon.match.any, false);
+	});
+
+	it('reads "look at my monsters" (and "my monster") as "look at monsters"', async () => {
+		for (const command of ['look at my monsters', 'look at my monster', 'Look at my monsters']) {
+			const { character, game } = await run(command);
+			expect(character.lookAtMonsters, command).to.have.been.calledOnceWith(sinon.match.any, false);
+			expect(game.lookAt, command).not.to.have.been.called;
+		}
+	});
+
+	it('prefers a monster actually named "My monsters" over the filler reading', async () => {
+		const character = { lookAtMonsters: sinon.stub().resolves(), monsters: [{ givenName: 'My Monsters' }] };
+		const game = { lookAt: sinon.stub().resolves(), log: sinon.stub() };
+		const results = 'look at my monsters'.match(regex);
+		await action({ channel: sinon.stub(), character, game, results, user: { id: 'u1' } });
+		expect(game.lookAt).to.have.been.calledOnce;
+		expect(character.lookAtMonsters).not.to.have.been.called;
 	});
 
 	describe('parsing', () => {

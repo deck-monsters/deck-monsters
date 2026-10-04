@@ -73,8 +73,19 @@ function lookAtAction({ channel, character, game, results, user }: any): Promise
 					return game.lookAtItem(channel, thing);
 				case 'items':
 					return character.lookAtItems(channel);
-				default:
+				default: {
+					/*
+					 * The chip once read "Look at my monsters" and typing that answered "I don't see
+					 * a my monsters here." (walk-fixes check, roadmap 44 K6): "my" is filler for
+					 * `look at monsters`. A monster actually named "My monsters" still wins, since
+					 * the name is the more specific reading.
+					 */
+					const mine = type === '' ? thing.match(/^my monsters?( in detail)?$/) : null;
+					const named = Array.isArray(character?.monsters)
+						&& character.monsters.some((m: { givenName?: unknown }) => String(m?.givenName ?? '').trim().toLowerCase() === thing);
+					if (mine && !named) return character.lookAtMonsters(channel, Boolean(mine[1]));
 					return game.lookAt(channel, type + thing);
+				}
 			}
 		})
 		.catch((err: unknown) => game.log(err));

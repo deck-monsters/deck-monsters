@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useMemo, useSyncExternalStore } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { useAuth } from '../lib/auth-context.js';
 import { trpc } from '../lib/trpc.js';
+import { RingFeedContext } from './useRingFeed.js';
 import { FIGHT_ON_RING_POLL_MS, QUIET_RING_POLL_MS } from './useFightOnRing.js';
 
 /**
@@ -25,6 +26,8 @@ export interface GuidedMonster {
 	name: string;
 	dead: boolean;
 	inRing: boolean;
+	/** In a running fight now (the inventory's `inEncounter`). Optional: older callers omit it. */
+	inEncounter?: boolean;
 	cards: string[];
 	cardSlots: number;
 	battles: { total: number };
@@ -204,6 +207,7 @@ export function useGuidedStart(roomId: string | undefined): GuidedStep & { fight
 			name: m.name,
 			dead: Boolean(m.dead),
 			inRing: Boolean(m.inRing),
+			inEncounter: Boolean(m.inEncounter),
 			cards: m.cards ?? [],
 			cardSlots: m.cardSlots ?? 0,
 			battles: { total: m.battles?.total ?? 0 },
@@ -266,11 +270,42 @@ export function useGuidedStart(roomId: string | undefined): GuidedStep & { fight
 		}
 	}, [loaded, isComplete, decided, fought, baseline, userId, roomId, monsters, hasOutcomeHistory, phase]);
 
+	// The live ring.state push, read from the feed the Console and the Workshop already sit
+	// under. Null context (the standalone Workshop route) just means no live source here.
+	const ringFeed = useContext(RingFeedContext);
+	const [live, setLive] = useState<{ names: Set<string> }>({ names: new Set() });
+	useEffect(() => {
+		if (!ringFeed) return;
+		return ringFeed.subscribe((tracked) => {
+			const event = tracked.data;
+			let state: { inEncounter?: boolean; contestants?: Array<{ name?: string; dead?: boolean }> } | undefined;
+			if (event.type === 'ring.state') state = event.payload as typeof state;
+			else if (event.type === 'handshake') state = (event.payload as { ringState?: typeof state }).ringState;
+			if (!state) return;
+			const names = new Set(
+				state.inEncounter ? (state.contestants ?? []).filter((c) => !c.dead && c.name).map((c) => c.name!) : [],
+			);
+			setLive({ names });
+		});
+	}, [ringFeed]);
+
 	const dismiss = useCallback(() => complete(userId, roomId), [userId, roomId]);
 	// The player's own monster is `waiting` in the ring, so a second contestant (a player's
 	// monster or a boss) means a fight is counting down or already on.
 	const ringData = ringState.data as { inEncounter?: boolean; contestants?: unknown[] } | undefined;
-	const fightOn = ringData?.inEncounter === true;
+	/*
+	 * Walk-fixes check (roadmap 44 K6): `fightOn` used to be the `waiting`-only poll, so a
+	 * one-round first fight ended unseen and `change_card` told a fighting monster to change a
+	 * card. It is now true whenever the guide's own monster is in a fight, from whichever source
+	 * is freshest: the live `ring.state` push (instant), the inventory's per-monster
+	 * `inEncounter` (no extra request), or the `waiting` poll. A fallen monster is never
+	 * "fighting", whatever the ring is doing.
+	 */
+	const subject = monsters?.find((m) => m.name === step.name);
+	const subjectFighting =
+		phase !== 'fallen' && phase !== 'spawn' && phase !== 'hidden'
+		&& (subject?.inEncounter === true || live.names.has(step.name));
+	const fightOn = subjectFighting || (phase === 'waiting' && ringData?.inEncounter === true);
 	const fightComing = !fightOn && (ringData?.contestants?.length ?? 0) > 1;
 	return { ...step, fightComing, fightOn, dismiss };
 }

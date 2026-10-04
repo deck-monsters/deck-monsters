@@ -394,4 +394,107 @@ describe('ConsolePane: a finished question leaves the input (pass 43, I4)', () =
     // The older question is a tombstone, not merely button-less.
     expect(screen.getAllByText('Action cancelled.')).toHaveLength(1);
   });
+
+  it('(h) an answered question keeps showing its pick when the next question arrives (shop: menu, pick, confirm)', async () => {
+    // r1 is the shop menu from beforeEach. Answer it by button, then the pick arrives, then the confirm.
+    fireEvent.click(screen.getByTitle('Choose Hit'));
+    await flush();
+    pushPromptRequest('r2');
+    fireEvent.click(screen.queryAllByTitle('Choose Hit').find(b => !(b as HTMLButtonElement).disabled)!);
+    await flush();
+    pushPromptRequest('r3');
+    expect(screen.queryAllByText('Action cancelled.')).toHaveLength(0);
+  });
+
+  it('(h2) same, with polls interleaved', async () => {
+    const q = (id: string) => ({ requestId: id, question: 'Which card?', choices: ['Hit'] });
+    await sleep(5);
+    poll(q('r1'));
+    fireEvent.click(screen.getByTitle('Choose Hit'));
+    await flush();
+    poll(q('r1'));
+    poll(null);
+    pushPromptRequest('r2');
+    poll(q('r2'));
+    fireEvent.click(screen.queryAllByTitle('Choose Hit').find(b => !(b as HTMLButtonElement).disabled)!);
+    await flush();
+    poll(q('r2'));
+    pushPromptRequest('r3');
+    poll(q('r3'));
+    poll(q('r2'));
+    poll(q('r3'));
+    expect(screen.queryAllByText('Action cancelled.')).toHaveLength(0);
+  });
+
+  /*
+   * Roadmap 44 K6 (walk-fixes check): after a reload the server replays the bus's recent
+   * events. An ANSWERED question has no closing event, so its replayed prompt.request used to
+   * arm the Console, and the first command after the reload was sent as its answer.
+   */
+  const pushHandshake = (serverTime: number) => act(() => {
+    pushEvent({
+      id: `hs-${serverTime}`,
+      data: { id: `hs-${serverTime}`, type: 'handshake', scope: 'private', targetUserId: 'user-1', text: '', payload: { serverTime: new Date(serverTime).toISOString() }, timestamp: serverTime, roomId } as any,
+    });
+  });
+  const pushRequestAt = (requestId: string, timestamp: number) => act(() => {
+    pushEvent({
+      id: `req-${requestId}`,
+      data: { id: `req-${requestId}`, type: 'prompt.request', scope: 'private', targetUserId: 'user-1', text: 'Which card?', payload: { requestId, question: 'Which card?', choices: ['Hit'] }, timestamp, roomId } as any,
+    });
+  });
+
+  it('(i) a prompt.request replayed on connect, with no closing event, does not arm the Console', async () => {
+    // Start from a clean console: the beforeEach question is not part of this scenario.
+    cleanupMount();
+    listeners.clear();
+    mount();
+    const now = Date.now();
+    pushHandshake(now);
+    pushRequestAt('old-1', now - 60_000);
+    pushRequestAt('old-2', now - 30_000);
+    expect(input().placeholder).not.toMatch(/answer/i);
+    expect(screen.queryAllByTitle(/^Choose /)).toHaveLength(0);
+    expect(screen.queryAllByText('Action cancelled.')).toHaveLength(0);
+    expect(trpcMocks.pendingPromptQuery.refetch).toHaveBeenCalled();
+    await expectNextLineIsCommand();
+  });
+
+  it('(i2) a replayed question the server still has is brought back by the poll', async () => {
+    cleanupMount();
+    listeners.clear();
+    mount();
+    const now = Date.now();
+    pushHandshake(now);
+    pushRequestAt('open-1', now - 10_000);
+    expect(input().placeholder).not.toMatch(/answer/i);
+    poll({ requestId: 'open-1', question: 'Which card?', choices: ['Hit'] });
+    expect(input().placeholder).toMatch(/answer/i);
+  });
+
+  it('(i3) a question published after the handshake still arms at once', () => {
+    cleanupMount();
+    listeners.clear();
+    mount();
+    const now = Date.now();
+    pushHandshake(now - 1_000);
+    pushRequestAt('new-1', now);
+    expect(input().placeholder).toMatch(/answer/i);
+  });
+
+  it('(j) shop menu and pick replayed, then the live confirm: no "Action cancelled." above it', () => {
+    // The walk-fixes check saw two tombstones above the shop's confirm. The menu and the pick
+    // had been answered, but their replayed requests carried no answer, so the confirm's
+    // arrival retired them as cancelled.
+    cleanupMount();
+    listeners.clear();
+    mount();
+    const now = Date.now();
+    pushHandshake(now);
+    pushRequestAt('menu', now - 20_000);
+    pushRequestAt('pick', now - 10_000);
+    pushRequestAt('confirm', now + 5);
+    expect(screen.queryAllByText('Action cancelled.')).toHaveLength(0);
+    expect(input().placeholder).toMatch(/answer/i);
+  });
 });

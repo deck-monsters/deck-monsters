@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { act, fireEvent, render, renderHook, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -19,6 +20,7 @@ vi.mock('../lib/trpc.js', () => ({
   },
 }));
 
+import { RingFeedContext } from '../hooks/useRingFeed.js';
 import GuidedStartBox from '../components/GuidedStartBox.js';
 import {
   deckChanged,
@@ -229,6 +231,72 @@ describe('useGuidedStart fightComing', () => {
     const live = renderHook(() => useGuidedStart('room-1')).result.current;
     expect(live.fightOn).toBe(true);
     expect(live.fightComing).toBe(false);
+  });
+});
+
+describe('useGuidedStart fightOn in any step (44 K6)', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    resetGuidedStartForTests();
+    mocks.history = [];
+    mocks.historyError = false;
+    mocks.ring = { inEncounter: false, contestants: [] };
+  });
+  const fought = (over: Record<string, unknown>) => [{ name: 'Saffron', cards: full, cardSlots: 3, battles: { total: 1 }, ...over }];
+
+  it('change_card + monster in a fight: fightOn, so the box says it is fighting', () => {
+    localStorage.setItem('ftuxStarted:user-1:room-1', 'true');
+    mocks.monsters = fought({ inEncounter: true });
+    const { result } = renderHook(() => useGuidedStart('room-1'));
+    expect(result.current.phase).toBe('change_card');
+    expect(result.current.fightOn).toBe(true);
+    render(<GuidedStartBox surface="console" {...result.current} onRun={() => undefined} />);
+    expect(screen.getByText('Saffron is fighting. Watch The Ring.')).toBeInTheDocument();
+    expect(screen.queryByText(/changing a card/)).toBeNull();
+    expect(screen.queryByRole('button', { name: 'help unequip' })).toBeNull();
+  });
+
+  it('change_card + no fight: the original text', () => {
+    localStorage.setItem('ftuxStarted:user-1:room-1', 'true');
+    mocks.monsters = fought({});
+    const { result } = renderHook(() => useGuidedStart('room-1'));
+    expect(result.current.fightOn).toBe(false);
+    render(<GuidedStartBox surface="console" {...result.current} onRun={() => undefined} />);
+    expect(screen.getByText(/Saffron has fought a fight\. Now try changing a card/)).toBeInTheDocument();
+  });
+
+  it('waiting + fight on keeps saying so; the countdown line stays for a coming fight', () => {
+    mocks.monsters = fought({ battles: { total: 0 }, inRing: true, inEncounter: true });
+    expect(renderHook(() => useGuidedStart('room-1')).result.current.fightOn).toBe(true);
+    mocks.monsters = fought({ battles: { total: 0 }, inRing: true });
+    mocks.ring = { inEncounter: false, contestants: [{ name: 'Saffron' }, { name: 'Razeth' }] };
+    const coming = renderHook(() => useGuidedStart('room-1')).result.current;
+    expect(coming.fightOn).toBe(false);
+    expect(coming.fightComing).toBe(true);
+  });
+
+  it('a live ring.state push naming the monster turns it on, and an empty push turns it off', () => {
+    localStorage.setItem('ftuxStarted:user-1:room-1', 'true');
+    mocks.monsters = fought({});
+    let listener: ((t: { id: string; data: { type: string; payload: unknown } }) => void) | undefined;
+    const feed = { subscribe: (l: typeof listener) => { listener = l; return () => undefined; } };
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <RingFeedContext.Provider value={feed as never}>{children}</RingFeedContext.Provider>
+    );
+    const { result } = renderHook(() => useGuidedStart('room-1'), { wrapper });
+    expect(result.current.fightOn).toBe(false);
+    act(() => listener!({ id: '1', data: { type: 'ring.state', payload: { inEncounter: true, contestants: [{ name: 'Saffron', dead: false }, { name: 'Razeth' }] } } }));
+    expect(result.current.fightOn).toBe(true);
+    act(() => listener!({ id: '2', data: { type: 'ring.state', payload: { inEncounter: false, contestants: [] } } }));
+    expect(result.current.fightOn).toBe(false);
+  });
+
+  it('a fallen monster is never reported as fighting', () => {
+    localStorage.setItem('ftuxStarted:user-1:room-1', 'true');
+    mocks.monsters = fought({ dead: true, inEncounter: true });
+    const { result } = renderHook(() => useGuidedStart('room-1'));
+    expect(result.current.phase).toBe('fallen');
+    expect(result.current.fightOn).toBe(false);
   });
 });
 

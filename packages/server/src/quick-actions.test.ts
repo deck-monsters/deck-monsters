@@ -24,6 +24,12 @@ describe('buildQuickActions', () => {
 		]);
 	});
 
+	it('labels the monsters chip with the command it runs (walk-fixes check: "Look at my monsters" was refused)', () => {
+		const monster = { givenName: 'Fluffy', cards: makeCards(9) };
+		const actions = buildQuickActions(makeGame({ monsters: [monster], deck: [] }), USER);
+		expect(actions.find((a) => a.command === 'look at monsters')?.label).to.equal('Look at monsters');
+	});
+
 	it('suggests training when the character owns no monsters', () => {
 		const actions = buildQuickActions(makeGame({ monsters: [], deck: [] }), USER);
 		expect(actions[0]?.command).to.equal('train a monster');

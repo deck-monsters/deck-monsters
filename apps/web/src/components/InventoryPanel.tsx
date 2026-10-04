@@ -49,7 +49,7 @@ export default function InventoryPanel({
     <section className="workshop-inventory">
       <header className="workshop-section-header">
         <div>
-          <h2>Your Inventory</h2>
+          <h2>Your cards</h2>
           {activeMonsterFilterName && (
             <p className="workshop-filter-summary">
               Showing cards usable by {activeMonsterFilterName}
