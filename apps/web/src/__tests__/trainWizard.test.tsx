@@ -145,6 +145,8 @@ describe('TrainWizard', () => {
     expect(props.suggestNames).toHaveBeenCalledWith({ type: 0, gender: 'androgynous' });
     fireEvent.click(screen.getByTitle('Suggest two other names'));
     await waitFor(() => expect(props.suggestNames).toHaveBeenCalledTimes(2));
+    // "More names" asks for two names other than the ones on screen.
+    expect(props.suggestNames).toHaveBeenLastCalledWith({ type: 0, gender: 'androgynous', exclude: ['Vesper', 'Ember'] });
   });
 
   it('refreshes the suggestions when the type or pronouns changed', async () => {

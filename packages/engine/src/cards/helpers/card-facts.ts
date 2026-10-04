@@ -80,3 +80,14 @@ export const cardFacts = (source: CardSource): CardFacts => {
 
 /** Every card a deck can hold, in `all.ts` order. */
 export const allCardFacts = (): CardFacts[] => all.map(Card => cardFacts(Card));
+
+/**
+ * Facts for every card copy that names itself differently from its class, such as an upgraded
+ * Kalevala ("The Kalevala (2d8)"), keyed by that display name. A card class opts in with a
+ * static `variantOptions` list of constructor options.
+ */
+export const cardFactsVariants = (): CardFacts[] =>
+	all.flatMap(Card => ((Card as any).variantOptions ?? []).map((options: Record<string, unknown>) => {
+		const copy: any = new (Card as any)(options);
+		return { ...cardFacts(copy), name: String(copy.itemType ?? cardTypeOf(copy)) };
+	}));

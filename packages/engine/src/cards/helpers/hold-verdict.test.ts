@@ -3,7 +3,7 @@ import { expect } from 'chai';
 import allMonsters from '../../monsters/helpers/all.js';
 import all from './all.js';
 import { cardHoldVerdict } from './hold-verdict.js';
-import { allCardFacts, cardFacts } from './card-facts.js';
+import { allCardFacts, cardFacts, cardFactsVariants } from './card-facts.js';
 import { holdableByLevel } from './holdable.js';
 import { roleOf } from './roles.js';
 import { SIGNATURE_CARD_TYPES } from './signature.js';
@@ -106,6 +106,15 @@ describe('./cards/helpers/card-facts.ts', () => {
 		for (const [creatureType, cardType] of Object.entries(SIGNATURE_CARD_TYPES)) {
 			expect(facts.find(f => f.name === cardType)?.signatureOf, cardType).to.equal(creatureType);
 		}
+	});
+
+	it('lists each Kalevala variant under its own name with its own dice', () => {
+		const variants = cardFactsVariants();
+		const strong = variants.find(f => f.name === 'The Kalevala (2d8)');
+		expect(strong, 'the 2d8 copy has facts').to.not.equal(undefined);
+		expect(strong!.stats).to.include('2d8');
+		expect(strong!.stats).to.not.include('1d4');
+		expect(variants.map(f => f.name)).to.include('The Kalevala (1d4)');
 	});
 
 	it('does not call a card two types can hold a signature (Blast is every Cleric\'s)', () => {

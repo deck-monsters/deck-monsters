@@ -288,7 +288,7 @@ export function useDeckWorkshop(roomId?: string) {
       return spawnMonsterMutation.mutateAsync({ roomId, ...input });
     },
     // Two name ideas for the training wizard. Always fresh (staleTime 0): "More names" must differ.
-    suggestMonsterNames: (input: { type: number; gender: 'male' | 'female' | 'androgynous' }) => {
+    suggestMonsterNames: (input: { type: number; gender: 'male' | 'female' | 'androgynous'; exclude?: string[] }) => {
       if (!roomId) throw new Error('Room not selected');
       return utils.game.suggestMonsterNames.fetch({ roomId, ...input }, { staleTime: 0 });
     },

@@ -41,7 +41,7 @@ export type TrainWizardProps = {
   shuffleAvatars?: () => unknown;
   busy: boolean;
   /** Two names for this type and pronouns; may reject (the wizard then shows no chips). */
-  suggestNames: (input: { type: number; gender: Gender }) => Promise<string[]>;
+  suggestNames: (input: { type: number; gender: Gender; exclude?: string[] }) => Promise<string[]>;
   /** Resolves with what went wrong, or null when the monster was trained. */
   onTrain: (input: TrainWizardInput) => Promise<TrainFailure | null>;
 };
@@ -155,10 +155,10 @@ export default function TrainWizard({
   const latestSuggestion = useRef(0);
   const submitting = useRef(false);
   const fetchSuggestions = useCallback(
-    (typeValue: number, genderValue: Gender) => {
+    (typeValue: number, genderValue: Gender, exclude: string[] = []) => {
       const key = `${typeValue}:${genderValue}`;
       const request = ++latestSuggestion.current;
-      suggestNames({ type: typeValue, gender: genderValue })
+      suggestNames({ type: typeValue, gender: genderValue, ...(exclude.length > 0 ? { exclude } : {}) })
         .then((names) => {
           if (request === latestSuggestion.current) setSuggestions({ key, names: names.slice(0, 2) });
         })
@@ -325,7 +325,7 @@ export default function TrainWizard({
               type="button"
               className="btn workshop-inline-btn"
               title="Suggest two other names"
-              onClick={() => chosenType && fetchSuggestions(chosenType.index, gender)}
+              onClick={() => chosenType && fetchSuggestions(chosenType.index, gender, suggestions.key === suggestionKey ? suggestions.names : [])}
             >
               More names
             </button>

@@ -325,6 +325,21 @@ describe('useGuidedStart fightOn in any step (44 K6)', () => {
     mocks.inventoryAt = 0;
   });
 
+  it('a newer inventory saying not fighting clears an older live push (missed end-of-fight push)', () => {
+    localStorage.setItem('ftuxStarted:user-1:room-1', 'true');
+    mocks.monsters = fought({ inEncounter: false });
+    mocks.inventoryAt = 0;
+    const { wrapper, push } = feedWrapper();
+    const { result, rerender } = renderHook(() => useGuidedStart('room-1'), { wrapper });
+    push({ inEncounter: true, contestants: [{ name: 'Saffron', userId: 'user-1' }] });
+    expect(result.current.fightOn).toBe(true);
+    // The end-of-fight push is missed; the inventory refreshes later and says not fighting.
+    mocks.inventoryAt = Date.now() + 10_000;
+    rerender();
+    expect(result.current.fightOn).toBe(false);
+    mocks.inventoryAt = 0;
+  });
+
   it('forgets the live push when the room changes', () => {
     localStorage.setItem('ftuxStarted:user-1:room-1', 'true');
     localStorage.setItem('ftuxStarted:user-1:room-2', 'true');

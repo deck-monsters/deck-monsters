@@ -13,6 +13,7 @@ import {
 	PROMPT_CANCELLED,
 	PromptCancelledError,
 	allCardFacts,
+	cardFactsVariants,
 	allMonsters,
 	holdableByLevel,
 	monsterTypeSummary,
@@ -366,7 +367,7 @@ const nextCardsFor = (type: string, level: number): InventoryMonsterSummary['nex
 // per process. The query still asserts membership: the data is public game content, but the
 // rooms rule is that no game procedure answers a non-member.
 let cardFactsCache: ReturnType<typeof allCardFacts> | undefined;
-const getCardFacts = () => (cardFactsCache ??= allCardFacts());
+const getCardFacts = () => (cardFactsCache ??= [...allCardFacts(), ...cardFactsVariants()]);
 
 const summarizeInventory = ({
 	character,
@@ -1259,6 +1260,8 @@ export function createRouter(roomManager: RoomManager, chat: ChatService = new C
 				roomId: z.string().uuid(),
 				type: z.number().int().nonnegative(),
 				gender: z.enum(['male', 'female', 'androgynous']),
+				// The names on screen, so "More names" gives two others (Codex on #423).
+				exclude: z.array(z.string().max(40)).max(10).optional(),
 			}))
 			.query(async ({ input, ctx }) => {
 				await roomManager.assertMember(ctx.userId, input.roomId);
@@ -1267,7 +1270,7 @@ export function createRouter(roomManager: RoomManager, chat: ChatService = new C
 					throw new TRPCError({ code: 'BAD_REQUEST', message: SPAWN_ERRORS.typeUnavailable });
 				}
 				const game = await roomManager.getGame(input.roomId);
-				const taken = Object.keys(game.getAllMonstersLookup?.() ?? {});
+				const taken = [...Object.keys(game.getAllMonstersLookup?.() ?? {}), ...(input.exclude ?? [])];
 				const type = String(Monster.creatureType ?? '');
 				const first = chooseName(type, input.gender, taken);
 				const second = chooseName(type, input.gender, [first, ...taken]);

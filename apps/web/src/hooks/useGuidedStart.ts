@@ -309,7 +309,12 @@ export function useGuidedStart(roomId: string | undefined): GuidedStep & { fight
 		phase !== 'fallen' && phase !== 'spawn' && phase !== 'hidden'
 		&& (live && live.at > inventory.dataUpdatedAt
 			? live.names.has(step.name)
-			: subject?.inEncounter === true || (live?.names.has(step.name) ?? false));
+			// The newer source decides alone. An inventory refreshed after the last live push is
+			// authoritative even when it says "not fighting": ORing in the older push kept the
+			// guide on "is fighting" after a missed end-of-fight push (Codex on #423).
+			: subject
+				? subject.inEncounter === true
+				: (live?.names.has(step.name) ?? false));
 	const fightOn = subjectFighting || (phase === 'waiting' && ringData?.inEncounter === true);
 	const fightComing = !fightOn && (ringData?.contestants?.length ?? 0) > 1;
 	return { ...step, fightComing, fightOn, dismiss };

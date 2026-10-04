@@ -786,7 +786,7 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
       />
       {detail && (
         <CardDetailSheet
-          facts={factsByName.get(stableCardName(detail.cardName)) ?? null}
+          facts={factsByName.get(detail.cardName) ?? factsByName.get(stableCardName(detail.cardName)) ?? null}
           cardName={detail.cardName}
           opener={detail.opener}
           monsters={

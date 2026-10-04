@@ -111,7 +111,7 @@ export { CARD_ROLES, CARD_ROLE_BY_TYPE, CARD_ROLE_LABELS, roleOf } from './cards
 export type { CardRole } from './cards/helpers/roles.js';
 export { cardHoldVerdict } from './cards/helpers/hold-verdict.js';
 export type { CardHoldVerdict, HoldableCard, HoldingMonster } from './cards/helpers/hold-verdict.js';
-export { allCardFacts, cardFacts } from './cards/helpers/card-facts.js';
+export { allCardFacts, cardFacts, cardFactsVariants } from './cards/helpers/card-facts.js';
 export type { CardFacts } from './cards/helpers/card-facts.js';
 export { holdableByLevel } from './cards/helpers/holdable.js';
 export type { HoldableLevel } from './cards/helpers/holdable.js';
