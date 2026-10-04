@@ -5089,6 +5089,31 @@ orders:`).
 
 **Status**: Fixed.
 
+### 217. A question that was over still took the next line — FIXED
+
+Found by Cursor's new-player walk ([walk 2](../reference/new-player-walk-2.md), #9), pass 43
+I4. On a phone, after an equip question timed out, `help` came back as `! Prompt is no longer
+active` and did nothing; only the next command ran. Old questions kept live-looking buttons.
+
+Root cause, reproduced in `consolePane-prompt-finished.test.tsx`:
+
+1. When a question's timeout or cancel event was missed (a reconnect), the Console waited for
+   two empty `pendingPrompt` polls, 3 s apart, before letting go. For 3–6 s the next line went
+   to the dead question.
+2. A new question never retired an older one, so its buttons stayed clickable.
+3. An answer rejected as stale cleared the typed text and left the question marked answered.
+
+Fix: an empty poll that started after the question arrived clears it at once; a stale
+rejection clears it only when the follow-up poll succeeded, and puts the typed text back
+(never sent on its own); a new question tombstones older ones; the active-question ref is
+written synchronously. The review caught two regressions in the first version, now tested: a
+network failure that read as "nothing pending" buried a live question for good, and a time
+window measured from when a poll *landed* rather than when it *started* reopened #142's
+race. A superseded question shows the existing "Action cancelled." tombstone, even when it
+had timed out. See [events, prompts, and replay](../architecture/events-prompts-and-replay.md#prompts).
+
+**Status**: Fixed. Needs a live check on a phone.
+
 ## Closed without a fix
 
 These were open investigations the owner closed on 2026-09-28. Reopen with new evidence.

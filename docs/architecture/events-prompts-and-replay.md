@@ -85,6 +85,25 @@ Prompt answers are deliberately outside engine serialization lanes. A response m
 able to settle the command that currently holds the user's lane. Connector failures or a
 non-string prompt result cancel the request so it cannot hang until timeout.
 
+**When the web Console treats a question as over** (`ConsolePane.tsx`, roadmap 43 I4, 10b
+#217). A question ends on its `prompt.timeout` or `prompt.cancel` event, or on an answer.
+Events can be missed during a reconnect, so the `pendingPrompt` poll is the backstop:
+
+- an empty poll that **started** after the question arrived clears it at once, because the
+  server registers a prompt before it publishes one, so that poll must have seen it;
+- an empty poll that started earlier needs a second empty poll, so an in-flight poll can't
+  erase a question that has only just arrived (#142);
+- an answer the server rejects as no longer active (`PRECONDITION_FAILED`) clears the
+  question, but only when the follow-up poll **succeeded**. On a network failure the cached
+  poll can read empty while the question is still live, and burying it would leave the
+  player stuck until the server's timeout (#153);
+- a new question retires any older one still showing, since a player has at most one open
+  question (the `roomId:userId` lane and `activeFlows`). If a flow ever prompts again after
+  `cancelFlow`, revisit this.
+
+`setActivePromptId` is the only writer of `activePromptIdRef`, and writes it synchronously,
+so a request and its timeout replayed in one burst can't leave the input armed.
+
 Answer encoding is a separate protocol: read
 [the prompt/answer contract](../reference/prompt-answer-contract.md) before changing labels,
 choices, or connector response values. Read
