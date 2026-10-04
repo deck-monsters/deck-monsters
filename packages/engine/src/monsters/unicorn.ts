@@ -124,14 +124,20 @@ class Unicorn extends BaseMonster {
 			retreat: sample(RETREATS),
 			voice: sample(VOICES),
 			witness: sample(WITNESS_DETAILS),
-			witnessShape: sample(WITNESS_SHAPES),
-			swearer: sample(AUTHORITIES),
-			// One stored number fixes what you saw and how it is told, so a restored unicorn
-			// reads the same every time it is looked at.
-			sightingRoll: Math.random(),
-			commoner: sample(COMMONERS.map(({ who }) => who)),
 			anhorn: sample(ANHORN_CHANCE),
 			icon: '🦄',
+			// How the witness line is told is drawn only for a new unicorn. A saved one that
+			// already has its witness detail but predates these keys must not redraw them on
+			// every restore (hydrateMonster spreads saved options into this constructor), or
+			// its description would change between looks. It reads the getters' fixed
+			// fallbacks instead.
+			...(options.witness === undefined ? {
+				witnessShape: sample(WITNESS_SHAPES),
+				swearer: sample(AUTHORITIES),
+				commoner: sample(COMMONERS.map(({ who }) => who)),
+				// One stored number fixes what you saw and how it is told.
+				sightingRoll: Math.random(),
+			} : {}),
 		};
 
 		super(Object.assign(defaultOptions, options));
@@ -243,8 +249,8 @@ class Unicorn extends BaseMonster {
 				return `${pronouns.he} ${agree(pronouns, 'keeps', 'keep')} to ${this.retreat}`;
 			case 'voice':
 				return `${pronouns.his} voice is ${this.voice}`;
-			case 'horn':
-				return `${pronouns.his} horn is ${this.horn}`;
+			// No horn case: the description already names the horn, so a commoner who is "not
+			// wrong" about it says nothing new. A horn witness falls back to the eyes.
 			default:
 				return `${pronouns.his} eyes are ${this.eyes}`;
 		}

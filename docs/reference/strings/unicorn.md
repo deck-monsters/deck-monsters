@@ -21,12 +21,12 @@ Source: `packages/engine/src/monsters/unicorn.ts`.
 
 Seeded, cycling he, she, and they.
 
-- `a goat-bearded unicorn bearing a long, straight black horn. His coat is tawny. Ctesias wrote that his voice is low as a lowing ox. He hums at dusk, startlingly dissonant, and the dogs leave the room.`
-- `a horse-like unicorn bearing a bright ivory horn. Her coat is ivory white. Solinus swears her horn is ringed black. You have seen her horn up close: bright ivory, and sharper than Solinus let on.`
-- `a stocky, cloven-hoofed unicorn bearing a white, crimson, and black horn. Their coat is white with a dark-red head. Pliny says they keep to a laurel grove. But just this morning you found them asleep in your hayloft.`
-- `an elephant-footed unicorn bearing a ringed black horn. His coat is tawny. Marco Polo says his voice is low as a lowing ox. But just this morning he called across the yard, clear as a bell.`
-- `a stocky, cloven-hoofed unicorn bearing a ringed black horn. Her coat is white with a dark-red head. A drunken sailor swears that her voice is clear as a bell. He is not believed, but he is not wrong.`
-- `a horse-like unicorn bearing a white, crimson, and black horn. Their coat is winter white. Pliny says they keep to an enclosed garden. But just this morning you found them asleep in your hayloft.`
+- `a goat-bearded unicorn bearing a long, straight black horn. His coat is tawny. Marco Polo says his voice is low as a lowing ox. But just this morning he called across the yard, clear as a bell.`
+- `a horse-like unicorn bearing a bright ivory horn. Her coat is ivory white. Aelian swears her horn is white, crimson, and black. You have seen her horn up close: bright ivory, and sharper than Aelian let on.`
+- `a stocky, cloven-hoofed unicorn bearing a white, crimson, and black horn. Their coat is white with a dark-red head. Marco Polo says they keep to a laurel grove. But just this morning you found them in your garden, eating your roses.`
+- `an elephant-footed unicorn bearing a ringed black horn. His coat is tawny. A very old woman in the market swears that his voice is low as a lowing ox. She is not believed, but she is not wrong.`
+- `a stocky, cloven-hoofed unicorn bearing a ringed black horn. Her coat is white with a dark-red head. Pliny wrote that her voice is clear as a bell. She hums at dusk, low as a lowing ox, and the dogs leave the room.`
+- `a horse-like unicorn bearing a white, crimson, and black horn. Their coat is winter white. Pliny says they keep to an enclosed garden. But just this morning you found them in your orchard, knocking down the apples.`
 
 ### Fill lists
 
@@ -55,7 +55,6 @@ Seeded, cycling he, she, and they.
 | seenLine → returns | `{who} wrote that {his} eyes are {eyes}. {He} {turns/turn} to look at you, and {his} eyes are {seen}.` |
 | witnessDetail → returns | `{he} {keeps/keep} to {retreat}` |
 | witnessDetail → returns | `{his} voice is {voice}` |
-| witnessDetail → returns | `{his} horn is {horn}` |
 | witnessDetail → returns | `{his} eyes are {eyes}` |
 | description → anhorn | ` The oldest English called {him} ānhorn, and did not argue about {his} feet.` |
 | description → returns | `{article} {build} unicorn bearing {article} {horn} horn. {His} coat is {color}. {witnessLine}{anhorn}` |

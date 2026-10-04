@@ -89,7 +89,11 @@ describe('monsters/unicorn', () => {
 					for (const eyes of ['dark blue', 'black', 'woodland brown']) {
 						const u = new Unicorn({ gender, witness, eyes, witnessShape: 'seen', sightingRoll, retreat: 'an enclosed garden', anhorn: false });
 						const line = u.seenLine;
-						if (witness === 'eyes') expect(line.split('swear they are ')[1] ?? line.split('eyes are ')[2]).to.not.equal(`${eyes}.`);
+						if (witness === 'eyes') {
+							const seen = line.match(/(?:swear they are|eyes are) ([^.]+)\.$/);
+							expect(seen, line).to.not.equal(null);
+							expect(seen![1]).to.not.equal(eyes);
+						}
 						if (witness === 'retreat') expect(line).to.not.include('your garden');
 						expect(line, line).to.not.match(/\bits?\b|undefined/);
 						if (gender === 'androgynous') expect(line).to.not.match(/\bthey (keeps|blinks|turns|hums)\b/);
@@ -114,12 +118,24 @@ describe('monsters/unicorn', () => {
 		expect(new Unicorn({ anhorn: false }).description).not.to.include('ānhorn');
 	});
 
-	it('reads the same for a unicorn saved before the witness options existed', () => {
-		// A unicorn saved by an older release: no shape, swearer or roll were stored.
-		const saved = { witness: 'retreat', retreat: 'a rocky gorge', build: 'horse-like', horn: 'bright ivory', color: 'tawny', gender: 'female', anhorn: false, witnessShape: undefined, swearer: undefined, commoner: undefined, sightingRoll: undefined };
-		const first = new Unicorn({ ...saved }).description;
-		expect(first).to.include('Pliny says she keeps to a rocky gorge. But just this morning you found her in your garden, eating your roses.');
-		expect(new Unicorn({ ...saved }).description).to.equal(first);
+	it('reads the same on every restore for a unicorn saved before the sighting roll existed', async () => {
+		// Review finding (roadmap 42 B): hydrateMonster spreads saved options into the
+		// constructor, so a default drawn there for a missing key was redrawn on every restore.
+		// JSON drops the keys entirely, which is what a real old save looks like.
+		await monsterHydrateReady;
+		const fresh = JSON.parse(JSON.stringify(new Unicorn({ gender: 'female', witness: 'retreat', retreat: 'a rocky gorge', anhorn: false })));
+		const oldShape = { ...fresh, options: { ...fresh.options, witnessShape: 'liar', swearer: 'Pliny', doubter: 'Aelian' } };
+		delete oldShape.options.sightingRoll;
+		const noShape = { ...fresh, options: { ...fresh.options } };
+		for (const key of ['witnessShape', 'swearer', 'commoner', 'sightingRoll']) delete noShape.options[key];
+
+		for (const saved of [oldShape, noShape]) {
+			const first = (hydrateMonster(JSON.parse(JSON.stringify(saved))) as Unicorn).description;
+			expect(first).to.include('Pliny says she keeps to a rocky gorge. But just this morning you found her in your garden, eating your roses.');
+			for (let i = 0; i < 5; i++) {
+				expect((hydrateMonster(JSON.parse(JSON.stringify(saved))) as Unicorn).description).to.equal(first);
+			}
+		}
 	});
 
 	it('keeps generated appearance through a hydration round trip', async () => {
