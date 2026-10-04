@@ -79,7 +79,7 @@ Made by the orchestrator, from the [triage](#triage):
 | K5 | **`look at cards for [monster]`, docs and close-out.** The Console command and its catalogue entry; help inventory, handbook, architecture docs; Cursor's live check (44a) | Engine, docs | K4 | Command done (on `Game`, beside `look at [monster]`, room-scoped). Review: no findings beyond a bare `look at cards for` reading like `look at` with no name. Fixed on the way: `look at cards for Rex` used to list your own deck and ignore the name. The docs close-out is still to come | (cherry-picked) |
 
 Every task gets an independent read-only review and a fix round; K3 and K4 get a live look at
-390 and 1440.
+390 and 1440 in Cursor's checklist, [44a](44a-cursor-guides-and-wizard-check.md).
 
 ## The text (orchestrator)
 
