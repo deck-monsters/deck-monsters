@@ -39,6 +39,9 @@ import { resolveShop, type Shop } from './items/store/shop.js';
 import type { BossSummonLedger } from './helpers/boss-summons.js';
 import { refundPendingSummons } from './helpers/boss-summons.js';
 import { announceAndThrow } from './helpers/announce-and-throw.js';
+import { holdableByLevel } from './cards/helpers/holdable.js';
+import { CARD_ROLES, CARD_ROLE_LABELS } from './cards/helpers/roles.js';
+import joinList from './helpers/join-list.js';
 
 // State save debounce: 30 seconds
 const SAVE_DEBOUNCE_MS = 30_000;
@@ -979,6 +982,40 @@ export class Game extends BaseClass {
 		}
 
 		return announceAndThrow(channel, `I can find no monster by the name of ${monsterName}.`, { delay: 'short' });
+	}
+
+	/**
+	 * `look at cards for <monster>`: which cards the monster can use now (by role), and which
+	 * open up at later levels. Resolves the monster like `look at <monster>` does, so the
+	 * unknown-monster refusal is the same line. "Now" is levels <= the monster's own level.
+	 */
+	lookAtCardsFor(channel: any, monsterName: string): Promise<unknown> {
+		const monster = monsterName ? this.getAllMonstersLookup()[monsterName.toLowerCase()] : undefined;
+
+		if (!monster) {
+			return announceAndThrow(channel, `I can find no monster by the name of ${monsterName}.`, { delay: 'short' });
+		}
+
+		const level = monster.level ?? 0;
+		const byLevel = holdableByLevel(monster);
+		const now = byLevel.filter(l => l.level <= level).flatMap(l => l.cards);
+		const lines = [`${monster.givenName} can use these cards now:`];
+
+		for (const role of CARD_ROLES) {
+			const names = now
+				.filter(c => c.role === role)
+				.map(c => c.name)
+				.sort((a, b) => a.localeCompare(b));
+			if (names.length) lines.push(`${CARD_ROLE_LABELS[role]}: ${joinList(names)}.`);
+		}
+
+		const later = byLevel.filter(l => l.level > level);
+		if (later.length) {
+			lines.push('Later:');
+			for (const l of later) lines.push(`Level ${l.level}: ${joinList(l.cards.map(c => c.name))}.`);
+		}
+
+		return Promise.resolve(channel({ announce: lines.join('\n'), delay: 'short' }));
 	}
 
 	editMonster(channel: any, monsterName: string): Promise<unknown> {

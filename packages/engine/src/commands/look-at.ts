@@ -8,7 +8,7 @@ import type { registerHandler } from './index.js';
 // default `game.lookAt` instead of being read as type `monster`. `(?!at$)` keeps a bare `look at` unrecognised,
 // as before, rather than taking `at` for a name.
 const LOOK_AT_REGEX =
-	/^look (?:at )?(?:the )?(monster(?:s)? manual|player(?:s)? handbook|(?:dungeon master(?:s)|dm)? guide|monsters in|monsters|monster|character|cards in|card inventory|all cards|inventory|cards|card|deck|item|items|ring|dmg)?( .+|(?<= )(?!at$)\S.*)?$/i;
+	/^look (?:at )?(?:the )?(monster(?:s)? manual|player(?:s)? handbook|(?:dungeon master(?:s)|dm)? guide|monsters in|monsters|monster|character|cards in|cards for|card inventory|all cards|inventory|cards|card|deck|item|items|ring|dmg)?( .+|(?<= )(?!at$)\S.*)?$/i;
 
 function lookAtAction({ channel, character, game, results, user }: any): Promise<unknown> {
 	return Promise.resolve()
@@ -17,6 +17,10 @@ function lookAtAction({ channel, character, game, results, user }: any): Promise
 			let thing = (results[2] || '').trim().toLowerCase();
 
 			switch (type) {
+				// `cards for` is listed before `cards` in the pattern. Before it existed,
+				// `look at cards for fluffy` matched `cards` and silently listed the deck.
+				case 'cards for':
+					return game.lookAtCardsFor(channel, thing);
 				case 'deck':
 				case 'cards':
 					return character.lookAtCards(channel, thing);
