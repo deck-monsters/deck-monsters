@@ -222,11 +222,13 @@ describe('useGuidedStart fightComing', () => {
     expect(result.current.fightComing).toBe(false);
   });
 
-  it('is true once a second monster or a boss shares the ring, or a fight is on', () => {
+  it('is true once a second monster or a boss shares the ring, and a live fight is fightOn instead', () => {
     mocks.ring = { inEncounter: false, contestants: [{ name: 'Saffron' }, { name: 'Razeth', isBoss: true }] };
     expect(renderHook(() => useGuidedStart('room-1')).result.current.fightComing).toBe(true);
     mocks.ring = { inEncounter: true, contestants: [] };
-    expect(renderHook(() => useGuidedStart('room-1')).result.current.fightComing).toBe(true);
+    const live = renderHook(() => useGuidedStart('room-1')).result.current;
+    expect(live.fightOn).toBe(true);
+    expect(live.fightComing).toBe(false);
   });
 });
 
@@ -261,6 +263,13 @@ describe('GuidedStartBox', () => {
     expect(screen.getByText('Saffron is in the ring. Watch The Ring: a fight starts when the countdown ends.')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'summon a boss' })).toBeNull();
     expect(screen.queryByText(/summon/i)).toBeNull();
+  });
+
+  it('says the fight is on, not that a countdown is running, during a live fight', () => {
+    render(<GuidedStartBox surface="console" phase="waiting" name="Saffron" slots={3} fightOn fightComing dismiss={() => undefined} onRun={() => undefined} />);
+    expect(screen.getByText('Saffron is fighting. Watch The Ring.')).toBeInTheDocument();
+    expect(screen.queryByText(/countdown/)).toBeNull();
+    expect(screen.queryByRole('button', { name: 'summon a boss' })).toBeNull();
   });
 
   it('says the same in the Workshop, and keeps the summon advice while alone', () => {

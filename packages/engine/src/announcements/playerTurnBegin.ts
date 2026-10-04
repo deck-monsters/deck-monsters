@@ -36,7 +36,7 @@ export function announceTurnBegin(
 	eb.publish({
 		type: 'announce',
 		scope: 'public',
-		text: `*It's ${possessive(turnName)} turn. ${turnName} plays the next card in ${monster.pronouns?.his ?? 'their'} deck.*\n\n${body}`,
+		text: `*It's ${possessive(turnName)} turn. ${monster.givenName} plays the next card in ${monster.pronouns?.his ?? 'their'} deck.*\n\n${body}`,
 		payload: { contestant },
 	});
 

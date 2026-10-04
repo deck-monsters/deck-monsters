@@ -15,6 +15,8 @@ export interface GuidedStartBoxProps {
 	dismiss: () => void;
 	/** Another monster or a boss is in the ring with the player's: a fight is counting down or on. */
 	fightComing?: boolean;
+	/** A fight is running now, so there is no countdown to wait for. */
+	fightOn?: boolean;
 	/** Console only: runs the chip's command. */
 	onRun?: (command: string) => void;
 }
@@ -28,7 +30,7 @@ interface Copy {
 const bossLimit: number = BOSS_SUMMON_LIMIT;
 const bosses = `${bossLimit} ${bossLimit === 1 ? 'boss' : 'bosses'}`;
 
-export function guidedCopy(surface: 'console' | 'workshop', phase: GuidedPhase, name: string, slots: number, fightComing = false): Copy | null {
+export function guidedCopy(surface: 'console' | 'workshop', phase: GuidedPhase, name: string, slots: number, fightComing = false, fightOn = false): Copy | null {
 	const console_ = surface === 'console';
 	switch (phase) {
 		case 'spawn':
@@ -52,6 +54,7 @@ export function guidedCopy(surface: 'console' | 'workshop', phase: GuidedPhase, 
 			 * while a boss was standing in the ring. Once anything shares the ring the advice
 			 * is to watch, not to summon, so the chip and the summons hint go.
 			 */
+			if (fightOn) return { text: `${name} is fighting. Watch The Ring.` };
 			if (fightComing) {
 				return { text: `${name} is in the ring. Watch The Ring: a fight starts when the countdown ends.` };
 			}
@@ -75,8 +78,8 @@ export function guidedCopy(surface: 'console' | 'workshop', phase: GuidedPhase, 
 	}
 }
 
-export default function GuidedStartBox({ surface, phase, name, slots, dismiss, fightComing, onRun }: GuidedStartBoxProps) {
-	const copy = guidedCopy(surface, phase, name, slots, fightComing);
+export default function GuidedStartBox({ surface, phase, name, slots, dismiss, fightComing, fightOn, onRun }: GuidedStartBoxProps) {
+	const copy = guidedCopy(surface, phase, name, slots, fightComing, fightOn);
 	if (!copy) return null;
 	return (
 		<section className="ftux-guide" aria-label="Getting started guide">

@@ -15,7 +15,8 @@ export function announceContestant(
 
 	// A deliberate minimal pair: same sentence shape, opposite consent. A player's monster
 	// *answers a call* — it came willingly, and its beastmaster is a companion rather than
-	// an owner. A boss is *sent in at the behest of* the house, which commands.
+	// an owner. A boss is *sent in by* the house, which commands (the line once said "at the behest
+	// of"; it now reads "sent by the house").
 	//
 	// Bosses are handed a randomly generated owner by `randomCharacter` under
 	// userId 'boss' (docs/architecture/boss-encounters.md §1), so crediting
