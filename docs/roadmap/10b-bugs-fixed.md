@@ -5137,6 +5137,43 @@ its review, pass 43 I5.
 
 **Status**: Fixed.
 
+### 219. `look at cards for Rex` listed your own cards and ignored the name — FIXED
+
+Found building roadmap 44 K5. The look-at parser's `cards` alternative matched first and
+took `for Rex` as an ignored argument, so the player saw their unequipped cards, not Rex's.
+`cards for` now comes before `cards` in `LOOK_AT_REGEX` and runs the new command.
+
+**Status**: Fixed.
+
+### 220. The Console could suggest a monster name already taken in the room — FIXED
+
+Found building roadmap 44 K4. `chooseName` excluded taken names with an exact-case
+`includes`, but the room's monster lookup keys are lowercase, so `Rex` was never excluded by
+`rex`. It now compares without case; the web's new name chips share it.
+
+**Status**: Fixed.
+
+### 221. After a reload the first command answered a finished question, and the guide missed fights — FIXED
+
+Found by Cursor's walk-fixes check ([report](../reference/walk-fixes-check.md)), roadmap 44 K6.
+
+- **The reload.** A fresh `ringFeed` subscription replays the room's last 100 events.
+  Answering a question publishes no event, so a replayed `prompt.request` for a question
+  already answered had nothing after it to close it, and the Console armed it. The first line
+  typed went to `respondToPrompt` and came back `Prompt is no longer active`. A later real
+  question then retired those replayed rows as cancelled, which is probably the `Action
+  cancelled.` Cursor saw above a shop confirm (not reproduced directly; the live check
+  confirms). Fix: a `prompt.request` stamped before this connection's handshake is replay and
+  is ignored; the `pendingPrompt` poll is refetched at once and re-arms it if the server still
+  has it. Both stamps come from the server clock.
+- **The guide.** Its fight check was a 5–15 s poll used only while waiting for a first fight,
+  so a one-round fight ended unseen, and the "change a card" step told a fighting monster to
+  change a card. The guide now reads the live `ring.state` push (only the player's own
+  contestants; the review caught a match by name that another player's same-named monster
+  would have tripped) with the inventory's fight flag as a fallback, and a newer push wins.
+
+**Status**: Fixed. Needs Cursor's live check (44a items 17–19).
+
 ## Closed without a fix
 
 These were open investigations the owner closed on 2026-09-28. Reopen with new evidence.
