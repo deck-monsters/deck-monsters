@@ -8,7 +8,7 @@ tags: [roadmap, planning, workshop, bosses, cards]
 ---
 # 42 — Proposals for the next passes
 
-**Status:** Proposed (2026-10-04). B is done (below); the rest is not started. The owner picks
+**Status:** Proposed (2026-10-04). B is done (below), and F's walk is done and triaged in G; the rest is not started. The owner picks
 what goes next; each pick then gets its own plan with a task table, in the usual way.
 
 The owner's requests are A to D. E lists what Claude noticed in recent sessions. F is
@@ -250,4 +250,72 @@ Smaller items, each worth a line in some pass:
 
 The prompt and its rules are in [42a](42a-cursor-new-player-walk.md). It is a fresh walk of the
 whole game as a first-time player, after batches 2 and 3 and chat. Its findings feed
-roadmap 39's known gaps and the choice between A to E.
+roadmap 39's known gaps and the choice between A to E. **Done (2026-10-04):** triaged in G
+below.
+
+## G. What Cursor's walk found, and where it goes
+
+Cursor walked the game as a new player on 2026-10-04
+([new-player walk 2](../reference/new-player-walk-2.md)). Each finding is placed below. The
+numbers are the report's ten moments (§1); "table" means its "Everything else" table (§2).
+Claude checked the code behind each **bug** before listing it.
+
+**Folds into A (the training wizard):**
+- one first step: the empty Console says `look at monsters` while the guide says train (#10);
+- the suggested character name is `Beastmaster-<id>`, part of an account id (#10);
+- the avatar row has no labels and doesn't say it is you, not the monster (table);
+- the first type's sentence scrolls off the top on a phone (table);
+- the finished monster card gives `ac`, `hp` and Class with no legend (#10, §4).
+
+**Folds into C (guides and card info) and E1 (card details in the Workshop):**
+- the equip question can't show what a card does, and `look at` is refused while it is open
+  (#1). `9 of 9 slots remaining` and `Hit [4]` need plain wording;
+- Help → Cards: the contents don't jump to the card, the ASCII frames are clipped at 390, and
+  "see ITEMS.md" should name the Items tab (#7);
+- `that kind of monster can't use it` should say which kinds can (table). This is C's "which
+  cards when";
+- MSRP, DPT and hit chance on the card shown in the ring (#4), and a legend for the card marks
+  (§4);
+- `help heal` finds nothing, because help searches commands, not cards (table);
+- the Items guide's first sentence is not player language (table).
+
+**A new pass, H: the fight log reads as one stream.** Flavour, rolls, running tallies and
+results share one voice (#4). A roll can disagree with its sentence (`rolled 4 on 1d4 … to
+drink` then `🎲 18`), and a tally can say `2 HITS` above `Miss...`. The end line,
+`1 dead after 3 rounds`, names nobody, and the card found in the dust reads as loot for the
+boss. H separates what happened from its flavour, checks the roll lines, and ends a fight by
+naming who fell and what each player won (XP, coins, the card). It needs its own plan.
+
+**A new pass, I: small fixes from the walk.** These are each a line or two:
+1. **Bug:** the Workshop's multi-card move says `Moved 1 cards` (`server/src/trpc/router.ts`,
+   the move-many summary, which has no singular).
+2. The Workshop's first-deck note says `tap an empty slot`. The control needs a card selected
+   first (#2).
+3. On a phone, the second monster is off the right edge, and only two dots show it (#2).
+4. The guide still says `Nobody else here? Summon a boss.` after the fight has started (#3).
+5. `It's Ada's turn` reads as a choice to make (#3).
+6. Revive says `instantly`, and the monster comes back at 1 HP with nothing saying it heals
+   while idle (#5).
+7. The shop's confirm button says `Equip cards`, and neither the confirm nor the receipt names
+   the item (#6). The Sorting Hat's `Are you sure?` doesn't say what happens, and `give` after
+   the hat is gone says "doesn't have any items that Rex can use" (table).
+8. A boss arrives `at the behest of 👑 The Editor`. That is the house (`RING_PATRON`), not a
+   player, but a new player reads it as a person; Cursor took it for its own account. The
+   header's `boss in ~13m` shows while a boss stands, and the timer boss doesn't spend a summon
+   (#8). The boss's strategy line, `You target the weakest player`, addresses the player.
+9. An answered or timed-out question stays on screen and takes the next Enter
+   (`Prompt is no longer active`) (#9). This touches the prompt lifecycle, so read
+   [engine concurrency and timing](../architecture/engine-concurrency-and-timing.md) first.
+10. `look at items` with no items prints nothing (§5).
+11. The fight reward (2 XP, 10 coins) is never said (table, §4). Folds into H's end line.
+12. The Fights row's `Card: Soften` reads as the winning card, and the row doesn't open (table).
+13. Leaders at 390 hides its right-hand columns (table).
+14. A first boss shows `Fights: 129 · Won: 103` (table).
+15. The long room name: this is E5.
+
+**Owner decisions:**
+- **Prion Disease's name.** Its card type is `1993-09-7202 18:58`, a deliberate Eternal
+  September joke, and Cursor read it as a broken row (#7). Keep it, or show the card as
+  Prion Disease with the date in its flavour?
+- **Shop prices.** After the free hat, everything costs 33 coins and the first fight paid 10.
+  Should a first purchase be within one or two fights?

@@ -8,7 +8,7 @@ tags: [roadmap, onboarding, help, cursor]
 ---
 # 42a — A first-time player's walk (Cursor)
 
-**Status:** Ready to run (2026-10-04) against production, after #420.
+**Status:** Done (2026-10-04). Report: [new-player walk 2](../reference/new-player-walk-2.md); triage: [42 G](42-next-proposals.md#g-what-cursors-walk-found-and-where-it-goes).
 
 ## What this is for
 
@@ -102,3 +102,7 @@ link it from docs/README.md, make sure pnpm docs:check passes, commit to your br
 push it. Do not change code, do not open a pull request, and delete your room when you
 finish.
 ```
+
+## Actionable remainder
+
+- [ ] The findings, as placed in [42 G](42-next-proposals.md#g-what-cursors-walk-found-and-where-it-goes): A, C and E1, a new pass H (the fight log), and a new pass I (small fixes).
