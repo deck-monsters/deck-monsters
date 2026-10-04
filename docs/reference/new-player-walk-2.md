@@ -186,7 +186,9 @@ The boss card said `Strategy: You target the weakest player in the ring, every t
 What it seemed to mean: another player named The Editor had summoned, a boss was
 both here and 13 minutes away, and "You target" was an instruction to Ada.
 
-What it did: The Editor is the name on this account. The timer boss arrives by
+What it did: The Editor is the house (`RING_PATRON` in `constants/lore.ts`), named on every
+boss arrival whoever is signed in. (Claude's correction: the walk first took it for this
+account's name, which is itself the finding.) The timer boss arrives by
 itself and does not spend a summon. "You" in the strategy is the boss.
 
 What's missing: who called the boss, and that the timer is not the summon count.
