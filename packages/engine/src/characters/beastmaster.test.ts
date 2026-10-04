@@ -163,6 +163,19 @@ describe('characters/beastmaster', () => {
 		expect(announce).to.include('Blink');
 	});
 
+	it('says so, and where to get items, when `look at items` finds none', async () => {
+		const beastmaster = new Beastmaster();
+		beastmaster.monsters = [makeMonster('Stonefang', []) as any];
+		channelStub.resetHistory();
+
+		await beastmaster.lookAtItems(channelStub as any);
+
+		expect(channelStub.calledOnce).to.equal(true);
+		expect(channelStub.firstCall.args[0].announce).to.equal(
+			'You have no items. Buy some with buy items, or win them in fights.',
+		);
+	});
+
 	it('unequips cards from a monster and returns them to deck', async () => {
 		const beastmaster = new Beastmaster();
 		const monster = makeMonster('Stonefang', [makeCard('Hit'), makeCard('Hit'), makeCard('Heal')]);

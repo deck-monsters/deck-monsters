@@ -487,6 +487,14 @@ class Beastmaster extends BaseCharacter {
 	lookAtItems(channel: ChannelWithManager): Promise<void> {
 		const { channelManager, channelName } = channel;
 
+		// `look at items` with nothing anywhere used to print nothing at all, which reads as a
+		// broken command (new-player walk 2, I3). Say so, and say where items come from.
+		if (this.items.length < 1 && !this.monsters.some(monster => (monster as any).items?.length > 0)) {
+			return Promise.resolve(
+				(channel as any)({ announce: 'You have no items. Buy some with buy items, or win them in fights.' }),
+			).then(() => undefined);
+		}
+
 		return Promise.resolve()
 			.then(() => { if (this.items.length) return super.lookAtItems(channel as any); })
 			.then(() =>

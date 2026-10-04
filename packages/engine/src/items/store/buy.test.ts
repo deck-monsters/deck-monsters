@@ -227,6 +227,65 @@ describe('./items/store/buy.ts', () => {
 		expect(shop.items).to.deep.equal([purchasedItem, remainingItem]);
 	});
 
+	it('names the items in the confirm and the receipt, and says what to do next', async () => {
+		const bandage = { name: 'Bandage', itemType: 'Bandage', cost: 10 };
+		const potion = { name: 'Potion', itemType: 'Potion', cost: 5 };
+		const shop: Shop = { ...defaultShop, priceOffset: 1, items: [bandage, potion] };
+		const character = {
+			givenName: 'Ada',
+			pronouns: { he: 'she', him: 'her', his: 'her' },
+			coins: 100,
+			cards: [] as any[],
+			items: [] as any[],
+			addCard: sinon.stub(),
+			addItem: sinon.stub()
+		};
+
+		channelStub.resolves();
+		channelStub.onCall(0).resolves('0');
+		channelStub.onCall(1).resolves('0, 1');
+		channelStub.onCall(3).resolves('yes');
+
+		await buyItems({ character, channel: channelStub, host: makeHost(shop) });
+
+		const questions = channelStub.getCalls().map(call => call.args[0]?.question).filter(Boolean);
+		// The shop's pick prompt carries the marker the web client reads for its Buy button.
+		expect(questions[1]).to.match(/^Choose one or more of the following items to buy:/);
+		// Prices are doubled (priceOffset * 2): 10 * 2 + 5 * 2 = 30.
+		expect(questions[2]).to.equal('Bandage and Potion from Gorgons and Gremlins for 30 coins. Buy them? (yes/no)');
+		expect(channelStub.calledWith({
+			announce: 'Sold: Bandage and Potion. Ada has 70 coins left. Use an item with use, or give it to a monster with give.'
+		})).to.equal(true);
+		// The receipt already says the balance; it is not repeated on its own line.
+		expect(channelStub.calledWith({ announce: 'Ada has 70 coins.' })).to.equal(false);
+	});
+
+	it('asks "Buy it?" and says "1 coin" for a single one-coin item', async () => {
+		const pebble = { name: 'Pebble', itemType: 'Pebble', cost: 0.5 };
+		const shop: Shop = { ...defaultShop, priceOffset: 1, items: [pebble] };
+		const character = {
+			givenName: 'Ada',
+			pronouns: { he: 'she', him: 'her', his: 'her' },
+			coins: 5,
+			cards: [] as any[],
+			items: [] as any[],
+			addCard: sinon.stub(),
+			addItem: sinon.stub()
+		};
+
+		channelStub.resolves();
+		channelStub.onCall(0).resolves('0');
+		channelStub.onCall(1).resolves('Pebble');
+		channelStub.onCall(3).resolves('no');
+
+		await buyItems({ character, channel: channelStub, host: makeHost(shop) });
+
+		const questions = channelStub.getCalls().map(call => call.args[0]?.question).filter(Boolean);
+		expect(questions[2]).to.equal('Pebble from Gorgons and Gremlins for 1 coin. Buy it? (yes/no)');
+		// Declining still closes with the balance.
+		expect(channelStub.calledWith({ announce: 'Ada has 5 coins.' })).to.equal(true);
+	});
+
 	// Regression test for the shop menu off-by-one: the menu text and the web client both
 	// use 0-based indices ("0) Items"), but the dispatch used to compare against the
 	// 1-based literal `1`, so answering with the index for "Items" fell through to the

@@ -2,6 +2,7 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 
 import { LotteryTicket } from '../scrolls/lottery-ticket.js';
+import { SortingHat } from '../scrolls/sorting-hat.js';
 import { ChaosTheoryScroll } from '../scrolls/chaos-theory.js';
 import useItems from './use.js';
 
@@ -107,6 +108,33 @@ describe('./items/helpers/use.ts', () => {
 				use: useStub
 			}).then(() => {
 				expect(channelStub.calledWith({ question: 'Are you sure? (yes/no)' })).to.equal(true);
+			});
+		});
+
+		it('asks an item\'s own confirm question when it has one, naming who is affected', () => {
+			const character = makeCharacter();
+			const hat = new SortingHat();
+			character.items = [hat];
+			const question = 'Put on the Sorting Hat? It sorts Character into one of four teams, and is used up. (yes/no)';
+			channelStub.withArgs({ question }).resolves('yes');
+			const useStub = sinon.stub().resolves();
+
+			return useItems({ channel: channelStub, character, itemSelection: ['sorting hat'], use: useStub }).then(() => {
+				expect(channelStub.calledWith({ question })).to.equal(true);
+				expect(channelStub.calledWith({ question: 'Are you sure? (yes/no)' })).to.equal(false);
+				expect(useStub.calledOnce).to.equal(true);
+			});
+		});
+
+		it('names the monster the hat sorts when used on one', () => {
+			const character = makeCharacter();
+			const monster = makeMonster({ givenName: 'Brass' });
+			character.items = [new SortingHat()];
+			const question = 'Put on the Sorting Hat? It sorts Brass into one of four teams, and is used up. (yes/no)';
+			channelStub.withArgs({ question }).resolves('yes');
+
+			return useItems({ channel: channelStub, character, monster, itemSelection: ['sorting hat'], use: sinon.stub().resolves() }).then(() => {
+				expect(channelStub.calledWith({ question })).to.equal(true);
 			});
 		});
 

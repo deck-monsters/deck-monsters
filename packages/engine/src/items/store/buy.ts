@@ -3,6 +3,8 @@ import getClosingTime from './closing-time.js';
 import { announceAndThrow } from '../../helpers/announce-and-throw.js';
 import { getChoices, getFinalItemChoices, resolveChoiceIndex } from '../../helpers/choices.js';
 import type { ShopHost } from './shop.js';
+import { joinList } from '../../helpers/join-list.js';
+import { getItemKey } from '../helpers/counts.js';
 import { isSortingHat, withSortingHat } from './stock.js';
 
 // The menu labels are the single source of truth for both the rendered question text and
@@ -20,6 +22,15 @@ const ownedCountSuffix = (character: any, itemType: string): string => {
 	return owned > 0 ? ` [own ${owned}]` : '';
 };
 
+/**
+ * First line of the shop's pick prompt. The wording is the contract with the web client:
+ * `InlineChoices` reads "items to buy" off the question to label its confirm button
+ * "Buy n items" instead of the equip wording. Discord and older clients just see the text
+ * ("one or more" still marks it multi-select), so the change is additive. See
+ * docs/reference/prompt-answer-contract.md.
+ */
+const SHOP_PICK_QUESTION = 'Choose one or more of the following items to buy:';
+
 const addOwnershipToChoiceQuestion = (character: any, items: any[]) =>
 	({ itemChoices }: { itemChoices: string }): string => {
 		const lines = itemChoices.split('\n').map((line: string) => {
@@ -28,7 +39,7 @@ const addOwnershipToChoiceQuestion = (character: any, items: any[]) =>
 			const itemType = match[2].trim();
 			return line + ownedCountSuffix(character, itemType);
 		});
-		return `Choose one or more of the following items:\n\n${lines.join('\n')}`;
+		return `${SHOP_PICK_QUESTION}\n\n${lines.join('\n')}`;
 	};
 
 const buyItems = ({
@@ -95,7 +106,7 @@ ${getChoices(SHOP_MENU_LABELS)}`,
 
 But of course, ${character.givenName}. We have something really special in stock right now.`
 				})
-					.then(() => chooseItems({ items: backRoom, channel, showPrice: true, priceOffset }))
+					.then(() => chooseItems({ items: backRoom, channel, showPrice: true, priceOffset, getQuestion: addOwnershipToChoiceQuestion(character, backRoom) }))
 					.then((choices: any[]) => ({ choices, priceOffset }));
 			}
 
@@ -121,9 +132,7 @@ That'll be ${value} coins, but by the looks of things I _highly_ doubt that's in
 
 			return channel({
 				question:
-`These ${priceOffset > 2 ? 'exquisite' : 'fine'} items are available from ${shop.name} for a mere ${value} coins.
-
-Would you like to buy them? (yes/no)`
+`${joinList(choices.map(getItemKey))} from ${shop.name} for ${value} ${value === 1 ? 'coin' : 'coins'}. Buy ${choices.length === 1 ? 'it' : 'them'}? (yes/no)`
 			})
 				.then((answer: string = '') => {
 					if (answer.toLowerCase() !== 'yes') {
@@ -210,17 +219,28 @@ Would you like to buy them? (yes/no)`
 						backRoom: remainingBackRoom
 					});
 
+					// The receipt names what was bought and what is left, and says what to do next
+					// (new-player walk 2, I3). It replaces the old "Sold! Thank you..." plus a
+					// separate coins line. The "use or give" hint is about items, so a cards-only
+					// purchase gets the receipt without it.
+					const boughtItem = purchased.some((choice: any) => !choice.cardType);
+					const coinsLeft = character.coins;
 					return Promise.resolve(soldOutNotice).then(() => channel({
 						announce:
-`Sold! Thank you for your purchase, ${character.givenName}. It was a pleasure doing business with you.`
-					}));
+`Sold: ${joinList(purchased.map(getItemKey))}. ${character.givenName} has ${coinsLeft} ${coinsLeft === 1 ? 'coin' : 'coins'} left.${boughtItem ? ' Use an item with use, or give it to a monster with give.' : ''}`
+					})).then(() => true);
 				})
-				.then(() => channel({
-					announce:
+				.then((sold: unknown) => {
+					// A purchase's receipt already says the coins left; the other endings
+					// (declined, sold out, can't afford) still close with the balance.
+					if (sold === true) return undefined;
+					return channel({
+						announce:
 `${character.givenName} has ${character.coins} ${character.coins === 1 ? 'coin' : 'coins'}.`
-				}));
+					});
+				});
 		});
 };
 
 export default buyItems;
-export { buyItems };
+export { buyItems, SHOP_PICK_QUESTION };

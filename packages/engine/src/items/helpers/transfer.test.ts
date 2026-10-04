@@ -46,7 +46,7 @@ describe('./items/helpers/transfer.ts', () => {
 
 		return transferItems({ from, to, channel: channelStub }).catch(() => {
 			return expect(channelStub).to.have.been.calledWith({
-				announce: "Monster doesn't have any items that Character can use."
+				announce: "Monster has no items Character can use. Used items are gone; buy more in the shop."
 			});
 		});
 	});

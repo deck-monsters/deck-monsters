@@ -20,6 +20,16 @@ function isMultiSelect(question: string): boolean {
   return /one or more|card\(s\)|item\(s\)/i.test(question);
 }
 
+/**
+ * The shop's pick prompt is the same multi-select as equip, but the button must say what it
+ * does. The engine marks it in the question text ("...items to buy:", `SHOP_PICK_QUESTION` in
+ * items/store/buy.ts), so older clients and Discord, which ignore the marker, still work.
+ * It said "Equip cards" on a purchase (new-player walk 2, I3).
+ */
+function isBuyPrompt(question: string): boolean {
+  return /items to buy/i.test(question);
+}
+
 /** True when the equip loop already committed a partial batch and offers an early finish. */
 function canFinishPartialEquip(question: string): boolean {
   const match = question.match(/You have (\d+) of (\d+) slots remaining/i);
@@ -60,6 +70,7 @@ export default function InlineChoices({
   // Position in this array = deck slot (1-based displayed to user).
   const [selectionOrder, setSelectionOrder] = useState<number[]>([]);
   const multi = isMultiSelect(question);
+  const buying = multi && isBuyPrompt(question);
   // Per-index max counts parsed from the question text (e.g., "Hit [3]" → idx→3).
   // When null, fall back to max-1 toggle (no count info available).
   const choiceCounts = multi ? parseChoiceCounts(question) : null;
@@ -221,7 +232,7 @@ export default function InlineChoices({
       {multi && !isDone && (
         <div style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
           <button
-            title="Equip the cards you picked, in the order you picked them"
+            title={buying ? 'Buy the items you picked.' : 'Equip the cards you picked, in the order you picked them'}
             onClick={handleConfirm}
             disabled={selectionOrder.length === 0}
             style={{
@@ -234,7 +245,11 @@ export default function InlineChoices({
               cursor: selectionOrder.length > 0 ? 'pointer' : 'default',
             }}
           >
-            Equip {selectionOrder.length > 0 ? `${selectionOrder.length} card${selectionOrder.length !== 1 ? 's' : ''}` : 'cards'}
+            {buying
+              ? (selectionOrder.length > 0
+                ? `Buy ${selectionOrder.length} ${selectionOrder.length !== 1 ? 'items' : 'item'}`
+                : 'Buy items')
+              : <>Equip {selectionOrder.length > 0 ? `${selectionOrder.length} card${selectionOrder.length !== 1 ? 's' : ''}` : 'cards'}</>}
           </button>
           {showDoneEquipping && (
             <button

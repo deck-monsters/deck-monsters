@@ -73,6 +73,12 @@ channel({ question: '...', choices: ['Items', 'Cards', 'Back Room'] })
 **Descriptions ride in the question, not in `choices`.** The monster type prompt explains each
 type with `Label: line` rows in the question text while `choices` stays the bare labels. A
 label with a description glued on would stop the Discord button's label answer from resolving.
+**A multi-select prompt says what its confirm button does through the question text.** The web
+`InlineChoices` shows `Equip n cards` for every "one or more" prompt unless the question
+contains `items to buy`, in which case the button reads `Buy n items`. The shop's pick prompt
+opens with `SHOP_PICK_QUESTION` (`items/store/buy.ts`) for this. No new field rides on the
+prompt, so Discord and older clients simply see the sentence, and the answer encoding is
+unchanged. It used to say `Equip cards` on a purchase (new-player walk 2).
 **Free-text prompts cannot take an empty answer** (the web Console and Discord will not send
 one), so a "take the default" option needs a word to type: the character-name prompt accepts
 `ok`, `okay`, `yes` or `y`.

@@ -89,7 +89,7 @@ On the web, the Workshop shows valid targets and remaining uses. During your mon
 
 ## Coins and the Shop
 
-Every completed fight pays coins: 5 for a win and 2 for a loss, flee, or draw. Your first completed fight of each UTC day also pays a 5-coin participation bonus (a permanent death pays 4 before that bonus). The daily bonus is automatic — there is nothing to claim. Spend coins at the shop to expand your card pool and buy items.
+Every completed fight pays coins: 5 for a win and 2 for a loss, flee, or draw. Your first completed fight of each UTC day also pays a 5-coin participation bonus (a permanent death pays 4 before that bonus). The daily bonus is automatic — there is nothing to claim. New characters start with 30 coins. Spend coins at the shop to expand your card pool and buy items.
 
 Every win also adds a card to your collection. Until you own a copy of your winning monster's signature card (a Jinn's Sandstorm, a Dragon's Fire Breath, a Unicorn's Sticketh), that card is very likely the one you win.
 

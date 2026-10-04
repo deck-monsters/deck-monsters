@@ -32,7 +32,7 @@ const transferItems = ({ from, to, itemSelection, channel }: TransferOptions): P
 			);
 
 			if (items.length < 1) {
-				return announceAndThrow(channel, `${from.givenName} doesn't have any items that ${to.givenName} can use.`);
+				return announceAndThrow(channel, `${from.givenName} has no items ${to.givenName} can use. Used items are gone; buy more in the shop.`);
 			}
 
 			const { itemSlots } = to;

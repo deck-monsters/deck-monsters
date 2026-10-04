@@ -68,6 +68,14 @@ export const randomAvatarChoices = (count: number): string[] => {
 	return choices;
 };
 
+/**
+ * What a brand-new character starts with. A new player's first shop visit used to show
+ * "0 coins" and one free Sorting Hat, with nothing to spend (new-player walk 2, I3). Set at
+ * creation only: `base.ts` still defaults a missing `coins` to 0, because saved characters
+ * and generated bosses/harness fighters never pass through here and must not gain coins.
+ */
+export const STARTING_COINS = 30;
+
 /** Same limit as the Workshop form's "Your name" field and the spawnMonster input. */
 export const CHARACTER_NAME_MAX_LENGTH = 40;
 
@@ -245,7 +253,7 @@ const createCharacter = (
 		.then(() => askForGender(Character))
 		.then(() => (options.name === undefined ? askForName(Character) : undefined))
 		.then(() => askForAvatar())
-		.then(() => new Character(options));
+		.then(() => new Character({ ...options, coins: STARTING_COINS }));
 };
 
 export { createCharacter };
