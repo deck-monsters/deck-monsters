@@ -1029,6 +1029,34 @@ describe('trpc/router card management procedures', () => {
 		]);
 	});
 
+	it('uses the singular in the move summaries for one card (pass 43 I1)', async () => {
+		const moveCard = async ({ cardName }: { cardName: string }) =>
+			({ movedCount: 1, fromMonsterName: 'Fang', toMonsterName: 'Stonefang', cardName });
+		const announced: string[] = [];
+		const roomManager = {
+			assertMember: async () => undefined,
+			getGame: async () => ({ characters: { [USER_ID]: { moveCard } } }),
+			getEventBus: async () => ({
+				publish: (event: { type?: string; text?: string }) => {
+					if (event.type === 'announce') announced.push(String(event.text));
+				},
+			}),
+			runSerializedEngineWork: async (_roomId: string, fn: () => Promise<unknown>) => fn(),
+		} as unknown as Parameters<typeof createRouter>[0];
+		const caller = createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false });
+		await caller.game.moveMany({
+			roomId: ROOM_ID, fromMonsterName: 'Fang', toMonsterName: 'Stonefang',
+			cards: [{ cardName: 'Hit', count: 1 }],
+		});
+		await caller.game.moveCard({
+			roomId: ROOM_ID, cardName: 'Hit', fromMonsterName: 'Fang', toMonsterName: 'Stonefang',
+		});
+		expect(announced).to.deep.equal([
+			'Moved 1 card from Fang to Stonefang.',
+			'Moved 1 Hit from Fang to Stonefang.',
+		]);
+	});
+
 	it('prints one Console line for a Workshop equip, not the engine\'s line and the summary', async () => {
 		// Both used to reach the Console: "Equipped Hit on Stonefang." from the engine and the
 		// same summary from the router, and a batch move printed a line per card type plus a

@@ -1087,15 +1087,13 @@ button {
 
 /*
   Visible edge fade (pass 43 I1): the box already scrolled sideways, but nothing said so, so a
-  390px phone showed Name and XP and hid W/L/D. Classic CSS scroll shadows: the two `local`
-  layers are opaque covers that scroll with the content and hide the matching `scroll`
-  shadow once that edge is reached, so a fade shows only on a side that has more to see.
+  390px phone showed Name and XP and hid W/L/D. Classic CSS scroll shadows: the `local`
+  layer is an opaque cover that scrolls with the content and hides the matching `scroll`
+  shadow once that edge is reached, so a fade shows only while there is more to the right. There is no left fade: the sticky Rank/Name cells are opaque and would hide it, and the columns that matter scroll in from the right.
 */
 .leaderboard-table-region {
   background:
-    linear-gradient(to right, var(--color-bg) 30%, transparent) left center / 2rem 100% no-repeat local,
     linear-gradient(to left, var(--color-bg) 30%, transparent) right center / 2rem 100% no-repeat local,
-    linear-gradient(to right, color-mix(in srgb, var(--color-accent) 35%, transparent), transparent) left center / 0.9rem 100% no-repeat scroll,
     linear-gradient(to left, color-mix(in srgb, var(--color-accent) 35%, transparent), transparent) right center / 0.9rem 100% no-repeat scroll;
 }
 
@@ -1152,3 +1150,6 @@ button {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* overflow: hidden clips an outset focus ring, so draw it inside the box. */
+.app-shell-room-name:focus-visible { outline: 2px solid var(--color-accent); outline-offset: -2px; }

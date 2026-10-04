@@ -1,4 +1,5 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import { movedToMessage } from '../utils/moved-message.js';
 import { surfaceDescription } from './surface-descriptions.js';
 import InventoryPanel from './InventoryPanel.js';
 import ItemsPanel from './ItemsPanel.js';
@@ -501,7 +502,7 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
       const skipped = result.failures.length > 0
         ? ` Skipped: ${result.failures.map((f) => f.cardName).join(', ')}.`
         : '';
-      setMessage(`Moved ${result.movedCount} cards to ${target.monsterName}.${skipped}`);
+      setMessage(`${movedToMessage(result.movedCount, target.monsterName)}${skipped}`);
     }
   }
 

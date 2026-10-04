@@ -44,6 +44,8 @@ export default function AppShell({ children, roomName, roomId }: AppShellProps) 
         <Link
           to="/rooms"
           style={{
+            flexShrink: 0,
+            whiteSpace: 'nowrap',
             color: 'var(--color-fg-bright)',
             textDecoration: 'none',
             fontWeight: 700,
@@ -79,6 +81,8 @@ export default function AppShell({ children, roomName, roomId }: AppShellProps) 
               <Link
                 to={`/room/${roomId}/settings`}
                 style={{
+                  flexShrink: 0,
+                  whiteSpace: 'nowrap',
                   color: 'var(--color-fg-dim)',
                   textDecoration: 'none',
                   fontSize: '0.8rem',
