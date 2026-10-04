@@ -81,8 +81,9 @@ same as the claim.
   you would swear they are black."
 - **Voice:** "Pliny says his voice is low as a lowing ox. Then he calls once across the ring,
   clear as a bell."
-- **Where it lives:** "Aelian says they keep to an inaccessible mountain. You found them in an
-  enclosed garden, eating the roses."
+- **Where it lives:** "Aelian says they keep to an inaccessible mountain. But just this
+  morning you found them in the garden, eating your roses." (The owner's phrasing, 2026-10-04:
+  the contradiction is personal and recent. "Just this morning" and "your" carry the joke.)
 - **Horn** (new): "Topsell swears her horn is bright ivory. In the ring's light it looks
   ringed and black."
 
@@ -127,7 +128,19 @@ group.
 3. **Items, generated the same way, inside ITEMS.md's structure.** ITEMS.md keeps its
    hand-written rules and advice. Its tables are generated, with stats, grouped by the same
    purposes. The duplicate item list leaves CARDS.md.
-4. **One role table.** Every card gets a role, set in one place. A test fails when a card has
+4. **Which cards a monster can use, and when** (owner, 2026-10-04). Each card already
+   knows who may hold it (`permittedClassesAndTypes`) and its minimum level, but a player
+   has nowhere to see it. Three views, from one source:
+   - **In the guide,** every entry says who can use it and from which level. Each monster
+     type gets a short table, "What a Dragon can hold", by level: what it can hold now and
+     what opens up at each level.
+   - **In the Workshop,** a monster's panel says what its next level opens up ("At level 2:
+     Fire Breath, Tail Sweep"). The card detail sheet (E1) says whether this monster can
+     hold the card, and if not, why: the wrong type, or what level it needs.
+   - **In the Console,** a command such as `look at cards for [monster]` lists what that
+     monster can hold, grouped by role, with locked cards marked by their level. Its exact
+     wording goes through the catalogue.
+5. **One role table.** Every card gets a role, set in one place. A test fails when a card has
    none, in the same way every ring event must have a note. D uses the same table.
 
 **Size:** one engine build task (generators and the role table), plus the group intros. The
