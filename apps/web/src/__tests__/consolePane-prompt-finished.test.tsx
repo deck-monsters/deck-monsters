@@ -323,7 +323,8 @@ describe('ConsolePane: a finished question leaves the input (pass 43, I4)', () =
     pushPromptRequest('r1');
     trpcMocks.pendingPromptQuery.isFetching = false;
     trpcMocks.pendingPromptQuery.data = null;
-    trpcMocks.pendingPromptQuery.dataUpdatedAt += 1;
+    // Landed 6s after the prompt: a time-since-arrival grace would wrongly clear it.
+    trpcMocks.pendingPromptQuery.dataUpdatedAt = Date.now() + 6_000;
     rerender();
     expect(input().placeholder).toMatch(/answer/i);
     // A second empty poll, though, is authoritative whenever it was sent.

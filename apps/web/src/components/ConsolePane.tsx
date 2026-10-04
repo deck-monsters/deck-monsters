@@ -216,11 +216,8 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
 
   // The prompt timeout/cancel handlers live in a subscription callback that closes over
   // the render in which it was created, so reading `activePromptId` there went stale and
-  // left the input locked. Mirror it into a ref — written in an effect rather than during
-  // render, so the render stays pure under StrictMode's double-invocation.
-  useEffect(() => {
-    activePromptIdRef.current = activePromptId;
-  }, [activePromptId]);
+  // left the input locked. They read `activePromptIdRef`, which `setActivePromptId` writes
+  // synchronously (the only writer).
   const virtuosoRef = useRef<VirtuosoHandle>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const seenRef = useRef(new Set<string>());
@@ -260,6 +257,10 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
   );
 
   useEffect(() => {
+    // Date.now() is taken a few ms after the request really left, so a prompt arriving in
+    // that gap could be cleared by this poll's one empty answer. Acceptable: the gap is a
+    // render tick against a 3s poll, the server registers a prompt before publishing it, and
+    // the next poll re-arms a prompt that is still pending.
     if (pendingPromptFetching) pollStartedAtRef.current = Date.now();
   }, [pendingPromptFetching]);
 
