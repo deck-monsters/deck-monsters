@@ -21,12 +21,12 @@ Source: `packages/engine/src/monsters/unicorn.ts`.
 
 Seeded, cycling he, she, and they.
 
-- `a goat-bearded unicorn bearing a long, straight black horn. His coat is tawny. So saith Ctesias: he keeps to a lonely wilderness. Marco Polo saith otherwise, and loudly.`
-- `a horse-like unicorn bearing a bright ivory horn. Her coat is ivory white. So saith Solinus: her voice is low as a lowing ox. Aelian saith otherwise, and loudly.`
-- `a stocky, cloven-hoofed unicorn bearing a white, crimson, and black horn. Their coat is white with a dark-red head. Pliny swears that they keep to a laurel grove; Marco Polo calls Pliny a liar.`
-- `an elephant-footed unicorn bearing a ringed black horn. His coat is tawny. Marco Polo swears that he keeps to an enclosed garden; Aelian calls Marco Polo a liar.`
+- `a goat-bearded unicorn bearing a long, straight black horn. His coat is tawny. Ctesias wrote that his voice is low as a lowing ox. He hums at dusk, startlingly dissonant, and the dogs leave the room.`
+- `a horse-like unicorn bearing a bright ivory horn. Her coat is ivory white. Solinus swears her horn is ringed black. You have seen her horn up close: bright ivory, and sharper than Solinus let on.`
+- `a stocky, cloven-hoofed unicorn bearing a white, crimson, and black horn. Their coat is white with a dark-red head. Pliny says they keep to a laurel grove. But just this morning you found them asleep in your hayloft.`
+- `an elephant-footed unicorn bearing a ringed black horn. His coat is tawny. Marco Polo says his voice is low as a lowing ox. But just this morning he called across the yard, clear as a bell.`
 - `a stocky, cloven-hoofed unicorn bearing a ringed black horn. Her coat is white with a dark-red head. A drunken sailor swears that her voice is clear as a bell. He is not believed, but he is not wrong.`
-- `a horse-like unicorn bearing a white, crimson, and black horn. Their coat is winter white. Pliny swears that they keep to an enclosed garden; Aelian calls Pliny a liar.`
+- `a horse-like unicorn bearing a white, crimson, and black horn. Their coat is winter white. Pliny says they keep to an enclosed garden. But just this morning you found them asleep in your hayloft.`
 
 ### Fill lists
 
@@ -36,20 +36,26 @@ Seeded, cycling he, she, and they.
 - `BUILDS`: `horse-like`, `horse-like`, `goat-bearded`, `goat-bearded`, `stag-headed`, `stag-headed`, `stocky, cloven-hoofed`, `stocky, cloven-hoofed`, `elephant-footed`
 - `RETREATS`: `a rocky gorge`, `a laurel grove`, `an inaccessible mountain`, `a lonely wilderness`, `an enclosed garden`
 - `VOICES`: `low as a lowing ox`, `clear as a bell`, `startlingly dissonant`
-- `WITNESS_DETAILS`: `eyes`, `retreat`, `voice`
+- `WITNESS_DETAILS`: `eyes`, `retreat`, `voice`, `horn`
+- `SIGHTINGS`: `in your garden, eating your roses / an enclosed garden`, `in your kitchen, eating the bread`, `at the village well, drinking out of the bucket`, `in your orchard, knocking down the apples`, `asleep in your hayloft`
 - `AUTHORITIES`: `Pliny`, `Aelian`, `Ctesias`, `Solinus`, `Topsell`, `Marco Polo`
 - `COMMONERS`: `a drunken sailor / he`, `a very old woman in the market / she`
-- `WITNESS_SHAPES`: `liar`, `liar`, `saith`, `commoner`
+- `WITNESS_SHAPES`: `seen`, `seen`, `seen`, `commoner`
 
 ### Templates
 
 | Where | Template |
 |---|---|
-| witnessLine → returns | `So saith {swearer}: {detail}. {doubter} saith otherwise, and loudly.` |
-| witnessLine → returns | `{Who} swears that {detail}. {Pronoun} is not believed, but {pronoun} is not wrong.` |
-| witnessLine → returns | `{swearer} swears that {detail}; {doubter} calls {swearer} a liar.` |
+| witnessLine → returns | `{Who} swears that {witnessDetail}. {Pronoun} is not believed, but {pronoun} is not wrong.` |
+| seenLine → returns | `{who} says {his} voice is {voice}. But just this morning {he} called across the yard, {heard}.` |
+| seenLine → returns | `{who} wrote that {his} voice is {voice}. {He} {hums/hum} at dusk, {heard}, and the dogs leave the room.` |
+| seenLine → returns | `{who} says {he} {keeps/keep} to {retreat}. But just this morning you found {him} {where}.` |
+| seenLine → returns | `{who} swears {his} horn is {claimed}. You have seen {his} horn up close: {horn}, and sharper than {who} let on.` |
+| seenLine → returns | `{who} says {his} eyes are {eyes}. But {he} {blinks/blink} slowly, and you would swear they are {seen}.` |
+| seenLine → returns | `{who} wrote that {his} eyes are {eyes}. {He} {turns/turn} to look at you, and {his} eyes are {seen}.` |
 | witnessDetail → returns | `{he} {keeps/keep} to {retreat}` |
 | witnessDetail → returns | `{his} voice is {voice}` |
+| witnessDetail → returns | `{his} horn is {horn}` |
 | witnessDetail → returns | `{his} eyes are {eyes}` |
 | description → anhorn | ` The oldest English called {him} ānhorn, and did not argue about {his} feet.` |
 | description → returns | `{article} {build} unicorn bearing {article} {horn} horn. {His} coat is {color}. {witnessLine}{anhorn}` |

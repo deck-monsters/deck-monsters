@@ -8,8 +8,8 @@ tags: [roadmap, planning, workshop, bosses, cards]
 ---
 # 42 — Proposals for the next passes
 
-**Status:** Proposed (2026-10-04). Nothing here is started. The owner picks what goes first;
-each pick then gets its own plan with a task table, in the usual way.
+**Status:** Proposed (2026-10-04). B is done (below); the rest is not started. The owner picks
+what goes next; each pick then gets its own plan with a task table, in the usual way.
 
 The owner's requests are A to D. E lists what Claude noticed in recent sessions. F is
 Cursor's next walk. A, C and D share one new piece, a **role** for every card (attack, area,
@@ -55,6 +55,14 @@ screen keeps its answer if you go back.
 preview. Then a Cursor check at 390 px.
 
 ## B. The Unicorn's witness line
+
+**Done (2026-10-04).** Shipped as proposed, with these changes in the build:
+- the shape is named `seen` (three draws in four) beside `commoner`;
+- the sightings for "where it lives" are a pool (garden and roses, kitchen, village well,
+  orchard, hayloft); the garden is never drawn when the claim is "an enclosed garden";
+- the contradicting value comes from a stored `sightingRoll`, not the id. A Unicorn saved
+  before this has no roll and reads as roll 0, so its line is still the same on every look;
+- `doubter` is gone; a saved `liar` or `saith` reads as `seen`.
 
 **Owner:** the end of the Unicorn description reads bland. Perhaps one authority makes a
 claim, and the monster does something that undoes it ("…says her eyes are blue, but she

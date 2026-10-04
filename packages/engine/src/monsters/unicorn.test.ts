@@ -67,18 +67,45 @@ describe('monsters/unicorn', () => {
 		expect(unicorn.description).not.to.match(/with[^.]*with/);
 	});
 
-	it('lets the old authorities quarrel, and never has one call themself a liar', () => {
-		const liar = new Unicorn({ gender: 'female', witness: 'voice', voice: 'low as a lowing ox', witnessShape: 'liar', swearer: 'Pliny', doubter: 'Aelian', anhorn: false });
-		expect(liar.description).to.match(/Pliny swears that her voice is low as a lowing ox; Aelian calls Pliny a liar\.$/);
+	it('has one authority make a claim that the unicorn undoes in front of you (roadmap 42 B)', () => {
+		const roses = new Unicorn({ gender: 'androgynous', witness: 'retreat', retreat: 'an inaccessible mountain', witnessShape: 'seen', swearer: 'Aelian', sightingRoll: 0, anhorn: false });
+		expect(roses.description).to.match(/Aelian says they keep to an inaccessible mountain\. But just this morning you found them in your garden, eating your roses\.$/);
 
-		const saith = new Unicorn({ gender: 'female', witness: 'eyes', eyes: 'dark blue', witnessShape: 'saith', swearer: 'Ctesias', doubter: 'Topsell', anhorn: false });
-		expect(saith.description).to.include('So saith Ctesias: her eyes are dark blue. Topsell saith otherwise, and loudly.');
+		const eyes = new Unicorn({ gender: 'female', witness: 'eyes', eyes: 'dark blue', witnessShape: 'seen', swearer: 'Ctesias', sightingRoll: 0, anhorn: false });
+		expect(eyes.description).to.match(/Ctesias says her eyes are dark blue\. But she blinks slowly, and you would swear they are black\.$/);
+
+		const horn = new Unicorn({ gender: 'male', witness: 'horn', horn: 'ringed black', witnessShape: 'seen', swearer: 'Topsell', sightingRoll: 0, anhorn: false });
+		expect(horn.description).to.match(/Topsell swears his horn is white, crimson, and black\. You have seen his horn up close: ringed black, and sharper than Topsell let on\.$/);
 
 		const sailor = new Unicorn({ gender: 'androgynous', witness: 'retreat', retreat: 'a rocky gorge', witnessShape: 'commoner', commoner: 'a drunken sailor', anhorn: false });
 		expect(sailor.description).to.include('A drunken sailor swears that they keep to a rocky gorge. He is not believed, but he is not wrong.');
+	});
 
-		const same = new Unicorn({ witnessShape: 'liar', swearer: 'Pliny', doubter: 'Pliny' });
-		expect(same.doubter).to.equal('Aelian');
+	it('never has what you saw agree with the claim, for any roll, detail or pronouns', () => {
+		for (const gender of ['male', 'female', 'androgynous']) {
+			for (const witness of ['eyes', 'retreat', 'voice', 'horn']) {
+				for (let i = 0; i < 40; i++) {
+					const sightingRoll = i / 40;
+					for (const eyes of ['dark blue', 'black', 'woodland brown']) {
+						const u = new Unicorn({ gender, witness, eyes, witnessShape: 'seen', sightingRoll, retreat: 'an enclosed garden', anhorn: false });
+						const line = u.seenLine;
+						if (witness === 'eyes') expect(line.split('swear they are ')[1] ?? line.split('eyes are ')[2]).to.not.equal(`${eyes}.`);
+						if (witness === 'retreat') expect(line).to.not.include('your garden');
+						expect(line, line).to.not.match(/\bits?\b|undefined/);
+						if (gender === 'androgynous') expect(line).to.not.match(/\bthey (keeps|blinks|turns|hums)\b/);
+					}
+				}
+			}
+		}
+	});
+
+	it('reads the same every time, and for a unicorn saved with an old witness shape', () => {
+		const legacy = new Unicorn({ witnessShape: 'liar', swearer: 'Pliny', doubter: 'Aelian', witness: 'voice', voice: 'clear as a bell', sightingRoll: undefined, anhorn: false });
+		expect(legacy.description).to.include('Pliny says');
+		expect(legacy.description).to.not.include('liar');
+		expect(legacy.description).to.equal(legacy.description);
+		const saith = new Unicorn({ witnessShape: 'saith', witness: 'eyes', anhorn: false });
+		expect(saith.description).to.not.match(/saith|liar/);
 	});
 
 	it('ends with the Old English name only when the rare flag is drawn', () => {
@@ -88,9 +115,11 @@ describe('monsters/unicorn', () => {
 	});
 
 	it('reads the same for a unicorn saved before the witness options existed', () => {
-		const legacy = new Unicorn({ witnessShape: undefined, swearer: undefined, doubter: undefined, commoner: undefined });
-		expect(legacy.description).to.include('Pliny swears that');
-		expect(legacy.description).to.include('Aelian calls Pliny a liar.');
+		// A unicorn saved by an older release: no shape, swearer or roll were stored.
+		const saved = { witness: 'retreat', retreat: 'a rocky gorge', build: 'horse-like', horn: 'bright ivory', color: 'tawny', gender: 'female', anhorn: false, witnessShape: undefined, swearer: undefined, commoner: undefined, sightingRoll: undefined };
+		const first = new Unicorn({ ...saved }).description;
+		expect(first).to.include('Pliny says she keeps to a rocky gorge. But just this morning you found her in your garden, eating your roses.');
+		expect(new Unicorn({ ...saved }).description).to.equal(first);
 	});
 
 	it('keeps generated appearance through a hydration round trip', async () => {
