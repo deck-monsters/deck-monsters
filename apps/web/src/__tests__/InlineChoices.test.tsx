@@ -55,7 +55,7 @@ describe('InlineChoices', () => {
       expect(screen.getByText('Equip cards')).toBeTruthy();
     });
 
-    it('labels the shop pick button "Buy n items", not the equip wording', () => {
+    it('labels the shop item pick "Buy n items", not the equip wording', () => {
       const onAnswer = vi.fn();
       render(
         <InlineChoices
@@ -73,6 +73,55 @@ describe('InlineChoices', () => {
       fireEvent.click(screen.getByText('Blast'));
       fireEvent.click(screen.getByText('Buy 2 items'));
       expect(onAnswer).toHaveBeenCalledWith('req-1', '0, 2');
+    });
+
+    it('labels the shop card pick "Buy n cards"', () => {
+      const onAnswer = vi.fn();
+      render(
+        <InlineChoices
+          {...defaultProps}
+          question={'Choose one or more of the following cards to buy:\n\n0) Hit [1] - 5 coins'}
+          onAnswer={onAnswer}
+        />
+      );
+      expect(screen.getByText('Buy cards')).toBeTruthy();
+      expect(screen.queryByText(/Equip/)).toBeNull();
+
+      fireEvent.click(screen.getByText('Hit'));
+      const one = screen.getByText('Buy 1 card');
+      expect(one.getAttribute('title')).toBe('Buy the cards you picked.');
+      fireEvent.click(screen.getByText('Blast'));
+      fireEvent.click(screen.getByText('Buy 2 cards'));
+      expect(onAnswer).toHaveBeenCalledWith('req-1', '0, 2');
+    });
+
+    it('labels the Back Room pick "Buy n" with no noun, since it stocks cards and items', () => {
+      const onAnswer = vi.fn();
+      render(
+        <InlineChoices
+          {...defaultProps}
+          question={'Choose one or more of the following to buy:\n\n0) Hit [1] - 5 coins'}
+          onAnswer={onAnswer}
+        />
+      );
+      const idle = screen.getByText('Buy');
+      expect(idle.getAttribute('title')).toBe('Buy what you picked.');
+      expect(screen.queryByText(/Equip/)).toBeNull();
+
+      fireEvent.click(screen.getByText('Hit'));
+      fireEvent.click(screen.getByText('Blast'));
+      fireEvent.click(screen.getByText('Buy 2'));
+      expect(onAnswer).toHaveBeenCalledWith('req-1', '0, 2');
+    });
+
+    it('keeps the equip wording for the sell and equip questions', () => {
+      render(
+        <InlineChoices
+          {...defaultProps}
+          question={'Choose one or more of the following cards:\n\n0) Hit [1]'}
+        />
+      );
+      expect(screen.getByText('Equip cards')).toBeTruthy();
     });
 
     it('sends indices in selection order (not sorted) when confirmed', () => {

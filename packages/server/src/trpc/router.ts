@@ -12,7 +12,9 @@ import {
 	PRONOUN_KEYS,
 	PROMPT_CANCELLED,
 	PromptCancelledError,
+	allCardFacts,
 	allMonsters,
+	holdableByLevel,
 	monsterTypeSummary,
 	equipResultMessage,
 	getXpCapForLevel,
@@ -91,6 +93,15 @@ type InventoryMonsterSummary = {
 	// epoch instead. Never send the timer handle or timeout length itself over the wire.
 	revivesAt: number | null;
 	battles: { wins: number; losses: number; total: number };
+	// What the card-details sheet needs to say "{monster} can use this" without a round trip
+	// per card. The class goes down so the web can run the engine's browser-safe
+	// `cardHoldVerdict` itself against the static card facts (`game.cardFacts`): that keeps this
+	// payload to two small fields per monster instead of a verdict for every card x monster,
+	// and the rule stays the engine's, not a copy (roadmap 44 K3).
+	monsterClass: string;
+	// The next level above this monster's that opens any card its type can hold, with those
+	// card names, for the panel's "At level N: ..." line. Null when nothing opens later.
+	nextCards: { level: number; cards: string[] } | null;
 };
 
 // Per-item summary for the web item list (docs/architecture/workshop-and-items.md).
@@ -327,6 +338,25 @@ const summarizeItem = (
 	};
 };
 
+/** The static `class` of the monster type with this name ('' for an unknown type). */
+const monsterClassOfType = (type: string): string => {
+	const Monster = allMonsters.find((M) => (M as { creatureType?: string }).creatureType === type) as
+		| { class?: string }
+		| undefined;
+	return typeof Monster?.class === 'string' ? Monster.class : '';
+};
+
+const nextCardsFor = (type: string, level: number): InventoryMonsterSummary['nextCards'] => {
+	const next = holdableByLevel(type).find((group) => group.level > level);
+	return next ? { level: next.level, cards: next.cards.map((card) => card.name) } : null;
+};
+
+// The card facts are static (they read the card classes, not any room), so build them once
+// per process. The query still asserts membership: the data is public game content, but the
+// rooms rule is that no game procedure answers a non-member.
+let cardFactsCache: ReturnType<typeof allCardFacts> | undefined;
+const getCardFacts = () => (cardFactsCache ??= allCardFacts());
+
 const summarizeInventory = ({
 	character,
 	inRing,
@@ -396,14 +426,13 @@ const summarizeInventory = ({
 						: 0,
 			};
 
+			const type = typeof record.creatureType === 'string' ? record.creatureType : 'Unknown';
+
 			return {
 				monster,
 				summary: {
 					name,
-					type:
-						typeof record.creatureType === 'string'
-							? record.creatureType
-							: 'Unknown',
+					type,
 					level,
 					xpIntoLevel,
 					xpNeededForLevel,
@@ -420,6 +449,8 @@ const summarizeInventory = ({
 					maxHp,
 					revivesAt,
 					battles,
+					monsterClass: monsterClassOfType(type),
+					nextCards: nextCardsFor(type, level),
 				} satisfies InventoryMonsterSummary,
 			};
 		})
@@ -1286,6 +1317,13 @@ export function createRouter(roomManager: RoomManager, chat: ChatService = new C
 					return character.spawnMonster(channel, { type: input.type, gender: input.gender, name: input.name, color: input.color, game });
 				}) as { givenName?: unknown; creatureType?: unknown };
 				return { ok: true as const, monsterName: String(monster?.givenName ?? input.name), monsterType: String(monster?.creatureType ?? '') };
+			}),
+
+		cardFacts: protectedProcedure
+			.input(z.object({ roomId: z.string().uuid() }))
+			.query(async ({ input, ctx }) => {
+				await roomManager.assertMember(ctx.userId, input.roomId);
+				return getCardFacts();
 			}),
 
 		myInventory: protectedProcedure

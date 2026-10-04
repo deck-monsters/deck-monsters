@@ -1,4 +1,4 @@
-import { abbreviateCardName, getCardClass, getCardEmoji, isLongCardName } from '../utils/cards.js';
+import { CARD_ROLE_SLOT_LABEL, abbreviateCardName, getCardEmoji, getCardRole, isLongCardName } from '../utils/cards.js';
 
 export type WorkshopCardLocation =
   | { kind: 'inventory' }
@@ -24,6 +24,13 @@ interface CardSlotProps {
     sourceSelectionId?: string,
   ) => Promise<void> | void;
   onTapSlot?: (target: WorkshopCardLocation) => Promise<void> | void;
+  /**
+   * Opens the card's detail sheet. The control is a sibling of the slot button, not a child:
+   * a button inside a button is invalid HTML and would swallow the tap that selects the card.
+   * It stays enabled on a disabled slot (locked monster, filtered-out card) because reading
+   * what a card does changes nothing.
+   */
+  onShowDetails?: (cardName: string) => void;
 }
 
 export default function CardSlot({
@@ -37,8 +44,9 @@ export default function CardSlot({
   onSelectCard,
   onDropCard,
   onTapSlot,
+  onShowDetails,
 }: CardSlotProps) {
-  const cardClass = cardName ? getCardClass(cardName) : 'utility';
+  const role = cardName ? getCardRole(cardName) : undefined;
 
   async function handleDrop(event: React.DragEvent<HTMLButtonElement>) {
     if (disabled) return;
@@ -83,11 +91,12 @@ export default function CardSlot({
   }
 
   return (
+    <div className="workshop-card-cell">
     <button
       type="button"
       className={[
         'workshop-card-slot',
-        cardName ? `class-${cardClass}` : 'empty',
+        cardName ? `role-${role ?? 'none'}` : 'empty',
         isDropActive ? 'drop-over' : '',
         selected ? 'selected' : '',
         disabled ? 'disabled' : '',
@@ -108,11 +117,23 @@ export default function CardSlot({
         <>
           <span className="workshop-card-icon">{getCardEmoji(cardName)}</span>
           <span className={`workshop-card-name${isLongCardName(cardName) ? ' compact' : ''}`}>{abbreviateCardName(cardName)}</span>
-          <span className="workshop-card-class">{cardClass}</span>
+          {role && <span className="workshop-card-class">{CARD_ROLE_SLOT_LABEL[role]}</span>}
         </>
       ) : (
         <span>[+]</span>
       )}
     </button>
+    {cardName && onShowDetails && (
+      <button
+        type="button"
+        className="workshop-card-info"
+        title="What this card does"
+        aria-label={`What ${cardName} does`}
+        onClick={() => onShowDetails(cardName)}
+      >
+        ⓘ
+      </button>
+    )}
+    </div>
   );
 }

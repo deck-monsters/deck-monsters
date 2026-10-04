@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { trpc } from '../lib/trpc.js';
 import type { ItemSummary } from '../utils/item-tiers.js';
+import type { CardFactsView } from '../utils/cards.js';
 
 type WorkshopMonster = {
   name: string;
@@ -23,6 +24,11 @@ type WorkshopMonster = {
   maxHp: number;
   revivesAt: number | null;
   battles: { wins: number; losses: number; total: number };
+  // For the card-details sheet and the panel's "At level N" line; see
+  // `InventoryMonsterSummary` in the server router. Optional: older payloads and test doubles
+  // lack them.
+  monsterClass?: string;
+  nextCards?: { level: number; cards: string[] } | null;
 };
 
 type WorkshopInventory = {
@@ -85,6 +91,12 @@ export function useDeckWorkshop(roomId?: string) {
       refetchInterval: 30_000,
       refetchOnWindowFocus: true,
     },
+  );
+  // Static for the life of the process (it reads the card classes, not the room), so it is
+  // fetched once. The sheet shows only the card's name until it arrives.
+  const cardFactsQuery = trpc.game.cardFacts.useQuery(
+    { roomId: validRoomId },
+    { enabled: !!roomId, staleTime: Infinity },
   );
   const spawnOptionsQuery = trpc.game.spawnOptions.useQuery(
     { roomId: validRoomId },
@@ -222,6 +234,7 @@ export function useDeckWorkshop(roomId?: string) {
     characterCreation: characterCreationQuery.data ?? { pronouns: [], avatars: [], suggestedName: '' },
     shuffleAvatars: () => characterCreationQuery.refetch(),
     monsters,
+    cardFacts: (cardFactsQuery.data ?? []) as CardFactsView[],
     unequippedDeck,
     cardCosts,
     cardCompatibility,

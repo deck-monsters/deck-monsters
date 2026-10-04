@@ -5,6 +5,8 @@ import InventoryPanel from './InventoryPanel.js';
 import ItemsPanel from './ItemsPanel.js';
 import ShopPanel, { type SellableGroup, type SellSelection, type ShopStockItem } from './ShopPanel.js';
 import MonsterWorkshopPanel from './MonsterWorkshopPanel.js';
+import CardDetailSheet from './CardDetailSheet.js';
+import { stableCardName, type CardFactsView } from '../utils/cards.js';
 import type { WorkshopCardLocation } from './CardSlot.js';
 import GuidedStartBox from './GuidedStartBox.js';
 import { useGuidedStart } from '../hooks/useGuidedStart.js';
@@ -32,9 +34,15 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
   const [error, setError] = useState<string | null>(null);
   const [showSpawn, setShowSpawn] = useState(false);
   const [spawnTypeIndex, setSpawnTypeIndex] = useState<number | null>(null);
+  // The card whose details sheet is open, and the monster it is shown for: the monster whose
+  // panel the card is in, or for a card in Your cards the highlighted monster. Null for a
+  // card in Your cards with nothing highlighted, which shows a verdict for every monster.
+  const [detail, setDetail] = useState<{ cardName: string; monsterName: string | null } | null>(null);
 
   const {
     monsters,
+    // Defaults to [] for the same reason as cardCosts: older doubles lack it.
+    cardFacts = [],
     unequippedDeck,
     // Defaults to {} — older test doubles and any stale cached payload predating this field
     // must not crash the sell-price preview, only show it as free (0 cost).
@@ -81,6 +89,13 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
    */
   const needsCharacter = hasCharacter === false;
   const guide = useGuidedStart(roomId);
+
+  const factsByName = useMemo(() => {
+    const map = new Map<string, CardFactsView>();
+    for (const facts of cardFacts) map.set(facts.name, facts);
+    return map;
+  }, [cardFacts]);
+  const closeDetail = useCallback(() => setDetail(null), []);
 
   // Places at the player's side. Absent while the inventory loads (and in older test
   // doubles), in which case no line is shown rather than a wrong count.
@@ -754,6 +769,7 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
             compatibilityHint={hint.reason === null ? (selectedInventoryCardName ? 'eligible' : 'none') : 'ineligible'}
             refusalSentence={hint.sentence}
             onToggleFilter={() => handleToggleMonsterFilter(monster.name)}
+            onShowDetails={(cardName) => setDetail({ cardName, monsterName: monster.name })}
           />
           );
         })}
@@ -767,6 +783,7 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
         activeMonsterFilterName={activeMonsterFilter}
         compatibleCardCount={compatibleCardCount}
         disabled={busy}
+        onShowDetails={(cardName) => setDetail({ cardName, monsterName: activeMonsterFilter })}
         onClearMonsterFilter={() => setActiveMonsterFilter(null)}
         isCardUnavailable={(cardName) =>
           activeMonsterFilter ? !isCardCompatibleWithMonster(cardName, activeMonsterFilter) : false
@@ -800,6 +817,18 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
         sellableCards={sellableCards}
         onSell={(selection) => void handleSellShopItems(selection)}
       />
+      {detail && (
+        <CardDetailSheet
+          facts={factsByName.get(stableCardName(detail.cardName)) ?? null}
+          cardName={detail.cardName}
+          monsters={
+            detail.monsterName
+              ? monsters.filter((monster) => monster.name === detail.monsterName)
+              : monsters
+          }
+          onClose={closeDetail}
+        />
+      )}
     </div>
   );
 }

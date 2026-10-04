@@ -26,6 +26,8 @@ interface InventoryPanelProps {
    */
   onEquipSelected?: () => void;
   disabled?: boolean;
+  /** Opens the card detail sheet for one of the unequipped cards. */
+  onShowDetails?: (cardName: string) => void;
 }
 
 export default function InventoryPanel({
@@ -40,6 +42,7 @@ export default function InventoryPanel({
   isCardUnavailable,
   onEquipSelected,
   disabled = false,
+  onShowDetails,
 }: InventoryPanelProps) {
   const location: WorkshopCardLocation = { kind: 'inventory' };
   return (
@@ -97,6 +100,7 @@ export default function InventoryPanel({
                 )}
                 onTapSlot={() => onTapSlot()}
                 onSelectCard={onSelectCard}
+                onShowDetails={onShowDetails}
               />
             );
           })}

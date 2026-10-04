@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => {
   const myInventoryUseQuery = vi.fn();
   const shopUseQuery = vi.fn();
   const spawnOptionsUseQuery = vi.fn();
+  const cardFactsUseQuery = vi.fn(() => ({ data: undefined }));
   const characterCreationUseQuery = vi.fn();
 	const flowStatusUseQuery = vi.fn();
   const inventoryRefetch = vi.fn(async () => undefined);
@@ -30,6 +31,7 @@ const mocks = vi.hoisted(() => {
     myInventoryUseQuery,
     shopUseQuery,
     spawnOptionsUseQuery,
+    cardFactsUseQuery,
     characterCreationUseQuery,
 	flowStatusUseQuery,
     inventoryRefetch,
@@ -74,6 +76,7 @@ vi.mock('../lib/trpc.js', () => ({
       },
       shop: { useQuery: mocks.shopUseQuery },
       spawnOptions: { useQuery: mocks.spawnOptionsUseQuery },
+      cardFacts: { useQuery: mocks.cardFactsUseQuery },
       characterCreationChoices: { useQuery: mocks.characterCreationUseQuery },
 	  flowStatus: { useQuery: mocks.flowStatusUseQuery },
 	  cancelFlow: { useMutation: mocks.cancelFlowUseMutation },

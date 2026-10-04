@@ -53,6 +53,35 @@ describe('trpc/router respondToPrompt', () => {
 	});
 });
 
+describe('trpc/router game.cardFacts', () => {
+	it('returns every card with its role, text, level and price after a membership check', async () => {
+		let checked: string | undefined;
+		const roomManager = {
+			assertMember: async (_user: string, room: string) => { checked = room; },
+		} as unknown as Parameters<typeof createRouter>[0];
+		const caller = createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false });
+
+		const facts = await caller.game.cardFacts({ roomId: ROOM_ID });
+
+		expect(checked).to.equal(ROOM_ID);
+		expect(facts.length).to.be.greaterThan(30);
+		const hit = facts.find((card) => card.name === 'Hit');
+		expect(hit).to.include({ role: 'attack', roleLabel: 'Attacks' });
+		expect(hit!.description).to.be.a('string').and.not.equal('');
+		// Same array every call: the facts are static, so they are built once per process.
+		expect(await caller.game.cardFacts({ roomId: ROOM_ID })).to.equal(facts);
+	});
+
+	it('refuses a non-member', async () => {
+		const roomManager = {
+			assertMember: async () => { throw new TRPCError({ code: 'FORBIDDEN' }); },
+		} as unknown as Parameters<typeof createRouter>[0];
+		const caller = createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false });
+		const err = await caller.game.cardFacts({ roomId: ROOM_ID }).catch((e: unknown) => e);
+		expect((err as TRPCError).code).to.equal('FORBIDDEN');
+	});
+});
+
 describe('trpc/router card management procedures', () => {
 	it('returns inventory summary for game.myInventory', async () => {
 		const targetMonster = {
@@ -150,6 +179,26 @@ describe('trpc/router card management procedures', () => {
 			},
 			{ monsterName: 'Mirebell', items: [] },
 		]);
+	});
+
+	it('gives each monster its class and the next level that opens a card', async () => {
+		const monster = {
+			givenName: 'Rex', creatureType: 'Minotaur', level: 0, inEncounter: false, cardSlots: 9,
+			cards: [], items: [], options: {}, hp: 10, maxHp: 10, battles: { wins: 0, losses: 0, total: 0 },
+		};
+		const unknown = { ...monster, givenName: 'Mystery', creatureType: 'Nonesuch' };
+		const game = { characters: { [USER_ID]: { monsters: [monster, unknown], deck: [], items: [] } }, ring: { contestants: [] } };
+		const roomManager = { assertMember: async () => undefined, getGame: async () => game } as unknown as Parameters<typeof createRouter>[0];
+		const result = await createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false }).game.myInventory({ roomId: ROOM_ID });
+
+		const [rex, mystery] = result.monsters;
+		expect(rex!.monsterClass).to.be.a('string').and.not.equal('');
+		expect(rex!.nextCards).to.not.equal(null);
+		expect(rex!.nextCards!.level).to.be.greaterThan(0);
+		expect(rex!.nextCards!.cards).to.be.an('array').that.is.not.empty;
+		// An unknown type holds nothing, so there is no class and no "At level N" line.
+		expect(mystery!.monsterClass).to.equal('');
+		expect(mystery!.nextCards).to.equal(null);
 	});
 
 	it('uses the engine revival completion epoch for a fallen monster mid-revival', async () => {

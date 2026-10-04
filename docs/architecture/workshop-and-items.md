@@ -30,7 +30,31 @@ serialization, and read-model contracts behind those rules.
   presets, and item summaries;
 - the character's unequipped card deck;
 - card compatibility used by Workshop placement;
+- per monster, its `monsterClass` and `nextCards` (the next level above its own that opens any
+  card its type can hold, with the card names; from the engine's `holdableByLevel`), which the
+  panel's `At level {n}: {cards}.` line reads;
 - character-carried and monster-carried items as separate lists.
+
+## Card details
+
+`game.cardFacts({ roomId })` asserts membership and returns the engine's `allCardFacts()`: every
+card's stable name, role, description, stats, level, who can use it and price. The facts are
+static (they read the card classes, not the room), so the router builds them once per process
+and the web fetches them once (`staleTime: Infinity`). Cards are matched by stable name: a
+display name that carries dice (`The Kalevala (1d4)`) loses the suffix first
+(`stableCardName` in `apps/web/src/utils/cards.ts`).
+
+Each card in the Workshop has an info button (title `What this card does`) that opens
+`CardDetailSheet`: a bottom sheet on a phone and a modest dialog on a wide screen, rendered in a
+portal, with focus moved to Close and Escape closing it. The verdict line comes from running the
+engine's browser-safe `cardHoldVerdict` against the facts and the monster's level, class and type
+(`monsterClass` rides on `myInventory`), so the rule is the engine's and the server does not send
+a verdict for every card and monster pair. It is shown for the monster whose panel holds the card;
+for a card in Your cards, for the highlighted monster, or for every monster when none is.
+
+Slot labels (`ATTACK`, `AREA`, `HEAL`, `DEFENCE`, `TRICK`) and the slot tint come from the card's
+role (`roleOf`), replacing a keyword guess at the name that filed Blink as magic and Take Wing as
+utility.
 
 Each item summary includes its display name, expired state, engine-generated use text,
 valid monster names, character usability, and whether its action requires another prompt.

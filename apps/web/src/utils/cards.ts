@@ -1,9 +1,4 @@
-const HEAL_KEYWORDS = ['heal', 'scotch', 'whiskey', 'potion', 'pokecen', 'spin up', 'horn of proof', 'gloaming'];
-// Unconquerable Horn has been an attack (a strike and a rally) since roadmap 35.
-const MELEE_KEYWORDS = ['hit', 'berserk', 'gore', 'spear', 'knife', 'swipe', 'battle', 'rampage', 'sticketh', 'unconquerable', 'tail lash'];
-const MAGIC_KEYWORDS = ['blink', 'blast', 'mesmer', 'sandstorm', 'curse', 'coil', 'focus', 'drain', 'cloak', 'entrance', 'dissonant', 'breath', 'tsunami', 'helm of awe'];
-
-export type CardClass = 'melee' | 'magic' | 'heal' | 'utility';
+import { cardHoldVerdict, roleOf, type CardHoldVerdict, type CardRole } from '@deck-monsters/engine';
 
 // A deck slot is ~70px wide at its narrowest, and its label wraps to two lines. At the
 // compact size (`.workshop-card-name.compact`) a line holds about ten characters, measured
@@ -29,27 +24,90 @@ export function abbreviateCardName(name: string): string {
     .join(' ');
 }
 
-export function getCardClass(name: string): CardClass {
-  const lower = name.toLowerCase();
-  if (HEAL_KEYWORDS.some((keyword) => lower.includes(keyword))) return 'heal';
-  if (MELEE_KEYWORDS.some((keyword) => lower.includes(keyword))) return 'melee';
-  if (MAGIC_KEYWORDS.some((keyword) => lower.includes(keyword))) return 'magic';
-  return 'utility';
+/**
+ * A card's display name carries its dice when the card has them ("The Kalevala (1d4)"),
+ * while the engine's role table and card facts are keyed by the stable card name. Strip a
+ * trailing dice suffix so both find the same card. Other names pass through unchanged.
+ */
+export function stableCardName(displayName: string): string {
+  return displayName.replace(/\s*\(\d+d\d+\)\s*$/, '');
 }
 
-export function getCardIcon(cardClass: CardClass): string {
-  switch (cardClass) {
-    case 'melee':
+/** The slot label on a card: the five roles, short enough for a ~70px slot. */
+export const CARD_ROLE_SLOT_LABEL: Record<CardRole, string> = {
+  attack: 'ATTACK',
+  area: 'AREA',
+  heal: 'HEAL',
+  guard: 'DEFENCE',
+  trick: 'TRICK',
+};
+
+/**
+ * The role of a card, from the engine's one role table. This replaced a name-guessing
+ * keyword list that filed "Mood Scales" and "Take Wing" as utility and Blink as magic; the
+ * slot now says what the card does, in the same words the guide uses. Undefined for a name
+ * the table does not know (never a real card in a deck).
+ */
+export function getCardRole(displayName: string): CardRole | undefined {
+  return roleOf(stableCardName(displayName));
+}
+
+export function getCardIcon(role: CardRole | undefined): string {
+  switch (role) {
+    case 'attack':
       return '⚔';
-    case 'magic':
-      return '✦';
+    case 'area':
+      return '✸';
     case 'heal':
       return '✚';
+    case 'trick':
+      return '✦';
     default:
       return '◇';
   }
 }
 
-export function getCardEmoji(name: string): string {
-  return getCardIcon(getCardClass(name));
+export function getCardEmoji(displayName: string): string {
+  return getCardIcon(getCardRole(displayName));
+}
+
+/** The slice of the server's card facts (`game.cardFacts`) the detail sheet reads. */
+export interface CardFactsView {
+  name: string;
+  role: CardRole;
+  roleLabel: string;
+  description: string;
+  stats: string;
+  level: number;
+  usedBy: string[];
+  price: number;
+}
+
+/** "A", "A and B", "A, B and C": player-facing lists use "and", no Oxford comma. */
+export function joinList(names: string[]): string {
+  if (names.length <= 1) return names.join('');
+  return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
+}
+
+export interface VerdictMonster {
+  name: string;
+  type: string;
+  level: number;
+  monsterClass?: string;
+}
+
+/** The engine's hold rule, run in the browser against a card's facts. */
+export function verdictFor(facts: CardFactsView, monster: VerdictMonster): CardHoldVerdict {
+  return cardHoldVerdict(
+    { level: facts.level, permittedClassesAndTypes: facts.usedBy.length > 0 ? facts.usedBy : undefined },
+    { level: monster.level, class: monster.monsterClass, creatureType: monster.type },
+  );
+}
+
+/** The plan's three verdict lines, for one monster. */
+export function verdictLine(facts: CardFactsView, monster: VerdictMonster): string {
+  const verdict = verdictFor(facts, monster);
+  if (verdict.ok) return `${monster.name} can use this.`;
+  if (verdict.reason === 'type') return `${monster.name} can't use this. Only ${joinList(verdict.allowed)} can.`;
+  return `${monster.name} can use this from level ${verdict.level}. ${monster.name} is level ${monster.level} now.`;
 }

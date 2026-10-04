@@ -594,16 +594,128 @@ button {
   border-style: dashed;
 }
 
-.workshop-card-slot.class-melee {
+/* Border tint by role (the engine's one role table); a card with no role keeps the plain border. */
+.workshop-card-slot.role-attack,
+.workshop-card-slot.role-area {
   border-color: color-mix(in srgb, var(--color-accent) 45%, var(--color-border));
 }
 
-.workshop-card-slot.class-heal {
+.workshop-card-slot.role-heal {
   border-color: color-mix(in srgb, var(--color-success) 55%, var(--color-border));
 }
 
-.workshop-card-slot.class-magic {
+.workshop-card-slot.role-trick {
   border-color: color-mix(in srgb, var(--color-fg-bright) 45%, var(--color-border));
+}
+
+/* "At level N: ..." under the monster's type line. */
+.workshop-next-cards {
+  margin: 0.15rem 0 0;
+  font-size: 0.72rem;
+  color: var(--color-fg-dim);
+}
+
+/* The cell holds the slot button and, beside it, the details button (never nested). */
+.workshop-card-cell {
+  position: relative;
+  display: flex;
+  min-width: 0;
+}
+
+.workshop-card-cell > .workshop-card-slot {
+  flex: 1;
+}
+
+.workshop-card-info {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 1.6rem;
+  height: 1.6rem;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 0;
+  color: var(--color-fg-dim);
+  font-size: 0.85rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.workshop-card-info:hover,
+.workshop-card-info:focus-visible {
+  color: var(--color-accent);
+}
+
+/* Card details: a bottom sheet on a phone, a modest dialog on a wide screen. */
+.card-detail-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgb(0 0 0 / 0.55);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.card-detail-sheet {
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  background: var(--color-bg);
+  color: var(--color-fg);
+  border: 1px solid var(--color-border);
+  border-bottom: 0;
+  padding: 1rem 16px calc(1rem + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.card-detail-sheet h2 {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--color-fg-bright);
+}
+
+.card-detail-role {
+  margin: 0;
+  color: var(--color-fg-dim);
+  text-transform: uppercase;
+  font-size: 0.72rem;
+}
+
+.card-detail-sheet p {
+  margin: 0;
+}
+
+.card-detail-verdicts {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.card-detail-sheet .card-detail-close {
+  align-self: flex-start;
+  min-height: 2.5rem;
+}
+
+@media (min-width: 700px) {
+  .card-detail-backdrop {
+    align-items: center;
+  }
+
+  .card-detail-sheet {
+    width: min(26rem, 90vw);
+    border-bottom: 1px solid var(--color-border);
+    padding-bottom: 1rem;
+  }
 }
 
 .workshop-card-icon {

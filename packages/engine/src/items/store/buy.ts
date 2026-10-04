@@ -15,7 +15,13 @@ import { isSortingHat, withSortingHat } from './stock.js';
 const SHOP_MENU_LABELS = ['Items', 'Cards', 'Back Room'];
 
 // Card choosing is referenced via any until cards module is ready
-type ChooseCards = (opts: { cards: any[]; channel: any; showPrice?: boolean; priceOffset?: number }) => Promise<any[]>;
+type ChooseCards = (opts: {
+	cards: any[];
+	channel: any;
+	showPrice?: boolean;
+	priceOffset?: number;
+	getQuestion?: (opts: { cardChoices: string }) => string;
+}) => Promise<any[]>;
 
 const ownedCountSuffix = (character: any, itemType: string): string => {
 	const owned = (character.items as any[] || []).filter((i: any) => i.itemType === itemType).length;
@@ -23,15 +29,19 @@ const ownedCountSuffix = (character: any, itemType: string): string => {
 };
 
 /**
- * First line of the shop's pick prompt. The wording is the contract with the web client:
- * `InlineChoices` reads "items to buy" off the question to label its confirm button
- * "Buy n items" instead of the equip wording. Discord and older clients just see the text
- * ("one or more" still marks it multi-select), so the change is additive. See
- * docs/reference/prompt-answer-contract.md.
+ * First line of each shop pick prompt. The wording is the contract with the web client:
+ * `InlineChoices` matches `to buy:` and takes the noun before it ("cards", "items", or none
+ * for the Back Room) to label its confirm button "Buy 2 cards", "Buy 2 items" or "Buy 2".
+ * Discord and older clients just see the text ("one or more" still marks it multi-select),
+ * so the change is additive. The card pick used to carry no marker at all, so the web showed
+ * "Equip cards" on a purchase, and the Back Room called its stock "items" though it can hold
+ * cards (roadmap 44 K3). See docs/reference/prompt-answer-contract.md.
  */
 const SHOP_PICK_QUESTION = 'Choose one or more of the following items to buy:';
+const SHOP_CARD_PICK_QUESTION = 'Choose one or more of the following cards to buy:';
+const SHOP_BACK_ROOM_PICK_QUESTION = 'Choose one or more of the following to buy:';
 
-const addOwnershipToChoiceQuestion = (character: any, items: any[]) =>
+const addOwnershipToChoiceQuestion = (character: any, items: any[], heading: string = SHOP_PICK_QUESTION) =>
 	({ itemChoices }: { itemChoices: string }): string => {
 		const lines = itemChoices.split('\n').map((line: string) => {
 			const match = line.match(/^(\d+\))\s+(.+?)\s*(-\s*\d+.*)?$/);
@@ -39,7 +49,7 @@ const addOwnershipToChoiceQuestion = (character: any, items: any[]) =>
 			const itemType = match[2].trim();
 			return line + ownedCountSuffix(character, itemType);
 		});
-		return `${SHOP_PICK_QUESTION}\n\n${lines.join('\n')}`;
+		return `${heading}\n\n${lines.join('\n')}`;
 	};
 
 const buyItems = ({
@@ -90,7 +100,13 @@ ${getChoices(SHOP_MENU_LABELS)}`,
 
 				if (!chooseCards) return announceAndThrow(channel, "Cards are not available.");
 
-				return chooseCards({ cards, channel, showPrice: true, priceOffset: shop.priceOffset * 2 })
+				return chooseCards({
+					cards,
+					channel,
+					showPrice: true,
+					priceOffset: shop.priceOffset * 2,
+					getQuestion: ({ cardChoices }) => `${SHOP_CARD_PICK_QUESTION}\n\n${cardChoices}`
+				})
 					.then((choices: any[]) => ({ choices, priceOffset }));
 			}
 
@@ -106,7 +122,7 @@ ${getChoices(SHOP_MENU_LABELS)}`,
 
 But of course, ${character.givenName}. We have something really special in stock right now.`
 				})
-					.then(() => chooseItems({ items: backRoom, channel, showPrice: true, priceOffset, getQuestion: addOwnershipToChoiceQuestion(character, backRoom) }))
+					.then(() => chooseItems({ items: backRoom, channel, showPrice: true, priceOffset, getQuestion: addOwnershipToChoiceQuestion(character, backRoom, SHOP_BACK_ROOM_PICK_QUESTION) }))
 					.then((choices: any[]) => ({ choices, priceOffset }));
 			}
 
@@ -243,4 +259,4 @@ That'll be ${value} coins, but by the looks of things I _highly_ doubt that's in
 };
 
 export default buyItems;
-export { buyItems, SHOP_PICK_QUESTION };
+export { buyItems, SHOP_PICK_QUESTION, SHOP_CARD_PICK_QUESTION, SHOP_BACK_ROOM_PICK_QUESTION };
