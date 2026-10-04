@@ -130,6 +130,19 @@ describe('layout-agnostic surface panels', () => {
 			expect(fightDetail.refetch).toHaveBeenCalledTimes(1);
 		});
 
+		it('shows loading again while a retry is fetching', () => {
+			fightDetail.result = { isError: true, isFetching: true };
+			openRow();
+			expect(screen.getByText('Loading the play-by-play…')).toBeTruthy();
+		});
+
+		it('does not offer a retry for a fight that no longer exists', () => {
+			fightDetail.result = { isError: true, error: { data: { code: 'NOT_FOUND' } } };
+			openRow();
+			expect(screen.getByText('Nothing was saved for this fight.')).toBeTruthy();
+			expect(screen.queryByText(/Tap to try again/)).toBeNull();
+		});
+
 		it('says nothing was saved when there are no events', () => {
 			fightDetail.result = { data: { events: [] } };
 			openRow();

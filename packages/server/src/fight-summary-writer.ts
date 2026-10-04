@@ -142,7 +142,14 @@ export function attachFightSummaryWriter(
 
 function onRingFight(roomId: string, event: GameEvent): void {
 	const payload = event.payload as { eventName?: string };
-	if (payload.eventName === 'fightConcludes') return;
+	/*
+	 * Only the begin event starts the window, and only the first one counts. What broke: the
+	 * guard skipped just `fightConcludes`, so `announceFight`'s later `ring.fight` (no
+	 * eventName, published after the opening narration) overwrote startedAt and the fight log
+	 * lost its opening lines. Any other ring.fight is not a start.
+	 */
+	if (payload.eventName !== 'fightBegins') return;
+	if (pendingByRoom.get(roomId)) return;
 
 	const startedAt = new Date(event.timestamp);
 	pendingByRoom.set(roomId, { startedAt });
@@ -192,6 +199,8 @@ async function onFightResolved(
 	}
 
 	const endedAt = new Date(event.timestamp);
+	// No pending start (e.g. the server restarted mid-fight) leaves a one-millisecond window,
+	// so the client shows "Nothing was saved for this fight." for that fight.
 	const startedAt = pending?.startedAt ?? endedAt;
 
 	if (!pending) {
