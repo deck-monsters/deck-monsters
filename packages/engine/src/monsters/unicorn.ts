@@ -98,6 +98,14 @@ const COMMONERS = [
 	{ who: 'a drunken sailor', pronoun: 'he' },
 	{ who: 'a very old woman in the market', pronoun: 'she' },
 ];
+// What you noticed about the horn up close, besides its colour. The owner's example was the
+// candy cane; the rest keep the same note of nonsense.
+const HORN_ODDITIES = [
+	'tasted a little like a candy cane',
+	'smelled faintly of toast',
+	'whistled a little when the wind blew',
+	'had a sparrow nesting near the tip',
+];
 /*
  * `seen` is the line the owner asked for (roadmap 42 B): one authority makes a claim and the
  * unicorn, in front of you, undoes it. The quarrel is shown rather than reported. It replaced
@@ -229,7 +237,9 @@ class Unicorn extends BaseMonster {
 			}
 			case 'horn': {
 				const claimed = this.other(HORNS, this.horn);
-				return `${who} swears ${p.his} horn is ${claimed}. You have seen ${p.his} horn up close: ${this.horn}, and sharper than ${who} let on.`;
+				// A bit of nonsense keeps the line from reading dry (owner, 2026-10-04).
+				const oddly = this.pick(HORN_ODDITIES, 2);
+				return `${who} swears ${p.his} horn is ${claimed}. You have seen ${p.his} horn up close: ${this.horn}, and ${oddly}.`;
 			}
 			default: {
 				const seen = this.other(EYES, this.eyes);

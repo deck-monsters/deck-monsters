@@ -75,7 +75,7 @@ describe('monsters/unicorn', () => {
 		expect(eyes.description).to.match(/Ctesias says her eyes are dark blue\. But she blinks slowly, and you would swear they are black\.$/);
 
 		const horn = new Unicorn({ gender: 'male', witness: 'horn', horn: 'ringed black', witnessShape: 'seen', swearer: 'Topsell', sightingRoll: 0, anhorn: false });
-		expect(horn.description).to.match(/Topsell swears his horn is white, crimson, and black\. You have seen his horn up close: ringed black, and sharper than Topsell let on\.$/);
+		expect(horn.description).to.match(/Topsell swears his horn is white, crimson, and black\. You have seen his horn up close: ringed black, and tasted a little like a candy cane\.$/);
 
 		const sailor = new Unicorn({ gender: 'androgynous', witness: 'retreat', retreat: 'a rocky gorge', witnessShape: 'commoner', commoner: 'a drunken sailor', anhorn: false });
 		expect(sailor.description).to.include('A drunken sailor swears that they keep to a rocky gorge. He is not believed, but he is not wrong.');

@@ -67,6 +67,8 @@ preview. Then a Cursor check at 390 px.
   `witness`). `hydrateMonster` spreads saved options into the constructor, so a default drawn
   there for a key an old save lacks was redrawn on every restore, and the line changed between
   looks;
+- the horn line ends in a bit of nonsense (owner, 2026-10-04): "…ringed black, and tasted a little
+  like a candy cane." Three more in the same note are in the pool;
 - the commoner never vouches for the horn, which the description has already named.
 
 **Owner:** the end of the Unicorn description reads bland. Perhaps one authority makes a

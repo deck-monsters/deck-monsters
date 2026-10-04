@@ -22,7 +22,7 @@ Source: `packages/engine/src/monsters/unicorn.ts`.
 Seeded, cycling he, she, and they.
 
 - `a goat-bearded unicorn bearing a long, straight black horn. His coat is tawny. Marco Polo says his voice is low as a lowing ox. But just this morning he called across the yard, clear as a bell.`
-- `a horse-like unicorn bearing a bright ivory horn. Her coat is ivory white. Aelian swears her horn is white, crimson, and black. You have seen her horn up close: bright ivory, and sharper than Aelian let on.`
+- `a horse-like unicorn bearing a bright ivory horn. Her coat is ivory white. Aelian swears her horn is white, crimson, and black. You have seen her horn up close: bright ivory, and whistled a little when the wind blew.`
 - `a stocky, cloven-hoofed unicorn bearing a white, crimson, and black horn. Their coat is white with a dark-red head. Marco Polo says they keep to a laurel grove. But just this morning you found them in your garden, eating your roses.`
 - `an elephant-footed unicorn bearing a ringed black horn. His coat is tawny. A very old woman in the market swears that his voice is low as a lowing ox. She is not believed, but she is not wrong.`
 - `a stocky, cloven-hoofed unicorn bearing a ringed black horn. Her coat is white with a dark-red head. Pliny wrote that her voice is clear as a bell. She hums at dusk, low as a lowing ox, and the dogs leave the room.`
@@ -40,6 +40,7 @@ Seeded, cycling he, she, and they.
 - `SIGHTINGS`: `in your garden, eating your roses / an enclosed garden`, `in your kitchen, eating the bread`, `at the village well, drinking out of the bucket`, `in your orchard, knocking down the apples`, `asleep in your hayloft`
 - `AUTHORITIES`: `Pliny`, `Aelian`, `Ctesias`, `Solinus`, `Topsell`, `Marco Polo`
 - `COMMONERS`: `a drunken sailor / he`, `a very old woman in the market / she`
+- `HORN_ODDITIES`: `tasted a little like a candy cane`, `smelled faintly of toast`, `whistled a little when the wind blew`, `had a sparrow nesting near the tip`
 - `WITNESS_SHAPES`: `seen`, `seen`, `seen`, `commoner`
 
 ### Templates
@@ -50,7 +51,7 @@ Seeded, cycling he, she, and they.
 | seenLine → returns | `{who} says {his} voice is {voice}. But just this morning {he} called across the yard, {heard}.` |
 | seenLine → returns | `{who} wrote that {his} voice is {voice}. {He} {hums/hum} at dusk, {heard}, and the dogs leave the room.` |
 | seenLine → returns | `{who} says {he} {keeps/keep} to {retreat}. But just this morning you found {him} {where}.` |
-| seenLine → returns | `{who} swears {his} horn is {claimed}. You have seen {his} horn up close: {horn}, and sharper than {who} let on.` |
+| seenLine → returns | `{who} swears {his} horn is {claimed}. You have seen {his} horn up close: {horn}, and {oddly}.` |
 | seenLine → returns | `{who} says {his} eyes are {eyes}. But {he} {blinks/blink} slowly, and you would swear they are {seen}.` |
 | seenLine → returns | `{who} wrote that {his} eyes are {eyes}. {He} {turns/turn} to look at you, and {his} eyes are {seen}.` |
 | witnessDetail → returns | `{he} {keeps/keep} to {retreat}` |
