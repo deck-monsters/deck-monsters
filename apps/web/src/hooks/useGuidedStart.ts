@@ -273,21 +273,24 @@ export function useGuidedStart(roomId: string | undefined): GuidedStep & { fight
 	// The live ring.state push, read from the feed the Console and the Workshop already sit
 	// under. Null context (the standalone Workshop route) just means no live source here.
 	const ringFeed = useContext(RingFeedContext);
-	const [live, setLive] = useState<{ names: Set<string> }>({ names: new Set() });
+	// Tagged with its room and arrival time: a push from another room is not this room's, and
+	// a push newer than the last inventory fetch outranks that fetch's `inEncounter`.
+	const [liveState, setLive] = useState<{ roomId: string | undefined; at: number; names: Set<string> } | null>(null);
+	const live = liveState && liveState.roomId === roomId ? liveState : null;
 	useEffect(() => {
 		if (!ringFeed) return;
 		return ringFeed.subscribe((tracked) => {
 			const event = tracked.data;
-			let state: { inEncounter?: boolean; contestants?: Array<{ name?: string; dead?: boolean }> } | undefined;
+			let state: { inEncounter?: boolean; contestants?: Array<{ name?: string; dead?: boolean; userId?: string | null }> } | undefined;
 			if (event.type === 'ring.state') state = event.payload as typeof state;
 			else if (event.type === 'handshake') state = (event.payload as { ringState?: typeof state }).ringState;
 			if (!state) return;
 			const names = new Set(
-				state.inEncounter ? (state.contestants ?? []).filter((c) => !c.dead && c.name).map((c) => c.name!) : [],
+				state.inEncounter ? (state.contestants ?? []).filter((c) => !c.dead && c.name && c.userId === userId).map((c) => c.name!) : [],
 			);
-			setLive({ names });
+			setLive({ roomId, at: Date.now(), names });
 		});
-	}, [ringFeed]);
+	}, [ringFeed, userId, roomId]);
 
 	const dismiss = useCallback(() => complete(userId, roomId), [userId, roomId]);
 	// The player's own monster is `waiting` in the ring, so a second contestant (a player's
@@ -304,7 +307,9 @@ export function useGuidedStart(roomId: string | undefined): GuidedStep & { fight
 	const subject = monsters?.find((m) => m.name === step.name);
 	const subjectFighting =
 		phase !== 'fallen' && phase !== 'spawn' && phase !== 'hidden'
-		&& (subject?.inEncounter === true || live.names.has(step.name));
+		&& (live && live.at > inventory.dataUpdatedAt
+			? live.names.has(step.name)
+			: subject?.inEncounter === true || (live?.names.has(step.name) ?? false));
 	const fightOn = subjectFighting || (phase === 'waiting' && ringData?.inEncounter === true);
 	const fightComing = !fightOn && (ringData?.contestants?.length ?? 0) > 1;
 	return { ...step, fightComing, fightOn, dismiss };

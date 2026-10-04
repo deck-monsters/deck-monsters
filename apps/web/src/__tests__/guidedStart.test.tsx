@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   monsters: [] as Array<Record<string, unknown>> | undefined,
   history: [] as Array<{ type: string }> | undefined,
   historyError: false,
+  inventoryAt: 0,
   ring: { inEncounter: false, contestants: [] as unknown[] },
 }));
 
@@ -13,7 +14,7 @@ vi.mock('../lib/auth-context.js', () => ({ useAuth: () => ({ user: { id: 'user-1
 vi.mock('../lib/trpc.js', () => ({
   trpc: {
     game: {
-      myInventory: { useQuery: () => ({ data: mocks.monsters ? { monsters: mocks.monsters } : undefined }) },
+      myInventory: { useQuery: () => ({ data: mocks.monsters ? { monsters: mocks.monsters } : undefined, dataUpdatedAt: mocks.inventoryAt }) },
       ringState: { useQuery: () => ({ data: mocks.ring }) },
       consoleHistory: { useQuery: () => ({ data: mocks.historyError ? undefined : mocks.history, isError: mocks.historyError }) },
     },
@@ -285,9 +286,54 @@ describe('useGuidedStart fightOn in any step (44 K6)', () => {
     );
     const { result } = renderHook(() => useGuidedStart('room-1'), { wrapper });
     expect(result.current.fightOn).toBe(false);
-    act(() => listener!({ id: '1', data: { type: 'ring.state', payload: { inEncounter: true, contestants: [{ name: 'Saffron', dead: false }, { name: 'Razeth' }] } } }));
+    act(() => listener!({ id: '1', data: { type: 'ring.state', payload: { inEncounter: true, contestants: [{ name: 'Saffron', dead: false, userId: 'user-1' }, { name: 'Razeth', userId: null }] } } }));
     expect(result.current.fightOn).toBe(true);
     act(() => listener!({ id: '2', data: { type: 'ring.state', payload: { inEncounter: false, contestants: [] } } }));
+    expect(result.current.fightOn).toBe(false);
+  });
+
+  const feedWrapper = () => {
+    let listener: ((t: { id: string; data: { type: string; payload: unknown } }) => void) | undefined;
+    const feed = { subscribe: (l: typeof listener) => { listener = l; return () => undefined; } };
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <RingFeedContext.Provider value={feed as never}>{children}</RingFeedContext.Provider>
+    );
+    const push = (payload: unknown) => act(() => listener!({ id: String(Math.random()), data: { type: 'ring.state', payload } }));
+    return { wrapper, push };
+  };
+
+  it("another player's monster with the same name does not make mine fighting", () => {
+    localStorage.setItem('ftuxStarted:user-1:room-1', 'true');
+    mocks.monsters = fought({});
+    const { wrapper, push } = feedWrapper();
+    const { result } = renderHook(() => useGuidedStart('room-1'), { wrapper });
+    push({ inEncounter: true, contestants: [{ name: 'Saffron', userId: 'user-2' }, { name: 'Razeth', userId: null }] });
+    expect(result.current.fightOn).toBe(false);
+    push({ inEncounter: true, contestants: [{ name: 'Saffron', userId: 'user-2' }, { name: 'Saffron', userId: 'user-1' }] });
+    expect(result.current.fightOn).toBe(true);
+  });
+
+  it('a newer live push beats a stale inventory inEncounter: true', () => {
+    localStorage.setItem('ftuxStarted:user-1:room-1', 'true');
+    mocks.monsters = fought({ inEncounter: true });
+    mocks.inventoryAt = Date.now() - 10_000;
+    const { wrapper, push } = feedWrapper();
+    const { result } = renderHook(() => useGuidedStart('room-1'), { wrapper });
+    expect(result.current.fightOn).toBe(true);
+    push({ inEncounter: false, contestants: [] });
+    expect(result.current.fightOn).toBe(false);
+    mocks.inventoryAt = 0;
+  });
+
+  it('forgets the live push when the room changes', () => {
+    localStorage.setItem('ftuxStarted:user-1:room-1', 'true');
+    localStorage.setItem('ftuxStarted:user-1:room-2', 'true');
+    mocks.monsters = fought({});
+    const { wrapper, push } = feedWrapper();
+    const { result, rerender } = renderHook(({ room }) => useGuidedStart(room), { wrapper, initialProps: { room: 'room-1' } });
+    push({ inEncounter: true, contestants: [{ name: 'Saffron', userId: 'user-1' }] });
+    expect(result.current.fightOn).toBe(true);
+    rerender({ room: 'room-2' });
     expect(result.current.fightOn).toBe(false);
   });
 
