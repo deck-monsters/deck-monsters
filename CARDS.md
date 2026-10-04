@@ -15,7 +15,18 @@
 
 Items are in the [Items guide](ITEMS.md).
 
+How to read a card:
+
+- Hit chance: how often the card hurt its target in practice plays.
+- DPT: the damage it does each time it's played, on average, with misses counted.
+- Heal chance and HPT: the same, for healing.
+- MSRP: its price in the shop, in coins.
+- Targets: the stat the target defends with. ac is armour class.
+- Level and Usable by: the level a monster needs, and which monsters can use it.
+
 ## Contents
+
+Jump to: [Attacks](#attacks) · [Area attacks](#area-attacks) · [Healing](#healing) · [Boosts and defence](#boosts-and-defence) · [Tricks and curses](#tricks-and-curses) · [What each type can hold](#what-each-type-can-hold)
 
 - [Attacks](#attacks)
   - [Asinine Companion](#asinine-companion)

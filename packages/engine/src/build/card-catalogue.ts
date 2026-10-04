@@ -18,6 +18,18 @@ export const CARD_CATALOGUE_HEADING = 'The Card Catalogue (Player Reference)';
  */
 const CARD_CATALOGUE_HEADER = `## ${CARD_CATALOGUE_HEADING}\n\nItems are in the [Items guide](ITEMS.md).`;
 
+/** Legend for the numbers in each card (roadmap 44 review). Used verbatim. */
+export const CARD_LEGEND = [
+	'How to read a card:',
+	'',
+	'- Hit chance: how often the card hurt its target in practice plays.',
+	"- DPT: the damage it does each time it's played, on average, with misses counted.",
+	'- Heal chance and HPT: the same, for healing.',
+	'- MSRP: its price in the shop, in coins.',
+	'- Targets: the stat the target defends with. ac is armour class.',
+	'- Level and Usable by: the level a monster needs, and which monsters can use it.',
+].join('\n');
+
 /** Group intros and the "which cards when" copy: roadmap 44, "The text". Used verbatim. */
 export const CARD_GROUP_INTROS: Readonly<Record<CardRole, string>> = {
 	attack: "Cards that hit one opponent. Most roll a d20 against the target's AC, then roll for damage. Bigger dice hit harder.",
@@ -92,7 +104,12 @@ export const generateCardCatalogue = async (output: DocOutputFn): Promise<void> 
 	].join('\n'));
 	contents.push(renderTocEntry(HOLDABLE_HEADING, () => holdableAnchor));
 
-	await output(`${CARD_CATALOGUE_HEADER}\n\n## Contents\n\n${contents.join('\n')}`);
+	const jumpTo = `Jump to: ${[
+		...groups.map((g, gi) => `[${g.label}](#${groupAnchors[gi].group})`),
+		`[${HOLDABLE_HEADING}](#${holdableAnchor})`,
+	].join(' · ')}`;
+
+	await output(`${CARD_CATALOGUE_HEADER}\n\n${CARD_LEGEND}\n\n## Contents\n\n${jumpTo}\n\n${contents.join('\n')}`);
 
 	await eachSeries(groups, async g => {
 		await output(`## ${g.label}\n\n${CARD_GROUP_INTROS[g.role]}`);

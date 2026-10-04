@@ -20,7 +20,7 @@ import { actionCard } from '../helpers/card.js';
 import { cardFacts } from '../cards/helpers/card-facts.js';
 import { holdableByLevel } from '../cards/helpers/holdable.js';
 import { CARD_ROLES, CARD_ROLE_LABELS, type CardRole } from '../cards/helpers/roles.js';
-import { CARD_GROUP_INTROS, HOLDABLE_HEADING, HOLDABLE_INTRO } from './card-catalogue.js';
+import { CARD_GROUP_INTROS, CARD_LEGEND, HOLDABLE_HEADING, HOLDABLE_INTRO } from './card-catalogue.js';
 import {
 	ITEMS_END_MARKER,
 	ITEMS_HEADING,
@@ -123,6 +123,17 @@ describe('root-docs generation', () => {
 			for (const role of CARD_ROLES) {
 				expect(cards).to.include(`## ${CARD_ROLE_LABELS[role]}\n\n${CARD_GROUP_INTROS[role]}\n\n### `);
 			}
+		});
+
+		it('has the legend once, right after the Items line, and a jump row linking every group', async () => {
+			const cards = await collectCardsMarkdown();
+			expect(cards.split('How to read a card:')).to.have.length(2);
+			expect(cards).to.include(`Items are in the [Items guide](ITEMS.md).\n\n${CARD_LEGEND}\n\n## Contents\n\nJump to: `);
+			const jump = cards.split('\n').find(l => l.startsWith('Jump to: '))!;
+			// The every-](#anchor)-resolves guard proves each target exists; this checks the row itself.
+			expect(jump.split(' · ')).to.have.length(CARD_ROLES.length + 1);
+			for (const role of CARD_ROLES) expect(jump).to.include(`[${CARD_ROLE_LABELS[role]}](#`);
+			expect(jump).to.include(`[${HOLDABLE_HEADING}](#`);
 		});
 
 		it('lists every card exactly once, under its own role, alphabetically', async () => {
