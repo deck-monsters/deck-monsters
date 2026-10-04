@@ -55,7 +55,7 @@ export const CARD_ROLE_BY_TYPE: Readonly<Record<string, CardRole>> = {
 	'Calisthenics': 'guard',
 	'Camouflage Vest': 'guard',
 	'Cloak of Invisibility': 'guard',
-	// Coil and Constrict: the hold is guaranteed and is the point; the hit is the fallback.
+	// Coil and Constrict: a hit always brings the hold, and the hold is the point.
 	// (Horn Gore and the forked weapons only have a chance to hold, so they stay attacks.)
 	'Coil': 'trick',
 	// A hit whose point is the int curse.
@@ -100,8 +100,10 @@ export const CARD_ROLE_BY_TYPE: Readonly<Record<string, CardRole>> = {
 	'Mood Scales': 'guard',
 	'Pick Pocket': 'trick',
 	'Pound': 'attack',
-	// A round of milkshakes for everyone, with a chance to kill each: it reaches several at once.
-	'1993-09-7202 18:58': 'area',
+	// Prion Disease: reaches everyone, but mostly heals them, with a small chance to kill.
+	// The point is the gamble, not the damage (orchestrator, review of K1).
+	'1993-09-7202 18:58': 'trick',
+	// Random Play plays a random card from the deck: what it does depends on the draw.
 	'Random Play': 'trick',
 	'Rehit': 'attack',
 	'Sandstorm': 'area',

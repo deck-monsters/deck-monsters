@@ -8,7 +8,7 @@ tags: [roadmap, cards, guides, workshop, onboarding]
 ---
 # 44 — Card guides, card details and a training wizard
 
-**Status:** Planned (2026-10-04). Proposals: [42 A, C and E1](42-next-proposals.md). Owner
+**Status:** In progress (2026-10-04). K1 done; K2 and K3 with implementers. Proposals: [42 A, C and E1](42-next-proposals.md). Owner
 order: after [43](43-walk-fixes.md), which is merged; its live check runs alongside.
 
 ## Why
@@ -71,9 +71,9 @@ Made by the orchestrator, from the [triage](#triage):
 
 | # | Task | Area | Can run beside | Status | Commit |
 |---|---|---|---|---|---|
-| K1 | **Engine foundations.** The role table and its test; `cardHoldVerdict(card, monster)` with reasons; the shared look table (question, example, preview) used by `askForColor`, with the preview test; card facts (name, role, description, stats, level, who can use it, rarity, price, signature type) as one pure function; exports for the server and, where browser-safe, `browser.ts` | Engine | — (first) | Planned | |
-| K2 | **The guides.** CARDS.md grouped by role with full cards and a contents list by group; a "What each type can hold" section per type, by level, with its signature cards; items removed from CARDS.md and generated into ITEMS.md between markers; the Help page picks it up; root-docs tests updated | Engine build, docs | K3 | Planned | |
-| K3 | **Card details in the Workshop, and the shop.** A server card-facts query; a ⓘ on each card opens a detail sheet with the card and whether this monster can hold it; "At level N: …" on each monster panel; slot labels from the role; the shop's card and Back Room picks say Buy | Server, web, engine (shop) | K2 | Planned | |
+| K1 | **Engine foundations.** The role table and its test; `cardHoldVerdict(card, monster)` with reasons; the shared look table (question, example, preview) used by `askForColor`, with the preview test; card facts (name, role, description, stats, level, who can use it, rarity, price, signature type) as one pure function; exports for the server and, where browser-safe, `browser.ts` | Engine | — (first) | Done. Roles keyed by `cardType` (the Kalevala's instance name carries its dice). Review: 61 of 64 roles kept as proposed; Prion Disease moved to tricks (it mostly heals everyone); Forked Stick stays an attack (a chance to hold, like Horn Gore). `lookQuestion` is byte-identical to the old Console question | e8924079 + this commit |
+| K2 | **The guides.** CARDS.md grouped by role with full cards and a contents list by group; a "What each type can hold" section per type, by level, with its signature cards; items removed from CARDS.md and generated into ITEMS.md between markers; the Help page picks it up; root-docs tests updated | Engine build, docs | K3 | In progress | |
+| K3 | **Card details in the Workshop, and the shop.** A server card-facts query; a ⓘ on each card opens a detail sheet with the card and whether this monster can hold it; "At level N: …" on each monster panel; slot labels from the role; the shop's card and Back Room picks say Buy | Server, web, engine (shop) | K2 | In progress | |
 | K4 | **The training wizard.** One step per screen in the Workshop, with the look question and live preview, name suggestion chips, and the Ready step; `spawnOptions` carries the look question; a name-suggestions query | Web, server | K5 | Planned | |
 | K5 | **`look at cards for [monster]`, docs and close-out.** The Console command and its catalogue entry; help inventory, handbook, architecture docs; Cursor's live check (44a) | Engine, docs | K4 | Planned | |
 
