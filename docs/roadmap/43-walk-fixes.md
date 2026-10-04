@@ -8,7 +8,7 @@ tags: [roadmap, onboarding, web, console, shop, ux]
 ---
 # 43 — Small fixes from the new-player walk
 
-**Status:** In progress (2026-10-04), after #421 merged. All five tasks are done (2026-10-04). Waiting on the PR, then Cursor's live check ([43a](43a-cursor-walk-fixes-check.md)). Source:
+**Status:** Merged in #422 and checked live (2026-10-04, [walk-fixes check](../reference/walk-fixes-check.md)): every item passed but 7, the guide during a fight, which moves to [44 K6](44-guides-cards-and-training.md) with the check's other findings. Source:
 [new-player walk 2](../reference/new-player-walk-2.md), triaged in
 [42 G](42-next-proposals.md#g-what-cursors-walk-found-and-where-it-goes). Numbers in brackets
 are the report's ten moments (#) or its "Everything else" table.
@@ -90,7 +90,6 @@ Fights row label is written at I5.
 
 ## Actionable remainder
 
-- [ ] Cursor's live check, [43a](43a-cursor-walk-fixes-check.md), after the deploy. Items 16–19 (questions that are over) matter most.
-- [ ] A Back Room card is still called an item when bought, and buying cards in the shop still shows the `Equip cards` button (its question has no buy marker) (pass C).
+- [ ] Item 7 and the check's other findings: [44 K6](44-guides-cards-and-training.md). The shop leftovers are 44 K3.
 - [ ] The play-by-play now opens with the plain `Fight begins with N contestants` line (pass H).
 - [ ] After the live check, fold the decisions into the area docs and archive this plan.

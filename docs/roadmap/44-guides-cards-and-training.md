@@ -75,6 +75,7 @@ Made by the orchestrator, from the [triage](#triage):
 | K2 | **The guides.** CARDS.md grouped by role with full cards and a contents list by group; a "What each type can hold" section per type, by level, with its signature cards; items removed from CARDS.md and generated into ITEMS.md between markers; the Help page picks it up; root-docs tests updated | Engine build, docs | K3 | Done. Review: the cards print MSRP, DPT and Hit chance with no meaning given (walk 2 #4), so CARDS.md opens with a "How to read a card" legend and a Jump to row. The web's Markdown skips the ITEMS.md markers | (cherry-picked K2 commits) |
 | K3 | **Card details in the Workshop, and the shop.** A server card-facts query; a ⓘ on each card opens a detail sheet with the card and whether this monster can hold it; "At level N: …" on each monster panel; slot labels from the role; the shop's card and Back Room picks say Buy | Server, web, engine (shop) | K2 | In progress | |
 | K4 | **The training wizard.** One step per screen in the Workshop, with the look question and live preview, name suggestion chips, and the Ready step; `spawnOptions` carries the look question; a name-suggestions query | Web, server | K5 | Planned | |
+| K6 | **What the walk-fixes check found** ([report](../reference/walk-fixes-check.md)). (1) The guide's `change_card` step tells a fighting monster to change a card, and the first fight can end before the guide's 15-second ring check sees it: during any fight the guide says `{name} is fighting. Watch The Ring.`, from the monsters' own fight state rather than a slow poll. (2) The chip `Look at my monsters` teaches a line the game refuses: the label becomes `Look at monsters`, and `look at my monsters` is accepted too. (3) After a reload, the first command is sometimes taken as an answer to a question that's already over: find where a replayed question gets armed, and stop it. (4) The shop's confirm appears under `Action cancelled.`: an answered pick question is being tombstoned as cancelled when the confirm arrives. (5) The Workshop's list is headed `Your Inventory`; the note calls it Your cards: the heading becomes `Your cards` | Web, server | K4 (not ConsolePane: K4 doesn't touch it) | Planned | |
 | K5 | **`look at cards for [monster]`, docs and close-out.** The Console command and its catalogue entry; help inventory, handbook, architecture docs; Cursor's live check (44a) | Engine, docs | K4 | Planned | |
 
 Every task gets an independent read-only review and a fix round; K3 and K4 get a live look at
@@ -132,7 +133,8 @@ Implementers use these exactly. Anything else is a `DRAFT(44)` placeholder for C
 ## Process
 
 - K1 runs alone. Then K2 beside K3 (generators versus server, web and shop). Then K4 beside
-  K5. K3 and K4 both touch the server router, so they don't run together.
+  K5. K3 and K4 both touch the server router, so they don't run together. K6 was added after
+  Cursor's check of 43; it runs beside K4 or K5, and its prompt items get a live re-check.
 - Implementers in a shared worktree never create or switch branches, `git add` only their
   own files, and never push. The orchestrator commits each task, with this table updated in
   the same commit.
@@ -159,4 +161,5 @@ A read-only survey on 2026-10-04 found:
 - [ ] K3 Card details in the Workshop, and the shop.
 - [ ] K4 The training wizard.
 - [ ] K5 `look at cards for [monster]`, docs and close-out.
+- [ ] K6 What the walk-fixes check found.
 - [ ] Later: odds for the 20 cards with none; fix the random draws at preview; a colour swatch that reaches the sprite.
