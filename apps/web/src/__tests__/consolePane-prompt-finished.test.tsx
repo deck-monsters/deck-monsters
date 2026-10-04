@@ -21,7 +21,8 @@ const trpcMocks = vi.hoisted(() => ({
   pendingPromptQuery: {
     data: null as null | PendingPromptSnapshot,
     dataUpdatedAt: 0,
-    refetch: vi.fn(async (): Promise<{ data: PendingPromptSnapshot | null }> => ({ data: null })),
+    isFetching: false,
+    refetch: vi.fn(async (): Promise<{ data: PendingPromptSnapshot | null; status?: string }> => ({ data: null, status: 'success' })),
   },
   respondToPromptMutateAsync: vi.fn(async (_v?: unknown) => ({ ok: true })),
   commandMutateAsync: vi.fn(async (_v?: unknown) => ({ ok: true })),
@@ -229,17 +230,27 @@ function expectPromptGone() {
   expect(screen.queryAllByTitle(/^Choose /).filter(b => !(b as HTMLButtonElement).disabled)).toHaveLength(0);
 }
 
+function tombstones() {
+  return screen.queryAllByText(/Action cancelled\.|timed out/);
+}
+
 describe('ConsolePane: a finished question leaves the input (pass 43, I4)', () => {
   let view: ReturnType<typeof render>;
   const mount = () => {
     view = render(<TestFeed><ConsolePane roomId={roomId} isActive /></TestFeed>);
   };
+  const cleanupMount = () => view.unmount();
   const rerender = () => view.rerender(<TestFeed><ConsolePane roomId={roomId} isActive /></TestFeed>);
+  // A poll that is sent (isFetching true) and then lands with `data`.
   const poll = (data: PendingPromptSnapshot | null) => {
+    trpcMocks.pendingPromptQuery.isFetching = true;
+    rerender();
+    trpcMocks.pendingPromptQuery.isFetching = false;
     trpcMocks.pendingPromptQuery.data = data;
-    trpcMocks.pendingPromptQuery.dataUpdatedAt = Date.now() + (data ? 0 : 10_000);
+    trpcMocks.pendingPromptQuery.dataUpdatedAt += 1;
     rerender();
   };
+  const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 
   beforeEach(() => {
     localStorage.clear();
@@ -250,7 +261,8 @@ describe('ConsolePane: a finished question leaves the input (pass 43, I4)', () =
     trpcMocks.pendingPromptQuery.data = null;
     trpcMocks.pendingPromptQuery.dataUpdatedAt = 0;
     trpcMocks.pendingPromptQuery.refetch.mockReset();
-    trpcMocks.pendingPromptQuery.refetch.mockImplementation(async () => ({ data: null }));
+    trpcMocks.pendingPromptQuery.isFetching = false;
+    trpcMocks.pendingPromptQuery.refetch.mockImplementation(async () => ({ data: null, status: 'success' }));
     trpcMocks.respondToPromptMutateAsync.mockReset();
     trpcMocks.respondToPromptMutateAsync.mockImplementation(async () => ({ ok: true }));
     trpcMocks.commandMutateAsync.mockReset();
@@ -293,7 +305,7 @@ describe('ConsolePane: a finished question leaves the input (pass 43, I4)', () =
   });
 
   it('(d) the timeout event is missed; the poll says nothing is pending', async () => {
-    poll({ requestId: 'r1', question: 'Which card?', choices: ['Hit'] });
+    await sleep(5);
     poll(null);
     // After the first empty poll the server has already said the question is gone: the
     // very next line must be a command, not an answer to the dead question.
@@ -301,13 +313,20 @@ describe('ConsolePane: a finished question leaves the input (pass 43, I4)', () =
     await expectNextLineIsCommand();
   });
 
-  // The original reason for two empty polls: a poll already in flight when a prompt arrives
-  // can come back empty and must not erase it.
-  it('(d2) a question that has only just arrived survives one empty poll', () => {
+  // The original reason for two empty polls (#142): a poll sent BEFORE the prompt arrived can
+  // land empty afterwards, however late, and must not erase it.
+  it('(d2) a poll sent before the prompt arrived, landing late, does not clear it', async () => {
+    cleanupMount();
+    trpcMocks.pendingPromptQuery.isFetching = true;
+    mount();
+    await sleep(5);
+    pushPromptRequest('r1');
+    trpcMocks.pendingPromptQuery.isFetching = false;
     trpcMocks.pendingPromptQuery.data = null;
-    trpcMocks.pendingPromptQuery.dataUpdatedAt = Date.now();
+    trpcMocks.pendingPromptQuery.dataUpdatedAt += 1;
     rerender();
     expect(input().placeholder).toMatch(/answer/i);
+    // A second empty poll, though, is authoritative whenever it was sent.
     trpcMocks.pendingPromptQuery.dataUpdatedAt += 1;
     rerender();
     expectPromptGone();
@@ -322,6 +341,7 @@ describe('ConsolePane: a finished question leaves the input (pass 43, I4)', () =
     await flush();
     expect(screen.getAllByText(/Prompt is no longer active/)).toHaveLength(1);
     expectPromptGone();
+    expect(tombstones().length).toBeGreaterThan(0);
     // The typed text is kept so Enter again runs it as a command.
     expect(input().value).toBe('yes');
     trpcMocks.respondToPromptMutateAsync.mockClear();
@@ -331,9 +351,37 @@ describe('ConsolePane: a finished question leaves the input (pass 43, I4)', () =
     expect(trpcMocks.respondToPromptMutateAsync).not.toHaveBeenCalled();
   });
 
+  it('(e2) a network failure with a cached null does not bury a live prompt', async () => {
+    trpcMocks.respondToPromptMutateAsync.mockRejectedValueOnce(new Error('Failed to fetch'));
+    trpcMocks.pendingPromptQuery.refetch.mockImplementation(async () => ({ data: null, status: 'error' }));
+    type('yes');
+    await flush();
+    expect(input().value).toBe('');
+    // The server still has the question: the next poll re-arms it.
+    poll({ requestId: 'r1', question: 'Which card?', choices: ['Hit'] });
+    expect(input().placeholder).toMatch(/answer/i);
+    expect(screen.queryAllByTitle(/^Choose /).filter(b => !(b as HTMLButtonElement).disabled)).toHaveLength(1);
+  });
+
+  it('(g) a request and its timeout in one replay burst leave the input in command mode', async () => {
+    act(() => {
+      for (const [id, type, payload] of [
+        ['b-req', 'prompt.request', { requestId: 'rb', question: 'Q?', choices: ['Hit'] }],
+        ['b-to', 'prompt.timeout', { requestId: 'rb' }],
+      ] as const) {
+        pushEvent({ id, data: { id, type, scope: 'private', targetUserId: 'user-1', text: '', payload, timestamp: Date.now(), roomId } as any });
+      }
+    });
+    // r1 (from beforeEach) was superseded by rb, which then timed out.
+    expectPromptGone();
+    await expectNextLineIsCommand();
+  });
+
   it('(f) a newer question supersedes an older one that never got a timeout/cancel event', () => {
     pushPromptRequest('r2');
     const live = screen.queryAllByTitle(/^Choose /).filter(b => !(b as HTMLButtonElement).disabled);
     expect(live).toHaveLength(1);
+    // The older question is a tombstone, not merely button-less.
+    expect(screen.getAllByText('Action cancelled.')).toHaveLength(1);
   });
 });

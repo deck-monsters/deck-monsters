@@ -112,21 +112,15 @@ function isPendingPromptSnapshot(value: unknown): value is PendingPromptSnapshot
 }
 
 /**
- * A poll that finds nothing pending clears a prompt at once when the prompt arrived at
- * least this long before the poll landed. The old rule (always two empty polls) left the
- * input routed to a dead question for 3-6s after a missed timeout/cancel event, and
- * `help` typed in that window was swallowed (new-player walk 2, finding 9). The grace is
- * what keeps the original two-poll reason alive: a poll already in flight when a prompt
- * arrives over the live feed can come back empty, and must not erase the new prompt.
- */
-const EMPTY_POLL_GRACE_MS = 5_000;
-
-/**
  * Marks every unresolved question except `keepId` cancelled. Only one question per player
  * is ever open (interactive flows run one at a time per room and user), so an older one
  * still showing live buttons when a newer one arrives is dead - its timeout/cancel event
  * never reached this Console - and its buttons would only lead to "Prompt is no longer
  * active".
+ *
+ * This relies on one open prompt per user (`activeFlows` plus the roomId:userId lane).
+ * `cancelFlow` deletes its `activeFlows` entry early, so if a flow ever re-prompted after a
+ * cancel, the retired question would stay hidden until its own timeout.
  */
 function retireOtherPrompts(events: ConsoleEvent[], keepId: string): ConsoleEvent[] {
   let changed = false;
@@ -178,9 +172,16 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
   // Per-attacker damage baseline for the "big hit" highlight. A ref, not state: it feeds
   // a classification decision and must never itself trigger a render.
   const damageHistoryRef = useRef(createDamageHistory());
-  const [activePromptId, setActivePromptId] = useState<string | null>(null);
+  const [activePromptId, setActivePromptIdState] = useState<string | null>(null);
   const [activePromptInView, setActivePromptInView] = useState(false);
   const activePromptIdRef = useRef<string | null>(null);
+  // Sets the ref synchronously too. The effect below syncs it only after a render, so a
+  // prompt.request and its prompt.timeout handled in one replay burst left the Console armed
+  // on a dead prompt (the timeout handler saw a null ref and never cleared it).
+  const setActivePromptId = useCallback((id: string | null) => {
+    activePromptIdRef.current = id;
+    setActivePromptIdState(id);
+  }, []);
   // requestIds resolved locally (answered, cancelled, or timed out) this session. The 3s
   // `pendingPrompt` poll can have a request already in flight when one of those happens,
   // so its response can echo the same requestId as still pending. Checked synchronously
@@ -190,7 +191,10 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
   // call that would need to read it.
   const resolvedPromptIdsRef = useRef<Set<string>>(new Set());
   const consecutiveEmptyPromptPollsRef = useRef(0);
-  // When each question first reached this Console, for the empty-poll grace above.
+  // When each question first reached this Console, and when the latest poll was sent: a poll
+  // sent after the arrival must have seen the prompt (the server registers it before
+  // publishing), so its empty answer is authoritative at once.
+  const pollStartedAtRef = useRef(0);
   const promptArrivedAtRef = useRef<Map<string, number>>(new Map());
   // Supersede the question that was open when a different one arrives (see retireOtherPrompts).
   const supersedePrompt = useCallback((newId: string) => {
@@ -249,10 +253,15 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
     data: pendingPrompt,
     dataUpdatedAt: pendingPromptUpdatedAt,
     refetch: refetchPendingPrompt,
+    isFetching: pendingPromptFetching,
   } = trpc.game.pendingPrompt.useQuery(
     { roomId },
     { enabled: !!roomId, refetchInterval: 3_000 },
   );
+
+  useEffect(() => {
+    if (pendingPromptFetching) pollStartedAtRef.current = Date.now();
+  }, [pendingPromptFetching]);
 
   // Scroll to bottom when this pane becomes active (tab switch)
   useEffect(() => {
@@ -441,7 +450,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
       });
     });
     setActivePromptId(prompt.requestId);
-  }, [supersedePrompt]);
+  }, [supersedePrompt, setActivePromptId]);
 
   useEffect(() => {
     if (pendingPrompt) {
@@ -455,13 +464,13 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
     }
 
     // A cancel/timeout event can be missed during a reconnect. A prompt that has only just
-    // arrived over the live feed needs two empty polls before it is cleared, so an older
-    // in-flight poll cannot erase it; one that arrived well before this poll landed is
-    // cleared on the first (EMPTY_POLL_GRACE_MS).
+    // arrived over the live feed needs two empty polls before it is cleared, so a poll that
+    // was already in flight cannot erase it; if this poll was sent after the prompt arrived
+    // it must have seen it, so one empty answer clears it.
     consecutiveEmptyPromptPollsRef.current += 1;
     const staleRequestId = activePromptIdRef.current;
     const arrivedAt = promptArrivedAtRef.current.get(staleRequestId);
-    const old = arrivedAt !== undefined && pendingPromptUpdatedAt - arrivedAt >= EMPTY_POLL_GRACE_MS;
+    const old = arrivedAt !== undefined && pollStartedAtRef.current > arrivedAt;
     if (!old && consecutiveEmptyPromptPollsRef.current < 2) return;
 
     resolvedPromptIdsRef.current.add(staleRequestId);
@@ -473,7 +482,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
     setActivePromptId(null);
     setInputLocked(false);
     consecutiveEmptyPromptPollsRef.current = 0;
-  }, [pendingPrompt, pendingPromptUpdatedAt, upsertPendingPrompt]);
+  }, [pendingPrompt, pendingPromptUpdatedAt, upsertPendingPrompt, setActivePromptId]);
 
   const onLiveEvent = useCallback((tracked: TrackedRingFeedEvent) => {
     const event = tracked.data;
@@ -608,7 +617,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
       const { actions } = event.payload as { actions: QuickAction[] };
       setQuickActions(actions ?? []);
     }
-  }, [refetchMyMonsters, refetchMyInventory, supersedePrompt, user?.id]);
+  }, [refetchMyMonsters, refetchMyInventory, supersedePrompt, setActivePromptId, user?.id]);
 
   const { reconnecting, seedCursor } = useRingFeedListener(onLiveEvent);
 
@@ -809,9 +818,16 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
       });
       // Recover latest pending prompt snapshot after stale requestId races.
       const latest = await refetchPendingPrompt();
+      // Only the server's own stale-prompt rejection, confirmed by a refetch that really
+      // succeeded, proves the question is gone. A network failure makes react-query hand back
+      // its last cached value (often null), and tombstoning then would bury a live prompt
+      // for good (bug #153's reason for the delete above).
+      const staleRejection = err instanceof Error
+        && ((err as { data?: { code?: string } }).data?.code === 'PRECONDITION_FAILED'
+          || /no longer active/i.test(err.message));
       if (latest.data) {
         upsertPendingPrompt(latest.data);
-      } else {
+      } else if (staleRejection && latest.status === 'success') {
         // Nothing is pending: the question is gone. Without this its buttons kept
         // showing the answer as chosen (new-player walk 2, finding 9). Keep the id
         // resolved so a poll already in flight cannot re-arm it.
