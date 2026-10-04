@@ -105,6 +105,10 @@ function parseBlocks(lines: string[], ctx: Ctx): ReactNode[] {
     const line = lines[i]!;
     if (!line.trim()) { i++; continue; }
 
+    // A comment-only line is for the file's maintainers (ITEMS.md marks its generated
+    // section with them); GitHub hides it, so the Help page must too, not print it.
+    if (/^\s*<!--.*-->\s*$/.test(line)) { i++; continue; }
+
     const fence = /^\s*```/.exec(line);
     if (fence) {
       const body: string[] = [];

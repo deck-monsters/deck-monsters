@@ -45,7 +45,7 @@ describe('HelpPanel', () => {
   it('switches section from a cross-guide link', () => {
     render(<HelpPanel />);
     fireEvent.click(screen.getByRole('button', { name: 'Cards' }));
-    fireEvent.click(screen.getAllByRole('link', { name: 'ITEMS.md' })[0]!);
+    fireEvent.click(screen.getAllByRole('link', { name: 'Items guide' })[0]!);
     expect(screen.getByRole('button', { name: 'Items' })).toHaveAttribute('aria-pressed', 'true');
   });
 

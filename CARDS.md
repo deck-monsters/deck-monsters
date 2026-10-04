@@ -13,121 +13,84 @@
 
 ## The Card Catalogue (Player Reference)
 
-Name, description, and rarity for every card and item in the game. For item rules —
-timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](ITEMS.md).
+Items are in the [Items guide](ITEMS.md).
 
 ## Contents
 
-### Card List
+- [Attacks](#attacks)
+  - [Asinine Companion](#asinine-companion)
+  - [Battle Focus](#battle-focus)
+  - [Berserk](#berserk)
+  - [Delayed Hit](#delayed-hit)
+  - [Fight or Flight](#fight-or-flight)
+  - [Fists of Villainy](#fists-of-villainy)
+  - [Fists of Virtue](#fists-of-virtue)
+  - [Forked Metal Rod](#forked-metal-rod)
+  - [Forked Stick](#forked-stick)
+  - [Hit](#hit)
+  - [Hit Harder](#hit-harder)
+  - [Horn Gore](#horn-gore)
+  - [Horn Swipe](#horn-swipe)
+  - [Iocane](#iocane)
+  - [Lucky Strike](#lucky-strike)
+  - [Pound](#pound)
+  - [Rehit](#rehit)
+  - [Sticketh](#sticketh)
+  - [Survival Knife](#survival-knife)
+  - [Tail Lash](#tail-lash)
+  - [The Kalevala](#the-kalevala)
+  - [Turkey Thigh](#turkey-thigh)
+  - [Unconquerable Horn](#unconquerable-horn)
+  - [Vengeful Rampage](#vengeful-rampage)
+  - [Wooden Spear](#wooden-spear)
+- [Area attacks](#area-attacks)
+  - [Blast](#blast)
+  - [Blast II](#blast-ii)
+  - [Entrance](#entrance)
+  - [Fire Breath](#fire-breath)
+  - [Sandstorm](#sandstorm)
+  - [Tsunami](#tsunami)
+- [Healing](#healing)
+  - [Gloaming Rest](#gloaming-rest)
+  - [Heal](#heal)
+  - [Horn of Proof](#horn-of-proof)
+  - [Scotch](#scotch)
+  - [Whiskey Shot](#whiskey-shot)
+- [Boosts and defence](#boosts-and-defence)
+  - [Adrenaline Rush](#adrenaline-rush)
+  - [Basic Shield](#basic-shield)
+  - [Calisthenics](#calisthenics)
+  - [Camouflage Vest](#camouflage-vest)
+  - [Cloak of Invisibility](#cloak-of-invisibility)
+  - [Ecdysis](#ecdysis)
+  - [Feline Companion](#feline-companion)
+  - [Flee](#flee)
+  - [Harden](#harden)
+  - [Mood Scales](#mood-scales)
+  - [Take Wing](#take-wing)
+  - [Thick Skin](#thick-skin)
+- [Tricks and curses](#tricks-and-curses)
+  - [1993-09-7202 18:58](#1993-09-7202-1858)
+  - [Bad Batch](#bad-batch)
+  - [Blink](#blink)
+  - [Brain Drain](#brain-drain)
+  - [Coil](#coil)
+  - [Concussion](#concussion)
+  - [Constrict](#constrict)
+  - [Dissonant Voice](#dissonant-voice)
+  - [Enchanted Faceswap](#enchanted-faceswap)
+  - [Enthrall](#enthrall)
+  - [Helm of Awe](#helm-of-awe)
+  - [Mesmerize](#mesmerize)
+  - [Molasses](#molasses)
+  - [Pick Pocket](#pick-pocket)
+  - [Random Play](#random-play)
+  - [Soften](#soften)
+- [What each type can hold](#what-each-type-can-hold)
 
-- [Adrenaline Rush](#adrenaline-rush)
-- [Asinine Companion](#asinine-companion)
-- [Bad Batch](#bad-batch)
-- [Basic Shield](#basic-shield)
-- [Battle Focus](#battle-focus)
-- [Berserk](#berserk)
-- [Blast](#blast)
-- [Blast II](#blast-ii)
-- [Blink](#blink)
-- [Harden](#harden)
-- [Brain Drain](#brain-drain)
-- [Calisthenics](#calisthenics)
-- [Camouflage Vest](#camouflage-vest)
-- [Cloak of Invisibility](#cloak-of-invisibility)
-- [Coil](#coil)
-- [Concussion](#concussion)
-- [Constrict](#constrict)
-- [Soften](#soften)
-- [Delayed Hit](#delayed-hit)
-- [Dissonant Voice](#dissonant-voice)
-- [Enchanted Faceswap](#enchanted-faceswap)
-- [Enthrall](#enthrall)
-- [Entrance](#entrance)
-- [Ecdysis](#ecdysis)
-- [Feline Companion](#feline-companion)
-- [Fight or Flight](#fight-or-flight)
-- [Fire Breath](#fire-breath)
-- [Fists of Villainy](#fists-of-villainy)
-- [Fists of Virtue](#fists-of-virtue)
-- [Flee](#flee)
-- [Forked Metal Rod](#forked-metal-rod)
-- [Forked Stick](#forked-stick)
-- [Gloaming Rest](#gloaming-rest)
-- [Heal](#heal)
-- [Helm of Awe](#helm-of-awe)
-- [Hit](#hit)
-- [Hit Harder](#hit-harder)
-- [Horn Gore](#horn-gore)
-- [Horn of Proof](#horn-of-proof)
-- [Horn Swipe](#horn-swipe)
-- [Iocane](#iocane)
-- [The Kalevala (1d4)](#the-kalevala-1d4)
-- [Lucky Strike](#lucky-strike)
-- [Mesmerize](#mesmerize)
-- [Molasses](#molasses)
-- [Mood Scales](#mood-scales)
-- [Pick Pocket](#pick-pocket)
-- [Pound](#pound)
-- [1993-09-7202 18:58](#1993-09-7202-1858)
-- [Random Play](#random-play)
-- [Rehit](#rehit)
-- [Sandstorm](#sandstorm)
-- [Scotch](#scotch)
-- [Sticketh](#sticketh)
-- [Survival Knife](#survival-knife)
-- [Tail Lash](#tail-lash)
-- [Take Wing](#take-wing)
-- [Thick Skin](#thick-skin)
-- [Tsunami](#tsunami)
-- [Turkey Thigh](#turkey-thigh)
-- [Unconquerable Horn](#unconquerable-horn)
-- [Vengeful Rampage](#vengeful-rampage)
-- [Whiskey Shot](#whiskey-shot)
-- [Wooden Spear](#wooden-spear)
+## Attacks
 
-### Item List
-
-- [Chocolate Bar](#chocolate-bar)
-- [Potion of Healing](#potion-of-healing)
-- [Pokecen](#pokecen)
-- [Spin Up](#spin-up)
-- [Swiss Chocolate](#swiss-chocolate)
-- [Chaos Theory for Beginners According to Clever Hans](#chaos-theory-for-beginners-according-to-clever-hans)
-- [Chaos Theory for Beginners](#chaos-theory-for-beginners)
-- [The Way of the Cobra Kai According to Clever Hans](#the-way-of-the-cobra-kai-according-to-clever-hans)
-- [The Way of the Cobra Kai](#the-way-of-the-cobra-kai)
-- [House Lannister According To Clever Hans](#house-lannister-according-to-clever-hans)
-- [House Lannister](#house-lannister)
-- [The Ballad of La Carambada According to Clever Hans](#the-ballad-of-la-carambada-according-to-clever-hans)
-- [The Ballad of La Carambada](#the-ballad-of-la-carambada)
-- [Lottery Ticket](#lottery-ticket)
-- [The Gospel According to Clever Hans](#the-gospel-according-to-clever-hans)
-- [The Gospel According to Parsifal](#the-gospel-according-to-parsifal)
-- [The Annals of Qin Shi Huang According to Clever Hans](#the-annals-of-qin-shi-huang-according-to-clever-hans)
-- [The Annals of Qin Shi Huang](#the-annals-of-qin-shi-huang)
-- [The Tale of Sir Robin According to Clever Hans](#the-tale-of-sir-robin-according-to-clever-hans)
-- [The Tale of Sir Robin](#the-tale-of-sir-robin)
-- [Sorting Hat](#sorting-hat)
-
-## Cards
-
-### Adrenaline Rush
-
-```text
-==================================
- ❗️  Adrenaline Rush  ○
-----------------------------------
-
- Life or Death brings about a 
- certain focus... A certain 
- AWAKENESS most people don't 
- actually want. It's what you 
- live for. It's how you know you 
- exist. You embrace it and 
- welcome the rush.
-
-==================================
-```
+Cards that hit one opponent. Most roll a d20 against the target's AC, then roll for damage. Bigger dice hit harder.
 
 ### Asinine Companion
 
@@ -143,32 +106,15 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
  The dragon has not eaten him. 
  Yet.
 
-==================================
-```
+ The donkey kicks your target: 
+ 1d20 + 2 + your level (up to 10) 
+ vs ac, for 1d8 + half your level 
+ damage on a hit. It never crits.
 
-### Bad Batch
-
-```text
-==================================
- 🍻  Bad Batch  ◆
-----------------------------------
-
- Nothing like a little bathtub 
- moonshine stored in sturdy lead 
- jugs.
-
-==================================
-```
-
-### Basic Shield
-
-```text
-==================================
- 🛡  Basic Shield  ○
-----------------------------------
-
- Equip yourself for the fight 
- ahead.
+ Level: 1
+ Usable by: Dragon
+ MSRP: 20
+ Class: Melee
 
 ==================================
 ```
@@ -190,6 +136,24 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
  sync as you lead in a dance of 
  their destruction.
 
+ Hit: 1d20 + str bonus vs ac on 
+ first hit
+ then also + int bonus (fatigued 
+ by 1 each subsequent hit) until 
+ you miss
+ 1d6 damage on first hit.
+ 1 damage per hit after that.
+
+ Stroke of luck increases damage 
+ per hit by 1.
+
+ Level: Beginner
+ Usable by: Gladiator
+ Hit chance: 69% | DPT: 5
+ MSRP: 130
+ Targets: ac
+ Class: Melee
+
 ==================================
 ```
 
@@ -206,162 +170,22 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
  the perfect face of your enemy. 
  Destroy it.
 
-==================================
-```
+ Hit: 1d20 + str bonus vs ac on 
+ first hit
+ then also + int bonus (fatigued 
+ by 1 each subsequent hit) until 
+ you miss
+ 1 damage per hit.
 
-### Blast
+ Stroke of luck increases damage 
+ per hit by 1.
 
-```text
-==================================
- 💥  Blast  •
-----------------------------------
-
- A magical blast against every 
- opponent in the fight.
-
-==================================
-```
-
-### Blast II
-
-```text
-==================================
- 💥  Blast II  ◆
-----------------------------------
-
- A strong magical blast against 
- every opponent in the fight.
-
-==================================
-```
-
-### Blink
-
-```text
-==================================
- ⏳  Blink  ☆
-----------------------------------
-
- Consume your victim's potential 
- energy
-
-==================================
-```
-
-### Harden
-
-```text
-==================================
- 🆙  Harden  ○
-----------------------------------
-
- It's time to put on your big boy 
- pants, and toughen up!
-
-==================================
-```
-
-### Brain Drain
-
-```text
-==================================
- 🤡  Brain Drain  ◆
-----------------------------------
-
- And we shall bury our enemies in 
- their own confusion.
-
-==================================
-```
-
-### Calisthenics
-
-```text
-==================================
- 🙆‍  Calisthenics  ○
-----------------------------------
-
- Your daily workout routine 
- limbers you up for a fight.
-
-==================================
-```
-
-### Camouflage Vest
-
-```text
-==================================
- ☁️  Camouflage Vest  ◇
-----------------------------------
-
- You don your vest and blend in, 
- if only for a while.
-
-==================================
-```
-
-### Cloak of Invisibility
-
-```text
-==================================
- ☁️  Cloak of Invisibility  ◇
-----------------------------------
-
- You don your cloak and 
- disappear, if only for a while.
-
-==================================
-```
-
-### Coil
-
-```text
-==================================
- ➰  Coil  ☆
-----------------------------------
-
- Coil around your enemies with 
- your body, and squeeze.
-
-==================================
-```
-
-### Concussion
-
-```text
-==================================
- 🥊  Concussion  ◆
-----------------------------------
-
- A hard blow to the head should 
- do the trick.
-
-==================================
-```
-
-### Constrict
-
-```text
-==================================
- ➰➰  Constrict  ★
-----------------------------------
-
- Coil around your enemies with 
- your body, and squeeze like you 
- mean it.
-
-==================================
-```
-
-### Soften
-
-```text
-==================================
- 😖  Soften  ◆
-----------------------------------
-
- Sweep the leg... You have a 
- problem with that? No mercy.
+ Level: 1
+ Usable by: Barbarian
+ Hit chance: 68% | DPT: 3
+ MSRP: 50
+ Targets: ac
+ Class: Melee
 
 ==================================
 ```
@@ -377,91 +201,17 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
  your opponent reveals 
  themselves, then you strike.
 
-==================================
-```
+ Delay your turn. Use the delayed 
+ turn to immediately hit the next 
+ player who hits you.
+ Hit: 1d20 vs ac / Damage: 1d6
 
-### Dissonant Voice
-
-```text
-==================================
- 🔔  Dissonant Voice  ◆
-----------------------------------
-
- "There was nothing more horrible 
- then the voice or braying of it, 
- for the voyce is strained above 
- measure." Stop thine ears.
-
-==================================
-```
-
-### Enchanted Faceswap
-
-```text
-==================================
- 👥  Enchanted Faceswap  ◇
-----------------------------------
-
- A snapchat filter for the 
- magically inclined. This spell 
- will cause the next card played 
- with the caster as the target to 
- be reversed so that the player 
- of the card becomes the target.
-
-==================================
-```
-
-### Enthrall
-
-```text
-==================================
- 🎇  Enthrall  ◆
-----------------------------------
-
- You strut and preen. Your beauty 
- enthralls everyone, except 
- yourself.
-
-==================================
-```
-
-### Entrance
-
-```text
-==================================
- 🎆  Entrance  ◇
-----------------------------------
-
- You strut and preen. Your 
- painful beauty entrances and 
- hits everyone, except yourself.
-
-==================================
-```
-
-### Ecdysis
-
-```text
-==================================
- 📶  Ecdysis  ○
-----------------------------------
-
- Evolve into your more perfect 
- form.
-
-==================================
-```
-
-### Feline Companion
-
-```text
-==================================
- 🐈  Feline Companion  ○
-----------------------------------
-
- A low purr in your ears helps 
- you focus your energy.
+ Level: Beginner
+ Usable by: All
+ Effect chance: 100%
+ MSRP: 50
+ Targets: ac
+ Class: Melee
 
 ==================================
 ```
@@ -476,20 +226,16 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
  Survival instincts are nothing 
  to be ashamed of.
 
-==================================
-```
+ Hit: 1d20 vs ac / Damage: 1d6
+ Chance to flee if below a 
+ quarter health
 
-### Fire Breath
-
-```text
-==================================
- 🔥  Fire Breath  ○
-----------------------------------
-
- "His breath kindleth coals, and 
- a flame goeth out of his mouth." 
- Whatever the flame touches keeps 
- burning.
+ Level: Beginner
+ Usable by: All
+ Hit chance: 67% | DPT: 3
+ MSRP: 10
+ Targets: ac
+ Class: Melee
 
 ==================================
 ```
@@ -502,6 +248,17 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
 ----------------------------------
 
  You show no mercy to the weak.
+
+ Hit: 1d20 vs ac / Damage: 1d6
+ Strikes opponent with lowest 
+ current hp.
+
+ Level: 1
+ Usable by: All
+ Hit chance: 68% | DPT: 3
+ MSRP: 20
+ Targets: ac
+ Class: Melee
 
 ==================================
 ```
@@ -516,18 +273,16 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
  You strike at the biggest bully 
  in the room.
 
-==================================
-```
+ Hit: 1d20 vs ac / Damage: 1d8
+ Strikes opponent with highest 
+ current hp.
 
-### Flee
-
-```text
-==================================
- 🏃  Flee  ◆
-----------------------------------
-
- There is no shame in living to 
- fight another day.
+ Level: 1
+ Usable by: All
+ Hit chance: 68% | DPT: 4
+ MSRP: 30
+ Targets: ac
+ Class: Melee
 
 ==================================
 ```
@@ -543,6 +298,41 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
  rod fashioned for Gladiator and 
  Basilisk-hunting.
 
+ Attack twice (once with each 
+ prong). +2 to hit and immobilize 
+ for each successful prong hit.
+
+ Chance to immobilize: 1d20 vs 
+ str.
+
+ If already immobilized, hit 
+ instead.
+ Hit: 1d20 vs ac / Damage: 1d6
+ 
+ +5 advantage vs Gladiator, 
+ Basilisk
+ 
+ +1 advantage vs Jinn, Minotaur
+ ineffective against Weeping 
+ Angel
+
+ Opponent breaks free by rolling 
+ 1d20 vs immobilizer's str + 
+ advantage - (turns immobilized * 
+ 3)
+ Hits immobilizer back on stroke 
+ of luck.
+ Turns immobilized resets on 
+ curse of loki.
+
+ Level: 2
+ Usable by: Fighter, Barbarian
+ Hit chance: 96% | DPT: 7
+ Effect chance: 74%
+ MSRP: 80
+ Targets: ac
+ Class: Melee
+
 ==================================
 ```
 
@@ -556,52 +346,41 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
  A simple weapon fashioned for 
  Basilisk and Gladiator-hunting.
 
-==================================
-```
+ Attempt to immobilize your 
+ opponent by pinning them between 
+ the branches of a forked stick.
 
-### Gloaming Rest
+ Chance to immobilize: 1d20 vs 
+ str.
+ If already immobilized, hit 
+ instead.
+ Hit: 1d20 vs dex / Damage: 1d4
+ 
+ +2 advantage vs Basilisk, 
+ Gladiator
+ 
+ -2 disadvantage vs Jinn, 
+ Minotaur
+ ineffective against Weeping 
+ Angel
 
-```text
-==================================
- 🌙  Gloaming Rest  ◇
-----------------------------------
+ Opponent breaks free by rolling 
+ 1d20 vs immobilizer's str +/- 
+ advantage/disadvantage - (turns 
+ immobilized * 3)
+ Hits immobilizer back on stroke 
+ of luck.
+ Turns immobilized resets on 
+ curse of loki.
 
- "At the sight of them they growe 
- tame, and come and sleepe beside 
- them." And then the hunters 
- come. Rest, and beware.
-
-==================================
-```
-
-### Heal
-
-```text
-==================================
- 💊  Heal  ○
-----------------------------------
-
- A well-timed healing can be the 
- difference between sweet victory 
- and devastating defeat.
-
-==================================
-```
-
-### Helm of Awe
-
-```text
-==================================
- 🐲  Helm of Awe  ◇
-----------------------------------
-
- Helm of awe on the hoard-guard's 
- brow: the bold go pale, the 
- proud bow low. Fafnir wore it on 
- his gold, and no man stood 
- before him. Shouting "SIT!" at a 
- dragon in the helm does not 
- work. It has been tried.
+ Level: Beginner
+ Usable by: Bard, Barbarian, 
+ Fighter
+ Hit chance: 62% | DPT: 2
+ Effect chance: 61%
+ MSRP: 50
+ Targets: dex
+ Class: Melee
 
 ==================================
 ```
@@ -616,6 +395,15 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
  A basic attack, the staple of 
  all good monsters.
 
+ Hit: 1d20 vs ac / Damage: 1d6
+
+ Level: Beginner
+ Usable by: All
+ Hit chance: 70% | DPT: 3
+ MSRP: 10
+ Targets: ac
+ Class: Melee
+
 ==================================
 ```
 
@@ -628,6 +416,17 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
 
  You hit just a little bit harder 
  than the average bear...
+
+ Hit: 1d20 vs ac / Damage: 1d6
+ Roll for damage twice, and use 
+ the best result.
+
+ Level: 2
+ Usable by: Barbarian, Fighter
+ Hit chance: 68% | DPT: 4
+ MSRP: 130
+ Targets: ac
+ Class: Melee
 
 ==================================
 ```
@@ -643,20 +442,39 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
  there to look pretty? Think 
  again...
 
-==================================
-```
+ Attack twice (once with each 
+ horn). +2 to hit and immobilize 
+ for each successful horn hit.
 
-### Horn of Proof
+ If either horn hits, chance to 
+ immobilize: 1d20 vs str.
 
-```text
-==================================
- 🏺  Horn of Proof  ◇
-----------------------------------
+ If already immobilized, hit 
+ instead.
+ Hit: 1d20 vs ac / Damage: 1d4
+ 
+ -2 disadvantage vs Minotaur, 
+ Gladiator
+ 
+ -6 disadvantage vs Basilisk, 
+ Jinn, Weeping Angel
 
- Kings drank from such horns and 
- feared no cup, for the horn 
- "doth wonderfully help against 
- poisons."
+ Opponent breaks free by rolling 
+ 1d20 vs immobilizer's str - 
+ disadvantage - (turns 
+ immobilized * 3)
+ Hits immobilizer back on stroke 
+ of luck.
+ Turns immobilized resets on 
+ curse of loki.
+
+ Level: Beginner
+ Usable by: Minotaur
+ Hit chance: 66% | DPT: 3
+ Effect chance: 45%
+ MSRP: 130
+ Targets: ac
+ Class: Melee
 
 ==================================
 ```
@@ -670,6 +488,20 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
 
  Swing your horns at your 
  opponent.
+
+ Hit: 1d20 vs str / Damage: 1d6
+ Roll twice for hit. Use the best 
+ roll. Stroke of Luck and Curse 
+ of Loki apply only to the 
+ selected roll (discarded rolls 
+ do not crit).
+
+ Level: 2
+ Usable by: Minotaur
+ Hit chance: 93% | DPT: 4
+ MSRP: 50
+ Targets: str
+ Class: Melee
 
 ==================================
 ```
@@ -685,21 +517,21 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
  the last few years building up 
  an immunity to iocane powder...
 
-==================================
-```
+ Hit: 1d20 vs ac / Damage: 2d4
+ - or, below 1/4 health -
+ Health: 2d4
+ + int bonus (diminished by 1 
+ each use until 0, then resets)
 
-### The Kalevala (1d4)
+ 1% chance to heal half max hp
+ 1% chance to poison
 
-```text
-==================================
- 🎻  The Kalevala (1d4)  ★
-----------------------------------
-
- Steadfast old Väinämöinen 
- himself fashioned this 
- instrument of eternal joy. Tune 
- its pikebone pegs and it may 
- lead you on to victory.
+ Level: 1
+ Usable by: Bard, Cleric
+ Hit chance: 66% | DPT: 4
+ MSRP: 20
+ Targets: ac
+ Class: Melee
 
 ==================================
 ```
@@ -717,62 +549,20 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
  Or perhaps feel the unluckiness 
  of your opponent...
 
-==================================
-```
+ Hit: 1d20 vs ac / Damage: 1d6
+ Roll twice for hit. Use the best 
+ roll. Stroke of Luck and Curse 
+ of Loki apply only to the 
+ selected roll (discarded rolls 
+ do not crit).
 
-### Mesmerize
-
-```text
-==================================
- 🌠  Mesmerize  ○
-----------------------------------
-
- You strut and preen. Your beauty 
- mesmerizes everyone. Now and 
- then, even yourself.
-
-==================================
-```
-
-### Molasses
-
-```text
-==================================
- 🍯  Molasses  ◆
-----------------------------------
-
- Slow down your enemies like it's 
- 1919.
-
-==================================
-```
-
-### Mood Scales
-
-```text
-==================================
- 🦎  Mood Scales  ◇
-----------------------------------
-
- Pliny's chameleon taketh the 
- colour of whatsoever it is next 
- unto. A dragon's scales take the 
- colour of its temper.
-
-==================================
-```
-
-### Pick Pocket
-
-```text
-==================================
- 👇  Pick Pocket  ○
-----------------------------------
-
- Reach into the pocket of the 
- most skilled player and grab one 
- of their cards to play as your 
- own.
+ Level: 2
+ Usable by: Bard, Cleric, 
+ Fighter, Wizard
+ Hit chance: 90% | DPT: 4
+ MSRP: 50
+ Targets: ac
+ Class: Melee
 
 ==================================
 ```
@@ -787,34 +577,14 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
  You wield the mighty pound card 
  and can do double the damage.
 
-==================================
-```
+ Hit: 1d20 vs ac / Damage: 2d6
 
-### 1993-09-7202 18:58
-
-```text
-==================================
- 旦  1993-09-7202 18:58  ☆
-----------------------------------
-
- Buy a questionable round of 
- milkshakes for everyone.
-
-==================================
-```
-
-### Random Play
-
-```text
-==================================
- 🎲  Random Play  ○
-----------------------------------
-
- You find the illegible scraps of 
- an ancient card in the corner. 
- Curious to see what it does, you 
- play it --as it crumbles to 
- dust.
+ Level: 3
+ Usable by: Bard, Barbarian
+ Hit chance: 69% | DPT: 6
+ MSRP: 130
+ Targets: ac
+ Class: Melee
 
 ==================================
 ```
@@ -831,33 +601,20 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
  quickly attempt to correct your 
  aim.
 
-==================================
-```
+ Hit: 1d20 vs ac / Damage: 1d6
+ Roll for attack, if you roll 
+ less than 10, roll again and use 
+ the second roll no matter what. 
+ Stroke of Luck and Curse of Loki 
+ apply only to the selected roll 
+ (discarded rolls do not crit).
 
-### Sandstorm
-
-```text
-==================================
- 🌪  Sandstorm  ☆
-----------------------------------
-
- A blinding cloud of sand whips 
- across the desert, damaging and 
- confusing all those caught in 
- it.
-
-==================================
-```
-
-### Scotch
-
-```text
-==================================
- 🥃  Scotch  ◇
-----------------------------------
-
- Keep the heid, this fight's far 
- from over.
+ Level: 2
+ Usable by: Cleric, Fighter
+ Hit chance: 84% | DPT: 4
+ MSRP: 20
+ Targets: ac
+ Class: Melee
 
 ==================================
 ```
@@ -874,6 +631,27 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
  tree, wherein his sharp horn 
  sticketh fast." Charge anyway.
 
+ Charge: 1d20 +1 vs ac / Damage: 
+ 1d10
+ On a miss, roll 1d20 + str vs 
+ the target's dex to pull up in 
+ time.
+ Fail, and your horn is stuck 
+ fast: at the start of each of 
+ your turns, roll 1d20 + str vs 
+ your own str - (turns stuck x 3) 
+ to pull it free. A stuck monster 
+ misses that turn.
+ Natural 1 on either roll fails. 
+ Natural 20 on the charge deals 
+ max damage.
+
+ Level: Beginner
+ Usable by: Unicorn
+ MSRP: 80
+ Targets: ac
+ Class: Melee
+
 ==================================
 ```
 
@@ -888,6 +666,23 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
  yourself in the thigh and press 
  the pommel for a Stimpak 
  injection.
+
+ Hit: 1d20 vs ac / Damage: 2d4
+ - or, below 1/4 health -
+ Health: 2d4
+ + int bonus (diminished by 1 
+ each use until 0, then resets)
+
+ 1% chance to heal half max hp
+ 1% chance to poison
+
+ Level: 1
+ Usable by: Fighter
+ Hit chance: 68% | DPT: 4
+ Heal chance: 0% | HPT: 0
+ MSRP: 20
+ Targets: ac
+ Class: Melee
 
 ==================================
 ```
@@ -907,48 +702,43 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
  is why the Vikings who shout at 
  dragons stand at the front.
 
-==================================
-```
+ Hit: 1d20 vs ac / Damage: 1d6. 
+ If the hit lands and the target 
+ is still standing, the tail 
+ strikes too (1d20 + your STR 
+ modifier - 2 to hit, 1d6 damage, 
+ no critical hits).
 
-### Take Wing
-
-```text
-==================================
- 🌬️  Take Wing  ◆
-----------------------------------
-
- "The fiery flying serpent." Up, 
- out of reach, and then down 
- again, all teeth.
-
-==================================
-```
-
-### Thick Skin
-
-```text
-==================================
- 🔬  Thick Skin  ○
-----------------------------------
-
- Grow a heavy layer of scales to 
- deflect the blows of thine 
- enemies.
+ Level: 1
+ Usable by: Dragon
+ MSRP: 50
+ Targets: ac
+ Class: Melee
 
 ==================================
 ```
 
-### Tsunami
+### The Kalevala
 
 ```text
 ==================================
- 🌊  Tsunami  ☆
+ 🎻  The Kalevala (1d4)  ★
 ----------------------------------
 
- "He maketh the deep to boil like 
- a pot... he maketh a path to 
- shine after him." Then the sea 
- stands up and falls on everyone.
+ Steadfast old Väinämöinen 
+ himself fashioned this 
+ instrument of eternal joy. Tune 
+ its pikebone pegs and it may 
+ lead you on to victory.
+
+ Hit: 1d20 vs int / Damage: 1d4
+
+ Level: 1
+ Usable by: All
+ Hit chance: 76% | DPT: 8
+ MSRP: 80
+ Targets: int
+ Class: Acoustic, Psychic
 
 ==================================
 ```
@@ -964,6 +754,22 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
  turkey thigh. If times get 
  tough, take a bite for a quick 
  hp boost.
+
+ Hit: 1d20 vs ac / Damage: 2d4
+ - or, below 1/4 health -
+ Health: 2d4
+ + int bonus (diminished by 1 
+ each use until 0, then resets)
+
+ 1% chance to heal half max hp
+ 1% chance to poison
+
+ Level: 1
+ Usable by: Barbarian
+ Hit chance: 67% | DPT: 4
+ MSRP: 20
+ Targets: ac
+ Class: Melee
 
 ==================================
 ```
@@ -984,6 +790,20 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
  liveth in the wood cometh to its 
  light.
 
+ Let the horn ring out: hit your 
+ target, and an ally in the ring 
+ strikes it too. If you have no 
+ ally, a creature of the wood 
+ answers its light: an otter, a 
+ deer, or a ram (1d20 + 2 to hit, 
+ 1d4 damage).
+
+ Level: 1
+ Usable by: Unicorn
+ MSRP: 50
+ Targets: ac
+ Class: Melee
+
 ==================================
 ```
 
@@ -997,18 +817,16 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
  Your wounds only make you 
  stronger.
 
-==================================
-```
+ Hit: 1d20 vs ac
+ Damage: 1d6 +1 per wound 
+ suffered
 
-### Whiskey Shot
-
-```text
-==================================
- 🥃  Whiskey Shot  ○
-----------------------------------
-
- 1 shot of whiskey for your 
- health. Doctor's orders.
+ Level: 3
+ Usable by: Barbarian
+ Hit chance: 67% | DPT: 8
+ MSRP: 80
+ Targets: ac
+ Class: Melee
 
 ==================================
 ```
@@ -1023,430 +841,1251 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
  A simple weapon fashioned for 
  Minotaur-hunting.
 
-==================================
-```
+ Hit: 1d20 vs ac / Damage: 1d6
+ +3 damage vs Minotaur
 
-## Items
-
-### Chocolate Bar
-
-```text
-==================================
- 🍫  Chocolate Bar  ○
-----------------------------------
-
- A quick snack to restore 1 hp.
+ Level: 1
+ Usable by: Bard, Fighter
+ Hit chance: 68% | DPT: 3
+ MSRP: 30
+ Targets: ac
+ Class: Melee
 
 ==================================
 ```
 
-### Potion of Healing
+## Area attacks
+
+Cards that strike every opponent at once. Each hit is smaller, but in a crowded ring they add up.
+
+### Blast
 
 ```text
 ==================================
- 💊  Potion of Healing  ○
+ 💥  Blast  •
 ----------------------------------
 
- Instantly heal 8 hp.
+ A magical blast against every 
+ opponent in the fight.
+
+ Blast: 3 base damage +1 per 
+ level of the caster (per two 
+ levels past level 10)
+
+ Level: Beginner
+ Usable by: Cleric
+ Hit chance: 100% | DPT: 3
+ MSRP: 50
+ Class: AOE
 
 ==================================
 ```
 
-### Pokecen
+### Blast II
 
 ```text
 ==================================
- 🏩  Pokecen  ○
+ 💥  Blast II  ◆
 ----------------------------------
 
- ポケモンセンター Heal Your Monsters!
+ A strong magical blast against 
+ every opponent in the fight.
+
+ Blast II: 3 base damage + int 
+ bonus of caster
+
+ Level: 2
+ Usable by: Cleric
+ Hit chance: 100% | DPT: 4
+ MSRP: 80
+ Class: AOE
 
 ==================================
 ```
 
-### Spin Up
+### Entrance
 
 ```text
 ==================================
- 🧠  Spin Up  ○
+ 🎆  Entrance  ◇
 ----------------------------------
 
- Instantly spin monster back up 
- in a new sleeve.
+ You strut and preen. Your 
+ painful beauty entrances and 
+ hits everyone, except yourself.
+
+ Immobilize and hit all 
+ opponents.
+
+ If already immobilized, hit 
+ instead.
+ Hit: 1d20 vs int / Damage: 1d6
+ 
+ +2 advantage vs Basilisk, 
+ Gladiator
+ 
+ -2 disadvantage vs Minotaur, 
+ Weeping Angel
+ ineffective against Jinn
+
+ Opponent breaks free by rolling 
+ 1d20 vs immobilizer's int +/- 
+ advantage/disadvantage - (turns 
+ immobilized * 3)
+ Hits immobilizer back on stroke 
+ of luck.
+ Turns immobilized resets on 
+ curse of loki.
+
+ -1 hp each turn immobilized.
+
+ Level: 3
+ Usable by: Weeping Angel
+ MSRP: 80
+ Targets: int
+ Class: Psychic
 
 ==================================
 ```
 
-### Swiss Chocolate
+### Fire Breath
 
 ```text
 ==================================
- 🍫  Swiss Chocolate  ☆
+ 🔥  Fire Breath  ○
 ----------------------------------
 
- Only the finest Swiss chocolate. 
- Restores 10 hp.
+ "His breath kindleth coals, and 
+ a flame goeth out of his mouth." 
+ Whatever the flame touches keeps 
+ burning.
+
+ A cone of fire: your target and 
+ the opponents beside it, 2 at 
+ first and 1 more every 2 levels.
+ 2 fire damage +1 per level. Each 
+ target rolls 1d20 + dex vs 15 + 
+ your int to dodge for half 
+ damage.
+ Anyone who does not dodge burns: 
+ 1 damage +1 per 3 levels at the 
+ start of their next 2 turns (a 
+ heal puts it out).
+ Winded afterwards: -2 ac until 
+ your next card.
+ An ancient dragon (level 10+) 
+ breathes fire that cannot be 
+ dodged and burns for 3 turns.
+
+ Level: Beginner
+ Usable by: Dragon
+ MSRP: 50
+ Class: AOE
 
 ==================================
 ```
 
-### Chaos Theory for Beginners According to Clever Hans
+### Sandstorm
 
 ```text
 ==================================
- 👦  Chaos Theory for Beginners 
- According to Clever Hans  ○
+ 🌪  Sandstorm  ☆
 ----------------------------------
 
- Tiny variations, the orientation 
- of hairs on your hand, the 
- amount of blood distending your 
- vessels, imperfections in the 
- skin... vastly affect the 
- outcome.
+ A blinding cloud of sand whips 
+ across the desert, damaging and 
+ confusing all those caught in 
+ it.
 
- Your mother told you to target a 
- random monster in the ring 
- rather than following a defined 
- order, and that's exactly what 
- you'll do.
+ 1 storm damage +1 per level of 
+ the jinni (per two levels past 
+ level 10) to everyone in the 
+ ring. Temporarily confuses 
+ opponents and causes them to 
+ mistake their targets.
+
+ Level: Beginner
+ Usable by: Jinn
+ Hit chance: 100% | DPT: 1
+ Effect chance: 100%
+ MSRP: 130
+ Class: AOE
 
 ==================================
 ```
 
-### Chaos Theory for Beginners
+### Tsunami
 
 ```text
 ==================================
- 🦋  Chaos Theory for Beginners  
- ○
+ 🌊  Tsunami  ☆
 ----------------------------------
 
- Tiny variations, the orientation 
- of hairs on your hand, the 
- amount of blood distending your 
- vessels, imperfections in the 
- skin... vastly affect the 
- outcome.
+ "He maketh the deep to boil like 
+ a pot... he maketh a path to 
+ shine after him." Then the sea 
+ stands up and falls on everyone.
 
- Target a random opponent in the 
- ring (other than yourself) 
- rather than following a defined 
- order
+ 5 damage to everyone in the 
+ ring: every opponent, every 
+ ally, and you.
+ You roll 1d20 + dex vs 10 to 
+ ride your own wave and take none 
+ of it.
+
+ Level: Beginner
+ Usable by: Dragon
+ MSRP: 130
+ Class: AOE
 
 ==================================
 ```
 
-### The Way of the Cobra Kai According to Clever Hans
+## Healing
+
+Cards that give hit points back. A monster at 0 HP is out of the fight, so a heal at the right moment can matter more than a hit.
+
+### Gloaming Rest
 
 ```text
 ==================================
- 👦  The Way of the Cobra Kai 
- According to Clever Hans  ○
+ 🌙  Gloaming Rest  ◇
 ----------------------------------
 
- We do not train to be merciful 
- here. Mercy is for the weak. 
- Here, in the streets, in 
- competition: A man confronts 
- you, he is the enemy. An enemy 
- deserves no mercy.
+ "At the sight of them they growe 
+ tame, and come and sleepe beside 
+ them." And then the hunters 
+ come. Rest, and beware.
 
- Your mother told you to target 
- the weakest monster in the ring, 
- every time, and that's exactly 
- what you'll do.
+ Kneel to rest: -2 ac until your 
+ next card.
+ If nothing damages you before 
+ then, heal a random amount 
+ between 4 hp and all the hp you 
+ are missing as that card begins. 
+ Any damage interrupts the rest 
+ and the healing is lost.
+
+ Level: 3
+ Usable by: Unicorn, Cleric
+ MSRP: 50
+ Class: Heal
 
 ==================================
 ```
 
-### The Way of the Cobra Kai
+### Heal
 
 ```text
 ==================================
- 🐍  The Way of the Cobra Kai  ○
+ 💊  Heal  ○
 ----------------------------------
 
- We do not train to be merciful 
- here. Mercy is for the weak. 
- Here, in the streets, in 
- competition: A man confronts 
- you, he is the enemy. An enemy 
- deserves no mercy.
+ A well-timed healing can be the 
+ difference between sweet victory 
+ and devastating defeat.
 
- You target the weakest player in 
- the ring, every time.
+ Health: 1d4
+ + int bonus (diminished by 1 
+ each use until 0, then resets)
+
+ 1% chance to heal half max hp
+ 1% chance to poison
+
+ Level: Beginner
+ Usable by: All
+ Hit chance: 1% | DPT: 0
+ Heal chance: 95% | HPT: 3
+ MSRP: 10
+ Class: Heal
 
 ==================================
 ```
 
-### House Lannister According To Clever Hans
+### Horn of Proof
 
 ```text
 ==================================
- 👦  House Lannister According To 
- Clever Hans  ○
+ 🏺  Horn of Proof  ◇
 ----------------------------------
 
- A Lannister always pays his 
- debts...
+ Kings drank from such horns and 
+ feared no cup, for the horn 
+ "doth wonderfully help against 
+ poisons."
 
- Your mother told you to target 
- the monster who attacked you 
- last, unless directed otherwise 
- by a specific card, and that's 
- exactly what you'll do.
+ Drink from the horn: remove one 
+ harm already on you (your worst 
+ stat penalty, or a Bad Batch 
+ waiting in the ring; if turned 
+ on someone held, it frees them), 
+ then ward yourself for one round 
+ against the next harmful effect 
+ an opponent puts on you that is 
+ not damage (a hold, a curse, 
+ poison, being blinked away, or 
+ being confused). Then heal 5 hp. 
+ The ward works once per fight.
+
+ Level: 2
+ Usable by: Unicorn, Cleric
+ MSRP: 30
+ Class: Heal
 
 ==================================
 ```
 
-### House Lannister
+### Scotch
 
 ```text
 ==================================
- 🦁  House Lannister  ○
+ 🥃  Scotch  ◇
 ----------------------------------
 
- A Lannister always pays his 
- debts...
+ Keep the heid, this fight's far 
+ from over.
 
- Target the opponent who attacked 
- you last, unless directed 
- otherwise by a specific card.
+ Health: 2d6
+ + int bonus (diminished by 1 
+ each use until 0, then resets)
+
+ 1% chance to heal half max hp
+ 1% chance to poison
+
+ Level: 4
+ Usable by: All
+ Hit chance: 1% | DPT: 0
+ Heal chance: 99% | HPT: 6
+ MSRP: 80
+ Class: Heal
 
 ==================================
 ```
 
-### The Ballad of La Carambada According to Clever Hans
+### Whiskey Shot
 
 ```text
 ==================================
- 👦  The Ballad of La Carambada 
- According to Clever Hans  ○
+ 🥃  Whiskey Shot  ○
 ----------------------------------
 
- Junto a ellos, aterrorizó la 
- comarca, aguardando el día de la 
- venganza. Hizo fama por su 
- diestro manejo de la pistola, 
- del machete y, sobre todo, por 
- su extraordinaria habilidad para 
- cabalgar. En tiempos en que las 
- mujeres acompañaban a sus 
- hombres a un lado del caballo, 
- ver a una mujer galopando era un 
- acontecimiento mayor.
+ 1 shot of whiskey for your 
+ health. Doctor's orders.
 
- Your mother told you to target 
- whoever has the highest maximum 
- hp in the ring even if they 
- currently have less hp, and 
- that's exactly what you'll do.
+ Health: 1d8
+ + int bonus (diminished by 1 
+ each use until 0, then resets)
+
+ 1% chance to heal half max hp
+ 1% chance to poison
+
+ Level: 2
+ Usable by: All
+ Hit chance: 1% | DPT: 0
+ Heal chance: 96% | HPT: 5
+ MSRP: 50
+ Class: Heal
 
 ==================================
 ```
 
-### The Ballad of La Carambada
+## Boosts and defence
+
+Cards that make your monster harder to hit, stronger for a while, or gone from sight. They do nothing to the other side; they help you last.
+
+### Adrenaline Rush
 
 ```text
 ==================================
- 💃  The Ballad of La Carambada  
- ○
+ ❗️  Adrenaline Rush  ○
 ----------------------------------
 
- Junto a ellos, aterrorizó la 
- comarca, aguardando el día de la 
- venganza. Hizo fama por su 
- diestro manejo de la pistola, 
- del machete y, sobre todo, por 
- su extraordinaria habilidad para 
- cabalgar. En tiempos en que las 
- mujeres acompañaban a sus 
- hombres a un lado del caballo, 
- ver a una mujer galopando era un 
- acontecimiento mayor.
+ Life or Death brings about a 
+ certain focus... A certain 
+ AWAKENESS most people don't 
+ actually want. It's what you 
+ live for. It's how you know you 
+ exist. You embrace it and 
+ welcome the rush.
 
- Target whoever has the highest 
- maximum hp in the ring (other 
- than yourself) even if they 
- currently have less hp.
+ Boost: dex +1
+ Boost: str +1
+
+ Level: 2
+ Usable by: Barbarian, Fighter
+ MSRP: 50
+ Class: Boost
 
 ==================================
 ```
 
-### Lottery Ticket
+### Basic Shield
 
 ```text
 ==================================
- 💰  Lottery Ticket  •
+ 🛡  Basic Shield  ○
 ----------------------------------
 
- Play the odds for a chance to 
- win up to 10000 coins.
+ Equip yourself for the fight 
+ ahead.
+
+ Boost: ac +2 (max total boost of 
+ level + 1, then boost granted to 
+ hp instead).
+ If hit by melee attack, damage 
+ comes out of ac boost first.
+
+ Level: 2
+ Usable by: Bard, Fighter
+ Heal chance: 20% | HPT: 0
+ MSRP: 50
+ Class: Boost
 
 ==================================
 ```
 
-### The Gospel According to Clever Hans
+### Calisthenics
 
 ```text
 ==================================
- 🐎  The Gospel According to 
- Clever Hans  •
+ 🙆‍  Calisthenics  ○
 ----------------------------------
 
- Your mother said that my mother 
- said that if you know your enemy 
- and know yourself, you will not 
- be put at risk even in a hundred 
- battles. If you only know 
- yourself, but not your opponent, 
- you may win or may lose. If you 
- know neither yourself nor your 
- enemy, you will always endanger 
+ Your daily workout routine 
+ limbers you up for a fight.
+
+ Boost: dex +1-2 depending on how 
+ deep the stretch is
+
+ Level: 2
+ Usable by: Barbarian, Fighter
+ Heal chance: 10% | HPT: 0
+ MSRP: 50
+ Class: Boost
+
+==================================
+```
+
+### Camouflage Vest
+
+```text
+==================================
+ ☁️  Camouflage Vest  ◇
+----------------------------------
+
+ You don your vest and blend in, 
+ if only for a while.
+
+ You are invisible until you play 
+ a card that targets another 
+ player, or for the next 2 cards 
+ you play (whichever comes 
+ first).
+ 1d20 vs your int for opponent to 
+ see you on their turn (natural 
+ 20 removes your cloak).
+
+ Level: 1
+ Usable by: Barbarian, Fighter
+ Effect chance: 100%
+ MSRP: 80
+ Class: Hide
+
+==================================
+```
+
+### Cloak of Invisibility
+
+```text
+==================================
+ ☁️  Cloak of Invisibility  ◇
+----------------------------------
+
+ You don your cloak and 
+ disappear, if only for a while.
+
+ You are invisible until you play 
+ a card that targets another 
+ player, or for the next 2 cards 
+ you play (whichever comes 
+ first).
+ 1d20 vs your int for opponent to 
+ see you on their turn (natural 
+ 20 removes your cloak).
+
+ Level: 1
+ Usable by: Bard, Cleric, Wizard
+ Effect chance: 100%
+ MSRP: 80
+ Class: Hide
+
+==================================
+```
+
+### Ecdysis
+
+```text
+==================================
+ 📶  Ecdysis  ○
+----------------------------------
+
+ Evolve into your more perfect 
+ form.
+
+ Boost: dex +1
+ Boost: str +1
+
+ Level: 2
+ Usable by: Basilisk
+ MSRP: 50
+ Class: Boost
+
+==================================
+```
+
+### Feline Companion
+
+```text
+==================================
+ 🐈  Feline Companion  ○
+----------------------------------
+
+ A low purr in your ears helps 
+ you focus your energy.
+
+ Boost: int +2 (max total boost 
+ of level + 1, at most +5, then 
+ boost granted to hp instead).
+
+ Level: 2
+ Usable by: Bard, Cleric
+ Heal chance: 20% | HPT: 0
+ MSRP: 80
+ Class: Boost
+
+==================================
+```
+
+### Flee
+
+```text
+==================================
+ 🏃  Flee  ◆
+----------------------------------
+
+ There is no shame in living to 
+ fight another day.
+
+ Chance to run away if bloodied 
+ (hp < half)
+
+ Level: Beginner
+ Usable by: All
+ MSRP: 10
+ Class: Hide
+
+==================================
+```
+
+### Harden
+
+```text
+==================================
+ 🆙  Harden  ○
+----------------------------------
+
+ It's time to put on your big boy 
+ pants, and toughen up!
+
+ Boost: ac +1 (max total boost of 
+ level + 1, then boost granted to 
+ hp instead).
+ If hit by melee attack, damage 
+ comes out of ac boost first.
+
+ Level: 1
+ Usable by: All
+ MSRP: 20
+ Class: Boost
+
+==================================
+```
+
+### Mood Scales
+
+```text
+==================================
+ 🦎  Mood Scales  ◇
+----------------------------------
+
+ Pliny's chameleon taketh the 
+ colour of whatsoever it is next 
+ unto. A dragon's scales take the 
+ colour of its temper.
+
+ Calm (above half your hp): your 
+ scales match the rocks and sea, 
+ and you are hidden until you 
+ play a card that targets another 
+ player, or for the next 2 cards 
+ you play (1d20 vs your int for 
+ an opponent to find you).
+ Furious (half your hp or less): 
+ your scales blaze red and you 
+ cannot hide, but your next melee 
+ hit does +1d6 damage.
+
+ Level: 1
+ Usable by: Dragon
+ MSRP: 80
+ Class: Hide
+
+==================================
+```
+
+### Take Wing
+
+```text
+==================================
+ 🌬️  Take Wing  ◆
+----------------------------------
+
+ "The fiery flying serpent." Up, 
+ out of reach, and then down 
+ again, all teeth.
+
+ Take off until your next card. 
+ The first melee attack or area 
+ attack against you misses.
+ If your next card is a melee 
+ attack, dive: +2 to hit and +1d6 
+ damage.
+ Any damage that lands while you 
+ are in the air knocks you down, 
+ and the dive is lost.
+
+ Level: Beginner
+ Usable by: Dragon
+ MSRP: 30
+
+==================================
+```
+
+### Thick Skin
+
+```text
+==================================
+ 🔬  Thick Skin  ○
+----------------------------------
+
+ Grow a heavy layer of scales to 
+ deflect the blows of thine 
+ enemies.
+
+ Boost: ac +2 (max total boost of 
+ level + 1, then boost granted to 
+ hp instead).
+ If hit by melee attack, damage 
+ comes out of ac boost first.
+
+ Level: 2
+ Usable by: Basilisk
+ Heal chance: 20% | HPT: 0
+ MSRP: 50
+ Class: Boost
+
+==================================
+```
+
+## Tricks and curses
+
+Cards that hold, curse, poison, confuse or rob an opponent instead of simply hitting them. Read these closely.
+
+### 1993-09-7202 18:58
+
+```text
+==================================
+ 旦  1993-09-7202 18:58  ☆
+----------------------------------
+
+ Buy a questionable round of 
+ milkshakes for everyone.
+
+ Serve everyone a nice round of 
+ milkshakes!
+ Usually restores between 0-3hp 
+ to each opponent, and 1-4hp for 
+ the player.
+ 1:50 chance to kill each 
+ opponent.
+ 1:100 chance to kill yourself.
+
+ Level: 2
+ Usable by: All
+ Hit chance: 2% | DPT: 0
+ Heal chance: 80% | HPT: 2
+ MSRP: 130
+ Class: Poison, AOE
+
+==================================
+```
+
+### Bad Batch
+
+```text
+==================================
+ 🍻  Bad Batch  ◆
+----------------------------------
+
+ Nothing like a little bathtub 
+ moonshine stored in sturdy lead 
+ jugs.
+
+ The next Whiskey Shot or Scotch 
+ played will poison rather than 
+ heal.
+
+ Level: 1
+ Usable by: Bard
+ Effect chance: 100%
+ MSRP: 50
+ Class: Poison
+
+==================================
+```
+
+### Blink
+
+```text
+==================================
+ ⏳  Blink  ☆
+----------------------------------
+
+ Consume your victim's potential 
+ energy
+
+ 1d20 vs opponent's int. They are 
+ removed from the fight (and can 
+ not be targeted).
+ On what would have been their 
+ next turn, if you are still 
+ alive you drain 1d4 hp and 4d4 
+ xp
+
+ Level: Beginner
+ Usable by: Weeping Angel
+ Effect chance: 75%
+ MSRP: 130
+ Targets: ac
+ Class: Psychic
+
+==================================
+```
+
+### Brain Drain
+
+```text
+==================================
+ 🤡  Brain Drain  ◆
+----------------------------------
+
+ And we shall bury our enemies in 
+ their own confusion.
+
+ Hit: 1d20 vs int / Damage: 1d4
+ Curse: xp -20
+ Can reduce xp down to 40, then 
+ takes 4 from hp instead.
+ The curse lands only if the hit 
+ does.
+
+ Level: 1
+ Usable by: Cleric, Jinn
+ Hit chance: 76% | DPT: 3
+ MSRP: 50
+ Targets: int
+ Class: Psychic
+
+==================================
+```
+
+### Coil
+
+```text
+==================================
+ ➰  Coil  ☆
+----------------------------------
+
+ Coil around your enemies with 
+ your body, and squeeze.
+
+ Immobilize and hit your opponent 
+ by coiling your serpentine body 
+ around them and squeezing. If 
+ opponent is immune, hit instead.
+
+ If already immobilized, hit 
+ instead.
+ Hit: 1d20 vs dex / Damage: 1d6
+ 
+ +2 advantage vs Gladiator, 
+ Minotaur
+ 
+ -2 disadvantage vs Basilisk, 
+ Jinn
+
+ Opponent breaks free by rolling 
+ 1d20 vs immobilizer's dex +/- 
+ advantage/disadvantage - (turns 
+ immobilized * 3)
+ Hits immobilizer back on stroke 
+ of luck.
+ Turns immobilized resets on 
+ curse of loki.
+
+ -1 hp each turn immobilized.
+
+ Level: Beginner
+ Usable by: Basilisk
+ Hit chance: 77% | DPT: 4
+ Effect chance: 100%
+ MSRP: 130
+ Targets: dex
+ Class: Melee
+
+==================================
+```
+
+### Concussion
+
+```text
+==================================
+ 🥊  Concussion  ◆
+----------------------------------
+
+ A hard blow to the head should 
+ do the trick.
+
+ Hit: 1d20 vs ac / Damage: 1d4
+ Curse: int -1 to -2 depending on 
+ how hard the hit is, with a 
+ maximum total curse of -(level + 
+ 1), at most -5. Afterwards 
+ penalties come out of hp 
+ instead. The curse lands only if 
+ the hit does.
+
+ Level: 1
+ Usable by: Barbarian, Fighter
+ Hit chance: 83% | DPT: 3
+ MSRP: 50
+ Targets: ac
+ Class: Melee
+
+==================================
+```
+
+### Constrict
+
+```text
+==================================
+ ➰➰  Constrict  ★
+----------------------------------
+
+ Coil around your enemies with 
+ your body, and squeeze like you 
+ mean it.
+
+ Immobilize and hit your opponent 
+ by coiling your serpentine body 
+ around them and squeezing. If 
+ opponent is immune, hit instead.
+
+ If already immobilized, hit 
+ instead.
+ Hit: 1d20 vs dex / Damage: 1d6
+ 
+ +3 advantage vs Gladiator, 
+ Minotaur
+ 
+ -3 disadvantage vs Basilisk, 
+ Jinn
+
+ Opponent breaks free by rolling 
+ 1d20 vs immobilizer's dex +/- 
+ advantage/disadvantage - (turns 
+ immobilized * 3)
+ Hits immobilizer back on stroke 
+ of luck.
+ Turns immobilized resets on 
+ curse of loki.
+
+ -2 hp each turn immobilized.
+
+ Level: 1
+ Usable by: Basilisk
+ Hit chance: 77% | DPT: 4
+ Effect chance: 100%
+ MSRP: 80
+ Targets: dex
+ Class: Melee
+
+==================================
+```
+
+### Dissonant Voice
+
+```text
+==================================
+ 🔔  Dissonant Voice  ◆
+----------------------------------
+
+ "There was nothing more horrible 
+ then the voice or braying of it, 
+ for the voyce is strained above 
+ measure." Stop thine ears.
+
+ Every opponent's next attack 
+ rolls twice and keeps the worse 
+ roll (disadvantage). A card that 
+ does not roll to hit (Blast, 
+ Heal) leaves it waiting.
+ No damage. Does not stack.
+
+ Level: 1
+ Usable by: Unicorn, Bard
+ MSRP: 20
+ Class: Acoustic
+
+==================================
+```
+
+### Enchanted Faceswap
+
+```text
+==================================
+ 👥  Enchanted Faceswap  ◇
+----------------------------------
+
+ A snapchat filter for the 
+ magically inclined. This spell 
+ will cause the next card played 
+ with the caster as the target to 
+ be reversed so that the player 
+ of the card becomes the target.
+
+ Level: 1
+ Usable by: Bard, Cleric, Wizard
+ Effect chance: 100%
+ MSRP: 80
+ Class: Hide
+
+==================================
+```
+
+### Enthrall
+
+```text
+==================================
+ 🎇  Enthrall  ◆
+----------------------------------
+
+ You strut and preen. Your beauty 
+ enthralls everyone, except 
  yourself.
 
- Your mother told you to keep 
- your strategy simple: your 
- opponent is always the person to 
- your right (wait, no, your other 
- right --No no, the other 
- other... You know what? Just 
- forget it... That one's fine).
+ Immobilize all opponents.
+
+ If already immobilized, hit 
+ instead.
+ Hit: 1d20 vs int / Damage: 1d6
+ 
+ +2 advantage vs Basilisk, 
+ Gladiator
+ 
+ -2 disadvantage vs Minotaur, 
+ Weeping Angel
+ ineffective against Jinn
+
+ Opponent breaks free by rolling 
+ 1d20 vs immobilizer's int +/- 
+ advantage/disadvantage - (turns 
+ immobilized * 3)
+ Hits immobilizer back on stroke 
+ of luck.
+ Turns immobilized resets on 
+ curse of loki.
+
+ Level: 2
+ Usable by: Weeping Angel
+ MSRP: 50
+ Targets: int
+ Class: Psychic
 
 ==================================
 ```
 
-### The Gospel According to Parsifal
+### Helm of Awe
 
 ```text
 ==================================
- 🏇  The Gospel According to 
- Parsifal  •
+ 🐲  Helm of Awe  ◇
 ----------------------------------
 
- My mother said that if you know 
- your enemy and know yourself, 
- you will not be put at risk even 
- in a hundred battles. If you 
- only know yourself, but not your 
- opponent, you may win or may 
- lose. If you know neither 
- yourself nor your enemy, you 
- will always endanger yourself.
+ Helm of awe on the hoard-guard's 
+ brow: the bold go pale, the 
+ proud bow low. Fafnir wore it on 
+ his gold, and no man stood 
+ before him. Shouting "SIT!" at a 
+ dragon in the helm does not 
+ work. It has been tried.
 
- Keep your strategy simple: your 
- opponent is always the person 
- next to you.
+ Each opponent rolls 1d20 + int 
+ vs 10 + your int modifier. On a 
+ failure they are awed and lose 
+ their next card.
+ At the start of each later turn 
+ they roll again, 3 easier each 
+ time: on a failure they cower 
+ and lose that card, on a success 
+ they recover.
+ On a natural 1, an opponent that 
+ is not bloodied tries to flee 
+ the ring (1d20 + dex, 10 or 
+ more); a bloodied one cowers.
+ No damage. Does not stack.
+
+ Level: 2
+ Usable by: Dragon
+ MSRP: 80
 
 ==================================
 ```
 
-### The Annals of Qin Shi Huang According to Clever Hans
+### Mesmerize
 
 ```text
 ==================================
- 👦  The Annals of Qin Shi Huang 
- According to Clever Hans  ○
+ 🌠  Mesmerize  ○
 ----------------------------------
 
- 焚書坑儒
+ You strut and preen. Your beauty 
+ mesmerizes everyone. Now and 
+ then, even yourself.
 
- Your mother told you to target 
- the monster who has the highest 
- xp, and that's exactly what 
- you'll do.
+ Immobilize everyone. You are 
+ caught too only on a natural 1 
+ (1d20).
+
+ If already immobilized, hit 
+ instead.
+ Hit: 1d20 vs int / Damage: 1d6
+ 
+ +2 advantage vs Basilisk, 
+ Gladiator
+ 
+ -2 disadvantage vs Minotaur, 
+ Weeping Angel
+ ineffective against Jinn
+
+ Opponent breaks free by rolling 
+ 1d20 vs immobilizer's int +/- 
+ advantage/disadvantage - (turns 
+ immobilized * 3)
+ Hits immobilizer back on stroke 
+ of luck.
+ Turns immobilized resets on 
+ curse of loki.
+
+ Level: 1
+ Usable by: Weeping Angel
+ Hit chance: 15% | DPT: 1
+ Effect chance: 80%
+ MSRP: 20
+ Targets: int
+ Class: AOE
 
 ==================================
 ```
 
-### The Annals of Qin Shi Huang
+### Molasses
 
 ```text
 ==================================
- 焚  The Annals of Qin Shi Huang  
- ○
+ 🍯  Molasses  ◆
 ----------------------------------
 
- 焚書坑儒
+ Slow down your enemies like it's 
+ 1919.
 
- Target the opponent who has the 
- highest xp.
+ Hit: 1d20 vs ac / Damage: 1d4
+ Curse: dex -1, with a maximum 
+ total curse of -(level + 1), at 
+ most -5. Afterwards penalties 
+ come out of hp instead. The 
+ curse lands only if the hit 
+ does.
+
+ Level: 1
+ Usable by: All
+ Hit chance: 68% | DPT: 2
+ MSRP: 50
+ Targets: ac
+ Class: Melee
 
 ==================================
 ```
 
-### The Tale of Sir Robin According to Clever Hans
+### Pick Pocket
 
 ```text
 ==================================
- 👦  The Tale of Sir Robin 
- According to Clever Hans  ○
+ 👇  Pick Pocket  ○
 ----------------------------------
 
- He was not in the least bit 
- scared to be mashed into a pulp, 
- or to have his eyes gouged out, 
- and his elbows broken, to have 
- his kneecaps split, and his body 
- burned away... brave Sir Robin!
+ Reach into the pocket of the 
+ most skilled player and grab one 
+ of their cards to play as your 
+ own.
 
- Your mother told you to target 
- whichever monster currently has 
- the highest hp, and that's 
- exactly what you'll do.
+ Level: Beginner
+ Usable by: All
+ MSRP: 20
+ Class: Melee
 
 ==================================
 ```
 
-### The Tale of Sir Robin
+### Random Play
 
 ```text
 ==================================
- 🙏  The Tale of Sir Robin  ○
+ 🎲  Random Play  ○
 ----------------------------------
 
- He was not in the least bit 
- scared to be mashed into a pulp, 
- or to have his eyes gouged out, 
- and his elbows broken, to have 
- his kneecaps split, and his body 
- burned away... brave Sir Robin!
+ You find the illegible scraps of 
+ an ancient card in the corner. 
+ Curious to see what it does, you 
+ play it --as it crumbles to 
+ dust.
 
- Target whichever opponent 
- currently has the highest hp.
+ Level: Beginner
+ Usable by: All
+ MSRP: 10
+ Class: Psychic
 
 ==================================
 ```
 
-### Sorting Hat
+### Soften
 
 ```text
 ==================================
- 🎩  Sorting Hat  •
+ 😖  Soften  ◆
 ----------------------------------
 
- Join a team, switch teams, or 
- leave one. Teammates go after 
- everyone else in the ring first, 
- and only turn on each other when 
- nobody else is left. If your 
- character has joined a team but 
- your monster hasn't, that 
- monster is on your character's 
- team.
+ Sweep the leg... You have a 
+ problem with that? No mercy.
 
- It's free, and every shop keeps 
- one in stock, because choosing a 
- side should never cost you. 
- `leave team` also takes you and 
- your monsters off a team for 
- free.
+ Hit: 1d20 vs ac / Damage: 1d4
+ Curse: ac -1, with a maximum 
+ total curse of -(level + 1). 
+ Afterwards penalties come out of 
+ hp instead. The curse lands only 
+ if the hit does.
 
- An enchanted hat that once 
- belonged to Godric Gryffindor. 
- Put it on and find out where you 
- truly belong.
+ Level: 1
+ Usable by: All
+ Hit chance: 74% | DPT: 3
+ MSRP: 20
+ Targets: ac
+ Class: Melee
 
 ==================================
 ```
+
+## What each type can hold
+
+Every card says which monsters can use it and from which level. Cards only one type can use are its signature cards.
+
+### Basilisk
+
+Signature cards: Coil, Constrict, Ecdysis, Thick Skin.
+
+| Level | Cards that open up |
+|---|---|
+| Beginner | Coil, Delayed Hit, Fight or Flight, Flee, Forked Stick, Heal, Hit, Pick Pocket, Random Play |
+| 1 | Berserk, Camouflage Vest, Concussion, Constrict, Fists of Villainy, Fists of Virtue, Harden, Molasses, Soften, The Kalevala, Turkey Thigh |
+| 2 | 1993-09-7202 18:58, Adrenaline Rush, Calisthenics, Ecdysis, Forked Metal Rod, Hit Harder, Thick Skin, Whiskey Shot |
+| 3 | Pound, Vengeful Rampage |
+| 4 | Scotch |
+
+### Gladiator
+
+Signature cards: Battle Focus, Survival Knife.
+
+| Level | Cards that open up |
+|---|---|
+| Beginner | Battle Focus, Delayed Hit, Fight or Flight, Flee, Forked Stick, Heal, Hit, Pick Pocket, Random Play |
+| 1 | Camouflage Vest, Concussion, Fists of Villainy, Fists of Virtue, Harden, Molasses, Soften, Survival Knife, The Kalevala, Wooden Spear |
+| 2 | 1993-09-7202 18:58, Adrenaline Rush, Basic Shield, Calisthenics, Forked Metal Rod, Hit Harder, Lucky Strike, Rehit, Whiskey Shot |
+| 4 | Scotch |
+
+### Jinn
+
+Signature cards: Bad Batch, Sandstorm.
+
+| Level | Cards that open up |
+|---|---|
+| Beginner | Delayed Hit, Fight or Flight, Flee, Forked Stick, Heal, Hit, Pick Pocket, Random Play, Sandstorm |
+| 1 | Bad Batch, Brain Drain, Cloak of Invisibility, Dissonant Voice, Enchanted Faceswap, Fists of Villainy, Fists of Virtue, Harden, Iocane, Molasses, Soften, The Kalevala, Wooden Spear |
+| 2 | 1993-09-7202 18:58, Basic Shield, Feline Companion, Lucky Strike, Whiskey Shot |
+| 3 | Pound |
+| 4 | Scotch |
+
+### Minotaur
+
+Signature cards: Horn Gore, Horn Swipe.
+
+| Level | Cards that open up |
+|---|---|
+| Beginner | Delayed Hit, Fight or Flight, Flee, Forked Stick, Heal, Hit, Horn Gore, Pick Pocket, Random Play |
+| 1 | Berserk, Camouflage Vest, Concussion, Fists of Villainy, Fists of Virtue, Harden, Molasses, Soften, The Kalevala, Turkey Thigh |
+| 2 | 1993-09-7202 18:58, Adrenaline Rush, Calisthenics, Forked Metal Rod, Hit Harder, Horn Swipe, Whiskey Shot |
+| 3 | Pound, Vengeful Rampage |
+| 4 | Scotch |
+
+### Weeping Angel
+
+Signature cards: Blink, Enthrall, Entrance, Mesmerize.
+
+| Level | Cards that open up |
+|---|---|
+| Beginner | Blast, Blink, Delayed Hit, Fight or Flight, Flee, Heal, Hit, Pick Pocket, Random Play |
+| 1 | Brain Drain, Cloak of Invisibility, Enchanted Faceswap, Fists of Villainy, Fists of Virtue, Harden, Iocane, Mesmerize, Molasses, Soften, The Kalevala |
+| 2 | 1993-09-7202 18:58, Blast II, Enthrall, Feline Companion, Horn of Proof, Lucky Strike, Rehit, Whiskey Shot |
+| 3 | Entrance, Gloaming Rest |
+| 4 | Scotch |
+
+### Unicorn
+
+Signature cards: Sticketh, Unconquerable Horn.
+
+| Level | Cards that open up |
+|---|---|
+| Beginner | Blast, Delayed Hit, Fight or Flight, Flee, Heal, Hit, Pick Pocket, Random Play, Sticketh |
+| 1 | Brain Drain, Cloak of Invisibility, Dissonant Voice, Enchanted Faceswap, Fists of Villainy, Fists of Virtue, Harden, Iocane, Molasses, Soften, The Kalevala, Unconquerable Horn |
+| 2 | 1993-09-7202 18:58, Blast II, Feline Companion, Horn of Proof, Lucky Strike, Rehit, Whiskey Shot |
+| 3 | Gloaming Rest |
+| 4 | Scotch |
+
+### Dragon
+
+Signature cards: Asinine Companion, Fire Breath, Helm of Awe, Mood Scales, Tail Lash, Take Wing, Tsunami.
+
+| Level | Cards that open up |
+|---|---|
+| Beginner | Delayed Hit, Fight or Flight, Fire Breath, Flee, Heal, Hit, Pick Pocket, Random Play, Take Wing, Tsunami |
+| 1 | Asinine Companion, Cloak of Invisibility, Enchanted Faceswap, Fists of Villainy, Fists of Virtue, Harden, Molasses, Mood Scales, Soften, Tail Lash, The Kalevala |
+| 2 | 1993-09-7202 18:58, Helm of Awe, Lucky Strike, Whiskey Shot |
+| 4 | Scotch |

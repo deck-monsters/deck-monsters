@@ -100,3 +100,561 @@ a fight you were in pays out — not only when the shop section itself refreshes
 
 For card order and builds see [CARDS.md](CARDS.md). For complete game rules and commands see
 [PLAYER_HANDBOOK.md](PLAYER_HANDBOOK.md).
+
+<!-- generated:every-item:start -->
+
+## Every item
+
+Each item with its full card. Generated from the game; the rules above explain how to use them.
+
+### Chaos Theory for Beginners
+
+```text
+==================================
+ 🦋  Chaos Theory for Beginners  
+ ○
+----------------------------------
+
+ Tiny variations, the orientation 
+ of hairs on your hand, the 
+ amount of blood distending your 
+ vessels, imperfections in the 
+ skin... vastly affect the 
+ outcome.
+
+ Target a random opponent in the 
+ ring (other than yourself) 
+ rather than following a defined 
+ order
+
+ Usable 3 times.
+
+ Level: 1
+ Usable by: All
+ MSRP: 20
+
+==================================
+```
+
+### Chaos Theory for Beginners According to Clever Hans
+
+```text
+==================================
+ 👦  Chaos Theory for Beginners 
+ According to Clever Hans  ○
+----------------------------------
+
+ Tiny variations, the orientation 
+ of hairs on your hand, the 
+ amount of blood distending your 
+ vessels, imperfections in the 
+ skin... vastly affect the 
+ outcome.
+
+ Your mother told you to target a 
+ random monster in the ring 
+ rather than following a defined 
+ order, and that's exactly what 
+ you'll do.
+
+ Usable 3 times.
+
+ Level: 1
+ Usable by: All
+ MSRP: 10
+
+==================================
+```
+
+### Chocolate Bar
+
+```text
+==================================
+ 🍫  Chocolate Bar  ○
+----------------------------------
+
+ A quick snack to restore 1 hp.
+
+ Usable 1 time.
+
+ Level: 1
+ Usable by: All
+ MSRP: 20
+
+==================================
+```
+
+### House Lannister
+
+```text
+==================================
+ 🦁  House Lannister  ○
+----------------------------------
+
+ A Lannister always pays his 
+ debts...
+
+ Target the opponent who attacked 
+ you last, unless directed 
+ otherwise by a specific card.
+
+ Usable 3 times.
+
+ Level: 1
+ Usable by: All
+ MSRP: 20
+
+==================================
+```
+
+### House Lannister According To Clever Hans
+
+```text
+==================================
+ 👦  House Lannister According To 
+ Clever Hans  ○
+----------------------------------
+
+ A Lannister always pays his 
+ debts...
+
+ Your mother told you to target 
+ the monster who attacked you 
+ last, unless directed otherwise 
+ by a specific card, and that's 
+ exactly what you'll do.
+
+ Usable 3 times.
+
+ Level: 1
+ Usable by: All
+ MSRP: 10
+
+==================================
+```
+
+### Lottery Ticket
+
+```text
+==================================
+ 💰  Lottery Ticket  •
+----------------------------------
+
+ Play the odds for a chance to 
+ win up to 10000 coins.
+
+ Usable 1 time.
+
+ Level: Beginner
+ Usable by: All
+ MSRP: 10
+
+==================================
+```
+
+### Pokecen
+
+```text
+==================================
+ 🏩  Pokecen  ○
+----------------------------------
+
+ ポケモンセンター Heal Your Monsters!
+
+ Usable 1 time.
+
+ Level: 1
+ Usable by: All
+ MSRP: 50
+
+==================================
+```
+
+### Potion of Healing
+
+```text
+==================================
+ 💊  Potion of Healing  ○
+----------------------------------
+
+ Instantly heal 8 hp.
+
+ Usable 1 time.
+
+ Level: 1
+ Usable by: All
+ MSRP: 50
+
+==================================
+```
+
+### Sorting Hat
+
+```text
+==================================
+ 🎩  Sorting Hat  •
+----------------------------------
+
+ Join a team, switch teams, or 
+ leave one. Teammates go after 
+ everyone else in the ring first, 
+ and only turn on each other when 
+ nobody else is left. If your 
+ character has joined a team but 
+ your monster hasn't, that 
+ monster is on your character's 
+ team.
+
+ It's free, and every shop keeps 
+ one in stock, because choosing a 
+ side should never cost you. 
+ `leave team` also takes you and 
+ your monsters off a team for 
+ free.
+
+ An enchanted hat that once 
+ belonged to Godric Gryffindor. 
+ Put it on and find out where you 
+ truly belong.
+
+ Usable 1 time.
+
+ Level: Beginner
+ Usable by: All
+ MSRP: free
+
+==================================
+```
+
+### Spin Up
+
+```text
+==================================
+ 🧠  Spin Up  ○
+----------------------------------
+
+ Instantly spin monster back up 
+ in a new sleeve.
+
+ Usable 1 time.
+
+ Level: 1
+ Usable by: All
+ MSRP: 20
+
+==================================
+```
+
+### Swiss Chocolate
+
+```text
+==================================
+ 🍫  Swiss Chocolate  ☆
+----------------------------------
+
+ Only the finest Swiss chocolate. 
+ Restores 10 hp.
+
+ Usable 1 time.
+
+ Level: 1
+ Usable by: All
+ MSRP: 20
+
+==================================
+```
+
+### The Annals of Qin Shi Huang
+
+```text
+==================================
+ 焚  The Annals of Qin Shi Huang  
+ ○
+----------------------------------
+
+ 焚書坑儒
+
+ Target the opponent who has the 
+ highest xp.
+
+ Usable 3 times.
+
+ Level: 1
+ Usable by: All
+ MSRP: 20
+
+==================================
+```
+
+### The Annals of Qin Shi Huang According to Clever Hans
+
+```text
+==================================
+ 👦  The Annals of Qin Shi Huang 
+ According to Clever Hans  ○
+----------------------------------
+
+ 焚書坑儒
+
+ Your mother told you to target 
+ the monster who has the highest 
+ xp, and that's exactly what 
+ you'll do.
+
+ Usable 3 times.
+
+ Level: 1
+ Usable by: All
+ MSRP: 10
+
+==================================
+```
+
+### The Ballad of La Carambada
+
+```text
+==================================
+ 💃  The Ballad of La Carambada  
+ ○
+----------------------------------
+
+ Junto a ellos, aterrorizó la 
+ comarca, aguardando el día de la 
+ venganza. Hizo fama por su 
+ diestro manejo de la pistola, 
+ del machete y, sobre todo, por 
+ su extraordinaria habilidad para 
+ cabalgar. En tiempos en que las 
+ mujeres acompañaban a sus 
+ hombres a un lado del caballo, 
+ ver a una mujer galopando era un 
+ acontecimiento mayor.
+
+ Target whoever has the highest 
+ maximum hp in the ring (other 
+ than yourself) even if they 
+ currently have less hp.
+
+ Usable 3 times.
+
+ Level: 1
+ Usable by: All
+ MSRP: 20
+
+==================================
+```
+
+### The Ballad of La Carambada According to Clever Hans
+
+```text
+==================================
+ 👦  The Ballad of La Carambada 
+ According to Clever Hans  ○
+----------------------------------
+
+ Junto a ellos, aterrorizó la 
+ comarca, aguardando el día de la 
+ venganza. Hizo fama por su 
+ diestro manejo de la pistola, 
+ del machete y, sobre todo, por 
+ su extraordinaria habilidad para 
+ cabalgar. En tiempos en que las 
+ mujeres acompañaban a sus 
+ hombres a un lado del caballo, 
+ ver a una mujer galopando era un 
+ acontecimiento mayor.
+
+ Your mother told you to target 
+ whoever has the highest maximum 
+ hp in the ring even if they 
+ currently have less hp, and 
+ that's exactly what you'll do.
+
+ Usable 3 times.
+
+ Level: 1
+ Usable by: All
+ MSRP: 10
+
+==================================
+```
+
+### The Gospel According to Clever Hans
+
+```text
+==================================
+ 🐎  The Gospel According to 
+ Clever Hans  •
+----------------------------------
+
+ Your mother said that my mother 
+ said that if you know your enemy 
+ and know yourself, you will not 
+ be put at risk even in a hundred 
+ battles. If you only know 
+ yourself, but not your opponent, 
+ you may win or may lose. If you 
+ know neither yourself nor your 
+ enemy, you will always endanger 
+ yourself.
+
+ Your mother told you to keep 
+ your strategy simple: your 
+ opponent is always the person to 
+ your right (wait, no, your other 
+ right --No no, the other 
+ other... You know what? Just 
+ forget it... That one's fine).
+
+ Usable 3 times.
+
+ Level: Beginner
+ Usable by: All
+ MSRP: 20
+
+==================================
+```
+
+### The Gospel According to Parsifal
+
+```text
+==================================
+ 🏇  The Gospel According to 
+ Parsifal  •
+----------------------------------
+
+ My mother said that if you know 
+ your enemy and know yourself, 
+ you will not be put at risk even 
+ in a hundred battles. If you 
+ only know yourself, but not your 
+ opponent, you may win or may 
+ lose. If you know neither 
+ yourself nor your enemy, you 
+ will always endanger yourself.
+
+ Keep your strategy simple: your 
+ opponent is always the person 
+ next to you.
+
+ Usable an unlimited number of 
+ times.
+
+ Level: Beginner
+ Usable by: All
+ MSRP: 20
+
+==================================
+```
+
+### The Tale of Sir Robin
+
+```text
+==================================
+ 🙏  The Tale of Sir Robin  ○
+----------------------------------
+
+ He was not in the least bit 
+ scared to be mashed into a pulp, 
+ or to have his eyes gouged out, 
+ and his elbows broken, to have 
+ his kneecaps split, and his body 
+ burned away... brave Sir Robin!
+
+ Target whichever opponent 
+ currently has the highest hp.
+
+ Usable 3 times.
+
+ Level: 1
+ Usable by: All
+ MSRP: 20
+
+==================================
+```
+
+### The Tale of Sir Robin According to Clever Hans
+
+```text
+==================================
+ 👦  The Tale of Sir Robin 
+ According to Clever Hans  ○
+----------------------------------
+
+ He was not in the least bit 
+ scared to be mashed into a pulp, 
+ or to have his eyes gouged out, 
+ and his elbows broken, to have 
+ his kneecaps split, and his body 
+ burned away... brave Sir Robin!
+
+ Your mother told you to target 
+ whichever monster currently has 
+ the highest hp, and that's 
+ exactly what you'll do.
+
+ Usable 3 times.
+
+ Level: 1
+ Usable by: All
+ MSRP: 10
+
+==================================
+```
+
+### The Way of the Cobra Kai
+
+```text
+==================================
+ 🐍  The Way of the Cobra Kai  ○
+----------------------------------
+
+ We do not train to be merciful 
+ here. Mercy is for the weak. 
+ Here, in the streets, in 
+ competition: A man confronts 
+ you, he is the enemy. An enemy 
+ deserves no mercy.
+
+ You target the weakest player in 
+ the ring, every time.
+
+ Usable 3 times.
+
+ Level: 1
+ Usable by: All
+ MSRP: 20
+
+==================================
+```
+
+### The Way of the Cobra Kai According to Clever Hans
+
+```text
+==================================
+ 👦  The Way of the Cobra Kai 
+ According to Clever Hans  ○
+----------------------------------
+
+ We do not train to be merciful 
+ here. Mercy is for the weak. 
+ Here, in the streets, in 
+ competition: A man confronts 
+ you, he is the enemy. An enemy 
+ deserves no mercy.
+
+ Your mother told you to target 
+ the weakest monster in the ring, 
+ every time, and that's exactly 
+ what you'll do.
+
+ Usable 3 times.
+
+ Level: 1
+ Usable by: All
+ MSRP: 10
+
+==================================
+```
+
+<!-- generated:every-item:end -->
