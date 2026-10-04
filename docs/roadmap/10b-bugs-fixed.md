@@ -2306,7 +2306,7 @@ drops to 2-up in a very narrow pane.
 
 ---
 
-### 122. Nothing said a player had a second monster on a phone — FIXED
+### 122. Nothing said a player had a second monster on a phone — FIXED (superseded by #215)
 
 **Root cause**: below 900px `.workshop-monster-row` becomes a scroll-snapped carousel, and
 the only indication that more monsters existed was the ~44px sliver of the next panel
@@ -5044,6 +5044,27 @@ such a name.
 **Fix**: `chooseName` (`helpers/names.ts`) keeps only the word before a parenthesis, and
 draws again (at most 25 times) when a name is empty or contains `null` or `undefined`. A
 test draws 300 names of every type and gender and finds none dirty.
+
+**Status**: Fixed.
+
+### 215. "Moved 1 cards", and a second monster hidden on a phone — FIXED
+
+Found by Cursor's new-player walk ([walk 2](../reference/new-player-walk-2.md)), pass 43 I1.
+
+- **"Moved 1 cards."** The Workshop's move-many summary in `server/src/trpc/router.ts` had a
+  literal `cards`, and the web client's own toast in `WorkshopPanel.tsx` had the same literal.
+  The single-card path printed `Moved 2 Hit` with no plural. Fixed with `movedSummary`
+  (`server/src/trpc/move-summary.ts`) and `movedToMessage` (`web/src/utils/moved-message.ts`),
+  each tested for one and for many.
+- **A second monster off the right edge at 390.** The fix for #122 kept the phone carousel
+  (a scroll-snapped row) and added dots to show it. A new player still read the dots as
+  decoration and never found the second monster. The carousel is gone: `.workshop-monster-row`
+  is always the auto-fit grid, one column on a phone and side by side on a desktop, so every
+  monster is on the page. This supersedes #122's dots.
+- **Leaders and the header at 390.** Leaders' columns were in a scroll box with nothing to say
+  it scrolled; a right-edge fade now shows there is more. A long room name wrapped to three
+  lines in the fixed-height header, because the flex child had no `min-width: 0`; it now ends
+  in an ellipsis, and the brand and settings links don't shrink.
 
 **Status**: Fixed.
 
