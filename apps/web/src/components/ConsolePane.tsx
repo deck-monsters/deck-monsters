@@ -112,6 +112,34 @@ function isPendingPromptSnapshot(value: unknown): value is PendingPromptSnapshot
 }
 
 /**
+ * A poll that finds nothing pending clears a prompt at once when the prompt arrived at
+ * least this long before the poll landed. The old rule (always two empty polls) left the
+ * input routed to a dead question for 3-6s after a missed timeout/cancel event, and
+ * `help` typed in that window was swallowed (new-player walk 2, finding 9). The grace is
+ * what keeps the original two-poll reason alive: a poll already in flight when a prompt
+ * arrives over the live feed can come back empty, and must not erase the new prompt.
+ */
+const EMPTY_POLL_GRACE_MS = 5_000;
+
+/**
+ * Marks every unresolved question except `keepId` cancelled. Only one question per player
+ * is ever open (interactive flows run one at a time per room and user), so an older one
+ * still showing live buttons when a newer one arrives is dead - its timeout/cancel event
+ * never reached this Console - and its buttons would only lead to "Prompt is no longer
+ * active".
+ */
+function retireOtherPrompts(events: ConsoleEvent[], keepId: string): ConsoleEvent[] {
+  let changed = false;
+  const next = events.map(ev => {
+    const p = ev.promptData;
+    if (!p || p.requestId === keepId || p.selectedAnswer || p.timedOut || p.cancelled) return ev;
+    changed = true;
+    return { ...ev, promptData: { ...p, cancelled: true } };
+  });
+  return changed ? next : events;
+}
+
+/**
  * Reports whether the end of the active prompt (its choice buttons) is on screen.
  * The waiting banner below the input exists for a prompt the player cannot see
  * (#142); when the choices are visible it is redundant and covers the input on a
@@ -162,6 +190,14 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
   // call that would need to read it.
   const resolvedPromptIdsRef = useRef<Set<string>>(new Set());
   const consecutiveEmptyPromptPollsRef = useRef(0);
+  // When each question first reached this Console, for the empty-poll grace above.
+  const promptArrivedAtRef = useRef<Map<string, number>>(new Map());
+  // Supersede the question that was open when a different one arrives (see retireOtherPrompts).
+  const supersedePrompt = useCallback((newId: string) => {
+    const previous = activePromptIdRef.current;
+    if (previous && previous !== newId) resolvedPromptIdsRef.current.add(previous);
+    if (!promptArrivedAtRef.current.has(newId)) promptArrivedAtRef.current.set(newId, Date.now());
+  }, []);
   const [inputValue, setInputValue] = useState('');
   // The latest input, for async code that must not overwrite what the player typed meanwhile.
   const inputValueRef = useRef('');
@@ -361,8 +397,10 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
     // answered. Once a requestId is resolved locally, a stale poll for the same id must
     // not resurrect it.
     if (resolvedPromptIdsRef.current.has(prompt.requestId)) return;
+    supersedePrompt(prompt.requestId);
 
-    setConsoleEvents(prev => {
+    setConsoleEvents(prevAll => {
+      const prev = retireOtherPrompts(prevAll, prompt.requestId);
       const existingIndex = prev.findIndex(ev => ev.promptData?.requestId === prompt.requestId);
       if (existingIndex === -1) {
         return [
@@ -403,7 +441,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
       });
     });
     setActivePromptId(prompt.requestId);
-  }, []);
+  }, [supersedePrompt]);
 
   useEffect(() => {
     if (pendingPrompt) {
@@ -416,13 +454,16 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
       return;
     }
 
-    // A cancel/timeout event can be missed during a reconnect. Require two authoritative
-    // empty polls before clearing so an older in-flight poll cannot erase a prompt that
-    // has only just arrived over the live feed.
+    // A cancel/timeout event can be missed during a reconnect. A prompt that has only just
+    // arrived over the live feed needs two empty polls before it is cleared, so an older
+    // in-flight poll cannot erase it; one that arrived well before this poll landed is
+    // cleared on the first (EMPTY_POLL_GRACE_MS).
     consecutiveEmptyPromptPollsRef.current += 1;
-    if (consecutiveEmptyPromptPollsRef.current < 2) return;
-
     const staleRequestId = activePromptIdRef.current;
+    const arrivedAt = promptArrivedAtRef.current.get(staleRequestId);
+    const old = arrivedAt !== undefined && pendingPromptUpdatedAt - arrivedAt >= EMPTY_POLL_GRACE_MS;
+    if (!old && consecutiveEmptyPromptPollsRef.current < 2) return;
+
     resolvedPromptIdsRef.current.add(staleRequestId);
     setConsoleEvents(prev => prev.map(ev =>
       ev.promptData?.requestId === staleRequestId
@@ -519,12 +560,11 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
         timeoutSeconds: promptPayload.timeoutSeconds,
         arrivedAt: Date.now(),
       };
-      addConsoleEvent({
-        id: event.id,
-        type: 'prompt',
-        text: promptPayload.question,
-        promptData,
-      });
+      supersedePrompt(promptPayload.requestId);
+      setConsoleEvents(prev => [
+        ...retireOtherPrompts(prev, promptPayload.requestId),
+        { id: event.id, type: 'prompt', text: promptPayload.question, promptData },
+      ]);
       setActivePromptId(promptPayload.requestId);
       return;
     }
@@ -568,7 +608,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
       const { actions } = event.payload as { actions: QuickAction[] };
       setQuickActions(actions ?? []);
     }
-  }, [refetchMyMonsters, refetchMyInventory, user?.id]);
+  }, [refetchMyMonsters, refetchMyInventory, supersedePrompt, user?.id]);
 
   const { reconnecting, seedCursor } = useRingFeedListener(onLiveEvent);
 
@@ -744,7 +784,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
     }
   }
 
-  async function handleAnswer(requestId: string, answer: string) {
+  async function handleAnswer(requestId: string, answer: string, typed?: string) {
     resolvedPromptIdsRef.current.add(requestId);
     // Mark the choice as selected immediately for UI feedback
     setConsoleEvents(prev => prev.map(ev =>
@@ -771,6 +811,22 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
       const latest = await refetchPendingPrompt();
       if (latest.data) {
         upsertPendingPrompt(latest.data);
+      } else {
+        // Nothing is pending: the question is gone. Without this its buttons kept
+        // showing the answer as chosen (new-player walk 2, finding 9). Keep the id
+        // resolved so a poll already in flight cannot re-arm it.
+        resolvedPromptIdsRef.current.add(requestId);
+        setConsoleEvents(prev => prev.map(ev =>
+          ev.promptData?.requestId === requestId
+            ? { ...ev, promptData: { ...ev.promptData!, selectedAnswer: null, cancelled: true } }
+            : ev
+        ));
+        // Put back what was typed (unless the player has typed something newer) so one
+        // more Enter runs it as a command. It is never auto-run: it may have been an answer.
+        if (typed && inputValueRef.current === '') {
+          inputValueRef.current = typed;
+          setInputValue(typed);
+        }
       }
     } finally {
       inputRef.current?.focus();
@@ -838,7 +894,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
       setInputValue('');
       if (answer) {
         addConsoleEvent({ id: `input-${Date.now()}`, type: 'input', text: answer });
-        void handleAnswer(activePromptId, answer);
+        void handleAnswer(activePromptId, answer, answer);
       }
     } else {
       void handleSubmitCommand(inputValue);
