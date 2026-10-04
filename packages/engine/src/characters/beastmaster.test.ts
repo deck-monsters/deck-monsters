@@ -172,7 +172,7 @@ describe('characters/beastmaster', () => {
 
 		expect(channelStub.calledOnce).to.equal(true);
 		expect(channelStub.firstCall.args[0].announce).to.equal(
-			'You have no items. Buy some with buy items, or win them in fights.',
+			'You have no items. Visit the shop to buy some, or win them in fights.',
 		);
 	});
 

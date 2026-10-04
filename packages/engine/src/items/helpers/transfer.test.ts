@@ -51,6 +51,16 @@ describe('./items/helpers/transfer.ts', () => {
 		});
 	});
 
+	it('says only that there is nothing to take when taking, without pointing at the shop', () => {
+		const from = makeCreature({ givenName: 'Rex' });
+		const to = makeCreature({ givenName: 'Ada', itemSlots: 12 });
+
+		return transferItems({ from, to, channel: channelStub, direction: 'take' }).then(
+			() => expect.fail('should have thrown'),
+			() => expect(channelStub).to.have.been.calledWith({ announce: 'Rex has no items to take.' }),
+		);
+	});
+
 	it('can give an item to another creature', () => {
 		const from = makeCreature({ givenName: 'Character', itemSlots: 12 });
 		from.items = [new LotteryTicket()];

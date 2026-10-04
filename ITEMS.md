@@ -50,8 +50,8 @@ which are not yet offered as a prompt-free web button.
 ## Targeting scrolls
 
 Targeting scrolls permanently change how a monster chooses opponents until another scroll
-changes it. Most can be used three times. The monster's stat card shows its current
-`Strategy`. “According to Clever Hans” variants use the corresponding imperfect/mistaken
+changes it. Most can be used three times. The monster's stat card shows them as its
+orders (`[monster]'s orders:`). “According to Clever Hans” variants use the corresponding imperfect/mistaken
 interpretation and are cheaper.
 
 | Scroll family | Strategy taught |

@@ -556,7 +556,7 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
       setError(null);
       const result = await unequipAll({ monsterName });
       setSelectedCards([]);
-      setMessage(`Cleared ${result.monsterName} (${result.removedCount} cards returned).`);
+      setMessage(`Cleared ${result.monsterName} (${result.removedCount} ${result.removedCount === 1 ? 'card' : 'cards'} returned).`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not clear deck');
     }

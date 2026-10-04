@@ -378,7 +378,7 @@ class Beastmaster extends BaseCharacter {
 				return this.chooseMonster({ channel, monsters, monsterName, action: 'take items from' });
 			})
 			.then(monster =>
-				transferItems({ from: monster as any, to: this as any, itemSelection, channel: channel as any }).then(
+				transferItems({ from: monster as any, to: this as any, itemSelection, channel: channel as any, direction: 'take' }).then(
 					() => monster,
 				),
 			);
@@ -491,7 +491,7 @@ class Beastmaster extends BaseCharacter {
 		// broken command (new-player walk 2, I3). Say so, and say where items come from.
 		if (this.items.length < 1 && !this.monsters.some(monster => (monster as any).items?.length > 0)) {
 			return Promise.resolve(
-				(channel as any)({ announce: 'You have no items. Buy some with buy items, or win them in fights.' }),
+				(channel as any)({ announce: 'You have no items. Visit the shop to buy some, or win them in fights.' }),
 			).then(() => undefined);
 		}
 

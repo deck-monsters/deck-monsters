@@ -33,7 +33,7 @@ export class SortingHat extends BaseScroll {
 	} = {}): string {
 		const wearer = monster ?? character;
 		const name = (wearer?.['givenName'] as string | undefined) ?? 'you';
-		return `Put on the Sorting Hat? It sorts ${name} into one of four teams, and is used up. (yes/no)`;
+		return `Put on the Sorting Hat? You choose a new team for ${name}, and the hat is used up. (yes/no)`;
 	}
 
 	action({ channel, channelName, character, monster }: {

@@ -72,9 +72,9 @@ Implementers use these exactly. Anything else is a `DRAFT(43)` placeholder for C
 - Pick button: `Buy {n} {item|items}`, titled `Buy the items you picked.`
 - Confirm: `{Items} from {shop} for {value} {coin|coins}. Buy {it|them}? (yes/no)`, with the item names joined by "and".
 - Receipt: `Sold: {items}. {name} has {coins} {coin|coins} left. Use an item with use, or give it to a monster with give.`
-- Sorting Hat: `Put on the Sorting Hat? It sorts {name} into one of four teams, and is used up. (yes/no)`
-- `give` with nothing: `{name} has no items {monster} can use. Used items are gone; buy more in the shop.`
-- `look at items` with none: `You have no items. Buy some with buy items, or win them in fights.`
+- Sorting Hat: `Put on the Sorting Hat? You choose a new team for {name}, and the hat is used up. (yes/no)`
+- `give` with nothing: `{name} has no items {monster} can use. Used items are gone; buy more in the shop.` `take` with nothing (final review: the two share a helper): `{monster} has no items to take.`
+- `look at items` with none: `You have no items. Visit the shop to buy some, or win them in fights.`
 - Handbook: `New characters start with 30 coins.`
 
 **I4–I5:** no new player-facing text yet. A `DRAFT(43)` placeholder if one is needed; the
@@ -91,5 +91,6 @@ Fights row label is written at I5.
 ## Actionable remainder
 
 - [ ] Cursor's live check, [43a](43a-cursor-walk-fixes-check.md), after the deploy. Items 16–19 (questions that are over) matter most.
-- [ ] A Back Room card is still called an item when bought (pass C).
+- [ ] A Back Room card is still called an item when bought, and buying cards in the shop still shows the `Equip cards` button (its question has no buy marker) (pass C).
+- [ ] The play-by-play now opens with the plain `Fight begins with N contestants` line (pass H).
 - [ ] After the live check, fold the decisions into the area docs and archive this plan.

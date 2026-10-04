@@ -8,9 +8,14 @@ interface TransferOptions {
 	to: any;
 	itemSelection?: string[];
 	channel: any;
+	/**
+	 * Which way the items move. The empty-handed line differs: only `give` points at the shop.
+	 * (A shared line once told `take items from Rex` to "buy more in the shop".)
+	 */
+	direction?: 'give' | 'take';
 }
 
-const transferItems = ({ from, to, itemSelection, channel }: TransferOptions): Promise<void> => {
+const transferItems = ({ from, to, itemSelection, channel, direction = 'give' }: TransferOptions): Promise<void> => {
 	const checkEncounter = (arg?: any): Promise<any> => {
 		if (to.inEncounter) {
 			return announceAndThrow(channel, `You cannot give items to ${to.givenName} while they are fighting!`);
@@ -32,7 +37,9 @@ const transferItems = ({ from, to, itemSelection, channel }: TransferOptions): P
 			);
 
 			if (items.length < 1) {
-				return announceAndThrow(channel, `${from.givenName} has no items ${to.givenName} can use. Used items are gone; buy more in the shop.`);
+				return announceAndThrow(channel, direction === 'take'
+					? `${from.givenName} has no items to take.`
+					: `${from.givenName} has no items ${to.givenName} can use. Used items are gone; buy more in the shop.`);
 			}
 
 			const { itemSlots } = to;

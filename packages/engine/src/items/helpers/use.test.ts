@@ -115,7 +115,7 @@ describe('./items/helpers/use.ts', () => {
 			const character = makeCharacter();
 			const hat = new SortingHat();
 			character.items = [hat];
-			const question = 'Put on the Sorting Hat? It sorts Character into one of four teams, and is used up. (yes/no)';
+			const question = 'Put on the Sorting Hat? You choose a new team for Character, and the hat is used up. (yes/no)';
 			channelStub.withArgs({ question }).resolves('yes');
 			const useStub = sinon.stub().resolves();
 
@@ -130,7 +130,7 @@ describe('./items/helpers/use.ts', () => {
 			const character = makeCharacter();
 			const monster = makeMonster({ givenName: 'Brass' });
 			character.items = [new SortingHat()];
-			const question = 'Put on the Sorting Hat? It sorts Brass into one of four teams, and is used up. (yes/no)';
+			const question = 'Put on the Sorting Hat? You choose a new team for Brass, and the hat is used up. (yes/no)';
 			channelStub.withArgs({ question }).resolves('yes');
 
 			return useItems({ channel: channelStub, character, monster, itemSelection: ['sorting hat'], use: sinon.stub().resolves() }).then(() => {

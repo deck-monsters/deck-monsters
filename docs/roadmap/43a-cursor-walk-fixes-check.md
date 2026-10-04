@@ -47,7 +47,8 @@ files, link it from `docs/README.md`, and make sure `pnpm docs:check` passes.
 
 7. Send a monster to the ring and summon a boss (or wait for one). Once the boss is in, the
    Console guide reads `{name} is in the ring. Watch The Ring: a fight starts when the countdown ends.`
-   with no summon chip. During the fight it reads `{name} is fighting. Watch The Ring.`
+   with no summon chip. During the fight it reads `{name} is fighting. Watch The Ring.` The
+   guide checks the ring every few seconds, so allow up to 15 seconds for it to change.
 8. While a boss stands in the ring, the header shows no `boss in ~…`. Hovering (1440) the
    summons badge shows
    `Bosses you summon. The house also sends one on its own timer, which doesn't use yours.`
@@ -62,16 +63,17 @@ files, link it from `docs/README.md`, and make sure `pnpm docs:check` passes.
 
 ### C. The shop and items
 
-13. `buy items`: the pick button reads `Buy items`, then `Buy 1 item` / `Buy 2 items` as you
+13. `visit the shop`, then pick items: the pick button reads `Buy items`, then `Buy 1 item` / `Buy 2 items` as you
     pick. Pick two copies of one item if you can afford it. The confirm reads
     `{Item ×2 and …} from {shop} for {n} coins. Buy them? (yes/no)` and the receipt
     `Sold: {items}. {name} has {n} coins left. Use an item with use, or give it to a monster with give.`
 14. `use Sorting Hat` asks
-    `Put on the Sorting Hat? It sorts {name} into one of four teams, and is used up. (yes/no)`.
+    `Put on the Sorting Hat? You choose a new team for {name}, and the hat is used up. (yes/no)`.
 15. With no items left: `look at items` says
-    `You have no items. Buy some with buy items, or win them in fights.`, and
+    `You have no items. Visit the shop to buy some, or win them in fights.`, and
     `give {item} to {monster}` says
     `{name} has no items {monster} can use. Used items are gone; buy more in the shop.`
+   `take items from {monster}` when it carries none says `{monster} has no items to take.`
 
 ### D. Questions that are over (the hardest one)
 

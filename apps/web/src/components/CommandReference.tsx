@@ -192,8 +192,8 @@ export default function CommandReference({ open, onClose, onInsertCommand }: Com
                     already carrying. Nothing can be handed over mid-fight, so stock it up
                     before it goes to the ring.
                     <br />
-                    Targeting scrolls change who a monster attacks; its stat card shows the
-                    current Strategy.
+                    Targeting scrolls change who a monster attacks; its stat card shows them
+                    as its orders.
                   </div>
                 )}
                 {entries.map((entry) => (

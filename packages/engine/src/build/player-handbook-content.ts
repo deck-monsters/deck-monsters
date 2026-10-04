@@ -224,7 +224,7 @@ The ring narrates every roll. What the words and numbers mean:
 - XP: experience. Monsters earn it from every fight, and it raises their level.
 - Beginner and Lvl 0: the same thing, a monster that has not reached level 1. The Workshop shows the number, the ring the word.
 - Class: the monster's fighting style, such as Barbarian or Wizard. It decides which cards the monster can hold; the Monster Manual lists each type's class.
-- Orders: who a monster goes after. A monster's card shows them as "{name}'s orders".
+- Orders: who a monster goes after. A monster's card shows them as "[monster]'s orders".
 `.trim();
 
 /*
