@@ -286,7 +286,7 @@ drink` then `🎲 18`), and a tally can say `2 HITS` above `Miss...`. The end li
 boss. H separates what happened from its flavour, checks the roll lines, and ends a fight by
 naming who fell and what each player won (XP, coins, the card). It needs its own plan.
 
-**A new pass, I: small fixes from the walk.** These are each a line or two:
+**A new pass, I: small fixes from the walk** (planned in [43](43-walk-fixes.md)). These are each a line or two:
 1. **Bug:** the Workshop's multi-card move says `Moved 1 cards` (`server/src/trpc/router.ts`,
    the move-many summary, which has no singular).
 2. The Workshop's first-deck note says `tap an empty slot`. The control needs a card selected
@@ -313,9 +313,11 @@ naming who fell and what each player won (XP, coins, the card). It needs its own
 14. A first boss shows `Fights: 129 · Won: 103` (table).
 15. The long room name: this is E5.
 
-**Owner decisions:**
-- **Prion Disease's name.** Its card type is `1993-09-7202 18:58`, a deliberate Eternal
-  September joke, and Cursor read it as a broken row (#7). Keep it, or show the card as
-  Prion Disease with the date in its flavour?
-- **Shop prices.** After the free hat, everything costs 33 coins and the first fight paid 10.
-  Should a first purchase be within one or two fights?
+**Owner decisions (2026-10-04):**
+- **Prion Disease keeps its name,** `1993-09-7202 18:58`. It is a joke card.
+- **Characters start with 30 coins,** so the first fight's 10 buys a 33-coin item. Items get a
+  little easier to reach without tipping the balance.
+- **Order:** I first, as its own PR once #421 merges; then A + C + E1; then H; then D.
+
+I is planned in [43 — Small fixes from the new-player walk](43-walk-fixes.md), with the
+starting coins as part of its task I3.
