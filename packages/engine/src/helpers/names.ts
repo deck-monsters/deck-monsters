@@ -63,7 +63,11 @@ const chooseName = (type: string, gender: string, alreadyTaken: string[] = [], d
 
 	const name = cleanName(fantasyNames(...args));
 
-	if (name === undefined || alreadyTaken.includes(name)) {
+	// Case-insensitive on purpose: the Console passes the keys of `getAllMonstersLookup()`, which
+	// are lowercased, so an exact `includes` never matched a taken name like "Rex" (found in
+	// roadmap 44 K4, when the web's name suggestions started reusing the same lookup).
+	const taken = alreadyTaken.map(n => n.toLowerCase());
+	if (name === undefined || taken.includes(name.toLowerCase())) {
 		// Bounded: a list that kept failing would otherwise recurse forever.
 		if (draws >= MAX_DRAWS) return name ?? `Nameless ${type}`;
 		return chooseName(type, gender, alreadyTaken, draws + 1);

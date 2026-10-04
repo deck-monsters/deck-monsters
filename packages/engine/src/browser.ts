@@ -29,4 +29,4 @@ export { CARD_ROLES, CARD_ROLE_LABELS, roleOf } from './cards/helpers/roles.js';
 export type { CardRole } from './cards/helpers/roles.js';
 export { cardHoldVerdict } from './cards/helpers/hold-verdict.js';
 export type { CardHoldVerdict } from './cards/helpers/hold-verdict.js';
-export { lookPreview, lookQuestion, lookQuestionShort } from './monsters/helpers/looks.js';
+export { lookEntry, lookPreview, lookQuestion, lookQuestionShort } from './monsters/helpers/looks.js';

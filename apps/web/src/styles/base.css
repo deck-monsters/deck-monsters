@@ -841,35 +841,46 @@ button {
   font-size: 0.8rem;
 }
 
-.workshop-spawn-form {
+/*
+ * Train monster wizard (roadmap 44 K4): one question per screen, built for a 390px phone first.
+ * Single column, 44px tap targets, and the Back / Next row stays in reach under the question.
+ */
+.train-wizard {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  align-items: end;
   gap: 0.65rem;
   border: 1px solid var(--color-border);
   padding: 0.75rem;
   background: var(--color-input-bg);
 }
-
-.workshop-spawn-form label { display: grid; gap: 0.25rem; color: var(--color-fg-dim); font-size: 0.75rem; }
-.workshop-spawn-form input, .workshop-spawn-form select { min-width: 0; border: 1px solid var(--color-border); background: var(--color-bg); color: var(--color-fg); padding: 0.45rem; font: inherit; }
-
-/*
- * First-run character fields. They span the whole grid so they read as a step above the
- * monster fields rather than as three more monster attributes mixed in among them.
- */
-.workshop-spawn-character {
-  grid-column: 1 / -1;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  align-items: end;
-  gap: 0.65rem;
-  border: 1px solid var(--color-border);
-  padding: 0.5rem 0.75rem 0.75rem;
-  margin: 0;
+.train-wizard-step { margin: 0; color: var(--color-fg-dim); font-size: 0.75rem; }
+.train-wizard-heading { margin: 0; font-size: 1.1rem; }
+.train-wizard-heading:focus { outline: none; }
+.train-wizard-body { display: grid; gap: 0.65rem; margin: 0; padding: 0; border: 0; min-width: 0; }
+.train-wizard-lead { margin: 0; color: var(--color-fg-dim); font-size: 0.85rem; padding: 0; }
+.train-wizard label { display: grid; gap: 0.25rem; color: var(--color-fg-dim); font-size: 0.75rem; }
+.train-wizard input[type='text'], .train-wizard input:not([type]), .train-wizard select {
+  min-width: 0; min-height: 2.75rem; border: 1px solid var(--color-border); background: var(--color-bg);
+  color: var(--color-fg); padding: 0.45rem; font: inherit; font-size: 1rem;
 }
-
-.workshop-spawn-character legend { color: var(--color-fg-dim); font-size: 0.75rem; padding: 0 0.25rem; }
+.train-wizard-types, .train-wizard-pronouns { gap: 0.5rem; }
+.train-wizard-type, .train-wizard-choice {
+  position: relative; display: grid; gap: 0.2rem; min-height: 2.75rem; padding: 0.6rem 0.75rem 0.6rem 2.25rem;
+  border: 1px solid var(--color-border); background: var(--color-bg); color: var(--color-fg); font-size: 0.9rem; cursor: pointer;
+}
+.train-wizard-type input, .train-wizard-choice input { position: absolute; left: 0.7rem; top: 0.85rem; margin: 0; }
+.train-wizard-type.is-selected, .train-wizard-choice.is-selected { border-color: var(--color-accent); }
+.train-wizard-type:focus-within, .train-wizard-choice:focus-within { outline: 2px solid var(--color-accent); outline-offset: 1px; }
+.train-wizard-type-name { font-weight: 600; }
+.train-wizard-type-summary, .train-wizard-type-facts { color: var(--color-fg-dim); font-size: 0.8rem; }
+.train-wizard-suggestions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; color: var(--color-fg-dim); font-size: 0.8rem; }
+.train-wizard-suggestions .btn { min-height: 2.75rem; }
+.train-wizard-preview-label { margin: 0; color: var(--color-fg-dim); font-size: 0.75rem; }
+.train-wizard-preview { margin: 0; color: var(--color-fg); }
+.train-wizard-preview.is-example { color: var(--color-fg-dim); font-style: italic; }
+.train-wizard-ready-name { margin: 0; font-size: 1.05rem; font-weight: 600; }
+.train-wizard-actions { display: flex; gap: 0.5rem; justify-content: flex-end; }
+.train-wizard-actions .btn { min-height: 2.75rem; flex: 1 1 0; max-width: 12rem; }
+.train-wizard .error-msg { margin: 0; }
 
 .workshop-avatar-choices {
   grid-column: 1 / -1;
@@ -1256,11 +1267,6 @@ button {
   accent-color: var(--color-accent);
 }
 
-.workshop-type-summary {
-  margin: 0;
-  color: var(--color-fg-dim);
-  font-size: 0.85rem;
-}
 
 /*
   Header room name (pass 43 I1): a long name wrapped to three lines at 390px and pushed the

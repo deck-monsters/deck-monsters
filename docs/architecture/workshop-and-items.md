@@ -137,7 +137,7 @@ all answers in the form first, or use the interactive per-user command flow desc
 ## The guided start in the Workshop
 
 After the first-run form, the Workshop shows the same getting-started box as the Console,
-under the Train row and above the monsters, for every step except `spawn` (the form already
+under the Train row and above the monsters, for every step except `spawn` (the wizard already
 covers training). Both surfaces read `hooks/useGuidedStart.ts`; the box is
 `components/GuidedStartBox.tsx` (the Workshop version has words only, no chips). It is hidden
 while a Console flow is in progress, like the Workshop's other controls. The steps, the
@@ -190,6 +190,25 @@ description glued on would stop the Discord button answer from resolving. The li
 `Beastmaster.spawnMonster` opens with `You can train {n} more {monster|monsters}.` and, with
 no places left, refuses with `Every place at your side is taken ({slots} {monster|monsters}).`,
 the Workshop Train row's wording.
+
+## Training: the wizard
+
+The Workshop's Train monster button opens `components/TrainWizard.tsx`, one question per
+screen (About you on a first run only, then Type, Pronouns, Name, Look, Ready), replacing the
+old one-screen form. It still sends the same `spawnMonster` input; only the gathering changed.
+All answers live in the wizard, so Back keeps them. A server refusal returns the wizard to the
+step at fault (`stepForError`: a taken monster name goes to Name, a taken character name to
+About you) instead of closing it.
+
+- Type cards read `spawnOptions` (`types[]` carries `summary`, `class` and `signatureCard`).
+- The Look step reads the engine's look table (`monsters/helpers/looks.ts`, browser-safe:
+  `lookEntry`, `lookQuestionShort`, `lookPreview`), the same table the Console's
+  `askForColor` reads. It previews the look line only; the rest of the description is drawn
+  when the monster is made.
+- Name suggestions come from the room-scoped, membership-checked `suggestMonsterNames`
+  query ({ roomId, type, gender }), because `fantasy-names` is Node-only. It skips names
+  taken in the room. `chooseName` compares taken names case-insensitively: the room's lookup
+  keys are lowercased, and an exact match used to let the Console re-suggest a taken name.
 
 ## Card moves say why
 

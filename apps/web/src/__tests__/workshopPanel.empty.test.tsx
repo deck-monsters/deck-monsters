@@ -29,6 +29,7 @@ const hookMock = vi.hoisted(() => ({
   deletePreset: vi.fn(),
   reviveMonster: vi.fn(),
   spawnMonster: vi.fn(),
+  suggestMonsterNames: vi.fn().mockResolvedValue({ names: [] }),
   sendMonsterToRing: vi.fn(),
   refresh: vi.fn(),
   roomName: 'Test Room',
@@ -76,11 +77,15 @@ describe('WorkshopPanel: no monsters yet (#113)', () => {
     render(<WorkshopPanel roomId="room-1" />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Train monster' }));
-    fireEvent.change(screen.getByLabelText('Type'), { target: { value: '2' } });
-    fireEvent.change(screen.getByLabelText('Pronouns'), { target: { value: 'female' } });
+    fireEvent.click(screen.getByRole('radio', { name: /Jinn/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+    fireEvent.click(screen.getByRole('radio', { name: 'she/her' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }));
     fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Saffron' } });
-    fireEvent.change(screen.getByLabelText('Appearance'), { target: { value: 'violet smoke' } });
-    fireEvent.submit(screen.getByRole('button', { name: 'Train' }).closest('form')!);
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'violet smoke' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Train Saffron' }));
 
     await waitFor(() => expect(hookMock.spawnMonster).toHaveBeenCalledWith({
       type: 2,
@@ -92,13 +97,17 @@ describe('WorkshopPanel: no monsters yet (#113)', () => {
     expect(screen.queryByLabelText('Name')).toBeNull();
   });
 
-  it('shows a spawn refusal in the alert and leaves the form available to correct', async () => {
+  it('shows a spawn refusal in the alert and returns the wizard to the Name step to correct', async () => {
     hookMock.spawnMonster.mockRejectedValue(new Error('That monster name is already taken.'));
     render(<WorkshopPanel roomId="room-1" />);
     fireEvent.click(screen.getByRole('button', { name: 'Train monster' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }));
     fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Res' } });
-    fireEvent.change(screen.getByLabelText('Appearance'), { target: { value: 'red' } });
-    fireEvent.submit(screen.getByRole('button', { name: 'Train' }).closest('form')!);
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'red' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Train Res' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent('That monster name is already taken.');
     expect(screen.getByLabelText('Name')).toHaveValue('Res');
@@ -107,7 +116,7 @@ describe('WorkshopPanel: no monsters yet (#113)', () => {
   it('uses the authoritative spawn catalog instead of a client-side monster list', () => {
     render(<WorkshopPanel roomId="room-1" />);
     fireEvent.click(screen.getByRole('button', { name: 'Train monster' }));
-    expect(screen.getByRole('option', { name: 'Jinn' })).toHaveValue('2');
+    expect(screen.getByRole('radio', { name: /Jinn/ })).toHaveAttribute('value', '2');
   });
 
   it('does not render the monster row at all when it would be empty', () => {

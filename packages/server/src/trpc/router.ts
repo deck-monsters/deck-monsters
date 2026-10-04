@@ -16,6 +16,8 @@ import {
 	allMonsters,
 	holdableByLevel,
 	monsterTypeSummary,
+	chooseName,
+	signatureCardType,
 	equipResultMessage,
 	getXpCapForLevel,
 	isCommandRefusal,
@@ -1237,9 +1239,38 @@ export function createRouter(roomManager: RoomManager, chat: ChatService = new C
 						label: String((Monster as unknown as { creatureType?: string }).creatureType ?? Monster.name),
 						// The same one-liner the Console prompt shows.
 						summary: monsterTypeSummary(Monster as unknown as { creatureType?: string }),
+						// The wizard's type card reads `Class: {class} · Signature card: {card}`.
+						class: String((Monster as unknown as { class?: string }).class ?? ''),
+						signatureCard: signatureCardType(Monster as unknown as { creatureType?: string }) ?? '',
 					})),
 					pronouns: PRONOUN_KEYS.map((key, i) => ({ key, label: PRONOUN_CHOICES[i] })),
 				};
+			}),
+
+		/*
+		 * Two clean name suggestions for the training wizard's Name step. The name lists
+		 * (`fantasy-names`) are Node-only, so the web asks here. Room-scoped like every game
+		 * query, and it skips names already taken in the room, the way the Console's
+		 * `askForName` does (roadmap 44 K4).
+		 */
+		suggestMonsterNames: protectedProcedure
+			.input(z.object({
+				roomId: z.string().uuid(),
+				type: z.number().int().nonnegative(),
+				gender: z.enum(['male', 'female', 'androgynous']),
+			}))
+			.query(async ({ input, ctx }) => {
+				await roomManager.assertMember(ctx.userId, input.roomId);
+				const Monster = allMonsters[input.type] as unknown as { creatureType?: string } | undefined;
+				if (!Monster) {
+					throw new TRPCError({ code: 'BAD_REQUEST', message: 'That monster type is not available.' });
+				}
+				const game = await roomManager.getGame(input.roomId);
+				const taken = Object.keys(game.getAllMonstersLookup?.() ?? {});
+				const type = String(Monster.creatureType ?? '');
+				const first = chooseName(type, input.gender, taken);
+				const second = chooseName(type, input.gender, [first, ...taken]);
+				return { names: [first, second] };
 			}),
 
 		/*

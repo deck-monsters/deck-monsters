@@ -1220,6 +1220,36 @@ describe('trpc/router monster lifecycle procedures', () => {
 			{ key: 'androgynous', label: 'they/them' },
 		]);
 		expect(options).not.to.have.property('genders');
+		// The wizard's type card: class and signature card per type.
+		expect(options.types.find((type) => type.label === 'Dragon')).to.include({ class: 'Wizard', signatureCard: 'Fire Breath' });
+		expect(options.types.every((type) => type.class.length > 0 && type.signatureCard.length > 0)).to.equal(true);
+	});
+
+	it('suggests two names for a type, skipping names taken in the room, and checks membership', async () => {
+		let assertedRoom: string | undefined;
+		const roomManager = {
+			assertMember: async (_userId: string, roomId: string) => { assertedRoom = roomId; },
+			getGame: async () => ({ getAllMonstersLookup: () => ({ rex: {} }) }),
+		} as unknown as Parameters<typeof createRouter>[0];
+		const caller = createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false });
+		const { names } = await caller.game.suggestMonsterNames({ roomId: ROOM_ID, type: 1, gender: 'male' });
+		expect(assertedRoom).to.equal(ROOM_ID);
+		expect(names).to.have.length(2);
+		expect(names[0]).not.to.equal(names[1]);
+		expect(names.every((name) => name.length > 0 && !/[()]/.test(name))).to.equal(true);
+	});
+
+	it('refuses name suggestions for a non-member and for an unknown type', async () => {
+		const denied = {
+			assertMember: async () => { throw new Error('Not a member'); },
+		} as unknown as Parameters<typeof createRouter>[0];
+		const deniedErr = await createRouter(denied).createCaller({ userId: USER_ID, serviceTokenValid: false })
+			.game.suggestMonsterNames({ roomId: ROOM_ID, type: 0, gender: 'male' }).catch((e: unknown) => e);
+		expect(deniedErr).to.be.instanceOf(Error);
+		const ok = { assertMember: async () => undefined } as unknown as Parameters<typeof createRouter>[0];
+		const unknownErr = await createRouter(ok).createCaller({ userId: USER_ID, serviceTokenValid: false })
+			.game.suggestMonsterNames({ roomId: ROOM_ID, type: 99, gender: 'male' }).catch((e: unknown) => e);
+		expect(unknownErr).to.have.property('code', 'BAD_REQUEST');
 	});
 
 	it('spawns a fully specified monster without an interactive prompt', async () => {

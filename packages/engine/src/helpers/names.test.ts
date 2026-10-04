@@ -25,4 +25,14 @@ describe('chooseName', () => {
 		for (let i = 0; i < 20; i++) taken.push(chooseName(TYPES.GLADIATOR, 'male', taken));
 		expect(new Set(taken).size).to.equal(taken.length);
 	});
+
+	// The Console passes lowercased keys of the monster lookup; an exact match never excluded "Rex".
+	it('treats taken names case-insensitively', () => {
+		const taken: string[] = [];
+		for (let i = 0; i < 20; i++) {
+			const name = chooseName(TYPES.GLADIATOR, 'male', taken.map(n => n.toLowerCase()));
+			expect(taken.map(n => n.toLowerCase())).to.not.include(name.toLowerCase());
+			taken.push(name);
+		}
+	});
 });
