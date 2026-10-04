@@ -5068,6 +5068,27 @@ Found by Cursor's new-player walk ([walk 2](../reference/new-player-walk-2.md)),
 
 **Status**: Fixed.
 
+### 216. The guide said "Summon a boss" beside a standing boss, and the header counted down to one — FIXED
+
+Found by Cursor's new-player walk ([walk 2](../reference/new-player-walk-2.md), #3 and #8), pass 43 I2.
+
+- **The guide.** The Console guide's "waiting" step only knew the player's monster was in the
+  ring. It never looked at who else was there, so it kept saying `Nobody else here? Summon a
+  boss.` while a boss stood beside it and the fight counted down. `useGuidedStart` now reads
+  the room's `ring.state` (only during that step) and says `Watch The Ring: a fight starts when
+  the countdown ends.`, or `{name} is fighting. Watch The Ring.` once the fight is on.
+- **The header.** The `boss in ~…` badge looked only at `nextBossSpawnAt`, so it counted down
+  to a boss while one was already in the ring. It now hides while the roster has a boss.
+- **The boss's record.** `BaseCreature.rankings` printed `Fights: 129 · Won: 103` for bosses,
+  which are rebuilt from shared templates, so a first opponent looked like a veteran. Bosses
+  now leave the record out.
+
+The same task reworded what a new player misread: the turn line, the revive line (1 HP, heals
+while resting), the boss arrival (`sent by the house`), and the strategy label (`{name}'s
+orders:`).
+
+**Status**: Fixed.
+
 ## Closed without a fix
 
 These were open investigations the owner closed on 2026-09-28. Reopen with new evidence.

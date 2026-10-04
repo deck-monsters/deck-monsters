@@ -8,7 +8,7 @@ tags: [roadmap, onboarding, web, console, shop, ux]
 ---
 # 43 — Small fixes from the new-player walk
 
-**Status:** In progress (2026-10-04), after #421 merged. I1 and I3 are done; I2 is with an implementer. Source:
+**Status:** In progress (2026-10-04), after #421 merged. I1, I2 and I3 are done; I4 is in its second review. Source:
 [new-player walk 2](../reference/new-player-walk-2.md), triaged in
 [42 G](42-next-proposals.md#g-what-cursors-walk-found-and-where-it-goes). Numbers in brackets
 are the report's ten moments (#) or its "Everything else" table.
@@ -38,9 +38,9 @@ Made by the orchestrator:
 | # | Task | Area | Can run beside | Status | Commit |
 |---|---|---|---|---|---|
 | I1 | **Workshop and layout.** The move-many summary says `Moved 1 cards` (`server/src/trpc/router.ts`, move-many announcement): give it a singular. The first-deck and first-move notes (`GuidedStartBox.tsx`) say to tap an empty slot first; the control needs a card selected first. On a phone, a second monster sits off the right edge with two dots as the only hint [#2]: stack the monster cards, or show a clear "1 of 2" with arrows. Leaders at 390 hides its right-hand columns. The long room name wraps to three lines (42 E5) | Web, server | I3 | Done. Review: the web toast had the same "1 cards"; the brand could wrap beside a long name; the left Leaders fade hid behind the sticky columns (dropped). Bug 215. Needs a live look at 390 | 7710dbe2, 06dc2d27 |
-| I2 | **The guide, revive and bosses.** The guide drops "Nobody else here? Summon a boss." once a second monster or a boss is in the ring [#3]. `It's {name}'s turn` explains that the card is played for you. The revive line says the HP the monster returns with and that it heals while resting [#5]. Bosses: the arrival line names the house so it reads as the game, not a player; the header doesn't count down to a boss while one is standing; the summons badge says a timer boss doesn't use a summon; a monster card labels its strategy as that monster's orders, so "you" reads as the monster [#8]. A boss card leaves out its `Fights: 129` record | Engine, web | I3 (after I1: both edit `GuidedStartBox.tsx`) | In progress | |
+| I2 | **The guide, revive and bosses.** The guide drops "Nobody else here? Summon a boss." once a second monster or a boss is in the ring [#3]. `It's {name}'s turn` explains that the card is played for you. The revive line says the HP the monster returns with and that it heals while resting [#5]. Bosses: the arrival line names the house so it reads as the game, not a player; the header doesn't count down to a boss while one is standing; the summons badge says a timer boss doesn't use a summon; a monster card labels its strategy as that monster's orders, so "you" reads as the monster [#8]. A boss card leaves out its `Fights: 129` record | Engine, web | I3 (after I1: both edit `GuidedStartBox.tsx`) | Done. Review: the turn line paired the player's name with the monster's pronoun (now "It's Ada's turn. Rex plays the next card in his deck."); the guide's ring poll ran forever (now only while waiting); a live fight gets `{name} is fighting. Watch The Ring.`; the handbook's glossary says Orders. Bug 216 | cf5b3340, 4e97663b |
 | I3 | **Shop and items, and 30 starting coins.** The shop's pick button says buy, not `Equip cards` [#6]. The confirm and the receipt name the items. The Sorting Hat's `Are you sure?` says what happens. `give` after an item is used up says so. `look at items` with none says you have none and where to get some. New characters start with 30 coins; the handbook says so | Engine, web, build | I1, I2 | Done. The Buy button keys off the shop question's "items to buy" (documented in the prompt-answer contract) rather than a new prompt field. Review: copies group as `Bandage ×2`; tests for cards-only receipts and the Back Room. A Back Room card still says "items" (left for pass C) | 932b5aa4, 90bcf8d3 |
-| I4 | **Questions that are over leave the input.** An answered, cancelled or timed-out question stops taking the next Enter (`Prompt is no longer active`), and its buttons stop looking live [#9] | Web, server prompts | — (after I1–I3) | Planned | |
+| I4 | **Questions that are over leave the input.** An answered, cancelled or timed-out question stops taking the next Enter (`Prompt is no longer active`), and its buttons stop looking live [#9] | Web, server prompts | — (after I1–I3) | In review (second round) | |
 | I5 | **Fights list, docs and close-out.** The Fights row's `Card: Soften` says it is the card found after the fight, and the row opens its play-by-play (or stops promising one). Help inventory, handbook, 10b for the bug, roadmap README; fold the decisions into area docs and move this plan to the archive | Web, docs | — (last) | Planned | |
 
 Each task gets an independent read-only review before it lands. I1 and I4 get a live check
@@ -58,7 +58,8 @@ Implementers use these exactly. Anything else is a `DRAFT(43)` placeholder for C
 
 **I2**
 - Guide, once a fight is coming or on: `{name} is in the ring. Watch The Ring: a fight starts when the countdown ends.`
-- Turn line: `It's {name}'s turn. {name} plays the next card in {his} deck.`
+- Turn line: `It's {player}'s turn. {monster} plays the next card in {his} deck.` (for a boss, both are the boss's name).
+- Guide during a fight: `{name} is fighting. Watch The Ring.`
 - Revive, beginner: `{name} has begun to revive. {He} {is|are} a beginner monster, so {he} {comes|come} back right away, with 1 HP. Monsters heal a little at a time while they rest.`
 - Revive, above beginner: the same, with `in about {time}` in place of `right away`.
 - Boss arrival: `A{adjective} {type} enters the ring, sent by the house ({RING_PATRON}).`
