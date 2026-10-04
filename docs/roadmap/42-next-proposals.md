@@ -100,16 +100,15 @@ same as the claim.
 - **Horn** (new): "Topsell swears her horn is bright ivory. In the ring's light it looks
   ringed and black."
 
-`witnessed`, the new shape, takes most draws. The `commoner` shape stays, because it already
+The new shape (built as `seen`) takes most draws. The `commoner` shape stays, because it already
 lands. `liar` and `saith` go, since both are the bland "two names argue" pattern the owner
 means. The anhorn line, 1 in 20, stays. The orchestrator writes the final lines, a pool of 3
 to 4 actions for each detail. They follow the voice guide's rule that verbs agree with the
 pronoun (`agree()`).
 
-**Saved Unicorns:** the shape and its values are stored on the monster. A Unicorn that already
-has `liar` or `saith` is moved to `witnessed` on load. The contradicting value is picked
-from its stored id, the same way `doubter` is today, so its description is the same every
-time it is looked at.
+**Saved Unicorns:** as built, see the Done note at the top of this section. A saved `liar` or
+`saith` reads as `seen` (nothing is rewritten), and the contradicting value comes from a stored
+`sightingRoll`, with roll 0 for a save that has none.
 
 **Size:** one small engine task with tests, plus the strings-inventory regeneration.
 
