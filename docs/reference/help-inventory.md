@@ -161,7 +161,7 @@ fight. Nothing in the first-run guide defined these.
 | Bloodied | `Pip is now bloodied. Pip has only 11HP.` | "Bloodied" is not defined. The hp number is |
 | Delayed Hit answering Delayed Hit | `Niruth Champion Of The Black's fourth Delayed Hit finds this moment too: he answers the same Delayed Hit from Pip.` | A player can follow the sentence. Nothing earlier said a Delayed Hit waits |
 | Stat block | `Class: Barbarian`, `Level: beginner`, `XP: 0`, `ac`, `hp`, `dex`, `str`, `int`, and lines like `-1 dex penalty` `+2 str bonus` | No glossary. Workshop had already said `Lvl 0` and `XP 0/28` for the same monster |
-| Strategy | `Strategy: Target whichever opponent currently has the highest hp.` The boss card also showed `Fights: 102 · Won: 45` | The strategy line is the only targeting help. A boss in a brand-new room already had 102 fights |
+| Strategy | `Strategy: Target whichever opponent currently has the highest hp.` The boss card also showed `Fights: 102 · Won: 45` | The strategy line is the only targeting help. A boss in a brand-new room already had 102 fights. *Pass 43 (2026-10-04): the label reads `{name}'s orders:`, and a boss card leaves out its record.* |
 | Teams | The command reference says `leave team` and mentions a Sorting Hat. The shop hat's paragraph talks about teammates | No team was joined, so the ring never showed one |
 | Items, holds, ambushes, revival, death | Not on screen | The shop and the command list name items and `revive`. The fight never reached them |
 

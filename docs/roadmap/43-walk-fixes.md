@@ -44,7 +44,8 @@ Made by the orchestrator:
 | I5 | **Fights list, docs and close-out.** The Fights row's `Card: Soften` says it is the card found after the fight, and the row opens its play-by-play (or stops promising one). Help inventory, handbook, 10b for the bug, roadmap README; fold the decisions into area docs and move this plan to the archive | Web, docs | — (last) | In progress | |
 
 Each task gets an independent read-only review before it lands. I1 and I4 get a live check
-at 390 and 1440 (Cursor), since they are layout and timing.
+at 390 and 1440 (Cursor), since they are layout and timing: the checklist is
+[43a](43a-cursor-walk-fixes-check.md), run after the deploy.
 
 ## The text (orchestrator)
 
