@@ -132,6 +132,13 @@ otherwise re-prompt on the silent channel. It supplies every answer the engine c
 name, class index, persisted pronoun key, and avatar. If training later fails, the created
 character remains intentionally.
 
+New characters start with 30 coins (`STARTING_COINS`, `characters/helpers/create.ts`). It is
+set in `createCharacter` only, never on hydrate: `creatures/base.ts` still defaults a missing
+`coins` to 0, so saved characters keep what they have. Boss and harness characters are built
+in `characters/helpers/random.ts`, not `createCharacter`, so they get none and sims are
+unaffected. An owner room reset re-creates characters with 30 each; that is fine because the
+reset wipes everything else.
+
 The Console path asks the same question the form does. `Game.getCharacter({ askName })`
 (set by `commands/index.ts`, not for admin aliases) hands the display name to
 `createCharacter` as `suggestedName` instead of `name`, so a new player is asked, before

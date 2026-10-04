@@ -286,6 +286,77 @@ describe('./items/store/buy.ts', () => {
 		expect(channelStub.calledWith({ announce: 'Ada has 5 coins.' })).to.equal(true);
 	});
 
+	const makeBuyer = () => ({
+		givenName: 'Ada',
+		pronouns: { he: 'she', him: 'her', his: 'her' },
+		coins: 1000,
+		cards: [] as any[],
+		items: [] as any[],
+		addCard: sinon.stub(),
+		addItem: sinon.stub()
+	});
+
+	// Answers by prompt content, so the test does not depend on how many announces sit between.
+	const answerBy = (menu: string, pick: string) => {
+		channelStub.callsFake(async (msg: any = {}) => {
+			if (!msg.question) return undefined;
+			if (msg.question.includes('Which would you like to see')) return menu;
+			if (msg.question.includes('items to buy')) return pick;
+			return 'yes';
+		});
+	};
+
+	it('groups copies in the confirm and receipt: "Bandage ×2 and Potion"', async () => {
+		const shop: Shop = {
+			...defaultShop,
+			priceOffset: 1,
+			items: [
+				{ name: 'Bandage', itemType: 'Bandage', cost: 1 },
+				{ name: 'Bandage', itemType: 'Bandage', cost: 1 },
+				{ name: 'Potion', itemType: 'Potion', cost: 1 }
+			]
+		};
+		answerBy('0', 'Bandage, Bandage, Potion');
+
+		await buyItems({ character: makeBuyer(), channel: channelStub, host: makeHost(shop) });
+
+		const questions = channelStub.getCalls().map(call => call.args[0]?.question).filter(Boolean);
+		expect(questions.some((q: string) => q.startsWith('Bandage ×2 and Potion from Gorgons and Gremlins for 6 coins. Buy them? (yes/no)'))).to.equal(true);
+		expect(channelStub.calledWith({
+			announce: 'Sold: Bandage ×2 and Potion. Ada has 994 coins left. Use an item with use, or give it to a monster with give.'
+		})).to.equal(true);
+	});
+
+	it('asks "Buy them?" for two copies of one item', async () => {
+		const shop: Shop = {
+			...defaultShop,
+			priceOffset: 1,
+			items: [
+				{ name: 'Bandage', itemType: 'Bandage', cost: 1 },
+				{ name: 'Bandage', itemType: 'Bandage', cost: 1 }
+			]
+		};
+		answerBy('0', 'Bandage, Bandage');
+
+		await buyItems({ character: makeBuyer(), channel: channelStub, host: makeHost(shop) });
+
+		const questions = channelStub.getCalls().map(call => call.args[0]?.question).filter(Boolean);
+		expect(questions.some((q: string) => q.startsWith('Bandage ×2 from Gorgons and Gremlins for 4 coins. Buy them? (yes/no)'))).to.equal(true);
+	});
+
+	it('carries the buy marker in the Back Room pick prompt, and a cards-only receipt omits the item hint', async () => {
+		const card = { name: 'Hit', cardType: 'Hit', cost: 1 };
+		const shop: Shop = { ...defaultShop, backRoomOffset: 1, backRoom: [card] };
+		answerBy('2', 'Hit');
+
+		await buyItems({ character: makeBuyer(), channel: channelStub, host: makeHost(shop) });
+
+		const questions = channelStub.getCalls().map(call => call.args[0]?.question).filter(Boolean);
+		expect(questions.some((q: string) => q.startsWith('Choose one or more of the following items to buy:'))).to.equal(true);
+		const receipt = channelStub.getCalls().map(call => call.args[0]?.announce).find((a: string) => a?.startsWith('Sold:'));
+		expect(receipt).to.equal('Sold: Hit. Ada has 999 coins left.');
+	});
+
 	// Regression test for the shop menu off-by-one: the menu text and the web client both
 	// use 0-based indices ("0) Items"), but the dispatch used to compare against the
 	// 1-based literal `1`, so answering with the index for "Items" fell through to the

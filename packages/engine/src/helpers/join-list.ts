@@ -9,3 +9,15 @@ const joinList = (names: string[]): string => {
 
 export { joinList };
 export default joinList;
+
+/**
+ * Like `joinList`, but a name that appears more than once is grouped as "Name ×n" (in order of
+ * first appearance), so two Bandages read "Bandage ×2" rather than "Bandage and Bandage".
+ */
+const joinGrouped = (names: string[]): string => {
+	const counts = new Map<string, number>();
+	names.forEach(name => counts.set(name, (counts.get(name) ?? 0) + 1));
+	return joinList([...counts].map(([name, n]) => (n > 1 ? `${name} ×${n}` : name)));
+};
+
+export { joinGrouped };

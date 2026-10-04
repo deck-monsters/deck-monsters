@@ -3,7 +3,7 @@ import getClosingTime from './closing-time.js';
 import { announceAndThrow } from '../../helpers/announce-and-throw.js';
 import { getChoices, getFinalItemChoices, resolveChoiceIndex } from '../../helpers/choices.js';
 import type { ShopHost } from './shop.js';
-import { joinList } from '../../helpers/join-list.js';
+import { joinGrouped } from '../../helpers/join-list.js';
 import { getItemKey } from '../helpers/counts.js';
 import { isSortingHat, withSortingHat } from './stock.js';
 
@@ -132,7 +132,7 @@ That'll be ${value} coins, but by the looks of things I _highly_ doubt that's in
 
 			return channel({
 				question:
-`${joinList(choices.map(getItemKey))} from ${shop.name} for ${value} ${value === 1 ? 'coin' : 'coins'}. Buy ${choices.length === 1 ? 'it' : 'them'}? (yes/no)`
+`${joinGrouped(choices.map(getItemKey))} from ${shop.name} for ${value} ${value === 1 ? 'coin' : 'coins'}. Buy ${choices.length === 1 ? 'it' : 'them'}? (yes/no)`
 			})
 				.then((answer: string = '') => {
 					if (answer.toLowerCase() !== 'yes') {
@@ -227,7 +227,7 @@ That'll be ${value} coins, but by the looks of things I _highly_ doubt that's in
 					const coinsLeft = character.coins;
 					return Promise.resolve(soldOutNotice).then(() => channel({
 						announce:
-`Sold: ${joinList(purchased.map(getItemKey))}. ${character.givenName} has ${coinsLeft} ${coinsLeft === 1 ? 'coin' : 'coins'} left.${boughtItem ? ' Use an item with use, or give it to a monster with give.' : ''}`
+`Sold: ${joinGrouped(purchased.map(getItemKey))}. ${character.givenName} has ${coinsLeft} ${coinsLeft === 1 ? 'coin' : 'coins'} left.${boughtItem ? ' Use an item with use, or give it to a monster with give.' : ''}`
 					})).then(() => true);
 				})
 				.then((sold: unknown) => {
