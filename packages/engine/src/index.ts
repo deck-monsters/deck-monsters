@@ -103,6 +103,21 @@ export { allMonsters } from './monsters/index.js';
 export { MONSTER_TYPE_SUMMARIES, monsterTypeSummary } from './monsters/helpers/type-summaries.js';
 /** Roadmap 36's pinned-advantage rule and its harness switch. */
 export { PIN_RULES, isPinned } from './cards/helpers/pinned.js';
+/**
+ * Card roles, who can hold a card (with the reason), card facts and the per-level holdable
+ * list (roadmap 44): one source for the guide, the server's card query and the Console.
+ */
+export { CARD_ROLES, CARD_ROLE_BY_TYPE, CARD_ROLE_LABELS, roleOf } from './cards/helpers/roles.js';
+export type { CardRole } from './cards/helpers/roles.js';
+export { cardHoldVerdict } from './cards/helpers/hold-verdict.js';
+export type { CardHoldVerdict, HoldableCard, HoldingMonster } from './cards/helpers/hold-verdict.js';
+export { allCardFacts, cardFacts } from './cards/helpers/card-facts.js';
+export type { CardFacts } from './cards/helpers/card-facts.js';
+export { holdableByLevel } from './cards/helpers/holdable.js';
+export type { HoldableLevel } from './cards/helpers/holdable.js';
+/** The look question per creature type: Console wording, example and description preview. */
+export { LOOKS, lookEntry, lookPreview, lookQuestion, lookQuestionShort } from './monsters/helpers/looks.js';
+export type { LookEntry, LookPronouns } from './monsters/helpers/looks.js';
 /** Every item class the engine knows about, for lookup by `itemType` — mirrors `allMonsters`. */
 export { default as allItems } from './items/helpers/all.js';
 /**

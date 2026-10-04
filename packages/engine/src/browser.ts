@@ -23,3 +23,10 @@ export {
 	isCardRefusalReason,
 } from './characters/helpers/equip-message.js';
 export type { CardRefusalReason } from './characters/helpers/equip-message.js';
+// Browser-safe: strings and pure functions only (the card classes and name lists are Node-only,
+// so card facts and the per-level list stay in index.ts and reach the web through the server).
+export { CARD_ROLES, CARD_ROLE_LABELS, roleOf } from './cards/helpers/roles.js';
+export type { CardRole } from './cards/helpers/roles.js';
+export { cardHoldVerdict } from './cards/helpers/hold-verdict.js';
+export type { CardHoldVerdict } from './cards/helpers/hold-verdict.js';
+export { lookPreview, lookQuestion, lookQuestionShort } from './monsters/helpers/looks.js';

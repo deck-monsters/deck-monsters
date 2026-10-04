@@ -261,6 +261,8 @@ const mentionsElsewhere = (cardType: string, ownPath: string): Array<Template & 
 	allSources()
 		// constants/ holds effect-type identifiers such as "Gloaming Rest Effect", not prose.
 		.filter(file => file.path !== ownPath && !file.path.includes(`${join('src', 'constants')}`))
+		// roles.ts is a table keyed by every card's name: data, not a line that talks about the card.
+		.filter(file => !file.path.endsWith(join('cards', 'helpers', 'roles.ts')))
 		.flatMap(file => {
 			const ctx = { constants: moduleConstants(file.source) };
 			return extractTemplates(file.source, ctx, new Set())
