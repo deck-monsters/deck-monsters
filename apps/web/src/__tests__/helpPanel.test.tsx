@@ -64,6 +64,19 @@ describe('AppShell menu', () => {
     for (const link of links) expect(link).toHaveAttribute('href', '/room/room-1/help');
   });
 
+  it('has one Help item: the command list says Console commands, and the theme its name (bug 229)', () => {
+    render(
+      <MemoryRouter>
+        <AppShell roomId="room-1"><div /></AppShell>
+      </MemoryRouter>,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Open menu' }));
+    expect(screen.queryByText(/Help \/ Commands/)).toBeNull();
+    // The desktop ? and the phone menu item: both named Console commands.
+    expect(screen.getAllByRole('button', { name: 'Console commands' })).toHaveLength(2);
+    expect(screen.getByRole('button', { name: /^Theme: [A-Z]/ }).textContent).not.toContain('-');
+  });
+
   it('lists Chat with the surface description as its title, in the room only', () => {
     const { unmount } = render(
       <MemoryRouter>

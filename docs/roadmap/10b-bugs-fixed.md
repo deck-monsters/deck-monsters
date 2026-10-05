@@ -2306,7 +2306,7 @@ drops to 2-up in a very narrow pane.
 
 ---
 
-### 122. Nothing said a player had a second monster on a phone — FIXED (superseded by #215)
+### 122. Nothing said a player had a second monster on a phone — FIXED (see #215 and #224)
 
 **Root cause**: below 900px `.workshop-monster-row` becomes a scroll-snapped carousel, and
 the only indication that more monsters existed was the ~44px sliver of the next panel
@@ -5060,7 +5060,8 @@ Found by Cursor's new-player walk ([walk 2](../reference/new-player-walk-2.md)),
   (a scroll-snapped row) and added dots to show it. A new player still read the dots as
   decoration and never found the second monster. The carousel is gone: `.workshop-monster-row`
   is always the auto-fit grid, one column on a phone and side by side on a desktop, so every
-  monster is on the page. This supersedes #122's dots.
+  monster is on the page. This supersedes #122's dots. (Reversed by #224: the carousel is back,
+  with stronger cues.)
 - **Leaders and the header at 390.** Leaders' columns were in a scroll box with nothing to say
   it scrolled; a right-edge fade now shows there is more. A long room name wrapped to three
   lines in the fixed-height header, because the flex child had no `min-width: 0`; it now ends
@@ -5210,6 +5211,123 @@ roadmap 45 L1.
   new yes/no question must end with `(yes/no)`.
 - **The taken name twice.** The Workshop's error banner included the training mutation's
   error, which the wizard already shows at the step at fault. The banner no longer shows it.
+
+**Status**: Fixed.
+
+### 224. A stacked Workshop made many monsters a long scroll on a phone — FIXED
+
+Found by the owner on an iPhone after #215.
+
+**Root cause**: #215 answered "players miss the second monster" by dropping the phone
+carousel, so `.workshop-monster-row` stacked one monster per screen-height. With several
+monsters the deck, inventory and items were pages below the fold. The problem #215 saw was
+discoverability, not the carousel itself.
+
+Fix: the carousel is back below 900px (`@container workshop`), with three cues instead of
+#122's small dots alone:
+
+- **Larger dots.** 10px markers (were 8px) in 28 × 44px tap targets.
+- **A next arrow.** After the dots, a dot with a chevron, `Next monster`, scrolls to the next
+  panel and fades on the last one. It sits outside the dots' tablist, since it is not a tab.
+- **A peek on load.** The first time the row overflows on a page load, the panels slide
+  56px left and back, once. It moves the panels, not the row: the row is the scroll
+  container and its own clip, so translating it shows nothing, and scrolling it would fight
+  `scroll-snap-type: mandatory`. A tap on the row stops it; reduced motion turns it off.
+
+The carousel starts at the first monster when the room changes: React Router reuses the panel
+from `/room/A/workshop` to `/room/B/workshop`, which would carry room A's position over (Codex
+on #425).
+
+Tests: `workshopPanel.dots.test.tsx` (dots, arrow, peek, and the CSS guard that replaced
+`workshopPanel.monsterRow.test.ts`).
+
+**Status**: Fixed.
+
+### 225. "At level 3: Pound and Vengeful Rampage." confused more than it helped — FIXED
+
+Found by the owner.
+
+**Root cause**: roadmap 44 K3 put the next card unlocks under each monster's type as a bare
+line. With no word for what "at level 3" was measuring, how far off it was, or what else the
+level brought, it read as noise. Nothing else in the Workshop said what levelling up does.
+
+Fix: the line is gone, and the XP bar is a button ending `Lvl {n} ›` that opens
+`LevelUpSheet`: the XP still to go and where XP comes from, the stat gains (max HP, AC, STR,
+DEX, INT; a capped stat is left out), and the cards that level opens, or the next level that
+opens any. The server sends `nextLevel` from the engine's new `levelUpGains`, which reads
+`levelBonus` in `creatures/stats.ts`, the same formula max HP and AC use; its test compares it
+with a real monster's stats for every type and levels 0–20, so the sheet cannot promise
+numbers the stats do not deliver. The card sheet's shell became `DetailSheet`, shared by both.
+
+**Status**: Fixed.
+
+### 226. A new player's tap on an empty [+] slot did nothing, and the deck line sat apart from the slots — FIXED
+
+Found by the owner, playing as a new player.
+
+**Root cause**: an empty monster slot only did something when cards were already selected
+(the tap moved them there). The way to choose cards for a monster was to tap its name, which
+filters Your cards to what it can use and scrolls to them, and nothing says so. A new player
+taps the `[+]` instead, and nothing happened. Separately, `Deck 0/9 · needs 9 more to enter
+the ring` sat above the action buttons, a row away from the slots it counts.
+
+Fix: with nothing selected, a tap on an empty monster slot does what the name does: Your
+cards filter to that monster and scroll into view (`showCardsFor` in `WorkshopPanel.tsx`).
+It always turns the filter on, so a second tap does not hide the cards again. The slot's
+tooltip says `Empty slot. Tap to see cards for it`. The deck line moved to just above the
+slot grid, below the actions. Tests: `workshopPanel.emptySlot.test.tsx` and the header test.
+
+**Status**: Fixed.
+
+### 227. The card sheet listed every monster with "Only Unicorn can." — FIXED
+
+Found by the owner.
+
+**Root cause**: roadmap 44 K3's sheet gave a card in Your cards one verdict per monster when
+none was highlighted, and each type refusal repeated who could use the card. With six
+monsters that was six identical `can't use this. Only Unicorn can.` lines under a `Used by:
+Unicorn` line that already said it.
+
+Fix: `Used by:` reads `Usable by:`. The verdict shows only for the monster in view (the
+card's own monster, or the highlighted one), and reads `{name} can use this.`, `{name} can't
+use this.` or `{name} can't use this until level {n}.` (`verdictLine` in
+`apps/web/src/utils/cards.ts`).
+
+**Status**: Fixed.
+
+### 228. Tapping a card in Your cards jumped the page on an iPhone — FIXED
+
+Found by the owner on an iPhone (screenshots: scrolled to Coil, tapped it, and the view
+showed the top of Your cards instead).
+
+**Root cause**: selecting a card adds hint lines to every monster panel, which sit above Your
+cards: `Can use selected inventory card.` (or the refusal) and `Tap destination slot…`.
+Everything below moves down by that height. Chrome's scroll anchoring keeps the view on the
+tapped card; iOS Safari has no scroll anchoring, so the view stayed at the same offset and the
+card slid away, by a whole screen with six monsters stacked (#215's layout) and about 160px
+with the carousel.
+
+Fix: `apps/web/src/utils/keep-in-place.ts`. The Workshop records the button a click lands on
+and its position (a capture-phase click handler), and a layout effect on the selection scrolls
+the pane by however far that button moved, before the browser paints. Checked in Chromium with
+`overflow-anchor: none` (Safari's behaviour): the tapped card moved 160px before, 0 after.
+Tests: `keepInPlace.test.ts`.
+
+**Status**: Fixed.
+
+### 229. Two Help items in the ☰ menu, and mixed underlines and capitals — FIXED
+
+Found by the owner on an iPhone.
+
+**Root cause**: the menu had `Help and guides` (the guides page, roadmap 39) and `Help /
+Commands` (the Console's command reference, from before the guides existed), two items saying
+Help for different things. The theme item printed the theme's id (`Theme: street-fighter`).
+And the menu mixes `<Link class="btn">` and `<button class="btn">`; `.btn` never cleared the
+browser's link underline, so only the links were underlined.
+
+Fix: the command reference is `Console commands` in the menu, on the desktop `?` (title and
+accessible name), and as the panel's title. The theme item uses the theme's label up to its
+note (`Theme: Street Fighter`). `.btn` sets `text-decoration: none`. Test: `helpPanel.test.tsx`.
 
 **Status**: Fixed.
 

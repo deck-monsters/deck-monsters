@@ -79,10 +79,10 @@ describe('verdictLine', () => {
 	});
 
 	it('names who can when the type is wrong, even if the level is too low as well', () => {
-		expect(verdictLine(facts, { name: 'Mira', type: 'Jinn', monsterClass: 'Mage', level: 0 })).toBe("Mira can't use this. Only Minotaur can.");
+		expect(verdictLine(facts, { name: 'Mira', type: 'Jinn', monsterClass: 'Mage', level: 0 })).toBe("Mira can't use this.");
 	});
 
 	it('names the level when only the level is short', () => {
-		expect(verdictLine(facts, { name: 'Rex', type: 'Minotaur', level: 1 })).toBe('Rex can use this from level 2. Rex is level 1 now.');
+		expect(verdictLine(facts, { name: 'Rex', type: 'Minotaur', level: 1 })).toBe("Rex can't use this until level 2.");
 	});
 });

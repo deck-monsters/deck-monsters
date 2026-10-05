@@ -104,10 +104,14 @@ export function verdictFor(facts: CardFactsView, monster: VerdictMonster): CardH
   );
 }
 
-/** The plan's three verdict lines, for one monster. */
+/**
+ * Whether one monster can use a card, in one short line. The sheet's `Usable by:` line
+ * already names who can, so the type refusal does not repeat it (bug 227: with every
+ * monster listed, "Only Unicorn can." six times over read as a joke).
+ */
 export function verdictLine(facts: CardFactsView, monster: VerdictMonster): string {
   const verdict = verdictFor(facts, monster);
   if (verdict.ok) return `${monster.name} can use this.`;
-  if (verdict.reason === 'type') return `${monster.name} can't use this. Only ${joinList(verdict.allowed)} can.`;
-  return `${monster.name} can use this from level ${verdict.level}. ${monster.name} is level ${monster.level} now.`;
+  if (verdict.reason === 'type') return `${monster.name} can't use this.`;
+  return `${monster.name} can't use this until level ${verdict.level}.`;
 }

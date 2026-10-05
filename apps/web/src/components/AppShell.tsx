@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth-context.js';
-import { useTheme } from '../hooks/useTheme.js';
+import { THEMES, useTheme } from '../hooks/useTheme.js';
 import { useCommandInsert } from '../lib/command-insert-context.js';
 import { surfaceDescription } from './surface-descriptions.js';
 import CommandReference from './CommandReference.js';
@@ -17,6 +17,8 @@ export default function AppShell({ children, roomName, roomId }: AppShellProps) 
   const { theme, setTheme, validThemes } = useTheme();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
+  // The menu shows a theme's name, not its id ("Street Fighter", not "street-fighter").
+  const themeName = (THEMES.find((entry) => entry.id === theme)?.label ?? theme).replace(/ \(.*\)$/, '');
   const THEME_ICON: Record<string, string> = { phosphor: '🟢', amber: '🟡', ember: '🔴', 'street-fighter': '🕹️' };
   const nextTheme = validThemes[(validThemes.indexOf(theme) + 1) % validThemes.length];
   const [refOpen, setRefOpen] = useState(false);
@@ -115,8 +117,8 @@ export default function AppShell({ children, roomName, roomId }: AppShellProps) 
             className="btn"
             style={{ fontSize: '0.8rem' }}
             onClick={() => setRefOpen(v => !v)}
-            title="Command reference"
-            aria-label="Open command reference"
+            title="Console commands: every command you can type in the Console"
+            aria-label="Console commands"
             aria-expanded={refOpen}
           >
             ?
@@ -259,16 +261,20 @@ export default function AppShell({ children, roomName, roomId }: AppShellProps) 
               Help and guides
             </Link>
             <Link to="/account" className="btn" onClick={() => setMenuOpen(false)}>Account</Link>
+            {/*
+              Was "Help / Commands", beside "Help and guides": two items saying Help, for two
+              different things (bug 229). This one is the Console's command list, so it says so.
+              No aria-label: the visible words are the accessible name, for voice control.
+            */}
             <button
               title="Every command you can type in the Console"
               className="btn"
               onClick={() => { setRefOpen(true); setMenuOpen(false); }}
-              aria-label="Open command reference"
             >
-              Help / Commands
+              Console commands
             </button>
             <button title="Change the theme" className="btn" onClick={() => { setTheme(nextTheme); setMenuOpen(false); }}>
-              Theme: {theme}
+              Theme: {themeName}
             </button>
             {user && (
               <button title="Sign out on this device" className="btn" onClick={() => { void handleSignOut(); setMenuOpen(false); }}>

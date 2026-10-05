@@ -119,7 +119,12 @@ button {
   touch-action: manipulation; /* removes 300ms tap delay on mobile */
 }
 
+/*
+  No underline: a `.btn` link (Fights, Account) and a `.btn` button (Theme, Sign out) sit side
+  by side in the ☰ menu, and only the links were underlined (bug 229).
+*/
 .btn {
+  text-decoration: none;
   background: transparent;
   border: 1px solid var(--color-border);
   color: var(--color-fg);
@@ -311,6 +316,110 @@ button {
   gap: 0.85rem;
 }
 
+/*
+  Carousel navigation: the dots and the next arrow. Hidden by default because at wide
+  container widths the monster row is a grid where every panel is already visible — there
+  is nothing to page through. The `@container` rule below turns it on alongside the rule
+  that makes the row scroll.
+*/
+.workshop-monster-nav {
+  display: none;
+  justify-content: center;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.workshop-monster-dots {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/*
+  The button is the tap target and draws nothing; the marker is the pseudo-element. Sizing
+  the button itself does not work — a border drawn for the marker would wrap the whole tap
+  target, which rendered the dots as tall vertical bars (10b #122). The marker went from 8px
+  to 10px in #224: at 8px on a phone the dots were easy to miss (new-player walk 2 #2).
+*/
+.workshop-monster-dot,
+.workshop-monster-next {
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 0;
+  min-width: 28px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.workshop-monster-dot::before {
+  content: '';
+  width: 10px;
+  height: 10px;
+  box-sizing: border-box;
+  border: 1px solid var(--color-accent);
+}
+
+.workshop-monster-dot.active::before {
+  background: var(--color-accent);
+}
+
+/*
+  The "next" arrow sits at the end of the dots, drawn as a dot with a chevron in it, so the
+  row reads as "there is more this way" and not only "you are here". Faded, not hidden, on
+  the last monster so the row does not jump as you page.
+*/
+.workshop-monster-next {
+  min-width: 32px;
+  color: var(--color-accent);
+}
+
+.workshop-monster-next-mark {
+  width: 16px;
+  height: 16px;
+  box-sizing: border-box;
+  border: 1px solid var(--color-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.workshop-monster-next[aria-disabled='true'] {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.workshop-monster-dot:focus-visible,
+.workshop-monster-next:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -8px;
+}
+
+/*
+  Peek on load (#224): the panels slide left once, about half a panel's sliver, and back, so
+  the next monster shows itself before the player has to guess. It moves the panels, not the
+  row: the row is the scroll container and its own clip box, so translating it reveals
+  nothing, and scrolling it would fight `scroll-snap-type: mandatory`. The class is only set
+  where the row actually overflows, and reduced motion turns it off below.
+*/
+@keyframes workshop-monster-peek {
+  0% { transform: translateX(0); }
+  40% { transform: translateX(-56px); }
+  70% { transform: translateX(-56px); }
+  100% { transform: translateX(0); }
+}
+
+.workshop-monster-row.peek > .workshop-monster-panel {
+  animation: workshop-monster-peek 1100ms ease-in-out 600ms 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .workshop-monster-row.peek > .workshop-monster-panel { animation: none; }
+}
+
 .workshop-monster-panel {
   border: 1px solid var(--color-border);
   padding: 0.75rem;
@@ -449,20 +558,46 @@ button {
   repeats the level (`Lvl {n}`); that moved to the type line once HP took over as the
   header's primary at-a-glance number.
 */
+/*
+  A button since bug 225 (it opens the level-up details), so the button chrome is reset and
+  it fills the panel's width like the HP meter above it. The min-height is the tap target.
+*/
 .workshop-xp-meter {
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 32px;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
   display: flex;
   align-items: center;
   gap: 0.35rem;
   margin-top: 0.35rem;
 }
 
-.workshop-xp-meter > span {
+.workshop-xp-meter:focus-visible {
+  outline: 1px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.workshop-xp-next {
+  font-size: 0.62rem;
+  color: var(--color-accent);
+  white-space: nowrap;
+}
+
+.workshop-xp-meter > span:first-child {
   font-size: 0.62rem;
   color: var(--color-fg-dim);
   white-space: nowrap;
 }
 
 .workshop-xp-meter-track {
+  display: block;
   flex: 1;
   min-width: 2rem;
   height: 6px;
@@ -470,16 +605,17 @@ button {
   background: var(--color-bg);
 }
 
-.workshop-xp-meter-track > div {
+.workshop-xp-meter-track > span {
+  display: block;
   background: var(--color-success);
   height: 100%;
 }
 
 /*
   Deck size as text, no bar — same rationale as the hp meter's comment above: a
-  near-always-full bar is not information. Sits directly above the action buttons rather
-  than sharing their row, so "Send to ring" / "Revive" / unequip-all don't get squeezed at
-  a 375px phone width (see the two attached header screenshots this replaced).
+  near-always-full bar is not information. Sits directly above the card slots it counts
+  (bug 226), not in the actions row, so "Send to ring" / "Revive" / unequip-all don't get
+  squeezed at a 375px phone width.
 */
 .workshop-deck-status {
   display: flex;
@@ -609,12 +745,6 @@ button {
 }
 
 /* "At level N: ..." under the monster's type line. */
-.workshop-next-cards {
-  margin: 0.15rem 0 0;
-  font-size: 0.72rem;
-  color: var(--color-fg-dim);
-}
-
 /* The cell holds the slot button and, beside it, the details button (never nested). */
 .workshop-card-cell {
   position: relative;
@@ -1061,12 +1191,30 @@ button {
 
 @container workshop (max-width: 900px) {
   /*
-    The monster row used to become a scroll-snapped carousel here, with dots as the only
-    hint that a second monster existed. On a 390px phone the second monster sat off the right
-    edge and players never found it (new-player walk 2, pass 43 I1). The row is now always
-    the auto-fit grid above: one column on a phone, so every monster is on screen by scrolling
-    down like the rest of the page, and two side by side when there is room.
+    The row becomes a scroll-snapped carousel: one panel and a sliver of the next. Pass 43 I1
+    stacked it instead, after walk 2 found players missing the second monster, but with many
+    monsters that made the Workshop a long scroll. #224 brought the carousel back with larger
+    dots, a next arrow and a one-time peek, which answer the discoverability problem directly.
   */
+  .workshop-monster-row {
+    display: flex;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scroll-snap-type: inline mandatory;
+    padding-bottom: 0.35rem;
+    /* The panels' offsetLeft is measured from here, which the dots' scroll handler needs. */
+    position: relative;
+  }
+
+  .workshop-monster-panel {
+    flex: 0 0 min(82cqw, 32rem);
+    min-width: 0;
+    scroll-snap-align: start;
+  }
+
+  /* On only where the row actually scrolls. */
+  .workshop-monster-nav { display: flex; }
+
   .workshop-card-grid { grid-template-columns: repeat(auto-fill, minmax(68px, 1fr)); }
 }
 
@@ -1120,6 +1268,7 @@ button {
     are ~85px against the inventory's ~112px. See 10b-bugs-fixed.md #121.
   */
   .workshop-card-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .workshop-monster-panel { flex-basis: min(88cqw, 25rem); }
   .workshop-header-actions .btn,
   .workshop-inline-btn,
   .workshop-panel-actions .btn { min-height: 44px; }

@@ -267,8 +267,11 @@ One source answers both, for the guide, the Workshop and the Console (roadmap 44
   can) or the level (with the level needed). The wrong kind wins when both fail. A test checks
   it against `canHold` for every card, type and level 0–5.
 - `holdableByLevel(type or monster)` lists what a type can hold, by the level each card
-  opens. The guide's per-type tables, the Workshop's `At level {n}: …` line and `look at cards
-  for [monster]` all use it.
+  opens. The guide's per-type tables, the Workshop's level-up details (from the XP bar) and
+  `look at cards for [monster]` all use it.
+- `levelUpGains(type, level)` (`monsters/helpers/level-up.ts`) is what the next level changes,
+  from `levelBonus` in `creatures/stats.ts`, the formula max HP and AC use. Its test checks
+  it against a real monster's stats for every type and levels 0–20.
 - `cardFacts(card)` / `allCardFacts()` (`cards/helpers/card-facts.ts`) give a card's name,
   role, text, stats, level, who can use it, rarity, price and signature type. The server's
   `game.cardFacts` query serves them to the Workshop's card sheet. The name is the stable

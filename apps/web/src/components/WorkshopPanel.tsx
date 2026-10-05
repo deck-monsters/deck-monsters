@@ -1,5 +1,6 @@
-import { useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { movedToMessage } from '../utils/moved-message.js';
+import { anchorFor, restoreAnchor, type ScrollAnchor } from '../utils/keep-in-place.js';
 import { surfaceDescription } from './surface-descriptions.js';
 import InventoryPanel from './InventoryPanel.js';
 import ItemsPanel from './ItemsPanel.js';
@@ -27,10 +28,23 @@ export type WorkshopPanelProps = {
   headerActions?: ReactNode;
 };
 
+// The carousel peek plays once per page load (see the effect in WorkshopPanel).
+let peekShown = false;
+
+/** Test hook: lets each test start as a fresh page load. */
+export function resetWorkshopPeekForTests() {
+  peekShown = false;
+}
+
 export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelProps) {
   const [selectedCards, setSelectedCards] = useState<SelectionState[]>([]);
   const [activeMonsterFilter, setActiveMonsterFilter] = useState<string | null>(null);
   const inventoryRef = useRef<HTMLDivElement>(null);
+  const monsterRowRef = useRef<HTMLDivElement>(null);
+  const [visibleMonsterIndex, setVisibleMonsterIndex] = useState(0);
+  const [peeking, setPeeking] = useState(false);
+  // The control the last click landed on, so a selection change cannot jump the page (bug 228).
+  const scrollAnchorRef = useRef<ScrollAnchor | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showSpawn, setShowSpawn] = useState(false);
@@ -509,8 +523,12 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
   }
 
   function handleToggleMonsterFilter(monsterName: string) {
+    showCardsFor(activeMonsterFilter === monsterName ? null : monsterName);
+  }
+
+  /** Filter Your cards to what this monster can use and bring them into view; null clears. */
+  function showCardsFor(next: string | null) {
     setSelectedCards([]);
-    const next = activeMonsterFilter === monsterName ? null : monsterName;
     setActiveMonsterFilter(next);
 
     // Tapping a monster filters the *inventory*, which sits below the monster row and is
@@ -530,7 +548,15 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
   }
 
   async function handleSlotClick(target: WorkshopCardLocation) {
-    if (selectedCards.length < 1 || !roomId || consoleFlowActive) return;
+    if (!roomId || consoleFlowActive) return;
+    if (selectedCards.length < 1) {
+      // An empty monster slot with nothing selected: a new player taps its [+] expecting to
+      // add a card there, and the tap did nothing. It now does what tapping the monster's
+      // name does: show the cards this monster can use (bug 226). Always on, never a toggle,
+      // so a second tap on [+] does not hide them again.
+      if (target.kind === 'monster') showCardsFor(target.monsterName);
+      return;
+    }
     const firstSource = selectedCards[0]?.location;
     if (firstSource && isSameSource(firstSource, target)) {
       setMessage('Selection unchanged. Tap cards to add/remove, then tap another zone to move.');
@@ -598,8 +624,93 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
     }
   }
 
+  /*
+    Below 900px the monster row becomes a scroll-snapped carousel, so a player with more
+    than one monster sees one panel and a sliver of the next. The sliver alone read as a
+    rendering fault, so the dots say how many monsters there are and which one you are on,
+    and the next arrow and the peek say there is more to the right (10b #122, #224).
+    See docs/architecture/web-workspace.md.
+  */
+  const handleMonsterRowScroll = useCallback(() => {
+    const row = monsterRowRef.current;
+    if (!row) return;
+    // Nearest panel to the row's left edge, which is where scroll-snap parks them.
+    let nearest = 0;
+    let best = Infinity;
+    for (const [index, panel] of [...row.children].entries()) {
+      const distance = Math.abs((panel as HTMLElement).offsetLeft - row.scrollLeft - row.clientLeft);
+      if (distance < best) {
+        best = distance;
+        nearest = index;
+      }
+    }
+    setVisibleMonsterIndex(nearest);
+  }, []);
+
+  const scrollToMonster = useCallback((index: number) => {
+    const panel = monsterRowRef.current?.children[index] as HTMLElement | undefined;
+    if (!panel) return;
+    const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    panel.scrollIntoView({
+      behavior: reduceMotion ? 'auto' : 'smooth',
+      inline: 'start',
+      block: 'nearest',
+    });
+  }, []);
+
+  /*
+    Peek once per page load, the first time the row has a monster off to the right. Only when
+    the row actually overflows: on a wide screen it is a grid with every panel visible, and
+    moving them would be noise. Once per load, not per visit to the Workshop, so switching
+    tabs does not replay it.
+  */
+  const monsterCount = monsters.length;
+  useEffect(() => {
+    if (peekShown || monsterCount < 2) return;
+    const row = monsterRowRef.current;
+    if (!row) return;
+    const tryPeek = () => {
+      if (peekShown || row.scrollWidth <= row.clientWidth) return false;
+      peekShown = true;
+      setPeeking(true);
+      return true;
+    };
+    if (tryPeek() || typeof ResizeObserver === 'undefined') return;
+    // A Workshop in a hidden pane has no layout yet (both widths 0), so try again once it
+    // gets a size rather than never peeking.
+    const observer = new ResizeObserver(() => {
+      if (tryPeek()) observer.disconnect();
+    });
+    observer.observe(row);
+    return () => observer.disconnect();
+  }, [monsterCount]);
+
+  // React Router reuses this panel from /room/A/workshop to /room/B/workshop, so the index and
+  // the row's sideways scroll would carry another room's position over: start at the first.
+  useEffect(() => {
+    setVisibleMonsterIndex(0);
+    if (monsterRowRef.current) monsterRowRef.current.scrollLeft = 0;
+  }, [roomId]);
+
+  // The dots are keyed by name, so removing a monster can leave the index past the end with
+  // no scroll event to correct it.
+  const activeMonsterIndex = Math.min(visibleMonsterIndex, Math.max(0, monsters.length - 1));
+  const atLastMonster = activeMonsterIndex >= monsters.length - 1;
+
+  // Selecting or moving cards adds or removes hint lines in every monster panel, above Your
+  // cards. Put the tapped card back under the finger before the browser paints.
+  useLayoutEffect(() => {
+    restoreAnchor(scrollAnchorRef.current);
+    scrollAnchorRef.current = null;
+  }, [selectedCards]);
+
   return (
-    <div className="workshop-view">
+    <div
+      className="workshop-view"
+      onClickCapture={(event) => {
+        scrollAnchorRef.current = anchorFor(event.target);
+      }}
+    >
       <div className="workshop-header">
         <div>
           <h1>Workshop</h1>
@@ -686,7 +797,17 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
           </p>
         </div>
       ) : (
-      <div className="workshop-monster-row">
+      <div
+        className={`workshop-monster-row${peeking ? ' peek' : ''}`}
+        ref={monsterRowRef}
+        onScroll={handleMonsterRowScroll}
+        // A player who grabs the row mid-peek gets it back at once rather than fighting the slide.
+        onPointerDown={() => setPeeking(false)}
+        // animationend bubbles, so only the peek's own end clears it.
+        onAnimationEnd={(event) => {
+          if (event.animationName === 'workshop-monster-peek') setPeeking(false);
+        }}
+      >
         {monsters.map((monster) => {
           // Once per monster per render: the reason, then the sentence built from it.
           const reason = selectedInventoryCardName ? refusalFor(selectedInventoryCardName, monster) : null;
@@ -743,6 +864,44 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
       </div>
       )}
 
+      {monsters.length > 1 && (
+        <div className="workshop-monster-nav">
+          <div className="workshop-monster-dots" role="tablist" aria-label="Monsters">
+            {monsters.map((monster, index) => (
+              <button
+                title={`Show ${monster.name}`}
+                key={monster.name}
+                type="button"
+                role="tab"
+                className={`workshop-monster-dot${index === activeMonsterIndex ? ' active' : ''}`}
+                aria-selected={index === activeMonsterIndex}
+                aria-label={monster.name}
+                onClick={() => scrollToMonster(index)}
+              />
+            ))}
+          </div>
+          {/* Outside the tablist: a "next" button is not a tab. */}
+          <button
+            type="button"
+            className="workshop-monster-next"
+            aria-label="Next monster"
+            title="Next monster"
+            // aria-disabled, not disabled: a disabled button drops keyboard focus the moment
+            // the last monster scrolls in.
+            aria-disabled={atLastMonster}
+            onClick={() => {
+              if (!atLastMonster) scrollToMonster(activeMonsterIndex + 1);
+            }}
+          >
+            <span className="workshop-monster-next-mark" aria-hidden="true">
+              <svg width="8" height="8" viewBox="0 0 8 8">
+                <path d="M2.5 1 L5.5 4 L2.5 7" fill="none" stroke="currentColor" strokeWidth="1.4" />
+              </svg>
+            </span>
+          </button>
+        </div>
+      )}
+
       <div ref={inventoryRef}>
       <InventoryPanel
         cards={unequippedDeck}
@@ -789,11 +948,9 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
           facts={factsByName.get(detail.cardName) ?? factsByName.get(stableCardName(detail.cardName)) ?? null}
           cardName={detail.cardName}
           opener={detail.opener}
-          monsters={
-            detail.monsterName
-              ? monsters.filter((monster) => monster.name === detail.monsterName)
-              : monsters
-          }
+          // One verdict, for the monster in view, or none. A line for every monster read
+          // badly with six of them (bug 227); "Usable by" already says who can.
+          monsters={detail.monsterName ? monsters.filter((monster) => monster.name === detail.monsterName) : []}
           onClose={closeDetail}
         />
       )}

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { formatRelativeFromNow } from '../utils/format-relative.js';
 import CardSlot, { type WorkshopCardLocation } from './CardSlot.js';
 import PresetControl from './PresetControl.js';
-import { joinList } from '../utils/cards.js';
+import LevelUpSheet, { type LevelUpGainsView } from './LevelUpSheet.js';
 // Reusing the ring roster's own hp math/bands rather than re-deriving them here — the two
 // bars must never drift apart on what counts as "hurt" vs "critical". Only the pure
 // functions are imported; the markup below is its own copy (see the "why" note on the hp
@@ -33,8 +33,10 @@ type MonsterPanelProps = {
     // router for why "dead with no timer" is a real, distinct case.
     revivesAt: number | null;
     battles: { wins: number; losses: number; total: number };
-    // The next level above this monster's that opens any card, for "At level N: ...".
+    // The next level above this monster's that opens any card, and what the next level
+    // changes: both for the level-up details its XP bar opens (LevelUpSheet).
     nextCards?: { level: number; cards: string[] } | null;
+    nextLevel?: LevelUpGainsView;
   };
   showSelectionHint: boolean;
   selectedCards: Array<{ location: WorkshopCardLocation; cardName: string; selectionId: string }>;
@@ -107,6 +109,8 @@ export default function MonsterWorkshopPanel({
   onShowDetails,
 }: MonsterPanelProps) {
   const [now, setNow] = useState(() => Date.now());
+  // The XP bar that opened the level-up details, or null while they are closed.
+  const [levelSheetOpener, setLevelSheetOpener] = useState<HTMLElement | null>(null);
   const locked = monster.inEncounter;
   const slots = useMemo(() => {
     const total = Math.max(monster.cardSlots, 1);
@@ -217,11 +221,6 @@ export default function MonsterWorkshopPanel({
           <p>
             {monster.type} · Lvl {monster.level}
           </p>
-          {monster.nextCards && monster.nextCards.cards.length > 0 && (
-            <p className="workshop-next-cards">
-              At level {monster.nextCards.level}: {joinList(monster.nextCards.cards)}.
-            </p>
-          )}
         </div>
       </div>
       {/*
@@ -248,36 +247,38 @@ export default function MonsterWorkshopPanel({
           />
         </div>
       </div>
-      <div className="workshop-xp-meter">
-        <span>XP {monster.xpIntoLevel}/{xpNeeded}</span>
-        <div
-          className="workshop-xp-meter-track"
-          role="progressbar"
-          aria-valuenow={monster.xpIntoLevel}
-          aria-valuemin={0}
-          aria-valuemax={xpNeeded}
-          aria-label={`${monster.name} has ${monster.xpIntoLevel} of ${xpNeeded} xp toward level ${monster.level + 1}`}
-        >
-          <div style={{ width: `${xpPct}%` }} />
-        </div>
-      </div>
       {/*
-        Deck size as text, not a bar — see the hp-meter comment above for why a
-        near-always-full bar carries no information. It sits directly above the action
-        buttons (rather than folded into that row) so it doesn't crowd "Send to ring" /
-        "Revive" against the unequip-all icon at a 375px phone width.
+        The XP bar is a button: it opens what the next level brings (LevelUpSheet, bug 225).
+        That replaced an "At level 3: Pound and Vengeful Rampage." line under the type, which
+        named cards with no context. `Lvl N ›` at the end says the bar opens something; the
+        accessible name carries the XP figures, since a button's content is not read as a
+        progress bar.
       */}
-      <div className="workshop-deck-status">
-        <span className="workshop-deck-count">
-          {deckLabel}
-          {deckNeedsMore > 0 && (
-            <span className="workshop-deck-needs-more"> · needs {deckNeedsMore} more to enter the ring</span>
-          )}
+      <button
+        type="button"
+        className="workshop-xp-meter"
+        aria-haspopup="dialog"
+        aria-label={`${monster.name} has ${monster.xpIntoLevel} of ${xpNeeded} xp toward level ${monster.level + 1}. See what level ${monster.level + 1} brings`}
+        title={`What level ${monster.level + 1} brings ${monster.name}`}
+        onClick={(event) => setLevelSheetOpener(event.currentTarget)}
+      >
+        <span>XP {monster.xpIntoLevel}/{xpNeeded}</span>
+        <span className="workshop-xp-meter-track" aria-hidden="true">
+          <span style={{ width: `${xpPct}%` }} />
         </span>
-        <span className="workshop-fights-count">
-          {battles.wins}W {battles.losses}L
-        </span>
-      </div>
+        <span className="workshop-xp-next" aria-hidden="true">Lvl {monster.level + 1} ›</span>
+      </button>
+      {levelSheetOpener && (
+        <LevelUpSheet
+          monsterName={monster.name}
+          xpIntoLevel={monster.xpIntoLevel}
+          xpNeededForLevel={xpNeeded}
+          nextLevel={monster.nextLevel}
+          nextCards={monster.nextCards}
+          opener={levelSheetOpener}
+          onClose={() => setLevelSheetOpener(null)}
+        />
+      )}
       <div className="workshop-monster-actions">
         {monster.dead ? (
           <button title={reviving ? `${monster.name} is on the way back` : `Bring ${monster.name} back. Above level 0 it takes a few minutes`} type="button" className="btn" disabled={busy || monster.inEncounter || reviving} onClick={onRevive}>
@@ -329,6 +330,25 @@ export default function MonsterWorkshopPanel({
           {monster.name} is in a fight. Cards unlock when it ends.
         </p>
       )}
+
+      {/*
+        Deck size as text, not a bar — see the hp-meter comment above for why a
+        near-always-full bar carries no information. It sits right above the slots it counts
+        (bug 226): above the action buttons, "needs 9 more" was a line away from the empty
+        slots it meant, and a new player could not tell what it was counting. It stays out of
+        the actions row so "Send to ring" / "Revive" are not crowded at a 375px phone width.
+      */}
+      <div className="workshop-deck-status">
+        <span className="workshop-deck-count">
+          {deckLabel}
+          {deckNeedsMore > 0 && (
+            <span className="workshop-deck-needs-more"> · needs {deckNeedsMore} more to enter the ring</span>
+          )}
+        </span>
+        <span className="workshop-fights-count">
+          {battles.wins}W {battles.losses}L
+        </span>
+      </div>
 
       <div className="workshop-slot-grid">
         {slots.map((cardName, idx) => {

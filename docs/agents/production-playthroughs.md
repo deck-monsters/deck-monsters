@@ -45,9 +45,11 @@ come after, and only to explain a finding.
 - Several controls with the same label can be in the DOM. Click the one
   whose box is on screen. A DOM `click()` on a hidden copy submits the
   wrong prompt.
-- The Workshop's monsters are a wrapping grid (`.workshop-monster-row`).
-  At 390 they stack in one column, so scroll the page down to the second
-  monster. At 1440 they sit side by side.
+- The Workshop's monsters (`.workshop-monster-row`) are a sideways
+  carousel at 390: one monster and a sliver of the next, with dots and a
+  next arrow (`Next monster`) under the row. Tap the arrow or a dot (each
+  is named after its monster) to reach the second monster. On first load
+  the panels slide left once and back. At 1440 they sit side by side.
 - Do not treat a fight as over because a card's flavour contains the word
   "victory". Wait for the win line or a monster at 0 HP.
 

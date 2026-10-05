@@ -30,9 +30,14 @@ serialization, and read-model contracts behind those rules.
   presets, and item summaries;
 - the character's unequipped card deck;
 - card compatibility used by Workshop placement;
-- per monster, its `monsterClass` and `nextCards` (the next level above its own that opens any
-  card its type can hold, with the card names; from the engine's `holdableByLevel`), which the
-  panel's `At level {n}: {cards}.` line reads;
+- per monster, its `monsterClass`, `nextCards` (the next level above its own that opens any
+  card its type can hold, with the card names; from the engine's `holdableByLevel`) and
+  `nextLevel` (what the next level changes: max HP, AC, STR, DEX and INT, from the engine's
+  `levelUpGains`). The panel's XP bar is a button (`Lvl {n} ›`) that opens these in
+  `LevelUpSheet`: the XP still to go, the stat gains (a stat at its cap is left out), and the
+  cards the level opens or when the next ones come. It replaced an `At level {n}: {cards}.`
+  line that named cards with no context (bug 225). It shares `DetailSheet` (portal, focus,
+  Escape, backdrop) with the card detail sheet;
 - character-carried and monster-carried items as separate lists.
 
 ## Card details
@@ -49,8 +54,16 @@ Each card in the Workshop has an info button (title `What this card does`) that 
 portal, with focus moved to Close and Escape closing it. The verdict line comes from running the
 engine's browser-safe `cardHoldVerdict` against the facts and the monster's level, class and type
 (`monsterClass` rides on `myInventory`), so the rule is the engine's and the server does not send
-a verdict for every card and monster pair. It is shown for the monster whose panel holds the card;
-for a card in Your cards, for the highlighted monster, or for every monster when none is.
+a verdict for every card and monster pair. It is shown for the monster whose panel holds the card,
+or for a card in Your cards, for the highlighted monster; with none highlighted there is no
+verdict, since `Usable by:` already says who can (bug 227). The lines are `{name} can use this.`,
+`{name} can't use this.` and `{name} can't use this until level {n}.`
+
+Selecting or moving cards changes the hint lines in every monster panel, above Your cards. iOS
+Safari has no scroll anchoring, so the Workshop keeps the tapped button where it was itself
+(`keep-in-place.ts`, bug 228). Anything new that changes height above the inventory on a tap
+gets the same treatment for free only if it re-renders with the selection; otherwise anchor it
+too.
 
 Slot labels (`ATTACK`, `AREA`, `HEAL`, `DEFENCE`, `TRICK`) and the slot tint come from the card's
 role (`roleOf`), replacing a keyword guess at the name that filed Blink as magic and Take Wing as

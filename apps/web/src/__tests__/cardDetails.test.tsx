@@ -75,10 +75,10 @@ describe('card details sheet in the Workshop', () => {
     expect(within(dialog).getByText('Tricks and curses')).toBeTruthy();
     expect(within(dialog).getByText('Wink out of sight.')).toBeTruthy();
     expect(within(dialog).getByText('Level: Beginner')).toBeTruthy();
-    expect(within(dialog).getByText('Used by: Jinn and Minotaur')).toBeTruthy();
+    expect(within(dialog).getByText('Usable by: Jinn and Minotaur')).toBeTruthy();
     expect(within(dialog).getByText('Price: 1 coin')).toBeTruthy();
     // Rex is a Gladiator, so Blink is not for him; Mira is not mentioned.
-    expect(within(dialog).getByText("Rex can't use this. Only Jinn and Minotaur can.")).toBeTruthy();
+    expect(within(dialog).getByText("Rex can't use this.")).toBeTruthy();
     expect(within(dialog).queryByText(/Mira/)).toBeNull();
     // The info button carries the plan's title.
     expect(screen.getAllByTitle('What this card does').length).toBeGreaterThan(0);
@@ -91,19 +91,18 @@ describe('card details sheet in the Workshop', () => {
     const dialog = screen.getByRole('dialog');
     expect(within(dialog).getByText('Price: free')).toBeTruthy();
     expect(within(dialog).getByText('Hit 1d20 vs AC, damage 1d6.')).toBeTruthy();
-    expect(within(dialog).getByText('Used by: Any monster')).toBeTruthy();
+    expect(within(dialog).getByText('Usable by: Any monster')).toBeTruthy();
     expect(within(dialog).getByText('Rex can use this.')).toBeTruthy();
   });
 
-  it('gives a card in Your cards one verdict per monster, or just the highlighted one', () => {
+  it('gives a card in Your cards no verdict, or one for the highlighted monster (bug 227)', () => {
     setup();
     render(<WorkshopPanel roomId="room-1" />);
     const inventory = document.querySelector('.workshop-inventory') as HTMLElement;
 
     fireEvent.click(within(inventory).getByRole('button', { name: 'What Fire Breath does' }));
     let dialog = screen.getByRole('dialog');
-    expect(within(dialog).getByText('Rex can use this from level 3. Rex is level 1 now.')).toBeTruthy();
-    expect(within(dialog).getByText("Mira can't use this. Only Gladiator can.")).toBeTruthy();
+    expect(within(dialog).queryByText(/Rex|Mira/)).toBeNull();
     fireEvent.click(within(dialog).getByRole('button', { name: 'Close' }));
     expect(screen.queryByRole('dialog')).toBeNull();
 
@@ -111,8 +110,14 @@ describe('card details sheet in the Workshop', () => {
     fireEvent.click(screen.getByTitle('Filter inventory cards for Mira'));
     fireEvent.click(within(inventory).getAllByRole('button', { name: 'What Fire Breath does' })[0]!);
     dialog = screen.getByRole('dialog');
-    expect(within(dialog).getByText("Mira can't use this. Only Gladiator can.")).toBeTruthy();
+    expect(within(dialog).getByText("Mira can't use this.")).toBeTruthy();
     expect(within(dialog).queryByText(/Rex/)).toBeNull();
+
+    // Rex is level 1 and Fire Breath opens at 3: the level line.
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Close' }));
+    fireEvent.click(screen.getByTitle('Filter inventory cards for Rex'));
+    fireEvent.click(within(inventory).getAllByRole('button', { name: 'What Fire Breath does' })[0]!);
+    expect(within(screen.getByRole('dialog')).getByText("Rex can't use this until level 3.")).toBeTruthy();
   });
 
   it('closes on Escape and from the Close button (titled), and focus moves in then back', () => {
@@ -198,7 +203,7 @@ describe('card details sheet in the Workshop', () => {
   });
 });
 
-describe('"At level N" line on a monster panel', () => {
+describe('level-up details from the XP bar (bug 225)', () => {
   const noop = () => undefined;
   const renderPanel = (monster: ReturnType<typeof makeMonster>) =>
     render(
@@ -217,14 +222,49 @@ describe('"At level N" line on a monster panel', () => {
         onDeletePreset={noop}
       />,
     );
+  const gains = { level: 3, hp: 3, ac: 1, str: 0, dex: 1, int: 1 };
+  const openSheet = () => {
+    fireEvent.click(screen.getByRole('button', { name: /See what level 3 brings/ }));
+    return within(screen.getByRole('dialog'));
+  };
 
-  it('names the next level that opens cards', () => {
-    renderPanel(makeMonster({ nextCards: { level: 3, cards: ['Fire Breath', 'Gore', 'Hit'] } }));
-    expect(screen.getByText('At level 3: Fire Breath, Gore and Hit.')).toBeTruthy();
+  it('no longer prints an "At level N" line on the panel', () => {
+    renderPanel(makeMonster({ level: 2, nextCards: { level: 3, cards: ['Fire Breath', 'Gore', 'Hit'] } }));
+    expect(screen.queryByText(/^At level/)).toBeNull();
   });
 
-  it('shows no line when nothing opens later', () => {
-    renderPanel(makeMonster({ nextCards: null }));
-    expect(screen.queryByText(/^At level/)).toBeNull();
+  it('opens from the XP bar, which says which level it opens', () => {
+    renderPanel(makeMonster({ level: 2, nextLevel: gains }));
+    expect(screen.getByText('Lvl 3 ›')).toBeTruthy();
+    expect(openSheet().getByRole('heading', { name: 'Rex at level 3' })).toBeTruthy();
+  });
+
+  it('lists the stat gains, leaving out a stat at its cap', () => {
+    renderPanel(makeMonster({ level: 2, nextLevel: gains }));
+    const items = openSheet().getAllByRole('listitem').map((li) => li.textContent);
+    expect(items).toEqual(['Max HP +3', 'AC +1', 'DEX +1', 'INT +1']);
+  });
+
+  it('names the cards the level opens', () => {
+    renderPanel(makeMonster({ level: 2, nextLevel: gains, nextCards: { level: 3, cards: ['Fire Breath', 'Gore', 'Hit'] } }));
+    expect(openSheet().getByText('New cards it can use: Fire Breath, Gore and Hit.')).toBeTruthy();
+  });
+
+  it('says when the next new cards come later', () => {
+    renderPanel(makeMonster({ level: 2, nextLevel: gains, nextCards: { level: 5, cards: ['Gore'] } }));
+    expect(openSheet().getByText('No new cards at this level. Next new cards, at level 5: Gore.')).toBeTruthy();
+  });
+
+  it('says when no new cards are left', () => {
+    renderPanel(makeMonster({ level: 2, nextLevel: gains, nextCards: null }));
+    expect(openSheet().getByText(/already use every card/)).toBeTruthy();
+  });
+
+  it('says how much XP is left, and closes back to the bar', () => {
+    renderPanel(makeMonster({ level: 2, xpIntoLevel: 10, xpNeededForLevel: 30, nextLevel: gains }));
+    const sheet = openSheet();
+    expect(sheet.getByText(/20 more XP to go \(10 of 30\)/)).toBeTruthy();
+    fireEvent.click(sheet.getByRole('button', { name: 'Close' }));
+    expect(screen.queryByRole('dialog')).toBeNull();
   });
 });

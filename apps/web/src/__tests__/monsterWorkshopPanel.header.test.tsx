@@ -196,6 +196,14 @@ describe('MonsterWorkshopPanel header — HP first, no slot bar (10b-bugs-fixed.
     expect(container.querySelector('.workshop-deck-needs-more')).toBeNull();
   });
 
+  it('puts the deck count right above the slots it counts (bug 226), below the actions', () => {
+    const { container } = renderPanel();
+    const status = container.querySelector('.workshop-deck-status');
+    expect(status?.nextElementSibling?.className).toBe('workshop-slot-grid');
+    const actions = container.querySelector('.workshop-monster-actions')!;
+    expect(actions.compareDocumentPosition(status!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
   it('renders no old-style deck-slot progressbar', () => {
     const { container } = renderPanel();
     expect(container.querySelector('.workshop-slot-meter')).toBeNull();

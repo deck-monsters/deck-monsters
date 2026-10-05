@@ -115,6 +115,9 @@ export { allCardFacts, cardFacts, cardFactsVariants } from './cards/helpers/card
 export type { CardFacts } from './cards/helpers/card-facts.js';
 export { holdableByLevel } from './cards/helpers/holdable.js';
 export type { HoldableLevel } from './cards/helpers/holdable.js';
+/** What the next level brings a monster type, for the Workshop's level-up details. */
+export { levelUpGains } from './monsters/helpers/level-up.js';
+export type { LevelUpGains } from './monsters/helpers/level-up.js';
 /** The look question per creature type: Console wording, example and description preview. */
 export { LOOKS, lookEntry, lookPreview, lookQuestion, lookQuestionShort } from './monsters/helpers/looks.js';
 export type { LookEntry, LookPronouns } from './monsters/helpers/looks.js';

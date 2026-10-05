@@ -199,6 +199,8 @@ describe('trpc/router card management procedures', () => {
 		// An unknown type holds nothing, so there is no class and no "At level N" line.
 		expect(mystery!.monsterClass).to.equal('');
 		expect(mystery!.nextCards).to.equal(null);
+		// The level-up details: level 0 to 1 raises every stat.
+		expect(rex!.nextLevel).to.deep.equal({ level: 1, hp: 3, ac: 1, str: 1, dex: 1, int: 1 });
 
 		// A second call (the 30 s poll) answers the same from the per-type memo.
 		const again = await createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false }).game.myInventory({ roomId: ROOM_ID });

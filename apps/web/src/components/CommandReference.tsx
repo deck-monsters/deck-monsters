@@ -95,13 +95,13 @@ export default function CommandReference({ open, onClose, onInsertCommand }: Com
           }}
         >
           <span style={{ flex: 1, fontWeight: 700, letterSpacing: '0.05em', fontSize: '0.85rem' }}>
-            COMMAND REFERENCE
+            CONSOLE COMMANDS
           </span>
           <button
-            title="Close the command reference"
+            title="Close the Console commands"
             ref={closeRef}
             onClick={onClose}
-            aria-label="Close command reference"
+            aria-label="Close Console commands"
             style={{
               background: 'transparent',
               border: '1px solid var(--color-border)',
