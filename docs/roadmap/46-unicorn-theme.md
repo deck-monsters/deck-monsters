@@ -507,7 +507,9 @@ them there.
 
 All candidates were checked on npm (`@fontsource/*`, version 5.3.0). Sizes are the latin
 `woff2` subset. Fontsource CSS registers faces with `unicode-range`. A browser downloads a
-face only when text uses it, so **players on other themes download nothing new.**
+face only when text uses it, so **players on other themes download no font files.** The
+Fontsource CSS itself is loaded with the theme's lazy chunk (§4.4), not from `main.tsx`, so it
+does not grow the shared stylesheet either.
 
 | Role | Recommendation | Licence | Latin woff2 | Why |
 |---|---|---|---|---|
@@ -534,8 +536,8 @@ by scrolling the Ring's history with throttled network (§4.7).
 | `apps/web/src/styles/base.css`, `terminal.css` | Replace literal radii, border widths and shadows with tokens (defaults preserve today); split `--font-family` uses into feed (`--font-family`) and chrome (`--font-ui`); meter tracks to `--color-meter-track`; highlight tag text to `--color-highlight-*`; badge text to `--color-on-accent`; make the `prefers-contrast: more` block complete per theme (light themes get their own high-contrast block) |
 | `apps/web/src/styles/effects.css` | Nothing for the scanlines: `--crt-scanline-opacity: 0` already turns them off. Add the foil keyframes here, inside `prefers-reduced-motion: no-preference` |
 | `apps/web/src/hooks/useTheme.ts` | The `THEMES` entry; set `<meta name="theme-color">` and `color-scheme` in `applyTheme` |
-| `apps/web/index.html` | A small inline script that reads `deck-monsters-theme` and sets `data-theme` before first paint (guarded with try/catch, as `localStorage` can throw) |
-| `apps/web/src/main.tsx` | Import the new font CSS (no download cost until used) |
+| `apps/web/index.html` | A small inline script that reads `deck-monsters-theme` and, before first paint, sets `data-theme` **and** updates `<meta name="theme-color">` from a tiny id → colour map (guarded with try/catch, as `localStorage` can throw). `applyTheme` only runs after React mounts, so leaving the meta to it would keep a black status bar through first paint (Codex on #426) |
+| `apps/web/src/themes/licorne.ts` (new) | Loaded with a dynamic `import()` from `applyTheme` the first time Licorne is chosen: it brings `theme-licorne.css` and the `@font-face` CSS. A static import in `main.tsx` would put those rules in the shared bundle for every player (Codex on #426); the font files themselves only download when a rule uses them |
 | `apps/web/src/components/AppShell.tsx` | Header inline styles to a class; `THEME_ICON` entry (🦄); backdrop to `--color-backdrop` |
 | `apps/web/src/animations/pixel-fight/renderer.ts` | Flash colour from a parameter, read once from `--color-sprite-flash`; keep the outline key (`O`) unflashed |
 | `apps/web/src/__tests__/theme-palettes.test.ts` | Extend: fg-dim, accent, system, error and success ≥ 4.5 on bg **and** input-bg; on-accent ≥ 4.5; meter fills ≥ 3 on their track; highlight text tokens ≥ 4.5 |
@@ -615,7 +617,7 @@ CRT one:
 | Fonts (only under this theme) | ≤ 115 KB latin, at most two preloaded |
 | Textures | ≤ 1 KB inline SVG; ≤ 25 KB optional WebP bloom |
 | CSS | `theme-licorne.css` ≤ 12 KB unminified |
-| Other themes | 0 bytes more downloaded; pixel-identical before and after task 1 |
+| Other themes | 0 bytes more downloaded: Licorne's CSS and `@font-face` rules are a separate chunk loaded by dynamic `import()`, the fonts load only when used, and the shared bundle grows only by the theme's `THEMES` entry and the pre-paint colour map. Pixel-identical before and after task 1 |
 | Runtime | No `backdrop-filter`, no live SVG filters, no blend modes on scrolling rows; layout shift from font swap ≈ 0 in the feed |
 
 ### 4.9 Task table
@@ -627,7 +629,7 @@ rest can run in parallel only where noted.
 | # | Pass | Task | Area / files | Acceptance | Can run beside | Status | Commit |
 |---|---|---|---|---|---|---|---|
 | 1 | 46a | **Theme plumbing, no visual change.** Shape, font, shadow, surface, meter-track, on-accent, highlight-text, backdrop and sprite-flash tokens with defaults equal to today; define the read-but-unset tokens in all four themes; `color-scheme`; pre-paint `data-theme` and `theme-color`; per-theme `prefers-contrast`; the header class; theme button label by name; extended palette test | `styles/*.css`, `useTheme.ts`, `index.html`, `AppShell.tsx`, `theme-palettes.test.ts`, `useTheme.test.ts`, `renderer.ts` (flash parameter) | Four themes pixel-identical at 390 and 1440; the extended palette test passes for all four; no black flash on a light theme in a smoke test | docs-only work | proposed | — |
-| 2 | 46a | **Licorne palette, fonts and shapes.** `theme-licorne.css`, `THEMES` entry and icon, the three font roles, radii, buttons, inputs, sheets, banners, Account label | `theme-licorne.css`, `main.tsx`, `useTheme.ts`, `AccountView.tsx`, fonts and `OFL.txt` | Palette test green; card frames still align; feed row-height test unchanged; check at 390 and 1440 | — (after 1) | proposed | — |
+| 2 | 46a | **Licorne palette, fonts and shapes.** `theme-licorne.css`, `THEMES` entry and icon, the three font roles, radii, buttons, inputs, sheets, banners; the lazy-loaded chunk, with a bundle check that other themes' CSS did not grow | `theme-licorne.css`, `themes/licorne.ts` (lazy chunk), `useTheme.ts`, fonts and `OFL.txt` | Palette test green; card frames still align; feed row-height test unchanged; check at 390 and 1440 | — (after 1) | proposed | — |
 | 3 | 46a | **Licorne surfaces.** Title-bar pane headers, folder tabs, Workshop role washes and edges, horn XP meter, HP pills, flower dots, sticker chips and badges, the empty Workshop frame | `theme-licorne.css`, small class hooks in `terminal.css`/`base.css` | Every surface in §3.4 matches; no close box where nothing closes; tap targets unchanged | 4 if 4 avoids the same selectors | proposed | — |
 | 4 | 46b | **Textures and foil.** Paper grain, blooms, pinstripes, foil on the four moments, motion and reduced motion | `theme-licorne.css`, `effects.css` | Budget in §4.8 met; no long frames while a fight scrolls; reduced motion is still | 3 (different selectors) | proposed | — |
 | 5 | 46b | **Pixel monsters on paper.** Sticker outline, pink flash, check the pale species and white appearances at 1×/2×/3× | `terminal.css`, `renderer.ts`, `rosterSprite`/pixel tests | Struck monsters visibly flash; pale monsters read on paper; nothing smoothed | 4 | proposed | — |
