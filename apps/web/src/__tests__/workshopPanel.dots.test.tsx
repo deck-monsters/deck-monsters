@@ -107,6 +107,20 @@ describe('workshop monster carousel next arrow', () => {
     expect(scroll).toHaveBeenCalled();
   });
 
+  it('starts at the first monster again when the room changes under the same panel', () => {
+    hookMock.monsters = [mk('Res'), mk('Fowl')];
+    const { rerender } = render(<WorkshopPanel roomId="room-1" />);
+    const row = document.querySelector('.workshop-monster-row') as HTMLElement;
+    Object.defineProperty(row.children[0], 'offsetLeft', { value: -300, configurable: true });
+    Object.defineProperty(row.children[1], 'offsetLeft', { value: 0, configurable: true });
+    row.scrollLeft = 300;
+    fireEvent.scroll(row);
+    expect(screen.getByRole('tab', { name: 'Fowl' }).getAttribute('aria-selected')).toBe('true');
+    rerender(<WorkshopPanel roomId="room-2" />);
+    expect(screen.getByRole('tab', { name: 'Res' }).getAttribute('aria-selected')).toBe('true');
+    expect(row.scrollLeft).toBe(0);
+  });
+
   it('is disabled on the last monster, where there is no next', () => {
     hookMock.monsters = [mk('Res'), mk('Fowl')];
     render(<WorkshopPanel roomId="room-1" />);

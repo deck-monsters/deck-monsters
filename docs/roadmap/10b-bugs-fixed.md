@@ -5234,6 +5234,10 @@ Fix: the carousel is back below 900px (`@container workshop`), with three cues i
   container and its own clip, so translating it shows nothing, and scrolling it would fight
   `scroll-snap-type: mandatory`. A tap on the row stops it; reduced motion turns it off.
 
+The carousel starts at the first monster when the room changes: React Router reuses the panel
+from `/room/A/workshop` to `/room/B/workshop`, which would carry room A's position over (Codex
+on #425).
+
 Tests: `workshopPanel.dots.test.tsx` (dots, arrow, peek, and the CSS guard that replaced
 `workshopPanel.monsterRow.test.ts`).
 

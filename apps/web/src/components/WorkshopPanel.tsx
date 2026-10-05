@@ -685,6 +685,13 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
     return () => observer.disconnect();
   }, [monsterCount]);
 
+  // React Router reuses this panel from /room/A/workshop to /room/B/workshop, so the index and
+  // the row's sideways scroll would carry another room's position over: start at the first.
+  useEffect(() => {
+    setVisibleMonsterIndex(0);
+    if (monsterRowRef.current) monsterRowRef.current.scrollLeft = 0;
+  }, [roomId]);
+
   // The dots are keyed by name, so removing a monster can leave the index past the end with
   // no scroll event to correct it.
   const activeMonsterIndex = Math.min(visibleMonsterIndex, Math.max(0, monsters.length - 1));
