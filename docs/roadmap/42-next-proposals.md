@@ -8,14 +8,22 @@ tags: [roadmap, planning, workshop, bosses, cards]
 ---
 # 42 — Proposals for the next passes
 
-**Status:** Proposed (2026-10-04). B is done (below), and F's walk is done and triaged in G; the rest is not started. The owner picks
-what goes next; each pick then gets its own plan with a task table, in the usual way.
+**Status:** Proposed (2026-10-05). B is done. F's walk is done and triaged in G. A, C and E1
+shipped as [44](../archive/roadmap/44-guides-cards-and-training.md) (#423) and G's pass I as
+[43](../archive/roadmap/43-walk-fixes.md) (#422), both archived. Open for the owner to pick:
+**D** (boss hands), the rest of **E**, **H** (the fight log) and **J** (what 43 and 44 left).
+Each pick gets its own plan with a task table, in the usual way.
 
-The owner's requests are A to D. E lists what Claude noticed in recent sessions. F is
-Cursor's next walk. A, C and D share one new piece, a **role** for every card (attack, area,
-heal, guard, trick). Build it once, in whichever of C or D goes first.
+The owner's requests were A to D. E lists what Claude noticed in recent sessions. F was
+Cursor's walk. The card **role** that A, C and D share now exists (`cards/helpers/roles.ts`,
+from 44); D uses it.
 
 ## A. Train a monster as a wizard
+
+**Done (2026-10-05).** Shipped as roadmap 44 K4 (#423): the Workshop trains with a step-by-step
+wizard, the look question and a live preview line come from the engine's shared look table,
+and names are suggested. Fixing the other random details at preview and a colour swatch are in
+J. The proposal below is kept as written.
 
 **Owner:** move the Workshop's monster trainer to a wizard, so each question has room to
 explain itself, with an example of how the answer reads in the monster's description.
@@ -115,6 +123,12 @@ pronoun (`agree()`).
 **Size:** one small engine task with tests, plus the strings-inventory regeneration.
 
 ## C. Fuller card and item guides
+
+**Done (2026-10-05).** Shipped as roadmap 44 K1, K2, K3 and K5 (#423): a role for every card,
+CARDS.md grouped by role with full cards, a legend and per-type "what it can hold" tables, the
+items generated into ITEMS.md, the Workshop's card details and `At level` line, and
+`look at cards for [monster]`. Odds for the 20 cards with none are in J. The proposal below is
+kept as written.
 
 **Owner:** clean up the card and item guides so they help more: the detailed version of each
 card, with its actions and stats, perhaps grouped by type, with some flavour around each
@@ -232,7 +246,7 @@ in the description (`docs/reference/simulation-harness.md`).
 
 Smaller items, each worth a line in some pass:
 
-1. **Card details in the Workshop.** Tapping a card there selects it, but nothing shows what
+1. **Card details in the Workshop** (done in 44 K3). Tapping a card there selects it, but nothing shows what
    it does. A detail sheet on long-press or a ⓘ, the same detailed card C puts in the guide,
    would answer the question every new player has when building a deck.
 2. **A test-room switch for forced events.** Cursor could not reach the first-time notes for
@@ -250,7 +264,7 @@ Smaller items, each worth a line in some pass:
 
 ## F. Cursor: a first-time player's walk
 
-The prompt and its rules are in [42a](42a-cursor-new-player-walk.md). It is a fresh walk of the
+The prompt and its rules are in [42a](../archive/roadmap/42a-cursor-new-player-walk.md). It is a fresh walk of the
 whole game as a first-time player, after batches 2 and 3 and chat. Its findings feed
 roadmap 39's known gaps and the choice between A to E. **Done (2026-10-04):** triaged in G
 below.

@@ -8,7 +8,7 @@ tags: [roadmap, onboarding, help, web, cursor]
 ---
 # 39a — In-game help: spec and Cursor passes
 
-**Status:** Walk ready to run; Parts 1 and 2 landed (2026-09-30), so Prompt B is ready too. Claude implements Parts 1 and 2 below. Cursor, which
+**Status:** Checked (2026-09-30). Parts 1 and 2 landed; Cursor's checks are in [help-check](../reference/help-check.md) and [batch 2](../reference/help-check-batch2.md).
 drives a real browser but runs a smaller model, does the browser work around them (owner): the
 new-player walk now, and a live check once Parts 1 and 2 land. Claude reviews Cursor's branch and
 writes any new player-facing text.
