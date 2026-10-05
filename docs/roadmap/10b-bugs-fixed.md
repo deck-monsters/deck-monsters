@@ -5291,6 +5291,26 @@ use this.` or `{name} can't use this until level {n}.` (`verdictLine` in
 
 **Status**: Fixed.
 
+### 228. Tapping a card in Your cards jumped the page on an iPhone — FIXED
+
+Found by the owner on an iPhone (screenshots: scrolled to Coil, tapped it, and the view
+showed the top of Your cards instead).
+
+**Root cause**: selecting a card adds hint lines to every monster panel, which sit above Your
+cards: `Can use selected inventory card.` (or the refusal) and `Tap destination slot…`.
+Everything below moves down by that height. Chrome's scroll anchoring keeps the view on the
+tapped card; iOS Safari has no scroll anchoring, so the view stayed at the same offset and the
+card slid away, by a whole screen with six monsters stacked (#215's layout) and about 160px
+with the carousel.
+
+Fix: `apps/web/src/utils/keep-in-place.ts`. The Workshop records the button a click lands on
+and its position (a capture-phase click handler), and a layout effect on the selection scrolls
+the pane by however far that button moved, before the browser paints. Checked in Chromium with
+`overflow-anchor: none` (Safari's behaviour): the tapped card moved 160px before, 0 after.
+Tests: `keepInPlace.test.ts`.
+
+**Status**: Fixed.
+
 ## Closed without a fix
 
 These were open investigations the owner closed on 2026-09-28. Reopen with new evidence.

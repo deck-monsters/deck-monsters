@@ -1,5 +1,6 @@
-import { useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { movedToMessage } from '../utils/moved-message.js';
+import { anchorFor, restoreAnchor, type ScrollAnchor } from '../utils/keep-in-place.js';
 import { surfaceDescription } from './surface-descriptions.js';
 import InventoryPanel from './InventoryPanel.js';
 import ItemsPanel from './ItemsPanel.js';
@@ -42,6 +43,8 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
   const monsterRowRef = useRef<HTMLDivElement>(null);
   const [visibleMonsterIndex, setVisibleMonsterIndex] = useState(0);
   const [peeking, setPeeking] = useState(false);
+  // The control the last click landed on, so a selection change cannot jump the page (bug 228).
+  const scrollAnchorRef = useRef<ScrollAnchor | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showSpawn, setShowSpawn] = useState(false);
@@ -687,8 +690,20 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
   const activeMonsterIndex = Math.min(visibleMonsterIndex, Math.max(0, monsters.length - 1));
   const atLastMonster = activeMonsterIndex >= monsters.length - 1;
 
+  // Selecting or moving cards adds or removes hint lines in every monster panel, above Your
+  // cards. Put the tapped card back under the finger before the browser paints.
+  useLayoutEffect(() => {
+    restoreAnchor(scrollAnchorRef.current);
+    scrollAnchorRef.current = null;
+  }, [selectedCards]);
+
   return (
-    <div className="workshop-view">
+    <div
+      className="workshop-view"
+      onClickCapture={(event) => {
+        scrollAnchorRef.current = anchorFor(event.target);
+      }}
+    >
       <div className="workshop-header">
         <div>
           <h1>Workshop</h1>

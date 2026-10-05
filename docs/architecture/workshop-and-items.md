@@ -59,6 +59,12 @@ or for a card in Your cards, for the highlighted monster; with none highlighted 
 verdict, since `Usable by:` already says who can (bug 227). The lines are `{name} can use this.`,
 `{name} can't use this.` and `{name} can't use this until level {n}.`
 
+Selecting or moving cards changes the hint lines in every monster panel, above Your cards. iOS
+Safari has no scroll anchoring, so the Workshop keeps the tapped button where it was itself
+(`keep-in-place.ts`, bug 228). Anything new that changes height above the inventory on a tap
+gets the same treatment for free only if it re-renders with the selection; otherwise anchor it
+too.
+
 Slot labels (`ATTACK`, `AREA`, `HEAL`, `DEFENCE`, `TRICK`) and the slot tint come from the card's
 role (`roleOf`), replacing a keyword guess at the name that filed Blink as magic and Take Wing as
 utility.
