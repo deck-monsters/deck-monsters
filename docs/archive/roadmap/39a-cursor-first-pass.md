@@ -1,16 +1,16 @@
 ---
-type: Roadmap
+type: Archive
 title: In-game help, Cursor first pass
 description: Roadmap 39's spec for the Workshop fixes and in-game Help, and two paste-whole Cursor prompts, one to walk the game as a new player now and one to check the fixes live once they land.
-status: draft
+status: deprecated
 audience: internal
 tags: [roadmap, onboarding, help, web, cursor]
 ---
 # 39a — In-game help: spec and Cursor passes
 
-**Status:** Walk ready to run; Parts 1 and 2 landed (2026-09-30), so Prompt B is ready too. Claude implements Parts 1 and 2 below. Cursor, which
-drives a real browser but runs a smaller model, does the browser work around them (owner): the
-new-player walk now, and a live check once Parts 1 and 2 land. Claude reviews Cursor's branch and
+**Status:** Done and archived (2026-10-05). Parts 1 and 2 landed on 2026-09-30, and both Cursor prompts below have run: the walk is the [help inventory](../../reference/help-inventory.md) and the live checks are [help-check](../../reference/help-check.md) and [batch 2](../../reference/help-check-batch2.md). The prompts are kept as a record; don't run them again. What is left of roadmap 39 is in [39](../../roadmap/39-in-game-help.md). Originally: Claude implemented Parts 1 and 2; Cursor, which
+drives a real browser but runs a smaller model, did the browser work around them (owner): the
+new-player walk, and a live check once Parts 1 and 2 landed. Claude reviewed Cursor's branch and
 writes any new player-facing text.
 
 ## Prompt A: the new-player walk (paste whole into Cursor, now)
@@ -43,11 +43,11 @@ fix, following the Rules section. Push your branch; do not open a pull request.
 - **Player-facing text:** use the lines in this file exactly. If you need a line that is not
   here, write a short placeholder, mark it with `// DRAFT(39):` in the code, and list it under
   "Strings for Claude" in your report. Claude writes all player-facing prose in this repo (owner
-  rule), following [voice and wording](../reference/voice-and-wording.md).
-- **Read first:** `CLAUDE.md`, [web workspace](../architecture/web-workspace.md),
-  [workshop and items](../architecture/workshop-and-items.md), and
-  [working in this repo](../agents/working-in-this-repo.md) (its verification gate).
-- **Run the app** as [local testing](../operations/local-testing.md) says, and check every change
+  rule), following [voice and wording](../../reference/voice-and-wording.md).
+- **Read first:** `CLAUDE.md`, [web workspace](../../architecture/web-workspace.md),
+  [workshop and items](../../architecture/workshop-and-items.md), and
+  [working in this repo](../../agents/working-in-this-repo.md) (its verification gate).
+- **Run the app** as [local testing](../../operations/local-testing.md) says, and check every change
   in the browser at 390 × 844 (a phone) and 1440 × 900, in Test Room A or B.
 - **Tests:** update the web tests that name changed labels (`workshopPanel.*.test.tsx` and
   others; search for the old text), and add a test for each new behaviour. Run the full gate
@@ -138,7 +138,7 @@ Today the handbook is reachable only by typing `look at player handbook` in the 
 ## Part 3 — Walk the game as a new player (Cursor, Prompt A)
 
 Use the paste-whole walk-through prompt in
-[roadmap 39](39-in-game-help.md#cursor-prompt-for-task-3-paste-whole): phone and desktop, from
+[roadmap 39](../../roadmap/39-in-game-help.md#cursor-prompt-for-task-3-paste-whole): phone and desktop, from
 joining a room to a first fight and a card change. Write the tables to
 `docs/reference/help-inventory.md` as it says.
 

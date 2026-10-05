@@ -1,14 +1,14 @@
 ---
-type: Roadmap
+type: Archive
 title: Small fixes from the walk, live check
 description: Cursor's live browser checklist for roadmap 43 — the stacked Workshop on a phone, the header and Leaders at 390, the guide during a fight, revive and boss lines, the shop's Buy button, 30 starting coins, finished questions leaving the input, and the Fights list.
-status: draft
+status: deprecated
 audience: internal
 tags: [roadmap, onboarding, web, console, cursor]
 ---
 # 43a — Small fixes from the walk, live check (Cursor)
 
-**Status:** Run on 2026-10-04: [walk-fixes check](../reference/walk-fixes-check.md). All items passed but 7 (see [44 K6](44-guides-cards-and-training.md)); item 13's two-copies case wasn't reachable on 30 coins.
+**Status:** Run on 2026-10-04: [walk-fixes check](../../reference/walk-fixes-check.md). All items passed but 7 (see [44 K6](44-guides-cards-and-training.md)); item 13's two-copies case wasn't reachable on 30 coins.
 
 ## Rules
 

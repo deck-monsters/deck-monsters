@@ -68,6 +68,7 @@ Generated and authored player references remain at the repository root:
 | Whether roadmap 41 room chat matches the shipped text | [Live check of room chat](reference/chat-check.md) |
 | What confused a first-time player on production | [New-player walk 2](reference/new-player-walk-2.md) |
 | Whether roadmap 43's walk fixes match production | [Live check of the walk fixes](reference/walk-fixes-check.md) |
+| Whether roadmap 44's card guides and training wizard match production | [Live check of the guides and wizard](reference/guides-wizard-check.md) |
 | Reviewing monster flavour strings or signature-card narration (generated inventories) | [Monster and card strings](reference/strings/README.md) |
 | `channel({ question, choices })` call site or connector answer encoding | [Prompt/answer contract](reference/prompt-answer-contract.md) |
 | Sprite maps, Canvas/CSS pixel art, scaling, palettes, animation construction | [Pixel art](reference/pixel-art.md) |

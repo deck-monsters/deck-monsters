@@ -1,20 +1,20 @@
 ---
-type: Roadmap
+type: Archive
 title: A first-time player's walk (Cursor)
 description: Cursor's brief for playing Deck Monsters as a first-time player on a phone and a desktop, and writing up everything confusing or under-explained.
-status: draft
+status: deprecated
 audience: internal
 tags: [roadmap, onboarding, help, cursor]
 ---
 # 42a — A first-time player's walk (Cursor)
 
-**Status:** Done (2026-10-04). Report: [new-player walk 2](../reference/new-player-walk-2.md); triage: [42 G](42-next-proposals.md#g-what-cursors-walk-found-and-where-it-goes).
+**Status:** Done (2026-10-04). Report: [new-player walk 2](../../reference/new-player-walk-2.md); triage: [42 G](../../roadmap/42-next-proposals.md#g-what-cursors-walk-found-and-where-it-goes).
 
 ## What this is for
 
 Play Deck Monsters as someone who has never seen it, and write down every moment you are
 unsure what something is, what will happen, why something was refused, or what to do next.
-The last walk ([help inventory](../reference/help-inventory.md)) came before in-game Help,
+The last walk ([help inventory](../../reference/help-inventory.md)) came before in-game Help,
 the guided start, first-time notes, button titles and chat. This walk checks what a new
 player meets now. **Judge as a newcomer, not as a tester:** "I didn't know what this meant"
 is a finding even when the game is working as designed.
@@ -105,4 +105,4 @@ finish.
 
 ## Actionable remainder
 
-- [ ] The findings, as placed in [42 G](42-next-proposals.md#g-what-cursors-walk-found-and-where-it-goes): A, C and E1, a new pass H (the fight log), and a new pass I (small fixes).
+- [x] The findings, as placed in [42 G](../../roadmap/42-next-proposals.md#g-what-cursors-walk-found-and-where-it-goes): A, C and E1 shipped as 44 and pass I as 43 (both archived). What is left is in [42 H and J](../../roadmap/42-next-proposals.md).

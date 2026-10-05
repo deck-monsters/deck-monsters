@@ -5172,7 +5172,46 @@ Found by Cursor's walk-fixes check ([report](../reference/walk-fixes-check.md)),
   contestants; the review caught a match by name that another player's same-named monster
   would have tripped) with the inventory's fight flag as a fallback, and a newer push wins.
 
-**Status**: Fixed. Needs Cursor's live check (44a items 17–19).
+**Status**: Fixed; confirmed live 2026-10-05 ([guides and wizard check](../reference/guides-wizard-check.md), items 17–19).
+
+### 222. `summon a boss` refused as if the ring were full, then a boss fight began — FIXED
+
+Found by Cursor's guides and wizard check ([report](../reference/guides-wizard-check.md)),
+roadmap 45 L2. `send Keleth to the ring`, then `summon a boss`, answered `Every challenger in
+the ring already has a boss to face…`, and a fight started against a boss anyway.
+
+Root cause: the refusal was right but said nothing useful. `bossAllowance()` is
+`max(1, humans)`, because an empty ring keeps one boss waiting for a challenger. A boss the
+house sent on its timer was already waiting when Keleth joined, so one human and one boss
+filled the quota, and the fight then began against that boss. The count was not wrong.
+
+Fix: when the player's monster is the only challenger and the only boss is one the player
+didn't summon, the refusal names it: `{boss} is already here for {monster}. Bring a friend
+into the ring, then summon another.` Every other case keeps the general line; the review
+caught that naming "the first boss" was wrong with two players and for a boss the player had
+summoned themselves.
+
+**Status**: Fixed.
+
+### 223. A question shown twice, yes/no without buttons, and a taken name shown twice — FIXED
+
+Found by Cursor's guides and wizard check ([report](../reference/guides-wizard-check.md)),
+roadmap 45 L1.
+
+- **The question twice.** Console history turns every past `prompt.request` into a plain
+  line. A Console that mounts or reloads while that question is still open also shows the
+  live question with its buttons, so the paragraph appeared twice (Cursor's
+  `16-buy-1.png`). The history line now carries its `requestId` and is hidden while the same
+  question is on screen; once the question is over, the line stays as the record.
+- **Yes/no without buttons.** Yes/no questions arrive with no choices and a question ending
+  in `(yes/no)`, so the Console drew only Cancel. It now shows `Yes` and `No`, styled alike
+  so a purchase confirm doesn't lean toward yes, and a yes/no question is never treated as a
+  multi-pick. The [prompt-answer contract](../reference/prompt-answer-contract.md) says a
+  new yes/no question must end with `(yes/no)`.
+- **The taken name twice.** The Workshop's error banner included the training mutation's
+  error, which the wizard already shows at the step at fault. The banner no longer shows it.
+
+**Status**: Fixed.
 
 ## Closed without a fix
 

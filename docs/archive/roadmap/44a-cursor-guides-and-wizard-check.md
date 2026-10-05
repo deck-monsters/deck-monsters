@@ -1,14 +1,14 @@
 ---
-type: Roadmap
+type: Archive
 title: Card guides and training wizard, live check
 description: Cursor's live browser checklist for roadmap 44, covering the training wizard, card details and level unlocks in the Workshop, the grouped card guide, look at cards for a monster, the shop's Buy buttons and the walk-fixes follow-ups.
-status: draft
+status: deprecated
 audience: internal
 tags: [roadmap, cards, workshop, onboarding, cursor]
 ---
 # 44a — Card guides and training wizard, live check (Cursor)
 
-**Status:** Ready to run once [44](44-guides-cards-and-training.md) is merged and deployed.
+**Status:** Run and archived (2026-10-05): [guides and wizard check](../../reference/guides-wizard-check.md).
 
 ## Rules
 

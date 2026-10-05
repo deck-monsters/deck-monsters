@@ -8,14 +8,22 @@ tags: [roadmap, planning, workshop, bosses, cards]
 ---
 # 42 — Proposals for the next passes
 
-**Status:** Proposed (2026-10-04). B is done (below), and F's walk is done and triaged in G; the rest is not started. The owner picks
-what goes next; each pick then gets its own plan with a task table, in the usual way.
+**Status:** Proposed (2026-10-05). B is done. F's walk is done and triaged in G. A, C and E1
+shipped as [44](../archive/roadmap/44-guides-cards-and-training.md) (#423) and G's pass I as
+[43](../archive/roadmap/43-walk-fixes.md) (#422), both archived. Open for the owner to pick:
+**D** (boss hands), the rest of **E**, **H** (the fight log) and **J** (what 43 and 44 left).
+Each pick gets its own plan with a task table, in the usual way.
 
-The owner's requests are A to D. E lists what Claude noticed in recent sessions. F is
-Cursor's next walk. A, C and D share one new piece, a **role** for every card (attack, area,
-heal, guard, trick). Build it once, in whichever of C or D goes first.
+The owner's requests were A to D. E lists what Claude noticed in recent sessions. F was
+Cursor's walk. The card **role** that A, C and D share now exists (`cards/helpers/roles.ts`,
+from 44); D uses it.
 
 ## A. Train a monster as a wizard
+
+**Done (2026-10-05).** Shipped as roadmap 44 K4 (#423): the Workshop trains with a step-by-step
+wizard, the look question and a live preview line come from the engine's shared look table,
+and names are suggested. Fixing the other random details at preview and a colour swatch are in
+J. The proposal below is kept as written.
 
 **Owner:** move the Workshop's monster trainer to a wizard, so each question has room to
 explain itself, with an example of how the answer reads in the monster's description.
@@ -115,6 +123,12 @@ pronoun (`agree()`).
 **Size:** one small engine task with tests, plus the strings-inventory regeneration.
 
 ## C. Fuller card and item guides
+
+**Done (2026-10-05).** Shipped as roadmap 44 K1, K2, K3 and K5 (#423): a role for every card,
+CARDS.md grouped by role with full cards, a legend and per-type "what it can hold" tables, the
+items generated into ITEMS.md, the Workshop's card details and `At level` line, and
+`look at cards for [monster]`. Odds for the 20 cards with none are in J. The proposal below is
+kept as written.
 
 **Owner:** clean up the card and item guides so they help more: the detailed version of each
 card, with its actions and stats, perhaps grouped by type, with some flavour around each
@@ -232,7 +246,7 @@ in the description (`docs/reference/simulation-harness.md`).
 
 Smaller items, each worth a line in some pass:
 
-1. **Card details in the Workshop.** Tapping a card there selects it, but nothing shows what
+1. **Card details in the Workshop** (done in 44 K3). Tapping a card there selects it, but nothing shows what
    it does. A detail sheet on long-press or a ⓘ, the same detailed card C puts in the guide,
    would answer the question every new player has when building a deck.
 2. **A test-room switch for forced events.** Cursor could not reach the first-time notes for
@@ -250,7 +264,7 @@ Smaller items, each worth a line in some pass:
 
 ## F. Cursor: a first-time player's walk
 
-The prompt and its rules are in [42a](42a-cursor-new-player-walk.md). It is a fresh walk of the
+The prompt and its rules are in [42a](../archive/roadmap/42a-cursor-new-player-walk.md). It is a fresh walk of the
 whole game as a first-time player, after batches 2 and 3 and chat. Its findings feed
 roadmap 39's known gaps and the choice between A to E. **Done (2026-10-04):** triaged in G
 below.
@@ -288,7 +302,7 @@ drink` then `🎲 18`), and a tally can say `2 HITS` above `Miss...`. The end li
 boss. H separates what happened from its flavour, checks the roll lines, and ends a fight by
 naming who fell and what each player won (XP, coins, the card). It needs its own plan.
 
-**A new pass, I: small fixes from the walk** (planned in [43](43-walk-fixes.md)). These are each a line or two:
+**A new pass, I: small fixes from the walk** (planned in [43](../archive/roadmap/43-walk-fixes.md)). These are each a line or two:
 1. **Bug:** the Workshop's multi-card move says `Moved 1 cards` (`server/src/trpc/router.ts`,
    the move-many summary, which has no singular).
 2. The Workshop's first-deck note says `tap an empty slot`. The control needs a card selected
@@ -321,5 +335,25 @@ naming who fell and what each player won (XP, coins, the card). It needs its own
   little easier to reach without tipping the balance.
 - **Order:** I first, as its own PR once #421 merges; then A + C + E1; then H; then D.
 
-A, C and E1 are built together in [44](44-guides-cards-and-training.md). I is built in [43 — Small fixes from the new-player walk](43-walk-fixes.md), with the
+A, C and E1 are built together in [44](../archive/roadmap/44-guides-cards-and-training.md). I is built in [43 — Small fixes from the new-player walk](../archive/roadmap/43-walk-fixes.md), with the
 starting coins as part of its task I3.
+
+## J. Left from 43 and 44, and what the guides check found
+
+43 and 44 are shipped and archived. What they left goes here until a pass takes it.
+
+**For pass H (the fight log):** the play-by-play opens with the plain `Fight begins with N
+contestants` line (43).
+
+**Follow-ups to A and C (44's remainder):**
+- odds in `card-odds.json` for the 20 cards with none, so their guide entries show a chance line;
+- fix a new monster's other random details (a Dragon's wings, a Unicorn's witness) at the
+  wizard's preview, so Ready can show the whole description;
+- a colour swatch in the wizard that reaches the pixel sprite.
+
+**Small fixes from the guides check** ([report](../reference/guides-wizard-check.md)): all
+four fixed in [45](../archive/roadmap/45-guides-check-fixes.md) (bugs 222 and 223). The
+check couldn't reach the `can use this from level {n}` sheet line live; tests cover it.
+
+**Next live check** (whoever runs one next): press the shop confirm's new `Yes` button once
+(45 L1), and open a card above Beginner's level for the `can use this from level {n}` line.

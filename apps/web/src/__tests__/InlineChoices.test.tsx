@@ -207,3 +207,76 @@ describe('InlineChoices', () => {
     });
   });
 });
+
+describe('InlineChoices yes/no questions', () => {
+  const base = {
+    requestId: 'req-yn',
+    choices: [] as string[],
+    selectedAnswer: null as string | null,
+    timedOut: false,
+    cancelled: false,
+    onAnswer: vi.fn(),
+    onCancel: vi.fn(),
+  };
+  // The real shapes: the shop confirm, the Sorting Hat and the generic confirm.
+  const questions = [
+    'Lottery Ticket from The Affordable Wisp for 17 coins. Buy it? (yes/no)',
+    'Put on the Sorting Hat? You choose a new team for Keleth, and the hat is used up. (yes/no)',
+    'Are you sure? (yes/no)',
+  ];
+
+  it.each(questions)('offers Yes and No buttons for %s', (question) => {
+    const onAnswer = vi.fn();
+    render(<InlineChoices {...base} question={question} onAnswer={onAnswer} />);
+    expect(screen.getByTitle('Answer yes').textContent).toBe('Yes');
+    expect(screen.getByTitle('Answer no').textContent).toBe('No');
+    fireEvent.click(screen.getByTitle('Answer yes'));
+    expect(onAnswer).toHaveBeenLastCalledWith('req-yn', 'yes');
+    fireEvent.click(screen.getByTitle('Answer no'));
+    expect(onAnswer).toHaveBeenLastCalledWith('req-yn', 'no');
+    expect(screen.getByTitle('Cancel this question')).toBeTruthy();
+  });
+
+  it('is never a multi-pick, even when an item name says item(s), and neither button looks pre-chosen', () => {
+    render(<InlineChoices {...base} question={'Spare item(s) bundle from The Wisp for 5 coins. Buy it? (yes/no)'} />);
+    expect(screen.getByTitle('Answer yes')).toBeTruthy();
+    expect(screen.queryByText(/^Buy /)).toBeNull();
+    expect(screen.queryByText(/^Equip /)).toBeNull();
+    expect(screen.getByTitle('Answer yes').getAttribute('style')).toBe(screen.getByTitle('Answer no').getAttribute('style'));
+  });
+
+  it('locks the buttons once answered and drops Cancel', () => {
+    render(<InlineChoices {...base} question="Are you sure? (yes/no)" selectedAnswer="yes" />);
+    expect((screen.getByTitle('Answer yes') as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByTitle('Answer no') as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.queryByTitle('Cancel this question')).toBeNull();
+  });
+
+  it('does not treat a menu, or a free-text question, as yes/no', () => {
+    const { rerender } = render(<InlineChoices {...base} question="Pick one (yes/no)" choices={['a', 'b']} />);
+    expect(screen.queryByTitle('Answer yes')).toBeNull();
+    rerender(<InlineChoices {...base} question="What is its name?" />);
+    expect(screen.queryByTitle('Answer yes')).toBeNull();
+    expect(screen.getByTitle('Cancel this question')).toBeTruthy();
+  });
+});
+
+describe('InlineChoices shop pick questions', () => {
+  it.each([
+    'Choose one or more of the following cards to buy:\n\n0) Basic Shield [1] - 87 coins\n1) Ecdysis [1] - 87 coins',
+    'Choose one or more of the following to buy:\n\n0) Basic Shield [1] - 87 coins [own 1]\n1) Ecdysis [1] - 87 coins',
+  ])('prints the question paragraph once', (question) => {
+    render(
+      <InlineChoices
+        requestId="r"
+        question={question}
+        choices={['Basic Shield', 'Ecdysis']}
+        selectedAnswer={null}
+        timedOut={false}
+        cancelled={false}
+        onAnswer={vi.fn()}
+      />,
+    );
+    expect(screen.getAllByText(/Choose one or more of the following/)).toHaveLength(1);
+  });
+});

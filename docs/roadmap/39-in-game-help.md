@@ -52,7 +52,7 @@ a proposed fix; the owner's own suggestions are marked.
 
 ## Tasks
 
-Tasks 1 and 2 are specified in [39a](39a-cursor-first-pass.md), which Claude implements; Cursor, which drives a real browser, does task 3's walk and a live check of 1 and 2 from the prompts there.
+Tasks 1 and 2 are specified in [39a](../archive/roadmap/39a-cursor-first-pass.md), which Claude implements; Cursor, which drives a real browser, does task 3's walk and a live check of 1 and 2 from the prompts there.
 
 | # | Task | Status |
 |---|---|---|
