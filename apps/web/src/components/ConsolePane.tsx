@@ -181,7 +181,11 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
    */
   const feedEvents = useMemo(() => {
     const open = new Set<string>();
-    for (const ev of consoleEvents) if (ev.promptData) open.add(ev.promptData.requestId);
+    // Only a question still showing its text hides the line: a timed-out or cancelled one shows
+    // only a tombstone, so its history line is the record of what ended (Codex on #424).
+    for (const ev of consoleEvents) {
+      if (ev.promptData && !ev.promptData.timedOut && !ev.promptData.cancelled) open.add(ev.promptData.requestId);
+    }
     if (open.size === 0) return consoleEvents;
     return consoleEvents.filter(ev => !(ev.promptRequestId && open.has(ev.promptRequestId)));
   }, [consoleEvents]);

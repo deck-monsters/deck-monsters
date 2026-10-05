@@ -39,4 +39,4 @@ this as one PR with the archiving of 43 and 44, and then a pause.
 - [x] L1 The Console's questions.
 - [x] L2 The summon refusal.
 
-Nothing is left. A later live check should press the shop's `Yes` button once; tests cover it.
+Nothing is left here. The one live check still owed (press the shop's `Yes` button once) is tracked in [42 J](../../roadmap/42-next-proposals.md).

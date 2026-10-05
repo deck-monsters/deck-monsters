@@ -354,3 +354,6 @@ contestants` line (43).
 **Small fixes from the guides check** ([report](../reference/guides-wizard-check.md)): all
 four fixed in [45](../archive/roadmap/45-guides-check-fixes.md) (bugs 222 and 223). The
 check couldn't reach the `can use this from level {n}` sheet line live; tests cover it.
+
+**Next live check** (whoever runs one next): press the shop confirm's new `Yes` button once
+(45 L1), and open a card above Beginner's level for the `can use this from level {n}` line.

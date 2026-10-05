@@ -15,7 +15,7 @@ Workshop, Shop, and Help pages. A throwaway room, `Scratch help-check 2026-09-30
 used for the fight and then deleted. Game Night was not opened.
 
 Judged against the strings that shipped, which differ slightly from the older lines in
-[39a](../roadmap/39a-cursor-first-pass.md). Revival reads `Fallen · back at {time} (in 12 min)`,
+[39a](../archive/roadmap/39a-cursor-first-pass.md). Revival reads `Fallen · back at {time} (in 12 min)`,
 or `in 2 h 15 min` for a long wait; `Fallen · back in {s} s` (never above 59) in the last
 minute; and `Fallen · almost back` once the time has passed. A full roster reads
 `(1 monster)` or `(N monsters)`. Help is the menu entry **Help and guides**, and it is

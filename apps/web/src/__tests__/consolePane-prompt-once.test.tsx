@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ReactNode } from 'react';
 import { RingFeedContext, type RingFeedApi } from '../hooks/useRingFeed.js';
@@ -68,14 +68,19 @@ vi.mock('../utils/format-event-text.js', () => ({ formatEventText: (text: string
 import ConsolePane from '../components/ConsolePane.js';
 import { resetGuidedStartForTests } from '../hooks/useGuidedStart.js';
 
+const liveListeners = new Set<(tracked: any) => void>();
+
 function TestFeed({ children }: { children: ReactNode }) {
   const value: RingFeedApi = {
     connected: true,
     reconnecting: false,
     seedCursor: () => undefined,
     subscribeChat: () => () => undefined,
-    subscribe: () => () => undefined,
-  };
+    subscribe: (listener: any) => {
+      liveListeners.add(listener);
+      return () => { liveListeners.delete(listener); };
+    },
+  } as RingFeedApi;
   return <RingFeedContext.Provider value={value}>{children}</RingFeedContext.Provider>;
 }
 
@@ -105,6 +110,26 @@ describe('ConsolePane shows an open question once', () => {
 
     expect(screen.getAllByText(/Choose one or more of the following cards to buy:/)).toHaveLength(1);
     expect(screen.getByText('Basic Shield')).toBeInTheDocument();
+  });
+
+  it('shows the history line again once the question times out (the tombstone alone says nothing)', () => {
+    trpcMocks.history = [
+      { id: 'evt-q', type: 'prompt.request', text: QUESTION, payload: { requestId: 'req-1', question: QUESTION } },
+    ];
+    trpcMocks.pending = { requestId: 'req-1', question: QUESTION, choices: ['Basic Shield'], timeoutSeconds: 120 };
+    render(<TestFeed><ConsolePane roomId={roomId} isActive /></TestFeed>);
+    expect(screen.getAllByText(/Choose one or more of the following cards to buy:/)).toHaveLength(1);
+    act(() => {
+      for (const listener of liveListeners) listener({
+        id: 't-1',
+        data: {
+          id: 't-1', type: 'prompt.timeout', scope: 'private', targetUserId: 'user-1', roomId, timestamp: Date.now(),
+          text: 'The game stopped waiting for your answer. Try the command again.', payload: { requestId: 'req-1' },
+        },
+      });
+    });
+    expect(screen.getAllByText(/Choose one or more of the following cards to buy:/)).toHaveLength(1);
+    expect(screen.queryByText('Basic Shield')).toBeNull();
   });
 
   it('keeps the history line of a question that is not open (it is the record)', () => {
