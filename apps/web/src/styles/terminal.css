@@ -36,8 +36,10 @@
   border-bottom-color: var(--color-accent);
 }
 
-.terminal-tab:hover:not(.active) {
-  color: var(--color-fg);
+@media (hover: hover) {
+  .terminal-tab:hover:not(.active) {
+    color: var(--color-fg);
+  }
 }
 
 /* Individual panes */
@@ -82,9 +84,11 @@
   cursor: pointer;
 }
 
-.pane-selector:hover {
-  color: var(--color-fg);
-  border-color: var(--color-fg-dim);
+@media (hover: hover) {
+  .pane-selector:hover {
+    color: var(--color-fg);
+    border-color: var(--color-fg-dim);
+  }
 }
 
 .pane-open-full {
@@ -95,8 +99,10 @@
   padding: 0.1rem 0.2rem;
 }
 
-.pane-open-full:hover {
-  color: var(--color-accent);
+@media (hover: hover) {
+  .pane-open-full:hover {
+    color: var(--color-accent);
+  }
 }
 
 .terminal-slot > * {
@@ -334,9 +340,11 @@
   touch-action: manipulation; /* removes 300ms tap delay on mobile */
 }
 
-.quick-action-chip:hover {
-  border-color: var(--color-fg);
-  color: var(--color-fg);
+@media (hover: hover) {
+  .quick-action-chip:hover {
+    border-color: var(--color-fg);
+    color: var(--color-fg);
+  }
 }
 
 .ftux-guide {
@@ -466,9 +474,11 @@
   z-index: 10;
 }
 
-.jump-to-bottom:hover {
-  border-color: var(--color-accent);
-  color: var(--color-accent);
+@media (hover: hover) {
+  .jump-to-bottom:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+  }
 }
 
 /* Pane divider (desktop) */
@@ -619,8 +629,10 @@
   cursor: pointer;
 }
 
-.roster-toggle:hover {
-  color: var(--color-fg);
+@media (hover: hover) {
+  .roster-toggle:hover {
+    color: var(--color-fg);
+  }
 }
 
 .roster-toggle:focus-visible {
@@ -1037,6 +1049,8 @@
 /* Layout-agnostic route/pane surfaces. Their inline size is determined by a draggable
    slot, so responsiveness must follow the container rather than the viewport. */
 .surface-panel-host {
+  /* The positioning box for buttons over the panel's scroller, such as Help's "↑ Top". */
+  position: relative;
   container: surface / inline-size;
   flex: 1;
   min-width: 0;
@@ -1080,6 +1094,7 @@
 /* Help and guides (roadmap 39). Wide content (tables, ASCII art) scrolls inside its own box,
    never the page: the panel is a query container that can be as narrow as a 390px phone. */
 .help-sections { display: flex; flex-wrap: wrap; gap: .4rem; margin: .75rem 0 1rem; }
+.help-jump-to-top { top: auto; bottom: 1rem; }
 .help-sections .btn[aria-pressed='true'] { color: var(--color-fg-bright); border-color: var(--color-accent); }
 .help-guide { overflow-wrap: anywhere; line-height: 1.5; }
 .help-guide h2 { font-size: 1.15rem; color: var(--color-fg-bright); margin: 1.25rem 0 .5rem; }
@@ -1102,6 +1117,12 @@
 
 @container surface (max-width: 520px) {
   .surface-panel { padding: .75rem; }
+  /*
+    The five section buttons wrapped four and one, with Commands alone on a second row
+    (bug 230). Three even columns read as one control on a phone.
+  */
+  .help-sections { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .help-sections .btn { justify-content: center; text-align: center; }
   .surface-panel-heading { align-items: flex-start; }
   .surface-panel h1 { font-size: 1.05rem; }
   .fight-log-card { padding: .6rem; }

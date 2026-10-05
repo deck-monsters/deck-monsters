@@ -12,6 +12,8 @@ export interface LevelUpGainsView {
 
 interface LevelUpSheetProps {
   monsterName: string;
+  /** Subject pronoun ("she", "they"); the name stands in when it is missing. */
+  pronoun?: string;
   xpIntoLevel: number;
   xpNeededForLevel: number;
   /** What the next level changes; missing from older payloads, which then show no stat list. */
@@ -39,6 +41,7 @@ const signed = (n: number) => (n > 0 ? `+${n}` : `−${Math.abs(n)}`);
  */
 export default function LevelUpSheet({
   monsterName,
+  pronoun,
   xpIntoLevel,
   xpNeededForLevel,
   nextLevel,
@@ -47,6 +50,8 @@ export default function LevelUpSheet({
   onClose,
 }: LevelUpSheetProps) {
   const level = nextLevel?.level;
+  // "it" read as an object, not a companion (bug 230): the monster's own pronoun, or its name.
+  const who = pronoun || monsterName;
   const toGo = Math.max(0, xpNeededForLevel - xpIntoLevel);
   // Only changes: a stat at its cap gains nothing and is left out rather than shown as +0.
   const gains = nextLevel ? STAT_LABELS.filter(([key]) => nextLevel[key] !== 0) : [];
@@ -74,14 +79,14 @@ export default function LevelUpSheet({
         </ul>
       )}
       {cardsNow.length > 0 ? (
-        <p>New cards it can use: {joinList(cardsNow)}.</p>
+        <p>New cards {who} can use: {joinList(cardsNow)}.</p>
       ) : nextCards && nextCards.cards.length > 0 ? (
         <p>
           No new cards at this level. Next new cards, at level {nextCards.level}:{' '}
           {joinList(nextCards.cards)}.
         </p>
       ) : nextCards === null ? (
-        <p>No new cards: it can already use every card it ever will.</p>
+        <p>No new cards to come: {who} can already use all of them.</p>
       ) : null}
     </DetailSheet>
   );

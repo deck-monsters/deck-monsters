@@ -116,40 +116,10 @@ export default function CommandReference({ open, onClose, onInsertCommand }: Com
           </button>
         </div>
 
-        {/* Quick links */}
-        <div
-          style={{
-            padding: '0.5rem 1rem',
-            borderBottom: '1px solid var(--color-border)',
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: '0.4rem',
-            flexShrink: 0,
-          }}
-        >
-          {[
-            { label: 'Handbook', cmd: 'look at player handbook' },
-            { label: 'Monster Manual', cmd: 'look at monster manual' },
-            { label: 'Card List', cmd: 'look at cards' },
-          ].map(({ label, cmd }) => (
-            <button
-              key={cmd}
-              onClick={() => { onInsertCommand(cmd); onClose(); }}
-              style={{
-                background: 'transparent',
-                border: '1px solid var(--color-border)',
-                color: 'var(--color-fg-dim)',
-                fontFamily: 'var(--font-family)',
-                fontSize: '0.75rem',
-                padding: '0.2rem 0.5rem',
-                cursor: 'pointer',
-              }}
-              title={`Run: ${cmd}`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
+        {/*
+          The Handbook / Monster Manual / Card List shortcuts were removed (bug 230): the guides
+          live in Help and guides, and this panel is now named for what it is, Console commands.
+        */}
 
         {/* Scrollable command list */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '0.5rem 0' }}>

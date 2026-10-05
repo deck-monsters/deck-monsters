@@ -111,6 +111,9 @@ type InventoryMonsterSummary = {
 	// XP bar opens. Each is a change and can be 0 or negative (youth AC fades); see
 	// `levelUpGains` in the engine.
 	nextLevel: { level: number; hp: number; ac: number; str: number; dex: number; int: number };
+	// The monster's subject pronoun ("she", "he", "they"), so the level-up details can say
+	// "New cards she can use" rather than "it" (bug 230). Empty when the record has none.
+	pronoun: string;
 };
 
 // Per-item summary for the web item list (docs/architecture/workshop-and-items.md).
@@ -374,6 +377,12 @@ const nextCardsFor = (type: string, level: number): InventoryMonsterSummary['nex
 let cardFactsCache: ReturnType<typeof allCardFacts> | undefined;
 const getCardFacts = () => (cardFactsCache ??= [...allCardFacts(), ...cardFactsVariants()]);
 
+/** A monster's subject pronoun from its `pronouns` getter ({ he: 'she', … }), or '' when absent. */
+const subjectPronoun = (pronouns: unknown): string => {
+	const he = (pronouns as { he?: unknown } | undefined)?.he;
+	return typeof he === 'string' ? he : '';
+};
+
 const summarizeInventory = ({
 	character,
 	inRing,
@@ -469,6 +478,7 @@ const summarizeInventory = ({
 					monsterClass: monsterClassOfType(type),
 					nextCards: nextCardsFor(type, level),
 					nextLevel: levelUpGains(type, level),
+					pronoun: subjectPronoun(record.pronouns),
 				} satisfies InventoryMonsterSummary,
 			};
 		})

@@ -135,9 +135,16 @@ button {
   transition: border-color 0.1s, color 0.1s;
 }
 
-.btn:hover:not(:disabled) {
-  border-color: var(--color-accent);
-  color: var(--color-accent);
+/*
+  Hover styles only where something can hover (bug 230). On a phone a tap leaves the button
+  "hovered" until the next tap elsewhere, so a Sell button stayed red (the Street Fighter
+  accent) after selling, and read as an error or a stuck selection.
+*/
+@media (hover: hover) {
+  .btn:hover:not(:disabled) {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+  }
 }
 
 .btn:disabled {
@@ -150,8 +157,10 @@ button {
   color: var(--color-fg-bright);
 }
 
-.btn-primary:hover:not(:disabled) {
-  background: var(--color-choice-hover);
+@media (hover: hover) {
+  .btn-primary:hover:not(:disabled) {
+    background: var(--color-choice-hover);
+  }
 }
 
 /* Panels (non-terminal UI cards) */
@@ -496,8 +505,10 @@ button {
   text-align: left;
 }
 
-.workshop-monster-filter-btn:hover {
-  border-color: var(--color-border);
+@media (hover: hover) {
+  .workshop-monster-filter-btn:hover {
+    border-color: var(--color-border);
+  }
 }
 
 .workshop-monster-filter-btn.active {
@@ -774,9 +785,14 @@ button {
   cursor: pointer;
 }
 
-.workshop-card-info:hover,
 .workshop-card-info:focus-visible {
   color: var(--color-accent);
+}
+
+@media (hover: hover) {
+  .workshop-card-info:hover {
+    color: var(--color-accent);
+  }
 }
 
 /* Card details: a bottom sheet on a phone, a modest dialog on a wide screen. */
@@ -1232,6 +1248,12 @@ button {
   }
   .shop-stock-row { align-items: stretch; flex-direction: column; }
   .shop-buy-button { width: 100%; }
+  /*
+    A sell row also holds the quantity box: 100% plus the box overflowed the card on a phone
+    (bug 230). The controls take the row and the button takes what the box leaves.
+  */
+  .shop-sell-controls { width: 100%; }
+  .shop-sell-controls .shop-buy-button { width: auto; flex: 1 1 auto; min-width: 0; }
   /*
     The header stays a row on a phone: title on the left, the pane's actions (the ⤢ full-page
     link) top-right. It used to stack, which was fine while coins, Sync and Train monster

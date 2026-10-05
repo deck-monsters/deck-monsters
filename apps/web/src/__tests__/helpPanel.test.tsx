@@ -42,6 +42,26 @@ describe('HelpPanel', () => {
     expect(region!.querySelector('table')).not.toBeNull();
   });
 
+  it('offers "↑ Top" when scrolling back up from deep in a guide, not on the way down (bug 230)', () => {
+    render(<HelpPanel />);
+    const panel = document.querySelector('.help-panel') as HTMLElement;
+    const scrollTo = vi.fn();
+    panel.scrollTo = scrollTo as unknown as typeof panel.scrollTo;
+    const scrollAt = (top: number) => {
+      panel.scrollTop = top;
+      fireEvent.scroll(panel);
+    };
+    scrollAt(3000); // reading down
+    expect(screen.queryByRole('button', { name: '↑ Top' })).toBeNull();
+    scrollAt(2900); // starting back up
+    fireEvent.click(screen.getByRole('button', { name: '↑ Top' }));
+    expect(scrollTo).toHaveBeenCalledWith(expect.objectContaining({ top: 0 }));
+    expect(screen.queryByRole('button', { name: '↑ Top' })).toBeNull();
+    scrollAt(600);
+    scrollAt(500); // near the top already: no button
+    expect(screen.queryByRole('button', { name: '↑ Top' })).toBeNull();
+  });
+
   it('switches section from a cross-guide link', () => {
     render(<HelpPanel />);
     fireEvent.click(screen.getByRole('button', { name: 'Cards' }));

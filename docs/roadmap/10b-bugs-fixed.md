@@ -5331,6 +5331,38 @@ note (`Theme: Street Fighter`). `.btn` sets `text-decoration: none`. Test: `help
 
 **Status**: Fixed.
 
+### 230. Phone polish from the owner's check of #425 — FIXED
+
+Found by the owner on an iPhone after #425 shipped.
+
+- **"New cards it can use."** The level-up sheet called a companion "it". The server now
+  sends each monster's subject pronoun (`pronoun` on `myInventory`, from its `pronouns`
+  getter), and the sheet says `New cards she can use`, falling back to the name. The no-cards
+  line no longer needs a pronoun at all: `No new cards to come: {name} can already use all of
+  them.`
+- **A Sell button stuck red, and past the card's edge.** Two causes. On a phone a tap leaves a
+  button in `:hover` until the next tap elsewhere, and `.btn:hover` paints the accent, red in
+  the Street Fighter theme, so a sold row looked like an error. Every hover rule in `base.css`
+  and `terminal.css` now sits under `@media (hover: hover)`. And the phone rule gave the Sell
+  button `width: 100%` beside the quantity box, so the pair overflowed the card; the controls
+  take the row and the button flexes into what the box leaves.
+- **Guide links in Console commands.** Handbook, Monster Manual and Card List repeated Help
+  and guides once the panel was renamed (bug 229). Removed.
+- **Help's section buttons on a phone.** Five buttons wrapped four and one. Below 520px they
+  are three even columns.
+- **Theme names.** The desktop theme button said `Switch to street-fighter theme` (the id),
+  and the Account page called the setting `Terminal theme`. Both use the theme's name now
+  (found while writing the unicorn theme proposal, roadmap 46).
+- **No way back up a long guide.** Help shows `↑ Top` once the player is about two phone
+  screens down and starts scrolling up, and hides it on the way down. Repeated scroll events
+  at the same offset (iOS sends them as momentum settles) do not count as a direction; the
+  first live check hid the button because of exactly that.
+
+Tests: `cardDetails.test.tsx`, `CommandReference.test.tsx`, `helpPanel.test.tsx`, and the
+router's `myInventory` test.
+
+**Status**: Fixed.
+
 ## Closed without a fix
 
 These were open investigations the owner closed on 2026-09-28. Reopen with new evidence.
