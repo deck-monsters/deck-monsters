@@ -237,6 +237,14 @@ describe('InlineChoices yes/no questions', () => {
     expect(screen.getByTitle('Cancel this question')).toBeTruthy();
   });
 
+  it('is never a multi-pick, even when an item name says item(s), and neither button looks pre-chosen', () => {
+    render(<InlineChoices {...base} question={'Spare item(s) bundle from The Wisp for 5 coins. Buy it? (yes/no)'} />);
+    expect(screen.getByTitle('Answer yes')).toBeTruthy();
+    expect(screen.queryByText(/^Buy /)).toBeNull();
+    expect(screen.queryByText(/^Equip /)).toBeNull();
+    expect(screen.getByTitle('Answer yes').getAttribute('style')).toBe(screen.getByTitle('Answer no').getAttribute('style'));
+  });
+
   it('locks the buttons once answered and drops Cancel', () => {
     render(<InlineChoices {...base} question="Are you sure? (yes/no)" selectedAnswer="yes" />);
     expect((screen.getByTitle('Answer yes') as HTMLButtonElement).disabled).toBe(true);

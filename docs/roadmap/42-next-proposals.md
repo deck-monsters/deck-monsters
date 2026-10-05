@@ -351,15 +351,6 @@ contestants` line (43).
   wizard's preview, so Ready can show the whole description;
 - a colour swatch in the wizard that reaches the pixel sprite.
 
-**Small fixes from the guides check** ([report](../reference/guides-wizard-check.md)), being done in [45](45-guides-check-fixes.md):
-1. The shop's card pick and Back Room pick print the `Choose one or more…` question twice: as
-   a line, then again above the buttons.
-2. The shop's yes/no confirm offers only `Cancel`; there are no `Yes` and `No` buttons, so a
-   new player must type `yes`.
-3. A taken monster name shows its message twice in the wizard: in the Workshop's banner and
-   under the suggestions.
-4. `summon a boss` with one monster in the ring answered `Every challenger in the ring already
-   has a boss to face…`, yet a fight began against a boss. Find which boss it meant (the timer
-   boss arriving at the same moment?) and make the refusal match the ring.
-5. The check couldn't reach the `can use this from level {n}` sheet line live (every
-   affordable card was Beginner); tests cover it.
+**Small fixes from the guides check** ([report](../reference/guides-wizard-check.md)): all
+four fixed in [45](../archive/roadmap/45-guides-check-fixes.md) (bugs 222 and 223). The
+check couldn't reach the `can use this from level {n}` sheet line live; tests cover it.

@@ -5193,6 +5193,26 @@ summoned themselves.
 
 **Status**: Fixed.
 
+### 223. A question shown twice, yes/no without buttons, and a taken name shown twice — FIXED
+
+Found by Cursor's guides and wizard check ([report](../reference/guides-wizard-check.md)),
+roadmap 45 L1.
+
+- **The question twice.** Console history turns every past `prompt.request` into a plain
+  line. A Console that mounts or reloads while that question is still open also shows the
+  live question with its buttons, so the paragraph appeared twice (Cursor's
+  `16-buy-1.png`). The history line now carries its `requestId` and is hidden while the same
+  question is on screen; once the question is over, the line stays as the record.
+- **Yes/no without buttons.** Yes/no questions arrive with no choices and a question ending
+  in `(yes/no)`, so the Console drew only Cancel. It now shows `Yes` and `No`, styled alike
+  so a purchase confirm doesn't lean toward yes, and a yes/no question is never treated as a
+  multi-pick. The [prompt-answer contract](../reference/prompt-answer-contract.md) says a
+  new yes/no question must end with `(yes/no)`.
+- **The taken name twice.** The Workshop's error banner included the training mutation's
+  error, which the wizard already shows at the step at fault. The banner no longer shows it.
+
+**Status**: Fixed.
+
 ## Closed without a fix
 
 These were open investigations the owner closed on 2026-09-28. Reopen with new evidence.

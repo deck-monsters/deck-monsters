@@ -101,8 +101,9 @@ export default function InlineChoices({
   // Ordered array: each entry is the choice index, in the order the user picked them.
   // Position in this array = deck slot (1-based displayed to user).
   const [selectionOrder, setSelectionOrder] = useState<number[]>([]);
-  const multi = isMultiSelect(question);
   const yesNo = isYesNo(question, choices);
+  // A yes/no question is never a multi-pick, even if an item name in it says "item(s)".
+  const multi = !yesNo && isMultiSelect(question);
   const buying = multi && isBuyPrompt(question);
   const noun = buyNoun(question);
   // Per-index max counts parsed from the question text (e.g., "Hit [3]" → idx→3).
@@ -340,9 +341,11 @@ export default function InlineChoices({
                 onClick={() => onAnswer(requestId, answer)}
                 style={{
                   padding: '0.3rem 0.75rem',
-                  background: picked || (answer === 'yes' && !isDone) ? 'var(--color-accent)' : 'transparent',
+                  // Yes and No look the same until one is picked: a purchase confirm must not
+                  // nudge toward yes (review of pass 45).
+                  background: picked ? 'var(--color-accent)' : 'transparent',
                   border: '1px solid var(--color-accent)',
-                  color: picked || (answer === 'yes' && !isDone) ? 'var(--color-bg)' : 'var(--color-fg)',
+                  color: picked ? 'var(--color-bg)' : 'var(--color-fg)',
                   fontFamily: 'var(--font-family)',
                   fontSize: 'var(--font-size)',
                   cursor: isDone ? 'default' : 'pointer',
