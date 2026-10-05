@@ -8,9 +8,20 @@ tags: [roadmap, web, theme, design, unicorn, accessibility]
 ---
 # 46 — A unicorn theme
 
-**Status:** Proposed (2026-10-05). Nothing is built. The owner picks a direction (or the
-recommended blend) and a name, then this becomes a two-pass plan (46a, 46b) with the task
-table at the end.
+**Status:** Proposed (2026-10-05), revised the same day after a second review the owner
+forwarded (see "Revision" below). Nothing is built. The owner picks a direction and a name,
+then this becomes a two-pass plan (46a, 46b) with the task table at the end.
+
+**Revision (2026-10-05).** The first draft blended the four inspirations fairly evenly: title
+bars everywhere, foil in four places, flowers and watercolour throughout. A second review
+argued that this would read as a collection of references rather than one object, and
+proposed giving each source one job. This revision adopts most of that review (the north
+star, the layer table, the material system, three levels of shine, a quieter Ring, binder
+tabs and pockets, a small botanical vocabulary, sparing hand-drawn marks, JetBrains Mono
+first) and the dye-based spectrum, which we checked against The Met's own text. It keeps all
+of the engineering in §4, and adds one fix of its own: a lazily loaded theme still needs its
+first-paint colours in the shared bundle (§4.4). The working name is now **Millefleur**
+(§5).
 
 **Owner's request (2026-10-05):** "a new theme that goes with the new unicorn monster. I'm
 thinking 90s trapper keeper, rounded edges and gradients and pastels and beautiful water
@@ -22,13 +33,16 @@ though a bit of a nod could be nice, maybe macOS 6 or 7 rather than dos/cli, Lis
 
 Every theme today is a phosphor screen in a different colour: dark background, one bright
 ink, monospace type, square boxes, optional scanlines. This theme is the first one that is
-**not a screen at all**. It is a page: watercolour paper, soft lilac and sea-foam washes,
-rounded windows, a puffy sticker here and there, and a sheen of holographic foil saved for
-the moments that matter (a natural 20, a level-up, the tab you are on).
+**not a screen at all**. It is an object: **a magical 1991 school binder that turns out to
+open onto the unicorn's garden.** The tabs are binder dividers, the Workshop is a sticker
+album with card pockets, the Ring is a quiet storybook page, and holographic shine is saved
+for the moments that matter.
 
-The nod to the computer is still there, but it is a **Macintosh, not DOS**: pane headers drawn
-as System 7 title bars, with pinstripes and a centred title. The feed and the Console keep a
-monospace font, but a soft, gel-pen one, so the card frames still line up.
+The nod to the computer is still there, but it is a **Macintosh, not DOS**: System 7 shows up
+in the grammar of controls (outlined buttons, the default-button ring, close boxes, title bars
+on real windows such as sheets and dialogs), not as a costume on every header. The feed and
+the Console keep JetBrains Mono, so the game's old monospace transcript still shows through
+the new paper, on purpose.
 
 **Who it is for:** players who find the terminal look cold or "for someone else". The owner
 wants it feminine and beautiful, and wants it to read as a choice in its own right, not a
@@ -132,11 +146,27 @@ or any character likeness. The film and its designs are under copyright.
   Surrenders to a Maiden*). Before using any image, check that its object page shows the
   Open Access / Public Domain badge. The Met site could not be opened from this session.
 
-**Borrow:** this is the source *The Last Unicorn* itself drew from, and it is free to
-use. Take the millefleurs as a scattered motif (we draw our own five-petal flowers as tiny
-SVG; we don't ship photographs), the circular fence as a frame idea for the empty
-Workshop, and pomegranate red. The film can only be an inspiration; the tapestries are a
-source we may use.
+- **The dyes.** The Met's description of the set says chemical analysis found the colours
+  came from three plants, **weld** (yellow), **madder** (red) and **woad** (blue), which the
+  weavers blended into a wide spectrum and highlighted with **silver and gilt thread**
+  ([The Met, object 467640](https://www.metmuseum.org/art/collection/search/467640); also
+  quoted by [Wikipedia](https://en.wikipedia.org/wiki/The_Unicorn_Tapestries)). The
+  materials line reads "wool warp with wool, silk, silver, and gilt wefts".
+
+**Borrow:** this is the source *The Last Unicorn* itself drew from, and it is free to use.
+Take:
+
+- **The dye spectrum** as the theme's rainbow (§3.4): madder rose, weld butter, woad sky,
+  woad-and-weld sea-foam, woad-and-madder lilac. It gives the Trapper Keeper rainbow a
+  historical reason to look the way it does, and keeps it soft rather than fluorescent.
+- **Metal thread as the ancestor of foil.** The holographic shine is the binder's version of
+  the tapestries' silver and gilt highlights.
+- **A small vocabulary of plants**, drawn by us as tiny ink marks (§3.4), not a generic
+  five-petal flower and never a photograph.
+- **The circular fence** of *The Unicorn in Captivity* as the theme's recurring enclosure
+  shape (§3.4), and pomegranate red for danger.
+
+The film can only be an inspiration; the tapestries are a source we may use.
 
 ### 2.5 Classic Mac OS: System 6, System 7, a touch of Platinum
 
@@ -155,11 +185,15 @@ source we may use.
 - [system.css](https://changelog.com/news/lOAY), an open-source CSS library modelled on
   System 6. It is useful as a reference for title-bar stripe spacing; we do not depend on it.
 
-**Borrow:** the window. Pane headers become title bars with fine horizontal pinstripes on
-either side of a centred title. Buttons become rounded rectangles; the primary action gets
-the thick double outline of the System 7 default button. A 1 px ink outline frames each
-window, with a hard 1–2 px drop shadow beneath it. A tiny dithered "desktop pattern" sits
-behind the panes. The pixel monsters already carry the Kare spirit; keep them pixelated.
+**Borrow:** the grammar, not the costume. Outlined controls with a strong 1 px ink edge;
+rounded-rectangle buttons; the thick double outline of the System 7 default button on the
+primary action; a compact square close box on things that really close; a 1–2 px hard
+shadow, used occasionally; classic selection-rectangle logic; a few pixels of dither in tiny
+places. **Pinstriped title bars only where there is a real window title**: the detail sheets,
+dialogs, the Train wizard's steps. Pane headers such as `THE RING · boss in ~5m · 3 summons
+left` carry live information on the right and on a phone have no room for a centred title,
+so they do not become title bars. The pixel monsters already carry the Kare spirit; keep them
+pixelated.
 
 **Do not copy:** the Chicago font file, Apple icons (the Happy Mac, the Finder face, the
 watch cursor), the Apple logo, or Platinum's exact bevel artwork. **Never draw a close
@@ -222,7 +256,7 @@ Decorative ramp (never behind small text): `#ff8fd0 #ffb38a #ffe680 #8ff0b8 #80d
 The deepest ink stays ≥ 10.5:1 on every *pale* stop (`#ffb3de` … `#d4c4ff`), so a title
 may sit on a washed-out version of the ramp.
 
-- **Type:** Fredoka (rounded, OFL) for chrome and headings; the soft mono (§4.3) for the feed.
+- **Type:** Fredoka (rounded, OFL) for chrome and headings; JetBrains Mono for the feed (§4.3).
 - **Shape:** large radii (14–18 px windows, pill buttons), 2 px white sticker border plus
   a soft shadow (`0 2px 0 #e3c4ee, 0 6px 14px rgb(176 22 110 / 0.12)`).
 - **Texture:** a pastel rainbow binding (4 px gradient strip) on the left edge of each pane;
@@ -254,7 +288,7 @@ build, because every existing assumption about a dark background still holds.
 | `--color-choice-hover` / `-selected` | `#2d3159` / `#373c6b` | | | | |
 | HP healthy / hurt / critical | `#f3effd` / `#e9a0c4` / `#e0473c` | Moonlight → rose → Bull red | 14.31 / 7.93 / 3.96 | steps 1.81, 2.00 | |
 
-- **Type:** Fraunces italic for display, Nunito for chrome, the soft mono for the feed.
+- **Type:** Fraunces italic for display, Nunito for chrome, JetBrains Mono for the feed.
 - **Shape:** medium radii (10–12 px), no hard shadows; edges are soft glows
   (`0 0 0 1px #41467a, 0 8px 24px rgb(0 0 0 / 0.35)`).
 - **Texture:** two or three large watercolour blooms (radial gradients in lilac `#5b4f9e`
@@ -286,7 +320,7 @@ Mac-like and the most legible.
 | HP healthy / hurt / critical | `#2f86c4` / `#9b3f8e` / `#5e0e2c` | Sky → plum → pomegranate | 3.46 / 5.27 / 11.70 | steps 1.52, 2.22 | |
 
 - **Type:** a pixel face for title bars only (§4.3), Nunito for the rest of the chrome,
-  the soft mono for the feed.
+  JetBrains Mono for the feed.
 - **Shape:** windows with 6 px corners and a hard `2px 2px 0` ink shadow; rounded-rect
   buttons (8 px); the primary button gets a second 3 px outline 2 px out (System 7 default
   button).
@@ -298,24 +332,106 @@ Mac-like and the most legible.
   The ink-black border also breaks the HP and XP tracks, which use `--color-border`
   (see §4.1).
 
-### 3.4 Recommended: "Licorne", a blend
+### 3.4 Recommended: "Millefleur", the binder and the garden
 
-**Paper and watercolour from B, the window from C, foil from A, kept for rare moments.**
-A light theme. The page is lilac-white watercolour paper with a few soft blooms. Each pane
-is a rounded window with a System 7 title bar in pastel pinstripes. Chips and badges are
-puffy stickers. Holographic foil appears in four places only: the active tab's underline,
-the nat-20 and kill highlight tags, the level-up sheet's header, and the Train wizard's
-"Meet your monster" step. That way the shine stays special.
+A light theme built from all three directions, but not as an even blend. Each source has one
+job, and the rules below say where each is allowed.
 
-Why the blend:
+**North star: magic leaking through office supplies.** Ordinary interaction is binder,
+stationery and System 7: calm, tidy, a little mundane. Magic intrudes at the moments that
+earn it. XP is a spiralling horn. A natural 20 throws a tiny rainbow across an otherwise plain
+index card. A level-up turns a window title to foil. A newly trained monster gets a white
+sticker halo. Flowers grow into an empty panel. Pomegranate red appears only when something
+is in danger. When a design choice is unclear, ask which side of that line it is on. This
+also suits the game's tone: a strange bestiary living inside a deliberately ordinary UI.
 
-- It is the largest departure (light, rounded, proportional chrome, textured) while staying
-  calm enough for a ten-minute fight log.
-- The Mac nod is structural (title bars, buttons, the default-button ring), not a font
-  gimmick. It survives even if no Chicago-like font clears licensing.
-- Foil reserved for highlights makes the moments players care about sparkle. If foil were
-  everywhere, nothing would.
-- B's palette works as a **dark sibling** later, the same theme family at night.
+**Who does what**
+
+| Layer | Source | It controls |
+|---|---|---|
+| World | Watercolour and the tapestries | Paper, palette, washes, the botanical marks |
+| Object | The Trapper Keeper | Tabs as dividers, pockets, labels, sheets, physical layering |
+| Interface grammar | System 6/7 | Borders, buttons, the default ring, close boxes, title bars on real windows, selection and focus |
+| Magic and reward | Holographic sticker culture | Level-ups, crits, rare things, the newly made |
+| Character | The game's own Unicorn | Roses, the spiral horn, pomegranate, the gloaming |
+
+**Feminine, not "pink UI".** The softness comes from material, ornament and editorial
+composition, not from maximising pink. Woad blue and sea-foam carry at least as much of the
+palette as blush; plum ink replaces black. Sanrio's Little Twin Stars is a useful check here:
+its identity moves among light blue, pink, mint and purple and leans on gentleness, not one
+colour.
+
+#### The dye spectrum
+
+The theme's rainbow is the tapestries' three dyes and their mixtures, diluted to washes.
+These are the same five wash tokens as below, which already pass contrast under text:
+
+| Dye | Wash token | Hex |
+|---|---|---|
+| Madder (red), diluted | `--wash-blush` | `#ffe3ee` |
+| Weld (yellow) | `--wash-butter` | `#fff3d1` |
+| Woad (blue) | `--wash-sky` | `#e1efff` |
+| Woad + weld | `--wash-seafoam` | `#dcf5ee` |
+| Woad + madder | `--wash-lilac` | `#efe4ff` |
+
+Where a rainbow appears (the foil, a binding edge), it runs in this order rather than the
+generic pink-to-purple ramp, and the foil plays the part of the silver and gilt thread.
+
+#### Materials, and where each may appear
+
+| Material | What it is | Allowed on | Not on |
+|---|---|---|---|
+| **Paper** | Pearl page, faint grain, one or two washes | The page behind everything; the Ring and Console; Help and Chat | Controls |
+| **Window** | White, rounded, 1 px ink outline, occasional hard shadow | Sheets, dialogs, the Train wizard, Workshop monster panels | Every pane header (see §2.5) |
+| **Divider** | A tab that sticks out of the binder, pale wash, joins the page when selected | The surface tabs only | Buttons |
+| **Pocket** | Translucent card pocket or album mount: warm white, stitched or dotted edge, small role label | Workshop card slots, Your cards | Lists of text |
+| **Label** | A small paper label pasted over a rule | Chat's "During fight #58", date separators, section labels | Anything clickable that is not a chip |
+| **Sticker** | Die-cut white border and soft shadow | Chips, badges, the unread count, pixel monsters in the roster | Body text, long lists |
+| **Shine** | Pearlescent, prismatic or holographic (below) | See the shine table | Scrolling rows, anything always on screen with motion |
+
+**Three levels of shine**, so the rare ones stay rare:
+
+| Level | What | Motion | Where |
+|---|---|---|---|
+| Pearlescent | A static, low-contrast gradient sheen | None | Fairly often: the selected divider's edge, the default button, the XP horn |
+| Prismatic | A static spectral edge (the dye spectrum) | None | Selected rare things: a rare item, the nat-20 and kill tags, a boss's name label |
+| Holographic | The animated, angle-shifting holo (§4.5) | Only on payoff moments; still under reduced motion | Level-up (the sheet's title bar), a newly trained monster (the wizard's last step) |
+
+The first draft put full foil on the active tab. That is on screen nearly all the time, so it
+would stop being special; it is pearlescent now.
+
+#### Marks: a botanical vocabulary and a little handwriting
+
+Five tiny ink marks, 8–16 px, drawn by us as static SVG. Not botanical illustrations; small
+doodles with fixed meanings:
+
+| Mark | Meaning |
+|---|---|
+| Rose | The Unicorn and monster-related moments (it eats your roses) |
+| Pomegranate leaf and seed | Danger, defeat, critical |
+| Iris | Story and chapter breaks: a boss summoned, a fight won |
+| Carnation or a small star flower | Neutral scatter: empty states, quiet decoration |
+| A sprig | An empty state's single ornament |
+
+The tapestries' own plants include iris, carnation and pomegranate among the 85 identified,
+so the vocabulary is borrowed from the source, not invented cuteness.
+
+**Handwriting, as marks only.** Never a handwriting font for text. A very few static,
+hand-drawn SVG marks give the binder its owner: a pencil circle behind a newly unlocked card
+in the level-up sheet, a small heart or star by "Meet your monster", one hand-drawn underline
+under the level-up title. No more than one on screen at a time.
+
+**The fence.** The low circular fence of *The Unicorn in Captivity* becomes the theme's
+enclosure shape: a circular medallion behind the level badge, an oval sticker halo around a
+newly trained monster, faint curved fence marks in the empty Workshop, and a ring-shaped
+loading state. Always abstract (a dashed or stitched curve), never a literal medieval fence.
+
+**One airbrush gesture.** Behind everything, besides the washes: a single, very faint
+airbrushed ribbon or arc crossing one corner of the page, in woad, like the soft clouds and
+ribbons of a period binder cover. It is the cheapest thing in the theme and the most
+specifically 1991.
+
+#### The palette
 
 | Token | Hex | Role | on bg | on panel | on sel |
 |---|---|---|---|---|---|
@@ -344,62 +460,74 @@ button) 14.38; the focus ring (accent on bg) 6.82, well over the 3:1 needed for 
 fg is 11.79–13.01, fg-dim 5.27–5.82 and accent 5.92–6.53 on each of them. They can tint
 panels, role slots and sheets without a contrast exception.
 
-#### How each surface looks in Licorne
+#### How each surface looks in Millefleur
 
-- **App header** (`AppShell.tsx`): white, with a 3 px pastel rainbow binding along its bottom
-  edge in place of the 1 px rule. The room name is in Fraunces italic 600. The nav buttons
-  are rounded-rect buttons.
-- **Tabs** (`.terminal-tab`): pill-topped folder tabs. The active one is white and joined
-  to its pane, with a foil underline. Inactive tabs are `--wash-lilac`. The Chat unread
-  badge (`.terminal-tab-badge`) is a puffy sticker: accent fill, white text, white ring.
-- **Pane headers** (`.pane-header`): **System 7 title bars.** Two pinstripe fields
-  (`repeating-linear-gradient` of 1 px `#d9c6ea` and 1 px transparent, six stripes) on
-  either side of the centred title. The title sits in a white gap, in the title-bar face
-  (§4.3), sentence case instead of today's uppercase tracking. Timers and actions
-  stay at the right, outside the stripes.
-- **The Ring feed:** paper background. The soft mono at the same 14 px / 1.4 metrics. Card
-  frames (`.event-card-block`) become index cards: white, 10 px radius, a hairline border,
-  and a faint ruled-line background (`repeating-linear-gradient` at the 19.6 px line
-  pitch, so rules sit under text lines). Highlight rows keep their 3 px left bar,
-  rounded at the ends; their tags are stickers. Narration stays plain ink: no glow, no
-  shadow.
-- **Roster** (`RingRoster.tsx`): sprites with a **die-cut sticker outline** (§4.6), names
-  in Nunito 700. The acting row gets a `--wash-butter` highlight with rounded ends. HP bars
-  become 6 px rounded pills on their own track token.
-- **Console** (`ConsolePane.tsx`): a notebook page. The command dock is a white rounded
-  field with an inner 1 px border. The `>` prompt glyph becomes accent-coloured and stays
-  `>`, so the help text that mentions typing at the prompt still matches. Quick-action
-  chips are puffy stickers.
-- **Workshop monster panels** (`.workshop-monster-panel`): rounded windows with the
-  title-bar header. Card slots get a role wash plus a role-coloured 2 px top edge (like a
-  tab divider in a binder): attack and area on `--wash-blush` with an accent edge, heal on
-  `--wash-seafoam` with a success edge, trick on `--wash-lilac` with an fg-bright edge.
-  Today the slots tint only their border through `color-mix`, and that rule stays as the
-  fallback. Disabled slots get a dotted border; incompatible ones a 45° hatching, not
-  colour alone.
-- **Meters:** HP stays the three-stage ramp. **XP is the unicorn's horn:** a pill track
-  whose fill is a diagonal twist (`repeating-linear-gradient(135deg, #fff3d1 0 6px,
+- **App header** (`AppShell.tsx`): white paper with a 3 px dye-spectrum binding along its
+  bottom edge in place of the 1 px rule. The room name is in Fraunces italic 600. The nav
+  buttons are System 7 rounded rectangles with an ink outline.
+- **Tabs** (`.terminal-tab`): **the star of the theme.** Each is a binder divider sticking up
+  from the page, in a very pale wash (not a saturated colour each). The selected divider is
+  white and joins the paper below it, with a thin pearlescent top edge; the existing
+  underline goes away, because the layering already says which tab you are on. On a phone
+  the row already scrolls sideways and clips at the right edge, which now reads as dividers
+  going on past the edge of the binder. The Chat unread badge is a puffy sticker.
+- **Pane headers** (`.pane-header`): plain labels on the paper, sentence case, with the
+  timers and actions where they are today. No title-bar stripes (§2.5).
+- **The Ring feed: the calmest surface.** Warm pearl paper, almost no shadow, faint grain.
+  JetBrains Mono in plum ink. The `=====` and `-----` card frames stay, drawn in faint
+  lavender: the terminal underneath the notebook, showing through on purpose. Narrative and
+  mechanics keep the distinction they have now. Ornament appears only at chapter-like moments
+  (boss summoned, fight won, level-up, new monster), as one iris or rose mark. The **boss
+  introduction** becomes a **bestiary clipping**: a slightly different paper stock pasted onto
+  the page, with two tiny botanical corner marks. Highlight rows keep their 3 px left bar,
+  rounded at the ends; their tags are prismatic stickers.
+- **Roster** (`RingRoster.tsx`): sprites as die-cut stickers (§4.6), names in Nunito 700. The
+  acting row gets a `--wash-butter` highlight with rounded ends. HP bars are 6 px rounded
+  pills on their own track token.
+- **Console** (`ConsolePane.tsx`): a notebook page, as calm as the Ring. The command dock is a
+  white System 7 field with an inner 1 px border; Send is the default button with its double
+  ring. The `>` prompt glyph stays `>`, in accent, so help text that mentions the prompt still
+  matches. Quick-action chips are stickers.
+- **Chat** (`ChatPanel.tsx`): lightly ruled stationery, **not** pastel speech bubbles (too
+  contemporary). Room messages are ink on paper. A DM gets a small die-cut envelope sticker
+  around its envelope icon, not a whole bubble. Date separators are quiet: `— ✿ Thu, Oct 1 at
+  4:41 PM ✿ —`. "During fight #58" is a small lilac paper label pasted over the rule. The
+  composer is a white System 7 control area with Send as the default button.
+- **Workshop: the showcase.** Each monster panel is a white album page (window material). The
+  monster's name is in Fraunces; `Gladiator · Lvl 2` stays small Nunito. HP and XP are small
+  jewel-like pieces on the page. The botanical marks gather around the monster, never among
+  the controls. The carousel reads as the pages of an album; the sliver of the next panel
+  helps the illusion.
+- **Card slots: binder pockets.** The nine empty `[+]` boxes, today big anonymous black
+  squares, become card pockets: a warm white interior with a faint woad speckle or ruling, a
+  dotted or stitched edge, and a tiny role label tab along the top (attack and area in
+  madder, heal in sea-foam, trick in lilac). An equipped card sits in its pocket. Incompatible
+  slots get diagonal pencil hatching, disabled ones a dotted edge, so colour is never alone.
+  Today's `color-mix` border tint stays as the fallback.
+- **Meters:** HP stays the three-stage ramp. **XP is the unicorn's horn:** a pill track whose
+  fill is a pearlescent diagonal twist (`repeating-linear-gradient(135deg, #fff3d1 0 6px,
   #efe4ff 6px 12px)`) with a 1 px accent outline, so the fill still reads at 3:1 against the
   track by its edge, not by the pastel.
-- **Bottom sheets** (`.card-detail-sheet`, `DetailSheet.tsx`, `LevelUpSheet.tsx`): the
-  Trapper Keeper flap. The top corners are 20 px, and a 36 × 5 px rounded grab tab sits at
-  the top in accent (decorative; the sheet still closes by its button and backdrop). The
-  close button is a System 7 close box: a 1 px ink square holding ✕, inside a 44 px hit
-  target. The level-up sheet's header gets the foil.
-- **Buttons** (`.btn`, `.btn-primary`): rounded rectangles, 8 px radius, a 1 px
-  `--color-fg` outline (14.38:1, so the control boundary passes the 3:1 non-text rule that
-  the soft border cannot). Hover fills `--wash-lilac`. The primary button is the System 7
-  default button: filled plum with white text, ringed by a second 2 px outline 2 px out.
-- **Toasts:** the app has no toast component. The nearest are banners
-  (`.connection-banner`, `.command-blocked-banner`, `.workshop-flash-error`,
-  `CatchUpBanner.tsx`). In Licorne they are rounded wash strips with a sticker icon: error
-  on `--wash-blush`, status on `--wash-sky`.
-- **Carousel dots** (`.workshop-monster-dot`): today they are 10 px squares in accent. They
-  become tiny five-petal flowers drawn with CSS `mask` (outline when inactive, filled when
-  active). The next arrow stays a circle with a chevron. The 28 × 44 px tap targets are
-  unchanged.
-- **Empty Workshop** (`.workshop-no-monsters`): the tapestry's circular fence as a dashed
-  rounded frame, with a single millefleur sprig. The copy is unchanged.
+- **Sheets and dialogs** (`DetailSheet.tsx` and the sheets that use it, the Train wizard):
+  **here the Mac title bar belongs.** The sheet is a window: a pinstriped title bar with the
+  title centred in a white gap, a System 7 close box (a 1 px ink square holding ✕ inside a
+  44 px hit target) on the real close control, and the Trapper Keeper flap shape (20 px top
+  corners). The level-up sheet's title bar is holographic.
+- **Buttons** (`.btn`, `.btn-primary`): rounded rectangles, 8 px radius, a 1 px `--color-fg`
+  outline (14.38:1, so the control boundary passes the 3:1 non-text rule that the soft border
+  cannot). Hover (on devices that hover, bug 230) fills `--wash-lilac`. The primary button is
+  the System 7 default button: filled plum with white text, ringed by a second 2 px outline
+  2 px out, with a pearlescent sheen.
+- **Banners** (there is no toast component): `.connection-banner`, `.command-blocked-banner`,
+  `.workshop-flash-error`, `CatchUpBanner.tsx` become rounded wash strips with a sticker icon:
+  error on `--wash-blush`, status on `--wash-sky`.
+- **Carousel dots** (`.workshop-monster-dot`): the "one flower" mark, outline when inactive and
+  filled when active. The next arrow stays a circle with a chevron. The 28 × 44 px tap targets
+  are unchanged.
+- **Empty Workshop** (`.workshop-no-monsters`): faint curved fence marks and a single sprig.
+  The copy is unchanged.
+- **Help** (`HelpPanel.tsx`): paper, with the section buttons as small dividers like the main
+  tabs; the guides in Nunito with Fraunces headings, code in JetBrains Mono.
 
 ## 4. Implementation brief
 
@@ -432,16 +560,16 @@ The facts below were checked against the code on 2026-10-05.
   blocker.
 - **Light-theme health bar.** The palette test requires healthy to be the *brightest*
   stage and every stage to be ≥ 3:1 against the background. On a light page that means a
-  mid-tone healthy (Licorne's is 3.71:1), so the bar cannot be pastel. That is fine, but
+  mid-tone healthy (Millefleur's is 3.71:1), so the bar cannot be pastel. That is fine, but
   `terminal.css` also uses the HP tokens as **text** colours in the highlight tags
   (`.event-highlight-nat20 .highlight-tag` and the crit-fail tag), where 3.71:1 is under the
   4.5:1 that small text needs. These need their own text-safe tokens.
 - **Tracks use the border colour.** `.roster-bar-track` is `var(--color-border)`. With
   Direction C's ink border the critical fill would sit at 1.29:1 on its track. A
-  `--color-meter-track` token fixes this (Licorne `#ece2f5`: healthy 3.14, hurt 4.39,
+  `--color-meter-track` token fixes this (Millefleur `#ece2f5`: healthy 3.14, hurt 4.39,
   critical 10.64).
 - **Text on accent uses `--color-bg`** (`.terminal-tab-badge`). This works in every
-  palette here (Licorne 6.82) but should be a named `--color-on-accent`.
+  palette here (Millefleur 6.82) but should be a named `--color-on-accent`.
 - **Tokens used but never defined.** `--color-bg-elevated` (`CatchUpBanner.tsx`,
   `.fight-log-card`), `--color-hover` (`CommandReference.tsx`), `--color-accent-muted`
   (`LeaderboardPanel.tsx`, falling back to a yellow `rgba(255,200,0,0.15)`),
@@ -476,20 +604,22 @@ The facts below were checked against the code on 2026-10-05.
 Every theme gets these, with defaults that reproduce today's look exactly, so the plumbing
 PR changes no pixels in the four existing themes.
 
-| Token | Default (today) | Licorne |
+| Token | Default (today) | Millefleur |
 |---|---|---|
 | `--font-ui` | `var(--font-family)` | `'Nunito', system-ui, sans-serif` |
 | `--font-display` | `var(--font-family)` | `'Fraunces', Georgia, serif` |
 | `--font-titlebar` | `var(--font-family)` | the title-bar face (§4.3) or `--font-ui` 800 |
-| `--font-mono` | `var(--font-family)` | the soft mono (also stays `--font-family` for the feed) |
+| `--font-mono` | `var(--font-family)` | `var(--font-family)` (JetBrains Mono in v1) |
 | `--radius-sm` / `--radius-md` / `--radius-lg` / `--radius-pill` | `0` / `0` / `0` / `999px` | `6px` / `10px` / `18px` / `999px` |
 | `--border-width` | `1px` | `1px` |
 | `--color-border-strong` | `var(--color-border)` | `var(--color-fg)` (controls, 3:1+) |
 | `--shadow-window` | `none` | `0 1px 0 #d9c6ea, 0 6px 18px rgb(51 32 79 / 0.08)` |
 | `--shadow-sticker` | `none` | `0 0 0 2px #fff, 0 2px 6px rgb(163 25 107 / 0.18)` |
 | `--surface-texture` | `none` | paper grain plus blooms (§4.5) |
-| `--surface-titlebar` | `none` | the pinstripe gradient |
-| `--foil` | `none` | the holo gradient stack (§4.5) |
+| `--surface-titlebar` | `none` | the pinstripe gradient (sheets and dialogs only) |
+| `--shine-pearl` | `none` | static pearlescent sheen (§4.5) |
+| `--shine-prism` | `none` | static dye-spectrum edge (§4.5) |
+| `--foil` | `none` | the animated holo stack, payoff moments only (§4.5) |
 | `--color-meter-track` | `var(--color-border)` | `#ece2f5` |
 | `--color-on-accent` | `var(--color-bg)` | `#ffffff` |
 | `--color-highlight-good` / `-warn` | `var(--color-hp-healthy)` / `var(--color-hp-hurt)` | `#0b6f55` / `#8e2f78` (text-safe, ≥ 4.5) |
@@ -515,29 +645,31 @@ does not grow the shared stylesheet either.
 |---|---|---|---|---|
 | Chrome / UI | **Nunito** 400, 700 | OFL-1.1 | 16.3 KB, 16.2 KB | Rounded terminals, friendly, very legible at 13–14 px. (Fredoka is the rounder alternative for Direction A, 16 KB a weight; Quicksand is too thin at 14 px.) |
 | Display (room name, sheet and wizard headings) | **Fraunces** 600 italic | OFL-1.1 | 23.0 KB | A soft old-style serif with a storybook feel, close to the film's titles in spirit without copying them. Its variable build has a "SOFT" axis worth trying. Alternative: Cormorant Garamond (23 KB), more delicate but thin at small sizes. |
-| Feed and Console | **Recursive Mono Casual** (Recursive with `MONO 1`, `CASL 1`), 400 and 700 | OFL-1.1 (Recursive Project Authors) | about 28 KB each as static instances | **Measured at a 600/1000 advance, the same 8.4 px at 14 px as JetBrains Mono**, so `FEED_CHAR_PX` and the card frames hold. The casual axis gives a gel-pen softness. Fontsource's variable subsets split `MONO` and `CASL` into separate files, and only the "full" file (305 KB) has both, so generate two static instances once (fontTools `instancer`) and commit them with `OFL.txt`. Fallback: **Victor Mono** 400 (OFL, 15.9 KB, also 600 units), which needs no build step. |
+| Feed and Console | **JetBrains Mono, as today** (v1). Later experiment: **Recursive Mono Casual** (Recursive with `MONO 1`, `CASL 1`), 400 and 700 | OFL-1.1 | 0 KB (already loaded); Recursive about 28 KB each as static instances | The monospace transcript is one of the strongest parts of the game's identity, and keeping it makes the paper around it read as the change. It also keeps `FEED_CHAR_PX` and the card frames exactly as they are, with no build step. Recursive Casual measures the same 600/1000 advance (8.4 px at 14 px) and gives a gel-pen softness, but needs two static instances generated once (fontTools `instancer`; Fontsource's variable subsets split `MONO` and `CASL`, and only the 305 KB "full" file has both). **Try it in a side-by-side screenshot after v1;** adopt it only if the difference is clear. Fallback for that experiment: Victor Mono 400 (OFL, 15.9 KB, 600 units, no build step). |
 | Title-bar nod | **Option 1:** none; use Nunito 800, small. **Option 2:** Pixelify Sans 500 (OFL, 8.1 KB), a pixel face that is not Chicago. **Option 3:** ChicagoFLF | ChicagoFLF: placed in the public domain by its author, Robin Casady ([Wikipedia](https://en.wikipedia.org/wiki/Robin_Casady), [cufonfonts](https://www.cufonfonts.com/font/chicagoflf)); not on Google Fonts or Fontsource | — | The real Chicago is Apple's and must not ship. "Chicago Kare" (Duane King, 2024) and "ChiKareGo" could not have their licences confirmed from this session; treat them as unavailable until someone reads their licence files. ChicagoFLF's public-domain status rests on its author's statement. **Owner decision** (§5). |
 
-**Budget:** Nunito ×2 + Fraunces ×1 + Rec Mono Casual ×2 ≈ 112 KB, fetched only under
-Licorne. With Victor Mono instead of Rec Mono, ≈ 72 KB. For comparison, JetBrains Mono 400
-is 21.2 KB. Preload only the mono and Nunito 400 when the theme is active; load the rest
-with `font-display: swap`.
+**Budget:** v1 is Nunito ×2 + Fraunces ×1 ≈ 56 KB, fetched only under Millefleur; the feed
+reuses JetBrains Mono. Adding Recursive Mono Casual later would bring it to ≈ 112 KB, or
+≈ 72 KB with Victor Mono. Preload Nunito 400 when the theme is active; load the rest with
+`font-display: swap`.
 
-**Font loading must not move the feed.** A late swap changes line wrapping. Keep the mono's
-`line-height` and size identical to today, give the fallback stack a `size-adjust` so that
-Courier or the system mono also measures 0.6 em, and let Virtuoso remeasure. Check
-by scrolling the Ring's history with throttled network (§4.7).
+**Font loading must not move the feed.** In v1 the feed font does not change, so this holds
+by construction. If the Recursive experiment is adopted, keep the mono's `line-height` and
+size identical to today, give the fallback stack a `size-adjust` so that Courier or the
+system mono also measures 0.6 em, let Virtuoso remeasure, and check by scrolling the Ring's
+history with throttled network (§4.7).
 
 ### 4.4 Files to touch
 
 | File | Change |
 |---|---|
-| `apps/web/src/styles/theme-licorne.css` (new) | All colour tokens (the palette test's required list), the new tokens, and theme-scoped surface rules |
+| `apps/web/src/styles/theme-millefleur.css` (new) | All colour tokens (the palette test's required list), the new tokens, and theme-scoped surface rules |
 | `apps/web/src/styles/base.css`, `terminal.css` | Replace literal radii, border widths and shadows with tokens (defaults preserve today); split `--font-family` uses into feed (`--font-family`) and chrome (`--font-ui`); meter tracks to `--color-meter-track`; highlight tag text to `--color-highlight-*`; badge text to `--color-on-accent`; make the `prefers-contrast: more` block complete per theme (light themes get their own high-contrast block) |
 | `apps/web/src/styles/effects.css` | Nothing for the scanlines: `--crt-scanline-opacity: 0` already turns them off. Add the foil keyframes here, inside `prefers-reduced-motion: no-preference` |
 | `apps/web/src/hooks/useTheme.ts` | The `THEMES` entry; set `<meta name="theme-color">` and `color-scheme` in `applyTheme` |
 | `apps/web/index.html` | A small inline script that reads `deck-monsters-theme` and, before first paint, sets `data-theme` **and** updates `<meta name="theme-color">` from a tiny id → colour map (guarded with try/catch, as `localStorage` can throw). `applyTheme` only runs after React mounts, so leaving the meta to it would keep a black status bar through first paint (Codex on #426) |
-| `apps/web/src/themes/licorne.ts` (new) | Loaded with a dynamic `import()` from `applyTheme` the first time Licorne is chosen: it brings `theme-licorne.css` and the `@font-face` CSS. A static import in `main.tsx` would put those rules in the shared bundle for every player (Codex on #426); the font files themselves only download when a rule uses them |
+| `apps/web/src/themes/millefleur.ts` (new) | Loaded with a dynamic `import()` from `applyTheme` the first time Millefleur is chosen: it brings `theme-millefleur.css` and the `@font-face` CSS. A static import in `main.tsx` would put those rules in the shared bundle for every player (Codex on #426); the font files themselves only download when a rule uses them |
+| `apps/web/src/styles/base.css` (first-paint block) | **A lazily loaded theme still needs its first frame.** For a returning player the pre-paint script sets `data-theme="millefleur"` before React runs, but the lazy chunk arrives later, so without help the first paint uses phosphor's tokens: a dark flash instead of a black one. Keep a tiny `[data-theme='millefleur']` block in the shared CSS with only `--color-bg`, `--color-fg`, `--color-input-bg`, `--color-border` and `color-scheme: light` (well under 1 KB), and have the pre-paint script add a `<link rel="modulepreload">` for the chunk so it starts downloading at once. The page then paints as plain paper and ink, and the textures and fonts arrive with the chunk |
 | `apps/web/src/components/AppShell.tsx` | Header inline styles to a class; `THEME_ICON` entry (🦄); backdrop to `--color-backdrop` |
 | `apps/web/src/animations/pixel-fight/renderer.ts` | Flash colour from a parameter, read once from `--color-sprite-flash`; keep the outline key (`O`) unflashed |
 | `apps/web/src/__tests__/theme-palettes.test.ts` | Extend: fg-dim, accent, system, error and success ≥ 4.5 on bg **and** input-bg; on-accent ≥ 4.5; meter fills ≥ 3 on their track; highlight text tokens ≥ 4.5 |
@@ -556,15 +688,24 @@ by scrolling the Ring's history with throttled network (§4.7).
   bottom-right, blush mid-right) at 35–55% of the wash colours, with `background-attachment:
   scroll`. `fixed` stutters on iOS Safari. If gradients look too clean, a single 512 px WebP
   bloom tile (budget 25 KB) may replace them.
+- **The airbrush ribbon:** one more `radial-gradient` stretched into a long ellipse and
+  rotated, in woad at about 12% alpha, crossing one corner of `body`. No image.
 - **Pinstripes:** `repeating-linear-gradient(to bottom, #d9c6ea 0 1px, transparent 1px
-  3px)` in `--surface-titlebar`, masked out behind the title.
-- **Foil:** `linear-gradient(115deg, #ffd1ec, #fff3c4, #c9f7e4, #cfe6ff, #e3d4ff, #ffd1ec)`
-  at `background-size: 300% 100%`, with a `conic-gradient` overlay in `mix-blend-mode:
-  soft-light`. Only on the four small elements listed in §3.4, never on a scrolling list
-  row. Animate `background-position` over 8 s only under `prefers-reduced-motion:
-  no-preference`, and only while hovered or focused (the active tab may shimmer once on
-  change). The global reduced-motion rule in `base.css` already freezes it on its first
-  frame, which still looks like foil.
+  3px)` in `--surface-titlebar`, masked out behind the title. Sheets, dialogs and the Train
+  wizard only.
+- **Pearlescent** (`--shine-pearl`): a static two- or three-stop `linear-gradient` of white,
+  `--wash-lilac` and `--wash-sky` at low contrast. No motion.
+- **Prismatic** (`--shine-prism`): a static 2–3 px edge in the dye order (madder, weld,
+  sea-foam, woad, lilac). No motion.
+- **Holographic** (`--foil`): `linear-gradient(115deg, #ffd1ec, #fff3c4, #c9f7e4, #cfe6ff,
+  #e3d4ff, #ffd1ec)` at `background-size: 300% 100%`, with a `conic-gradient` overlay in
+  `mix-blend-mode: soft-light`. Only on the payoff moments in §3.4 (the level-up sheet's title
+  bar, the new monster), never on a scrolling list row or anything always on screen. It
+  sweeps once when the moment appears, and again while hovered or focused, only under
+  `prefers-reduced-motion: no-preference`. The global reduced-motion rule in `base.css`
+  freezes it on its first frame, which still looks like foil.
+- **Marks:** the five botanical marks and the handwriting marks are tiny inline SVGs used as
+  `mask-image` or background images, coloured by tokens. Together well under 4 KB.
 - **Motion budget:** no ambient animation on the page. Sheets slide up 180 ms ease-out,
   as today. The Workshop peek (#224) is unchanged. Nothing animates `width`, `height` or
   `top`; only `transform`, `opacity` and `background-position`.
@@ -595,8 +736,8 @@ CRT one:
 - **Non-text:** buttons and inputs use `--color-border-strong` (14.38:1). The soft
   `--color-border` (1.50:1) is for decorative rules only. The four dark themes' borders are
   decorative too (phosphor `#2a3a2a` on `#0a0e0a` is about 1.6:1), so this is not a new kind
-  of exception, but Licorne should not add more of them.
-- **High contrast:** under `prefers-contrast: more`, Licorne drops textures, foil and
+  of exception, but Millefleur should not add more of them.
+- **High contrast:** under `prefers-contrast: more`, Millefleur drops textures, foil and
   washes, goes to `#ffffff` / `#000000` with a 2 px black border, and keeps its radii.
 - **Reduced motion:** no foil drift, no zoom-rect, sheets appear without sliding.
 - **Colour is never alone:** role slots keep their text role and get a top edge, not only
@@ -616,8 +757,8 @@ CRT one:
 |---|---|
 | Fonts (only under this theme) | ≤ 115 KB latin, at most two preloaded |
 | Textures | ≤ 1 KB inline SVG; ≤ 25 KB optional WebP bloom |
-| CSS | `theme-licorne.css` ≤ 12 KB unminified |
-| Other themes | 0 bytes more downloaded: Licorne's CSS and `@font-face` rules are a separate chunk loaded by dynamic `import()`, the fonts load only when used, and the shared bundle grows only by the theme's `THEMES` entry and the pre-paint colour map. Pixel-identical before and after task 1 |
+| CSS | `theme-millefleur.css` ≤ 12 KB unminified |
+| Other themes | No font or texture bytes. Millefleur's CSS and `@font-face` rules are a separate chunk loaded by dynamic `import()`; the shared bundle grows only by the `THEMES` entry, the pre-paint colour map, and the first-paint block (< 1 KB, §4.4). Pixel-identical before and after task 1 |
 | Runtime | No `backdrop-filter`, no live SVG filters, no blend modes on scrolling rows; layout shift from font swap ≈ 0 in the feed |
 
 ### 4.9 Task table
@@ -629,38 +770,46 @@ rest can run in parallel only where noted.
 | # | Pass | Task | Area / files | Acceptance | Can run beside | Status | Commit |
 |---|---|---|---|---|---|---|---|
 | 1 | 46a | **Theme plumbing, no visual change.** Shape, font, shadow, surface, meter-track, on-accent, highlight-text, backdrop and sprite-flash tokens with defaults equal to today; define the read-but-unset tokens in all four themes; `color-scheme`; pre-paint `data-theme` and `theme-color`; per-theme `prefers-contrast`; the header class; theme button label by name; extended palette test | `styles/*.css`, `useTheme.ts`, `index.html`, `AppShell.tsx`, `theme-palettes.test.ts`, `useTheme.test.ts`, `renderer.ts` (flash parameter) | Four themes pixel-identical at 390 and 1440; the extended palette test passes for all four; no black flash on a light theme in a smoke test | docs-only work | proposed | — |
-| 2 | 46a | **Licorne palette, fonts and shapes.** `theme-licorne.css`, `THEMES` entry and icon, the three font roles, radii, buttons, inputs, sheets, banners; the lazy-loaded chunk, with a bundle check that other themes' CSS did not grow | `theme-licorne.css`, `themes/licorne.ts` (lazy chunk), `useTheme.ts`, fonts and `OFL.txt` | Palette test green; card frames still align; feed row-height test unchanged; check at 390 and 1440 | — (after 1) | proposed | — |
-| 3 | 46a | **Licorne surfaces.** Title-bar pane headers, folder tabs, Workshop role washes and edges, horn XP meter, HP pills, flower dots, sticker chips and badges, the empty Workshop frame | `theme-licorne.css`, small class hooks in `terminal.css`/`base.css` | Every surface in §3.4 matches; no close box where nothing closes; tap targets unchanged | 4 if 4 avoids the same selectors | proposed | — |
-| 4 | 46b | **Textures and foil.** Paper grain, blooms, pinstripes, foil on the four moments, motion and reduced motion | `theme-licorne.css`, `effects.css` | Budget in §4.8 met; no long frames while a fight scrolls; reduced motion is still | 3 (different selectors) | proposed | — |
+| 2 | 46a | **Millefleur palette, fonts and shapes.** `theme-millefleur.css`, `THEMES` entry and icon, Nunito and Fraunces (the feed keeps JetBrains Mono), radii, buttons, inputs, banners; the lazy-loaded chunk, the first-paint block and the modulepreload, with a bundle check that other themes' CSS grew by under 1 KB | `theme-millefleur.css`, `themes/millefleur.ts` (lazy chunk), `base.css` (first-paint block), `index.html`, `useTheme.ts`, fonts and `OFL.txt` | Palette test green; card frames unchanged; feed row-height test unchanged; a reload on Millefleur shows no dark frame; check at 390 and 1440 | — (after 1) | proposed | — |
+| 3 | 46a | **Millefleur surfaces.** Binder-divider tabs, sheets and dialogs as windows with title bars, Workshop album pages and card pockets with role labels, the quiet Ring with lavender frames and the bestiary clipping, Chat stationery, horn XP meter, HP pills, flower dots, stickers | `theme-millefleur.css`, small class hooks in `terminal.css`/`base.css` | Every surface in §3.4 matches; no title bar on a pane header; no close box where nothing closes; tap targets unchanged | 4 if 4 avoids the same selectors | proposed | — |
+| 4 | 46b | **Paper, marks and shine.** Grain, washes and the airbrush ribbon; the botanical and handwriting marks; the fence shapes; pearlescent, prismatic and holographic shine where the tables in §3.4 allow; motion and reduced motion | `theme-millefleur.css`, `effects.css`, small SVG marks | Budget in §4.8 met; holographic only on payoff moments; no long frames while a fight scrolls; reduced motion is still | 3 (different selectors) | proposed | — |
 | 5 | 46b | **Pixel monsters on paper.** Sticker outline, pink flash, check the pale species and white appearances at 1×/2×/3× | `terminal.css`, `renderer.ts`, `rosterSprite`/pixel tests | Struck monsters visibly flash; pale monsters read on paper; nothing smoothed | 4 | proposed | — |
 | 6 | 46b | **Live check and docs.** Cursor-style checklist for the screens in §4.7; `docs/architecture/web-themes.md`; links from `AGENTS.md` and `docs/README.md`; roadmap status | docs | Check passed or findings filed in 10 | 4, 5 | proposed | — |
-| 7 | later | **Optional: the dark sibling** from Direction B ("Gloaming"?) on the same tokens | `theme-<name>.css` | Palette test green; same checks | — | proposed | — |
+| 7 | later | **Optional: the dark sibling** from Direction B, "Gloaming", on the same tokens and materials | `theme-gloaming.css` | Palette test green; same checks | — | proposed | — |
+| 8 | later | **Optional: the Recursive Mono Casual experiment** (§4.3): side-by-side screenshots of the Ring and Console, adopted only if the difference is clear | `themes/millefleur.ts`, fonts | Card frames align; feed row-height test unchanged; no jump with throttled network | — | proposed | — |
 
 ## 5. Open questions for the owner
 
-1. **Direction.** The recommended blend (Licorne), or one of A, B and C as written? B on
-   its own is the most beautiful at night but is not the big departure you asked for.
-2. **Name.** Suggestions, all original and all from the game's own Unicorn:
-   - **Licorne** (recommended): Philemon Holland's 1601 English Pliny, already quoted in
-     the Unicorn's description ("the Licorne or Monoceros"). It is soft, a little French,
-     and nobody else's mark.
-   - **Millefleur**: the flower-strewn ground of the tapestries, and the garden it raids.
-   - **Gloaming**: dusk, and the Unicorn's own card Gloaming Rest. A lovely name for the
-     dark sibling, but it may read as a link to that card. Ānhorn, the Old English word in
-     the rare look line, is charming but hard to type.
+1. **Direction.** The recommended Millefleur (the binder and the garden, §3.4), or one of
+   A, B and C as written? B on its own is the most beautiful at night but is not the big
+   departure you asked for.
+2. **Name.** Suggestions, all original and all from the game's own Unicorn or its sources:
+   - **Millefleur** (recommended): the flower-strewn ground of the tapestries, and the
+     garden the Unicorn raids. It names what makes this version special (garden, paper,
+     ornament) rather than just "unicorn", and pairs well with **Gloaming** for the dark
+     sibling.
+   - **Licorne**: Philemon Holland's 1601 English Pliny, already quoted in the Unicorn's
+     description ("the Licorne or Monoceros"). Elegant, but it mostly says "unicorn" and may
+     pull toward a faux-French luxury look.
+   - **Prism Garden** (more explicitly 90s) or **Moonflower** (softer, less grounded).
+   - **Gloaming**: keep it for the dark sibling; it echoes the Unicorn's card Gloaming Rest.
    The menu shows the name without the parenthesis, so the list label could be
-   "Licorne (pastel watercolour)".
-3. **The Mac nod's font.** Use no special face (title bars in Nunito), a pixel face that is
-   not Chicago (Pixelify Sans), or ChicagoFLF on its author's public-domain statement?
-4. **Feed font.** Recursive Mono Casual (softer, two generated files, ~56 KB) or Victor
-   Mono (plainer, no build step, ~16 KB)?
-5. **How much foil.** Four moments (recommended), or also on rare items and boss names?
+   "Millefleur (pastel watercolour)".
+3. **The Mac nod's font**, for sheet and dialog title bars only: no special face (Nunito
+   800, small), a pixel face that is not Chicago (Pixelify Sans), or ChicagoFLF on its
+   author's public-domain statement?
+4. **Feed font.** Keep JetBrains Mono (recommended for v1, the terminal showing through), and
+   try Recursive Mono Casual later as task 8?
+5. **How much shine.** The three levels in §3.4, with holographic only for the level-up and a
+   new monster (recommended), or also for rare items and boss names?
 6. **Default for light-mode devices?** Today every new player gets phosphor regardless of
    `prefers-color-scheme` (`useTheme.ts`). Should a phone set to light mode start on
-   Licorne?
+   Millefleur?
 7. **The dark sibling.** Build it right after (task 7), or wait for player feedback on
-   Licorne first?
-8. **Monster portraits.** Out of scope here, but the natural next step is a painted (not
+   Millefleur first?
+8. **Handwriting marks.** In (a very few static hand-drawn marks, §3.4), or leave them out
+   of v1?
+9. **Monster portraits.** Out of scope here, but the natural next step is a painted (not
    pixel) portrait for the Workshop panel in this theme. It would be a separate art pass
    with its own licence notes.
 
@@ -678,6 +827,7 @@ rest can run in parallel only where noted.
 - [The Last Unicorn, Alternate Ending](https://www.alternateending.com/2016/06/19/when-the-future-has-past-without-even-a-last-desperate-warning/)
 - [The Unicorn Tapestries, Wikipedia](https://en.wikipedia.org/wiki/The_Unicorn_Tapestries)
 - [The Unicorn Surrenders to a Maiden, The Met](https://www.metmuseum.org/art/collection/search/467653)
+- [The Unicorn Tapestries, The Met object 467640 (dyes and metal threads)](https://www.metmuseum.org/art/collection/search/467640)
 - [Chicago (typeface), Wikipedia](https://en.wikipedia.org/wiki/Chicago_(typeface))
 - [How Susan Kare designed user-friendly icons, Smithsonian](https://www.smithsonianmag.com/innovation/how-susan-kare-designed-user-friendly-icons-for-first-macintosh-180973286/)
 - [Inside Macintosh: Toolbox, window parts, Apple archive](https://developer.apple.com/library/archive/documentation/mac/Toolbox/Toolbox-191.html)
