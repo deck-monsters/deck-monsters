@@ -279,23 +279,6 @@ export default function MonsterWorkshopPanel({
           onClose={() => setLevelSheetOpener(null)}
         />
       )}
-      {/*
-        Deck size as text, not a bar — see the hp-meter comment above for why a
-        near-always-full bar carries no information. It sits directly above the action
-        buttons (rather than folded into that row) so it doesn't crowd "Send to ring" /
-        "Revive" against the unequip-all icon at a 375px phone width.
-      */}
-      <div className="workshop-deck-status">
-        <span className="workshop-deck-count">
-          {deckLabel}
-          {deckNeedsMore > 0 && (
-            <span className="workshop-deck-needs-more"> · needs {deckNeedsMore} more to enter the ring</span>
-          )}
-        </span>
-        <span className="workshop-fights-count">
-          {battles.wins}W {battles.losses}L
-        </span>
-      </div>
       <div className="workshop-monster-actions">
         {monster.dead ? (
           <button title={reviving ? `${monster.name} is on the way back` : `Bring ${monster.name} back. Above level 0 it takes a few minutes`} type="button" className="btn" disabled={busy || monster.inEncounter || reviving} onClick={onRevive}>
@@ -347,6 +330,25 @@ export default function MonsterWorkshopPanel({
           {monster.name} is in a fight. Cards unlock when it ends.
         </p>
       )}
+
+      {/*
+        Deck size as text, not a bar — see the hp-meter comment above for why a
+        near-always-full bar carries no information. It sits right above the slots it counts
+        (bug 226): above the action buttons, "needs 9 more" was a line away from the empty
+        slots it meant, and a new player could not tell what it was counting. It stays out of
+        the actions row so "Send to ring" / "Revive" are not crowded at a 375px phone width.
+      */}
+      <div className="workshop-deck-status">
+        <span className="workshop-deck-count">
+          {deckLabel}
+          {deckNeedsMore > 0 && (
+            <span className="workshop-deck-needs-more"> · needs {deckNeedsMore} more to enter the ring</span>
+          )}
+        </span>
+        <span className="workshop-fights-count">
+          {battles.wins}W {battles.losses}L
+        </span>
+      </div>
 
       <div className="workshop-slot-grid">
         {slots.map((cardName, idx) => {

@@ -608,9 +608,9 @@ button {
 
 /*
   Deck size as text, no bar — same rationale as the hp meter's comment above: a
-  near-always-full bar is not information. Sits directly above the action buttons rather
-  than sharing their row, so "Send to ring" / "Revive" / unequip-all don't get squeezed at
-  a 375px phone width (see the two attached header screenshots this replaced).
+  near-always-full bar is not information. Sits directly above the card slots it counts
+  (bug 226), not in the actions row, so "Send to ring" / "Revive" / unequip-all don't get
+  squeezed at a 375px phone width.
 */
 .workshop-deck-status {
   display: flex;

@@ -5257,6 +5257,24 @@ numbers the stats do not deliver. The card sheet's shell became `DetailSheet`, s
 
 **Status**: Fixed.
 
+### 226. A new player's tap on an empty [+] slot did nothing, and the deck line sat apart from the slots — FIXED
+
+Found by the owner, playing as a new player.
+
+**Root cause**: an empty monster slot only did something when cards were already selected
+(the tap moved them there). The way to choose cards for a monster was to tap its name, which
+filters Your cards to what it can use and scrolls to them, and nothing says so. A new player
+taps the `[+]` instead, and nothing happened. Separately, `Deck 0/9 · needs 9 more to enter
+the ring` sat above the action buttons, a row away from the slots it counts.
+
+Fix: with nothing selected, a tap on an empty monster slot does what the name does: Your
+cards filter to that monster and scroll into view (`showCardsFor` in `WorkshopPanel.tsx`).
+It always turns the filter on, so a second tap does not hide the cards again. The slot's
+tooltip says `Empty slot. Tap to pick a card for it`. The deck line moved to just above the
+slot grid, below the actions. Tests: `workshopPanel.emptySlot.test.tsx` and the header test.
+
+**Status**: Fixed.
+
 ## Closed without a fix
 
 These were open investigations the owner closed on 2026-09-28. Reopen with new evidence.

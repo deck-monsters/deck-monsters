@@ -520,8 +520,12 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
   }
 
   function handleToggleMonsterFilter(monsterName: string) {
+    showCardsFor(activeMonsterFilter === monsterName ? null : monsterName);
+  }
+
+  /** Filter Your cards to what this monster can use and bring them into view; null clears. */
+  function showCardsFor(next: string | null) {
     setSelectedCards([]);
-    const next = activeMonsterFilter === monsterName ? null : monsterName;
     setActiveMonsterFilter(next);
 
     // Tapping a monster filters the *inventory*, which sits below the monster row and is
@@ -541,7 +545,15 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
   }
 
   async function handleSlotClick(target: WorkshopCardLocation) {
-    if (selectedCards.length < 1 || !roomId || consoleFlowActive) return;
+    if (!roomId || consoleFlowActive) return;
+    if (selectedCards.length < 1) {
+      // An empty monster slot with nothing selected: a new player taps its [+] expecting to
+      // add a card there, and the tap did nothing. It now does what tapping the monster's
+      // name does: show the cards this monster can use (bug 226). Always on, never a toggle,
+      // so a second tap on [+] does not hide them again.
+      if (target.kind === 'monster') showCardsFor(target.monsterName);
+      return;
+    }
     const firstSource = selectedCards[0]?.location;
     if (firstSource && isSameSource(firstSource, target)) {
       setMessage('Selection unchanged. Tap cards to add/remove, then tap another zone to move.');
