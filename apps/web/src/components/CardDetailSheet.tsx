@@ -6,7 +6,7 @@ interface CardDetailSheetProps {
   facts: CardFactsView | null;
   /** The card's name as shown in the Workshop, for the fallback when `facts` is missing. */
   cardName: string;
-  /** One verdict line per monster: the monster in view, or every monster for an unfiltered card. */
+  /** The monster in view (the card's own monster, or the highlighted one), or none: no verdict line. */
   monsters: VerdictMonster[];
   /** The control that opened the sheet, from the click event; focus returns to it on close. */
   opener?: HTMLElement | null;
@@ -32,7 +32,7 @@ export default function CardDetailSheet({ facts, cardName, monsters, opener, onC
           {facts.description && <p>{facts.description}</p>}
           {facts.stats && <p>{facts.stats}</p>}
           <p>Level: {facts.level > 0 ? facts.level : 'Beginner'}</p>
-          <p>Used by: {facts.usedBy.length > 0 ? joinList(facts.usedBy) : 'Any monster'}</p>
+          <p>Usable by: {facts.usedBy.length > 0 ? joinList(facts.usedBy) : 'Any monster'}</p>
           <p>Price: {facts.price > 0 ? `${facts.price} ${facts.price === 1 ? 'coin' : 'coins'}` : 'free'}</p>
           {monsters.length > 0 && (
             <ul className="card-detail-verdicts">

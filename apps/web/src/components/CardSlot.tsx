@@ -110,7 +110,7 @@ export default function CardSlot({
       onDragOver={handleDragOver}
       onDrop={(event) => void handleDrop(event)}
       onClick={() => void handleClick()}
-      title={cardName ? (incompatible ? `${cardName} (not usable for current filter)` : cardName) : 'Empty slot. Tap to pick a card for it'}
+      title={cardName ? (incompatible ? `${cardName} (not usable for current filter)` : cardName) : 'Empty slot. Tap to see cards for it'}
       aria-label={cardName ? (incompatible ? `${cardName} (not usable for current filter)` : cardName) : 'Empty slot'}
     >
       {cardName ? (

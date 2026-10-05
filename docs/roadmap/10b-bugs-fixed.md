@@ -5270,8 +5270,24 @@ the ring` sat above the action buttons, a row away from the slots it counts.
 Fix: with nothing selected, a tap on an empty monster slot does what the name does: Your
 cards filter to that monster and scroll into view (`showCardsFor` in `WorkshopPanel.tsx`).
 It always turns the filter on, so a second tap does not hide the cards again. The slot's
-tooltip says `Empty slot. Tap to pick a card for it`. The deck line moved to just above the
+tooltip says `Empty slot. Tap to see cards for it`. The deck line moved to just above the
 slot grid, below the actions. Tests: `workshopPanel.emptySlot.test.tsx` and the header test.
+
+**Status**: Fixed.
+
+### 227. The card sheet listed every monster with "Only Unicorn can." — FIXED
+
+Found by the owner.
+
+**Root cause**: roadmap 44 K3's sheet gave a card in Your cards one verdict per monster when
+none was highlighted, and each type refusal repeated who could use the card. With six
+monsters that was six identical `can't use this. Only Unicorn can.` lines under a `Used by:
+Unicorn` line that already said it.
+
+Fix: `Used by:` reads `Usable by:`. The verdict shows only for the monster in view (the
+card's own monster, or the highlighted one), and reads `{name} can use this.`, `{name} can't
+use this.` or `{name} can't use this until level {n}.` (`verdictLine` in
+`apps/web/src/utils/cards.ts`).
 
 **Status**: Fixed.
 

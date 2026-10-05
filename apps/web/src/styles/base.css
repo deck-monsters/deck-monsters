@@ -382,7 +382,7 @@ button {
   justify-content: center;
 }
 
-.workshop-monster-next:disabled {
+.workshop-monster-next[aria-disabled='true'] {
   opacity: 0.35;
   cursor: default;
 }
@@ -1197,6 +1197,8 @@ button {
     overscroll-behavior-inline: contain;
     scroll-snap-type: inline mandatory;
     padding-bottom: 0.35rem;
+    /* The panels' offsetLeft is measured from here, which the dots' scroll handler needs. */
+    position: relative;
   }
 
   .workshop-monster-panel {

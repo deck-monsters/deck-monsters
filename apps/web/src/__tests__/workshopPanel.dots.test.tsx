@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -115,7 +115,12 @@ describe('workshop monster carousel next arrow', () => {
     Object.defineProperty(row.children[0], 'offsetLeft', { value: -300 });
     Object.defineProperty(row.children[1], 'offsetLeft', { value: 0 });
     fireEvent.scroll(row);
-    expect((screen.getByRole('button', { name: 'Next monster' }) as HTMLButtonElement).disabled).toBe(true);
+    const next = screen.getByRole('button', { name: 'Next monster' });
+    // aria-disabled, so a keyboard user's focus stays put, and a tap does nothing.
+    expect(next.getAttribute('aria-disabled')).toBe('true');
+    (row.children[1] as HTMLElement).scrollIntoView = vi.fn();
+    fireEvent.click(next);
+    expect(Element.prototype.scrollIntoView).not.toHaveBeenCalled();
     expect(screen.getByRole('tab', { name: 'Fowl' }).getAttribute('aria-selected')).toBe('true');
   });
 });
@@ -157,6 +162,20 @@ describe('workshop monster carousel peek', () => {
     const first = render(<WorkshopPanel roomId="room-1" />);
     first.unmount();
     render(<WorkshopPanel roomId="room-1" />);
+    expect(row().classList.contains('peek')).toBe(false);
+  });
+
+  it('ends with its own animation, not one bubbling up from inside a panel', () => {
+    overflow(800, 390);
+    render(<WorkshopPanel roomId="room-1" />);
+    // jsdom has no AnimationEvent, so build one that carries the name React reads.
+    const end = (animationName: string) =>
+      act(() => {
+        row().dispatchEvent(Object.assign(new Event('animationend', { bubbles: true }), { animationName }));
+      });
+    end('something-else');
+    expect(row().classList.contains('peek')).toBe(true);
+    end('workshop-monster-peek');
     expect(row().classList.contains('peek')).toBe(false);
   });
 

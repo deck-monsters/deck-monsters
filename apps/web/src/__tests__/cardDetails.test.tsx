@@ -75,10 +75,10 @@ describe('card details sheet in the Workshop', () => {
     expect(within(dialog).getByText('Tricks and curses')).toBeTruthy();
     expect(within(dialog).getByText('Wink out of sight.')).toBeTruthy();
     expect(within(dialog).getByText('Level: Beginner')).toBeTruthy();
-    expect(within(dialog).getByText('Used by: Jinn and Minotaur')).toBeTruthy();
+    expect(within(dialog).getByText('Usable by: Jinn and Minotaur')).toBeTruthy();
     expect(within(dialog).getByText('Price: 1 coin')).toBeTruthy();
     // Rex is a Gladiator, so Blink is not for him; Mira is not mentioned.
-    expect(within(dialog).getByText("Rex can't use this. Only Jinn and Minotaur can.")).toBeTruthy();
+    expect(within(dialog).getByText("Rex can't use this.")).toBeTruthy();
     expect(within(dialog).queryByText(/Mira/)).toBeNull();
     // The info button carries the plan's title.
     expect(screen.getAllByTitle('What this card does').length).toBeGreaterThan(0);
@@ -91,19 +91,18 @@ describe('card details sheet in the Workshop', () => {
     const dialog = screen.getByRole('dialog');
     expect(within(dialog).getByText('Price: free')).toBeTruthy();
     expect(within(dialog).getByText('Hit 1d20 vs AC, damage 1d6.')).toBeTruthy();
-    expect(within(dialog).getByText('Used by: Any monster')).toBeTruthy();
+    expect(within(dialog).getByText('Usable by: Any monster')).toBeTruthy();
     expect(within(dialog).getByText('Rex can use this.')).toBeTruthy();
   });
 
-  it('gives a card in Your cards one verdict per monster, or just the highlighted one', () => {
+  it('gives a card in Your cards no verdict, or one for the highlighted monster (bug 227)', () => {
     setup();
     render(<WorkshopPanel roomId="room-1" />);
     const inventory = document.querySelector('.workshop-inventory') as HTMLElement;
 
     fireEvent.click(within(inventory).getByRole('button', { name: 'What Fire Breath does' }));
     let dialog = screen.getByRole('dialog');
-    expect(within(dialog).getByText('Rex can use this from level 3. Rex is level 1 now.')).toBeTruthy();
-    expect(within(dialog).getByText("Mira can't use this. Only Gladiator can.")).toBeTruthy();
+    expect(within(dialog).queryByText(/Rex|Mira/)).toBeNull();
     fireEvent.click(within(dialog).getByRole('button', { name: 'Close' }));
     expect(screen.queryByRole('dialog')).toBeNull();
 
@@ -111,8 +110,14 @@ describe('card details sheet in the Workshop', () => {
     fireEvent.click(screen.getByTitle('Filter inventory cards for Mira'));
     fireEvent.click(within(inventory).getAllByRole('button', { name: 'What Fire Breath does' })[0]!);
     dialog = screen.getByRole('dialog');
-    expect(within(dialog).getByText("Mira can't use this. Only Gladiator can.")).toBeTruthy();
+    expect(within(dialog).getByText("Mira can't use this.")).toBeTruthy();
     expect(within(dialog).queryByText(/Rex/)).toBeNull();
+
+    // Rex is level 1 and Fire Breath opens at 3: the level line.
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Close' }));
+    fireEvent.click(screen.getByTitle('Filter inventory cards for Rex'));
+    fireEvent.click(within(inventory).getAllByRole('button', { name: 'What Fire Breath does' })[0]!);
+    expect(within(screen.getByRole('dialog')).getByText("Rex can't use this until level 3.")).toBeTruthy();
   });
 
   it('closes on Escape and from the Close button (titled), and focus moves in then back', () => {

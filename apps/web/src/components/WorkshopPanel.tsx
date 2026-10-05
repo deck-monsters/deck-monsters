@@ -665,10 +665,27 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
   useEffect(() => {
     if (peekShown || monsterCount < 2) return;
     const row = monsterRowRef.current;
-    if (!row || row.scrollWidth <= row.clientWidth) return;
-    peekShown = true;
-    setPeeking(true);
+    if (!row) return;
+    const tryPeek = () => {
+      if (peekShown || row.scrollWidth <= row.clientWidth) return false;
+      peekShown = true;
+      setPeeking(true);
+      return true;
+    };
+    if (tryPeek() || typeof ResizeObserver === 'undefined') return;
+    // A Workshop in a hidden pane has no layout yet (both widths 0), so try again once it
+    // gets a size rather than never peeking.
+    const observer = new ResizeObserver(() => {
+      if (tryPeek()) observer.disconnect();
+    });
+    observer.observe(row);
+    return () => observer.disconnect();
   }, [monsterCount]);
+
+  // The dots are keyed by name, so removing a monster can leave the index past the end with
+  // no scroll event to correct it.
+  const activeMonsterIndex = Math.min(visibleMonsterIndex, Math.max(0, monsters.length - 1));
+  const atLastMonster = activeMonsterIndex >= monsters.length - 1;
 
   return (
     <div className="workshop-view">
@@ -764,7 +781,10 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
         onScroll={handleMonsterRowScroll}
         // A player who grabs the row mid-peek gets it back at once rather than fighting the slide.
         onPointerDown={() => setPeeking(false)}
-        onAnimationEnd={() => setPeeking(false)}
+        // animationend bubbles, so only the peek's own end clears it.
+        onAnimationEnd={(event) => {
+          if (event.animationName === 'workshop-monster-peek') setPeeking(false);
+        }}
       >
         {monsters.map((monster) => {
           // Once per monster per render: the reason, then the sentence built from it.
@@ -831,8 +851,8 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
                 key={monster.name}
                 type="button"
                 role="tab"
-                className={`workshop-monster-dot${index === visibleMonsterIndex ? ' active' : ''}`}
-                aria-selected={index === visibleMonsterIndex}
+                className={`workshop-monster-dot${index === activeMonsterIndex ? ' active' : ''}`}
+                aria-selected={index === activeMonsterIndex}
                 aria-label={monster.name}
                 onClick={() => scrollToMonster(index)}
               />
@@ -844,8 +864,12 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
             className="workshop-monster-next"
             aria-label="Next monster"
             title="Next monster"
-            disabled={visibleMonsterIndex >= monsters.length - 1}
-            onClick={() => scrollToMonster(visibleMonsterIndex + 1)}
+            // aria-disabled, not disabled: a disabled button drops keyboard focus the moment
+            // the last monster scrolls in.
+            aria-disabled={atLastMonster}
+            onClick={() => {
+              if (!atLastMonster) scrollToMonster(activeMonsterIndex + 1);
+            }}
           >
             <span className="workshop-monster-next-mark" aria-hidden="true">
               <svg width="8" height="8" viewBox="0 0 8 8">
@@ -902,11 +926,9 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
           facts={factsByName.get(detail.cardName) ?? factsByName.get(stableCardName(detail.cardName)) ?? null}
           cardName={detail.cardName}
           opener={detail.opener}
-          monsters={
-            detail.monsterName
-              ? monsters.filter((monster) => monster.name === detail.monsterName)
-              : monsters
-          }
+          // One verdict, for the monster in view, or none. A line for every monster read
+          // badly with six of them (bug 227); "Usable by" already says who can.
+          monsters={detail.monsterName ? monsters.filter((monster) => monster.name === detail.monsterName) : []}
           onClose={closeDetail}
         />
       )}

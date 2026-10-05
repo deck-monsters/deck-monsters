@@ -54,8 +54,10 @@ Each card in the Workshop has an info button (title `What this card does`) that 
 portal, with focus moved to Close and Escape closing it. The verdict line comes from running the
 engine's browser-safe `cardHoldVerdict` against the facts and the monster's level, class and type
 (`monsterClass` rides on `myInventory`), so the rule is the engine's and the server does not send
-a verdict for every card and monster pair. It is shown for the monster whose panel holds the card;
-for a card in Your cards, for the highlighted monster, or for every monster when none is.
+a verdict for every card and monster pair. It is shown for the monster whose panel holds the card,
+or for a card in Your cards, for the highlighted monster; with none highlighted there is no
+verdict, since `Usable by:` already says who can (bug 227). The lines are `{name} can use this.`,
+`{name} can't use this.` and `{name} can't use this until level {n}.`
 
 Slot labels (`ATTACK`, `AREA`, `HEAL`, `DEFENCE`, `TRICK`) and the slot tint come from the card's
 role (`roleOf`), replacing a keyword guess at the name that filed Blink as magic and Take Wing as
