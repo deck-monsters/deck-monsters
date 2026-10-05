@@ -198,7 +198,7 @@ describe('card details sheet in the Workshop', () => {
   });
 });
 
-describe('"At level N" line on a monster panel', () => {
+describe('level-up details from the XP bar (bug 225)', () => {
   const noop = () => undefined;
   const renderPanel = (monster: ReturnType<typeof makeMonster>) =>
     render(
@@ -217,14 +217,49 @@ describe('"At level N" line on a monster panel', () => {
         onDeletePreset={noop}
       />,
     );
+  const gains = { level: 3, hp: 3, ac: 1, str: 0, dex: 1, int: 1 };
+  const openSheet = () => {
+    fireEvent.click(screen.getByRole('button', { name: /See what level 3 brings/ }));
+    return within(screen.getByRole('dialog'));
+  };
 
-  it('names the next level that opens cards', () => {
-    renderPanel(makeMonster({ nextCards: { level: 3, cards: ['Fire Breath', 'Gore', 'Hit'] } }));
-    expect(screen.getByText('At level 3: Fire Breath, Gore and Hit.')).toBeTruthy();
+  it('no longer prints an "At level N" line on the panel', () => {
+    renderPanel(makeMonster({ level: 2, nextCards: { level: 3, cards: ['Fire Breath', 'Gore', 'Hit'] } }));
+    expect(screen.queryByText(/^At level/)).toBeNull();
   });
 
-  it('shows no line when nothing opens later', () => {
-    renderPanel(makeMonster({ nextCards: null }));
-    expect(screen.queryByText(/^At level/)).toBeNull();
+  it('opens from the XP bar, which says which level it opens', () => {
+    renderPanel(makeMonster({ level: 2, nextLevel: gains }));
+    expect(screen.getByText('Lvl 3 ›')).toBeTruthy();
+    expect(openSheet().getByRole('heading', { name: 'Rex at level 3' })).toBeTruthy();
+  });
+
+  it('lists the stat gains, leaving out a stat at its cap', () => {
+    renderPanel(makeMonster({ level: 2, nextLevel: gains }));
+    const items = openSheet().getAllByRole('listitem').map((li) => li.textContent);
+    expect(items).toEqual(['Max HP +3', 'AC +1', 'DEX +1', 'INT +1']);
+  });
+
+  it('names the cards the level opens', () => {
+    renderPanel(makeMonster({ level: 2, nextLevel: gains, nextCards: { level: 3, cards: ['Fire Breath', 'Gore', 'Hit'] } }));
+    expect(openSheet().getByText('New cards it can use: Fire Breath, Gore and Hit.')).toBeTruthy();
+  });
+
+  it('says when the next new cards come later', () => {
+    renderPanel(makeMonster({ level: 2, nextLevel: gains, nextCards: { level: 5, cards: ['Gore'] } }));
+    expect(openSheet().getByText('No new cards at this level. Next new cards, at level 5: Gore.')).toBeTruthy();
+  });
+
+  it('says when no new cards are left', () => {
+    renderPanel(makeMonster({ level: 2, nextLevel: gains, nextCards: null }));
+    expect(openSheet().getByText(/already use every card/)).toBeTruthy();
+  });
+
+  it('says how much XP is left, and closes back to the bar', () => {
+    renderPanel(makeMonster({ level: 2, xpIntoLevel: 10, xpNeededForLevel: 30, nextLevel: gains }));
+    const sheet = openSheet();
+    expect(sheet.getByText(/20 more XP to go \(10 of 30\)/)).toBeTruthy();
+    fireEvent.click(sheet.getByRole('button', { name: 'Close' }));
+    expect(screen.queryByRole('dialog')).toBeNull();
   });
 });

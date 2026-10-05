@@ -553,20 +553,46 @@ button {
   repeats the level (`Lvl {n}`); that moved to the type line once HP took over as the
   header's primary at-a-glance number.
 */
+/*
+  A button since bug 225 (it opens the level-up details), so the button chrome is reset and
+  it fills the panel's width like the HP meter above it. The min-height is the tap target.
+*/
 .workshop-xp-meter {
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 32px;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
   display: flex;
   align-items: center;
   gap: 0.35rem;
   margin-top: 0.35rem;
 }
 
-.workshop-xp-meter > span {
+.workshop-xp-meter:focus-visible {
+  outline: 1px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.workshop-xp-next {
+  font-size: 0.62rem;
+  color: var(--color-accent);
+  white-space: nowrap;
+}
+
+.workshop-xp-meter > span:first-child {
   font-size: 0.62rem;
   color: var(--color-fg-dim);
   white-space: nowrap;
 }
 
 .workshop-xp-meter-track {
+  display: block;
   flex: 1;
   min-width: 2rem;
   height: 6px;
@@ -574,7 +600,8 @@ button {
   background: var(--color-bg);
 }
 
-.workshop-xp-meter-track > div {
+.workshop-xp-meter-track > span {
+  display: block;
   background: var(--color-success);
   height: 100%;
 }
@@ -713,12 +740,6 @@ button {
 }
 
 /* "At level N: ..." under the monster's type line. */
-.workshop-next-cards {
-  margin: 0.15rem 0 0;
-  font-size: 0.72rem;
-  color: var(--color-fg-dim);
-}
-
 /* The cell holds the slot button and, beside it, the details button (never nested). */
 .workshop-card-cell {
   position: relative;

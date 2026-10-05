@@ -46,6 +46,7 @@ export function getPreBattleModifier (self: BaseCreature, targetProp: string): n
 	const maxBoost = (MAX_BOOSTS as Record<string, number>)[targetProp] ?? 0;
 
 	// Level scaling: +1 per level up to the stat cap
+	// (Not `levelBonus`: getModifier('hp') and ('ac') come through here too, with this formula.)
 	modifier += Math.min(self.level, maxBoost);
 
 	// Permanent modifiers set via setModifier(..., permanent=true)
@@ -66,6 +67,27 @@ export function youthAcBonus (level: number, youthAc = 0): number {
 	return level <= 3 ? youthAc : Math.ceil(youthAc / 2);
 }
 
+/**
+ * What a level alone adds to a stat, before type offsets, variance, training or the fight.
+ * Max HP and AC read it directly; DEX, STR and INT match `getPreBattleModifier`'s level line.
+ * `levelUpGains` uses it to tell a player what the next level brings, and its test checks
+ * the result against a real monster's stats, so the two cannot drift.
+ */
+export function levelBonus (level: number, prop: string, youthAc = 0): number {
+	switch (prop) {
+		case 'hp':
+			return Math.min(level * 3, MAX_BOOSTS.hp);
+		case 'ac':
+			return Math.min(level, MAX_BOOSTS.ac) + youthAcBonus(level, youthAc);
+		case 'dex':
+		case 'str':
+		case 'int':
+			return Math.min(level, MAX_BOOSTS[prop]);
+		default:
+			return 0;
+	}
+}
+
 export function getPreBattlePropValue (self: BaseCreature, prop: string): number | undefined {
 	switch (prop) {
 		case 'dex':
@@ -75,12 +97,11 @@ export function getPreBattlePropValue (self: BaseCreature, prop: string): number
 		case 'int':
 			return BASE_INT + getPreBattleModifier(self, 'int');
 		case 'ac': {
-			let raw = BASE_AC + self.acVariance + youthAcBonus(self.level, (self.constructor as typeof BaseCreature).youthAc);
-			raw += Math.min(self.level, (MAX_BOOSTS as Record<string, number>)['ac']); // AC level bonus not in getModifier
-			return raw;
+			// The AC level bonus is not in getModifier.
+			return BASE_AC + self.acVariance + levelBonus(self.level, 'ac', (self.constructor as typeof BaseCreature).youthAc);
 		}
 		case 'hp':
-			return BASE_HP + self.hpVariance + Math.min(self.level * 3, MAX_BOOSTS.hp) +
+			return BASE_HP + self.hpVariance + levelBonus(self.level, 'hp') +
 				Math.min((self.modifiers as Record<string, number>).maxHp || 0, MAX_PROP_MODIFICATIONS.hp);
 		case 'xp':
 			return (self.options.xp as number | undefined) ?? STARTING_XP;

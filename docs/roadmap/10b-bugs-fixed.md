@@ -5239,6 +5239,24 @@ Tests: `workshopPanel.dots.test.tsx` (dots, arrow, peek, and the CSS guard that 
 
 **Status**: Fixed.
 
+### 225. "At level 3: Pound and Vengeful Rampage." confused more than it helped — FIXED
+
+Found by the owner.
+
+**Root cause**: roadmap 44 K3 put the next card unlocks under each monster's type as a bare
+line. With no word for what "at level 3" was measuring, how far off it was, or what else the
+level brought, it read as noise. Nothing else in the Workshop said what levelling up does.
+
+Fix: the line is gone, and the XP bar is a button ending `Lvl {n} ›` that opens
+`LevelUpSheet`: the XP still to go and where XP comes from, the stat gains (max HP, AC, STR,
+DEX, INT; a capped stat is left out), and the cards that level opens, or the next level that
+opens any. The server sends `nextLevel` from the engine's new `levelUpGains`, which reads
+`levelBonus` in `creatures/stats.ts`, the same formula max HP and AC use; its test compares it
+with a real monster's stats for every type and levels 0–20, so the sheet cannot promise
+numbers the stats do not deliver. The card sheet's shell became `DetailSheet`, shared by both.
+
+**Status**: Fixed.
+
 ## Closed without a fix
 
 These were open investigations the owner closed on 2026-09-28. Reopen with new evidence.

@@ -24,11 +24,12 @@ type WorkshopMonster = {
   maxHp: number;
   revivesAt: number | null;
   battles: { wins: number; losses: number; total: number };
-  // For the card-details sheet and the panel's "At level N" line; see
+  // For the card-details sheet and the level-up details the XP bar opens; see
   // `InventoryMonsterSummary` in the server router. Optional: older payloads and test doubles
   // lack them.
   monsterClass?: string;
   nextCards?: { level: number; cards: string[] } | null;
+  nextLevel?: { level: number; hp: number; ac: number; str: number; dex: number; int: number };
 };
 
 type WorkshopInventory = {

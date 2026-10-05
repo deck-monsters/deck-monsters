@@ -126,7 +126,8 @@ pronoun (`agree()`).
 
 **Done (2026-10-05).** Shipped as roadmap 44 K1, K2, K3 and K5 (#423): a role for every card,
 CARDS.md grouped by role with full cards, a legend and per-type "what it can hold" tables, the
-items generated into ITEMS.md, the Workshop's card details and `At level` line, and
+items generated into ITEMS.md, the Workshop's card details and `At level` line (since moved
+into the XP bar's level-up details, bug 225), and
 `look at cards for [monster]`. Odds for the 20 cards with none are in J. The proposal below is
 kept as written.
 

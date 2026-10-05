@@ -16,6 +16,7 @@ import {
 	cardFactsVariants,
 	allMonsters,
 	holdableByLevel,
+	levelUpGains,
 	monsterTypeSummary,
 	chooseName,
 	SPAWN_ERRORS,
@@ -106,6 +107,10 @@ type InventoryMonsterSummary = {
 	// The next level above this monster's that opens any card its type can hold, with those
 	// card names, for the panel's "At level N: ..." line. Null when nothing opens later.
 	nextCards: { level: number; cards: string[] } | null;
+	// What the next level changes (max HP, AC, STR, DEX, INT), for the level-up details the
+	// XP bar opens. Each is a change and can be 0 or negative (youth AC fades); see
+	// `levelUpGains` in the engine.
+	nextLevel: { level: number; hp: number; ac: number; str: number; dex: number; int: number };
 };
 
 // Per-item summary for the web item list (docs/architecture/workshop-and-items.md).
@@ -463,6 +468,7 @@ const summarizeInventory = ({
 					battles,
 					monsterClass: monsterClassOfType(type),
 					nextCards: nextCardsFor(type, level),
+					nextLevel: levelUpGains(type, level),
 				} satisfies InventoryMonsterSummary,
 			};
 		})
