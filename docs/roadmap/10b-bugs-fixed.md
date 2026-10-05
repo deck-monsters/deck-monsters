@@ -2306,7 +2306,7 @@ drops to 2-up in a very narrow pane.
 
 ---
 
-### 122. Nothing said a player had a second monster on a phone — FIXED (superseded by #215)
+### 122. Nothing said a player had a second monster on a phone — FIXED (see #215 and #224)
 
 **Root cause**: below 900px `.workshop-monster-row` becomes a scroll-snapped carousel, and
 the only indication that more monsters existed was the ~44px sliver of the next panel
@@ -5060,7 +5060,8 @@ Found by Cursor's new-player walk ([walk 2](../reference/new-player-walk-2.md)),
   (a scroll-snapped row) and added dots to show it. A new player still read the dots as
   decoration and never found the second monster. The carousel is gone: `.workshop-monster-row`
   is always the auto-fit grid, one column on a phone and side by side on a desktop, so every
-  monster is on the page. This supersedes #122's dots.
+  monster is on the page. This supersedes #122's dots. (Reversed by #224: the carousel is back,
+  with stronger cues.)
 - **Leaders and the header at 390.** Leaders' columns were in a scroll box with nothing to say
   it scrolled; a right-edge fade now shows there is more. A long room name wrapped to three
   lines in the fixed-height header, because the flex child had no `min-width: 0`; it now ends
@@ -5210,6 +5211,31 @@ roadmap 45 L1.
   new yes/no question must end with `(yes/no)`.
 - **The taken name twice.** The Workshop's error banner included the training mutation's
   error, which the wizard already shows at the step at fault. The banner no longer shows it.
+
+**Status**: Fixed.
+
+### 224. A stacked Workshop made many monsters a long scroll on a phone — FIXED
+
+Found by the owner on an iPhone after #215.
+
+**Root cause**: #215 answered "players miss the second monster" by dropping the phone
+carousel, so `.workshop-monster-row` stacked one monster per screen-height. With several
+monsters the deck, inventory and items were pages below the fold. The problem #215 saw was
+discoverability, not the carousel itself.
+
+Fix: the carousel is back below 900px (`@container workshop`), with three cues instead of
+#122's small dots alone:
+
+- **Larger dots.** 10px markers (were 8px) in 28 × 44px tap targets.
+- **A next arrow.** After the dots, a dot with a chevron, `Next monster`, scrolls to the next
+  panel and fades on the last one. It sits outside the dots' tablist, since it is not a tab.
+- **A peek on load.** The first time the row overflows on a page load, the panels slide
+  56px left and back, once. It moves the panels, not the row: the row is the scroll
+  container and its own clip, so translating it shows nothing, and scrolling it would fight
+  `scroll-snap-type: mandatory`. A tap on the row stops it; reduced motion turns it off.
+
+Tests: `workshopPanel.dots.test.tsx` (dots, arrow, peek, and the CSS guard that replaced
+`workshopPanel.monsterRow.test.ts`).
 
 **Status**: Fixed.
 

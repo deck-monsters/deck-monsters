@@ -27,10 +27,21 @@ export type WorkshopPanelProps = {
   headerActions?: ReactNode;
 };
 
+// The carousel peek plays once per page load (see the effect in WorkshopPanel).
+let peekShown = false;
+
+/** Test hook: lets each test start as a fresh page load. */
+export function resetWorkshopPeekForTests() {
+  peekShown = false;
+}
+
 export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelProps) {
   const [selectedCards, setSelectedCards] = useState<SelectionState[]>([]);
   const [activeMonsterFilter, setActiveMonsterFilter] = useState<string | null>(null);
   const inventoryRef = useRef<HTMLDivElement>(null);
+  const monsterRowRef = useRef<HTMLDivElement>(null);
+  const [visibleMonsterIndex, setVisibleMonsterIndex] = useState(0);
+  const [peeking, setPeeking] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showSpawn, setShowSpawn] = useState(false);
@@ -598,6 +609,55 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
     }
   }
 
+  /*
+    Below 900px the monster row becomes a scroll-snapped carousel, so a player with more
+    than one monster sees one panel and a sliver of the next. The sliver alone read as a
+    rendering fault, so the dots say how many monsters there are and which one you are on,
+    and the next arrow and the peek say there is more to the right (10b #122, #224).
+    See docs/architecture/web-workspace.md.
+  */
+  const handleMonsterRowScroll = useCallback(() => {
+    const row = monsterRowRef.current;
+    if (!row) return;
+    // Nearest panel to the row's left edge, which is where scroll-snap parks them.
+    let nearest = 0;
+    let best = Infinity;
+    for (const [index, panel] of [...row.children].entries()) {
+      const distance = Math.abs((panel as HTMLElement).offsetLeft - row.scrollLeft - row.clientLeft);
+      if (distance < best) {
+        best = distance;
+        nearest = index;
+      }
+    }
+    setVisibleMonsterIndex(nearest);
+  }, []);
+
+  const scrollToMonster = useCallback((index: number) => {
+    const panel = monsterRowRef.current?.children[index] as HTMLElement | undefined;
+    if (!panel) return;
+    const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    panel.scrollIntoView({
+      behavior: reduceMotion ? 'auto' : 'smooth',
+      inline: 'start',
+      block: 'nearest',
+    });
+  }, []);
+
+  /*
+    Peek once per page load, the first time the row has a monster off to the right. Only when
+    the row actually overflows: on a wide screen it is a grid with every panel visible, and
+    moving them would be noise. Once per load, not per visit to the Workshop, so switching
+    tabs does not replay it.
+  */
+  const monsterCount = monsters.length;
+  useEffect(() => {
+    if (peekShown || monsterCount < 2) return;
+    const row = monsterRowRef.current;
+    if (!row || row.scrollWidth <= row.clientWidth) return;
+    peekShown = true;
+    setPeeking(true);
+  }, [monsterCount]);
+
   return (
     <div className="workshop-view">
       <div className="workshop-header">
@@ -686,7 +746,14 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
           </p>
         </div>
       ) : (
-      <div className="workshop-monster-row">
+      <div
+        className={`workshop-monster-row${peeking ? ' peek' : ''}`}
+        ref={monsterRowRef}
+        onScroll={handleMonsterRowScroll}
+        // A player who grabs the row mid-peek gets it back at once rather than fighting the slide.
+        onPointerDown={() => setPeeking(false)}
+        onAnimationEnd={() => setPeeking(false)}
+      >
         {monsters.map((monster) => {
           // Once per monster per render: the reason, then the sentence built from it.
           const reason = selectedInventoryCardName ? refusalFor(selectedInventoryCardName, monster) : null;
@@ -741,6 +808,40 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
           );
         })}
       </div>
+      )}
+
+      {monsters.length > 1 && (
+        <div className="workshop-monster-nav">
+          <div className="workshop-monster-dots" role="tablist" aria-label="Monsters">
+            {monsters.map((monster, index) => (
+              <button
+                title={`Show ${monster.name}`}
+                key={monster.name}
+                type="button"
+                role="tab"
+                className={`workshop-monster-dot${index === visibleMonsterIndex ? ' active' : ''}`}
+                aria-selected={index === visibleMonsterIndex}
+                aria-label={monster.name}
+                onClick={() => scrollToMonster(index)}
+              />
+            ))}
+          </div>
+          {/* Outside the tablist: a "next" button is not a tab. */}
+          <button
+            type="button"
+            className="workshop-monster-next"
+            aria-label="Next monster"
+            title="Next monster"
+            disabled={visibleMonsterIndex >= monsters.length - 1}
+            onClick={() => scrollToMonster(visibleMonsterIndex + 1)}
+          >
+            <span className="workshop-monster-next-mark" aria-hidden="true">
+              <svg width="8" height="8" viewBox="0 0 8 8">
+                <path d="M2.5 1 L5.5 4 L2.5 7" fill="none" stroke="currentColor" strokeWidth="1.4" />
+              </svg>
+            </span>
+          </button>
+        </div>
       )}
 
       <div ref={inventoryRef}>
