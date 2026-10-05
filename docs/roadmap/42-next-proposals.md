@@ -337,7 +337,7 @@ contestants` line (43).
   wizard's preview, so Ready can show the whole description;
 - a colour swatch in the wizard that reaches the pixel sprite.
 
-**Small fixes from the guides check** ([report](../reference/guides-wizard-check.md)):
+**Small fixes from the guides check** ([report](../reference/guides-wizard-check.md)), being done in [45](45-guides-check-fixes.md):
 1. The shop's card pick and Back Room pick print the `Choose one or more…` question twice: as
    a line, then again above the buttons.
 2. The shop's yes/no confirm offers only `Cancel`; there are no `Yes` and `No` buttons, so a
