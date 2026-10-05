@@ -21,6 +21,17 @@ function isMultiSelect(question: string): boolean {
 }
 
 /**
+ * A yes/no question arrives with NO choices; the engine only ends its text with `(yes/no)`
+ * (the shop's confirm and sell, the Sorting Hat, `Are you sure?`, the creature edit
+ * confirms). It then parses the answer as the literal word `yes` and treats anything else as
+ * no, so the buttons send `yes` and `no`. Without them the player had only Cancel and had to
+ * guess to type `yes` (guides check, roadmap 45 L1). Choices present means a menu, never this.
+ */
+function isYesNo(question: string, choices: string[]): boolean {
+  return choices.length === 0 && /\(yes\/no\)\s*$/i.test(question);
+}
+
+/**
  * The shop's pick prompts are the same multi-select as equip, but the button must say what it
  * does. The engine marks them in the question text: "...cards to buy:", "...items to buy:"
  * and, for the Back Room, "...following to buy:" (the SHOP_..._PICK_QUESTION constants in
@@ -91,6 +102,7 @@ export default function InlineChoices({
   // Position in this array = deck slot (1-based displayed to user).
   const [selectionOrder, setSelectionOrder] = useState<number[]>([]);
   const multi = isMultiSelect(question);
+  const yesNo = isYesNo(question, choices);
   const buying = multi && isBuyPrompt(question);
   const noun = buyNoun(question);
   // Per-index max counts parsed from the question text (e.g., "Hit [3]" → idx→3).
@@ -172,7 +184,7 @@ export default function InlineChoices({
   return (
     <div className="event-prompt">
       <p className="prompt-question">{question}</p>
-      <ul
+      {!yesNo && <ul
         ref={listRef}
         role="listbox"
         aria-multiselectable={multi}
@@ -250,7 +262,7 @@ export default function InlineChoices({
             </li>
           );
         })}
-      </ul>
+      </ul>}
       {multi && !isDone && (
         <div style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
           <button
@@ -313,7 +325,56 @@ export default function InlineChoices({
           )}
         </div>
       )}
-      {!multi && !isDone && onCancel && (
+      {yesNo && (
+        <div style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+          {(['yes', 'no'] as const).map((answer) => {
+            const picked = selectedAnswer === answer;
+            return (
+              <button
+                key={answer}
+                type="button"
+                data-yes-no={answer}
+                title={`Answer ${answer}`}
+                disabled={isDone}
+                aria-pressed={picked}
+                onClick={() => onAnswer(requestId, answer)}
+                style={{
+                  padding: '0.3rem 0.75rem',
+                  background: picked || (answer === 'yes' && !isDone) ? 'var(--color-accent)' : 'transparent',
+                  border: '1px solid var(--color-accent)',
+                  color: picked || (answer === 'yes' && !isDone) ? 'var(--color-bg)' : 'var(--color-fg)',
+                  fontFamily: 'var(--font-family)',
+                  fontSize: 'var(--font-size)',
+                  cursor: isDone ? 'default' : 'pointer',
+                  opacity: isDone && !picked ? 0.5 : 1,
+                }}
+              >
+                {answer === 'yes' ? 'Yes' : 'No'}
+              </button>
+            );
+          })}
+          {!isDone && onCancel && (
+            <button
+              type="button"
+              title="Cancel this question"
+              onClick={() => onCancel(requestId)}
+              style={{
+                padding: '0.3rem 0.75rem',
+                background: 'transparent',
+                border: '1px solid var(--color-border)',
+                color: 'var(--color-fg-dim)',
+                fontFamily: 'var(--font-family)',
+                fontSize: 'var(--font-size)',
+                cursor: 'pointer',
+                marginLeft: 'auto',
+              }}
+            >
+              Cancel
+            </button>
+          )}
+        </div>
+      )}
+      {!multi && !yesNo && !isDone && onCancel && (
         <div style={{ marginTop: '0.25rem' }}>
           <button
             title="Cancel this question"

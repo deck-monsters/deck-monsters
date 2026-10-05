@@ -47,6 +47,21 @@ describe('mapConsoleHistoryEvent', () => {
     });
   });
 
+  it('tags a question line with its requestId so the Console can drop it while it is open', () => {
+    const mapped = mapConsoleHistoryEvent({
+      id: 'evt-q',
+      type: 'prompt.request',
+      text: 'Choose one or more of the following cards to buy:',
+      payload: { requestId: 'req-9', question: 'Choose one or more of the following cards to buy:' },
+    });
+    expect(mapped).toEqual({
+      id: 'evt-q',
+      type: 'announce',
+      text: 'Choose one or more of the following cards to buy:',
+      promptRequestId: 'req-9',
+    });
+  });
+
   it('carries only the mechanic slice of a tagged announce payload (roadmap 39 C4)', () => {
     const mapped = mapConsoleHistoryEvent({
       id: 'evt-m',

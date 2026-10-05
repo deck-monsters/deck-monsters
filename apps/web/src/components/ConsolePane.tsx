@@ -63,6 +63,8 @@ interface ConsoleEvent {
   highlight?: FightHighlight;
   /** The slice of the event payload a first-time mechanic note reads (see lib/mechanic-notes.ts). */
   payload?: Record<string, unknown>;
+  /** On a history line that is a question's text: the question it came from (see `feedEvents`). */
+  promptRequestId?: string;
 }
 
 interface QuickAction {
@@ -169,6 +171,20 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
   const [consoleEvents, setConsoleEvents] = useState<ConsoleEvent[]>([]);
   // Only the newest tagged row per mechanic may claim its note (see mechanicNoteFor).
   const newestMechanicRows = useMemo(() => newestEventIdByKey(consoleEvents), [consoleEvents]);
+  /*
+   * History keeps a question as a plain text line (an answered one is just a record). When the
+   * Console mounts or reloads while a question is still open, that history line AND the live
+   * question with its buttons both reach the feed, so the question's paragraph printed twice
+   * (the shop's card and Back Room picks, guides check, roadmap 45 L1). The line is dropped
+   * while a question with the same requestId is on screen; once it closes the line stays as
+   * the record it is.
+   */
+  const feedEvents = useMemo(() => {
+    const open = new Set<string>();
+    for (const ev of consoleEvents) if (ev.promptData) open.add(ev.promptData.requestId);
+    if (open.size === 0) return consoleEvents;
+    return consoleEvents.filter(ev => !(ev.promptRequestId && open.has(ev.promptRequestId)));
+  }, [consoleEvents]);
   // Per-attacker damage baseline for the "big hit" highlight. A ref, not state: it feeds
   // a classification decision and must never itself trigger a render.
   const damageHistoryRef = useRef(createDamageHistory());
@@ -1032,7 +1048,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
         aria-live="polite"
         aria-label="Console messages"
         tabIndex={0}
-        data={consoleEvents}
+        data={feedEvents}
         atBottomThreshold={AT_BOTTOM_THRESHOLD_PX}
         /*
          * Virtuoso's own follow-output, matching RingPane. This used to be `false` with the

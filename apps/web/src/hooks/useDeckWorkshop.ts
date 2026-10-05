@@ -261,7 +261,9 @@ export function useDeckWorkshop(roomId?: string) {
       loadPresetMutation.error?.message ??
       deletePresetMutation.error?.message ??
       reviveMonsterMutation.error?.message ??
-      spawnMonsterMutation.error?.message ??
+      // Not spawnMonsterMutation: the training wizard owns that error and shows it at the step
+      // at fault. Listing it here printed a taken name in the Workshop banner as well as under
+      // the suggestions (guides check, roadmap 45 L1).
       useItemMutation.error?.message ??
       sendMonsterToRingMutation.error?.message ??
       buyShopItemMutation.error?.message ??

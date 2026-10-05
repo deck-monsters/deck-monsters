@@ -172,6 +172,20 @@ describe('useDeckWorkshop', () => {
     expect(result.current.busy).toBe(false);
   });
 
+  // The training wizard shows a refused spawn (a taken name) at the step at fault; the Workshop
+  // banner showed it too (guides check, roadmap 45 L1). Every other mutation still uses the banner.
+  it('leaves a refused spawn to the wizard but reports other mutation errors', () => {
+    const failed = (message: string): any => ({ isPending: false, error: { message }, mutateAsync: vi.fn() });
+    mocks.spawnMonsterUseMutation.mockReturnValueOnce(failed('That monster name is already taken.'));
+    const { result, unmount } = renderHook(() => useDeckWorkshop('room-123'));
+    expect(result.current.latestError).toBeUndefined();
+    unmount();
+
+    mocks.reviveMonsterUseMutation.mockReturnValueOnce(failed('Revive failed.'));
+    const again = renderHook(() => useDeckWorkshop('room-123'));
+    expect(again.result.current.latestError).toBe('Revive failed.');
+  });
+
   it('is busy while a mutation is in flight', () => {
     mocks.equipCardsUseMutation.mockReturnValueOnce({ isPending: true, error: null, mutateAsync: vi.fn() });
     const { result } = renderHook(() => useDeckWorkshop('room-123'));

@@ -14,6 +14,8 @@ export type ConsoleHistoryDisplayEvent =
       text: string;
       /** Only the parts of the payload a first-time mechanic note needs; absent on ordinary lines. */
       payload?: Record<string, unknown>;
+      /** Set on the line a question left in history, so the Console can drop it while that question is open. */
+      promptRequestId?: string;
     }
   | null;
 
@@ -39,7 +41,13 @@ export function mapConsoleHistoryEvent(event: ConsoleHistoryEvent): ConsoleHisto
     };
   }
   if (event.type === 'prompt.request') {
-    return { id: event.id, type: 'announce', text: event.text || String(payload.question ?? '') };
+    const requestId = typeof payload.requestId === 'string' ? payload.requestId : undefined;
+    return {
+      id: event.id,
+      type: 'announce',
+      text: event.text || String(payload.question ?? ''),
+      ...(requestId ? { promptRequestId: requestId } : {}),
+    };
   }
   if (event.type === 'prompt.timeout') {
     return { id: event.id, type: 'tombstone', text: event.text };

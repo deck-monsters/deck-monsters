@@ -86,6 +86,14 @@ marker, so they keep the equip wording. No new field rides on the prompt, so Dis
 clients simply see the sentence, and the answer encoding is unchanged. It used to say `Equip
 cards` on a purchase (new-player walk 2), and until roadmap 44 the card pick had no marker and
 the Back Room called its stock "items".
+**A yes/no prompt has no `choices`; its question ends in `(yes/no)`.** The shop's buy and sell
+confirms, the Sorting Hat, `Are you sure?` and the creature edit confirms all work this way,
+and the engine accepts only the literal word `yes` (anything else is no). The web
+`InlineChoices` detects it as `choices` empty and the question matching `/\(yes\/no\)\s*$/i`,
+and shows `Yes` (title `Answer yes`) and `No` (title `Answer no`) buttons that send `yes` and
+`no`; typing `yes` still works. A question with choices is never treated as yes/no. Discord and
+older clients just see the text. A new yes/no prompt must keep `(yes/no)` at the end of the
+question to get the buttons.
 **Free-text prompts cannot take an empty answer** (the web Console and Discord will not send
 one), so a "take the default" option needs a word to type: the character-name prompt accepts
 `ok`, `okay`, `yes` or `y`.
