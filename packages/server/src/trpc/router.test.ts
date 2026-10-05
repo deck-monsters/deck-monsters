@@ -186,7 +186,7 @@ describe('trpc/router card management procedures', () => {
 			givenName: 'Rex', creatureType: 'Minotaur', level: 0, inEncounter: false, cardSlots: 9,
 			cards: [], items: [], options: {}, hp: 10, maxHp: 10, battles: { wins: 0, losses: 0, total: 0 },
 		};
-		const unknown = { ...monster, givenName: 'Mystery', creatureType: 'Nonesuch' };
+		const unknown = { ...monster, givenName: 'Mystery', creatureType: 'Nonesuch', pronouns: { he: 'she', him: 'her', his: 'her' } };
 		const game = { characters: { [USER_ID]: { monsters: [monster, unknown], deck: [], items: [] } }, ring: { contestants: [] } };
 		const roomManager = { assertMember: async () => undefined, getGame: async () => game } as unknown as Parameters<typeof createRouter>[0];
 		const result = await createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false }).game.myInventory({ roomId: ROOM_ID });
@@ -201,6 +201,9 @@ describe('trpc/router card management procedures', () => {
 		expect(mystery!.nextCards).to.equal(null);
 		// The level-up details: level 0 to 1 raises every stat.
 		expect(rex!.nextLevel).to.deep.equal({ level: 1, hp: 3, ac: 1, str: 1, dex: 1, int: 1 });
+		// The double has no pronouns getter: no pronoun, and the web falls back to the name.
+		expect(rex!.pronoun).to.equal('');
+		expect(mystery!.pronoun).to.equal('she');
 
 		// A second call (the 30 s poll) answers the same from the per-type memo.
 		const again = await createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false }).game.myInventory({ roomId: ROOM_ID });

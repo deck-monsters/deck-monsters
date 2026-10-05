@@ -37,6 +37,7 @@ type MonsterPanelProps = {
     // changes: both for the level-up details its XP bar opens (LevelUpSheet).
     nextCards?: { level: number; cards: string[] } | null;
     nextLevel?: LevelUpGainsView;
+    pronoun?: string;
   };
   showSelectionHint: boolean;
   selectedCards: Array<{ location: WorkshopCardLocation; cardName: string; selectionId: string }>;
@@ -271,6 +272,7 @@ export default function MonsterWorkshopPanel({
       {levelSheetOpener && (
         <LevelUpSheet
           monsterName={monster.name}
+          pronoun={monster.pronoun}
           xpIntoLevel={monster.xpIntoLevel}
           xpNeededForLevel={xpNeeded}
           nextLevel={monster.nextLevel}

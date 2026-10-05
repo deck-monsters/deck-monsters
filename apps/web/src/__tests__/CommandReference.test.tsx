@@ -38,11 +38,11 @@ describe('CommandReference', () => {
     expect(onInsertCommand).toHaveBeenCalledWith('train a monster');
   });
 
-  it('calls onInsertCommand with correct value for quick links', () => {
-    const onInsertCommand = vi.fn();
-    render(<CommandReference {...defaultProps} onInsertCommand={onInsertCommand} />);
-    fireEvent.click(screen.getByText('Handbook'));
-    expect(onInsertCommand).toHaveBeenCalledWith('look at player handbook');
+  it('has no guide shortcuts: the guides are in Help and guides (bug 230)', () => {
+    render(<CommandReference {...defaultProps} />);
+    expect(screen.queryByText('Handbook')).toBeNull();
+    expect(screen.queryByText('Monster Manual')).toBeNull();
+    expect(screen.queryByText('Card List')).toBeNull();
   });
 
   it('states that items can still be used mid-fight, and the catch', () => {

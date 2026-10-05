@@ -73,14 +73,38 @@ function CommandsSection() {
   );
 }
 
+/** How far down (px) before scrolling up offers "↑ Top": about two phone screens. */
+const TOP_BUTTON_AFTER_PX = 1200;
+
 export default function HelpPanel({ headerActions }: HelpPanelProps) {
   const [active, setActive] = useState<SectionId>('how-to-play');
   const bodyRef = useRef<HTMLDivElement>(null);
   const section = SECTIONS.find((s) => s.id === active)!;
 
+  // "↑ Top" (bug 230): the guides are long, and after following a link deep into Cards the way
+  // back was a long swipe. It shows once the player is well down and starts scrolling up, the
+  // moment they are looking for the top, and hides on the way down so it never covers text.
+  const [showTop, setShowTop] = useState(false);
+  const lastScrollTop = useRef(0);
+  function onScroll() {
+    const top = bodyRef.current?.scrollTop ?? 0;
+    // A repeated event at the same offset (iOS sends them as momentum settles) is no
+    // direction at all, and must not hide the button.
+    if (top === lastScrollTop.current) return;
+    const goingUp = top < lastScrollTop.current;
+    lastScrollTop.current = top;
+    setShowTop(top > TOP_BUTTON_AFTER_PX && goingUp);
+  }
+
   function show(id: SectionId) {
     setActive(id);
     bodyRef.current?.scrollTo?.({ top: 0 });
+  }
+
+  function scrollToTop() {
+    const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    bodyRef.current?.scrollTo?.({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' });
+    setShowTop(false);
   }
 
   const guide = section.markdown === undefined ? null : (
@@ -98,7 +122,7 @@ export default function HelpPanel({ headerActions }: HelpPanelProps) {
 
   return (
     <div className="surface-panel-host">
-      <section className="surface-panel help-panel" ref={bodyRef} aria-labelledby="help-title">
+      <section className="surface-panel help-panel" ref={bodyRef} onScroll={onScroll} aria-labelledby="help-title">
         <header className="surface-panel-heading">
           <h1 id="help-title">Help and guides</h1>
           <div className="surface-panel-actions">{headerActions}</div>
@@ -120,6 +144,11 @@ export default function HelpPanel({ headerActions }: HelpPanelProps) {
         </nav>
         {section.id === 'commands' ? <CommandsSection /> : guide}
       </section>
+      {showTop && (
+        <button type="button" title="Back to the top of this guide" className="jump-to-bottom help-jump-to-top" onClick={scrollToTop}>
+          ↑ Top
+        </button>
+      )}
     </div>
   );
 }

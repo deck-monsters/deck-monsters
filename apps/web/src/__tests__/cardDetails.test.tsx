@@ -247,7 +247,12 @@ describe('level-up details from the XP bar (bug 225)', () => {
 
   it('names the cards the level opens', () => {
     renderPanel(makeMonster({ level: 2, nextLevel: gains, nextCards: { level: 3, cards: ['Fire Breath', 'Gore', 'Hit'] } }));
-    expect(openSheet().getByText('New cards it can use: Fire Breath, Gore and Hit.')).toBeTruthy();
+    expect(openSheet().getByText('New cards Rex can use: Fire Breath, Gore and Hit.')).toBeTruthy();
+  });
+
+  it("uses the monster's pronoun rather than \"it\" (bug 230)", () => {
+    renderPanel(makeMonster({ level: 2, pronoun: 'she', nextLevel: gains, nextCards: { level: 3, cards: ['Gore'] } }));
+    expect(openSheet().getByText('New cards she can use: Gore.')).toBeTruthy();
   });
 
   it('says when the next new cards come later', () => {
@@ -257,7 +262,7 @@ describe('level-up details from the XP bar (bug 225)', () => {
 
   it('says when no new cards are left', () => {
     renderPanel(makeMonster({ level: 2, nextLevel: gains, nextCards: null }));
-    expect(openSheet().getByText(/already use every card/)).toBeTruthy();
+    expect(openSheet().getByText('No new cards to come: Rex can already use all of them.')).toBeTruthy();
   });
 
   it('says how much XP is left, and closes back to the bar', () => {

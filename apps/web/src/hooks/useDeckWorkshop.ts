@@ -30,6 +30,7 @@ type WorkshopMonster = {
   monsterClass?: string;
   nextCards?: { level: number; cards: string[] } | null;
   nextLevel?: { level: number; hp: number; ac: number; str: number; dex: number; int: number };
+  pronoun?: string;
 };
 
 type WorkshopInventory = {

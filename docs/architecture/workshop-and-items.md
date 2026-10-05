@@ -33,7 +33,7 @@ serialization, and read-model contracts behind those rules.
 - per monster, its `monsterClass`, `nextCards` (the next level above its own that opens any
   card its type can hold, with the card names; from the engine's `holdableByLevel`) and
   `nextLevel` (what the next level changes: max HP, AC, STR, DEX and INT, from the engine's
-  `levelUpGains`). The panel's XP bar is a button (`Lvl {n} ›`) that opens these in
+  `levelUpGains`), and `pronoun` (its subject pronoun, so the sheet says "she", not "it"). The panel's XP bar is a button (`Lvl {n} ›`) that opens these in
   `LevelUpSheet`: the XP still to go, the stat gains (a stat at its cap is left out), and the
   cards the level opens or when the next ones come. It replaced an `At level {n}: {cards}.`
   line that named cards with no context (bug 225). It shares `DetailSheet` (portal, focus,
