@@ -5311,6 +5311,22 @@ Tests: `keepInPlace.test.ts`.
 
 **Status**: Fixed.
 
+### 229. Two Help items in the ☰ menu, and mixed underlines and capitals — FIXED
+
+Found by the owner on an iPhone.
+
+**Root cause**: the menu had `Help and guides` (the guides page, roadmap 39) and `Help /
+Commands` (the Console's command reference, from before the guides existed), two items saying
+Help for different things. The theme item printed the theme's id (`Theme: street-fighter`).
+And the menu mixes `<Link class="btn">` and `<button class="btn">`; `.btn` never cleared the
+browser's link underline, so only the links were underlined.
+
+Fix: the command reference is `Console commands` in the menu, on the desktop `?` (title and
+accessible name), and as the panel's title. The theme item uses the theme's label up to its
+note (`Theme: Street Fighter`). `.btn` sets `text-decoration: none`. Test: `helpPanel.test.tsx`.
+
+**Status**: Fixed.
+
 ## Closed without a fix
 
 These were open investigations the owner closed on 2026-09-28. Reopen with new evidence.

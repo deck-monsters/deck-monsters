@@ -119,7 +119,12 @@ button {
   touch-action: manipulation; /* removes 300ms tap delay on mobile */
 }
 
+/*
+  No underline: a `.btn` link (Fights, Account) and a `.btn` button (Theme, Sign out) sit side
+  by side in the ☰ menu, and only the links were underlined (bug 229).
+*/
 .btn {
+  text-decoration: none;
   background: transparent;
   border: 1px solid var(--color-border);
   color: var(--color-fg);

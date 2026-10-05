@@ -26,7 +26,7 @@ describe('CommandReference', () => {
   it('calls onClose when the close button is clicked', () => {
     const onClose = vi.fn();
     render(<CommandReference {...defaultProps} onClose={onClose} />);
-    fireEvent.click(screen.getByLabelText('Close command reference'));
+    fireEvent.click(screen.getByLabelText('Close Console commands'));
     expect(onClose).toHaveBeenCalledOnce();
   });
 
