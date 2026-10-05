@@ -24,8 +24,8 @@ this as one PR with the archiving of 43 and 44, and then a pause.
 
 | # | Task | Area | Can run beside | Status | Commit |
 |---|---|---|---|---|---|
-| L1 | **The Console's questions.** (1) The shop's card pick and Back Room pick print their `Choose one or more…` question twice, as a line and again above the buttons: show it once. (2) A yes/no question (the shop's confirm, the Sorting Hat) offers only `Cancel`: show `Yes` and `No` buttons. (3) The wizard shows a taken monster name's message twice, in the Workshop banner and under the suggestions: show it once, in the wizard | Web | L2 | Planned | |
-| L2 | **The summon refusal.** With one monster in the ring, `summon a boss` answered `Every challenger in the ring already has a boss to face…`, and then a boss fight started. Find why (a timer boss arriving at the same moment, or a quota counting the wrong side) and make the refusal match the ring | Engine | L1 | Planned | |
+| L1 | **The Console's questions.** (1) The shop's card pick and Back Room pick print their `Choose one or more…` question twice, as a line and again above the buttons: show it once. (2) A yes/no question (the shop's confirm, the Sorting Hat) offers only `Cancel`: show `Yes` and `No` buttons. (3) The wizard shows a taken monster name's message twice, in the Workshop banner and under the suggestions: show it once, in the wizard | Web | L2 | In review | |
+| L2 | **The summon refusal.** With one monster in the ring, `summon a boss` answered `Every challenger in the ring already has a boss to face…`, and then a boss fight started. Find why (a timer boss arriving at the same moment, or a quota counting the wrong side) and make the refusal match the ring | Engine | L1 | Done. The refusal was right: a timer boss already filled the one-boss-per-challenger quota. It now names that boss when the player's monster is the only challenger; review narrowed it (two players, or the player's own summon, keep the general line). Bug 222 | 234b0b21, a1403853 |
 
 ## The text (orchestrator)
 

@@ -5174,6 +5174,25 @@ Found by Cursor's walk-fixes check ([report](../reference/walk-fixes-check.md)),
 
 **Status**: Fixed; confirmed live 2026-10-05 ([guides and wizard check](../reference/guides-wizard-check.md), items 17–19).
 
+### 222. `summon a boss` refused as if the ring were full, then a boss fight began — FIXED
+
+Found by Cursor's guides and wizard check ([report](../reference/guides-wizard-check.md)),
+roadmap 45 L2. `send Keleth to the ring`, then `summon a boss`, answered `Every challenger in
+the ring already has a boss to face…`, and a fight started against a boss anyway.
+
+Root cause: the refusal was right but said nothing useful. `bossAllowance()` is
+`max(1, humans)`, because an empty ring keeps one boss waiting for a challenger. A boss the
+house sent on its timer was already waiting when Keleth joined, so one human and one boss
+filled the quota, and the fight then began against that boss. The count was not wrong.
+
+Fix: when the player's monster is the only challenger and the only boss is one the player
+didn't summon, the refusal names it: `{boss} is already here for {monster}. Bring a friend
+into the ring, then summon another.` Every other case keeps the general line; the review
+caught that naming "the first boss" was wrong with two players and for a boss the player had
+summoned themselves.
+
+**Status**: Fixed.
+
 ## Closed without a fix
 
 These were open investigations the owner closed on 2026-09-28. Reopen with new evidence.
