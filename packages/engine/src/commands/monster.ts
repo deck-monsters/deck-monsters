@@ -317,6 +317,22 @@ function summonBossAction({ channel, character, game, isDM, user }: any): Promis
 
 		const capacity = ring.canAcceptBoss();
 		if (!capacity.ok) {
+			// Why: a boss that arrives on its own timer (or that waited in an empty ring for a
+			// challenger) already fills the one-boss-per-challenger quota when the player's first
+			// monster joins, so the refusal was right but read as if it were wrong, and the fight
+			// then started against that boss. Name the boss so the refusal explains itself.
+			if (capacity.reason === 'boss_quota') {
+				const waitingBoss = ring.contestants.find((contestant: any) => contestant.isBoss);
+				const mine = ring.contestants.find(
+					(contestant: any) => contestant.character === character && !contestant.isBoss
+				);
+				if (waitingBoss && mine) {
+					return announceAndThrow(
+						channel,
+						`${waitingBoss.monster.givenName} is already here for ${mine.monster.givenName}. Bring a friend into the ring, then summon another.`
+					);
+				}
+			}
 			return announceAndThrow(
 				channel,
 				BOSS_REFUSAL_MESSAGES[capacity.reason] ?? 'The ring cannot take another boss right now.'

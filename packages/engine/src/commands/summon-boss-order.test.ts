@@ -1,6 +1,10 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
 
+import Basilisk from '../monsters/basilisk.js';
+import Beastmaster from '../characters/beastmaster.js';
+import Game from '../game.js';
+import { engineReady } from '../helpers/engine-ready.js';
 import { listen, loadHandlers } from './index.js';
 
 const USER = { id: 'u1', name: 'Tester' };
@@ -87,5 +91,70 @@ describe('commands/monster: summon a boss announcement order', () => {
 		const summonLines = timeline.filter((entry) => entry.includes('has summoned a boss'));
 		expect(summonLines).to.have.lengthOf(1);
 		expect(summonLines[0]).to.include('Tweettypography');
+	});
+});
+
+/**
+ * Production check (roadmap 44): `send Keleth to the ring`, then `summon a boss`, answered
+ * "Every challenger in the ring already has a boss to face", and a fight began against a boss.
+ * Root cause: a boss had already arrived on its own (it waits in an empty ring for a
+ * challenger), so the one-boss-per-challenger quota was full and the refusal was right but
+ * unexplained. The refusal now names that boss.
+ */
+describe('commands/monster: summon a boss refusal names the waiting boss', () => {
+	before(async () => {
+		await engineReady;
+		loadHandlers();
+	});
+
+	async function summon(game: Game, character: Beastmaster) {
+		const channel = sinon.stub().resolves(undefined);
+		(game as any).getCharacter = sinon.stub().resolves(character);
+		await Promise.resolve(
+			listen({ command: 'summon a boss', game })!({
+				channel,
+				channelName: 'dm',
+				isDM: true,
+				isAdmin: false,
+				user: USER,
+				game,
+			} as any)
+		).catch(() => undefined);
+		return channel;
+	}
+
+	function joined(game: Game) {
+		const ring = game.getRing();
+		const character = new Beastmaster();
+		const monster = new Basilisk();
+		character.addMonster(monster);
+		return { ring, character, monster, join: () => ring.addMonster({ monster, character, userId: USER.id }) };
+	}
+
+	it('names the boss that was already in the ring when the first monster joined', async () => {
+		const game = new Game({}, () => {});
+		const { ring, character, monster, join } = joined(game);
+		const boss = ring.spawnBoss()!;
+		join();
+
+		const channel = await summon(game, character);
+
+		expect(JSON.stringify(channel.args)).to.include(
+			`${boss.monster.givenName} is already here for ${monster.givenName}. Bring a friend into the ring, then summon another.`
+		);
+		expect(ring.bossCount).to.equal(1);
+		game.dispose();
+	});
+
+	it('summons when no boss is in the ring', async () => {
+		const game = new Game({}, () => {});
+		const { ring, character, join } = joined(game);
+		join();
+		expect(ring.bossCount).to.equal(0);
+
+		await summon(game, character);
+
+		expect(ring.bossCount).to.equal(1);
+		game.dispose();
 	});
 });
