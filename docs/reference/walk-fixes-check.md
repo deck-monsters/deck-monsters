@@ -9,7 +9,7 @@ tags: [onboarding, console, web, verification]
 
 # Live check of the walk fixes
 
-Checked on 2026-10-04 at <https://deck-monsters.com>, on branch `cursor/walk-fixes-check-43a`, from `main` at `d3e8c789`. The checklist is [43a](../roadmap/43a-cursor-walk-fixes-check.md).
+Checked on 2026-10-04 at <https://deck-monsters.com>, on branch `cursor/walk-fixes-check-43a`, from `main` at `d3e8c789`. The checklist is [43a](../archive/roadmap/43a-cursor-walk-fixes-check.md).
 
 The room was `Scratch walk-fixes check 2026-10-04 long room` (45 characters), created for this check and deleted at the end. The character is Ada (they/them). The monsters are Rex, a Gladiator, and Luna, a Unicorn. Phone shots are 390×844. Desktop shots are 1440×900. Native `title` tooltips do not paint into screenshots; where a tooltip is the judgement, the `title` attribute was read from the element.
 

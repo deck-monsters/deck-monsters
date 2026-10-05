@@ -9,7 +9,7 @@ tags: [onboarding, workshop, cards, verification]
 
 # Live check of the guides and wizard
 
-Checked on 2026-10-05 at <https://deck-monsters.com>, on branch `cursor/guides-wizard-check-44a`, from `main` at `13ace44b`. The checklist is [44a](../roadmap/44a-cursor-guides-and-wizard-check.md).
+Checked on 2026-10-05 at <https://deck-monsters.com>, on branch `cursor/guides-wizard-check-44a`, from `main` at `13ace44b`. The checklist is [44a](../archive/roadmap/44a-cursor-guides-and-wizard-check.md).
 
 The room was `Scratch guides wizard 2026-10-05`, created for this check and deleted at the end. The character is Ada (she/her). The monster is Keleth, a Dragon (she/her). Phone shots are 390×844. The desktop shot is 1440×900. One browser tab.
 

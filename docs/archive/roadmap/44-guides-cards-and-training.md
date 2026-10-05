@@ -1,19 +1,19 @@
 ---
-type: Roadmap
+type: Archive
 title: Card guides, card details and a training wizard
 description: Roadmap 42 A, C and E1 as one pass, covering card roles, guides with full cards and who can hold them, card details in the Workshop, a Console card list per monster, and a step-by-step training wizard.
-status: draft
+status: deprecated
 audience: internal
 tags: [roadmap, cards, guides, workshop, onboarding]
 ---
 # 44 — Card guides, card details and a training wizard
 
-**Status:** Built (2026-10-04): all six tasks done (bugs 219–221). Next: the PR, then Cursor's live check ([44a](44a-cursor-guides-and-wizard-check.md)). Proposals: [42 A, C and E1](42-next-proposals.md). Owner
+**Status:** Shipped and archived (2026-10-05). Merged in #423; checked live ([guides and wizard check](../../reference/guides-wizard-check.md)): every item passed but the level line of item 11, which needs a card the account couldn't afford (tests cover it). Bugs 219–221 are in `10b-bugs-fixed.md`. The contracts live in [cards and encounter effects](../../architecture/cards-and-encounter-effects.md#who-can-hold-a-card-and-what-a-card-is), [workshop and items](../../architecture/workshop-and-items.md) and [events, prompts, and replay](../../architecture/events-prompts-and-replay.md#prompts); the remainder and the check's new findings moved to [42 H and J](../../roadmap/42-next-proposals.md).
 order: after [43](43-walk-fixes.md), which is merged; its live check runs alongside.
 
 ## Why
 
-New-player walk 2 ([report](../reference/new-player-walk-2.md)) found a player can't tell what
+New-player walk 2 ([report](../../reference/new-player-walk-2.md)) found a player can't tell what
 a card does while building a deck (#1), can't tell which cards a monster can hold (`that kind
 of monster can't use it`), and gets a monster that reads nothing like what they pictured
 (#10). The owner asked for a training wizard with an example for each question, guides with
@@ -75,7 +75,7 @@ Made by the orchestrator, from the [triage](#triage):
 | K2 | **The guides.** CARDS.md grouped by role with full cards and a contents list by group; a "What each type can hold" section per type, by level, with its signature cards; items removed from CARDS.md and generated into ITEMS.md between markers; the Help page picks it up; root-docs tests updated | Engine build, docs | K3 | Done. Review: the cards print MSRP, DPT and Hit chance with no meaning given (walk 2 #4), so CARDS.md opens with a "How to read a card" legend and a Jump to row. The web's Markdown skips the ITEMS.md markers | 51ec1257, 123d5e01 |
 | K3 | **Card details in the Workshop, and the shop.** A server card-facts query; a ⓘ on each card opens a detail sheet with the card and whether this monster can hold it; "At level N: …" on each monster panel; slot labels from the role; the shop's card and Back Room picks say Buy | Server, web, engine (shop) | K2 | Done. Verdicts run in the web with K1's browser-safe check (the server sends each monster's class and level, and its next unlock). Review: the ⓘ was 26 px on the card's corner (now a 44 px strip on phones), the sheet had no focus trap (now traps, makes the page inert, locks scroll), focus returns to the tapped button on iOS. `Price: free` and `Price: 1 coin` kept. Needs a live look at 390 | 48217d4a, ad9bd1b1 |
 | K4 | **The training wizard.** One step per screen in the Workshop, with the look question and live preview, name suggestion chips, and the Ready step; `spawnOptions` carries the look question; a name-suggestions query | Web, server | K5 | Done. Review: placeholder button titles worded; errors now return to the step at fault by exact server message or failing field; stale name suggestions ignored; no double Train. Bug 220 on the way | 11253c6c, 32195514, + final review |
-| K6 | **What the walk-fixes check found** ([report](../reference/walk-fixes-check.md)). (1) The guide's `change_card` step tells a fighting monster to change a card, and the first fight can end before the guide's 15-second ring check sees it: during any fight the guide says `{name} is fighting. Watch The Ring.`, from the monsters' own fight state rather than a slow poll. (2) The chip `Look at my monsters` teaches a line the game refuses: the label becomes `Look at monsters`, and `look at my monsters` is accepted too. (3) After a reload, the first command is sometimes taken as an answer to a question that's already over: find where a replayed question gets armed, and stop it. (4) The shop's confirm appears under `Action cancelled.`: an answered pick question is being tombstoned as cancelled when the confirm arrives. (5) The Workshop's list is headed `Your Inventory`; the note calls it Your cards: the heading becomes `Your cards` | Web, server | K4 (not ConsolePane: K4 doesn't touch it) | Done. Root cause of (3): replayed questions armed on reload (bug 221); (4) is probably the same cause, to confirm live. Review: the guide matched fighting monsters by name across the room; now only mine, newer push wins, resets per room | cbef4d5d, bd38c214 |
+| K6 | **What the walk-fixes check found** ([report](../../reference/walk-fixes-check.md)). (1) The guide's `change_card` step tells a fighting monster to change a card, and the first fight can end before the guide's 15-second ring check sees it: during any fight the guide says `{name} is fighting. Watch The Ring.`, from the monsters' own fight state rather than a slow poll. (2) The chip `Look at my monsters` teaches a line the game refuses: the label becomes `Look at monsters`, and `look at my monsters` is accepted too. (3) After a reload, the first command is sometimes taken as an answer to a question that's already over: find where a replayed question gets armed, and stop it. (4) The shop's confirm appears under `Action cancelled.`: an answered pick question is being tombstoned as cancelled when the confirm arrives. (5) The Workshop's list is headed `Your Inventory`; the note calls it Your cards: the heading becomes `Your cards` | Web, server | K4 (not ConsolePane: K4 doesn't touch it) | Done. Root cause of (3): replayed questions armed on reload (bug 221); (4) is probably the same cause, to confirm live. Review: the guide matched fighting monsters by name across the room; now only mine, newer push wins, resets per room | cbef4d5d, bd38c214 |
 | K5 | **`look at cards for [monster]`, docs and close-out.** The Console command and its catalogue entry; help inventory, handbook, architecture docs; Cursor's live check (44a) | Engine, docs | K4 | Command done (on `Game`, beside `look at [monster]`, room-scoped). Review: no findings beyond a bare `look at cards for` reading like `look at` with no name. Bug 219: `look at cards for Rex` used to list your own deck and ignore the name. The docs close-out is in the pass's last commit | 0c056d7b, + final review |
 
 Every task gets an independent read-only review and a fix round; K3 and K4 get a live look at
@@ -156,6 +156,8 @@ A read-only survey on 2026-10-04 found:
 
 ## Actionable remainder
 
-- [ ] Cursor's live check, [44a](44a-cursor-guides-and-wizard-check.md), after the deploy; items 17–19 confirm bug 221.
-- [ ] After it, fold the decisions into the area docs and archive this plan with 43.
-- [ ] Later: odds for the 20 cards with none; fix the random draws at preview; a colour swatch that reaches the sprite.
+- [x] Cursor's live check, [44a](44a-cursor-guides-and-wizard-check.md), after the deploy; items 17–19 confirm bug 221.
+- [x] After it, fold the decisions into the area docs and archive this plan with 43.
+- [x] Later: odds for the 20 cards with none; fix the random draws at preview; a colour swatch that reaches the sprite.
+
+All done or moved: what is left lives in [42 J](../../roadmap/42-next-proposals.md).

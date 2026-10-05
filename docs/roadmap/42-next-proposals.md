@@ -288,7 +288,7 @@ drink` then `🎲 18`), and a tally can say `2 HITS` above `Miss...`. The end li
 boss. H separates what happened from its flavour, checks the roll lines, and ends a fight by
 naming who fell and what each player won (XP, coins, the card). It needs its own plan.
 
-**A new pass, I: small fixes from the walk** (planned in [43](43-walk-fixes.md)). These are each a line or two:
+**A new pass, I: small fixes from the walk** (planned in [43](../archive/roadmap/43-walk-fixes.md)). These are each a line or two:
 1. **Bug:** the Workshop's multi-card move says `Moved 1 cards` (`server/src/trpc/router.ts`,
    the move-many summary, which has no singular).
 2. The Workshop's first-deck note says `tap an empty slot`. The control needs a card selected
@@ -321,5 +321,31 @@ naming who fell and what each player won (XP, coins, the card). It needs its own
   little easier to reach without tipping the balance.
 - **Order:** I first, as its own PR once #421 merges; then A + C + E1; then H; then D.
 
-A, C and E1 are built together in [44](44-guides-cards-and-training.md). I is built in [43 — Small fixes from the new-player walk](43-walk-fixes.md), with the
+A, C and E1 are built together in [44](../archive/roadmap/44-guides-cards-and-training.md). I is built in [43 — Small fixes from the new-player walk](../archive/roadmap/43-walk-fixes.md), with the
 starting coins as part of its task I3.
+
+## J. Left from 43 and 44, and what the guides check found
+
+43 and 44 are shipped and archived. What they left goes here until a pass takes it.
+
+**For pass H (the fight log):** the play-by-play opens with the plain `Fight begins with N
+contestants` line (43).
+
+**Follow-ups to A and C (44's remainder):**
+- odds in `card-odds.json` for the 20 cards with none, so their guide entries show a chance line;
+- fix a new monster's other random details (a Dragon's wings, a Unicorn's witness) at the
+  wizard's preview, so Ready can show the whole description;
+- a colour swatch in the wizard that reaches the pixel sprite.
+
+**Small fixes from the guides check** ([report](../reference/guides-wizard-check.md)):
+1. The shop's card pick and Back Room pick print the `Choose one or more…` question twice: as
+   a line, then again above the buttons.
+2. The shop's yes/no confirm offers only `Cancel`; there are no `Yes` and `No` buttons, so a
+   new player must type `yes`.
+3. A taken monster name shows its message twice in the wizard: in the Workshop's banner and
+   under the suggestions.
+4. `summon a boss` with one monster in the ring answered `Every challenger in the ring already
+   has a boss to face…`, yet a fight began against a boss. Find which boss it meant (the timer
+   boss arriving at the same moment?) and make the refusal match the ring.
+5. The check couldn't reach the `can use this from level {n}` sheet line live (every
+   affordable card was Beginner); tests cover it.

@@ -1,16 +1,16 @@
 ---
-type: Roadmap
+type: Archive
 title: Small fixes from the new-player walk
 description: Pass I from roadmap 42 G — the small, player-visible fixes Cursor's second new-player walk found in the Workshop, the guide, revive, the shop, bosses, stale prompts and the Fights list, plus 30 starting coins.
-status: draft
+status: deprecated
 audience: internal
 tags: [roadmap, onboarding, web, console, shop, ux]
 ---
 # 43 — Small fixes from the new-player walk
 
-**Status:** Merged in #422 and checked live (2026-10-04, [walk-fixes check](../reference/walk-fixes-check.md)): every item passed but 7, the guide during a fight, which moves to [44 K6](44-guides-cards-and-training.md) with the check's other findings. Source:
-[new-player walk 2](../reference/new-player-walk-2.md), triaged in
-[42 G](42-next-proposals.md#g-what-cursors-walk-found-and-where-it-goes). Numbers in brackets
+**Status:** Shipped and archived (2026-10-05). Merged in #422 and checked live ([walk-fixes check](../../reference/walk-fixes-check.md)); item 7 and the check's other findings were fixed in [44 K6](44-guides-cards-and-training.md). Bugs 215–218 are in `10b-bugs-fixed.md`; the prompt-ending rule is in [events, prompts, and replay](../../architecture/events-prompts-and-replay.md#prompts). The play-by-play's plain opening line is in [42 H](../../roadmap/42-next-proposals.md).
+[new-player walk 2](../../reference/new-player-walk-2.md), triaged in
+[42 G](../../roadmap/42-next-proposals.md#g-what-cursors-walk-found-and-where-it-goes). Numbers in brackets
 are the report's ten moments (#) or its "Everything else" table.
 
 ## Decisions
@@ -28,8 +28,8 @@ Made by the orchestrator:
 
 - The fight's reward line (item 11 in 42 G) waits for pass H, which rewrites the fight's end.
 - The stale-prompt fix (I4) touches the prompt lifecycle. Its implementer reads
-  [engine concurrency and timing](../architecture/engine-concurrency-and-timing.md) and
-  [the prompt-answer contract](../reference/prompt-answer-contract.md) first, and gets a
+  [engine concurrency and timing](../../architecture/engine-concurrency-and-timing.md) and
+  [the prompt-answer contract](../../reference/prompt-answer-contract.md) first, and gets a
   live browser check after review, because fake-timer tests have passed while the real
   browser still misbehaved (#162).
 
@@ -90,6 +90,8 @@ Fights row label is written at I5.
 
 ## Actionable remainder
 
-- [ ] Item 7 and the check's other findings: [44 K6](44-guides-cards-and-training.md). The shop leftovers are 44 K3.
-- [ ] The play-by-play now opens with the plain `Fight begins with N contestants` line (pass H).
-- [ ] After the live check, fold the decisions into the area docs and archive this plan.
+- [x] Item 7 and the check's other findings: [44 K6](44-guides-cards-and-training.md). The shop leftovers are 44 K3.
+- [x] The play-by-play now opens with the plain `Fight begins with N contestants` line (pass H).
+- [x] After the live check, fold the decisions into the area docs and archive this plan.
+
+All done or moved: what is left lives in [42 J](../../roadmap/42-next-proposals.md).

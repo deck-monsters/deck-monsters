@@ -5172,7 +5172,7 @@ Found by Cursor's walk-fixes check ([report](../reference/walk-fixes-check.md)),
   contestants; the review caught a match by name that another player's same-named monster
   would have tripped) with the inventory's fight flag as a fallback, and a newer push wins.
 
-**Status**: Fixed. Needs Cursor's live check (44a items 17–19).
+**Status**: Fixed; confirmed live 2026-10-05 ([guides and wizard check](../reference/guides-wizard-check.md), items 17–19).
 
 ## Closed without a fix
 
