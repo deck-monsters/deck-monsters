@@ -146,6 +146,35 @@ describe('commands/monster: summon a boss refusal names the waiting boss', () =>
 		game.dispose();
 	});
 
+	it('keeps the generic refusal with two humans and two bosses', async () => {
+		const game = new Game({}, () => {});
+		const { ring, character, join } = joined(game);
+		ring.spawnBoss();
+		join();
+		const other = new Beastmaster();
+		const otherMonster = new Basilisk();
+		other.addMonster(otherMonster);
+		ring.addMonster({ monster: otherMonster, character: other, userId: 'u2' });
+		ring.spawnBoss();
+
+		const channel = await summon(game, character);
+
+		expect(JSON.stringify(channel.args)).to.include('Every challenger in the ring already has a boss to face');
+		game.dispose();
+	});
+
+	it('keeps the generic refusal when the boss was summoned by this player', async () => {
+		const game = new Game({}, () => {});
+		const { ring, character, join } = joined(game);
+		join();
+		ring.spawnBoss({ summonedByUserId: USER.id, summonedAt: Date.now() });
+
+		const channel = await summon(game, character);
+
+		expect(JSON.stringify(channel.args)).to.include('Every challenger in the ring already has a boss to face');
+		game.dispose();
+	});
+
 	it('summons when no boss is in the ring', async () => {
 		const game = new Game({}, () => {});
 		const { ring, character, join } = joined(game);
