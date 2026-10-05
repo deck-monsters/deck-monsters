@@ -301,7 +301,7 @@ describe('./items/store/buy.ts', () => {
 		channelStub.callsFake(async (msg: any = {}) => {
 			if (!msg.question) return undefined;
 			if (msg.question.includes('Which would you like to see')) return menu;
-			if (msg.question.includes('items to buy')) return pick;
+			if (/to buy:/.test(msg.question)) return pick;
 			return 'yes';
 		});
 	};
@@ -352,9 +352,24 @@ describe('./items/store/buy.ts', () => {
 		await buyItems({ character: makeBuyer(), channel: channelStub, host: makeHost(shop) });
 
 		const questions = channelStub.getCalls().map(call => call.args[0]?.question).filter(Boolean);
-		expect(questions.some((q: string) => q.startsWith('Choose one or more of the following items to buy:'))).to.equal(true);
+		expect(questions.some((q: string) => q.startsWith('Choose one or more of the following to buy:\n'))).to.equal(true);
 		const receipt = channelStub.getCalls().map(call => call.args[0]?.announce).find((a: string) => a?.startsWith('Sold:'));
 		expect(receipt).to.equal('Sold: Hit. Ada has 999 coins left.');
+	});
+
+	it('carries the buy marker in the card pick prompt, naming cards', async () => {
+		const card = { name: 'Hit', cardType: 'Hit', cost: 1 };
+		const shop: Shop = { ...defaultShop, priceOffset: 1, cards: [card] };
+		answerBy('1', 'Hit');
+		const chooseCards = sinon.stub().callsFake(async ({ cards, channel, getQuestion }: any) => {
+			await channel({ question: getQuestion({ cardChoices: '0) Hit - 2 coins' }), choices: ['Hit'] });
+			return [cards[0]];
+		});
+
+		await buyItems({ character: makeBuyer(), channel: channelStub, host: makeHost(shop), chooseCards });
+
+		const questions = channelStub.getCalls().map(call => call.args[0]?.question).filter(Boolean);
+		expect(questions.some((q: string) => q.startsWith('Choose one or more of the following cards to buy:\n\n0) Hit'))).to.equal(true);
 	});
 
 	// Regression test for the shop menu off-by-one: the menu text and the web client both

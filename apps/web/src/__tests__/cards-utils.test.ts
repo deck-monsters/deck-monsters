@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
-import { abbreviateCardName, getCardClass, isLongCardName } from '../utils/cards.js';
+import {
+	CARD_ROLE_SLOT_LABEL,
+	abbreviateCardName,
+	getCardEmoji,
+	getCardRole,
+	isLongCardName,
+	stableCardName,
+	verdictLine,
+} from '../utils/cards.js';
 
 describe('abbreviateCardName', () => {
 	it('returns short names unchanged', () => {
@@ -31,34 +39,50 @@ describe('abbreviateCardName', () => {
 	});
 });
 
-describe('getCardClass', () => {
-	it('matches keyword groups case-insensitively', () => {
-		expect(getCardClass('Whiskey Shot')).toBe('heal');
-		expect(getCardClass('HIT')).toBe('melee');
-		expect(getCardClass('Blink')).toBe('magic');
+describe('card roles in the Workshop', () => {
+	it('reads the slot role from the engine table, not from the name', () => {
+		expect(getCardRole('Hit')).toBe('attack');
+		expect(getCardRole('Blink')).toBe('trick');
+		expect(getCardRole('Whiskey Shot')).toBe('heal');
+		expect(getCardRole('Fire Breath')).toBe('area');
+		// Names the old keyword guess filed as "utility" or "magic".
+		expect(getCardRole('Take Wing')).toBe('guard');
 	});
 
-	it('badges the Unicorn cards by what they do', () => {
-		expect(getCardClass('Sticketh')).toBe('melee');
-		expect(getCardClass('Horn of Proof')).toBe('heal');
-		expect(getCardClass('Gloaming Rest')).toBe('heal');
-		expect(getCardClass('Dissonant Voice')).toBe('magic');
-		// A ward against holds, like the other boosts.
-		expect(getCardClass('Unconquerable Horn')).toBe('melee');
+	it('finds the role of a card whose display name carries its dice', () => {
+		expect(stableCardName('The Kalevala (1d4)')).toBe('The Kalevala');
+		expect(stableCardName('Hit')).toBe('Hit');
+		expect(getCardRole('The Kalevala (2d6)')).toBe('attack');
 	});
 
-	it('badges the Dragon cards by what they do', () => {
-		expect(getCardClass('Fire Breath')).toBe('magic');
-		expect(getCardClass('Tsunami')).toBe('magic');
-		// A dodge and a dive, and a hide or a fury: moves, not attacks of their own.
-		expect(getCardClass('Take Wing')).toBe('utility');
-		expect(getCardClass('Mood Scales')).toBe('utility');
-		expect(getCardClass('Tail Lash')).toBe('melee');
-		expect(getCardClass('Helm of Awe')).toBe('magic');
-		expect(getCardClass('Asinine Companion')).toBe('utility');
+	it('has no role for a name that is not a card', () => {
+		expect(getCardRole('Mystery Card')).toBeUndefined();
+		expect(getCardEmoji('Mystery Card')).toBe('◇');
 	});
 
-	it('falls back to utility for unmatched names', () => {
-		expect(getCardClass('Mystery Card')).toBe('utility');
+	it('labels the five roles for a slot', () => {
+		expect(CARD_ROLE_SLOT_LABEL).toEqual({
+			attack: 'ATTACK',
+			area: 'AREA',
+			heal: 'HEAL',
+			guard: 'DEFENCE',
+			trick: 'TRICK',
+		});
+	});
+});
+
+describe('verdictLine', () => {
+	const facts = { name: 'Gore', role: 'attack' as const, roleLabel: 'Attacks', description: '', stats: '', level: 2, usedBy: ['Minotaur'], price: 5 };
+
+	it('says the monster can use a card it can', () => {
+		expect(verdictLine({ ...facts, level: 0 }, { name: 'Rex', type: 'Minotaur', level: 0 })).toBe('Rex can use this.');
+	});
+
+	it('names who can when the type is wrong, even if the level is too low as well', () => {
+		expect(verdictLine(facts, { name: 'Mira', type: 'Jinn', monsterClass: 'Mage', level: 0 })).toBe("Mira can't use this. Only Minotaur can.");
+	});
+
+	it('names the level when only the level is short', () => {
+		expect(verdictLine(facts, { name: 'Rex', type: 'Minotaur', level: 1 })).toBe('Rex can use this from level 2. Rex is level 1 now.');
 	});
 });

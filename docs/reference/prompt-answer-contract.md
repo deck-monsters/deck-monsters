@@ -75,10 +75,17 @@ type with `Label: line` rows in the question text while `choices` stays the bare
 label with a description glued on would stop the Discord button's label answer from resolving.
 **A multi-select prompt says what its confirm button does through the question text.** The web
 `InlineChoices` shows `Equip n cards` for every "one or more" prompt unless the question
-contains `items to buy`, in which case the button reads `Buy n items`. The shop's pick prompt
-opens with `SHOP_PICK_QUESTION` (`items/store/buy.ts`) for this. No new field rides on the
-prompt, so Discord and older clients simply see the sentence, and the answer encoding is
-unchanged. It used to say `Equip cards` on a purchase (new-player walk 2).
+contains `to buy:` (matched as `/\bto buy:/i`), in which case the button is a Buy button and
+the word before `to buy:` is the noun: `cards` gives `Buy n cards` (nothing picked: `Buy cards`,
+title `Buy the cards you picked.`), `items` gives `Buy n items`, and no noun gives `Buy n`
+(`Buy`, title `Buy what you picked.`). The shop's three pick prompts are the constants in
+`items/store/buy.ts`: `SHOP_CARD_PICK_QUESTION` (`...following cards to buy:`),
+`SHOP_PICK_QUESTION` (`...following items to buy:`) and `SHOP_BACK_ROOM_PICK_QUESTION`
+(`...following to buy:`, no noun because the Back Room stocks both). The sell prompts carry no
+marker, so they keep the equip wording. No new field rides on the prompt, so Discord and older
+clients simply see the sentence, and the answer encoding is unchanged. It used to say `Equip
+cards` on a purchase (new-player walk 2), and until roadmap 44 the card pick had no marker and
+the Back Room called its stock "items".
 **Free-text prompts cannot take an empty answer** (the web Console and Discord will not send
 one), so a "take the default" option needs a word to type: the character-name prompt accepts
 `ok`, `okay`, `yes` or `y`.

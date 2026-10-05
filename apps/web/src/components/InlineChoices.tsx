@@ -21,13 +21,34 @@ function isMultiSelect(question: string): boolean {
 }
 
 /**
- * The shop's pick prompt is the same multi-select as equip, but the button must say what it
- * does. The engine marks it in the question text ("...items to buy:", `SHOP_PICK_QUESTION` in
+ * The shop's pick prompts are the same multi-select as equip, but the button must say what it
+ * does. The engine marks them in the question text: "...cards to buy:", "...items to buy:"
+ * and, for the Back Room, "...following to buy:" (the SHOP_..._PICK_QUESTION constants in
  * items/store/buy.ts), so older clients and Discord, which ignore the marker, still work.
- * It said "Equip cards" on a purchase (new-player walk 2, I3).
+ * The noun before "to buy:" labels the button: "Buy 2 cards", "Buy 2 items" or, with no noun
+ * (the Back Room stocks both), "Buy 2". It said "Equip cards" on a purchase (new-player
+ * walk 2, I3), and the card pick had no marker at all until roadmap 44.
  */
 function isBuyPrompt(question: string): boolean {
-  return /items to buy/i.test(question);
+  return /\bto buy:/i.test(question);
+}
+
+type BuyNoun = 'cards' | 'items' | null;
+
+function buyNoun(question: string): BuyNoun {
+  const match = question.match(/\b(cards|items) to buy:/i);
+  return match ? (match[1]!.toLowerCase() as 'cards' | 'items') : null;
+}
+
+/** The confirm button's words: `Buy 2 cards`, or with nothing picked `Buy cards`. */
+function buyLabel(noun: BuyNoun, count: number): string {
+  if (count === 0) return noun ? `Buy ${noun}` : 'Buy';
+  if (!noun) return `Buy ${count}`;
+  return `Buy ${count} ${count === 1 ? noun.slice(0, -1) : noun}`;
+}
+
+function buyTitle(noun: BuyNoun): string {
+  return noun ? `Buy the ${noun} you picked.` : 'Buy what you picked.';
 }
 
 /** True when the equip loop already committed a partial batch and offers an early finish. */
@@ -71,6 +92,7 @@ export default function InlineChoices({
   const [selectionOrder, setSelectionOrder] = useState<number[]>([]);
   const multi = isMultiSelect(question);
   const buying = multi && isBuyPrompt(question);
+  const noun = buyNoun(question);
   // Per-index max counts parsed from the question text (e.g., "Hit [3]" → idx→3).
   // When null, fall back to max-1 toggle (no count info available).
   const choiceCounts = multi ? parseChoiceCounts(question) : null;
@@ -232,7 +254,7 @@ export default function InlineChoices({
       {multi && !isDone && (
         <div style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
           <button
-            title={buying ? 'Buy the items you picked.' : 'Equip the cards you picked, in the order you picked them'}
+            title={buying ? buyTitle(noun) : 'Equip the cards you picked, in the order you picked them'}
             onClick={handleConfirm}
             disabled={selectionOrder.length === 0}
             style={{
@@ -246,9 +268,7 @@ export default function InlineChoices({
             }}
           >
             {buying
-              ? (selectionOrder.length > 0
-                ? `Buy ${selectionOrder.length} ${selectionOrder.length !== 1 ? 'items' : 'item'}`
-                : 'Buy items')
+              ? buyLabel(noun, selectionOrder.length)
               : <>Equip {selectionOrder.length > 0 ? `${selectionOrder.length} card${selectionOrder.length !== 1 ? 's' : ''}` : 'cards'}</>}
           </button>
           {showDoneEquipping && (

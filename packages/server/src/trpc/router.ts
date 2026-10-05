@@ -12,8 +12,14 @@ import {
 	PRONOUN_KEYS,
 	PROMPT_CANCELLED,
 	PromptCancelledError,
+	allCardFacts,
+	cardFactsVariants,
 	allMonsters,
+	holdableByLevel,
 	monsterTypeSummary,
+	chooseName,
+	SPAWN_ERRORS,
+	signatureCardType,
 	equipResultMessage,
 	getXpCapForLevel,
 	isCommandRefusal,
@@ -91,6 +97,15 @@ type InventoryMonsterSummary = {
 	// epoch instead. Never send the timer handle or timeout length itself over the wire.
 	revivesAt: number | null;
 	battles: { wins: number; losses: number; total: number };
+	// What the card-details sheet needs to say "{monster} can use this" without a round trip
+	// per card. The class goes down so the web can run the engine's browser-safe
+	// `cardHoldVerdict` itself against the static card facts (`game.cardFacts`): that keeps this
+	// payload to two small fields per monster instead of a verdict for every card x monster,
+	// and the rule stays the engine's, not a copy (roadmap 44 K3).
+	monsterClass: string;
+	// The next level above this monster's that opens any card its type can hold, with those
+	// card names, for the panel's "At level N: ..." line. Null when nothing opens later.
+	nextCards: { level: number; cards: string[] } | null;
 };
 
 // Per-item summary for the web item list (docs/architecture/workshop-and-items.md).
@@ -327,6 +342,33 @@ const summarizeItem = (
 	};
 };
 
+/** The static `class` of the monster type with this name ('' for an unknown type). */
+const monsterClassOfType = (type: string): string => {
+	const Monster = allMonsters.find((M) => (M as { creatureType?: string }).creatureType === type) as
+		| { class?: string }
+		| undefined;
+	return typeof Monster?.class === 'string' ? Monster.class : '';
+};
+
+// holdableByLevel walks every card class per call and myInventory polls every 30 s per member,
+// so compute it once per monster type (it depends on nothing else: the card list is static).
+const holdableByType = new Map<string, ReturnType<typeof holdableByLevel>>();
+const nextCardsFor = (type: string, level: number): InventoryMonsterSummary['nextCards'] => {
+	let groups = holdableByType.get(type);
+	if (!groups) {
+		groups = holdableByLevel(type);
+		holdableByType.set(type, groups);
+	}
+	const next = groups.find((group) => group.level > level);
+	return next ? { level: next.level, cards: next.cards.map((card) => card.name) } : null;
+};
+
+// The card facts are static (they read the card classes, not any room), so build them once
+// per process. The query still asserts membership: the data is public game content, but the
+// rooms rule is that no game procedure answers a non-member.
+let cardFactsCache: ReturnType<typeof allCardFacts> | undefined;
+const getCardFacts = () => (cardFactsCache ??= [...allCardFacts(), ...cardFactsVariants()]);
+
 const summarizeInventory = ({
 	character,
 	inRing,
@@ -396,14 +438,13 @@ const summarizeInventory = ({
 						: 0,
 			};
 
+			const type = typeof record.creatureType === 'string' ? record.creatureType : 'Unknown';
+
 			return {
 				monster,
 				summary: {
 					name,
-					type:
-						typeof record.creatureType === 'string'
-							? record.creatureType
-							: 'Unknown',
+					type,
 					level,
 					xpIntoLevel,
 					xpNeededForLevel,
@@ -420,6 +461,8 @@ const summarizeInventory = ({
 					maxHp,
 					revivesAt,
 					battles,
+					monsterClass: monsterClassOfType(type),
+					nextCards: nextCardsFor(type, level),
 				} satisfies InventoryMonsterSummary,
 			};
 		})
@@ -1198,9 +1241,40 @@ export function createRouter(roomManager: RoomManager, chat: ChatService = new C
 						label: String((Monster as unknown as { creatureType?: string }).creatureType ?? Monster.name),
 						// The same one-liner the Console prompt shows.
 						summary: monsterTypeSummary(Monster as unknown as { creatureType?: string }),
+						// The wizard's type card reads `Class: {class} · Signature card: {card}`.
+						class: String((Monster as unknown as { class?: string }).class ?? ''),
+						signatureCard: signatureCardType(Monster as unknown as { creatureType?: string }) ?? '',
 					})),
 					pronouns: PRONOUN_KEYS.map((key, i) => ({ key, label: PRONOUN_CHOICES[i] })),
 				};
+			}),
+
+		/*
+		 * Two clean name suggestions for the training wizard's Name step. The name lists
+		 * (`fantasy-names`) are Node-only, so the web asks here. Room-scoped like every game
+		 * query, and it skips names already taken in the room, the way the Console's
+		 * `askForName` does (roadmap 44 K4).
+		 */
+		suggestMonsterNames: protectedProcedure
+			.input(z.object({
+				roomId: z.string().uuid(),
+				type: z.number().int().nonnegative(),
+				gender: z.enum(['male', 'female', 'androgynous']),
+				// The names on screen, so "More names" gives two others (Codex on #423).
+				exclude: z.array(z.string().max(40)).max(10).optional(),
+			}))
+			.query(async ({ input, ctx }) => {
+				await roomManager.assertMember(ctx.userId, input.roomId);
+				const Monster = allMonsters[input.type] as unknown as { creatureType?: string } | undefined;
+				if (!Monster) {
+					throw new TRPCError({ code: 'BAD_REQUEST', message: SPAWN_ERRORS.typeUnavailable });
+				}
+				const game = await roomManager.getGame(input.roomId);
+				const taken = [...Object.keys(game.getAllMonstersLookup?.() ?? {}), ...(input.exclude ?? [])];
+				const type = String(Monster.creatureType ?? '');
+				const first = chooseName(type, input.gender, taken);
+				const second = chooseName(type, input.gender, [first, ...taken]);
+				return { names: [first, second] };
 			}),
 
 		/*
@@ -1243,7 +1317,7 @@ export function createRouter(roomManager: RoomManager, chat: ChatService = new C
 			.mutation(async ({ input, ctx }) => {
 				await roomManager.assertMember(ctx.userId, input.roomId);
 				if (!allMonsters[input.type]) {
-					throw new TRPCError({ code: 'BAD_REQUEST', message: 'That monster type is not available.' });
+					throw new TRPCError({ code: 'BAD_REQUEST', message: SPAWN_ERRORS.typeUnavailable });
 				}
 				const [game, eventBus] = await Promise.all([roomManager.getGame(input.roomId), roomManager.getEventBus(input.roomId)]);
 				const existingCharacter = game.characters?.[ctx.userId];
@@ -1261,7 +1335,7 @@ export function createRouter(roomManager: RoomManager, chat: ChatService = new C
 						// character in this game, and this channel throws on any question — so the
 						// clash has to be caught here, before the engine can ask about it.
 						if (game.findCharacterByName?.(input.character.name)) {
-							throw new TRPCError({ code: 'CONFLICT', message: 'That name is already taken in this room.' });
+							throw new TRPCError({ code: 'CONFLICT', message: SPAWN_ERRORS.characterNameTaken });
 						}
 						// Prompt-free because every question `createCharacter` asks has its answer
 						// supplied: class (index 0, the only one), gender, name and avatar.
@@ -1282,10 +1356,17 @@ export function createRouter(roomManager: RoomManager, chat: ChatService = new C
 						throw new TRPCError({ code: 'NOT_FOUND', message: "You don't have a character in this room yet — fill in the character details to create one." });
 					}
 					const takenNames = Object.keys(game.getAllMonstersLookup?.() ?? {});
-					if (takenNames.includes(input.name.toLowerCase())) throw new TRPCError({ code: 'CONFLICT', message: 'That monster name is already taken.' });
+					if (takenNames.includes(input.name.toLowerCase())) throw new TRPCError({ code: 'CONFLICT', message: SPAWN_ERRORS.monsterNameTaken });
 					return character.spawnMonster(channel, { type: input.type, gender: input.gender, name: input.name, color: input.color, game });
 				}) as { givenName?: unknown; creatureType?: unknown };
 				return { ok: true as const, monsterName: String(monster?.givenName ?? input.name), monsterType: String(monster?.creatureType ?? '') };
+			}),
+
+		cardFacts: protectedProcedure
+			.input(z.object({ roomId: z.string().uuid() }))
+			.query(async ({ input, ctx }) => {
+				await roomManager.assertMember(ctx.userId, input.roomId);
+				return getCardFacts();
 			}),
 
 		myInventory: protectedProcedure

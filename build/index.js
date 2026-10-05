@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import { writeFileSync } from 'fs';
+import { readFileSync, writeFileSync } from 'fs';
 
 import getCardDPT from './card-odds.js';
 import getCardProbabilities from './card-probabilities.js';
@@ -9,6 +9,7 @@ const ENGINE_DIST = '../packages/engine/dist/build/root-docs.js';
 const writeToFile = (name, string, suffix = 'md') =>
 	writeFileSync(`${name}.${suffix}`, string);
 
+const ITEMS_GUIDE_DIST = '../packages/engine/dist/build/items-guide.js';
 const STRINGS_DIST = '../packages/engine/dist/build/strings-inventory.js';
 
 const loadGenerateRootDocs = async () => {
@@ -46,6 +47,10 @@ Promise.resolve()
 
 		const generateRootDocs = await loadGenerateRootDocs();
 		await generateRootDocs(writeToFile);
+
+		// ITEMS.md is authored; only its generated "Every item" block (between markers) is rewritten.
+		const { spliceItemsGuide } = await import(ITEMS_GUIDE_DIST);
+		writeToFile('ITEMS', spliceItemsGuide(readFileSync('ITEMS.md', 'utf8')));
 
 		// The per-monster strings inventories under docs/reference/strings/.
 		const { generateStringsInventories } = await import(STRINGS_DIST);

@@ -30,7 +30,31 @@ serialization, and read-model contracts behind those rules.
   presets, and item summaries;
 - the character's unequipped card deck;
 - card compatibility used by Workshop placement;
+- per monster, its `monsterClass` and `nextCards` (the next level above its own that opens any
+  card its type can hold, with the card names; from the engine's `holdableByLevel`), which the
+  panel's `At level {n}: {cards}.` line reads;
 - character-carried and monster-carried items as separate lists.
+
+## Card details
+
+`game.cardFacts({ roomId })` asserts membership and returns the engine's `allCardFacts()`: every
+card's stable name, role, description, stats, level, who can use it and price. The facts are
+static (they read the card classes, not the room), so the router builds them once per process
+and the web fetches them once (`staleTime: Infinity`). Cards are matched by stable name: a
+display name that carries dice (`The Kalevala (1d4)`) loses the suffix first
+(`stableCardName` in `apps/web/src/utils/cards.ts`).
+
+Each card in the Workshop has an info button (title `What this card does`) that opens
+`CardDetailSheet`: a bottom sheet on a phone and a modest dialog on a wide screen, rendered in a
+portal, with focus moved to Close and Escape closing it. The verdict line comes from running the
+engine's browser-safe `cardHoldVerdict` against the facts and the monster's level, class and type
+(`monsterClass` rides on `myInventory`), so the rule is the engine's and the server does not send
+a verdict for every card and monster pair. It is shown for the monster whose panel holds the card;
+for a card in Your cards, for the highlighted monster, or for every monster when none is.
+
+Slot labels (`ATTACK`, `AREA`, `HEAL`, `DEFENCE`, `TRICK`) and the slot tint come from the card's
+role (`roleOf`), replacing a keyword guess at the name that filed Blink as magic and Take Wing as
+utility.
 
 Each item summary includes its display name, expired state, engine-generated use text,
 valid monster names, character usability, and whether its action requires another prompt.
@@ -107,13 +131,13 @@ cards and why. A move that stops short (a full hand, a card the monster cannot h
 limit) returns `blockedBy` from `Beastmaster.moveCard`, and the move summaries carry it, since
 the engine's line that said so is no longer published. Publishing both printed an equip twice and a batch move as a line per card type plus
 the summary, which a player read as the game moving cards on its own (10b #195). Never add a prompt to an awaited Workshop path. Collect
-all answers in the form first, or use the interactive per-user command flow described in
+all answers in the wizard first, or use the interactive per-user command flow described in
 [engine concurrency and timing](engine-concurrency-and-timing.md).
 
 ## The guided start in the Workshop
 
-After the first-run form, the Workshop shows the same getting-started box as the Console,
-under the Train row and above the monsters, for every step except `spawn` (the form already
+After the first-run wizard, the Workshop shows the same getting-started box as the Console,
+under the Train row and above the monsters, for every step except `spawn` (the wizard already
 covers training). Both surfaces read `hooks/useGuidedStart.ts`; the box is
 `components/GuidedStartBox.tsx` (the Workshop version has words only, no chips). It is hidden
 while a Console flow is in progress, like the Workshop's other controls. The steps, the
@@ -166,6 +190,25 @@ description glued on would stop the Discord button answer from resolving. The li
 `Beastmaster.spawnMonster` opens with `You can train {n} more {monster|monsters}.` and, with
 no places left, refuses with `Every place at your side is taken ({slots} {monster|monsters}).`,
 the Workshop Train row's wording.
+
+## Training: the wizard
+
+The Workshop's Train monster button opens `components/TrainWizard.tsx`, one question per
+screen (About you on a first run only, then Type, Pronouns, Name, Look, Ready), replacing the
+old one-screen form. It still sends the same `spawnMonster` input; only the gathering changed.
+All answers live in the wizard, so Back keeps them. A server refusal returns the wizard to the
+step at fault (`stepForError`, by the exact `SPAWN_ERRORS` messages shared with the server, or
+by the field a failed input check names; anything unknown stays on Ready) instead of closing it.
+
+- Type cards read `spawnOptions` (`types[]` carries `summary`, `class` and `signatureCard`).
+- The Look step reads the engine's look table (`monsters/helpers/looks.ts`, browser-safe:
+  `lookEntry`, `lookQuestionShort`, `lookPreview`), the same table the Console's
+  `askForColor` reads. It previews the look line only; the rest of the description is drawn
+  when the monster is made.
+- Name suggestions come from the room-scoped, membership-checked `suggestMonsterNames`
+  query ({ roomId, type, gender }), because `fantasy-names` is Node-only. It skips names
+  taken in the room. `chooseName` compares taken names case-insensitively: the room's lookup
+  keys are lowercased, and an exact match used to let the Console re-suggest a taken name.
 
 ## Card moves say why
 
@@ -281,7 +324,7 @@ the price of levelling up the monster beside it, roadmap 39a). "Train monster" h
 row with a line built from `myInventory.monsterSlots` (the engine's `Beastmaster.monsterSlots`,
 never below the roster size) minus the monsters listed: the free-places sentence, or "Every
 place at your side is taken (1 monster / n monsters)." with the button disabled (Cancel stays
-usable if the form is already open). A first-run player (no character) gets
+usable if the wizard is already open). A first-run player (no character) gets
 the plain button. On a phone the header stays a row, with the pane's ⤢ link top-right, and the
 Train row stacks with the sentence at its natural height (bug 210) and the button at its own width, left-aligned (owner). A shop price of 0 reads **Free**, with its own confirm and success text.
 A fallen monster with a running revival (`revivesAt`, set only once `respawn()` starts, never

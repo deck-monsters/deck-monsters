@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useMemo, useSyncExternalStore } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { useAuth } from '../lib/auth-context.js';
 import { trpc } from '../lib/trpc.js';
+import { RingFeedContext } from './useRingFeed.js';
 import { FIGHT_ON_RING_POLL_MS, QUIET_RING_POLL_MS } from './useFightOnRing.js';
 
 /**
@@ -25,6 +26,8 @@ export interface GuidedMonster {
 	name: string;
 	dead: boolean;
 	inRing: boolean;
+	/** In a running fight now (the inventory's `inEncounter`). Optional: older callers omit it. */
+	inEncounter?: boolean;
 	cards: string[];
 	cardSlots: number;
 	battles: { total: number };
@@ -204,6 +207,7 @@ export function useGuidedStart(roomId: string | undefined): GuidedStep & { fight
 			name: m.name,
 			dead: Boolean(m.dead),
 			inRing: Boolean(m.inRing),
+			inEncounter: Boolean(m.inEncounter),
 			cards: m.cards ?? [],
 			cardSlots: m.cardSlots ?? 0,
 			battles: { total: m.battles?.total ?? 0 },
@@ -266,11 +270,52 @@ export function useGuidedStart(roomId: string | undefined): GuidedStep & { fight
 		}
 	}, [loaded, isComplete, decided, fought, baseline, userId, roomId, monsters, hasOutcomeHistory, phase]);
 
+	// The live ring.state push, read from the feed the Console and the Workshop already sit
+	// under. Null context (the standalone Workshop route) just means no live source here.
+	const ringFeed = useContext(RingFeedContext);
+	// Tagged with its room and arrival time: a push from another room is not this room's, and
+	// a push newer than the last inventory fetch outranks that fetch's `inEncounter`.
+	const [liveState, setLive] = useState<{ roomId: string | undefined; at: number; names: Set<string> } | null>(null);
+	const live = liveState && liveState.roomId === roomId ? liveState : null;
+	useEffect(() => {
+		if (!ringFeed) return;
+		return ringFeed.subscribe((tracked) => {
+			const event = tracked.data;
+			let state: { inEncounter?: boolean; contestants?: Array<{ name?: string; dead?: boolean; userId?: string | null }> } | undefined;
+			if (event.type === 'ring.state') state = event.payload as typeof state;
+			else if (event.type === 'handshake') state = (event.payload as { ringState?: typeof state }).ringState;
+			if (!state) return;
+			const names = new Set(
+				state.inEncounter ? (state.contestants ?? []).filter((c) => !c.dead && c.name && c.userId === userId).map((c) => c.name!) : [],
+			);
+			setLive({ roomId, at: Date.now(), names });
+		});
+	}, [ringFeed, userId, roomId]);
+
 	const dismiss = useCallback(() => complete(userId, roomId), [userId, roomId]);
 	// The player's own monster is `waiting` in the ring, so a second contestant (a player's
 	// monster or a boss) means a fight is counting down or already on.
 	const ringData = ringState.data as { inEncounter?: boolean; contestants?: unknown[] } | undefined;
-	const fightOn = ringData?.inEncounter === true;
+	/*
+	 * Walk-fixes check (roadmap 44 K6): `fightOn` used to be the `waiting`-only poll, so a
+	 * one-round first fight ended unseen and `change_card` told a fighting monster to change a
+	 * card. It is now true whenever the guide's own monster is in a fight, from whichever source
+	 * is freshest: the live `ring.state` push (instant), the inventory's per-monster
+	 * `inEncounter` (no extra request), or the `waiting` poll. A fallen monster is never
+	 * "fighting", whatever the ring is doing.
+	 */
+	const subject = monsters?.find((m) => m.name === step.name);
+	const subjectFighting =
+		phase !== 'fallen' && phase !== 'spawn' && phase !== 'hidden'
+		&& (live && live.at > inventory.dataUpdatedAt
+			? live.names.has(step.name)
+			// The newer source decides alone. An inventory refreshed after the last live push is
+			// authoritative even when it says "not fighting": ORing in the older push kept the
+			// guide on "is fighting" after a missed end-of-fight push (Codex on #423).
+			: subject
+				? subject.inEncounter === true
+				: (live?.names.has(step.name) ?? false));
+	const fightOn = subjectFighting || (phase === 'waiting' && ringData?.inEncounter === true);
 	const fightComing = !fightOn && (ringData?.contestants?.length ?? 0) > 1;
 	return { ...step, fightComing, fightOn, dismiss };
 }

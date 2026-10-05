@@ -14,6 +14,12 @@ export class KalevalaCard extends HitCard {
 	static level = 1;
 	static cost = PRICEY.cost;
 	static noBosses = true;
+	/**
+	 * Each copy carries its own dice, shown in its name ("The Kalevala (2d8)"). Card facts list
+	 * one entry per variant so a copy's details show its real damage, not the 1d4 a fresh copy
+	 * has (Codex on #423).
+	 */
+	static variantOptions = damageLevels.map(damageDice => ({ damageDice }));
 	static notForSale = true;
 	static neverForSale = true;
 	static defaults = {

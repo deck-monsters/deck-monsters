@@ -8,7 +8,7 @@ import type { registerHandler } from './index.js';
 // default `game.lookAt` instead of being read as type `monster`. `(?!at$)` keeps a bare `look at` unrecognised,
 // as before, rather than taking `at` for a name.
 const LOOK_AT_REGEX =
-	/^look (?:at )?(?:the )?(monster(?:s)? manual|player(?:s)? handbook|(?:dungeon master(?:s)|dm)? guide|monsters in|monsters|monster|character|cards in|card inventory|all cards|inventory|cards|card|deck|item|items|ring|dmg)?( .+|(?<= )(?!at$)\S.*)?$/i;
+	/^look (?:at )?(?:the )?(monster(?:s)? manual|player(?:s)? handbook|(?:dungeon master(?:s)|dm)? guide|monsters in|monsters|monster|character|cards in|cards for|card inventory|all cards|inventory|cards|card|deck|item|items|ring|dmg)?( .+|(?<= )(?!at$)\S.*)?$/i;
 
 function lookAtAction({ channel, character, game, results, user }: any): Promise<unknown> {
 	return Promise.resolve()
@@ -17,6 +17,10 @@ function lookAtAction({ channel, character, game, results, user }: any): Promise
 			let thing = (results[2] || '').trim().toLowerCase();
 
 			switch (type) {
+				// `cards for` is listed before `cards` in the pattern. Before it existed,
+				// `look at cards for fluffy` matched `cards` and silently listed the deck.
+				case 'cards for':
+					return game.lookAtCardsFor(channel, thing);
 				case 'deck':
 				case 'cards':
 					return character.lookAtCards(channel, thing);
@@ -69,8 +73,19 @@ function lookAtAction({ channel, character, game, results, user }: any): Promise
 					return game.lookAtItem(channel, thing);
 				case 'items':
 					return character.lookAtItems(channel);
-				default:
+				default: {
+					/*
+					 * The chip once read "Look at my monsters" and typing that answered "I don't see
+					 * a my monsters here." (walk-fixes check, roadmap 44 K6): "my" is filler for
+					 * `look at monsters`. A monster actually named "My monsters" still wins, since
+					 * the name is the more specific reading.
+					 */
+					const mine = type === '' ? thing.match(/^my monsters?( in detail)?$/) : null;
+					const named = Array.isArray(character?.monsters)
+						&& character.monsters.some((m: { givenName?: unknown }) => String(m?.givenName ?? '').trim().toLowerCase() === thing);
+					if (mine && !named) return character.lookAtMonsters(channel, Boolean(mine[1]));
 					return game.lookAt(channel, type + thing);
+				}
 			}
 		})
 		.catch((err: unknown) => game.log(err));

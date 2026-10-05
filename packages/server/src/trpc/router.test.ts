@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { TRPCError } from '@trpc/server';
-import { Game, allItems } from '@deck-monsters/engine';
+import { Game, SPAWN_ERRORS, allItems } from '@deck-monsters/engine';
 
 import { createRouter, activeFlows, activePromptFreeMutations } from './router.js';
 
@@ -50,6 +50,35 @@ describe('trpc/router respondToPrompt', () => {
 
 		expect(err).to.be.instanceOf(TRPCError);
 		expect((err as TRPCError).code).to.equal('PRECONDITION_FAILED');
+	});
+});
+
+describe('trpc/router game.cardFacts', () => {
+	it('returns every card with its role, text, level and price after a membership check', async () => {
+		let checked: string | undefined;
+		const roomManager = {
+			assertMember: async (_user: string, room: string) => { checked = room; },
+		} as unknown as Parameters<typeof createRouter>[0];
+		const caller = createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false });
+
+		const facts = await caller.game.cardFacts({ roomId: ROOM_ID });
+
+		expect(checked).to.equal(ROOM_ID);
+		expect(facts.length).to.be.greaterThan(30);
+		const hit = facts.find((card) => card.name === 'Hit');
+		expect(hit).to.include({ role: 'attack', roleLabel: 'Attacks' });
+		expect(hit!.description).to.be.a('string').and.not.equal('');
+		// Same array every call: the facts are static, so they are built once per process.
+		expect(await caller.game.cardFacts({ roomId: ROOM_ID })).to.equal(facts);
+	});
+
+	it('refuses a non-member', async () => {
+		const roomManager = {
+			assertMember: async () => { throw new TRPCError({ code: 'FORBIDDEN' }); },
+		} as unknown as Parameters<typeof createRouter>[0];
+		const caller = createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false });
+		const err = await caller.game.cardFacts({ roomId: ROOM_ID }).catch((e: unknown) => e);
+		expect((err as TRPCError).code).to.equal('FORBIDDEN');
 	});
 });
 
@@ -150,6 +179,30 @@ describe('trpc/router card management procedures', () => {
 			},
 			{ monsterName: 'Mirebell', items: [] },
 		]);
+	});
+
+	it('gives each monster its class and the next level that opens a card', async () => {
+		const monster = {
+			givenName: 'Rex', creatureType: 'Minotaur', level: 0, inEncounter: false, cardSlots: 9,
+			cards: [], items: [], options: {}, hp: 10, maxHp: 10, battles: { wins: 0, losses: 0, total: 0 },
+		};
+		const unknown = { ...monster, givenName: 'Mystery', creatureType: 'Nonesuch' };
+		const game = { characters: { [USER_ID]: { monsters: [monster, unknown], deck: [], items: [] } }, ring: { contestants: [] } };
+		const roomManager = { assertMember: async () => undefined, getGame: async () => game } as unknown as Parameters<typeof createRouter>[0];
+		const result = await createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false }).game.myInventory({ roomId: ROOM_ID });
+
+		const [rex, mystery] = result.monsters;
+		expect(rex!.monsterClass).to.be.a('string').and.not.equal('');
+		expect(rex!.nextCards).to.not.equal(null);
+		expect(rex!.nextCards!.level).to.be.greaterThan(0);
+		expect(rex!.nextCards!.cards).to.be.an('array').that.is.not.empty;
+		// An unknown type holds nothing, so there is no class and no "At level N" line.
+		expect(mystery!.monsterClass).to.equal('');
+		expect(mystery!.nextCards).to.equal(null);
+
+		// A second call (the 30 s poll) answers the same from the per-type memo.
+		const again = await createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false }).game.myInventory({ roomId: ROOM_ID });
+		expect(again.monsters[0]!.nextCards).to.deep.equal(rex!.nextCards);
 	});
 
 	it('uses the engine revival completion epoch for a fallen monster mid-revival', async () => {
@@ -1167,6 +1220,63 @@ describe('trpc/router monster lifecycle procedures', () => {
 			{ key: 'androgynous', label: 'they/them' },
 		]);
 		expect(options).not.to.have.property('genders');
+		// The wizard's type card: class and signature card per type.
+		expect(options.types.find((type) => type.label === 'Dragon')).to.include({ class: 'Wizard', signatureCard: 'Fire Breath' });
+		expect(options.types.every((type) => type.class.length > 0 && type.signatureCard.length > 0)).to.equal(true);
+	});
+
+	it('suggests two names for a type, skipping names taken in the room, and checks membership', async () => {
+		let assertedRoom: string | undefined;
+		const roomManager = {
+			assertMember: async (_userId: string, roomId: string) => { assertedRoom = roomId; },
+			getGame: async () => ({ getAllMonstersLookup: () => ({ rex: {} }) }),
+		} as unknown as Parameters<typeof createRouter>[0];
+		const caller = createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false });
+		const { names } = await caller.game.suggestMonsterNames({ roomId: ROOM_ID, type: 1, gender: 'male' });
+		expect(assertedRoom).to.equal(ROOM_ID);
+		expect(names).to.have.length(2);
+		expect(names[0]).not.to.equal(names[1]);
+		expect(names.every((name) => name.length > 0 && !/[()]/.test(name))).to.equal(true);
+	});
+
+	it('never suggests a name taken in the room, whatever its case', async () => {
+		// The room's lookup keys are lowercased; the lists' names are capitalised.
+		const lookup: Record<string, unknown> = {};
+		const roomManager = {
+			assertMember: async () => undefined,
+			getGame: async () => ({ getAllMonstersLookup: () => lookup }),
+		} as unknown as Parameters<typeof createRouter>[0];
+		const caller = createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false });
+		for (let i = 0; i < 15; i++) {
+			const { names } = await caller.game.suggestMonsterNames({ roomId: ROOM_ID, type: 1, gender: 'male' });
+			for (const name of names) {
+				expect(Object.keys(lookup), name).not.to.include(name.toLowerCase());
+				lookup[name.toLowerCase()] = {};
+			}
+		}
+	});
+
+	it('pins the spawn refusal wording the web wizard matches on', () => {
+		// The wizard sends the player back to the step at fault by exact message. Rewording one
+		// must be a deliberate change here and in the wizard's tests.
+		expect(SPAWN_ERRORS).to.deep.equal({
+			monsterNameTaken: 'That monster name is already taken.',
+			characterNameTaken: 'That name is already taken in this room.',
+			typeUnavailable: 'That monster type is not available.',
+		});
+	});
+
+	it('refuses name suggestions for a non-member and for an unknown type', async () => {
+		const denied = {
+			assertMember: async () => { throw new Error('Not a member'); },
+		} as unknown as Parameters<typeof createRouter>[0];
+		const deniedErr = await createRouter(denied).createCaller({ userId: USER_ID, serviceTokenValid: false })
+			.game.suggestMonsterNames({ roomId: ROOM_ID, type: 0, gender: 'male' }).catch((e: unknown) => e);
+		expect(deniedErr).to.be.instanceOf(Error);
+		const ok = { assertMember: async () => undefined } as unknown as Parameters<typeof createRouter>[0];
+		const unknownErr = await createRouter(ok).createCaller({ userId: USER_ID, serviceTokenValid: false })
+			.game.suggestMonsterNames({ roomId: ROOM_ID, type: 99, gender: 'male' }).catch((e: unknown) => e);
+		expect(unknownErr).to.have.property('code', 'BAD_REQUEST');
 	});
 
 	it('spawns a fully specified monster without an interactive prompt', async () => {

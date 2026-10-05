@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { trpc } from '../lib/trpc.js';
 import type { ItemSummary } from '../utils/item-tiers.js';
+import type { CardFactsView } from '../utils/cards.js';
 
 type WorkshopMonster = {
   name: string;
@@ -23,11 +24,16 @@ type WorkshopMonster = {
   maxHp: number;
   revivesAt: number | null;
   battles: { wins: number; losses: number; total: number };
+  // For the card-details sheet and the panel's "At level N" line; see
+  // `InventoryMonsterSummary` in the server router. Optional: older payloads and test doubles
+  // lack them.
+  monsterClass?: string;
+  nextCards?: { level: number; cards: string[] } | null;
 };
 
 type WorkshopInventory = {
   // "No character in this room yet" is not the same as "a character with no monsters",
-  // and the workshop's first-run form depends on telling them apart.
+  // and the workshop's first-run wizard depends on telling them apart.
   hasCharacter: boolean;
   // Monster places at the character's side (engine `Beastmaster.monsterSlots`); the Train
   // row says how many are free.
@@ -86,6 +92,12 @@ export function useDeckWorkshop(roomId?: string) {
       refetchOnWindowFocus: true,
     },
   );
+  // Static for the life of the process (it reads the card classes, not the room), so it is
+  // fetched once. The sheet shows only the card's name until it arrives.
+  const cardFactsQuery = trpc.game.cardFacts.useQuery(
+    { roomId: validRoomId },
+    { enabled: !!roomId, staleTime: Infinity },
+  );
   const spawnOptionsQuery = trpc.game.spawnOptions.useQuery(
     { roomId: validRoomId },
     { enabled: !!roomId, staleTime: Infinity },
@@ -93,7 +105,7 @@ export function useDeckWorkshop(roomId?: string) {
   /*
    * Only a player without a character needs these, and they are what the engine's
    * creation prompts would have asked for — the workshop's spawn mutation is prompt-free
-   * (docs/architecture/engine-concurrency-and-timing.md), so the answers come from the form
+   * (docs/architecture/engine-concurrency-and-timing.md), so the answers come from the wizard
    * instead.
    * The avatar list is random per request, which is what makes "Shuffle" a refetch.
    */
@@ -222,6 +234,7 @@ export function useDeckWorkshop(roomId?: string) {
     characterCreation: characterCreationQuery.data ?? { pronouns: [], avatars: [], suggestedName: '' },
     shuffleAvatars: () => characterCreationQuery.refetch(),
     monsters,
+    cardFacts: (cardFactsQuery.data ?? []) as CardFactsView[],
     unequippedDeck,
     cardCosts,
     cardCompatibility,
@@ -273,6 +286,11 @@ export function useDeckWorkshop(roomId?: string) {
     }) => {
       if (!roomId) throw new Error('Room not selected');
       return spawnMonsterMutation.mutateAsync({ roomId, ...input });
+    },
+    // Two name ideas for the training wizard. Always fresh (staleTime 0): "More names" must differ.
+    suggestMonsterNames: (input: { type: number; gender: 'male' | 'female' | 'androgynous'; exclude?: string[] }) => {
+      if (!roomId) throw new Error('Room not selected');
+      return utils.game.suggestMonsterNames.fetch({ roomId, ...input }, { staleTime: 0 });
     },
     reviveMonster: (input: { monsterName: string }) => {
       if (!roomId) throw new Error('Room not selected');

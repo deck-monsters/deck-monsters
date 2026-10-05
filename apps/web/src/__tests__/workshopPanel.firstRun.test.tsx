@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const hookMock = vi.hoisted(() => ({
@@ -18,7 +18,10 @@ const hookMock = vi.hoisted(() => ({
   },
   shuffleAvatars: vi.fn(),
   spawnOptions: {
-    types: [{ index: 0, label: 'Basilisk', summary: 'A hard-hitting serpent that coils around its foes and grows a thicker skin.' }, { index: 2, label: 'Jinn', summary: 'A trickster spirit that stirs up sandstorms and turns the fight with clever magic.' }],
+    types: [
+      { index: 0, label: 'Basilisk', summary: 'A hard-hitting serpent that coils around its foes and grows a thicker skin.', class: 'Barbarian', signatureCard: 'Coil' },
+      { index: 2, label: 'Jinn', summary: 'A trickster spirit that stirs up sandstorms and turns the fight with clever magic.', class: 'Cleric', signatureCard: 'Sandstorm' },
+    ],
     pronouns: [
       { key: 'male', label: 'he/him' },
       { key: 'female', label: 'she/her' },
@@ -40,6 +43,7 @@ const hookMock = vi.hoisted(() => ({
   deletePreset: vi.fn(),
   reviveMonster: vi.fn(),
   spawnMonster: vi.fn(),
+  suggestMonsterNames: vi.fn(),
   sendMonsterToRing: vi.fn(),
   refresh: vi.fn(),
   roomName: 'Test Room',
@@ -64,12 +68,17 @@ import WorkshopPanel from '../components/WorkshopPanel.js';
  * prompt-free channel and cannot ask (docs/architecture/engine-concurrency-and-timing.md).
  */
 describe('WorkshopPanel: first run with no character', () => {
+  const next = () => fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+  /** Walks the wizard from the Type step to Ready: a Jinn, she/her, Saffron, violet smoke. */
   const fillSpawnFields = () => {
-    fireEvent.change(screen.getByLabelText('Type'), { target: { value: '2' } });
-    const pronounInputs = screen.getAllByLabelText('Pronouns');
-    fireEvent.change(pronounInputs[pronounInputs.length - 1]!, { target: { value: 'female' } });
+    fireEvent.click(screen.getByRole('radio', { name: /Jinn/ }));
+    next();
+    fireEvent.click(screen.getByRole('radio', { name: 'she/her' }));
+    next();
     fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Saffron' } });
-    fireEvent.change(screen.getByLabelText('Appearance'), { target: { value: 'violet smoke' } });
+    next();
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'violet smoke' } });
+    next();
   };
 
   beforeEach(() => {
@@ -80,6 +89,8 @@ describe('WorkshopPanel: first run with no character', () => {
     hookMock.latestError = null;
     hookMock.spawnMonster.mockReset();
     hookMock.shuffleAvatars.mockReset();
+    hookMock.suggestMonsterNames.mockReset();
+    hookMock.suggestMonsterNames.mockResolvedValue({ names: ['Vesper', 'Ember'] });
     hookMock.spawnMonster.mockResolvedValue({ monsterName: 'Saffron', monsterType: 'Jinn' });
   });
 
@@ -96,42 +107,23 @@ describe('WorkshopPanel: first run with no character', () => {
     render(<WorkshopPanel roomId="room-1" />);
     fireEvent.click(screen.getByRole('button', { name: 'Train monster' }));
 
-    expect(screen.getByRole('group', { name: 'About you' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'About you' })).toBeTruthy();
+    expect(screen.getByText('Step 1 of 6')).toBeTruthy();
     expect(screen.getByLabelText('Your name')).toHaveValue('Ada Lovelace');
-    expect(within(screen.getByRole('group', { name: 'About you' })).getByLabelText('Pronouns')).toHaveValue('androgynous');
+    expect(screen.getByLabelText('Pronouns')).toHaveValue('androgynous');
+    expect(screen.getByRole('option', { name: 'she/her' })).toHaveValue('female');
     expect(screen.getByRole('radio', { name: '🦊' })).toBeChecked();
-  });
-
-  it('labels the pronoun options in words while keeping the engine keys as values', () => {
-    render(<WorkshopPanel roomId="room-1" />);
-    fireEvent.click(screen.getByRole('button', { name: 'Train monster' }));
-    const characterFields = within(screen.getByRole('group', { name: 'About you' }));
-
-    expect(characterFields.getByRole('option', { name: 'she/her' })).toHaveValue('female');
-    expect(characterFields.getByRole('option', { name: 'he/him' })).toHaveValue('male');
-    expect(characterFields.getByRole('option', { name: 'they/them' })).toHaveValue('androgynous');
-  });
-
-  it('lists character and monster pronouns in the same server-provided order', () => {
-    render(<WorkshopPanel roomId="room-1" />);
-    fireEvent.click(screen.getByRole('button', { name: 'Train monster' }));
-
-    expect(screen.getAllByLabelText('Pronouns').map((select) =>
-      Array.from((select as HTMLSelectElement).options, (option) => option.text),
-    )).toEqual([
-      ['he/him', 'she/her', 'they/them'],
-      ['he/him', 'she/her', 'they/them'],
-    ]);
   });
 
   it('sends the character with the spawn, so onboarding is one submit', async () => {
     render(<WorkshopPanel roomId="room-1" />);
     fireEvent.click(screen.getByRole('button', { name: 'Train monster' }));
-    fillSpawnFields();
     fireEvent.change(screen.getByLabelText('Your name'), { target: { value: 'Ada' } });
-    fireEvent.change(screen.getAllByLabelText('Pronouns')[0]!, { target: { value: 'female' } });
+    fireEvent.change(screen.getByLabelText('Pronouns'), { target: { value: 'female' } });
     fireEvent.click(screen.getByRole('radio', { name: '🐙' }));
-    fireEvent.submit(screen.getByRole('button', { name: 'Train' }).closest('form')!);
+    next();
+    fillSpawnFields();
+    fireEvent.click(screen.getByRole('button', { name: 'Train Saffron' }));
 
     await waitFor(() => expect(hookMock.spawnMonster).toHaveBeenCalledWith({
       type: 2,
@@ -141,16 +133,6 @@ describe('WorkshopPanel: first run with no character', () => {
       character: { name: 'Ada', gender: 'female', avatar: '🐙' },
     }));
     expect(await screen.findByRole('status')).toHaveTextContent('Saffron the Jinn answers your call.');
-  });
-
-  it('shows the one-line description of the chosen monster type', () => {
-    render(<WorkshopPanel roomId="room-1" />);
-    fireEvent.click(screen.getByRole('button', { name: 'Train monster' }));
-
-    expect(screen.getByText('A hard-hitting serpent that coils around its foes and grows a thicker skin.')).toBeTruthy();
-    fireEvent.change(screen.getByLabelText('Type'), { target: { value: '2' } });
-    expect(screen.getByText('A trickster spirit that stirs up sandstorms and turns the fight with clever magic.')).toBeTruthy();
-    expect(screen.queryByText('A hard-hitting serpent that coils around its foes and grows a thicker skin.')).toBeNull();
   });
 
   it('offers a different set of avatars without losing the rest of the form', () => {
@@ -169,11 +151,12 @@ describe('WorkshopPanel: first run with no character', () => {
     render(<WorkshopPanel roomId="room-1" />);
     fireEvent.click(screen.getByRole('button', { name: 'Train monster' }));
 
-    expect(screen.queryByRole('group', { name: 'About you' })).toBeNull();
+    expect(screen.queryByRole('heading', { name: 'About you' })).toBeNull();
     expect(screen.queryByLabelText('Your name')).toBeNull();
+    expect(screen.getByText('Step 1 of 5')).toBeTruthy();
 
     fillSpawnFields();
-    fireEvent.submit(screen.getByRole('button', { name: 'Train' }).closest('form')!);
+    fireEvent.click(screen.getByRole('button', { name: 'Train Saffron' }));
 
     await waitFor(() => expect(hookMock.spawnMonster).toHaveBeenCalledWith({
       type: 2,
@@ -181,6 +164,33 @@ describe('WorkshopPanel: first run with no character', () => {
       name: 'Saffron',
       color: 'violet smoke',
     }));
+  });
+
+  it('returns to the Name step when the server says the name is taken, and keeps the wizard open', async () => {
+    hookMock.hasCharacter = true;
+    hookMock.spawnMonster.mockRejectedValue(new Error('That monster name is already taken.'));
+    render(<WorkshopPanel roomId="room-1" />);
+    fireEvent.click(screen.getByRole('button', { name: 'Train monster' }));
+    fillSpawnFields();
+    fireEvent.click(screen.getByRole('button', { name: 'Train Saffron' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('That monster name is already taken.');
+    expect(screen.getByRole('heading', { name: 'Name' })).toBeTruthy();
+    expect(screen.getByLabelText('Name')).toHaveValue('Saffron');
+  });
+
+  it('asks the server for name suggestions for the chosen type and pronouns', async () => {
+    hookMock.hasCharacter = true;
+    render(<WorkshopPanel roomId="room-1" />);
+    fireEvent.click(screen.getByRole('button', { name: 'Train monster' }));
+    fireEvent.click(screen.getByRole('radio', { name: /Jinn/ }));
+    next();
+    fireEvent.click(screen.getByRole('radio', { name: 'she/her' }));
+    next();
+    fireEvent.click(await screen.findByRole('button', { name: 'Vesper' }));
+
+    expect(hookMock.suggestMonsterNames).toHaveBeenCalledWith({ type: 2, gender: 'female' });
+    expect(screen.getByLabelText('Name')).toHaveValue('Vesper');
   });
 
   it('keeps the monster-focused empty state for a player who has a character', () => {

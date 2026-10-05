@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { formatRelativeFromNow } from '../utils/format-relative.js';
 import CardSlot, { type WorkshopCardLocation } from './CardSlot.js';
 import PresetControl from './PresetControl.js';
+import { joinList } from '../utils/cards.js';
 // Reusing the ring roster's own hp math/bands rather than re-deriving them here — the two
 // bars must never drift apart on what counts as "hurt" vs "critical". Only the pure
 // functions are imported; the markup below is its own copy (see the "why" note on the hp
@@ -32,6 +33,8 @@ type MonsterPanelProps = {
     // router for why "dead with no timer" is a real, distinct case.
     revivesAt: number | null;
     battles: { wins: number; losses: number; total: number };
+    // The next level above this monster's that opens any card, for "At level N: ...".
+    nextCards?: { level: number; cards: string[] } | null;
   };
   showSelectionHint: boolean;
   selectedCards: Array<{ location: WorkshopCardLocation; cardName: string; selectionId: string }>;
@@ -64,6 +67,8 @@ type MonsterPanelProps = {
   /** `{Card} can't go on {Monster}: {reason}.` shown when the hint is 'ineligible'. */
   refusalSentence?: string;
   onToggleFilter?: () => void;
+  /** Opens the card detail sheet for a card in this monster's deck. */
+  onShowDetails?: (cardName: string, opener: HTMLElement) => void;
 };
 
 /**
@@ -99,6 +104,7 @@ export default function MonsterWorkshopPanel({
   compatibilityHint = 'none',
   refusalSentence,
   onToggleFilter,
+  onShowDetails,
 }: MonsterPanelProps) {
   const [now, setNow] = useState(() => Date.now());
   const locked = monster.inEncounter;
@@ -211,6 +217,11 @@ export default function MonsterWorkshopPanel({
           <p>
             {monster.type} · Lvl {monster.level}
           </p>
+          {monster.nextCards && monster.nextCards.cards.length > 0 && (
+            <p className="workshop-next-cards">
+              At level {monster.nextCards.level}: {joinList(monster.nextCards.cards)}.
+            </p>
+          )}
         </div>
       </div>
       {/*
@@ -336,6 +347,7 @@ export default function MonsterWorkshopPanel({
               selected={selectedCards.some((selectedCard) => selectedCard.selectionId === selectionId)}
               disabled={busy || locked}
               onSelectCard={onSelectCard}
+              onShowDetails={onShowDetails}
               onTapSlot={onTapSlot}
               onDropCard={(source, droppedCardName, sourceSelectionId) =>
                 onDropCard(source, droppedCardName, sourceSelectionId, selectionId)

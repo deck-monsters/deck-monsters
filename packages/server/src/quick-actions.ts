@@ -157,7 +157,7 @@ export function buildQuickActions(game: QuickActionsGame, userId: string): Quick
 		add(`Equip ${monsterName(nextToEquip)}`, `equip ${monsterName(nextToEquip)}`);
 	}
 
-	add('Look at my monsters', 'look at monsters');
+	add('Look at monsters', 'look at monsters');
 	add('Visit the shop', 'visit the shop');
 
 	return actions.slice(0, MAX_QUICK_ACTIONS);

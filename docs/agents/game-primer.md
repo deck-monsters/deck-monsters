@@ -23,7 +23,7 @@ already covers a subject in depth this links to it rather than restating it.
    existing character the room, a per-character grant lives in `monsterSlotModifier`, and
    nobody is stranded over capacity — they just cannot train more. A legacy stored
    `monsterSlots` is folded into the modifier once on load
-   (`packages/engine/src/characters/beastmaster.ts`). The Workshop's Train form creates the
+   (`packages/engine/src/characters/beastmaster.ts`). The Workshop's training wizard creates the
    character in the same prompt-free mutation when the player has none (#160); the console
    path prompts, and asks for **pronouns** (`he/him`, `she/her`, `they/them`), which map onto
    the persisted `male|female|androgynous` keys via `helpers/pronouns.ts`.

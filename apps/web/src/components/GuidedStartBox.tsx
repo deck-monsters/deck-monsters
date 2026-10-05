@@ -32,6 +32,9 @@ const bosses = `${bossLimit} ${bossLimit === 1 ? 'boss' : 'bosses'}`;
 
 export function guidedCopy(surface: 'console' | 'workshop', phase: GuidedPhase, name: string, slots: number, fightComing = false, fightOn = false): Copy | null {
 	const console_ = surface === 'console';
+	// Any step that names a monster gives way to this while that monster is fighting: the
+	// walk-fixes check saw change_card tell a fighting monster to change a card.
+	if (fightOn && name && phase !== 'spawn' && phase !== 'fallen') return { text: `${name} is fighting. Watch The Ring.` };
 	switch (phase) {
 		case 'spawn':
 			if (!console_) return null;
@@ -54,7 +57,6 @@ export function guidedCopy(surface: 'console' | 'workshop', phase: GuidedPhase, 
 			 * while a boss was standing in the ring. Once anything shares the ring the advice
 			 * is to watch, not to summon, so the chip and the summons hint go.
 			 */
-			if (fightOn) return { text: `${name} is fighting. Watch The Ring.` };
 			if (fightComing) {
 				return { text: `${name} is in the ring. Watch The Ring: a fight starts when the countdown ends.` };
 			}

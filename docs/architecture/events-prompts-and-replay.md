@@ -101,6 +101,12 @@ Events can be missed during a reconnect, so the `pendingPrompt` poll is the back
   question, but only when the follow-up poll **succeeded**. On a network failure the cached
   poll can read empty while the question is still live, and burying it would leave the
   player stuck until the server's timeout (#153);
+- a `prompt.request` stamped **before this connection's handshake** is replay, not news, and
+  is ignored (the poll is asked at once and brings the question back if it is still open).
+  Answering publishes no event, so a replayed request for an answered question looks exactly
+  like an open one; arming it made the first command after a reload go out as its answer
+  ("Prompt is no longer active"), and the next real question then retired it as "Action
+  cancelled." (roadmap 44 K6);
 - a new question retires any older one still showing, since a player has at most one open
   question (the `roomId:userId` lane and `activeFlows`). If a flow ever prompts again after
   `cancelFlow`, revisit this.

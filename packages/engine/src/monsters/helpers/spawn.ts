@@ -1,12 +1,12 @@
 import { stripControlCharacters } from '../../helpers/strip-control-characters.js';
 import PRONOUNS, { PRONOUN_CHOICES, PRONOUN_KEYS, genderFromPronounChoice } from '../../helpers/pronouns.js';
 import names from '../../helpers/names.js';
-import { BASILISK, DRAGON, GLADIATOR, JINN, MINOTAUR, UNICORN, WEEPING_ANGEL } from '../../constants/creature-types.js';
 import { announceAndThrow } from '../../helpers/announce-and-throw.js';
 import type { ChannelFn, CardInstance } from '../../creatures/base.js';
 import type BaseMonster from '../base.js';
 import allMonsters from './all.js';
 import { monsterTypeSummary } from './type-summaries.js';
+import { lookQuestion } from './looks.js';
 // The answer contract (0-based index from web, label text from Discord) lives in
 // exactly one place. This used to be a per-file copy behind the lazy loader below,
 // and three copies of a rule that must agree is how the shop menus drifted out of
@@ -144,36 +144,10 @@ const spawnMonster = (
 			.then(() => {
 				if (color !== undefined) return color;
 
-				let example = 'blue';
-				let descriptor = 'clothing look like';
-
-				const ct = (Monster as any).creatureType as string;
-				if (ct === BASILISK) {
-					example = 'gold and black diamond patterned';
-					descriptor = 'skin look like';
-				} else if (ct === MINOTAUR) {
-					example = 'scarred, wrinkled, and beautifully auburn';
-					descriptor = 'skin and hair look like';
-				} else if (ct === GLADIATOR) {
-					example = 'tattered rags';
-					descriptor = 'garments look like';
-				} else if (ct === WEEPING_ANGEL) {
-					example = 'deceptively glorious';
-					descriptor = 'raiment be';
-				} else if (ct === JINN) {
-					example = 'slightly translucent blue';
-					descriptor = 'nascent form be';
-				} else if (ct === UNICORN) {
-					example = 'ivory white with a dark-red head';
-					descriptor = 'coat look like';
-				} else if (ct === DRAGON) {
-					example = 'deep-sea blue with an ember-red belly';
-					descriptor = 'scales look like';
-				}
-
+				// The wording, example and per-type descriptor live in looks.ts, shared with the web wizard.
 				const pronounSet = (PRONOUNS as any)[(options.gender as string) ?? 'male'];
 				return channel({
-					question: `What should ${pronounSet?.his ?? 'their'} ${descriptor}? (eg: ${example})`,
+					question: lookQuestion((Monster as any).creatureType as string, pronounSet),
 				});
 			})
 			.then((answer: unknown) => {

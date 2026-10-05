@@ -54,3 +54,23 @@ describe('card grids match density across the workshop (#121)', () => {
     expect(narrowest).toMatch(/\.workshop-slot-grid\s*\{\s*grid-template-columns:\s*repeat\(2,/);
   });
 });
+
+describe('card details button never sits on the card at phone width', () => {
+  it('is a corner badge of at least 2rem on wide screens', () => {
+    const body = ruleBody('.workshop-card-info');
+    expect(body).toMatch(/position:\s*absolute/);
+    expect(body).toMatch(/width:\s*2rem/);
+    expect(body).toMatch(/height:\s*2rem/);
+  });
+
+  it('gets its own full-width strip under the card at 520px and below', () => {
+    const narrow = css.slice(css.indexOf('@container workshop (max-width: 520px)'), css.indexOf('@container workshop (max-width: 280px)'));
+    expect(narrow).toMatch(/\.workshop-card-cell\s*\{\s*flex-direction:\s*column;/);
+    expect(narrow).toMatch(/\.workshop-card-info\s*\{[^}]*position:\s*static;[^}]*width:\s*100%;[^}]*min-height:\s*2\.75rem/);
+  });
+
+  it('caps the sheet height with dvh, keeping a vh fallback before it', () => {
+    const body = ruleBody('.card-detail-sheet');
+    expect(body).toMatch(/max-height:\s*85vh;\s*max-height:\s*85dvh;/);
+  });
+});

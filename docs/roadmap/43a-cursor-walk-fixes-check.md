@@ -8,7 +8,7 @@ tags: [roadmap, onboarding, web, console, cursor]
 ---
 # 43a — Small fixes from the walk, live check (Cursor)
 
-**Status:** Ready to run once [43](43-walk-fixes.md) is merged and deployed.
+**Status:** Run on 2026-10-04: [walk-fixes check](../reference/walk-fixes-check.md). All items passed but 7 (see [44 K6](44-guides-cards-and-training.md)); item 13's two-copies case wasn't reachable on 30 coins.
 
 ## Rules
 

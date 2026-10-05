@@ -1,12 +1,15 @@
-import { useCallback, useContext, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { movedToMessage } from '../utils/moved-message.js';
 import { surfaceDescription } from './surface-descriptions.js';
 import InventoryPanel from './InventoryPanel.js';
 import ItemsPanel from './ItemsPanel.js';
 import ShopPanel, { type SellableGroup, type SellSelection, type ShopStockItem } from './ShopPanel.js';
 import MonsterWorkshopPanel from './MonsterWorkshopPanel.js';
+import CardDetailSheet from './CardDetailSheet.js';
+import { stableCardName, type CardFactsView } from '../utils/cards.js';
 import type { WorkshopCardLocation } from './CardSlot.js';
 import GuidedStartBox from './GuidedStartBox.js';
+import TrainWizard, { toTrainFailure, type TrainFailure, type TrainWizardInput } from './TrainWizard.js';
 import { useGuidedStart } from '../hooks/useGuidedStart.js';
 import { useDeckWorkshop } from '../hooks/useDeckWorkshop.js';
 import { RingFeedContext, type TrackedRingFeedEvent } from '../hooks/useRingFeed.js';
@@ -31,10 +34,15 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showSpawn, setShowSpawn] = useState(false);
-  const [spawnTypeIndex, setSpawnTypeIndex] = useState<number | null>(null);
+  // The card whose details sheet is open, and the monster it is shown for: the monster whose
+  // panel the card is in, or for a card in Your cards the highlighted monster. Null for a
+  // card in Your cards with nothing highlighted, which shows a verdict for every monster.
+  const [detail, setDetail] = useState<{ cardName: string; monsterName: string | null; opener: HTMLElement | null } | null>(null);
 
   const {
     monsters,
+    // Defaults to [] for the same reason as cardCosts: older doubles lack it.
+    cardFacts = [],
     unequippedDeck,
     // Defaults to {} — older test doubles and any stale cached payload predating this field
     // must not crash the sell-price preview, only show it as free (0 cost).
@@ -64,6 +72,7 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
     loadPreset,
     deletePreset,
     spawnMonster,
+    suggestMonsterNames,
     reviveMonster,
     sendMonsterToRing,
     useItem,
@@ -81,6 +90,13 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
    */
   const needsCharacter = hasCharacter === false;
   const guide = useGuidedStart(roomId);
+
+  const factsByName = useMemo(() => {
+    const map = new Map<string, CardFactsView>();
+    for (const facts of cardFacts) map.set(facts.name, facts);
+    return map;
+  }, [cardFacts]);
+  const closeDetail = useCallback(() => setDetail(null), []);
 
   // Places at the player's side. Absent while the inventory loads (and in older test
   // doubles), in which case no line is shown rather than a wrong count.
@@ -157,31 +173,17 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
 	  }
 	}
 
-  async function handleSpawn(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const data = new FormData(event.currentTarget);
+  // The wizard owns the answers; this sends them and reports back, so a server error (a name
+  // clash, say) shows in the wizard at the step at fault instead of closing it.
+  async function handleSpawn(input: TrainWizardInput): Promise<TrainFailure | null> {
     try {
       setError(null);
-      const result = await spawnMonster({
-        type: Number(data.get('type')),
-        gender: String(data.get('gender')) as 'male' | 'female' | 'androgynous',
-        name: String(data.get('name') ?? '').trim(),
-        color: String(data.get('color') ?? '').trim(),
-        // Only sent on a first run; the server ignores it once a character exists.
-        ...(needsCharacter
-          ? {
-              character: {
-                name: String(data.get('characterName') ?? '').trim(),
-                gender: String(data.get('characterGender')) as 'male' | 'female' | 'androgynous',
-                avatar: String(data.get('avatar') ?? ''),
-              },
-            }
-          : {}),
-      });
+      const result = await spawnMonster(input);
       setMessage(`${result.monsterName} the ${result.monsterType} answers your call.`);
       setShowSpawn(false);
+      return null;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not train that monster');
+      return toTrainFailure(err);
     }
   }
 
@@ -618,7 +620,7 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
       <div className="workshop-train-row">
         {trainLine && <p className="workshop-train-line">{trainLine}</p>}
         <button
-          title={showSpawn ? 'Close the form without training' : 'Choose a type, a name and a look for a new monster'}
+          title={showSpawn ? 'Close without training' : 'Choose a type, a name and a look for a new monster'}
           className="btn"
           onClick={() => setShowSpawn((shown) => !shown)}
           disabled={!roomId || busy || (trainingFull && !showSpawn)}
@@ -639,41 +641,21 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
 		</div>
 	  )}
 	  {busy && !consoleFlowActive && <div className="workshop-banner">Applying changes…</div>}
-      {/* Same guide as the Console. Not on `spawn`: the first-run form already covers training. */}
+      {/* Same guide as the Console. Not on `spawn`: the first-run wizard already covers training. */}
       {!consoleFlowActive && guide.phase !== 'hidden' && guide.phase !== 'spawn' && (
         <GuidedStartBox surface="workshop" {...guide} />
       )}
       {showSpawn && (
-        <form className="workshop-spawn-form" onSubmit={(event) => void handleSpawn(event)}>
-          {needsCharacter && (
-            <fieldset className="workshop-spawn-character">
-              <legend>About you</legend>
-              <label>Your name<input name="characterName" required maxLength={40} autoComplete="off" defaultValue={characterCreation.suggestedName} key={characterCreation.suggestedName} /></label>
-              <label>Pronouns<select name="characterGender" defaultValue="androgynous">{characterCreation.pronouns.map(({ key, label }) => <option key={key} value={key}>{label}</option>)}</select></label>
-              <fieldset className="workshop-avatar-choices">
-                <legend>Avatar</legend>
-                {characterCreation.avatars.map((avatar, index) => (
-                  <label key={`${avatar}-${index}`} className="workshop-avatar-chip">
-                    <input type="radio" name="avatar" value={avatar} defaultChecked={index === 0} />
-                    <span>{avatar}</span>
-                  </label>
-                ))}
-                {/* The list is generated per request, so a new one is just a refetch. */}
-                <button title="Show other icons to choose from" type="button" className="btn workshop-inline-btn" onClick={() => void shuffleAvatars()}>Shuffle</button>
-              </fieldset>
-            </fieldset>
-          )}
-          <label>Type<select name="type" value={spawnTypeIndex ?? spawnOptions.types[0]?.index} onChange={(event) => setSpawnTypeIndex(Number(event.target.value))}>{spawnOptions.types.map((type) => <option key={type.index} value={type.index}>{type.label}</option>)}</select></label>
-          {/* One line per type, from the same source as the Console prompt. */}
-          {(() => {
-            const chosen = spawnOptions.types.find((type) => type.index === (spawnTypeIndex ?? spawnOptions.types[0]?.index));
-            return chosen?.summary ? <p className="workshop-type-summary">{chosen.summary}</p> : null;
-          })()}
-          <label>Pronouns<select name="gender" defaultValue="androgynous">{spawnOptions.pronouns.map(({ key, label }) => <option key={key} value={key}>{label}</option>)}</select></label>
-          <label>Name<input name="name" required maxLength={40} autoComplete="off" /></label>
-          <label>Appearance<input name="color" required maxLength={100} placeholder="gold and black" /></label>
-          <button title="Train a monster with these choices" type="submit" className="btn" disabled={busy}>Train</button>
-        </form>
+        <TrainWizard
+          types={spawnOptions.types}
+          pronouns={spawnOptions.pronouns}
+          needsCharacter={needsCharacter}
+          characterCreation={characterCreation}
+          shuffleAvatars={shuffleAvatars}
+          busy={busy}
+          suggestNames={async (input) => (await suggestMonsterNames(input)).names}
+          onTrain={handleSpawn}
+        />
       )}
       {selectedCards.length > 0 && (
         <div className="workshop-mobile-hint">
@@ -754,6 +736,7 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
             compatibilityHint={hint.reason === null ? (selectedInventoryCardName ? 'eligible' : 'none') : 'ineligible'}
             refusalSentence={hint.sentence}
             onToggleFilter={() => handleToggleMonsterFilter(monster.name)}
+            onShowDetails={(cardName, opener) => setDetail({ cardName, monsterName: monster.name, opener })}
           />
           );
         })}
@@ -767,6 +750,7 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
         activeMonsterFilterName={activeMonsterFilter}
         compatibleCardCount={compatibleCardCount}
         disabled={busy}
+        onShowDetails={(cardName, opener) => setDetail({ cardName, monsterName: activeMonsterFilter, opener })}
         onClearMonsterFilter={() => setActiveMonsterFilter(null)}
         isCardUnavailable={(cardName) =>
           activeMonsterFilter ? !isCardCompatibleWithMonster(cardName, activeMonsterFilter) : false
@@ -800,6 +784,19 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
         sellableCards={sellableCards}
         onSell={(selection) => void handleSellShopItems(selection)}
       />
+      {detail && (
+        <CardDetailSheet
+          facts={factsByName.get(detail.cardName) ?? factsByName.get(stableCardName(detail.cardName)) ?? null}
+          cardName={detail.cardName}
+          opener={detail.opener}
+          monsters={
+            detail.monsterName
+              ? monsters.filter((monster) => monster.name === detail.monsterName)
+              : monsters
+          }
+          onClose={closeDetail}
+        />
+      )}
     </div>
   );
 }

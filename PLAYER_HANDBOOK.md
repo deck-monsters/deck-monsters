@@ -183,6 +183,7 @@ Messages stay until everyone who has played in the room lately has had a chance 
 - `move [count] [card] from [monster A] to [monster B]` — Move multiple copies directly between monsters (e.g. `move 2 Hit from Fluffy to Fang`)
 - `save preset [name] for [monster]` — Save a monster's current deck as a preset (e.g. `save preset tank for Fluffy`)
 - `load preset [name] on [monster]` — Load a preset onto a monster (e.g. `load preset tank on Fluffy`)
+- `look at cards for [monster]` — See which cards a monster can use now, and which open up at later levels (e.g. `look at cards for Rex`)
 - `look at presets for [monster]` — List saved presets for a monster (e.g. `look at presets for Fluffy`)
 - `delete preset [name] for [monster]` — Delete a saved preset (e.g. `delete preset tank for Fluffy`)
 

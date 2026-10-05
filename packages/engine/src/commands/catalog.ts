@@ -40,6 +40,7 @@ export const COMMAND_CATALOG: CommandEntry[] = [
 	{ command: 'move [count] [card] from [monster A] to [monster B]', description: 'Move multiple copies directly between monsters', category: 'cards', example: 'move 2 Hit from Fluffy to Fang' },
 	{ command: 'save preset [name] for [monster]', description: "Save a monster's current deck as a preset", category: 'cards', example: 'save preset tank for Fluffy' },
 	{ command: 'load preset [name] on [monster]', description: 'Load a preset onto a monster', category: 'cards', example: 'load preset tank on Fluffy' },
+	{ command: 'look at cards for [monster]', description: 'See which cards a monster can use now, and which open up at later levels', category: 'cards', example: 'look at cards for Rex' },
 	{ command: 'look at presets for [monster]', description: 'List saved presets for a monster', category: 'cards', example: 'look at presets for Fluffy' },
 	{ command: 'delete preset [name] for [monster]', description: 'Delete a saved preset', category: 'cards', example: 'delete preset tank for Fluffy' },
 

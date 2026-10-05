@@ -170,6 +170,8 @@ Some legacy text is intentionally called out so it does not return: “proud own
 | Progression | **XP**, **level**; `Lvl 3` compact, `Level 3` full card, level zero is “Beginner” | — | `L3` badges | meters, stats, handbook |
 | Purchase location | **the shop**; person is **the merchant** | `store` | store | commands, shop UI, handbook |
 | Inspection | **look at …** | — | — | commands; “View”/“Show” may describe a result |
+| Card role | **Attacks**, **Area attacks**, **Healing**, **Boosts and defence**, **Tricks and curses**; slot tags `ATTACK`, `AREA`, `HEAL`, `DEFENCE`, `TRICK` | — | name-guessed tags `MELEE`, `MAGIC`, `UTILITY` | card guide, Workshop slots, `look at cards for` (roadmap 44) |
+| Signature card | `Signature card:` (one) is the card a type starts with, in the training wizard; `Signature cards:` (several) in the card guide lists every card only that type can use, which always includes it | — | — | wizard, card guide |
 | Pronouns | “Which pronouns should we use for you/your monster?”; `he/him`, `she/her`, `they/them` | — | gender questions | console prompts and workshop forms |
 
 Code keys remain `male`, `female`, and `androgynous`; they are persistence and API details,

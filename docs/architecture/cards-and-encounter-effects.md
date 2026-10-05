@@ -258,6 +258,22 @@ asked for very old dragons to be "immensely powerful but occasionally able to be
 and the "once per fight" record lives in that effect's closure. `look at` says the dragon is
 ancient. A new card that should respect ancient dragons reads `isAncientDragon`.
 
+## Who can hold a card, and what a card is
+
+One source answers both, for the guide, the Workshop and the Console (roadmap 44):
+
+- `cardHoldVerdict(card, monster)` (`cards/helpers/hold-verdict.ts`, browser-safe) says
+  whether a monster can hold a card and, if not, why: the wrong kind of monster (with who
+  can) or the level (with the level needed). The wrong kind wins when both fail. A test checks
+  it against `canHold` for every card, type and level 0–5.
+- `holdableByLevel(type or monster)` lists what a type can hold, by the level each card
+  opens. The guide's per-type tables, the Workshop's `At level {n}: …` line and `look at cards
+  for [monster]` all use it.
+- `cardFacts(card)` / `allCardFacts()` (`cards/helpers/card-facts.ts`) give a card's name,
+  role, text, stats, level, who can use it, rarity, price and signature type. The server's
+  `game.cardFacts` query serves them to the Workshop's card sheet. The name is the stable
+  `cardType` (The Kalevala without its dice).
+
 ## Adding a card or a monster
 
 The Unicorn pass (archived as
@@ -274,12 +290,15 @@ new card or monster must reach. Check each one.
   2026-09-24 crash). `cards/card-options-isolation.test.ts` enforces it for every registered card.
 - Sale: default is the front shop; `notForSale` sends it to the back room at a steep
   markup; `neverForSale` keeps it out of both.
-- Register it in `cards/helpers/all.ts` **in alphabetical order**, because the generated
-  card lists follow that array, and export it from `cards/index.ts`.
+- Register it in `cards/helpers/all.ts` in alphabetical order, and export it from
+  `cards/index.ts`.
+- Give it a **role** in `cards/helpers/roles.ts`, keyed by its `cardType`: `attack`, `area`,
+  `heal`, `guard` (boosts and defence) or `trick`, by the rules in that file's header
+  (roadmap 44). `roles.test.ts` fails for a card with none. The role groups the card guide,
+  labels Workshop slots, and orders `look at cards for [monster]`. A card only one type can
+  hold is that type's signature card in the guide; that isn't a role.
 - A monster's signature card goes in `getMinimumDeck()` (`cards/helpers/deck.ts`) beside
   the others, and in `docs/agents/game-primer.md`'s starting-deck count.
-- Give the web workshop a badge keyword in `apps/web/src/utils/cards.ts`; it classifies by
-  name, and an unmatched card shows as Utility.
 - Tests: permissions, stats text, hit and miss, natural 1 and 20, confusion
   (`target === player`), encounter cleanup, and a JSON hydration round trip.
 - Add a `card_types` row in a new migration (class name to display name) so the operator

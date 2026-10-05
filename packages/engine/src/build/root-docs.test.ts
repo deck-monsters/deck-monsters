@@ -15,6 +15,20 @@ import {
 import { createAnchorTracker, qualifiesAsListItem } from './markdown.js';
 import allCards from '../cards/helpers/all.js';
 import allItems from '../items/helpers/all.js';
+import allMonsters from '../monsters/helpers/all.js';
+import { actionCard } from '../helpers/card.js';
+import { cardFacts } from '../cards/helpers/card-facts.js';
+import { holdableByLevel } from '../cards/helpers/holdable.js';
+import { CARD_ROLES, CARD_ROLE_LABELS, type CardRole } from '../cards/helpers/roles.js';
+import { CARD_GROUP_INTROS, CARD_LEGEND, HOLDABLE_HEADING, HOLDABLE_INTRO } from './card-catalogue.js';
+import {
+	ITEMS_END_MARKER,
+	ITEMS_HEADING,
+	ITEMS_INTRO,
+	ITEMS_START_MARKER,
+	renderItemsSection,
+	spliceItemsGuide,
+} from './items-guide.js';
 
 /**
  * Splits Markdown into `{ inside, outside }` line arrays by fence state, so the "keep
@@ -78,13 +92,153 @@ describe('root-docs generation', () => {
 		expect(dmg).to.include('acVariance = random(0, 2) + typeAcOffset');
 	});
 
-	it('keeps CARDS player-facing (description + rarity, not verbose DPT tables)', async () => {
+	it('shows the full card for every card in CARDS, grouped by role (DMG keeps its own odds tables)', async () => {
 		const cards = await collectCardsMarkdown();
 		const dmg = await collectDmgMarkdown();
 
 		expect(cards).to.include('Player Reference');
-		expect(cards).to.not.match(/Hit chance: \d+% \| DPT:/);
+		expect(cards).to.include('Items are in the [Items guide](ITEMS.md).');
+		// The old contract forbade the odds line here. Guide entries are now the full card
+		// (roadmap 44), so the numbers a player needs while building a deck are in it.
+		expect(cards).to.match(/Hit chance: \d+% \| DPT:/);
 		expect(dmg).to.match(/Hit chance: \d+% \| DPT:/);
+	});
+
+	describe('CARDS.md structure', () => {
+		const headings = (content: string, level: number): string[] =>
+			splitByFence(content).outside
+				.filter(line => line.startsWith(`${'#'.repeat(level)} `))
+				.map(line => line.slice(level + 1));
+
+		it('has one section per role, in order, each opening with its intro line', async () => {
+			const cards = await collectCardsMarkdown();
+			const labels = CARD_ROLES.map(role => CARD_ROLE_LABELS[role]);
+
+			expect(headings(cards, 2)).to.deep.equal([
+				'The Card Catalogue (Player Reference)',
+				'Contents',
+				...labels,
+				HOLDABLE_HEADING,
+			]);
+			for (const role of CARD_ROLES) {
+				expect(cards).to.include(`## ${CARD_ROLE_LABELS[role]}\n\n${CARD_GROUP_INTROS[role]}\n\n### `);
+			}
+		});
+
+		it('has the legend once, right after the Items line, and a jump row linking every group', async () => {
+			const cards = await collectCardsMarkdown();
+			expect(cards.split('How to read a card:')).to.have.length(2);
+			expect(cards).to.include(`Items are in the [Items guide](ITEMS.md).\n\n${CARD_LEGEND}\n\n## Contents\n\nJump to: `);
+			const jump = cards.split('\n').find(l => l.startsWith('Jump to: '))!;
+			// The every-](#anchor)-resolves guard proves each target exists; this checks the row itself.
+			expect(jump.split(' · ')).to.have.length(CARD_ROLES.length + 1);
+			for (const role of CARD_ROLES) expect(jump).to.include(`[${CARD_ROLE_LABELS[role]}](#`);
+			expect(jump).to.include(`[${HOLDABLE_HEADING}](#`);
+		});
+
+		it('lists every card exactly once, under its own role, alphabetically', async () => {
+			const cards = await collectCardsMarkdown();
+			const lines = splitByFence(cards).outside;
+			const facts = allCards.map(Card => cardFacts(Card));
+
+			// Card names are the `###` headings that sit before the final "which cards when"
+			// section; the type headings after it are monsters.
+			const holdableAt = lines.indexOf(`## ${HOLDABLE_HEADING}`);
+			const cardHeadings = lines.slice(0, holdableAt).filter(l => l.startsWith('### ')).map(l => l.slice(4));
+			expect(cardHeadings).to.have.length(facts.length);
+			expect(new Set(cardHeadings).size).to.equal(facts.length);
+
+			let section: CardRole | undefined;
+			const seenByRole = new Map<CardRole, string[]>();
+			for (const line of lines.slice(0, holdableAt)) {
+				const group = CARD_ROLES.find(role => line === `## ${CARD_ROLE_LABELS[role]}`);
+				if (group) section = group;
+				else if (line.startsWith('### ') && section) {
+					seenByRole.set(section, [...(seenByRole.get(section) ?? []), line.slice(4)]);
+				}
+			}
+			for (const role of CARD_ROLES) {
+				const expected = facts.filter(f => f.role === role).map(f => f.name).sort((a, b) => a.localeCompare(b));
+				expect(seenByRole.get(role), `${role} group`).to.deep.equal(expected);
+			}
+		});
+
+		it('shows each card as its full card, the same text the Console prints with numbers', async () => {
+			const cards = await collectCardsMarkdown();
+			for (const Card of allCards) {
+				const frame = actionCard(new Card(), true).trim().replace(/^```\n/, '').replace(/\n```$/, '');
+				expect(cards, `${new Card().cardType} full card`).to.include(`\`\`\`text\n${frame}\n\`\`\``);
+			}
+		});
+
+		it('ends with a section for every monster type, with a Level | Cards that open up table', async () => {
+			const cards = await collectCardsMarkdown();
+			const after = cards.slice(cards.indexOf(`## ${HOLDABLE_HEADING}`));
+
+			expect(after).to.include(HOLDABLE_INTRO);
+			expect(headings(after, 3)).to.deep.equal(allMonsters.map(M => (M as any).creatureType));
+			for (const Monster of allMonsters) {
+				const type = (Monster as any).creatureType as string;
+				const start = after.indexOf(`### ${type}\n`);
+				const section = after.slice(start, after.indexOf('\n### ', start + 1) === -1 ? undefined : after.indexOf('\n### ', start + 1));
+				expect(section, type).to.match(/\nSignature cards: .+\.\n/);
+				expect(section, type).to.include('| Level | Cards that open up |\n|---|---|\n| Beginner |');
+				for (const { level, cards: held } of holdableByLevel(type)) {
+					const label = level === 0 ? 'Beginner' : String(level);
+					expect(section, `${type} level ${label}`).to.include(`| ${label} | ${held.map(c => c.name).join(', ')} |`);
+				}
+			}
+		});
+
+		it('leaves items out of CARDS (they are in ITEMS.md)', async () => {
+			const cards = await collectCardsMarkdown();
+			expect(headings(cards, 2)).to.not.include('Items');
+			expect(cards).to.not.include('### Item List');
+		});
+	});
+
+	describe('ITEMS.md generated section', () => {
+		const authored = '# Items\n\nAuthored rules.\n\n## Practical preparation\n\nKeep this.\n';
+
+		it('is appended once when the markers are missing, and holds every item', () => {
+			const out = spliceItemsGuide(authored);
+			expect(out.startsWith(authored.trimEnd())).to.equal(true);
+			expect(out.split(ITEMS_START_MARKER)).to.have.length(2);
+			expect(out).to.include(`## ${ITEMS_HEADING}\n\n${ITEMS_INTRO}`);
+			for (const Item of allItems) {
+				const name = (new Item() as { itemType?: string }).itemType ?? Item.name;
+				expect(out, name).to.include(`### ${name}\n`);
+			}
+			expect(out.endsWith('\n')).to.equal(true);
+		});
+
+		it('rewrites only between the markers and is idempotent', () => {
+			const once = spliceItemsGuide(authored);
+			expect(spliceItemsGuide(once)).to.equal(once);
+			const edited = once.replace('Keep this.', 'Keep this, edited.').replace(
+				ITEMS_END_MARKER, `stale line\n${ITEMS_END_MARKER}`,
+			);
+			const again = spliceItemsGuide(edited);
+			expect(again).to.include('Keep this, edited.');
+			expect(again).to.not.include('stale line');
+		});
+
+		it('refuses a lone marker rather than guess', () => {
+			expect(() => spliceItemsGuide(`${authored}\n${ITEMS_START_MARKER}\n`)).to.throw(/marker/);
+		});
+
+		it('keeps the Markdown clean: tagged fences, no stray box characters, blank-line headings', () => {
+			const { outside, inside } = splitByFence(renderItemsSection());
+			expect(inside.length).to.be.greaterThan(0);
+			expect(outside.filter(l => /[─═╔║╚╗╝]/.test(l))).to.have.length(0);
+			outside.forEach((line, i) => {
+				if (/^#{1,6}\s/.test(line)) {
+					expect(outside[i - 1], line).to.equal('');
+					expect(outside[i + 1], line).to.equal('');
+				}
+			});
+			expect(renderItemsSection().match(/^```text$/gm)?.length).to.equal(allItems.length);
+		});
 	});
 
 	it('uses LF line endings in all generated root artifacts', async () => {
