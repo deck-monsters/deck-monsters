@@ -18,7 +18,8 @@ export default function AppShell({ children, roomName, roomId }: AppShellProps) 
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   // The menu shows a theme's name, not its id ("Street Fighter", not "street-fighter").
-  const themeName = (THEMES.find((entry) => entry.id === theme)?.label ?? theme).replace(/ \(.*\)$/, '');
+  const nameOf = (id: string) => (THEMES.find((entry) => entry.id === id)?.label ?? id).replace(/ \(.*\)$/, '');
+  const themeName = nameOf(theme);
   const THEME_ICON: Record<string, string> = { phosphor: '🟢', amber: '🟡', ember: '🔴', 'street-fighter': '🕹️' };
   const nextTheme = validThemes[(validThemes.indexOf(theme) + 1) % validThemes.length];
   const [refOpen, setRefOpen] = useState(false);
@@ -163,8 +164,8 @@ export default function AppShell({ children, roomName, roomId }: AppShellProps) 
             className="btn"
             style={{ fontSize: '0.8rem' }}
             onClick={() => setTheme(nextTheme)}
-            title={`Switch to ${nextTheme} theme`}
-            aria-label={`Switch to ${nextTheme} theme`}
+            title={`Switch to the ${nameOf(nextTheme)} theme`}
+            aria-label={`Switch to the ${nameOf(nextTheme)} theme`}
           >
             {THEME_ICON[theme] ?? '🎨'}
           </button>

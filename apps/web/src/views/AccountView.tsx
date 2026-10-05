@@ -113,7 +113,7 @@ export default function AccountView() {
         <p className="panel-title">Appearance</p>
         <div className="form-group">
           <label htmlFor="theme-select" style={{ display: 'block', marginBottom: '0.4rem' }}>
-            Terminal theme
+            Theme
           </label>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
             {THEMES.map(({ id, label }) => (

@@ -5350,6 +5350,9 @@ Found by the owner on an iPhone after #425 shipped.
   and guides once the panel was renamed (bug 229). Removed.
 - **Help's section buttons on a phone.** Five buttons wrapped four and one. Below 520px they
   are three even columns.
+- **Theme names.** The desktop theme button said `Switch to street-fighter theme` (the id),
+  and the Account page called the setting `Terminal theme`. Both use the theme's name now
+  (found while writing the unicorn theme proposal, roadmap 46).
 - **No way back up a long guide.** Help shows `↑ Top` once the player is about two phone
   screens down and starts scrolling up, and hides it on the way down. Repeated scroll events
   at the same offset (iOS sends them as momentum settles) do not count as a direction; the
