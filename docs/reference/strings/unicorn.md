@@ -60,6 +60,17 @@ Seeded, cycling he, she, and they.
 | description → anhorn | ` The oldest English called {him} ānhorn, and did not argue about {his} feet.` |
 | description → returns | `{article} {build} unicorn bearing {article} {horn} horn. {His} coat is {color}. {witnessLine}{anhorn}` |
 
+### Ring entrance
+
+Additive to the call or the house arrival; cycling he, she, and they.
+
+- Player (he): `Companion steps in, horn first. The witnesses agree on one thing: somebody has been eating the roses.`
+- House (he): `Companion trots through the gate. The house denies all knowledge of the missing roses.`
+- Player (she): `Companion steps in, horn first. The witnesses agree on one thing: somebody has been eating the roses.`
+- House (she): `Companion trots through the gate. The house denies all knowledge of the missing roses.`
+- Player (they): `Companion steps in, horn first. The witnesses agree on one thing: somebody has been eating the roses.`
+- House (they): `Companion trots through the gate. The house denies all knowledge of the missing roses.`
+
 ### Long description
 
 ```text

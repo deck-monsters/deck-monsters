@@ -48,6 +48,17 @@ Seeded, cycling he, she, and they.
 | description → ancient | ` {He} {is/are} ancient. {His} fire cannot be dodged, but {he} can still be tricked.` |
 | description → returns | `{article} {head} dragon, {body}, with {wings} wings. {His} scales are {color}, and {he} {keeps/keep} to {home}. {profile}{ancient}` |
 
+### Ring entrance
+
+Additive to the call or the house arrival; cycling he, she, and they.
+
+- Player (he): `Companion leaves the hoard unguarded. One cup goes missing, and there will be words. Loud ones.`
+- House (he): `Companion sweeps down to the sand. The house had better have counted the silver.`
+- Player (she): `Companion leaves the hoard unguarded. One cup goes missing, and there will be words. Loud ones.`
+- House (she): `Companion sweeps down to the sand. The house had better have counted the silver.`
+- Player (they): `Companion leaves the hoard unguarded. One cup goes missing, and there will be words. Loud ones.`
+- House (they): `Companion sweeps down to the sand. The house had better have counted the silver.`
+
 ### Long description
 
 ```text

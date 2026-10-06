@@ -4,6 +4,7 @@ import { RING_PATRON } from '../constants/lore.js';
 import { bossPersonalityFor } from '../helpers/boss-personalities.js';
 import type { RoomEventBus } from '../events/index.js';
 import type { FeedLine } from '../events/types.js';
+import { bossEntrance, playerEntrance } from './ring-flavour.js';
 
 export function announceContestant(
 	eb: RoomEventBus,
@@ -34,6 +35,7 @@ export function announceContestant(
 		? `A${adjective} ${monster.creatureType} enters the ring, sent by the house (${RING_PATRON}).`
 		: `A${adjective} ${monster.creatureType} answers the call of ${character.icon} ${character.givenName}.`;
 	const arrival = `${arrivalSentence}${isBoss && temperament ? ` ${temperament}` : ''}`;
+	const entrance = isBoss ? bossEntrance(monster, ring?.contestants ?? []) : playerEntrance(monster);
 
 	// The structured twin of `text`: the temperament is its own line so a renderer can style
 	// or explain it without matching prose, and the card is one `card` line with no fence.
@@ -46,13 +48,14 @@ export function announceContestant(
 			...(isBoss ? {} : { owner: character.givenName }),
 		},
 		...(isBoss && temperament ? [{ kind: 'temperament', text: temperament } satisfies FeedLine] : []),
+		...(entrance ? [{ kind: 'narration', text: entrance } satisfies FeedLine] : []),
 		monsterCardLine(monster),
 	];
 
 	eb.publish({
 		type: 'ring.add',
 		scope: 'public',
-		text: `${arrival}\n${monsterCard(monster)}`,
+		text: `${arrival}\n${entrance ? `${entrance}\n` : ''}${monsterCard(monster)}`,
 		// `mechanic` lets the web explain temperaments once (roadmap 39 C4); only set when the
 		// line actually says one.
 		payload: temperament ? { contestant, mechanic: 'boss-temperament', lines } : { contestant, lines },

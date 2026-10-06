@@ -258,9 +258,9 @@ as the build history; the statuses below describe what has actually landed.
 | 4 | 46a | **Paint and paper.** Bake the watercolour compositions and the grain tile; wire `--surface-texture`; holo only where listed | WebP assets in the lazy chunk, `theme-millefleur.css` | Budget in §8 met; no long frames while a fight scrolls | 3 (different selectors) | done | 795888c3, cc7e5a3d |
 | 5 | 46a | **Pixel monsters on paper.** The halo, the soft lift, the pink hit flash; check pale species and white appearances at 1×/2×/3× | `terminal.css`, `renderer.ts`, `rosterSprite`/pixel tests | Struck monsters visibly flash; pale monsters read on paper; nothing smoothed | 4 | done | 7da2efe5; halo in 2252866a, d2c8d594 |
 | 6 | 46a | **Live check and docs.** Cursor-style checklist for the screens in §7; `docs/architecture/web-themes.md`; links from `AGENTS.md` and `docs/README.md`; roadmap status | docs | Check passed or findings filed in 10 | 4, 5 | checked | 46b-cursor-check.md |
-| 7 | 46a | **Structured feed lines from the engine.** Every feed announcement also publishes `payload.lines`: clean single lines, each with a `kind` and its facts (round, actor, card, roll, damage, HP). `text` stays byte-for-byte (Discord sends it verbatim; pacing sizes pauses from it) | `packages/engine/src/announcements/*`, `events/types.ts`, `helpers/card.ts`, `ring/index.ts` | A consistency test keeps `lines` equal to `text` without its layout; engine, server and Discord tests green | 3d | built, reviewed; roll-fidelity fixes in this checkpoint | 75a52250, 653f6c2a, 3a777501 |
-| 8 | 46a | **The feed rendered from lines.** The web draws `lines` when present (falling back to `text` for older events), with spacing from CSS rather than baked whitespace; Millefleur restyles or replaces lines by kind (the round as a divider, a play's card name, the roll as a quieter second line); row-height guesses count lines | `RingPane`, `ConsolePane`, `format-event-text`, `feed-row-height.ts`, theme CSS | Live scroll test clean under every theme; each feed screen beside its mock | — (after 7) | live-checked | b78d6f2d, 70a1309e, b51e3b1c |
-| 9 | 46a | **Flavour.** New narration in the house voice where the mock found room for it, per `voice-and-wording.md`, in `text` and `lines` both: an entrance line per species after a player's monster answers the call; a short beat under each round divider (a small pool, no repeats back to back); a species verb for a boss's arrival (stamps, slithers, stalks…), keeping "sent by the house". Approved direction (owner, 2026-10-06): bring together jokes and lore from across the game — the Unicorn's roses (its witness line), the Gladiator's past, the Basilisk's gaze, the Dragon's hoard, the Jinn's smoke — e.g. a boss Minotaur is "Half bull, all temper", and "…and in no mood for roses" when a Unicorn is in the ring. Refined over time like all flavour | engine announcements, strings inventory | Owner reviews the lines in the Ring | 8 | approved, after 8 | — |
+| 7 | 46a | **Structured feed lines from the engine.** Every feed announcement also publishes `payload.lines`: clean single lines, each with a `kind` and its facts (round, actor, card, roll, damage, HP). `text` stays byte-for-byte (Discord sends it verbatim; pacing sizes pauses from it) | `packages/engine/src/announcements/*`, `events/types.ts`, `helpers/card.ts`, `ring/index.ts` | A consistency test keeps `lines` equal to `text` without its layout; engine, server and Discord tests green | 3d | built, reviewed; roll-fidelity fixes in this checkpoint | 75a52250, 653f6c2a, 3a777501, f4b4a9d5 |
+| 8 | 46a | **The feed rendered from lines.** The web draws `lines` when present (falling back to `text` for older events), with spacing from CSS rather than baked whitespace; Millefleur restyles or replaces lines by kind (the round as a divider, a play's card name, the roll as a quieter second line); row-height guesses count lines | `RingPane`, `ConsolePane`, `format-event-text`, `feed-row-height.ts`, theme CSS | Live scroll test clean under every theme; each feed screen beside its mock | — (after 7) | live-checked | b78d6f2d, 70a1309e, b51e3b1c, f4b4a9d5 |
+| 9 | 46a | **Flavour.** New narration in the house voice where the mock found room for it, per `voice-and-wording.md`, in `text` and `lines` both: an entrance line per species after a player's monster answers the call; a short beat under each round divider (a small pool, no repeats back to back); a species verb for a boss's arrival (stamps, slithers, stalks…), keeping "sent by the house". Approved direction (owner, 2026-10-06): bring together jokes and lore from across the game — the Unicorn's roses (its witness line), the Gladiator's past, the Basilisk's gaze, the Dragon's hoard, the Jinn's smoke — e.g. a boss Minotaur is "Half bull, all temper", and "…and in no mood for roses" when a Unicorn is in the ring. Refined over time like all flavour | engine announcements, strings inventory | Owner reviews the lines in the Ring | 8 | implemented, awaiting owner review | this checkpoint |
 
 ### Reading the mocks
 
@@ -367,9 +367,11 @@ another PR. Cursor's task-6/task-8 browser checklist is complete in
 1. Review fixes 237 and 238 are implemented and independently approved; the full
    build/typecheck/lint/test/docs gate passed. Main still ends at 230, so 231–236
    keep their numbers. Task 3d's shipped backports are reviewed.
-2. Add task 9's approved entrance, round and boss lines in both `text` and `lines`.
-   Show fresh events in a new owned scratch room on Millefleur, with a boss and round
-   divider, then delete only that scratch room. Leave the reusable rooms alone.
+2. Task 9's additive entrance, round and boss lines are implemented in both `text`
+   and `lines`, independently approved, and pass the full gate. A new owned local
+   scratch room showed the Unicorn entrance, Minotaur boss and round beat on
+   Millefleur at 390 and 1440. The room and disposable database were deleted; the
+   reusable remote rooms were untouched. See the evidence and copy below.
 3. Keep task 9 pending the owner's review; put every authored line here. Do not archive
    roadmap 46. The CSS budget and missing performance evidence stay open as item L.
 4. Before each checkpoint push: `pnpm build && pnpm typecheck && pnpm lint && pnpm test`
@@ -386,3 +388,70 @@ Still open for the next session: task 9, then the whole-branch review and the on
 (handoff item 4). Task 3d stays proposed. The scratch room for this check was deleted;
 Test Room A, Test Room B and Game Night were left in the lobby.
 
+
+### Task 9 — lines for the owner's review (2026-10-06)
+
+These are additive narration after the existing call/house arrival and beneath round
+markers. The house sentence, temperament and card remain; composed play/roll/HP
+sentences do not change. `{name}` is the monster's name; pronouns come from the monster
+and Gladiator's `comes/come` agrees with them. All seven species are covered.
+
+| Species | After a player's monster answers the call |
+|---|---|
+| Basilisk | {name} raises a crowned head. The front row studies the sand. |
+| Gladiator | {name} steps onto the sand. Once, the gates were locked behind {him}; today, {he} {comes/come} by choice. |
+| Jinn | {name} gathers out of smoke. No lamp was rubbed; a friend called. |
+| Minotaur | {name} lowers {his} horns. The way in was easy. The way out is somebody else's problem. |
+| Weeping Angel | {name} is already here. Nobody remembers blinking. |
+| Unicorn | {name} steps in, horn first. The witnesses agree on one thing: somebody has been eating the roses. |
+| Dragon | {name} leaves the hoard unguarded. One cup goes missing, and there will be words. Loud ones. |
+
+| Species | Added to the boss's arrival, keeping "sent by the house" |
+|---|---|
+| Basilisk | {name} slithers through the gate. The front row studies the sand. |
+| Gladiator | {name} stalks onto the sand. The house has found an old hand. |
+| Jinn | {name} billows through the gate. The house has sent smoke with a grudge. |
+| Minotaur | {name} stamps into the ring. Half bull, all temper. |
+| Minotaur, with a living Unicorn in this ring | {name} stamps into the ring. Half bull, all temper, and in no mood for roses. |
+| Weeping Angel | {name} stands beyond the gate. Nobody saw the journey. |
+| Unicorn | {name} trots through the gate. The house denies all knowledge of the missing roses. |
+| Dragon | {name} sweeps down to the sand. The house had better have counted the silver. |
+
+Round beats rotate in a small pool, separately per room's Ring, without adjacent
+repeats or random draws that could change seeded combat:
+
+- The crowd settles. The sand does not.
+- The house keeps its counsel. The next card will speak.
+- A hush runs round the benches.
+- Somewhere in the stands, a wager changes hands.
+- The gates are shut. The story is not.
+
+The Dragon's missing cup echoes the existing Beowulf joke; the other lines connect to
+species lore and running jokes. Generated species/pronoun examples live in the
+[strings inventories](../reference/strings/README.md), regenerated from the same source.
+**Acceptance stays open:** the owner reviews these lines in the Ring. Do not mark task 9
+done or archive this roadmap.
+
+
+### Task 9 — verification checkpoint (2026-10-06)
+
+The independent implementation review approved species/pronoun coverage, additive
+text/lines consistency, ring-scoped Minotaur roses, deterministic round rotation and
+the regenerated strings inventories. Build, typecheck, lint, all tests and docs checks
+passed. Owner editorial acceptance remains open.
+
+The configured remote database was unreachable. For this check, the existing test
+account authenticated normally against Supabase; a disposable localhost PostgreSQL
+instance held only the new owned scratch room. The actual engine, room manager,
+event persistence, authenticated API and web renderer produced these fresh events:
+
+- [Unicorn entrance and Minotaur boss, 390 × 940](46b-shots/flavour-boss-390.png).
+- [Round divider and beat, 390 × 940](46b-shots/flavour-round-390.png).
+- [Round divider and beat, 1440 × 900](46b-shots/flavour-round-1440.png).
+
+The fixture used short Heal decks, skipped pacing delays and a locally initialized
+schema. It verifies narration rendering, not production migrations, combat balance
+or the outstanding performance budget. This is a targeted task-9 check; Cursor's
+completed 46b checklist was not repeated. The scratch room was deleted through the
+API, its room list was verified empty, and the disposable database was removed.
+Test Room A, Test Room B and Game Night were untouched.

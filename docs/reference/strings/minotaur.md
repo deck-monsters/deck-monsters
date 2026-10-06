@@ -39,6 +39,18 @@ Seeded, cycling he, she, and they.
 |---|---|
 | description → returns | `a battle-hardened, {color} minotaur with a {pattern} pattern shaved into {his} thick fur. Make no mistake, despite {his} {descriptor} bulk {he} {is} a first-class host who has never been put to shame at a dinner party.` |
 
+### Ring entrance
+
+Additive to the call or the house arrival; cycling he, she, and they.
+
+- Player (he): `Companion lowers his horns. The way in was easy. The way out is somebody else's problem.`
+- House (he): `Companion stamps into the ring. Half bull, all temper.`
+- Player (she): `Companion lowers her horns. The way in was easy. The way out is somebody else's problem.`
+- House (she): `Companion stamps into the ring. Half bull, all temper.`
+- Player (they): `Companion lowers their horns. The way in was easy. The way out is somebody else's problem.`
+- House (they): `Companion stamps into the ring. Half bull, all temper.`
+- House, with a Unicorn in the ring: `Companion stamps into the ring. Half bull, all temper, and in no mood for roses.`
+
 ### Long description
 
 ```text

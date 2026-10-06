@@ -21,6 +21,7 @@ function makeContestant({ isBoss }: { isBoss: boolean }) {
 			icon: '🐗',
 			givenName: 'Seeskane Orcbane',
 			creatureType: 'Minotaur',
+			pronouns: { he: 'he', him: 'him', his: 'his', verbSuffix: 's' },
 			individualDescription: 'A battle-hardened, gray minotaur.',
 			stats: 'Type: Minotaur\nClass: Barbarian',
 			rankings: 'Fights: 95 · Won: 65',

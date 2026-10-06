@@ -61,7 +61,7 @@ describe('round and turn banners', () => {
 
 		const bannerLines = published
 			.flatMap((event) => event.text.split('\n'))
-			.filter((line) => !line.includes('vs'));
+			.filter((line) => /^(🎲|🏁|[-])/u.test(line.trim()));
 
 		for (const line of bannerLines) {
 			expect(line.length, `too wide for a phone: "${line}"`).to.be.at.most(32);

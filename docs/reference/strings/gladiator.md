@@ -39,6 +39,17 @@ Seeded, cycling he, she, and they.
 |---|---|
 | description → returns | `a {adjective} gladiator, dressed in {color} and hailing from {location}. Many years ago {he} {was} captured, stripped of {his} title and land, and forced to compete in brutal matches for the entertainment of a blood-thirsty crowd. Standing {height} tall, when you see {him} you know instantly that this is a warrior who has witnessed the worst humankind has to offer and has overcome.` |
 
+### Ring entrance
+
+Additive to the call or the house arrival; cycling he, she, and they.
+
+- Player (he): `Companion steps onto the sand. Once, the gates were locked behind him; today, he comes by choice.`
+- House (he): `Companion stalks onto the sand. The house has found an old hand.`
+- Player (she): `Companion steps onto the sand. Once, the gates were locked behind her; today, she comes by choice.`
+- House (she): `Companion stalks onto the sand. The house has found an old hand.`
+- Player (they): `Companion steps onto the sand. Once, the gates were locked behind them; today, they come by choice.`
+- House (they): `Companion stalks onto the sand. The house has found an old hand.`
+
 ### Long description
 
 ```text

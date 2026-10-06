@@ -149,7 +149,9 @@ divider. Those sentences are display only. The engine's `text` stays the Discord
 the dark themes' line ("lays down the following card", "has only 17HP"). Do not change
 `text` to match the composed sentence, and do not treat the composed sentence as a second
 canon to localise. Flavour that belongs in both (an entrance line, a boss's verb) is written
-once, in `text` and in `lines`, in the house voice. That work is roadmap 46 task 9.
+once, in `text` and in `lines`, in the house voice. Those additive entrances and round
+beats now live in `announcements/ring-flavour.ts`; their editorial acceptance remains
+roadmap 46 task 9.
 
 ### Existing bad examples are migration targets
 

@@ -39,6 +39,17 @@ Seeded, cycling he, she, and they.
 |---|---|
 | description → returns | `a {adjective}, {color}, {location}-dwelling basilisk with a nasty disposition and the ability to turn creatures to stone with {his} gaze. In the forest {he} {is} king and (weighing {weight}) in the ring {he} {is} much to be feared. See how {he} rear{verbSuffix} {his} head, and roll{verbSuffix} about {his} dreadful eyes, to drive all virtue out, or look it dead!` |
 
+### Ring entrance
+
+Additive to the call or the house arrival; cycling he, she, and they.
+
+- Player (he): `Companion raises a crowned head. The front row studies the sand.`
+- House (he): `Companion slithers through the gate. The front row studies the sand.`
+- Player (she): `Companion raises a crowned head. The front row studies the sand.`
+- House (she): `Companion slithers through the gate. The front row studies the sand.`
+- Player (they): `Companion raises a crowned head. The front row studies the sand.`
+- House (they): `Companion slithers through the gate. The front row studies the sand.`
+
 ### Long description
 
 ```text

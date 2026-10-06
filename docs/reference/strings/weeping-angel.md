@@ -39,6 +39,17 @@ Seeded, cycling he, she, and they.
 |---|---|
 | description → returns | `{article} {color} weeping angel. On meeting {him} one might form the following three impressions: that {he} {was} {nationality}, that {he} {was} intelligent, and that {he} {was} {descriptor} than a treeful of monkeys on nitrous oxide.` |
 
+### Ring entrance
+
+Additive to the call or the house arrival; cycling he, she, and they.
+
+- Player (he): `Companion is already here. Nobody remembers blinking.`
+- House (he): `Companion stands beyond the gate. Nobody saw the journey.`
+- Player (she): `Companion is already here. Nobody remembers blinking.`
+- House (she): `Companion stands beyond the gate. Nobody saw the journey.`
+- Player (they): `Companion is already here. Nobody remembers blinking.`
+- House (they): `Companion stands beyond the gate. Nobody saw the journey.`
+
 ### Long description
 
 ```text

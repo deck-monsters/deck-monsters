@@ -233,3 +233,10 @@ Roll lines carry numeric facts only when the source has them. Compound results (
 HP/XP dice) keep their authored text and verdict rather than invented zero figures. A web
 composer must fall back to those original blocks when numeric facts are incomplete, and
 retain substantive critical-roll outcomes (maximum damage, reflected attacks).
+
+Ring arrivals and round announcements carry additive narration in both `text` and
+`payload.lines`, authored once in `announcements/ring-flavour.ts`. Entrances are species
+specific; a boss Minotaur notices a living, present Unicorn only in this Ring. The
+round pool rotates per Ring through a weak-key index, with no random draws, new timers
+or saved state. Original arrival, temperament, card and round-marker text stays intact.
+Discord and pacing therefore receive the same new flavour as the web.

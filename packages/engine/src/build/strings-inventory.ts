@@ -25,6 +25,8 @@ import ts from 'typescript';
 
 import allMonsters from '../monsters/helpers/all.js';
 import allCards from '../cards/helpers/all.js';
+import { bossEntrance, playerEntrance } from '../announcements/ring-flavour.js';
+import { UNICORN } from '../constants/creature-types.js';
 import { GENERATED_DOC_NOTICE, normalizeLineEndings } from './root-docs.js';
 
 // dist/build and src/build both sit two levels below the package root.
@@ -400,7 +402,22 @@ export const renderStringsInventory = (Monster: any): string => {
 		);
 	}
 
-	lines.push('### Long description', '', ...fence(Monster.description ?? ''), '');
+	lines.push('### Ring entrance', '', 'Additive to the call or the house arrival; cycling he, she, and they.', '');
+	for (const gender of GENDERS) {
+		const monster = new Monster({ name: 'Companion', gender });
+		try {
+			const player = playerEntrance(monster);
+			const boss = bossEntrance(monster);
+			if (player) lines.push(`- Player (${monster.pronouns.he}): ${code(player)}`);
+			if (boss) lines.push(`- House (${monster.pronouns.he}): ${code(boss)}`);
+		} finally {
+			monster.disposeTimers();
+		}
+	}
+	const roses = bossEntrance({ creatureType: Monster.creatureType, givenName: 'Companion', pronouns: { he: 'they', him: 'them', his: 'their' } }, [{ monster: { creatureType: UNICORN } }]);
+	const ordinary = bossEntrance({ creatureType: Monster.creatureType, givenName: 'Companion', pronouns: { he: 'they', him: 'them', his: 'their' } });
+	if (roses && roses !== ordinary) lines.push(`- House, with a Unicorn in the ring: ${code(roses)}`);
+	lines.push('', '### Long description', '', ...fence(Monster.description ?? ''), '');
 
 	for (const Card of cards) lines.push(...renderCard(Card));
 

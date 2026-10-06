@@ -39,6 +39,17 @@ Seeded, cycling he, she, and they.
 |---|---|
 | description → returns | `a {color} figure {descriptor} in the dusty shadows at the corner of your vision. At first you think it might be human and you wonder who or what {he} {is}. What {is} {he} thinking about? When you turn to look closer all you see is a {animal} and a gently settling cloud of sand.` |
 
+### Ring entrance
+
+Additive to the call or the house arrival; cycling he, she, and they.
+
+- Player (he): `Companion gathers out of smoke. No lamp was rubbed; a friend called.`
+- House (he): `Companion billows through the gate. The house has sent smoke with a grudge.`
+- Player (she): `Companion gathers out of smoke. No lamp was rubbed; a friend called.`
+- House (she): `Companion billows through the gate. The house has sent smoke with a grudge.`
+- Player (they): `Companion gathers out of smoke. No lamp was rubbed; a friend called.`
+- House (they): `Companion billows through the gate. The house has sent smoke with a grudge.`
+
 ### Long description
 
 ```text

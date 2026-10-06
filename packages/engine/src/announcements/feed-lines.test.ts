@@ -10,6 +10,8 @@ import BlastCard from '../cards/blast.js';
 import { FireBreathCard } from '../cards/fire-breath.js';
 import { HelmOfAweCard } from '../cards/helm-of-awe.js';
 import Dragon from '../monsters/dragon.js';
+import allMonsters from '../monsters/helpers/all.js';
+import { ROUND_BEATS } from './ring-flavour.js';
 import { DelayedHit } from '../cards/delayed-hit.js';
 import { TARGET_LOWEST_HP_PLAYER } from '../helpers/targeting-strategies.js';
 import { formatCardLine, itemCardLine, monsterCardLine, monsterTurnFeedLine } from '../helpers/card.js';
@@ -375,7 +377,10 @@ describe('feed lines (payload.lines)', () => {
 			announceNextRound(eb, 'Ring', {}, { round: 1 });
 
 			expect(published[0]!.text).to.include('round 2');
-			expect(linesOf(published[0]!)).to.deep.equal([{ kind: 'round', text: '🏁  round 2', round: 2 }]);
+			expect(expectLinesMatchText(published[0]!)).to.deep.equal([
+				{ kind: 'round', text: '🏁  round 2', round: 2 },
+				{ kind: 'narration', text: ROUND_BEATS[0] },
+			]);
 		});
 
 		// The ring starts its round counter at 1 and passes it through unchanged, so the turn
@@ -446,7 +451,7 @@ describe('feed lines (payload.lines)', () => {
 		it('flags a boss and gives its temperament a line of its own', () => {
 			const { eb, published } = capture();
 			announceContestant(eb, 'Ring', {}, { contestant: contestant(true) });
-			const [arrival, temperament, card] = linesOf(published[0]!);
+			const [arrival, temperament, narration, card] = expectLinesMatchText(published[0]!);
 
 			expect(arrival).to.include({ kind: 'arrival', name: 'Seeskane Orcbane', boss: true });
 			expect(arrival).to.not.have.property('owner');
@@ -454,15 +459,17 @@ describe('feed lines (payload.lines)', () => {
 			expect(arrival!.text).to.not.include('picks on whoever');
 			expect(temperament!.kind).to.equal('temperament');
 			expect(temperament!.text).to.include('picks on whoever looks weakest');
+			expect(narration).to.include({ kind: 'narration', text: 'Seeskane Orcbane stamps into the ring. Half bull, all temper.' });
 			expect(card!.kind).to.equal('card');
 		});
 
 		it("names the owner on a player's arrival and says no temperament", () => {
 			const { eb, published } = capture();
 			announceContestant(eb, 'Ring', {}, { contestant: contestant(false) });
-			const [arrival, card, ...rest] = linesOf(published[0]!);
+			const [arrival, narration, card, ...rest] = expectLinesMatchText(published[0]!);
 
 			expect(arrival).to.include({ kind: 'arrival', boss: false, owner: 'Incredible Swan' });
+			expect(narration!.kind).to.equal('narration');
 			expect(card!.kind).to.equal('card');
 			expect(rest).to.deep.equal([]);
 		});
@@ -579,5 +586,62 @@ describe('feed lines: card frames carry unwrapped fields', () => {
 		expect(terse).to.not.have.property('stats');
 		expect(full.stats).to.deep.equal([{ label: '', value: 'Heals 5' }]);
 		expect(full.rankings!.some(f => f.label === 'Usable by')).to.equal(true);
+	});
+});
+
+
+describe('feed lines: additive ring flavour', () => {
+	for (const Monster of allMonsters) {
+		for (const gender of ['male', 'female', 'androgynous']) {
+			it(`${Monster.creatureType} entrance agrees with ${gender} and matches text for players and bosses`, () => {
+				const monster = new Monster({ name: 'Companion', gender });
+				try {
+					for (const isBoss of [false, true]) {
+						const { eb, published } = capture();
+						announceContestant(eb, 'Ring', {}, { contestant: { monster, isBoss, character: { givenName: 'Ada', icon: '🦊' } } });
+						const lines = expectLinesMatchText(published[0]!);
+						expect(lines.filter(l => l.kind === 'narration')).to.have.lengthOf(1);
+						expect(lines[0]!.text).to.include(isBoss ? 'sent by the house' : 'answers the call');
+						const prose = lines.find(l => l.kind === 'narration')!.text;
+						expect(prose).to.include(monster.givenName);
+						if (!isBoss && Monster.creatureType === 'Gladiator') {
+							expect(prose).to.include(gender === 'androgynous' ? 'they come by choice' : `${monster.pronouns.he} comes by choice`);
+						}
+					}
+				} finally { monster.disposeTimers(); }
+			});
+		}
+	}
+
+	it('adds the roses only for a living Unicorn in this ring', () => {
+		const monster = new (allMonsters.find(M => M.creatureType === 'Minotaur')!)({ name: 'Bull' });
+		try {
+			for (const contestants of [[], [{ monster: { creatureType: 'Unicorn', dead: true } }], [{ monster: { creatureType: 'Unicorn' }, fled: true }], [{ monster: { creatureType: 'Unicorn' } }]]) {
+				const { eb, published } = capture();
+				announceContestant(eb, 'Ring', { contestants }, { contestant: { monster, isBoss: true, character: {} } });
+				const lines = expectLinesMatchText(published[0]!);
+				expect(lines.find(l => l.kind === 'narration')!.text.includes('in no mood for roses')).to.equal(contestants.length === 1 && !('dead' in contestants[0]!.monster) && !('fled' in contestants[0]!));
+			}
+		} finally { monster.disposeTimers(); }
+	});
+
+	it('rotates rounds without adjacent repeats or cross-room influence, without random draws', () => {
+		const a = {}, b = {};
+		const beats: string[] = [];
+		const random = sinon.spy(Math, 'random');
+		try {
+			for (let round = 0; round < ROUND_BEATS.length * 3; round++) {
+				const { eb, published } = capture();
+				announceNextRound(eb, 'Ring', a, { round });
+				const lines = expectLinesMatchText(published[0]!);
+				beats.push(lines[1]!.text);
+				if (round > 0) expect(beats[round]).to.not.equal(beats[round - 1]);
+			}
+			const { eb, published } = capture();
+			announceNextRound(eb, 'Ring', b, { round: 0 });
+			expect(expectLinesMatchText(published[0]!)[1]!.text).to.equal(ROUND_BEATS[0]);
+			expect(new Set(beats).size).to.equal(ROUND_BEATS.length);
+			expect(random.called).to.equal(false);
+		} finally { random.restore(); }
 	});
 });
