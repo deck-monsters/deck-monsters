@@ -11,7 +11,7 @@ tags: [roadmap, planning, workshop, bosses, cards]
 **Status:** Proposed (2026-10-05). B is done. F's walk is done and triaged in G. A, C and E1
 shipped as [44](../archive/roadmap/44-guides-cards-and-training.md) (#423) and G's pass I as
 [43](../archive/roadmap/43-walk-fixes.md) (#422), both archived. Open for the owner to pick:
-**D** (boss hands), the rest of **E**, **H** (the fight log) and **J** (what 43 and 44 left).
+**D** (boss hands), the rest of **E**, **H** (the fight log), **J** (what 43 and 44 left) and **K** (rendered cards).
 Each pick gets its own plan with a task table, in the usual way.
 
 The owner's requests were A to D. E lists what Claude noticed in recent sessions. F was
@@ -358,3 +358,18 @@ check couldn't reach the `can use this from level {n}` sheet line live; tests co
 
 **Next live check** (whoever runs one next): press the shop confirm's new `Yes` button once
 (45 L1), and open a card above Beginner's level for the `can use this from level {n}` line.
+
+## K. Rendered cards (owner, 2026-10-06)
+
+The Millefleur mock left card frames out of the fight transcript; the owner kept them, because
+they are how a player learns what a card does in the middle of a fight. But a painted theme
+should not have to print a card as ASCII. Proposal: a card's structured data in its feed line
+(name, icon, role, description, the stat lines as label and value, level and class), so a theme
+can draw a real card component, while the terminal themes and Discord keep the ASCII frame,
+which remains the default and the text form.
+
+- The `card` feed line (roadmap 46 task 7) already carries the title and icon; extend it from
+  `formatCard`'s inputs, not by parsing the frame.
+- A theme opts in; the row-height guess counts the component's height the way it counts a card
+  frame today (`feed-row-height.ts`).
+- Start with the Ring and Console feeds; the card details sheet already draws a card from data.
