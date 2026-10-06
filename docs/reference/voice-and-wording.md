@@ -141,6 +141,16 @@ September 2026).
 - Good: `lifts the whole sea until all roads, rather than leading to Rome as per Imperial Regulation MCCCXCVII, subsection C, lead to Neptune, and drops it on`
 - Good: `The courage runs out of ${name} like mead from a cracked horn, and ${pronouns.he} ${agree(pronouns, 'flees', 'flee')} the ring!`
 
+### The Millefleur feed restates the same facts
+
+On the Millefleur theme the web Ring draws shorter sentences from `payload.lines`: "A plays
+Card", "A rolled 9 +1 = 10 vs 9 · hit", "A is at 24/33 hp, bloodied", and a round as a
+divider. Those sentences are display only. The engine's `text` stays the Discord line and
+the dark themes' line ("lays down the following card", "has only 17HP"). Do not change
+`text` to match the composed sentence, and do not treat the composed sentence as a second
+canon to localise. Flavour that belongs in both (an entrance line, a boss's verb) is written
+once, in `text` and in `lines`, in the house voice. That work is roadmap 46 task 9.
+
 ### Existing bad examples are migration targets
 
 Some legacy text is intentionally called out so it does not return: “proud owner” becomes

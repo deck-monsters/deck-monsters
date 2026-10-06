@@ -63,6 +63,14 @@ At 1440px the same destinations are text links: **Terminal**, **?**, **Rooms**,
 | `YOU JOINED HERE` | A bookmark of when this player arrived | A marker in the feed, above later hits | The words | It sits in the middle of combat lines |
 | Pane menu on desktop (`The Ring`, `Console`, …) | Picks what that half of the screen shows | Replaces that pane. Choosing Workshop on the right removed the command box | Aria `Surface shown in the left/right pane` | The only place to type a command disappears with the Console pane |
 
+Millefleur (checked 2026-10-06) restates some Ring lines in plainer sentences. A play reads
+"Quoloth plays Hit" above the card. A round is a divider, "ROUND 2". A standing line reads
+"Round 2, turn 5. Mabo is at 13/35 hp, bloodied." The word bloodied is rose. A roll reads
+"Mabo rolled 2 +1 = 3 vs 6 · hit", in a dimmer colour. The dark themes, Discord, and the
+Console's own record keep the engine's sentences ("lays down the following card", "has only
+17HP"). Nothing in Help and guides says the Ring will shorten them. The words are the same
+facts: plays, rolled, hp, bloodied.
+
 ## Console and prompts
 
 | Where | Guess | What it did | What explains it | Confusion |

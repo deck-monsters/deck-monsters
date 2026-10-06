@@ -306,11 +306,13 @@ selects the one visible slot. Returning to the workspace restores the persisted 
 
 The Ring event list is a Virtuoso window. It mounts when ring history has been applied,
 because Virtuoso reads `heightEstimates` only while its size tree is empty and the empty
-placeholder fills that tree. Narration is one or two lines and a card box is a tall fenced
-frame, so the list passes a per-row `heightEstimates` value
-(`apps/web/src/utils/feed-row-height.ts`) until the row is measured. The guess is the
-feed's CSS line box and the pane's measured column width; a taller line still corrects
-`scrollTop` once the row mounts.
+placeholder fills that tree. An event with `payload.lines` is several blocks (one per
+line, or one composed sentence), and a card is a tall frame, so the list passes a per-row
+`heightEstimates` value (`apps/web/src/utils/feed-row-height.ts`) until the row is
+measured. The guess sums the same blocks `FeedLines` draws, using the feed's CSS line box,
+the pane's measured column width, and the gap between lines (`--feed-line-gap`). A taller
+line still corrects `scrollTop` once the row mounts. Events stored before lines existed
+fall back to the old text guess.
 
 The guess reads the live CSS, so a theme can set its own feed type. The feed's size, line
 height and letter spacing are tokens (`--feed-font-size`, `--feed-line-height`,
@@ -338,9 +340,19 @@ and the list mounts then. Without ResizeObserver the fallback is used.
 
 ## Card frames
 
-A card box is the 34-column character frame from `formatCard`
-(`packages/engine/src/helpers/card.ts`). The web draws that text in a monospace panel
-(`.event-card-block`); it does not replace the characters with a CSS border. Pictographs
+When an event has `payload.lines`, the web draws those lines (`components/FeedLines.tsx`,
+blocks from `utils/feed-lines.ts`) instead of the engine's `text`. A `card` line is the
+frame's title and body with the ASCII rules already removed: the panel (`.event-card-block`)
+paints a title, a CSS rule (`.feed-card-title`) and the body. Spacing between lines is the
+CSS gap, not blank lines baked into `text`. Millefleur (`feedStyle` `millefleur`) replaces
+some kinds with composed sentences — a round is a divider, a play names the card, a roll
+is one dim sentence, a bloodied HP line gains a rose ", bloodied" inside the sentence.
+Every other theme is `terminal`: one block per line, the engine's own words. `text` is
+not rewritten. Discord and pacing still use it.
+
+Events with no lines (history from before roadmap 46, private command replies) still draw
+`text`. A card box there is the 34-column character frame from `formatCard`
+(`packages/engine/src/helpers/card.ts`), in the same monospace panel. Pictographs
 count as two columns and variation selectors as none, because that is the width the feed
 font advances. Only text that needs it takes that path; plain text keeps `word-wrap`'s
 breaks. Both give 32 columns after the one-space indent, and each authored line is wrapped

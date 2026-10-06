@@ -8,10 +8,11 @@ tags: [design, theme, millefleur, tokens, accessibility]
 ---
 # Millefleur design system
 
-The design is final as of 2026-10-06. Nothing is built yet: [roadmap 46](../../roadmap/46-unicorn-theme.md)
-is the plan for building it on the theme system. This page is the reference that plan builds
-toward. Read [the brief](README.md) first for what the theme is for; [process](process.md)
-explains how it got here.
+The design is final as of 2026-10-06. The theme is built on the branch recorded in
+[roadmap 46](../../roadmap/46-unicorn-theme.md); the live check is
+[46b](../../roadmap/46b-cursor-check.md). Flavour lines (task 9) are not in the Ring yet.
+This page is the reference the theme is built toward. Read [the brief](README.md) first for
+what the theme is for; [process](process.md) explains how it got here.
 
 The four final screens are in [samples/](samples/). Each is an HTML page you can open, with a
 render beside it. They are the visual source of truth. Where this page and a sample disagree,

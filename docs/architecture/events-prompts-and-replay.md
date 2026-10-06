@@ -203,14 +203,19 @@ A feed event has two forms of the same content.
   (they are persisted in `room_events.payload` and replayed).
 
 Renderers prefer `lines` and fall back to `text`, because events stored before lines existed have
-none. `announcements/feed-lines.test.ts` runs a real fight and holds the invariant: every feed
+none. The web does this in `FeedEventBody` (`components/FeedLines.tsx`): lines become the
+blocks in `utils/feed-lines.ts`, and a missing `lines` array renders `text` as before.
+Millefleur composes some kinds (a round divider, "A plays Card", one roll sentence, a rose
+", bloodied" inside an HP sentence). The other four themes draw one block per line in the
+engine's words. `announcements/feed-lines.test.ts` runs a real fight and holds the invariant: every feed
 event carries lines, each line is clean, and the lines' text equals `text` with its layout
 removed, so the two cannot drift. Private command replies (`look at` listings, ring errors, the
 countdown hints) and protocol events (`ring.state`, `prompt.*`, `handshake`, `heartbeat`,
 `quick_actions`, `system.gap`) carry no lines.
 
 Added in roadmap 46 (task 7), so the Millefleur theme could style or replace lines by kind, as its
-mock did (the round as a divider, a play's card name in bold, the roll as a quieter second line).
+mock did (the round as a divider, a play's card name, the roll as a quieter line). The web
+half is task 8. The composed sentences are display only; they are not a second copy of `text`.
 
 ## Change checklist
 

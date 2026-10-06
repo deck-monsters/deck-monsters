@@ -47,7 +47,11 @@ The groups (see the comments in `theme-phosphor.css` for each one's reason):
   46a (their defaults are what the old fallbacks drew).
 - **Type:** `--font-ui` for the chrome (buttons, tabs, forms, headings) and `--font-mono` for
   the feed, the Console and transcripts. A theme may change `--font-ui` freely; `--font-mono`
-  must stay monospace, because card frames are ASCII and the feed counts columns. The feed's
+  must stay monospace, because the row-height guess still wraps by column and events
+  without lines still draw the ASCII card frame. Events that carry `payload.lines` draw a
+  card as a title, a CSS rule and the body. Millefleur also replaces some of those lines
+  with composed sentences; every other theme draws the engine's words
+  ([web workspace: Card frames](web-workspace.md#card-frames)). The feed's
   own size, line height and letter spacing are `--feed-font-size`, `--feed-line-height` and
   `--feed-letter-spacing`; the Ring's row-height guess measures them from the live CSS
   ([web workspace: Ring feed row heights](web-workspace.md#ring-feed-row-heights)).
