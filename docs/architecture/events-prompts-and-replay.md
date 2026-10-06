@@ -183,6 +183,35 @@ the user may see as an **untracked** frame, `{ type: 'chat', id: 'chat-<messageI
   [`rooms-and-identity.md`](rooms-and-identity.md#chat).
 - **A frame still proves the connection is alive**, so it resets the web heartbeat watchdog.
 
+## Feed lines: `text` and `payload.lines`
+
+A feed event has two forms of the same content.
+
+- **`text`** is the contract for Discord, which sends it verbatim and relies on its ``` fences,
+  `*`/`_` markup and newlines; for pacing, which sizes the pause after an event from its length
+  (`helpers/pacing-context.ts`); and for every consumer that predates lines (the fight log, the
+  web's fallback, sprite mentions). It keeps the layout of the Slack era: indents, blank lines,
+  ASCII rules, several lines bundled into one event. **Do not change its layout** to suit a
+  renderer.
+- **`payload.lines`** (`FeedLine[]`, `packages/engine/src/events/types.ts`; helpers in
+  `events/feed-lines.ts` and the `…Line` siblings in `helpers/card.ts`) is its clean twin:
+  every line on its own, no layout whitespace, rules or fences, each with a `kind` and the facts
+  a renderer needs (round, actor, card, a roll's natural, bonus, total, target and result, damage,
+  HP, a card frame's title). Lines keep the inline markup and the icon spacing of `text`. A
+  `card` line is the one multi-line kind: the frame's body, without rules or fences. Lines are
+  built where the text is built, from the same values, never parsed from text, and are plain JSON
+  (they are persisted in `room_events.payload` and replayed).
+
+Renderers prefer `lines` and fall back to `text`, because events stored before lines existed have
+none. `announcements/feed-lines.test.ts` runs a real fight and holds the invariant: every feed
+event carries lines, each line is clean, and the lines' text equals `text` with its layout
+removed, so the two cannot drift. Private command replies (`look at` listings, ring errors, the
+countdown hints) and protocol events (`ring.state`, `prompt.*`, `handshake`, `heartbeat`,
+`quick_actions`, `system.gap`) carry no lines.
+
+Added in roadmap 46 (task 7), so the Millefleur theme could style or replace lines by kind, as its
+mock did (the round as a divider, a play's card name in bold, the roll as a quieter second line).
+
 ## Change checklist
 
 - [ ] Payloads remain JSON-safe and narration-independent where clients need structure.
