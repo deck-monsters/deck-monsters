@@ -501,8 +501,8 @@ beat to a role. `{NAME}` in the live Gladiator chant is the uppercased monster n
 
 | Species | Draft 1 | Draft 2 |
 |---|---|---|
-| Basilisk | {name} lifts a crowned head. The crowd discovers several fascinating things about its own shoes. | {name} surveys the benches. A man in the front row closes his eyes and announces that he wasn't looking anyway. |
-| Jinn | {name} steps out of a curl of smoke. A man with a lamp puts it away before anyone can get the wrong idea. | {name} takes shape beside the gate. A small boy asks for three wishes. His mother would settle for one: that he sit down. |
-| Minotaur | {name} ducks through the gate. The mason who built it suddenly remembers an urgent appointment elsewhere. | {name} lowers {his} horns. A man who has been shouting advice remembers that he is, technically, a spectator. |
-| Weeping Angel | {name} is standing by the gate. The gatekeeper is fairly certain that this is something he would have noticed. | {name} is already on the sand. Several people decide to blink in shifts, without discussing it first. |
-| Unicorn | {name} steps onto the sand. A vendor discreetly changes “fresh roses” to “seasonal produce” on his sign. | {name} pauses at the gate. The palace gardener recognizes {him}. This is not, on the whole, a happy reunion. |
+| Basilisk | {name} lifts a crowned head. Somewhere a music producer is about to invent the genre of shoegaze. | {name} surveys the benches. A man in the front row announces that he wasn't looking anyway. |
+| Jinn | {name} steps out of a curl of smoke. A man with a lamp puts it away before anyone can get the wrong idea. | {name} takes shape beside the gate. A small boy (for what must be the 100th time) asks for three wishes. His mother would settle for one. |
+| Minotaur | {name} just barely ducks through the gate. The mason who maintains it suddenly remembers an urgent appointment elsewhere. | {name} lowers {his} horns. At just that moment a man who has been shouting advice wisely remembers that he is, technically, a spectator. |
+| Weeping Angel | {name} is standing on the inside of the closed gates. The gatekeeper is fairly certain that he never opened them. | {name} sits demurely, almost statue-like, on the edge of a small fountain in the middle of a beautiful rose garden. No wait, the spectators rub their eyes, that's just the sand. |
+| Unicorn | {name} steps onto the sand. A vendor discreetly changes “fresh roses” to “seasonal produce” on her sign. | {name} pauses at the gate. The palace gardener recognizes {him}. This is not, on the whole, a happy reunion. |
