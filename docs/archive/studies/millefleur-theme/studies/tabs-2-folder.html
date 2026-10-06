@@ -1,0 +1,54 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&amp;display=swap">
+<style>
+body{margin:0;background:#e9e4df;font-family:Nunito;display:grid;grid-template-columns:repeat(3,390px);gap:16px;padding:16px}
+.c{position:relative;width:390px;height:300px;background:#fbf8f5;overflow:hidden}
+.l{position:absolute;left:8px;bottom:6px;background:#fff;padding:2px 6px;border-radius:4px;font-size:12px;z-index:9}
+.bg{position:absolute;inset:0;background:radial-gradient(ellipse 320px 140px at 75% 0%,rgba(215,196,246,.5),transparent 70%),radial-gradient(ellipse 220px 120px at 5% 0%,rgba(241,198,216,.45),transparent 70%)}
+header{position:relative;display:flex;align-items:center;gap:8px;padding:16px 16px 0;font:800 13px/1 Nunito;letter-spacing:.14em;color:#3b2a55}
+header .room{font:700 15px/1 Nunito;letter-spacing:0;color:#9a2f66;flex:1}
+header button{width:38px;height:38px;border:1px solid rgba(160,135,200,.7);border-radius:12px;background:rgba(255,253,250,.85)}
+.row{position:relative;display:flex;align-items:flex-end;padding:14px 0 0 12px;z-index:3}
+.tab{position:relative;height:32px;padding:0 17px;display:flex;align-items:center;margin-right:-9px;font:700 13px/1 Nunito;color:#7d72a0;white-space:nowrap}
+.tab svg{position:absolute;left:0;top:0;width:100%;height:100%;z-index:-1;overflow:visible}
+.tab.on{color:#8a2a5e}
+.panel{position:relative;margin:0 12px;height:200px;background:rgba(255,253,250,.86);z-index:2}
+.panel h1{margin:0;padding:16px 16px 0;font:800 20px Nunito;color:#2f2147}
+.panel .top{position:absolute;left:0;right:0;top:0;height:1px;background:linear-gradient(90deg,rgba(150,125,195,.0),rgba(150,125,195,.5) 8%,rgba(150,125,195,.5) 92%,rgba(150,125,195,0))}
+</style></head><body>
+
+<!-- A: panel line broken under selected (selected tab covers it), unselected fade -->
+<div class="c"><div class="bg"></div>
+<header>DECK MONSTERS <span style="color:#c9b8e4">/</span> <span class="room">Crazy chickens</span><button aria-label="Menu"></button></header>
+<div class="row">
+ <span class="tab" style="z-index:5"><svg viewBox="0 0 100 32" preserveAspectRatio="none"><defs><linearGradient id="fa" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f5f0f9"/><stop offset="1" stop-color="#f5f0f9" stop-opacity=".25"/></linearGradient></defs><path d="M0 32 C5 32 6 3 13 1.5 C15 1 85 1 87 1.5 C94 3 95 32 100 32" fill="url(#fa)" stroke="rgba(150,125,195,.5)" vector-effect="non-scaling-stroke"/></svg>The Ring</span>
+ <span class="tab" style="z-index:4"><svg viewBox="0 0 100 32" preserveAspectRatio="none"><path d="M0 32 C5 32 6 3 13 1.5 C15 1 85 1 87 1.5 C94 3 95 32 100 32" fill="url(#fa)" stroke="rgba(150,125,195,.5)" vector-effect="non-scaling-stroke"/></svg>Console</span>
+ <span class="tab on" style="z-index:9"><svg viewBox="0 0 100 32" preserveAspectRatio="none"><defs><linearGradient id="fs" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fbe3ee"/><stop offset=".85" stop-color="#fffdfa"/></linearGradient></defs><path d="M0 33 C5 33 6 3 13 1.5 C15 1 85 1 87 1.5 C94 3 95 33 100 33 Z" fill="url(#fs)" stroke="none"/><path d="M0 32.5 C5 32.5 6 3 13 1.5 C15 1 85 1 87 1.5 C94 3 95 32.5 100 32.5" fill="none" stroke="rgba(190,120,160,.65)" vector-effect="non-scaling-stroke"/></svg>Chat</span>
+ <span class="tab" style="z-index:3"><svg viewBox="0 0 100 32" preserveAspectRatio="none"><path d="M0 32 C5 32 6 3 13 1.5 C15 1 85 1 87 1.5 C94 3 95 32 100 32" fill="url(#fa)" stroke="rgba(150,125,195,.5)" vector-effect="non-scaling-stroke"/></svg>Workshop</span>
+ <span class="tab" style="z-index:2"><svg viewBox="0 0 100 32" preserveAspectRatio="none"><path d="M0 32 C5 32 6 3 13 1.5 C15 1 85 1 87 1.5 C94 3 95 32 100 32" fill="url(#fa)" stroke="rgba(150,125,195,.5)" vector-effect="non-scaling-stroke"/></svg>Fights</span>
+</div>
+<div class="panel"><div class="top"></div><h1>Chat</h1></div><span class="l">A · folder tabs, selected joins the page</span></div>
+
+<!-- B: shorter, lighter, smaller font; unselected sit 3px lower -->
+<div class="c"><div class="bg"></div>
+<header>DECK MONSTERS <span style="color:#c9b8e4">/</span> <span class="room">Crazy chickens</span><button aria-label="Menu"></button></header>
+<div class="row" style="padding-top:16px">
+ <span class="tab" style="z-index:5;height:28px;font-size:12.5px;padding:0 16px"><svg viewBox="0 0 100 28" preserveAspectRatio="none"><path d="M0 28 C4 28 6 3 12 1.5 C14 1 86 1 88 1.5 C94 3 96 28 100 28" fill="rgba(245,240,249,.65)" stroke="rgba(150,125,195,.42)" vector-effect="non-scaling-stroke"/></svg>The Ring</span>
+ <span class="tab" style="z-index:4;height:28px;font-size:12.5px;padding:0 16px"><svg viewBox="0 0 100 28" preserveAspectRatio="none"><path d="M0 28 C4 28 6 3 12 1.5 C14 1 86 1 88 1.5 C94 3 96 28 100 28" fill="rgba(245,240,249,.65)" stroke="rgba(150,125,195,.42)" vector-effect="non-scaling-stroke"/></svg>Console</span>
+ <span class="tab on" style="z-index:9;height:32px;font-size:12.5px;padding:0 18px"><svg viewBox="0 0 100 32" preserveAspectRatio="none"><path d="M0 33 C5 33 6 3 13 1.5 C15 1 85 1 87 1.5 C94 3 95 33 100 33 Z" fill="#fffdfa"/><path d="M0 32.5 C5 32.5 6 3 13 1.5 C15 1 85 1 87 1.5 C94 3 95 32.5 100 32.5" fill="none" stroke="rgba(150,125,195,.6)" vector-effect="non-scaling-stroke"/><path d="M14 3 L86 3" stroke="#e7a9c6" stroke-width="2" vector-effect="non-scaling-stroke" opacity=".8"/></svg>Chat</span>
+ <span class="tab" style="z-index:3;height:28px;font-size:12.5px;padding:0 16px"><svg viewBox="0 0 100 28" preserveAspectRatio="none"><path d="M0 28 C4 28 6 3 12 1.5 C14 1 86 1 88 1.5 C94 3 96 28 100 28" fill="rgba(245,240,249,.65)" stroke="rgba(150,125,195,.42)" vector-effect="non-scaling-stroke"/></svg>Workshop</span>
+ <span class="tab" style="z-index:2;height:28px;font-size:12.5px;padding:0 16px"><svg viewBox="0 0 100 28" preserveAspectRatio="none"><path d="M0 28 C4 28 6 3 12 1.5 C14 1 86 1 88 1.5 C94 3 96 28 100 28" fill="rgba(245,240,249,.65)" stroke="rgba(150,125,195,.42)" vector-effect="non-scaling-stroke"/></svg>Fights</span>
+</div>
+<div class="panel"><div class="top"></div><h1>Chat</h1></div><span class="l">B · smaller, selected taller with a rose edge</span></div>
+
+<!-- C: like A but with rose-washed selected that fades, unselected transparent paper -->
+<div class="c"><div class="bg"></div>
+<header>DECK MONSTERS <span style="color:#c9b8e4">/</span> <span class="room">Crazy chickens</span><button aria-label="Menu"></button></header>
+<div class="row">
+ <span class="tab" style="z-index:5"><svg viewBox="0 0 100 32" preserveAspectRatio="none"><path d="M0 32 C5 32 6 3 13 1.5 C15 1 85 1 87 1.5 C94 3 95 32 100 32" fill="rgba(255,253,250,.45)" stroke="rgba(150,125,195,.45)" vector-effect="non-scaling-stroke"/></svg>The Ring</span>
+ <span class="tab" style="z-index:4"><svg viewBox="0 0 100 32" preserveAspectRatio="none"><path d="M0 32 C5 32 6 3 13 1.5 C15 1 85 1 87 1.5 C94 3 95 32 100 32" fill="rgba(255,253,250,.45)" stroke="rgba(150,125,195,.45)" vector-effect="non-scaling-stroke"/></svg>Console</span>
+ <span class="tab on" style="z-index:9"><svg viewBox="0 0 100 32" preserveAspectRatio="none"><defs><linearGradient id="fc" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f8d6e5"/><stop offset=".9" stop-color="#fffdfa"/></linearGradient></defs><path d="M0 33 C5 33 6 3 13 1.5 C15 1 85 1 87 1.5 C94 3 95 33 100 33 Z" fill="url(#fc)"/><path d="M0 32.5 C5 32.5 6 3 13 1.5 C15 1 85 1 87 1.5 C94 3 95 32.5 100 32.5" fill="none" stroke="rgba(150,125,195,.6)" vector-effect="non-scaling-stroke"/></svg>Chat</span>
+ <span class="tab" style="z-index:3"><svg viewBox="0 0 100 32" preserveAspectRatio="none"><path d="M0 32 C5 32 6 3 13 1.5 C15 1 85 1 87 1.5 C94 3 95 32 100 32" fill="rgba(255,253,250,.45)" stroke="rgba(150,125,195,.45)" vector-effect="non-scaling-stroke"/></svg>Workshop</span>
+ <span class="tab" style="z-index:2"><svg viewBox="0 0 100 32" preserveAspectRatio="none"><path d="M0 32 C5 32 6 3 13 1.5 C15 1 85 1 87 1.5 C94 3 95 32 100 32" fill="rgba(255,253,250,.45)" stroke="rgba(150,125,195,.45)" vector-effect="non-scaling-stroke"/></svg>Fights</span>
+</div>
+<div class="panel"><div class="top"></div><h1>Chat</h1></div><span class="l">C · translucent tabs, rose-washed selected</span></div>
+</body></html>

@@ -1,0 +1,76 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&amp;display=swap">
+<style>body{margin:0;background:#e9e4df;font:12px Nunito;display:grid;grid-template-columns:repeat(3,390px);gap:16px;padding:16px}
+.c{position:relative;width:390px;height:844px;background:#fbf8f5;overflow:hidden}
+.l{position:absolute;left:8px;bottom:6px;background:#fff;padding:2px 6px;border-radius:4px}
+g.p{mix-blend-mode:multiply}</style></head><body>
+<svg width="0" height="0" style="position:absolute"><defs>
+ <filter id="W1" x="-30%" y="-30%" width="160%" height="160%" color-interpolation-filters="sRGB">
+  <feTurbulence type="fractalNoise" baseFrequency="0.008" numOctaves="3" seed="21" result="w"/>
+  <feDisplacementMap in="SourceGraphic" in2="w" scale="48" xChannelSelector="R" yChannelSelector="G" result="s0"/>
+  <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="2" seed="5" result="w2"/>
+  <feDisplacementMap in="s0" in2="w2" scale="6" xChannelSelector="R" yChannelSelector="G" result="s"/>
+  <feTurbulence type="fractalNoise" baseFrequency="0.018" numOctaves="3" seed="3" result="cl"/>
+  <feColorMatrix in="cl" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -1.1 0 0 0 1.2" result="cla"/>
+  <feComposite in="s" in2="cla" operator="in" result="body0"/>
+  <feGaussianBlur in="body0" stdDeviation="1.5" result="body"/>
+  <feMorphology in="s" operator="erode" radius="2" result="e"/>
+  <feComposite in="s" in2="e" operator="out" result="rim"/>
+  <feGaussianBlur in="rim" stdDeviation="1.3" result="rimb"/>
+  <feComponentTransfer in="rimb" result="rimc"><feFuncA type="linear" slope=".55"/></feComponentTransfer>
+  <feMerge><feMergeNode in="body"/><feMergeNode in="rimc"/></feMerge>
+ </filter>
+ <filter id="W2" x="-30%" y="-30%" width="160%" height="160%" color-interpolation-filters="sRGB">
+  <feTurbulence type="fractalNoise" baseFrequency="0.009" numOctaves="3" seed="44" result="w"/>
+  <feDisplacementMap in="SourceGraphic" in2="w" scale="44" xChannelSelector="R" yChannelSelector="G" result="s0"/>
+  <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="2" seed="15" result="w2"/>
+  <feDisplacementMap in="s0" in2="w2" scale="6" xChannelSelector="R" yChannelSelector="G" result="s"/>
+  <feTurbulence type="fractalNoise" baseFrequency="0.016" numOctaves="3" seed="9" result="cl"/>
+  <feColorMatrix in="cl" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -1.1 0 0 0 1.2" result="cla"/>
+  <feComposite in="s" in2="cla" operator="in" result="body0"/>
+  <feGaussianBlur in="body0" stdDeviation="1.5" result="body"/>
+  <feMorphology in="s" operator="erode" radius="2" result="e"/>
+  <feComposite in="s" in2="e" operator="out" result="rim"/>
+  <feGaussianBlur in="rim" stdDeviation="1.3" result="rimb"/>
+  <feComponentTransfer in="rimb" result="rimc"><feFuncA type="linear" slope=".55"/></feComponentTransfer>
+  <feMerge><feMergeNode in="body"/><feMergeNode in="rimc"/></feMerge>
+ </filter>
+ <filter id="G"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/><feComponentTransfer><feFuncA type="linear" slope="0.2"/></feComponentTransfer></filter>
+ <filter id="F"><feTurbulence type="fractalNoise" baseFrequency="0.035 0.09" numOctaves="3" seed="7"/><feColorMatrix type="saturate" values="0"/><feComponentTransfer><feFuncA type="linear" slope="0.05"/></feComponentTransfer></filter>
+</defs></svg>
+
+<div class="c"><svg width="390" height="844">
+ <g class="p" filter="url(#W1)" opacity=".55">
+  <path d="M-60 -40 L440 -40 L440 70 C390 120 330 95 280 130 C220 170 170 120 110 160 C60 192 10 170 -60 200Z" fill="#d7c4f6"/>
+ </g>
+ <g class="p" filter="url(#W2)" opacity=".5">
+  <path d="M-60 -40 L220 -40 C215 30 160 80 90 110 C40 130 0 135 -60 150Z" fill="#f1c6d8"/>
+  <path d="M270 640 C320 600 390 600 440 590 L440 900 L200 900 C200 800 220 700 270 640Z" fill="#c4e6d8"/>
+ </g>
+ <g class="p" filter="url(#W1)" opacity=".4">
+  <path d="M330 720 C370 700 420 700 440 700 L440 900 L330 900 C320 840 310 760 330 720Z" fill="#cbdff9"/>
+ </g>
+ <rect width="390" height="844" filter="url(#F)" style="mix-blend-mode:multiply"/><rect width="390" height="844" filter="url(#G)" style="mix-blend-mode:multiply" opacity=".45"/>
+ </svg><span class="l">P · top bleed, glazed corner below</span></div>
+
+<div class="c"><svg width="390" height="844">
+ <g class="p" filter="url(#W1)" opacity=".5">
+  <path d="M-60 -40 L440 -40 L440 120 C340 170 270 120 190 170 C120 210 40 160 -60 190Z" fill="#cfe1fa"/>
+ </g>
+ <g class="p" filter="url(#W2)" opacity=".5">
+  <path d="M160 -40 L440 -40 L440 230 C380 260 330 210 290 170 C240 120 190 60 160 -40Z" fill="#dcc8f7"/>
+  <path d="M-60 560 C10 530 70 560 110 620 C150 690 130 800 120 900 L-60 900Z" fill="#f3cddb"/>
+ </g>
+ <rect width="390" height="844" filter="url(#F)" style="mix-blend-mode:multiply"/><rect width="390" height="844" filter="url(#G)" style="mix-blend-mode:multiply" opacity=".45"/>
+ </svg><span class="l">Q · sky and lilac glaze, rose at left</span></div>
+
+<div class="c"><svg width="390" height="844">
+ <g class="p" filter="url(#W2)" opacity=".5">
+  <path d="M-60 -40 L440 -40 L440 90 C380 140 300 90 230 140 C170 180 90 130 40 170 C10 190 -30 180 -60 190Z" fill="#f1c9d9"/>
+ </g>
+ <g class="p" filter="url(#W1)" opacity=".5">
+  <path d="M-60 40 C20 10 120 40 200 20 C260 5 300 -10 330 -40 L-60 -40Z" fill="#d6c3f6"/>
+  <path d="M-60 700 C40 660 160 700 260 680 C330 666 400 680 440 670 L440 900 L-60 900Z" fill="#c9e6da"/>
+ </g>
+ <rect width="390" height="844" filter="url(#F)" style="mix-blend-mode:multiply"/><rect width="390" height="844" filter="url(#G)" style="mix-blend-mode:multiply" opacity=".45"/>
+ </svg><span class="l">R · rose and lilac above, sea-foam ground</span></div>
+</body></html>

@@ -1,0 +1,85 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&amp;display=swap">
+<style>body{margin:0;background:#e9e4df;font:12px Nunito;display:grid;grid-template-columns:repeat(3,390px);gap:16px;padding:16px}
+.c{position:relative;width:390px;height:844px;background:#fbf8f5;overflow:hidden}
+.l{position:absolute;left:8px;bottom:6px;background:#fff;padding:2px 6px;border-radius:4px}
+svg g.p{mix-blend-mode:multiply}</style></head><body>
+<svg width="0" height="0" style="position:absolute"><defs>
+ <filter id="E" x="-30%" y="-30%" width="160%" height="160%" color-interpolation-filters="sRGB">
+  <feTurbulence type="fractalNoise" baseFrequency="0.011" numOctaves="5" seed="21" result="w"/>
+  <feDisplacementMap in="SourceGraphic" in2="w" scale="60" xChannelSelector="R" yChannelSelector="G" result="s"/>
+  <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="4" seed="3" result="cl"/>
+  <feColorMatrix in="cl" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -1.3 0 0 0 1.25" result="cla"/>
+  <feComposite in="s" in2="cla" operator="in" result="body0"/>
+  <feGaussianBlur in="body0" stdDeviation="1.2" result="body"/>
+  <feMorphology in="s" operator="erode" radius="2.5" result="e"/>
+  <feComposite in="s" in2="e" operator="out" result="rim"/>
+  <feGaussianBlur in="rim" stdDeviation="0.9" result="rimb"/>
+  <feComponentTransfer in="rimb" result="rimc"><feFuncA type="linear" slope=".8"/></feComponentTransfer>
+  <feMerge><feMergeNode in="body"/><feMergeNode in="rimc"/></feMerge>
+ </filter>
+ <filter id="E2" x="-30%" y="-30%" width="160%" height="160%" color-interpolation-filters="sRGB">
+  <feTurbulence type="fractalNoise" baseFrequency="0.013" numOctaves="5" seed="44" result="w"/>
+  <feDisplacementMap in="SourceGraphic" in2="w" scale="50" xChannelSelector="R" yChannelSelector="G" result="s"/>
+  <feTurbulence type="fractalNoise" baseFrequency="0.025" numOctaves="4" seed="9" result="cl"/>
+  <feColorMatrix in="cl" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -1.3 0 0 0 1.25" result="cla"/>
+  <feComposite in="s" in2="cla" operator="in" result="body0"/>
+  <feGaussianBlur in="body0" stdDeviation="1.2" result="body"/>
+  <feMorphology in="s" operator="erode" radius="2.5" result="e"/>
+  <feComposite in="s" in2="e" operator="out" result="rim"/>
+  <feGaussianBlur in="rim" stdDeviation="0.9" result="rimb"/>
+  <feComponentTransfer in="rimb" result="rimc"><feFuncA type="linear" slope=".8"/></feComponentTransfer>
+  <feMerge><feMergeNode in="body"/><feMergeNode in="rimc"/></feMerge>
+ </filter>
+ <filter id="S" x="-30%" y="-30%" width="160%" height="160%">
+  <feTurbulence type="fractalNoise" baseFrequency="0.006 0.05" numOctaves="3" seed="2" result="st"/>
+  <feDisplacementMap in="SourceGraphic" in2="st" scale="30" xChannelSelector="R" yChannelSelector="G" result="s"/>
+  <feTurbulence type="fractalNoise" baseFrequency="0.012 0.22" numOctaves="2" seed="6" result="br"/>
+  <feColorMatrix in="br" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -1.5 0 0 0 1.35" result="ba"/>
+  <feComposite in="s" in2="ba" operator="in" result="b2"/>
+  <feGaussianBlur in="b2" stdDeviation="0.8"/>
+ </filter>
+ <filter id="G"><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="4" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/><feComponentTransfer><feFuncA type="linear" slope="0.22"/></feComponentTransfer></filter>
+ <filter id="F"><feTurbulence type="fractalNoise" baseFrequency="0.012 0.18" numOctaves="2" seed="7"/><feColorMatrix type="saturate" values="0"/><feComponentTransfer><feFuncA type="linear" slope="0.09"/></feComponentTransfer></filter>
+</defs></svg>
+
+<!-- 1: diagonal sweeps, abstract -->
+<div class="c"><svg width="390" height="844">
+ <g class="p" filter="url(#E)" opacity=".62">
+  <path d="M-60 -40 L300 -40 C260 40 180 60 120 130 C70 190 10 230 -60 260Z" fill="#d9c6f7"/>
+  <path d="M170 -30 L440 -30 L440 120 C380 150 330 110 280 90 C230 70 200 30 170 -30Z" fill="#f6cddd"/>
+ </g>
+ <g class="p" filter="url(#E2)" opacity=".55">
+  <path d="M440 380 C380 420 330 520 300 600 C270 680 300 760 360 880 L440 880Z" fill="#c4e8da"/>
+  <path d="M-40 640 C40 610 140 650 190 720 C230 780 220 840 210 900 L-40 900Z" fill="#d2e3fa"/>
+ </g>
+ <g class="p" filter="url(#S)" opacity=".5" fill="none" stroke-linecap="round">
+  <path d="M20 470 C120 440 230 470 330 420" stroke="#f3e1b4" stroke-width="34"/>
+ </g>
+ <rect width="390" height="844" filter="url(#F)" style="mix-blend-mode:multiply"/><rect width="390" height="844" filter="url(#G)" style="mix-blend-mode:multiply" opacity=".5"/>
+ </svg><span class="l">1 · corner sweeps + one brush stroke</span></div>
+
+<!-- 2: Rothko-ish stacked soft fields, irregular -->
+<div class="c"><svg width="390" height="844">
+ <g class="p" filter="url(#E)" opacity=".5">
+  <path d="M-30 -30 L420 -30 L420 170 C330 190 250 160 170 185 C100 205 30 175 -30 195Z" fill="#dccaf8"/>
+  <path d="M-30 520 C60 500 160 540 260 515 C330 498 380 510 420 500 L420 640 C340 660 250 630 160 655 C80 676 20 650 -30 660Z" fill="#f4d0de"/>
+ </g>
+ <g class="p" filter="url(#E2)" opacity=".5">
+  <path d="M-30 690 C90 670 200 700 300 680 C360 668 400 680 420 675 L420 880 L-30 880Z" fill="#cfe3fa"/>
+  <path d="M120 140 C200 120 300 150 420 130 L420 260 C340 280 260 250 190 270 C150 280 110 260 120 140Z" fill="#c9eadd"/>
+ </g>
+ <rect width="390" height="844" filter="url(#F)" style="mix-blend-mode:multiply"/><rect width="390" height="844" filter="url(#G)" style="mix-blend-mode:multiply" opacity=".5"/>
+ </svg><span class="l">2 · stacked fields (Rothko)</span></div>
+
+<!-- 3: Japanese: one large bleed from top edge, gradient bokashi, small accent -->
+<div class="c" style="background:linear-gradient(180deg,#f6f1fb 0%,#fbf8f5 40%)"><svg width="390" height="844">
+ <g class="p" filter="url(#E)" opacity=".55">
+  <path d="M-40 -40 L440 -40 L440 60 C380 110 330 60 270 120 C220 170 160 110 100 150 C50 185 0 140 -40 170Z" fill="#d6c3f6"/>
+ </g>
+ <g class="p" filter="url(#E2)" opacity=".45">
+  <path d="M-40 -40 L200 -40 C190 30 120 70 60 90 C10 105 -20 100 -40 120Z" fill="#f2c8da"/>
+  <path d="M260 700 C300 650 360 640 440 650 L440 900 L230 900 C220 820 230 740 260 700Z" fill="#c6e7da"/>
+ </g>
+ <rect width="390" height="844" filter="url(#F)" style="mix-blend-mode:multiply"/><rect width="390" height="844" filter="url(#G)" style="mix-blend-mode:multiply" opacity=".5"/>
+ </svg><span class="l">3 · bleed from the top, quiet below</span></div>
+</body></html>

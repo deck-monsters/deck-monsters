@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Millefleur v2 Ring</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&amp;family=JetBrains+Mono:wght@400;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.tab{flex:none;padding:9px 15px;font:700 13px/1 Nunito,sans-serif;color:#6e6190;border-radius:999px}
+.tab.on{color:#2f2147;background:linear-gradient(120deg,#ffd6ec,#fff1c9 30%,#d3f5e6 55%,#d6e8ff 78%,#e6d9ff);box-shadow:0 0 0 1px rgba(255,255,255,.9), 0 4px 14px rgba(150,110,200,.18)}
+.ln{margin:0;font:400 12.5px/1.65 'JetBrains Mono',monospace;color:#3b2a55;white-space:pre-wrap}
+.dim{color:#7a6e98}
+.rule{height:1px;margin:6px 0;background:linear-gradient(90deg,transparent,rgba(170,140,220,.45),transparent)}
+</style>
+</helmet>
+<div style="position:relative;width:390px;height:940px;overflow:hidden;font-family:Nunito,sans-serif;color:#3b2a55;background:#fbf8fc">
+  <svg aria-hidden="true" width="390" height="940" style="position:absolute;inset:0">
+    <defs>
+      <filter id="wcR" x="-30%" y="-30%" width="160%" height="160%"><feTurbulence type="fractalNoise" baseFrequency="0.011" numOctaves="3" seed="11"></feTurbulence><feDisplacementMap in="SourceGraphic" scale="70"></feDisplacementMap><feGaussianBlur stdDeviation="16"></feGaussianBlur></filter>
+      <filter id="grR"><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" stitchTiles="stitch"></feTurbulence><feColorMatrix values="0 0 0 0 0.4  0 0 0 0 0.3  0 0 0 0 0.5  0 0 0 0.07 0"></feColorMatrix></filter>
+    </defs>
+    <g filter="url(#wcR)">
+      <ellipse cx="350" cy="90" rx="190" ry="130" fill="#dbe9ff" opacity=".9"></ellipse>
+      <ellipse cx="20" cy="420" rx="160" ry="220" fill="#e8dbff" opacity=".8"></ellipse>
+      <ellipse cx="380" cy="760" rx="170" ry="190" fill="#d3f2e8" opacity=".75"></ellipse>
+    </g>
+    <rect width="390" height="940" filter="url(#grR)"></rect>
+  </svg>
+
+  <div style="position:relative;display:flex;flex-direction:column;height:100%">
+    <header style="display:flex;align-items:center;gap:8px;padding:16px 16px 10px">
+      <span style="font:800 13px/1 Nunito,sans-serif;letter-spacing:.14em;color:#3b2a55">DECK MONSTERS</span>
+      <span style="color:#c9b8e4">/</span>
+      <span style="font:700 15px/1 Nunito,sans-serif;color:#a8336f;flex:1">Crazy chickens</span>
+      <button aria-label="Open menu" style="width:38px;height:38px;border:0;border-radius:12px;background:rgba(255,255,255,.75);box-shadow:0 0 0 1px rgba(200,180,230,.5), 0 4px 12px rgba(120,90,170,.12);display:flex;align-items:center;justify-content:center;padding:0"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b2a55" stroke-width="2" stroke-linecap="round"><path d="M5 7h14M5 12h14M5 17h14"></path></svg></button>
+    </header>
+
+    <nav aria-label="Places" style="display:flex;gap:2px;padding:4px 0 12px 10px;overflow:hidden;mask-image:linear-gradient(to right,#000 82%,transparent)">
+      <span class="tab on">The Ring</span><span class="tab">Console</span><span class="tab">Chat</span><span class="tab">Workshop</span><span class="tab">Fights</span><span class="tab">Leaders</span>
+    </nav>
+
+    <main style="flex:1;min-height:0;margin:0 12px;border-radius:24px 24px 0 0;background:linear-gradient(180deg,rgba(255,255,255,.82),rgba(255,255,255,.6));box-shadow:0 0 0 1px rgba(255,255,255,.9), 0 0 0 2px rgba(200,180,230,.3), 0 16px 40px rgba(120,90,170,.12);display:flex;flex-direction:column;overflow:hidden">
+      <div style="display:flex;align-items:center;gap:8px;padding:14px 16px 8px;font-size:13px">
+        <b style="color:#2f2147;font-weight:800">The Ring</b>
+        <span style="flex:1"></span>
+        <span style="color:#a8336f;font-weight:700">boss in ~5m</span>
+        <span class="dim">· 3 summons left</span>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:6px;padding:4px 12px 10px">
+        <div style="display:flex;align-items:center;gap:10px;padding:6px 10px;border-radius:999px;background:linear-gradient(90deg,rgba(255,241,201,.85),rgba(255,255,255,0))">
+          <div style="position:relative;width:34px;height:34px;flex:none"><div aria-hidden="true" style="position:absolute;inset:0;border-radius:50%;background:conic-gradient(#ffd6ec,#fff1c9,#d3f5e6,#d6e8ff,#e6d9ff,#ffd6ec);filter:blur(3px)"></div><div aria-hidden="true" style="position:absolute;inset:4px;border-radius:50%;background:#fff"></div><svg width="22" height="17" viewBox="0 0 12 9" shape-rendering="crispEdges" style="position:absolute;left:6px;top:9px"><rect x="8" y="0" width="1" height="1" fill="#e8c76a"></rect><rect x="7" y="1" width="2" height="1" fill="#fde9a8"></rect><rect x="6" y="2" width="4" height="1" fill="#f7f5ff"></rect><rect x="5" y="3" width="6" height="1" fill="#e9e4fa"></rect><rect x="8" y="3" width="1" height="1" fill="#2a2f6b"></rect><rect x="0" y="4" width="10" height="2" fill="#e9e4fa"></rect><rect x="0" y="6" width="9" height="1" fill="#d8d1f1"></rect><rect x="1" y="7" width="2" height="2" fill="#8f84bd"></rect><rect x="4" y="7" width="1" height="2" fill="#8f84bd"></rect><rect x="7" y="7" width="2" height="2" fill="#8f84bd"></rect></svg></div>
+          <span style="font-weight:800;font-size:13px;width:66px">Poirot</span>
+          <span style="flex:1;height:6px;border-radius:999px;background:rgba(200,180,230,.3)"><span style="display:block;width:72%;height:100%;border-radius:999px;background:linear-gradient(90deg,#7cc9b4,#3a9f88)"></span></span>
+          <span class="dim" style="font-size:11px;width:38px;text-align:right">24/33</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:6px 10px">
+          <div style="width:34px;height:34px;flex:none;display:flex;align-items:center;justify-content:center"><svg width="24" height="18" viewBox="0 0 12 9" shape-rendering="crispEdges" style="filter:drop-shadow(0 1px 2px rgba(120,90,170,.35))"><rect x="2" y="1" width="7" height="2" fill="#7a4a2a"></rect><rect x="1" y="3" width="9" height="3" fill="#a8683b"></rect><rect x="3" y="3" width="1" height="1" fill="#1d0f33"></rect><rect x="7" y="3" width="1" height="1" fill="#1d0f33"></rect><rect x="0" y="0" width="2" height="2" fill="#e9dcc0"></rect><rect x="9" y="0" width="2" height="2" fill="#e9dcc0"></rect><rect x="2" y="6" width="2" height="3" fill="#5c3720"></rect><rect x="7" y="6" width="2" height="3" fill="#5c3720"></rect></svg></div>
+          <span style="font-weight:800;font-size:13px;width:66px">Minotaur</span>
+          <span style="flex:1;height:6px;border-radius:999px;background:rgba(200,180,230,.3)"><span style="display:block;width:22%;height:100%;border-radius:999px;background:linear-gradient(90deg,#c0476f,#7a1838)"></span></span>
+          <span class="dim" style="font-size:11px;width:38px;text-align:right">7/31</span>
+        </div>
+      </div>
+
+      <div style="height:1px;margin:0 16px;background:linear-gradient(90deg,transparent,rgba(170,140,220,.5),transparent)"></div>
+
+      <div style="flex:1;min-height:0;overflow:hidden;padding:12px 18px;display:flex;flex-direction:column;gap:4px;mask-image:linear-gradient(to bottom,#000 88%,transparent)">
+        <div style="margin:0 0 8px;padding:12px 14px;border-radius:16px;background:linear-gradient(135deg,rgba(255,224,236,.75),rgba(230,217,255,.6));box-shadow:0 0 0 1px rgba(255,255,255,.9)">
+          <div style="font:800 15px/1.2 Nunito,sans-serif;color:#2f2147">A Minotaur stamps into the ring</div>
+          <p style="margin:4px 0 0;font-size:12.5px;line-height:1.45;color:#4d3d6c">Summoned by the Editor for Poirot. Half bull, all temper, and in no mood for roses.</p>
+        </div>
+
+        <div class="rule"></div>
+        <p class="ln">  <b>Poirot</b> plays <b>Sticketh</b> (1d20 vs AC)</p>
+        <p class="ln dim">  rolled 20 · natural 20!</p>
+        <div style="display:flex;align-items:center;gap:8px;margin:2px 0">
+          <span style="font:800 10px/1 Nunito,sans-serif;letter-spacing:.06em;padding:5px 10px;border-radius:999px;color:#2f2147;background:linear-gradient(110deg,#ffd6ec,#fff1c9,#d3f5e6,#d6e8ff,#e6d9ff);box-shadow:0 0 12px rgba(220,180,255,.6)">NAT 20</span>
+          <span class="ln" style="font-weight:700">Horn finds the gap. 14 damage.</span>
+        </div>
+        <div class="rule"></div>
+        <p class="ln">  <b>Minotaur</b> plays <b>Hit</b> (1d20 vs AC)</p>
+        <p class="ln dim">  rolled 7 · misses Poirot</p>
+        <div class="rule"></div>
+        <p class="ln">Poirot is at 24/33 hp. The Minotaur is at</p>
+        <p class="ln"><span style="color:#a12a4f;font-weight:700">7/31 hp, bloodied.</span></p>
+
+        <div style="display:flex;align-items:center;gap:10px;margin:10px 0 6px;font:700 11px/1 Nunito,sans-serif;letter-spacing:.1em;color:#7a6e98">
+          <span style="flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(170,140,220,.5))"></span>ROUND 3<span style="flex:1;height:1px;background:linear-gradient(90deg,rgba(170,140,220,.5),transparent)"></span>
+        </div>
+        <p class="ln">  <b>Poirot</b> is choosing a card…</p>
+        <p class="ln dim">  The Minotaur paws the sand.</p>
+      </div>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":940}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

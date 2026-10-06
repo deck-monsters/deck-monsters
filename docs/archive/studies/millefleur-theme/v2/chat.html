@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Millefleur v2 Chat</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.tab{flex:none;padding:9px 15px;font:700 13px/1 Nunito,sans-serif;color:#6e6190;border-radius:999px}
+.tab.on{color:#2f2147;background:linear-gradient(120deg,#ffd6ec,#fff1c9 30%,#d3f5e6 55%,#d6e8ff 78%,#e6d9ff);box-shadow:0 0 0 1px rgba(255,255,255,.9), 0 4px 14px rgba(150,110,200,.18)}
+.m{display:flex;flex-direction:column;gap:2px;padding:7px 0}
+.who{font:800 13px/1.3 Nunito,sans-serif;color:#2f2147}
+.t{font:600 11px/1 Nunito,sans-serif;color:#8a7fa8;margin-left:6px}
+.tx{font:400 14px/1.45 Nunito,sans-serif;color:#3b2a55}
+.sep{display:flex;align-items:center;gap:10px;margin:10px 0 4px;font:700 11px/1 Nunito,sans-serif;letter-spacing:.06em;color:#8a7fa8}
+.sep i{flex:1;height:1px}
+</style>
+</head>
+<body style="margin:0">
+<div style="position:relative;width:390px;height:940px;overflow:hidden;font-family:Nunito,sans-serif;color:#3b2a55;background:#fbf8fc">
+  <svg aria-hidden="true" width="390" height="940" style="position:absolute;inset:0">
+    <defs>
+      <filter id="wcC" x="-30%" y="-30%" width="160%" height="160%"><feTurbulence type="fractalNoise" baseFrequency="0.011" numOctaves="3" seed="23"></feTurbulence><feDisplacementMap in="SourceGraphic" scale="70"></feDisplacementMap><feGaussianBlur stdDeviation="16"></feGaussianBlur></filter>
+      <filter id="grC"><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" stitchTiles="stitch"></feTurbulence><feColorMatrix values="0 0 0 0 0.4  0 0 0 0 0.3  0 0 0 0 0.5  0 0 0 0.07 0"></feColorMatrix></filter>
+    </defs>
+    <g filter="url(#wcC)">
+      <ellipse cx="370" cy="140" rx="180" ry="150" fill="#ffe0ec" opacity=".85"></ellipse>
+      <ellipse cx="10" cy="520" rx="170" ry="200" fill="#dbe9ff" opacity=".85"></ellipse>
+      <ellipse cx="330" cy="900" rx="200" ry="130" fill="#e8dbff" opacity=".85"></ellipse>
+    </g>
+    <rect width="390" height="940" filter="url(#grC)"></rect>
+  </svg>
+
+  <div style="position:relative;display:flex;flex-direction:column;height:100%">
+    <header style="display:flex;align-items:center;gap:8px;padding:16px 16px 10px">
+      <span style="font:800 13px/1 Nunito,sans-serif;letter-spacing:.14em;color:#3b2a55">DECK MONSTERS</span>
+      <span style="color:#c9b8e4">/</span>
+      <span style="font:700 15px/1 Nunito,sans-serif;color:#a8336f;flex:1">Crazy chickens</span>
+      <button aria-label="Open menu" style="width:38px;height:38px;border:0;border-radius:12px;background:rgba(255,255,255,.75);box-shadow:0 0 0 1px rgba(200,180,230,.5), 0 4px 12px rgba(120,90,170,.12);display:flex;align-items:center;justify-content:center;padding:0"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b2a55" stroke-width="2" stroke-linecap="round"><path d="M5 7h14M5 12h14M5 17h14"></path></svg></button>
+    </header>
+
+    <nav aria-label="Places" style="display:flex;gap:2px;padding:4px 0 12px 10px;overflow:hidden;mask-image:linear-gradient(to right,#000 82%,transparent)">
+      <span class="tab">The Ring</span><span class="tab">Console</span><span class="tab on">Chat</span><span class="tab">Workshop</span><span class="tab">Fights</span><span class="tab">Leaders</span>
+    </nav>
+
+    <main style="flex:1;min-height:0;margin:0 12px;border-radius:24px 24px 0 0;background:linear-gradient(180deg,rgba(255,255,255,.82),rgba(255,255,255,.62));box-shadow:0 0 0 1px rgba(255,255,255,.9), 0 0 0 2px rgba(200,180,230,.3), 0 16px 40px rgba(120,90,170,.12);display:flex;flex-direction:column;overflow:hidden">
+      <div style="flex:1;min-height:0;overflow:hidden;padding:8px 18px;mask-image:linear-gradient(to bottom,transparent,#000 8%)">
+        <div class="sep"><i style="background:linear-gradient(90deg,transparent,rgba(170,140,220,.5))"></i>Thu, Oct 1 · 4:41 PM<i style="background:linear-gradient(90deg,rgba(170,140,220,.5),transparent)"></i></div>
+        <div class="m"><div><span class="who">Rosa</span><span class="t">4:41</span></div><div class="tx">anyone want to summon the minotaur with me?</div></div>
+        <div class="m"><div><span class="who">Dave</span><span class="t">4:42</span></div><div class="tx">yes. Poirot is ready, give me a sec</div></div>
+        <div style="display:inline-flex;margin:6px 0 2px;padding:4px 10px;border-radius:999px;font:700 10.5px/1.3 Nunito,sans-serif;letter-spacing:.04em;color:#5a4380;background:rgba(230,217,255,.7);align-self:flex-start;width:max-content">During fight #58</div>
+        <div class="m"><div><span class="who">Rosa</span><span class="t">4:44</span></div><div class="tx">NAT 20 on the bull!!</div></div>
+        <div class="m" style="margin:2px -10px;padding:8px 10px;border-radius:14px;background:linear-gradient(120deg,rgba(255,214,236,.55),rgba(230,217,255,.5))"><div style="display:flex;align-items:center;gap:6px"><svg width="13" height="10" viewBox="0 0 14 10" aria-hidden="true"><rect x=".7" y=".7" width="12.6" height="8.6" rx="2" fill="#fff" stroke="#a8336f" stroke-width="1"></rect><path d="M1.2 1.4 L7 5.6 L12.8 1.4" fill="none" stroke="#a8336f" stroke-width="1"></path></svg><span class="who">Dave</span><span style="font:700 11px/1 Nunito,sans-serif;color:#a8336f">to you</span><span class="t" style="margin-left:0">4:45</span></div><div class="tx">nice. want my spare Blink after?</div></div>
+        <div class="sep" style="margin-top:16px"><i style="background:linear-gradient(90deg,transparent,rgba(170,140,220,.5))"></i>Today<i style="background:linear-gradient(90deg,rgba(170,140,220,.5),transparent)"></i></div>
+        <div class="m"><div><span class="who">Mira</span><span class="t">9:02</span></div><div class="tx">is that a unicorn eating my roses</div></div>
+        <div class="m"><div><span class="who">Rosa</span><span class="t">9:03</span></div><div class="tx">her name is Poirot and she has no regrets</div></div>
+      </div>
+
+      <form style="display:flex;flex-direction:column;gap:8px;padding:12px 14px 18px;background:rgba(255,255,255,.75);box-shadow:0 -1px 0 rgba(200,180,230,.45)">
+        <div style="display:flex;align-items:center;gap:8px">
+          <label for="to2" style="font-size:12px;font-weight:700;color:#6e6190">To</label>
+          <select id="to2" style="flex:1;font:600 14px Nunito,sans-serif;color:#3b2a55;padding:9px 12px;border:0;border-radius:12px;background:#fff;box-shadow:0 0 0 1px rgba(200,180,230,.7)"><option>Everyone in the room</option></select>
+        </div>
+        <div style="display:flex;gap:8px">
+          <label for="m2" style="position:absolute;left:-9999px">Message</label>
+          <input id="m2" placeholder="Say something nice…" style="flex:1;min-width:0;font:400 14px Nunito,sans-serif;color:#3b2a55;padding:12px 14px;border:0;border-radius:12px;background:#fff;box-shadow:0 0 0 1px rgba(200,180,230,.7), inset 0 1px 3px rgba(120,90,170,.08)">
+          <button style="font:800 14px/1 Nunito,sans-serif;color:#fff;background:linear-gradient(160deg,#5a4380,#3b2a55);border:0;border-radius:12px;padding:0 18px;box-shadow:0 0 0 2px #fff, 0 0 0 3.5px rgba(90,67,128,.55)">Send</button>
+        </div>
+      </form>
+    </main>
+  </div>
+</div>
+</body>
+</html>

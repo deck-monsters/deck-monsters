@@ -1,0 +1,81 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&amp;display=swap">
+<style>body{margin:0;background:#e9e4df;font:12px Nunito;display:grid;grid-template-columns:repeat(4,390px);gap:16px;padding:16px}
+.c{position:relative;width:390px;height:520px;background:#fbf8f5;overflow:hidden}
+.l{position:absolute;left:8px;bottom:6px;background:#fff;padding:2px 6px;border-radius:4px}</style></head><body>
+<svg width="0" height="0" style="position:absolute"><defs>
+ <!-- A: granulated wash, big warp, crisp-ish edge -->
+ <filter id="A" x="-30%" y="-30%" width="160%" height="160%">
+  <feTurbulence type="fractalNoise" baseFrequency="0.014" numOctaves="5" seed="4" result="w"/>
+  <feDisplacementMap in="SourceGraphic" in2="w" scale="55" xChannelSelector="R" yChannelSelector="G" result="s"/>
+  <feTurbulence type="fractalNoise" baseFrequency="0.55" numOctaves="2" seed="8" result="g"/>
+  <feColorMatrix in="g" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -1.4 0 0 0 1.25" result="ga"/>
+  <feComposite in="s" in2="ga" operator="in" result="gr"/>
+  <feGaussianBlur in="gr" stdDeviation="0.7"/>
+ </filter>
+ <!-- B: dry brush streaks: anisotropic noise along the stroke -->
+ <filter id="B" x="-30%" y="-30%" width="160%" height="160%">
+  <feTurbulence type="fractalNoise" baseFrequency="0.004 0.09" numOctaves="3" seed="2" result="st"/>
+  <feDisplacementMap in="SourceGraphic" in2="st" scale="26" xChannelSelector="R" yChannelSelector="G" result="s"/>
+  <feTurbulence type="fractalNoise" baseFrequency="0.01 0.35" numOctaves="2" seed="6" result="bristle"/>
+  <feColorMatrix in="bristle" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -2.2 0 0 0 1.75" result="ba"/>
+  <feComposite in="s" in2="ba" operator="in" result="b2"/>
+  <feGaussianBlur in="b2" stdDeviation="0.5"/>
+ </filter>
+ <!-- C: Rothko field: soft feathered rectangle with inner breathing -->
+ <filter id="C" x="-30%" y="-30%" width="160%" height="160%">
+  <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="4" seed="11" result="w"/>
+  <feDisplacementMap in="SourceGraphic" in2="w" scale="28" xChannelSelector="R" yChannelSelector="G" result="s"/>
+  <feGaussianBlur in="s" stdDeviation="6" result="soft"/>
+  <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="3" seed="3" result="cl"/>
+  <feColorMatrix in="cl" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -1 0 0 0 1.35" result="cla"/>
+  <feComposite in="soft" in2="cla" operator="in"/>
+ </filter>
+ <!-- D: bleeding wet edge with pooled rim (Japanese wash) -->
+ <filter id="D" x="-30%" y="-30%" width="160%" height="160%">
+  <feTurbulence type="fractalNoise" baseFrequency="0.018" numOctaves="5" seed="21" result="w"/>
+  <feDisplacementMap in="SourceGraphic" in2="w" scale="45" xChannelSelector="R" yChannelSelector="G" result="s"/>
+  <feMorphology in="s" operator="erode" radius="3" result="e"/>
+  <feComposite in="s" in2="e" operator="out" result="rim"/>
+  <feGaussianBlur in="rim" stdDeviation="1" result="rimb"/>
+  <feGaussianBlur in="s" stdDeviation="2" result="body"/>
+  <feComponentTransfer in="body" result="bodyl"><feFuncA type="linear" slope=".55"/></feComponentTransfer>
+  <feMerge><feMergeNode in="bodyl"/><feMergeNode in="rimb"/></feMerge>
+ </filter>
+ <filter id="G"><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="4" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/><feComponentTransfer><feFuncA type="linear" slope="0.22"/></feComponentTransfer></filter>
+ <filter id="F"><feTurbulence type="fractalNoise" baseFrequency="0.012 0.18" numOctaves="2" seed="7"/><feColorMatrix type="saturate" values="0"/><feComponentTransfer><feFuncA type="linear" slope="0.09"/></feComponentTransfer></filter>
+</defs></svg>
+
+<div class="c"><svg width="390" height="520">
+ <g filter="url(#A)" opacity=".7">
+  <path d="M-40 60 C60 10 160 70 250 40 C330 15 400 60 430 40 L430 150 C330 175 260 120 160 160 C80 190 0 150 -40 170Z" fill="#e3d4fa"/>
+  <path d="M-30 330 C70 300 140 350 260 320 C340 300 390 330 430 320 L430 380 C330 400 240 370 140 395 C60 415 0 385 -30 400Z" fill="#cdeee2"/>
+ </g>
+ <rect width="390" height="520" filter="url(#F)" style="mix-blend-mode:multiply"/><rect width="390" height="520" filter="url(#G)" style="mix-blend-mode:multiply" opacity=".5"/>
+ </svg><span class="l">A · granulated wash bands</span></div>
+
+<div class="c"><svg width="390" height="520">
+ <g filter="url(#B)" opacity=".75" fill="none" stroke-linecap="round">
+  <path d="M-30 110 C80 80 200 120 420 70" stroke="#dcc9f7" stroke-width="70"/>
+  <path d="M-20 300 C120 330 260 270 420 310" stroke="#c6eadc" stroke-width="54"/>
+  <path d="M60 450 C160 430 300 470 420 430" stroke="#f7cfde" stroke-width="40"/>
+ </g>
+ <rect width="390" height="520" filter="url(#F)" style="mix-blend-mode:multiply"/><rect width="390" height="520" filter="url(#G)" style="mix-blend-mode:multiply" opacity=".5"/>
+ </svg><span class="l">B · dry-brush strokes</span></div>
+
+<div class="c"><svg width="390" height="520">
+ <g filter="url(#C)" opacity=".75">
+  <rect x="20" y="30" width="350" height="190" rx="10" fill="#e6d6fb"/>
+  <rect x="30" y="250" width="330" height="110" rx="10" fill="#f8d3e2"/>
+  <rect x="20" y="385" width="350" height="110" rx="10" fill="#d3e5fb"/>
+ </g>
+ <rect width="390" height="520" filter="url(#F)" style="mix-blend-mode:multiply"/><rect width="390" height="520" filter="url(#G)" style="mix-blend-mode:multiply" opacity=".5"/>
+ </svg><span class="l">C · Rothko fields</span></div>
+
+<div class="c"><svg width="390" height="520">
+ <g filter="url(#D)" opacity=".8">
+  <path d="M-40 -20 L430 -20 L430 90 C340 140 260 80 170 130 C90 175 20 120 -40 150Z" fill="#dccbf8"/>
+  <path d="M250 300 C320 260 430 280 430 330 L430 520 L180 520 C200 450 190 360 250 300Z" fill="#c8e9dc"/>
+ </g>
+ <rect width="390" height="520" filter="url(#F)" style="mix-blend-mode:multiply"/><rect width="390" height="520" filter="url(#G)" style="mix-blend-mode:multiply" opacity=".5"/>
+ </svg><span class="l">D · wet edge, pooled rim</span></div>
+</body></html>

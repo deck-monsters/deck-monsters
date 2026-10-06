@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Millefleur v4 Chat</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.tabs{position:relative;display:flex;align-items:flex-end;padding:0 0 0 12px;z-index:3}
+.tab{position:relative;height:30px;padding:0 16px;display:flex;align-items:center;margin-right:-8px;font:700 12.5px/1 Nunito,sans-serif;color:#695c8c;white-space:nowrap}
+.tab svg{position:absolute;left:0;top:0;width:100%;height:100%;z-index:-1;overflow:visible}
+.tab.on{height:33px;padding:0 18px;color:#8a2a5e}
+.page{position:relative;z-index:2;margin:0 12px;background:linear-gradient(rgba(255,253,250,.9),rgba(255,253,250,.76) 220px);box-shadow:0 14px 34px rgba(110,85,150,.08)}
+.page .edge{position:absolute;left:0;right:0;top:0;height:1px;background:linear-gradient(90deg,rgba(150,125,195,0),rgba(150,125,195,.45) 6%,rgba(150,125,195,.45) 94%,rgba(150,125,195,0))}
+.btn2{font:700 14px/1 Nunito,sans-serif;color:#3b2a55;background:rgba(255,253,250,.9);border:1px solid #8f7cbc;border-radius:12px;padding:12px 16px}
+.btn1{font:800 14px/1 Nunito,sans-serif;color:#fff;background:linear-gradient(160deg,#5d4684,#3b2a55);border:0;border-radius:12px;padding:0 18px;box-shadow:0 0 0 2px rgba(255,253,250,.95), 0 0 0 3.5px rgba(93,70,132,.45), 0 6px 14px rgba(93,70,132,.2)}
+.field{font:400 14px Nunito,sans-serif;color:#3b2a55;padding:11px 13px;border:1px solid #8f7cbc;border-radius:12px;background:rgba(255,253,250,.95)}
+/* Every line of the log is exactly one ruled line: 28px, text baseline 6px above the rule. */
+/* The rule is a 28px tile, bottom-anchored like the text. (A repeating-linear-gradient with no
+   background-size fills the whole box, so its lines drifted from the bottom-anchored rows.) */
+.ruled{background-image:linear-gradient(to right,transparent 32px,rgba(232,160,190,.4) 32px,rgba(232,160,190,.4) 33px,transparent 33px),linear-gradient(to bottom,transparent 27px,rgba(140,170,220,.24) 27px)}
+.ln{margin:0;height:28px;display:flex;align-items:flex-end;gap:6px;padding-bottom:7px;box-sizing:border-box;font:400 14px/1 Nunito,sans-serif;color:#3b2a55;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.who{font:800 13px/1 Nunito,sans-serif;color:#2f2147}
+.t{font:600 11px/1 Nunito,sans-serif;color:#695c8c}
+.day{justify-content:center;font:700 11px/1 Nunito,sans-serif;letter-spacing:.06em;color:#695c8c}
+</style>
+</helmet>
+<div style="position:relative;width:390px;height:940px;overflow:hidden;font-family:Nunito,sans-serif;color:#3b2a55;background:#fbf8f5">
+  <svg aria-hidden="true" width="390" height="940" style="position:absolute;inset:0">
+    <defs>
+      <filter id="c4a" x="-30%" y="-30%" width="160%" height="160%" color-interpolation-filters="sRGB"><feTurbulence type="fractalNoise" baseFrequency="0.008" numOctaves="3" seed="21" result="w"></feTurbulence><feDisplacementMap in="SourceGraphic" in2="w" scale="48" xChannelSelector="R" yChannelSelector="G" result="s0"></feDisplacementMap><feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="2" seed="5" result="w2"></feTurbulence><feDisplacementMap in="s0" in2="w2" scale="6" xChannelSelector="R" yChannelSelector="G" result="s"></feDisplacementMap><feTurbulence type="fractalNoise" baseFrequency="0.018" numOctaves="3" seed="3" result="cl"></feTurbulence><feColorMatrix in="cl" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -1.1 0 0 0 1.2" result="cla"></feColorMatrix><feComposite in="s" in2="cla" operator="in" result="b0"></feComposite><feGaussianBlur in="b0" stdDeviation="1.5" result="body"></feGaussianBlur><feMorphology in="s" operator="erode" radius="2" result="e"></feMorphology><feComposite in="s" in2="e" operator="out" result="rim"></feComposite><feGaussianBlur in="rim" stdDeviation="1.3" result="rimb"></feGaussianBlur><feComponentTransfer in="rimb" result="rimc"><feFuncA type="linear" slope=".55"></feFuncA></feComponentTransfer><feMerge><feMergeNode in="body"></feMergeNode><feMergeNode in="rimc"></feMergeNode></feMerge></filter>
+      <filter id="c4b" x="-30%" y="-30%" width="160%" height="160%" color-interpolation-filters="sRGB"><feTurbulence type="fractalNoise" baseFrequency="0.009" numOctaves="3" seed="44" result="w"></feTurbulence><feDisplacementMap in="SourceGraphic" in2="w" scale="44" xChannelSelector="R" yChannelSelector="G" result="s0"></feDisplacementMap><feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="2" seed="15" result="w2"></feTurbulence><feDisplacementMap in="s0" in2="w2" scale="6" xChannelSelector="R" yChannelSelector="G" result="s"></feDisplacementMap><feTurbulence type="fractalNoise" baseFrequency="0.016" numOctaves="3" seed="9" result="cl"></feTurbulence><feColorMatrix in="cl" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -1.1 0 0 0 1.2" result="cla"></feColorMatrix><feComposite in="s" in2="cla" operator="in" result="b0"></feComposite><feGaussianBlur in="b0" stdDeviation="1.5" result="body"></feGaussianBlur><feMorphology in="s" operator="erode" radius="2" result="e"></feMorphology><feComposite in="s" in2="e" operator="out" result="rim"></feComposite><feGaussianBlur in="rim" stdDeviation="1.3" result="rimb"></feGaussianBlur><feComponentTransfer in="rimb" result="rimc"><feFuncA type="linear" slope=".55"></feFuncA></feComponentTransfer><feMerge><feMergeNode in="body"></feMergeNode><feMergeNode in="rimc"></feMergeNode></feMerge></filter>
+      <filter id="c4g"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3" stitchTiles="stitch"></feTurbulence><feColorMatrix type="saturate" values="0"></feColorMatrix><feComponentTransfer><feFuncA type="linear" slope="0.2"></feFuncA></feComponentTransfer></filter>
+      <filter id="c4f"><feTurbulence type="fractalNoise" baseFrequency="0.035 0.09" numOctaves="3" seed="7"></feTurbulence><feColorMatrix type="saturate" values="0"></feColorMatrix><feComponentTransfer><feFuncA type="linear" slope="0.05"></feFuncA></feComponentTransfer></filter>
+    </defs>
+    <g filter="url(#c4b)" opacity=".5" style="mix-blend-mode:multiply">
+      <path d="M-60 -40 L440 -40 L440 90 C380 140 300 90 230 140 C170 180 90 130 40 170 C10 190 -30 180 -60 190Z" fill="#f1c9d9"></path>
+    </g>
+    <g filter="url(#c4a)" opacity=".5" style="mix-blend-mode:multiply">
+      <path d="M-60 40 C20 10 120 40 200 20 C260 5 300 -10 330 -40 L-60 -40Z" fill="#d6c3f6"></path>
+      <path d="M-60 760 C40 720 160 760 260 740 C330 726 400 740 440 730 L440 960 L-60 960Z" fill="#c9e6da"></path>
+    </g>
+    <rect width="390" height="940" filter="url(#c4f)" style="mix-blend-mode:multiply"></rect>
+    <rect width="390" height="940" filter="url(#c4g)" style="mix-blend-mode:multiply" opacity=".45"></rect>
+  </svg>
+
+  <div style="position:relative;display:flex;flex-direction:column;height:100%">
+    <header style="display:flex;align-items:center;gap:8px;padding:16px 16px 14px">
+      <span style="font:800 13px/1 Nunito,sans-serif;letter-spacing:.14em;color:#3b2a55">DECK MONSTERS</span>
+      <span style="color:#c4b3e0">/</span>
+      <span style="font:700 15px/1 Nunito,sans-serif;color:#9a2f66;flex:1">Crazy chickens</span>
+      <button aria-label="Open menu" class="btn2" style="width:38px;height:38px;padding:0;display:flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b2a55" stroke-width="2" stroke-linecap="round"><path d="M5 7h14M5 12h14M5 17h14"></path></svg></button>
+    </header>
+
+    <nav aria-label="Places" class="tabs" style="-webkit-mask-image:linear-gradient(90deg,#000 80%,transparent 98%);mask-image:linear-gradient(90deg,#000 80%,transparent 98%)">
+      <svg width="0" height="0" style="position:absolute"><defs><linearGradient id="tcu" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f5f0f9" stop-opacity=".97"></stop><stop offset="1" stop-color="#f5f0f9" stop-opacity=".8"></stop></linearGradient><linearGradient id="tcs" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f8d8e6"></stop><stop offset=".85" stop-color="#fffdfa"></stop></linearGradient></defs></svg>
+      <span class="tab" style="z-index:6"><svg viewBox="0 0 100 30" preserveAspectRatio="none"><path d="M0 30 C4 30 6 3 12 1.5 C14 1 86 1 88 1.5 C94 3 96 30 100 30" fill="url(#tcu)" stroke="rgba(150,125,195,.5)" vector-effect="non-scaling-stroke"></path></svg>The Ring</span>
+      <span class="tab" style="z-index:5"><svg viewBox="0 0 100 30" preserveAspectRatio="none"><path d="M0 30 C4 30 6 3 12 1.5 C14 1 86 1 88 1.5 C94 3 96 30 100 30" fill="url(#tcu)" stroke="rgba(150,125,195,.5)" vector-effect="non-scaling-stroke"></path></svg>Console</span>
+      <span class="tab on" style="z-index:9"><svg viewBox="0 0 100 33" preserveAspectRatio="none"><path d="M0 34 C5 34 6 3 13 1.5 C15 1 85 1 87 1.5 C94 3 95 34 100 34 Z" fill="url(#tcs)"></path><path d="M0 33.5 C5 33.5 6 3 13 1.5 C15 1 85 1 87 1.5 C94 3 95 33.5 100 33.5" fill="none" stroke="rgba(150,125,195,.62)" vector-effect="non-scaling-stroke"></path></svg>Chat</span>
+      <span class="tab" style="z-index:4"><svg viewBox="0 0 100 30" preserveAspectRatio="none"><path d="M0 30 C4 30 6 3 12 1.5 C14 1 86 1 88 1.5 C94 3 96 30 100 30" fill="url(#tcu)" stroke="rgba(150,125,195,.5)" vector-effect="non-scaling-stroke"></path></svg>Workshop</span>
+      <span class="tab" style="z-index:3"><svg viewBox="0 0 100 30" preserveAspectRatio="none"><path d="M0 30 C4 30 6 3 12 1.5 C14 1 86 1 88 1.5 C94 3 96 30 100 30" fill="url(#tcu)" stroke="rgba(150,125,195,.5)" vector-effect="non-scaling-stroke"></path></svg>Fights</span>
+      <span class="tab" style="z-index:2"><svg viewBox="0 0 100 30" preserveAspectRatio="none"><path d="M0 30 C4 30 6 3 12 1.5 C14 1 86 1 88 1.5 C94 3 96 30 100 30" fill="url(#tcu)" stroke="rgba(150,125,195,.5)" vector-effect="non-scaling-stroke"></path></svg>Leaders</span>
+    </nav>
+
+    <main class="page" style="flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden">
+      <div class="edge"></div>
+      <div class="ruled" style="flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;padding:0 16px 6px 46px;background-size:100% 100%,100% 28px;background-repeat:no-repeat,repeat-y;background-position:-14px 0,0 calc(100% - 6px);-webkit-mask-image:linear-gradient(to bottom,transparent,#000 7%);mask-image:linear-gradient(to bottom,transparent,#000 7%)">
+        <p class="ln day">Thu, Oct 1 · 4:41 PM</p>
+        <p class="ln"><span class="who">Rosa</span><span class="t">4:41</span></p>
+        <p class="ln">anyone want to summon the minotaur?</p>
+        <p class="ln"><span class="who">Dave</span><span class="t">4:42</span></p>
+        <p class="ln">yes. Poirot is ready, give me a sec</p>
+        <p class="ln"><span style="padding:2px 9px;border-radius:999px;font:700 10.5px/1.2 Nunito,sans-serif;letter-spacing:.04em;color:#5a4380;background:rgba(227,212,250,.8);box-shadow:inset 0 0 0 1px rgba(190,170,215,.6)">During fight #58</span></p>
+        <p class="ln"><span class="who">Rosa</span><span class="t">4:44</span></p>
+        <p class="ln">NAT 20 on the bull!!</p>
+        <div style="margin:0 -8px 0 -10px;padding:0 8px 0 10px;border-radius:10px;background:rgba(251,217,230,.45);box-shadow:inset 0 0 0 1px rgba(220,160,190,.42)">
+          <p class="ln"><svg width="13" height="10" viewBox="0 0 14 10" aria-hidden="true" style="align-self:center;margin-top:6px"><rect x=".7" y=".7" width="12.6" height="8.6" rx="2" fill="#fffdfa" stroke="#9a2f66" stroke-width="1"></rect><path d="M1.2 1.4 L7 5.6 L12.8 1.4" fill="none" stroke="#9a2f66" stroke-width="1"></path></svg><span class="who">Dave</span><span style="font:700 11px/1 Nunito,sans-serif;color:#9a2f66">to you</span><span class="t">4:45</span></p>
+          <p class="ln">nice. want my spare Blink after?</p>
+        </div>
+        <p class="ln day">Today</p>
+        <p class="ln"><span class="who">Mira</span><span class="t">9:02</span></p>
+        <p class="ln">is that a unicorn eating my roses</p>
+        <p class="ln"><span class="who">Rosa</span><span class="t">9:03</span></p>
+        <p class="ln">her name is Poirot and she has no regrets</p>
+      </div>
+
+      <form style="display:flex;flex-direction:column;gap:8px;padding:12px 14px 18px;border-top:1px solid rgba(190,170,215,.5);background:rgba(253,250,246,.9)">
+        <div style="display:flex;align-items:center;gap:8px">
+          <label for="to4" style="font-size:12px;font-weight:700;color:#695c8c">To</label>
+          <select id="to4" class="field" style="flex:1;font-weight:600;padding:9px 12px"><option>Everyone in the room</option></select>
+        </div>
+        <div style="display:flex;gap:8px">
+          <label for="m4" style="position:absolute;left:-9999px">Message</label>
+          <input id="m4" class="field" placeholder="Say something nice…" style="flex:1;min-width:0">
+          <button class="btn1">Send</button>
+        </div>
+      </form>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":940}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

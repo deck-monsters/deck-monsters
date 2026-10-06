@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Millefleur v3 level-up sheet</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.gain{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0;border-radius:14px;background:rgba(255,253,250,.8);border:1px solid rgba(190,170,215,.55)}
+.gain b{font:800 17px/1 Nunito,sans-serif;color:#1f6b57}
+.gain span{font:700 10px/1 Nunito,sans-serif;letter-spacing:.06em;color:#7a6e98}
+.chip{display:inline-block;padding:7px 12px;margin:0 6px 8px 0;font:700 12.5px/1.2 Nunito,sans-serif;color:#3b2a55;background:rgba(255,253,250,.85);border:1px solid rgba(190,170,215,.65);border-radius:999px}
+.btn1{font:800 14px/1 Nunito,sans-serif;color:#fff;background:linear-gradient(160deg,#5d4684,#3b2a55);border:0;border-radius:13px;padding:13px 22px;box-shadow:0 0 0 2px rgba(255,253,250,.95), 0 0 0 3.5px rgba(93,70,132,.5), 0 6px 14px rgba(93,70,132,.22)}
+</style>
+</helmet>
+<div style="position:relative;width:390px;height:940px;overflow:hidden;font-family:Nunito,sans-serif;color:#3b2a55;background:#fbf8f5">
+  <svg aria-hidden="true" width="390" height="940" style="position:absolute;inset:0">
+    <defs>
+      <filter id="l3a" x="-25%" y="-25%" width="150%" height="150%"><feTurbulence type="fractalNoise" baseFrequency="0.028" numOctaves="4" seed="9" result="n"></feTurbulence><feDisplacementMap in="SourceGraphic" in2="n" scale="11" xChannelSelector="R" yChannelSelector="G" result="d"></feDisplacementMap><feGaussianBlur in="d" stdDeviation="0.8"></feGaussianBlur></filter>
+    </defs>
+    <g filter="url(#l3a)">
+      <path d="M-50 30 C30 -40 200 -20 248 60 C292 132 210 214 112 208 C30 203 -70 160 -50 30Z" fill="#e3d4fa" opacity=".55"></path>
+      <path d="M300 300 C360 250 450 290 440 380 C432 460 380 520 320 500 C260 480 240 350 300 300Z" fill="#cdeee2" opacity=".55"></path>
+    </g>
+  </svg>
+  <div aria-hidden="true" style="position:absolute;left:14px;right:14px;top:150px;height:420px;border-radius:18px;background:rgba(255,253,250,.72);border:1px solid rgba(190,170,215,.55)"></div>
+  <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(75,58,110,.16),rgba(75,58,110,.3))"></div>
+
+  <section role="dialog" aria-labelledby="v3lvl" style="position:absolute;left:0;right:0;bottom:0;border-radius:26px 26px 0 0;background:#fdfaf6;border-top:1px solid rgba(190,170,215,.7);box-shadow:0 -10px 36px rgba(75,58,110,.2);overflow:hidden">
+    <svg aria-hidden="true" width="390" height="600" style="position:absolute;left:0;top:0">
+      <defs>
+        <filter id="l3b" x="-25%" y="-25%" width="150%" height="150%"><feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="4" seed="31" result="n"></feTurbulence><feDisplacementMap in="SourceGraphic" in2="n" scale="12" xChannelSelector="R" yChannelSelector="G" result="d"></feDisplacementMap><feGaussianBlur in="d" stdDeviation="0.9"></feGaussianBlur></filter>
+        <filter id="l3g"><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="4" stitchTiles="stitch"></feTurbulence><feColorMatrix type="saturate" values="0"></feColorMatrix><feComponentTransfer><feFuncA type="linear" slope="0.22"></feFuncA></feComponentTransfer></filter>
+        <linearGradient id="l3fade" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity="1"></stop><stop offset=".55" stop-color="#fff" stop-opacity=".6"></stop><stop offset="1" stop-color="#fff" stop-opacity="0"></stop></linearGradient>
+        <mask id="l3m"><rect width="390" height="190" fill="url(#l3fade)"></rect></mask>
+      </defs>
+      <g filter="url(#l3b)" mask="url(#l3m)">
+        <path d="M-30 -20 C40 -30 110 10 100 70 C90 120 20 140 -30 120Z" fill="#fbcfe2" opacity=".75"></path>
+        <path d="M70 -30 C140 -40 200 0 190 60 C180 110 110 120 80 90 C50 60 30 -20 70 -30Z" fill="#fbe7b0" opacity=".7"></path>
+        <path d="M170 -30 C240 -40 290 10 280 70 C270 120 200 130 170 100 C140 70 130 -20 170 -30Z" fill="#c4ecdc" opacity=".75"></path>
+        <path d="M250 -30 C320 -40 370 0 365 60 C360 115 290 125 260 95 C230 65 215 -20 250 -30Z" fill="#c8ddfa" opacity=".75"></path>
+        <path d="M330 -30 C400 -40 430 20 420 80 C410 130 350 130 330 100 C310 70 300 -20 330 -30Z" fill="#dccbfa" opacity=".8"></path>
+      </g>
+      <rect width="390" height="600" filter="url(#l3g)" style="mix-blend-mode:multiply" opacity=".5"></rect>
+    </svg>
+
+    <div style="position:relative;height:50px;display:flex;align-items:center;justify-content:center">
+      <div aria-hidden="true" style="position:absolute;left:60px;right:60px;top:19px;height:11px;background:repeating-linear-gradient(to bottom,rgba(80,60,120,.22) 0 1px,transparent 1px 3px);-webkit-mask-image:linear-gradient(90deg,transparent,#000 20%,#000 80%,transparent);mask-image:linear-gradient(90deg,transparent,#000 20%,#000 80%,transparent)"></div>
+      <span style="position:relative;padding:4px 14px;border-radius:999px;background:rgba(253,250,246,.95);border:1px solid rgba(190,170,215,.6);font:800 13px/1 Nunito,sans-serif;letter-spacing:.04em;color:#2f2147">Level up</span>
+      <button aria-label="Close" style="position:absolute;left:8px;top:3px;width:44px;height:44px;border:0;background:transparent;display:flex;align-items:center;justify-content:center;padding:0"><span style="width:20px;height:20px;border-radius:6px;background:rgba(253,250,246,.95);border:1px solid rgba(90,67,128,.5);display:flex;align-items:center;justify-content:center;box-sizing:border-box"><svg width="8" height="8" viewBox="0 0 8 8"><path d="M1 1 L7 7 M7 1 L1 7" stroke="#3b2a55" stroke-width="1.4" stroke-linecap="round"></path></svg></span></button>
+    </div>
+
+    <div style="position:relative;padding:12px 22px 28px;display:flex;flex-direction:column;gap:18px">
+      <div style="display:flex;align-items:center;gap:16px">
+        <div style="position:relative;width:76px;height:76px;flex:none">
+          <div aria-hidden="true" style="position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 210deg,#fbd2e4,#fbecbe,#c9eedf,#cfe2fb,#e0d0fb,#fbd2e4);filter:blur(6px)"></div>
+          <div style="position:absolute;inset:7px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#fffdfa,#f6f0fd);display:flex;align-items:center;justify-content:center;font:800 28px/1 Nunito,sans-serif;color:#9a2f66">3</div>
+        </div>
+        <div>
+          <h2 id="v3lvl" style="margin:0;font:800 22px/1.15 Nunito,sans-serif;color:#2f2147">Poirot at level 3</h2>
+          <p style="margin:6px 0 0;font-size:13px;line-height:1.45;color:#6e6190">15 more XP to go (13 of 28). Monsters earn XP in the ring, most of it from wins.</p>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px">
+        <div class="gain"><b>+3</b><span>MAX HP</span></div>
+        <div class="gain"><b>+1</b><span>AC</span></div>
+        <div class="gain"><b>+1</b><span>STR</span></div>
+        <div class="gain"><b>+1</b><span>DEX</span></div>
+        <div class="gain"><b>+1</b><span>INT</span></div>
+      </div>
+
+      <div>
+        <div style="font:700 12px/1 Nunito,sans-serif;color:#6e6190;margin-bottom:10px">New cards she can use</div>
+        <div>
+          <span class="chip">Horn of Proof</span><span class="chip">Unconquerable Horn</span><span class="chip">Brain Drain</span><span class="chip">Soften</span><span class="chip">Molasses</span><span class="chip">Wooden Spear</span>
+        </div>
+      </div>
+
+      <div><button class="btn1">Close</button></div>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":940}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Millefleur Chat</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@1,9..144,600&amp;family=Nunito:wght@400;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.tab{flex:none;padding:9px 14px 8px;font:700 13px/1 Nunito,sans-serif;color:#66568a;background:#efe4ff;border:1px solid #d9c6ea;border-bottom:0;border-radius:10px 10px 0 0;margin-right:-4px;position:relative}
+.tab.sea{background:#dcf5ee}.tab.sky{background:#e1efff}.tab.blush{background:#ffe3ee}.tab.butter{background:#fff3d1}
+.tab.on{background:#fffefd;color:#1d0f33;z-index:2;padding-bottom:10px;margin-bottom:-1px;box-shadow:inset 0 2px 0 #fffefd, inset 0 3px 0 #e1efff}
+.msg{margin:0;font-size:14px;line-height:28px;color:#33204f}
+.who{font-weight:800;color:#1d0f33}
+.t{font-size:11px;color:#66568a;margin-left:6px}
+</style>
+</head>
+<body style="margin:0">
+<div style="width:390px;height:940px;box-sizing:border-box;overflow:hidden;font-family:Nunito,sans-serif;color:#33204f;background:#fbf7fd;display:flex;flex-direction:column">
+
+  <header style="display:flex;align-items:center;gap:8px;padding:14px 16px 12px;background:#ffffff;box-shadow:0 3px 0 0 #ffe3ee, 0 4px 0 #fff3d1, 0 5px 0 #dcf5ee, 0 6px 0 #e1efff, 0 7px 0 #efe4ff">
+    <span style="font:800 13px/1 Nunito,sans-serif;letter-spacing:.12em;color:#1d0f33">DECK MONSTERS</span>
+    <span style="color:#cdb8e3">/</span>
+    <span style="font:600 italic 17px/1 Fraunces,serif;color:#a3196b;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Crazy chickens</span>
+    <button aria-label="Open menu" style="width:34px;height:34px;border:1px solid #33204f;border-radius:8px;background:#fff;display:flex;align-items:center;justify-content:center;padding:0"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#33204f" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h16"></path></svg></button>
+  </header>
+
+  <nav aria-label="Places" style="display:flex;align-items:flex-end;padding:18px 0 0 12px;overflow:hidden;border-bottom:1px solid #d9c6ea">
+    <span class="tab">The Ring</span>
+    <span class="tab sea">Console</span>
+    <span class="tab on">Chat</span>
+    <span class="tab">Workshop</span>
+    <span class="tab butter">Fights</span>
+    <span class="tab blush">Leaders</span>
+  </nav>
+
+  <main style="flex:1;min-height:0;display:flex;flex-direction:column;background-color:#fffefd;background-image:linear-gradient(to right, transparent 34px, #f4c6d9 34px, #f4c6d9 35px, transparent 35px), repeating-linear-gradient(to bottom, transparent 0 27px, #dfe9f8 27px 28px);background-position:0 6px">
+    <div style="flex:1;min-height:0;overflow:hidden;padding:14px 16px 0 46px">
+
+      <div style="display:flex;align-items:center;gap:8px;height:28px;color:#66568a;font:600 italic 13px/1 Fraunces,serif;justify-content:center">
+        <span>✿</span><span>Thu, Oct 1 at 4:41 PM</span><span>✿</span>
+      </div>
+      <p class="msg"><span class="who">Rosa</span><span class="t">4:41</span></p>
+      <p class="msg">anyone want to summon the minotaur with me?</p>
+      <p class="msg"><span class="who">Dave</span><span class="t">4:42</span></p>
+      <p class="msg">yes. Poirot is ready, give me a sec</p>
+
+      <div style="height:28px;display:flex;align-items:center">
+        <span style="display:inline-block;padding:2px 10px;font:800 10px/1.6 Nunito,sans-serif;letter-spacing:.05em;color:#4b2f7a;background:#efe4ff;transform:rotate(-1deg);box-shadow:0 1px 2px rgba(51,32,79,.15)">DURING FIGHT #58</span>
+      </div>
+      <p class="msg"><span class="who">Rosa</span><span class="t">4:44</span></p>
+      <p class="msg">NAT 20 on the bull!!</p>
+
+      <p class="msg" style="display:flex;align-items:center;gap:8px"><span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:18px;border-radius:4px;background:#fff;box-shadow:0 0 0 1.5px #fff, 0 0 0 2.5px #a3196b, 0 1px 3px rgba(51,32,79,.25)"><svg width="14" height="10" viewBox="0 0 14 10"><rect x=".5" y=".5" width="13" height="9" rx="1" fill="#ffe3ee" stroke="#a3196b"></rect><path d="M1 1 L7 6 L13 1" fill="none" stroke="#a3196b"></path></svg></span><span class="who">Dave</span><span style="font-size:12px;color:#a3196b;font-weight:700">to you</span><span class="t">4:45</span></p>
+      <p class="msg">nice. want my spare Blink after?</p>
+
+      <div style="display:flex;align-items:center;gap:8px;height:28px;color:#66568a;font:600 italic 13px/1 Fraunces,serif;justify-content:center;margin-top:28px">
+        <span>✿</span><span>Today</span><span>✿</span>
+      </div>
+      <p class="msg"><span class="who">Mira</span><span class="t">9:02</span></p>
+      <p class="msg">is that a unicorn eating my roses</p>
+    </div>
+
+    <form style="display:flex;flex-direction:column;gap:8px;padding:12px 16px 18px;background:#ffffff;border-top:1px solid #33204f">
+      <div style="display:flex;align-items:center;gap:8px">
+        <label for="to" style="font-size:12px;font-weight:700;color:#66568a">To</label>
+        <select id="to" style="flex:1;font:600 14px Nunito,sans-serif;color:#33204f;padding:8px 10px;border:1px solid #33204f;border-radius:8px;background:#fff"><option>Everyone in the room</option></select>
+      </div>
+      <div style="display:flex;gap:8px">
+        <label for="m" style="position:absolute;left:-9999px">Message</label>
+        <input id="m" placeholder="Say something nice…" style="flex:1;min-width:0;font:400 14px Nunito,sans-serif;color:#33204f;padding:11px 12px;border:1px solid #33204f;border-radius:8px;box-shadow:inset 1px 1px 0 #e3d6f0">
+        <button style="font:800 14px/1 Nunito,sans-serif;color:#fff;background:#33204f;border:0;border-radius:8px;padding:0 18px;box-shadow:0 0 0 2px #fff, 0 0 0 4px #33204f">Send</button>
+      </div>
+    </form>
+  </main>
+</div>
+</body>
+</html>
