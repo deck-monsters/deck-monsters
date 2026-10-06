@@ -382,6 +382,6 @@ Docs owed for task 8 are updated in the same commit as this note. Do not open a 
 task 9 (flavour) alone. Do not archive this plan until task 9 lands.
 
 Still open for the next session: task 9, then the whole-branch review and the one PR
-(handoff item 4). Task 3d stays proposed. The scratch room used for this check should be
-deleted if it is still in the lobby; its name was "Scratch millefleur check 2026-10-06".
+(handoff item 4). Task 3d stays proposed. The scratch room for this check was deleted;
+Test Room A, Test Room B and Game Night were left in the lobby.
 
