@@ -8,8 +8,10 @@ import { feedBlocksOf, type FeedBlock, type FeedPart, type FeedStyle } from '../
  * `estimateFeedBlocksHeight` books, so a theme's styling here must not change a block's line
  * count or vertical chrome without going through `readFeedMetrics`.
  *
- * Card frames keep the existing `.event-card-block` panel: title line, a CSS rule, then the
- * body. Sprites are not drawn inside a card (its columns are monospace art).
+ * Card frames keep the existing `.event-card-block` panel. Millefleur draws a title line, a CSS
+ * rule, then the body; the terminal themes draw the engine's own ASCII frame (rules included,
+ * no title line), as Discord does. Sprites are not drawn inside a card (its columns are
+ * monospace art).
  */
 function renderPart(part: FeedPart, key: string, mentions?: MonsterMentions | null): React.ReactNode {
   const nodes = formatLineText(part.text, key, mentions, part.markup === true);
@@ -23,7 +25,7 @@ function FeedLineBlock({ block, mentions }: { block: FeedBlock; mentions?: Monst
   if (block.card) {
     return (
       <div className="feed-line feed-line-card event-card-block" data-kind="card">
-        <div className="feed-card-title">{block.card.title}</div>
+        {block.card.title && <div className="feed-card-title">{block.card.title}</div>}
         {block.card.body && <div className="feed-card-body">{block.card.body}</div>}
       </div>
     );

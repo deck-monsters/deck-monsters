@@ -373,6 +373,10 @@ which remains the default and the text form.
 - A theme opts in; the row-height guess counts the component's height the way it counts a card
   frame today (`feed-row-height.ts`).
 - Start with the Ring and Console feeds; the card details sheet already draws a card from data.
+- The terminal themes draw a card line as the engine's ASCII frame (rules redrawn at 34
+  columns), but the line has no blank line between the description and the stats, so the
+  frame reads a little tighter than the old fenced text. The structured fields
+  (`description`, `stats`) are enough to restore that break here.
 
 ## L. A Street Fighter level badge (owner, 2026-10-06)
 

@@ -46,10 +46,21 @@ describe('composeFeedBlocks (terminal)', () => {
     expect(blocks[5]!.indent).toBe(4);
   });
 
-  it('keeps a card as a panel with its title and body', () => {
+  // The terminal themes draw the engine's ASCII frame, as Discord does (owner, 2026-10-06).
+  it('keeps a card as the ASCII frame, rules included', () => {
     const [block] = composeFeedBlocks(
       [{ kind: 'card', text: '👊  Hit  •\nA basic attack.', title: 'Hit  •' }],
       'terminal',
+    );
+    const heavy = '='.repeat(34);
+    const light = '-'.repeat(34);
+    expect(block!.card).toEqual({ title: '', body: [heavy, '👊  Hit  •', light, 'A basic attack.', heavy].join('\n') });
+  });
+
+  it('keeps Millefleur\'s card as a title over its body', () => {
+    const [block] = composeFeedBlocks(
+      [{ kind: 'card', text: '👊  Hit  •\nA basic attack.', title: 'Hit  •' }],
+      'millefleur',
     );
     expect(block!.card).toEqual({ title: '👊  Hit  •', body: 'A basic attack.' });
   });

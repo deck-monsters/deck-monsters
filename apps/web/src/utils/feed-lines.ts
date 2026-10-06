@@ -157,9 +157,21 @@ function hasNumericRollFacts(roll: Extract<FeedLine, { kind: 'roll' }>): roll is
 	return Number.isFinite(roll.natural) && Number.isFinite(roll.bonus) && Number.isFinite(roll.total) && roll.result !== undefined;
 }
 
+/** The engine's card frame rules (`helpers/card.ts` `formatCard`), 34 columns. */
+const CARD_RULE_HEAVY = '='.repeat(34);
+const CARD_RULE_LIGHT = '-'.repeat(34);
+
 function plainBlock(line: FeedLine, key: string, style: FeedStyle): FeedBlock {
 	if (line.kind === 'card') {
 		const [title = '', ...rest] = line.text.split('\n');
+		if (style === 'terminal') {
+			// The terminal themes keep the ASCII frame Discord shows (owner, 2026-10-06: "for the
+			// terminal interfaces … the ascii style render is preferred"). The engine's line drops
+			// the rules, so they are redrawn here at the frame's 34 columns; the frame is all body,
+			// so the row estimate counts every rule as the line it is.
+			const body = [CARD_RULE_HEAVY, title, CARD_RULE_LIGHT, ...rest, CARD_RULE_HEAVY].join('\n');
+			return { key, kind: 'card', indent: 0, parts: [], card: { title: '', body } };
+		}
 		return { key, kind: 'card', indent: 0, parts: [], card: { title, body: rest.join('\n') } };
 	}
 	// The threshold line already says "is now bloodied" (hit.ts). Appending the clause
@@ -261,7 +273,7 @@ export function composeFeedBlocks(lines: readonly FeedLine[], style: FeedStyle):
 
 /** The text a block puts on screen, for the estimate: parts joined, a card's lines kept. */
 export function blockText(block: FeedBlock): string {
-	if (block.card) return block.card.body ? `${block.card.title}\n${block.card.body}` : block.card.title;
+	if (block.card) return [block.card.title, block.card.body].filter(Boolean).join('\n');
 	return block.parts.map((part) => part.text).join('');
 }
 
