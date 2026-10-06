@@ -63,24 +63,27 @@ a slow seed or a fight that never ends.
 
 - [ ] Time each fight in a long run and look at the slowest seeds' logs.
 
-### L. Millefleur size and performance acceptance
+### L. Millefleur stylesheet condensation
 
-**Owner:** Web themes. Found in roadmap 46's branch review (2026-10-06).
+**Owner:** Web themes. Found in roadmap 46's branch review (2026-10-06). The size
+decision below is from the owner the same day.
 
 **Root cause:** successive surface/mock-fidelity passes appended overrides to the lazy
 stylesheet without rechecking the original source-size budget. The final source is
 80,553 bytes, against roadmap 46 §8's 12 KB unminified limit; the roadmap's 10.6 KB claim
-was from task 2. Lazy loading still isolates this CSS from players who never choose
-Millefleur. Recorded live checks cover screens, scrolling and first paint, but do not
-record the required Fast-3G run or fight-scroll frame timings, so they cannot establish
-runtime-budget acceptance.
+was from task 2. Duplicate-looking rules are often load-bearing, so a sweep that deletes
+them can change a screen without a test noticing.
 
-- [ ] Consolidate the cascade while preserving the approved screens, or have the owner
-  explicitly revise the budget with measured production CSS size.
-- [ ] Add or explicitly reconcile the planned Nunito 400 font preload; the lazy chunk
-  imports font faces but currently creates no font preload link.
-- [ ] Record the missing slow-network and scrolling frame-timing evidence. This is a
-  bounded performance check, not a repeat of the completed 46b screen checklist.
+**Decided (2026-10-06):** that size is not a ship gate. Millefleur's stylesheet, Nunito,
+and the watercolour assets are already a lazy chunk, so a player who stays on phosphor
+never downloads them. Production now caches hashed `assets/` for a year and revalidates
+`index.html` ([deployment](../operations/deployment.md#2b-service-web-static-spa)). The
+Fast-3G run and fight-scroll frame timings from §7 were never recorded; they are not
+required to ship this theme.
+
+- [ ] Condense duplicate rules in `theme-millefleur.css` in a careful pass, checked
+  screen by screen at 390 and 1440 on Millefleur and on phosphor. Do not treat the old
+  12 KB figure as the target, and do not restyle the dark themes.
 
 ## Historical detail
 

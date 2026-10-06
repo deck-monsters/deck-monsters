@@ -28,8 +28,10 @@ ASCII `=` rules inside a card; the frame is a title, a CSS rule and the body, an
 lines are separated by the CSS gap. Colours and chrome otherwise match each dark
 theme. This check did not boot `main` beside them. Task 3d's backports have since
 been reviewed; the level badge stays withheld. The level-up sheet opened from the XP bar at 4/28; a real level-up was not
-reached. Task 9 has since been looked at in the Ring (see roadmap 46). Do not archive
-roadmap 46 until the CSS budget is decided.
+reached. Task 9 has since been looked at in the Ring (see roadmap 46). The owner
+accepted the stylesheet size on 2026-10-06; condensing it is a later careful pass
+in [10, item L](10-bug-fixes.md#l-millefleur-stylesheet-condensation), not a reason
+to hold this theme.
 
 Shots below live in `docs/roadmap/46b-shots/`. Widths are CSS pixels. Phosphor is the
 theme with no `data-theme` attribute.

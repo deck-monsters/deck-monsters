@@ -12,9 +12,10 @@ tags: [roadmap, web, theme, design, unicorn, accessibility]
 `claude/unicorn-monster-cards-cigpmw`. The branch review fixed feed-fidelity
 findings. Task 9's narration was looked at in the Ring: the reviewed drafts read
 cleanly after the call and the house arrival, on a phone and on a desktop. This
-page stays active. The implementation and the Ring look are done. What remains is
-recorded below for the closing pass. One PR for the whole theme, opened only when
-the owner asks.
+page stays active. The implementation and the Ring look are done. Phosphor stays
+the starting theme, and the stylesheet size is accepted. What remains is recorded
+below for the closing pass. One PR for the whole theme, opened only when the owner
+asks.
 
 - **The design:** [Millefleur design system](../reference/millefleur/design-system.md), with
   [the brief and artist statement](../reference/millefleur/README.md), [the final
@@ -38,9 +39,12 @@ From the owner's reviews of rendered screens, 2026-10-05 to 2026-10-06:
 - **The other directions:** Holo Folder's soft rainbow became the holo fade. Gloaming (a dark
   sibling) is not planned; the owner did not favour it. Dream Desktop becomes its own theme,
   [roadmap 47](47-dream-desktop-theme.md).
-- **Still open:** whether a phone set to light mode should start on Millefleur (today every new
-  player gets phosphor, `useTheme.ts`), and painted portraits for the Workshop (a separate art
-  pass). Neither is part of finishing this branch.
+- **Starting theme:** Phosphor. Millefleur is a light theme a player turns on. The app does
+  not follow the phone's light or dark setting (`prefers-color-scheme`). Recorded 2026-10-06.
+  The [brief](../reference/millefleur/README.md) already said this: a choice in its own right,
+  not a light mode.
+- **Still open:** painted portraits for the Workshop (a separate art pass). Not part of
+  finishing this branch.
 
 ## Handoff — ready to finalize (2026-10-06)
 
@@ -62,15 +66,24 @@ To finish the branch:
 
 1. Read this page against the code and remove any sentence that still says task 9 is
    waiting. Do not restyle the dark themes, and do not repeat the 46b screen tour.
-2. Leave [10, item L](10-bug-fixes.md#l-millefleur-size-and-performance-acceptance)
-   where it is. Task 4's screens are done. The stylesheet is 80,553 bytes against
-   the 12 KB budget in §8, and the Fast-3G and fight-scroll timings were never
-   recorded. That is an owner decision, not a reason to reopen the paint. Do not
-   start a CSS diet or a new performance tour unless the owner asks.
-3. The two decisions above (light-mode default, Workshop portraits) stay open and
-   already have a home on this page. Dream Desktop is [roadmap 47](47-dream-desktop-theme.md).
-4. When the owner asks, open the one pull request for this branch. Do not archive
-   this page while item L and those two decisions are open.
+2. The stylesheet size is not a ship gate. The owner said so on 2026-10-06: 80,553
+   bytes against the old 12 KB line in §8 is acceptable. Do not start a CSS diet or
+   a Fast-3G tour to close this branch. Millefleur's stylesheet, Nunito, and the
+   watercolour assets are already a lazy chunk (`LAZY_THEMES` in `useTheme.ts`,
+   started from `main.tsx` only when `data-theme` is already `millefleur`). Do not
+   add a second loader. A later pass may streamline duplicate rules. That pass is
+   [10, item L](10-bug-fixes.md#l-millefleur-stylesheet-condensation) and has to be
+   checked screen by screen, because rules that look repeated are often load-bearing.
+3. Production caching is `apps/web/serve.json`, wired by `pnpm start`
+   (`serve dist -s -c ../serve.json`). Hashed files under `assets/` are cached for a
+   year as immutable. `index.html`, including the SPA fallback, is revalidated.
+   Before that file, `serve` sent ETags and no `Cache-Control`. The header contract
+   is in the [deployment guide](../operations/deployment.md#2b-service-web-static-spa).
+4. Workshop portraits stay open, on this page. The light-theme question above is
+   closed. Dream Desktop is [roadmap 47](47-dream-desktop-theme.md).
+5. When the owner asks, open the one pull request for this branch. Do not archive
+   this page while the Workshop portraits are still only recorded here. The CSS
+   condensation checkbox already has a home on item L.
 
 Before each push: `pnpm build && pnpm typecheck && pnpm lint && pnpm test` and
 `pnpm docs:check`.
@@ -273,9 +286,14 @@ CRT treatment:
 |---|---|
 | Fonts (only under this theme) | ≤ 70 KB latin, one preloaded |
 | Textures | Four baked watercolour WebPs ≤ 40 KB each, one grain tile ≤ 10 KB, all in the lazy chunk |
-| CSS | `theme-millefleur.css` ≤ 12 KB unminified |
+| CSS | `theme-millefleur.css` ≤ 12 KB unminified (revised 2026-10-06: not a ship gate; see below) |
 | Other themes | No font or texture bytes. Millefleur's CSS and `@font-face` rules are a separate chunk loaded by dynamic `import()`; the shared bundle grows only by the `THEMES` entry, the pre-paint colour map, and the first-paint block (< 1 KB, §4). Pixel-identical before and after task 1 |
 | Runtime | No `backdrop-filter`, no live SVG filters, no blend modes on scrolling rows; no layout shift (the feed font is unchanged) |
+
+The owner revised the CSS line on 2026-10-06. The shipped source is 80,553 bytes, and
+that is not a reason to hold the theme. The chunk is lazy, and production caches the
+hashed files (the handoff above). Condensing duplicate rules is a later careful pass
+([10, item L](10-bug-fixes.md#l-millefleur-stylesheet-condensation)).
 
 ### 9. Task table
 
@@ -387,8 +405,10 @@ renderer (task 8), and new flavour (task 9). Discord keeps the text it has today
 - **Budget evidence.** The task-2 10.6 KB figure describes that early checkpoint, not
   the final stylesheet. The current CSS source is 80,553 bytes; §8's 12 KB unminified
   limit is not met. Recorded task-6 checks do not include Fast-3G or fight-scroll frame
-  timings. These remain open in [10, item L](10-bug-fixes.md#l-millefleur-size-and-performance-acceptance).
-  The completed 46b checklist is not being repeated.
+  timings. The owner accepted that on 2026-10-06: the size is not a ship gate, and those
+  timings are not required to close the theme. A careful condensation pass remains in
+  [10, item L](10-bug-fixes.md#l-millefleur-stylesheet-condensation). The completed 46b
+  checklist is not being repeated.
 - **Deviation from §4:** the pre-paint script cannot name the lazy chunk (its file name is
   hashed), so instead of a `modulepreload` the chunk's import starts at the top of `main.tsx`,
   before React renders, whenever `data-theme` is already `millefleur`.
@@ -414,8 +434,8 @@ another PR. Cursor's task-6/task-8 browser checklist is complete in
    rotates all four owner-approved chants. The owner's revised drafts for the other
    five species (e83eb18f) are folded into the tables below and into the live pools.
 3. Task 9 was looked at in the Ring after the drafts were folded in. The lines are in
-   the tables above. Do not archive
-   roadmap 46. The CSS budget and missing performance evidence stay open as item L.
+   the tables above. The CSS size was later accepted (see the handoff at the top). Do
+   not archive roadmap 46 while the Workshop portraits are only recorded here.
 4. Before each checkpoint push: `pnpm build && pnpm typecheck && pnpm lint && pnpm test`
    and `pnpm docs:check`. The branch owner decides when to open its one PR.
 
@@ -425,10 +445,12 @@ Task 8 is live-checked and task 6's screen tour is recorded in
 [46b-cursor-check.md](46b-cursor-check.md). Bugs 235 and 236 are fixed (70a1309e, b51e3b1c).
 Docs owed for task 8 are updated in the same commit as this note. Do not open a PR.
 The reviewed entrance drafts are in the live pools and have been looked at in the
-Ring. Do not re-apply the drafts. Do not archive this plan while the CSS budget is open.
+Ring. Do not re-apply the drafts. The stylesheet size was later accepted; see the
+handoff at the top. Do not archive this plan while the Workshop portraits are only
+recorded here.
 
-Still open: the whole-branch review and the one PR (handoff item 4), and the CSS
-budget. Task 3d's two set-aside ideas stay set aside. The
+Still open from this note: the one PR, when the owner asks. Task 3d's two set-aside
+ideas stay set aside. The
 scratch room for the live check was deleted; Test Room A, Test Room B and Game Night
 were left in the lobby.
 
@@ -503,7 +525,8 @@ Minotaur roses clause stays on the original temper line only. The sheep bone and
 pilfered goblet connect to the Dragon's appetite and hoard; the other lines connect
 to species lore and running jokes. Generated species/pronoun examples live in the
 [strings inventories](../reference/strings/README.md), regenerated from the same source.
-The Ring look is recorded below. Do not archive this roadmap while the CSS budget is open.
+The Ring look is recorded below. The stylesheet size was later accepted; see the handoff
+at the top. Do not archive this roadmap while the Workshop portraits are only recorded here.
 
 
 ### Task 9 — verification checkpoint (2026-10-06)
@@ -511,7 +534,8 @@ The Ring look is recorded below. Do not archive this roadmap while the CSS budge
 The independent implementation review approved species/pronoun coverage, additive
 text/lines consistency, ring-scoped Minotaur roses, deterministic round rotation and
 the regenerated strings inventories. Build, typecheck, lint, all tests and docs checks
-passed. Owner editorial acceptance remains open.
+passed. Owner editorial acceptance was still open at this checkpoint. The Ring look
+below closed it.
 
 The configured remote database was unreachable. For this check, the existing test
 account authenticated normally against Supabase; a disposable localhost PostgreSQL
@@ -585,5 +609,7 @@ turned up in the ones on screen.
 
 This fight ended before a round rolled over, so a round beat was not on screen.
 Those beats were already checked at the earlier flavour checkpoint and were not
-part of the draft fold. The CSS budget in [10, item L](10-bug-fixes.md#l-millefleur-size-and-performance-acceptance)
-is still open. Do not archive this roadmap.
+part of the draft fold. The stylesheet size was later accepted. Condensing duplicate
+rules remains a careful pass in
+[10, item L](10-bug-fixes.md#l-millefleur-stylesheet-condensation). Do not archive this
+roadmap while the Workshop portraits are only recorded here.

@@ -211,6 +211,17 @@ That's it — no Dockerfile, no manual build command entry. Railway will read th
 build the SPA with Railpack, then serve it via
 [`serve`](https://github.com/vercel/serve).
 
+`pnpm start` runs `serve dist -s -c ../serve.json`. `serve` looks for its config inside the
+folder it serves (`dist`), so the `-c ../serve.json` flag is what points it at
+`apps/web/serve.json` in the package directory. Vite fingerprints everything under
+`dist/assets/` (scripts, styles, fonts, images). Those responses send
+`Cache-Control: public, max-age=31536000, immutable`. `index.html` is not fingerprinted, and
+the SPA fallback (`-s`) serves that same file for client routes, so it sends
+`Cache-Control: public, max-age=0, must-revalidate`. `serve` still adds ETags. Before
+`serve.json`, responses had ETags and no `Cache-Control`, so browsers only guessed how long
+to keep a hashed file. The dev server (`vite`) does not send these headers. Checked against
+`serve` 14.2.6 on 2026-10-06.
+
 Go to **Settings → Networking** and generate a public domain so you have a URL for the web app.
 
 Then go to **Variables** and add:

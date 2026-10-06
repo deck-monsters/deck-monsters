@@ -34,8 +34,9 @@ function getPreferredTheme(): Theme {
     return currentTheme ?? 'phosphor';
   }
   if (isValidTheme(stored)) return stored;
-  // Default to phosphor regardless of prefers-color-scheme — the entire app
-  // is dark-first by design.
+  // Phosphor is the start. A light theme is a player's choice: the phone's
+  // light or dark setting (prefers-color-scheme) is not a reason to switch.
+  // Millefleur stays available as a theme button, loaded only when chosen.
   return 'phosphor';
 }
 

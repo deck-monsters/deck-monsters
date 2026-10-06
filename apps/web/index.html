@@ -10,8 +10,10 @@
          a phosphor status bar for the first frames. Reads the same localStorage key, and
          sets data-theme and <meta name="theme-color"> synchronously. localStorage can throw
          (private windows, blocked site data), so everything is guarded and falls through to
-         phosphor. The id -> colour map repeats THEMES; theme-prepaint.test.ts keeps them
-         identical. -->
+         phosphor. A missing or unknown id stays on phosphor too, including when the
+         phone is set to light mode: Millefleur is a choice, not a match for
+         prefers-color-scheme. The id -> colour map repeats THEMES;
+         theme-prepaint.test.ts keeps them identical. -->
     <script>
       (function () {
         try {

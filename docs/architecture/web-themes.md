@@ -29,6 +29,14 @@ Phosphor has no `data-theme` attribute; `applyTheme` removes it. The choice is s
 `localStorage['deck-monsters-theme']`; every read and write is guarded, because storage can
 throw (private windows, blocked site data). A failed read falls back to the in-memory choice.
 
+## The starting theme
+
+Phosphor is the start for a new player. `getPreferredTheme` returns it when nothing valid is
+stored, and the pre-paint script in `index.html` does the same. The app does not read
+`prefers-color-scheme`. A phone set to light mode still opens on phosphor. Millefleur is a
+light theme the player turns on from the theme control; the
+[brief](../reference/millefleur/README.md) says the same thing, a choice in its own right.
+
 ## The token contract
 
 Every rule in `base.css` and `terminal.css` draws with tokens, and **every token's default on
@@ -111,6 +119,11 @@ before React runs, but the chunk arrives later. So:
 `themeAssetsReady(theme)` says whether a lazy theme's stylesheet has settled; the Ring waits
 for it before measuring the feed's type, and gives up waiting after a few seconds rather than
 leaving the feed empty.
+
+Those chunk files, the Nunito faces, and the watercolour textures are content-hashed under
+`assets/`. Production tells the browser to keep them; `index.html` stays revalidated so a
+deploy can point at new hashes. The header values live in the
+[deployment guide](../operations/deployment.md#2b-service-web-static-spa).
 
 ## Tests
 
