@@ -1,3 +1,4 @@
+import { usePaintSurface } from '../hooks/usePaintSurface.js';
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
 import { Link } from 'react-router-dom';
 import PaneDivider from './PaneDivider.js';
@@ -307,6 +308,9 @@ export default function Terminal({ roomId }: TerminalProps) {
   function isVisible(surfaceId: SurfaceId): boolean {
     return isSideBySide ? slots.includes(surfaceId) : slots[activeSlot] === surfaceId;
   }
+
+  // Chat or the Workshop wins the painted ground when it is on screen; otherwise the Ring's.
+  usePaintSurface(isVisible('chat') ? 'chat' : isVisible('workshop') ? 'workshop' : 'ring');
 
   return (
     <div

@@ -167,6 +167,38 @@
 }
 
 
+/* ── The painted ground ──
+   Each surface's watercolour from its sample, baked once (tools/bake.mjs) and never run as live
+   filters (§5, §8): the Ring's by default, the Workshop's and Chat's when that surface is on
+   screen (<html data-paint>, hooks/usePaintSurface.ts). The paper's fibre and grain are a
+   separate 128px tile multiplied over it, so the grain stays crisp at any width. The page and
+   cards are translucent paper, so the paint shows through them, faintly, as in the mocks.
+   The body carries it, behind the header and tabs too, because the mocks' washes bleed in from
+   the top of the screen. Painted once for the viewport: no blend modes on scrolling rows. */
+[data-theme='millefleur'] body {
+  --mf-paint: url('../themes/millefleur-paint/ring.webp');
+  background-color: var(--color-bg);
+  background-image: url('../themes/millefleur-paint/grain.webp'), var(--mf-paint);
+  background-size: 128px 128px, 100% auto;
+  background-position: 0 0, top center;
+  background-repeat: repeat, no-repeat;
+  background-blend-mode: multiply, normal;
+}
+/* The shells paint the page colour in every theme; here they let the ground through, or the
+   paint would show only behind the header. */
+[data-theme='millefleur'] .terminal-shell { background: transparent; }
+[data-theme='millefleur'][data-paint='workshop'] body { --mf-paint: url('../themes/millefleur-paint/workshop.webp'); }
+[data-theme='millefleur'][data-paint='chat'] body { --mf-paint: url('../themes/millefleur-paint/chat.webp'); }
+/* On a wide screen the 390px painting, width-fitted, would be ~3.7x tall; fit it to the
+   viewport instead and keep it still while the panes scroll (desktop only: a fixed background
+   is costly on phones). */
+@media (min-width: 1024px) {
+  [data-theme='millefleur'] body {
+    background-size: 128px 128px, 100% 100vh;
+    background-attachment: scroll, fixed;
+  }
+}
+
 /* ── Menu drawer and dialogs: paper with a soft lilac edge ── */
 [data-theme='millefleur'] .app-menu-drawer {
   background: var(--color-bg);
@@ -1160,17 +1192,13 @@
   border-bottom: 0;
   border-radius: 24px 24px 0 0;
   background-color: #fdfaf6;
-  /* Five washes, as strong as the mock's multiplied blobs and as deep (~135px): pink, butter,
-     sea-foam, sky and lilac, left to right, over paper. Positions are percentages of the width
-     so they hold on the wider dialog. The baked watercolour replaces this in pass 46b. */
-  background-image:
-    radial-gradient(150px 64px at 14% 22px, rgb(246 199 218 / 0.8) 0 45%, transparent 100%),
-    radial-gradient(130px 66px at 40% 26px, rgb(250 226 168 / 0.8) 0 45%, transparent 100%),
-    radial-gradient(95px 58px at 58% 62px, rgb(196 235 219 / 0.8) 0 45%, transparent 100%),
-    radial-gradient(140px 62px at 85% 20px, rgb(201 220 249 / 0.8) 0 45%, transparent 100%),
-    radial-gradient(75px 70px at 99% 72px, rgb(220 201 248 / 0.8) 0 45%, transparent 100%),
-    linear-gradient(#fdfaf6, #fdfaf6);
-  background-size: 100% 150px, 100% 150px, 100% 150px, 100% 150px, 100% 150px, 100% 100%;
+  /* The level-up sample's own painted header, baked (docs/reference/millefleur/tools/bake.mjs):
+     its five washes and the paper's grain, over the sheet's paper. Five CSS radial gradients
+     stood in here first and read as an amorphous blur beside the tuned watercolour (owner,
+     2026-10-06). Width-fitted, so a wider dialog shows the same painting, a little larger. */
+  background-image: url('../themes/millefleur-paint/sheet.webp');
+  background-position: top center;
+  background-size: 100% auto;
   background-repeat: no-repeat;
 }
 @media (min-width: 700px) {
@@ -1359,6 +1387,8 @@
 
 /* ── High contrast: white and black, 2px black borders, no washes, holo or texture; radii kept ── */
 @media (prefers-contrast: more) {
+  /* No paint and no grain under high contrast: plain white paper. */
+  [data-theme='millefleur'] body { background-image: none; background-color: #ffffff; }
   [data-theme='millefleur'] {
     --color-bg: #ffffff;
     --color-fg: #000000;

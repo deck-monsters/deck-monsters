@@ -1,3 +1,4 @@
+import { usePaintSurface } from '../hooks/usePaintSurface.js';
 import { useParams } from 'react-router-dom';
 import AppShell from '../components/AppShell.js';
 import WorkshopPanel from '../components/WorkshopPanel.js';
@@ -12,6 +13,7 @@ export type { SelectionState } from '../components/WorkshopPanel.js';
  * This host adds only the app chrome.
  */
 export default function WorkshopView() {
+  usePaintSurface('workshop');
   const { roomId } = useParams<{ roomId: string }>();
 
   // Only the room's name is needed here, for AppShell's header. Fetched directly rather
