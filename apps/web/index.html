@@ -5,6 +5,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <meta name="theme-color" content="#0a0e0a" />
     <title>Deck Monsters</title>
+    <!-- Pre-paint theme. applyTheme (hooks/useTheme.ts) only runs after React mounts, so
+         without this a returning player on a non-default theme gets the phosphor page and
+         a phosphor status bar for the first frames. Reads the same localStorage key, and
+         sets data-theme and <meta name="theme-color"> synchronously. localStorage can throw
+         (private windows, blocked site data), so everything is guarded and falls through to
+         phosphor. The id -> colour map repeats THEMES; theme-prepaint.test.ts keeps them
+         identical. -->
+    <script>
+      (function () {
+        try {
+          var colors = {
+            phosphor: '#0a0e0a',
+            amber: '#0a0800',
+            ember: '#12060a',
+            'street-fighter': '#060c1e'
+          };
+          var id = localStorage.getItem('deck-monsters-theme');
+          if (!id || !Object.prototype.hasOwnProperty.call(colors, id)) return;
+          if (id !== 'phosphor') document.documentElement.setAttribute('data-theme', id);
+          var meta = document.querySelector('meta[name="theme-color"]');
+          if (meta) meta.setAttribute('content', colors[id]);
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -1,12 +1,18 @@
 import { useCallback, useEffect, useSyncExternalStore } from 'react';
 
 const STORAGE_KEY = 'deck-monsters-theme';
+/**
+ * `themeColor` is the theme's `--color-bg`, for `<meta name="theme-color">` (the phone's
+ * status bar and the browser chrome). It is repeated in the inline pre-paint script in
+ * index.html, which cannot import this file; `theme-prepaint.test.ts` fails if the two
+ * drift apart, or from the theme stylesheets.
+ */
 export const THEMES = [
-  { id: 'phosphor', label: 'Phosphor (green on black)' },
-  { id: 'amber', label: 'Amber (orange on black)' },
-  { id: 'ember', label: 'Ember (red on black)' },
-  { id: 'street-fighter', label: 'Street Fighter (SNES, 1992)' },
-] as const satisfies ReadonlyArray<{ id: string; label: string }>;
+  { id: 'phosphor', label: 'Phosphor (green on black)', themeColor: '#0a0e0a' },
+  { id: 'amber', label: 'Amber (orange on black)', themeColor: '#0a0800' },
+  { id: 'ember', label: 'Ember (red on black)', themeColor: '#12060a' },
+  { id: 'street-fighter', label: 'Street Fighter (SNES, 1992)', themeColor: '#060c1e' },
+] as const satisfies ReadonlyArray<{ id: string; label: string; themeColor: string }>;
 
 export type ThemeId = typeof THEMES[number]['id'];
 export type Theme = ThemeId;
@@ -30,6 +36,19 @@ function applyTheme(theme: Theme): void {
     document.documentElement.removeAttribute('data-theme');
   } else {
     document.documentElement.setAttribute('data-theme', theme);
+  }
+
+  // The status bar follows the theme. index.html's pre-paint script sets it before first
+  // paint for a returning player; this keeps it right on every later change.
+  const themeColor = THEMES.find(({ id }) => id === theme)?.themeColor;
+  if (themeColor) {
+    let meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
+    if (!meta) {
+      meta = document.createElement('meta');
+      meta.name = 'theme-color';
+      document.head.appendChild(meta);
+    }
+    meta.content = themeColor;
   }
 
   // There used to be a per-theme `features` list here, mirrored onto a

@@ -13,7 +13,7 @@
 /* Tab bar — visible only on narrow screens */
 .terminal-tabs {
   display: none;
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: var(--border-width) solid var(--color-border);
   background: var(--color-bg);
 }
 
@@ -22,7 +22,7 @@
   background: transparent;
   border: none;
   color: var(--color-fg-dim);
-  font-family: var(--font-family);
+  font-family: var(--font-ui);
   font-size: var(--font-size);
   padding: 0.5rem 1rem;
   cursor: pointer;
@@ -47,7 +47,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  border-right: 1px solid var(--color-border);
+  border-right: var(--border-width) solid var(--color-border);
   min-width: 0; /* prevent grid blowout */
   /* Positioning context for anything absolutely placed inside a pane. Without it
      `.jump-to-bottom` resolved against `.terminal-shell` — the whole two-pane grid —
@@ -68,7 +68,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  border-right: 1px solid var(--color-border);
+  border-right: var(--border-width) solid var(--color-border);
   min-width: 0; /* prevent grid blowout */
   position: relative;
   container-type: inline-size;
@@ -76,9 +76,9 @@
 
 .pane-selector {
   background: transparent;
-  border: 1px solid var(--color-border);
+  border: var(--border-width) solid var(--color-border);
   color: var(--color-fg-dim);
-  font-family: var(--font-family);
+  font-family: var(--font-ui);
   font-size: 0.7rem;
   padding: 0.1rem 0.3rem;
   cursor: pointer;
@@ -112,7 +112,7 @@
 
 .pane-header {
   padding: 0.35rem var(--pane-padding);
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: var(--border-width) solid var(--color-border);
   font-size: 0.75rem;
   color: var(--color-fg-dim);
   text-transform: uppercase;
@@ -165,6 +165,9 @@
    "a level 6 Minotaur". Padding belongs on `.event-feed-list`, which is a normal-flow
    child and measures against the content box. See 10b-bugs-fixed.md #98. */
 .event-feed {
+  /* The feed is monospace on every theme: rows are booked at JetBrains Mono's advance
+     (utils/feed-row-height.ts) and card frames are ASCII rules. */
+  font-family: var(--font-mono);
   list-style: none;
   flex: 1;
   overflow-y: auto;
@@ -178,6 +181,7 @@
 
 /* The empty placeholder renders outside `.event-feed-list`, so it needs its own gutter. */
 .event-feed-empty {
+  font-family: var(--font-mono);
   padding: var(--pane-padding);
 }
 
@@ -303,7 +307,7 @@
 
 /* Styled panel for triple-backtick blocks from the engine (card/item/monster displays) */
 .event-card-block {
-  border: 1px solid var(--color-border);
+  border: var(--border-width) solid var(--color-border);
   background: var(--color-input-bg);
   padding: 0.5rem 0.75rem;
   margin: 0.4rem 0;
@@ -316,7 +320,7 @@
   display: flex;
   gap: 0.4rem;
   padding: 0.4rem var(--pane-padding);
-  border-top: 1px solid var(--color-border);
+  border-top: var(--border-width) solid var(--color-border);
   overflow-x: auto;
   flex-shrink: 0;
   scrollbar-width: none;
@@ -328,9 +332,9 @@
 
 .quick-action-chip {
   background: transparent;
-  border: 1px solid var(--color-border);
+  border: var(--border-width) solid var(--color-border);
   color: var(--color-fg-dim);
-  font-family: var(--font-family);
+  font-family: var(--font-ui);
   font-size: 0.8rem;
   padding: 0.2rem 0.5rem;
   white-space: nowrap;
@@ -352,7 +356,7 @@
   flex-direction: column;
   gap: 0.5rem;
   padding: 0.6rem var(--pane-padding);
-  border-top: 1px solid var(--color-border);
+  border-top: var(--border-width) solid var(--color-border);
   flex-shrink: 0;
   position: relative;
 }
@@ -387,7 +391,8 @@
 
 /* Command input dock */
 .command-dock {
-  border-top: 1px solid var(--color-border);
+  font-family: var(--font-mono); /* the Console prompt and typed commands, like the feed above */
+  border-top: var(--border-width) solid var(--color-border);
   display: flex;
   align-items: center;
   flex-shrink: 0;
@@ -413,7 +418,7 @@
   justify-content: space-between;
   gap: 0.75rem;
   padding: 0.55rem 0.7rem;
-  border: 1px solid var(--color-warning, var(--color-accent));
+  border: var(--border-width) solid var(--color-warning, var(--color-accent));
   background: var(--color-bg);
   color: var(--color-fg-bright);
   font-size: 0.75rem;
@@ -432,7 +437,7 @@
   background: transparent;
   border: none;
   color: var(--color-fg);
-  font-family: var(--font-family);
+  font-family: var(--font-mono);
   font-size: var(--font-size);
   line-height: var(--line-height);
   height: var(--input-height);
@@ -464,9 +469,9 @@
   bottom: 0.75rem;
   right: 1rem;
   background: var(--color-choice-hover);
-  border: 1px solid var(--color-border);
+  border: var(--border-width) solid var(--color-border);
   color: var(--color-fg);
-  font-family: var(--font-family);
+  font-family: var(--font-ui);
   font-size: 0.75rem;
   padding: 0.25rem 0.6rem;
   cursor: pointer;
@@ -572,9 +577,9 @@
   right: -3px;
   min-width: 0.85rem;
   padding: 0 0.2rem;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--color-accent);
-  color: var(--color-bg);
+  color: var(--color-on-accent);
   /* 13px tall: it ends above the label's line box (which starts 14px down in the 44px tab),
      so it sits in the corner and never covers a letter. */
   font-size: 0.55rem;
@@ -591,7 +596,7 @@
   text-align: center;
   color: var(--color-fg-dim);
   background: var(--color-input-bg);
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: var(--border-width) solid var(--color-border);
   flex-shrink: 0;
 }
 
@@ -607,7 +612,7 @@
    Colours come from theme tokens so every theme picks it up automatically. */
 .ring-roster {
   flex-shrink: 0;
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: var(--border-width) solid var(--color-border);
   background: var(--color-input-bg);
   /* Never let a big roster crowd out the feed — it scrolls internally instead. */
   max-height: 40%;
@@ -835,7 +840,7 @@
   padding: 0.25rem var(--pane-padding) 0.4rem;
   font-size: 0.66rem;
   color: var(--color-fg-dim);
-  border-top: 1px dashed var(--color-border);
+  border-top: var(--border-width) dashed var(--color-border);
 }
 
 .roster-legend li { display: inline-flex; align-items: center; }
@@ -905,7 +910,7 @@
 .roster-tag {
   flex: 0 0 auto;
   padding: 0 0.3rem;
-  border: 1px solid var(--color-border);
+  border: var(--border-width) solid var(--color-border);
   border-radius: 2px;
   font-size: 0.6rem;
   text-transform: uppercase;
@@ -921,7 +926,7 @@
 .roster-bar-track {
   height: 4px;
   margin: 0.15rem 0;
-  background: var(--color-border);
+  background: var(--color-meter-track);
   border-radius: 2px;
   overflow: hidden;
 }
@@ -1025,7 +1030,7 @@
   font-size: 0.6rem;
   letter-spacing: 0.1em;
   padding: 0.05rem 0.3rem;
-  border: 1px solid currentColor;
+  border: var(--border-width) solid currentColor;
   border-radius: 2px;
   white-space: nowrap;
   color: var(--color-fg-dim);
@@ -1033,10 +1038,10 @@
 
 /* A natural 20 and a kill are the loudest; a crit fail is loud but not good news. */
 .event-highlight-nat20 { border-left-color: var(--color-hp-healthy, var(--color-success)); }
-.event-highlight-nat20 .highlight-tag { color: var(--color-hp-healthy, var(--color-success)); }
+.event-highlight-nat20 .highlight-tag { color: var(--color-highlight-good); }
 
 .event-highlight-critFail { border-left-color: var(--color-hp-hurt, var(--color-accent)); }
-.event-highlight-critFail .highlight-tag { color: var(--color-hp-hurt, var(--color-accent)); }
+.event-highlight-critFail .highlight-tag { color: var(--color-highlight-warn); }
 
 .event-highlight-kill { border-left-color: var(--color-error); }
 .event-highlight-kill .highlight-tag { color: var(--color-error); }
@@ -1066,7 +1071,7 @@
   min-width: 0;
 }
 .surface-panel-heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
-.ring-items { border-bottom: 1px solid var(--color-border); padding: 0.45rem 0.75rem; background: var(--color-input-bg); font-size: 0.78rem; }
+.ring-items { border-bottom: var(--border-width) solid var(--color-border); padding: 0.45rem 0.75rem; background: var(--color-input-bg); font-size: 0.78rem; }
 .ring-items summary { cursor: pointer; color: var(--color-accent); font-weight: 700; }
 .ring-items p { margin: 0.35rem 0; color: var(--color-fg-dim); }
 .ring-items-actions { display: flex; flex-wrap: wrap; gap: 0.35rem; }
@@ -1076,13 +1081,16 @@
 .surface-panel-subtitle { margin: 0.25rem 0 0; color: var(--color-fg-dim); font-size: 0.85rem; }
 .surface-muted { color: var(--color-fg-dim); }
 .fight-log-list { list-style: none; padding: 0; margin: 0; }
-.fight-log-card { border: 1px solid var(--color-border); border-radius: 6px; padding: .75rem; margin-bottom: .5rem; background: var(--color-bg-elevated, var(--color-bg)); }
+.fight-log-card { border: var(--border-width) solid var(--color-border); border-radius: 6px; padding: .75rem; margin-bottom: .5rem; background: var(--color-bg-elevated, var(--color-bg)); }
 .fight-log-summary { all: unset; box-sizing: border-box; cursor: pointer; width: 100%; display: grid; gap: .25rem; overflow-wrap: anywhere; }
 .fight-log-summary:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 3px; }
 .fight-log-retry { all: unset; box-sizing: border-box; cursor: pointer; min-height: 44px; display: inline-flex; align-items: center; color: var(--color-accent); text-decoration: underline; }
 .fight-log-retry:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 3px; }
 .fight-streak { color: var(--color-accent); font-size: .8rem; }
-.fight-log-detail { margin-top: .75rem; font-size: .85rem; font-family: var(--font-mono, monospace); overflow-wrap: anywhere; }
+.fight-log-detail { margin-top: .75rem; font-size: .85rem; /* Literal `monospace`, not --font-mono: --font-mono was unset when this was written, so
+     the generic fallback is what has always rendered. Defining the token must not move
+     pixels in 46a; swapping to var(--font-mono) is a one-line follow-up. */
+  font-family: monospace; overflow-wrap: anywhere; }
 /* Scrolling lives on the wrapper so the list's markers are never inside a scrollport —
    WebKit clips outside-positioned markers there, Blink does not. See 10b-bugs-fixed.md #125. */
 .fight-log-events { max-height: 15rem; overflow: auto; }
@@ -1104,14 +1112,14 @@
 .help-guide p, .help-guide ul, .help-guide ol { margin: .5rem 0; }
 .help-guide ul, .help-guide ol { padding-left: 1.5rem; }
 .help-guide blockquote { margin: .5rem 0; padding-left: .75rem; border-left: 2px solid var(--color-border); color: var(--color-fg-dim); }
-.help-guide hr { border: 0; border-top: 1px solid var(--color-border); margin: 1rem 0; }
+.help-guide hr { border: 0; border-top: var(--border-width) solid var(--color-border); margin: 1rem 0; }
 .help-guide code { color: var(--color-accent); }
 .help-guide a { color: var(--color-accent); }
-.help-pre { max-width: 100%; overflow-x: auto; margin: .5rem 0; padding: .5rem; border: 1px solid var(--color-border); outline-offset: -2px; }
+.help-pre { max-width: 100%; overflow-x: auto; margin: .5rem 0; padding: .5rem; border: var(--border-width) solid var(--color-border); outline-offset: -2px; }
 .help-pre code { white-space: pre; }
 .help-table-region { max-width: 100%; overflow-x: auto; margin: .5rem 0; outline-offset: -2px; }
 .help-table-region table { border-collapse: collapse; min-width: 20rem; }
-.help-table-region th, .help-table-region td { text-align: left; vertical-align: top; padding: .3rem .6rem; border-bottom: 1px solid var(--color-border); overflow-wrap: normal; }
+.help-table-region th, .help-table-region td { text-align: left; vertical-align: top; padding: .3rem .6rem; border-bottom: var(--border-width) solid var(--color-border); overflow-wrap: normal; }
 .help-pre:focus-visible, .help-table-region:focus-visible { outline: 2px solid var(--color-accent); }
 .help-example { color: var(--color-fg-dim); font-size: .85em; }
 
@@ -1166,13 +1174,13 @@
   color: var(--color-fg-dim);
   font-size: 0.75rem;
 }
-.chat-divider::before, .chat-divider::after { content: ''; flex: 1; border-top: 1px solid var(--color-border); }
+.chat-divider::before, .chat-divider::after { content: ''; flex: 1; border-top: var(--border-width) solid var(--color-border); }
 .chat-divider-fight { color: var(--color-fg); }
 .chat-divider-marker { color: var(--color-accent); }
 .chat-divider-marker::before, .chat-divider-marker::after { border-top-color: var(--color-accent); }
 .chat-composer {
   flex-shrink: 0;
-  border-top: 1px solid var(--color-border);
+  border-top: var(--border-width) solid var(--color-border);
   padding: 0.5rem 0 calc(0.5rem + env(safe-area-inset-bottom, 0px));
   background: var(--color-bg);
   position: sticky;
@@ -1182,9 +1190,9 @@
 .chat-composer-to label { color: var(--color-fg-dim); font-size: 0.85rem; }
 .chat-composer-to select, .chat-input {
   background: var(--color-input-bg);
-  border: 1px solid var(--color-border);
+  border: var(--border-width) solid var(--color-border);
   color: var(--color-fg);
-  font-family: var(--font-family);
+  font-family: var(--font-ui);
   font-size: var(--font-size);
   min-height: 44px;
   padding: 0 0.5rem;

@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { clear, drawSprite } from './renderer.js';
+import { clear, drawSprite, readSpriteFlashColor } from './renderer.js';
 import { SPRITE_ART, spriteFor } from './sprites.js';
 import { paletteFor } from './appearance-palette.js';
 import { subscribeToFrames } from './frame-ticker.js';
@@ -67,7 +67,11 @@ export default function RosterSprite({
       const cycles = pose === 'idle' || pose === 'attack' || pose === 'flee';
       const frame = frames[cycles ? frameIndex % frames.length : 0]!;
       clear(ctx);
-      drawSprite(ctx, frame, palette, 0, 0, SCALE, { mirror: false, flash: flashing });
+      drawSprite(ctx, frame, palette, 0, 0, SCALE, {
+        mirror: false,
+        flash: flashing,
+        flashColor: flashing ? readSpriteFlashColor() : undefined,
+      });
     };
 
     draw(0);
@@ -87,6 +91,7 @@ export default function RosterSprite({
     drawSprite(ctx, frames[0]!, paletteFor(sprite.palette, appearance, name, appearanceHex), 0, 0, SCALE, {
       mirror: false,
       flash,
+      flashColor: flash ? readSpriteFlashColor() : undefined,
     });
   }, [creatureType, appearance, appearanceHex, name, anim, flash, startedAt]);
 

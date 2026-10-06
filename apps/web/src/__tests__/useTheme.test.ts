@@ -10,6 +10,7 @@ describe('useTheme', () => {
     localStorage.clear();
     document.documentElement.removeAttribute('data-theme');
     document.documentElement.removeAttribute('data-theme-features');
+    document.head.querySelectorAll('meta[name="theme-color"]').forEach((m) => m.remove());
   });
 
   afterEach(() => {
@@ -76,6 +77,26 @@ describe('useTheme', () => {
   it('includes street-fighter in validThemes', () => {
     const { result } = renderHook(() => useTheme());
     expect(result.current.validThemes).toContain('street-fighter');
+  });
+
+  it('keeps <meta name="theme-color"> in step with the theme', () => {
+    const meta = document.createElement('meta');
+    meta.name = 'theme-color';
+    meta.content = '#0a0e0a';
+    document.head.appendChild(meta);
+
+    const { result } = renderHook(() => useTheme());
+    expect(meta.content).toBe('#0a0e0a');
+    act(() => result.current.setTheme('street-fighter'));
+    expect(meta.content).toBe('#060c1e');
+    act(() => result.current.setTheme('phosphor'));
+    expect(meta.content).toBe('#0a0e0a');
+  });
+
+  it('creates the theme-color meta if the page has none', () => {
+    const { result } = renderHook(() => useTheme());
+    act(() => result.current.setTheme('amber'));
+    expect(document.querySelector('meta[name="theme-color"]')?.getAttribute('content')).toBe('#0a0800');
   });
 
   it('clears a stale theme-features attribute left by an older build', () => {

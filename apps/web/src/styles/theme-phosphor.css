@@ -1,5 +1,8 @@
 /* Default phosphor (green-on-dark) terminal theme */
 :root {
+  /* All four themes are dark. Without this, native controls and scrollbars drew light
+     chrome against a dark page. A light theme overrides it. */
+  color-scheme: dark;
   --color-bg: #0a0e0a;
   --color-fg: #a8d060;
   --color-fg-bright: #d4f0a0;
@@ -13,6 +16,11 @@
   --color-input-bg: #111811;
   --color-choice-hover: #1a2a1a;
   --color-choice-selected: #1e3a0e;
+  /* Read-but-never-set before 46a; each value is what the call site's fallback drew. */
+  --color-bg-elevated: var(--color-bg);              /* CatchUpBanner, .fight-log-card */
+  --color-hover: rgb(255 255 255 / 0.05);            /* CommandReference row hover */
+  --color-accent-muted: rgb(255 200 0 / 0.15);       /* LeaderboardPanel highlight row */
+  --color-warning: var(--color-accent);              /* .command-blocked-banner border */
   --font-family: 'JetBrains Mono', ui-monospace, 'Cascadia Code', 'Fira Code', monospace;
   --font-size: 14px;
   --line-height: 1.4;
@@ -23,6 +31,52 @@
   --header-height: 3rem;
   --divider-width: 4px;
   --divider-handle-width: 24px;
+
+  /* ── Plumbing tokens (roadmap 46, pass 46a) ──
+     Every default below reproduces what the app drew before the token existed, so the
+     four dark themes are pixel-identical; a theme overrides only what it needs to
+     (docs/roadmap/46-unicorn-theme.md §2). They live on :root, so a `var(--color-border)`
+     default resolves per element: [data-theme=x] sets its colours on the same <html>
+     element, and custom properties compute after the cascade, so each theme's own
+     --color-border/--color-bg/--color-hp-* flows into these defaults. Do not move a
+     theme's colour overrides to a different element or that stops being true. */
+  /* Type: chrome (buttons, tabs, forms, headers) reads --font-ui; the feed, Console and
+     transcripts read --font-mono. feed-row-height.ts books rows at JetBrains Mono's
+     advance, so a theme may change --font-ui freely but must keep --font-mono monospace
+     at a 0.6em advance. */
+  --font-ui: var(--font-family);
+  --font-mono: var(--font-family);
+  /* Shape and edges. */
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
+  --radius-pill: 999px;
+  --border-width: 1px;
+  --color-border-strong: var(--color-border);
+  --shadow-page: none;
+  /* Surfaces. */
+  --surface-page: var(--color-bg);
+  --surface-texture: none;
+  --surface-titlebar: none;
+  --holo: none;
+  --wash-lilac: transparent;
+  --wash-seafoam: transparent;
+  --wash-blush: transparent;
+  --wash-butter: transparent;
+  --wash-sky: transparent;
+  /* Meters and text on coloured fills. A meter track must contrast with every HP stage
+     (theme-palettes.test.ts); the border colour is only safe on the dark themes. */
+  --color-meter-track: var(--color-border);
+  --color-on-accent: var(--color-bg);
+  /* Text-safe stand-ins for the HP stages in the highlight tags (small text needs 4.5:1,
+     a bar fill only 3:1). */
+  --color-highlight-good: var(--color-hp-healthy);
+  --color-highlight-warn: var(--color-hp-hurt);
+  --color-sprite-flash: #ffffff;
+  --color-backdrop: rgb(0 0 0 / 0.7);
+  --color-backdrop-light: rgb(0 0 0 / 0.5);
+  /* Read by components with a fallback but never set before 46a. The values below are
+     what each fallback produced, so no pixel moves; see the per-site notes in each theme. */
   /* Ring-roster health bar. Deliberately its own ramp rather than reusing
      --color-success/--color-accent/--color-error: those carry unrelated semantic
      meanings and are not ordered by brightness, so a bar built from them could read

@@ -56,7 +56,7 @@ export default function CommandSuggestions({
             cursor: 'pointer',
             background: idx === activeIndex ? 'var(--color-choice-selected, rgba(255,255,255,0.1))' : 'transparent',
             borderBottom: idx < suggestions.length - 1 ? '1px solid var(--color-border)' : 'none',
-            fontFamily: 'var(--font-family)',
+            fontFamily: 'var(--font-mono)',
             fontSize: '0.8rem',
             color: idx === activeIndex ? 'var(--color-fg-bright)' : 'var(--color-fg)',
           }}

@@ -17,8 +17,10 @@ body {
   color: var(--color-fg);
 }
 
+/* The page default is the chrome face. The feed and Console opt back into --font-mono
+   (.event-feed, .command-dock), so a theme can restyle the chrome without touching them. */
 body {
-  font-family: var(--font-family);
+  font-family: var(--font-ui);
   font-size: var(--font-size);
   line-height: var(--line-height);
   -webkit-font-smoothing: antialiased;
@@ -85,9 +87,9 @@ input[type='text'],
 input[type='email'],
 input[type='password'] {
   background: var(--color-input-bg);
-  border: 1px solid var(--color-border);
+  border: var(--border-width) solid var(--color-border);
   color: var(--color-fg);
-  font-family: var(--font-family);
+  font-family: var(--font-ui);
   font-size: var(--font-size);
   padding: 0.4rem 0.6rem;
   width: 100%;
@@ -111,10 +113,23 @@ input[type='password']:focus {
   }
 }
 
+/* App header (AppShell). These were an inline style, which a theme cannot restyle without
+   !important; a class lets a theme change the bar's border, surface and padding. */
+.app-header {
+  height: var(--header-height);
+  border-bottom: var(--border-width) solid var(--color-border);
+  display: flex;
+  align-items: center;
+  padding: 0 1rem;
+  gap: 1rem;
+  flex-shrink: 0;
+  background: var(--color-bg);
+}
+
 /* Buttons */
 button {
   cursor: pointer;
-  font-family: var(--font-family);
+  font-family: var(--font-ui);
   font-size: var(--font-size);
   touch-action: manipulation; /* removes 300ms tap delay on mobile */
 }
@@ -126,7 +141,7 @@ button {
 .btn {
   text-decoration: none;
   background: transparent;
-  border: 1px solid var(--color-border);
+  border: var(--border-width) solid var(--color-border);
   color: var(--color-fg);
   padding: 0.35rem 0.75rem;
   display: inline-flex;
@@ -166,7 +181,7 @@ button {
 /* Panels (non-terminal UI cards) */
 .panel {
   background: var(--color-input-bg);
-  border: 1px solid var(--color-border);
+  border: var(--border-width) solid var(--color-border);
   padding: 1rem;
   margin-bottom: 1rem;
 }
@@ -192,7 +207,7 @@ button {
 
 .error-msg {
   background: rgba(255, 107, 107, 0.1);
-  border: 1px solid var(--color-error);
+  border: var(--border-width) solid var(--color-error);
   color: var(--color-error);
   padding: 0.5rem 0.75rem;
   margin-bottom: 1rem;
@@ -208,7 +223,7 @@ button {
   justify-content: space-between;
   gap: 1rem;
   padding: 0.75rem;
-  border: 1px solid var(--color-error);
+  border: var(--border-width) solid var(--color-error);
   background: var(--color-bg);
   color: var(--color-fg-bright);
 }
@@ -217,7 +232,7 @@ button {
 
 .success-msg {
   background: rgba(136, 204, 68, 0.1);
-  border: 1px solid var(--color-success);
+  border: var(--border-width) solid var(--color-success);
   color: var(--color-success);
   padding: 0.5rem 0.75rem;
   margin-bottom: 1rem;
@@ -234,7 +249,7 @@ button {
 .tag {
   font-size: 0.75rem;
   padding: 0.15rem 0.4rem;
-  border: 1px solid var(--color-border);
+  border: var(--border-width) solid var(--color-border);
   color: var(--color-fg-dim);
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -369,7 +384,7 @@ button {
   width: 10px;
   height: 10px;
   box-sizing: border-box;
-  border: 1px solid var(--color-accent);
+  border: var(--border-width) solid var(--color-accent);
 }
 
 .workshop-monster-dot.active::before {
@@ -390,7 +405,7 @@ button {
   width: 16px;
   height: 16px;
   box-sizing: border-box;
-  border: 1px solid var(--color-accent);
+  border: var(--border-width) solid var(--color-accent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -430,7 +445,7 @@ button {
 }
 
 .workshop-monster-panel {
-  border: 1px solid var(--color-border);
+  border: var(--border-width) solid var(--color-border);
   padding: 0.75rem;
   background: var(--color-input-bg);
   display: flex;
@@ -476,7 +491,7 @@ button {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   padding: 0.05rem 0.35rem;
-  border: 1px solid var(--color-border);
+  border: var(--border-width) solid var(--color-border);
   color: var(--color-fg-dim);
   white-space: nowrap;
 }
@@ -500,7 +515,7 @@ button {
   font-size: 0.95rem;
   color: var(--color-fg-bright);
   background: transparent;
-  border: 1px solid transparent;
+  border: var(--border-width) solid transparent;
   padding: 0.05rem 0.2rem;
   text-align: left;
 }
@@ -612,7 +627,7 @@ button {
   flex: 1;
   min-width: 2rem;
   height: 6px;
-  border: 1px solid var(--color-border);
+  border: var(--border-width) solid var(--color-border);
   background: var(--color-bg);
 }
 
@@ -654,7 +669,7 @@ button {
 }
 
 .workshop-inventory {
-  border: 1px solid var(--color-border);
+  border: var(--border-width) solid var(--color-border);
   padding: 0.75rem;
   background: var(--color-input-bg);
 }
@@ -697,7 +712,7 @@ button {
 
 .workshop-drop-zone {
   margin-top: 0.6rem;
-  border: 1px dashed var(--color-border);
+  border: var(--border-width) dashed var(--color-border);
   padding: 0.5rem;
   color: var(--color-fg-dim);
   font-size: 0.78rem;
@@ -712,7 +727,7 @@ button {
 .workshop-card-slot {
   width: 100%;
   min-height: 92px;
-  border: 1px solid var(--color-border);
+  border: var(--border-width) solid var(--color-border);
   background: var(--color-bg);
   padding: 0.3rem;
   display: flex;
@@ -813,7 +828,7 @@ button {
   overflow-y: auto;
   background: var(--color-bg);
   color: var(--color-fg);
-  border: 1px solid var(--color-border);
+  border: var(--border-width) solid var(--color-border);
   border-bottom: 0;
   padding: 1rem 16px calc(1rem + env(safe-area-inset-bottom, 0px));
   display: flex;
@@ -860,7 +875,7 @@ button {
 
   .card-detail-sheet {
     width: min(26rem, 90vw);
-    border-bottom: 1px solid var(--color-border);
+    border-bottom: var(--border-width) solid var(--color-border);
     padding-bottom: 1rem;
   }
 }
@@ -922,9 +937,9 @@ button {
   min-width: 120px;
   background: var(--color-bg);
   color: var(--color-fg);
-  border: 1px solid var(--color-border);
+  border: var(--border-width) solid var(--color-border);
   padding: 0.2rem 0.35rem;
-  font-family: var(--font-family);
+  font-family: var(--font-ui);
   font-size: 0.75rem;
 }
 
@@ -994,7 +1009,7 @@ button {
 .train-wizard {
   display: grid;
   gap: 0.65rem;
-  border: 1px solid var(--color-border);
+  border: var(--border-width) solid var(--color-border);
   padding: 0.75rem;
   background: var(--color-input-bg);
 }
@@ -1005,13 +1020,13 @@ button {
 .train-wizard-lead { margin: 0; color: var(--color-fg-dim); font-size: 0.85rem; padding: 0; }
 .train-wizard label { display: grid; gap: 0.25rem; color: var(--color-fg-dim); font-size: 0.75rem; }
 .train-wizard input[type='text'], .train-wizard input:not([type]), .train-wizard select {
-  min-width: 0; min-height: 2.75rem; border: 1px solid var(--color-border); background: var(--color-bg);
+  min-width: 0; min-height: 2.75rem; border: var(--border-width) solid var(--color-border); background: var(--color-bg);
   color: var(--color-fg); padding: 0.45rem; font: inherit; font-size: 1rem;
 }
 .train-wizard-types, .train-wizard-pronouns { gap: 0.5rem; }
 .train-wizard-type, .train-wizard-choice {
   position: relative; display: grid; gap: 0.2rem; min-height: 2.75rem; padding: 0.6rem 0.75rem 0.6rem 2.25rem;
-  border: 1px solid var(--color-border); background: var(--color-bg); color: var(--color-fg); font-size: 0.9rem; cursor: pointer;
+  border: var(--border-width) solid var(--color-border); background: var(--color-bg); color: var(--color-fg); font-size: 0.9rem; cursor: pointer;
 }
 .train-wizard-type input, .train-wizard-choice input { position: absolute; left: 0.7rem; top: 0.85rem; margin: 0; }
 .train-wizard-type.is-selected, .train-wizard-choice.is-selected { border-color: var(--color-accent); }
@@ -1044,7 +1059,7 @@ button {
   display: flex;
   align-items: center;
   gap: 0.3rem;
-  border: 1px solid var(--color-border);
+  border: var(--border-width) solid var(--color-border);
   background: var(--color-bg);
   padding: 0.25rem 0.45rem;
   font-size: 1.1rem;
@@ -1061,7 +1076,7 @@ button {
  * line, because a dimmed row with no reason reads as a bug.
  */
 .workshop-items {
-  border: 1px solid var(--color-border);
+  border: var(--border-width) solid var(--color-border);
   padding: 0.75rem;
   background: var(--color-input-bg);
   margin-top: 0.75rem;
@@ -1077,7 +1092,7 @@ button {
 }
 
 .workshop-item-row {
-  border: 1px solid var(--color-border);
+  border: var(--border-width) solid var(--color-border);
   background: var(--color-bg);
   padding: 0.4rem 0.55rem;
   display: flex;
@@ -1149,7 +1164,7 @@ button {
 }
 
 .workshop-shop {
-  border: 1px solid var(--color-border);
+  border: var(--border-width) solid var(--color-border);
   padding: 0.75rem;
   background: var(--color-input-bg);
   margin-top: 0.75rem;
@@ -1164,7 +1179,7 @@ button {
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  border: 1px solid var(--color-border);
+  border: var(--border-width) solid var(--color-border);
   background: var(--color-bg);
   padding: 0.55rem;
 }
@@ -1177,7 +1192,7 @@ button {
 .shop-sell-section { margin-top: 0.75rem; }
 .shop-sell-section summary { cursor: pointer; color: var(--color-accent); font-weight: 700; }
 .shop-sell-controls { display: flex; align-items: center; gap: 0.4rem; flex: 0 0 auto; }
-.shop-sell-qty { width: 3.2rem; background: var(--color-bg); color: var(--color-fg-bright); border: 1px solid var(--color-border); padding: 0.2rem 0.3rem; font: inherit; }
+.shop-sell-qty { width: 3.2rem; background: var(--color-bg); color: var(--color-fg-bright); border: var(--border-width) solid var(--color-border); padding: 0.2rem 0.3rem; font: inherit; }
 
 .monster-workshop-panel.in-ring,
 .workshop-monster-panel.in-ring {
@@ -1185,21 +1200,21 @@ button {
 }
 
 .workshop-warning {
-  border: 1px solid var(--color-accent);
+  border: var(--border-width) solid var(--color-accent);
   color: var(--color-accent);
   padding: 0.45rem 0.55rem;
   font-size: 0.78rem;
 }
 
 .workshop-flash-error {
-  border: 1px solid var(--color-error);
+  border: var(--border-width) solid var(--color-error);
   color: var(--color-error);
   padding: 0.45rem 0.55rem;
   font-size: 0.78rem;
 }
 
 .workshop-banner {
-  border: 1px solid var(--color-accent);
+  border: var(--border-width) solid var(--color-accent);
   color: var(--color-accent);
   padding: 0.4rem 0.55rem;
   font-size: 0.75rem;
@@ -1243,7 +1258,7 @@ button {
     width: 100%;
     height: auto;
     min-height: 2.75rem;
-    border: 1px solid var(--color-border);
+    border: var(--border-width) solid var(--color-border);
     border-top: 0;
   }
   .shop-stock-row { align-items: stretch; flex-direction: column; }
@@ -1346,8 +1361,15 @@ button {
 }
 
 /* Accessibility: high contrast */
+/* Scoped to the dark themes on purpose. This block forces white text, a black page and a
+   #555 border on <html>, and it loads after the theme files at equal specificity, so it
+   used to override *every* theme. On a light theme that left --color-input-bg pale under
+   white text: inputs, panels and the feed's card frames became unreadable (roadmap 46 §1).
+   A light theme (Millefleur, task 2) lists itself in the :not() below and ships its own
+   high-contrast block. The extra :not() also lifts specificity to (0,2,0), which still
+   beats the theme files' (0,1,0), as before. */
 @media (prefers-contrast: more) {
-  :root {
+  :root:not([data-theme='millefleur']) {
     --color-fg: #ffffff;
     --color-fg-bright: #ffffff;
     --color-fg-dim: #aaaaaa;
@@ -1362,7 +1384,7 @@ button {
    which reads as a broken layout, and is the very first thing a new player
    sees. See 10b-bugs-fixed.md #113. */
 .workshop-no-monsters {
-  border: 1px dashed var(--color-border);
+  border: var(--border-width) dashed var(--color-border);
   padding: 1.25rem 1rem;
   display: flex;
   flex-direction: column;

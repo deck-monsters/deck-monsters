@@ -1031,7 +1031,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
               border: '1px solid var(--color-border)',
               color: 'var(--color-fg-dim)',
               cursor: 'pointer',
-              fontFamily: 'var(--font-family)',
+              fontFamily: 'var(--font-ui)',
             }}
             title="Cancel current action"
           >

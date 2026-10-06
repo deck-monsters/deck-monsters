@@ -32,7 +32,7 @@ function LoadingScreen() {
         justifyContent: 'center',
         background: 'var(--color-bg)',
         color: 'var(--color-fg-dim)',
-        fontFamily: 'var(--font-family)',
+        fontFamily: 'var(--font-ui)',
         letterSpacing: '0.05em',
       }}
     >
@@ -129,7 +129,7 @@ function JoinByInvite() {
         justifyContent: 'center',
         background: 'var(--color-bg)',
         color: 'var(--color-fg-dim)',
-        fontFamily: 'var(--font-family)',
+        fontFamily: 'var(--font-ui)',
       }}
     >
       {joinRoom.isError ? 'Redirecting…' : 'Joining room…'}

@@ -24,7 +24,53 @@ const REQUIRED_TOKENS = [
   '--color-hp-healthy',
   '--color-hp-hurt',
   '--color-hp-critical',
+  // Read by components with a fallback but never set before roadmap 46 pass 46a; every
+  // theme now states them so a light theme cannot inherit a dark-theme guess (the yellow
+  // accent-muted fallback, the white-5% hover).
+  '--color-bg-elevated',
+  '--color-hover',
+  '--color-accent-muted',
+  '--color-warning',
 ];
+
+/** Plumbing tokens phosphor's :root must define so every theme inherits a default. */
+const ROOT_DEFAULT_TOKENS = [
+  '--font-ui', '--font-mono', '--radius-sm', '--radius-md', '--radius-lg', '--radius-pill',
+  '--border-width', '--color-border-strong', '--shadow-page', '--surface-page',
+  '--surface-texture', '--surface-titlebar', '--holo', '--color-meter-track',
+  '--color-on-accent', '--color-highlight-good', '--color-highlight-warn',
+  '--color-sprite-flash', '--color-backdrop', '--color-backdrop-light',
+  '--wash-lilac', '--wash-seafoam', '--wash-blush', '--wash-butter', '--wash-sky',
+];
+
+/**
+ * Known failures of the contrast rules below, recorded rather than fixed: pass 46a must not
+ * change a pixel of the four existing themes, so a theme that fails a rule it was never held
+ * to is listed here, with the measured ratio, until someone chooses to retune its colours.
+ * Key: `${file}|${rule}`. Delete an entry when the palette is fixed; the test fails if an
+ * entry no longer fails, so the list cannot rot.
+ */
+const KNOWN_FAILURES: Record<string, string> = {
+  // Measured ratio on the right; 4.5:1 is needed for text, 3:1 for the meter fill.
+  'theme-amber.css|--color-fg-dim on --color-bg': '3.07:1',
+  'theme-amber.css|--color-fg-dim on --color-input-bg': '3.05:1',
+  'theme-amber.css|--color-system on --color-bg': '2.30:1',
+  'theme-amber.css|--color-system on --color-input-bg': '2.29:1',
+  'theme-amber.css|--color-hp-critical on --color-meter-track': '2.48 (needs 3)',
+  'theme-phosphor.css|--color-fg-dim on --color-bg': '3.58:1',
+  'theme-phosphor.css|--color-fg-dim on --color-input-bg': '3.33:1',
+  'theme-phosphor.css|--color-system on --color-bg': '3.59:1',
+  'theme-phosphor.css|--color-system on --color-input-bg': '3.34:1',
+  'theme-phosphor.css|--color-hp-critical on --color-meter-track': '2.22 (needs 3)',
+  'theme-street-fighter.css|--color-fg-dim on --color-bg': '2.30:1',
+  'theme-street-fighter.css|--color-fg-dim on --color-input-bg': '2.24:1',
+  'theme-street-fighter.css|--color-system on --color-bg': '2.67:1',
+  'theme-street-fighter.css|--color-system on --color-input-bg': '2.60:1',
+  'theme-street-fighter.css|--color-accent on --color-bg': '3.99:1',
+  'theme-street-fighter.css|--color-accent on --color-input-bg': '3.89:1',
+  'theme-street-fighter.css|--color-on-accent on --color-accent': '3.99:1',
+  'theme-street-fighter.css|--color-hp-critical on --color-meter-track': '2.40 (needs 3)',
+};
 
 function themeFiles(): string[] {
   return readdirSync(STYLES_DIR).filter(f => f.startsWith('theme-') && f.endsWith('.css'));
@@ -37,6 +83,29 @@ function tokensIn(css: string): Map<string, string> {
     if (match) found.set(match[1]!, match[2]!.trim());
   }
   return found;
+}
+
+/** Every `--name: value;` line, not just colours (the plumbing tokens). */
+function allTokensIn(css: string): Map<string, string> {
+  const found = new Map<string, string>();
+  for (const line of css.split('\n')) {
+    const match = line.match(/^\s*(--[a-z0-9-]+)\s*:\s*([^;]+);/);
+    if (match) found.set(match[1]!, match[2]!.trim());
+  }
+  return found;
+}
+
+/**
+ * Resolve a token to a literal, following `var(--x)` first in the theme and then in
+ * phosphor's :root defaults. This mirrors the browser: every theme sets its values on
+ * <html>, so a default such as `--color-meter-track: var(--color-border)` on :root picks up
+ * the active theme's own --color-border.
+ */
+function resolve(name: string, theme: Map<string, string>, root: Map<string, string>, depth = 0): string | null {
+  const raw = theme.get(name) ?? root.get(name);
+  if (raw === undefined || depth > 8) return null;
+  const ref = raw.match(/^var\((--[a-z0-9-]+)\)$/);
+  return ref ? resolve(ref[1]!, theme, root, depth + 1) : raw;
 }
 
 // --- WCAG relative luminance / contrast -------------------------------------
@@ -66,7 +135,13 @@ function contrast(a: string, b: string): number | null {
   return (hi + 0.05) / (lo + 0.05);
 }
 
+const ROOT_TOKENS = allTokensIn(readFileSync(join(STYLES_DIR, 'theme-phosphor.css'), 'utf8'));
+
 describe('theme palettes', () => {
+  it('gives phosphor :root a default for every plumbing token', () => {
+    expect(ROOT_DEFAULT_TOKENS.filter(t => !ROOT_TOKENS.has(t))).toEqual([]);
+  });
+
   it('finds the theme stylesheets', () => {
     expect(themeFiles().length).toBeGreaterThanOrEqual(4);
   });
@@ -75,6 +150,24 @@ describe('theme palettes', () => {
     describe(file, () => {
       const css = readFileSync(join(STYLES_DIR, file), 'utf8');
       const tokens = tokensIn(css);
+      const themeTokens = allTokensIn(css);
+      const val = (name: string) => resolve(name, themeTokens, ROOT_TOKENS);
+
+      /** Assert `fg` on `bg` meets `min`, or is a listed known failure. */
+      function expectContrast(rule: string, fg: string, bg: string, min: number) {
+        const a = val(fg);
+        const b = val(bg);
+        expect(a, `${file}: ${fg} should resolve to a colour`).not.toBeNull();
+        expect(b, `${file}: ${bg} should resolve to a colour`).not.toBeNull();
+        const ratio = contrast(a!, b!);
+        if (ratio === null) return; // not a plain hex (e.g. rgb() with alpha): out of scope
+        const key = `${file}|${rule}`;
+        if (key in KNOWN_FAILURES) {
+          expect.soft(ratio, `${key} is listed as failing but now passes; remove it from KNOWN_FAILURES`).toBeLessThan(min);
+          return;
+        }
+        expect.soft(ratio, `${file}: ${rule} (${fg} on ${bg}) is ${ratio.toFixed(2)}:1`).toBeGreaterThanOrEqual(min);
+      }
 
       // street-fighter and phosphor define the full set; a partial theme that only
       // overrides a few tokens would silently inherit the rest, so require all.
@@ -122,6 +215,30 @@ describe('theme palettes', () => {
           // 3:1 is the WCAG minimum for a non-text UI component.
           expect(ratio, `${file}: ${token} on --color-bg`).toBeGreaterThanOrEqual(3);
         });
+      });
+
+      for (const surface of ['--color-bg', '--color-input-bg'] as const) {
+        it(`keeps secondary and status text at 4.5:1 on ${surface}`, () => {
+          for (const token of ['--color-fg-dim', '--color-accent', '--color-system', '--color-error', '--color-success']) {
+            expectContrast(`${token} on ${surface}`, token, surface, 4.5);
+          }
+        });
+      }
+
+      it('keeps text on an accent fill (tab badges) at 4.5:1', () => {
+        expectContrast('--color-on-accent on --color-accent', '--color-on-accent', '--color-accent', 4.5);
+      });
+
+      it('keeps every HP-bar stage at 3:1 on the meter track', () => {
+        for (const token of ['--color-hp-healthy', '--color-hp-hurt', '--color-hp-critical']) {
+          expectContrast(`${token} on --color-meter-track`, token, '--color-meter-track', 3);
+        }
+      });
+
+      it('keeps highlight-tag text at 4.5:1 on the page', () => {
+        for (const token of ['--color-highlight-good', '--color-highlight-warn']) {
+          expectContrast(`${token} on --color-bg`, token, '--color-bg', 4.5);
+        }
       });
     });
   });

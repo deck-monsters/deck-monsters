@@ -4,6 +4,21 @@ export function clear(ctx: CanvasRenderingContext2D): void {
   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 }
 
+export const DEFAULT_SPRITE_FLASH = '#ffffff';
+
+/**
+ * The hit-flash colour for the active theme (`--color-sprite-flash`, default white).
+ * Read on demand, only for a frame that is actually flashing: that is a few frames per
+ * hit, and it keeps a theme switch mid-session honest without a listener. A light theme
+ * needs a non-white flash, because white on a white panel makes a struck monster vanish
+ * instead of blink (roadmap 46 §1).
+ */
+export function readSpriteFlashColor(): string {
+  if (typeof document === 'undefined') return DEFAULT_SPRITE_FLASH;
+  const value = getComputedStyle(document.documentElement).getPropertyValue('--color-sprite-flash').trim();
+  return value || DEFAULT_SPRITE_FLASH;
+}
+
 export function drawSprite(
   ctx: CanvasRenderingContext2D,
   spriteFrame: PixelFrame,
@@ -11,7 +26,7 @@ export function drawSprite(
   x: number,
   y: number,
   scale: number,
-  { mirror, flash }: { mirror: boolean; flash: boolean },
+  { mirror, flash, flashColor = DEFAULT_SPRITE_FLASH }: { mirror: boolean; flash: boolean; flashColor?: string },
 ): void {
   ctx.imageSmoothingEnabled = false;
   ctx.save();
@@ -31,7 +46,11 @@ export function drawSprite(
     for (let column = 0; column < pixels.length; column += 1) {
       const color = pixels[column]!;
       if (color === '.') continue;
-      ctx.fillStyle = flash ? '#ffffff' : palette[color]!;
+      // TODO(roadmap 46 task 5): today the flash covers the outline (key 'O') too, so the
+      // whole sprite is one flat colour. A light theme wants the outline kept dark so a
+      // struck monster blinks rather than disappears; changing it here would alter every
+      // theme, so it waits for that task.
+      ctx.fillStyle = flash ? flashColor : palette[color]!;
       ctx.fillRect(x + (column - SPRITE_PAD) * scale, y + row * scale, scale, scale);
     }
   }

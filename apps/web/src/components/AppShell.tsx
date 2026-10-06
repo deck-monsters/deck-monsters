@@ -32,18 +32,7 @@ export default function AppShell({ children, roomName, roomId }: AppShellProps) 
 
   return (
     <div className="app-shell">
-      <header
-        style={{
-          height: 'var(--header-height)',
-          borderBottom: '1px solid var(--color-border)',
-          display: 'flex',
-          alignItems: 'center',
-          padding: '0 1rem',
-          gap: '1rem',
-          flexShrink: 0,
-          background: 'var(--color-bg)',
-        }}
-      >
+      <header className="app-header">
         <Link
           to="/rooms"
           style={{
@@ -199,7 +188,7 @@ export default function AppShell({ children, roomName, roomId }: AppShellProps) 
             position: 'fixed',
             inset: 0,
             zIndex: 200,
-            background: 'rgba(0,0,0,0.7)',
+            background: 'var(--color-backdrop)',
           }}
           onClick={() => setMenuOpen(false)}
           role="presentation"
