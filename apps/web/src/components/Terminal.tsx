@@ -119,6 +119,16 @@ function TerminalTabs({
       row.scrollLeft = Math.max(0, tab.offsetLeft - row.clientWidth * 0.4);
     }
   }, [activeSurface]);
+  // Millefleur fades the row's right end; once it has scrolled, a tab cut at the left edge
+  // fades too. The class is only styled under that theme, so toggling it is inert elsewhere.
+  useEffect(() => {
+    const row = rowRef.current;
+    if (!row) return;
+    const sync = () => row.classList.toggle('scrolled', row.scrollLeft > 0);
+    sync();
+    row.addEventListener('scroll', sync, { passive: true });
+    return () => row.removeEventListener('scroll', sync);
+  }, []);
   return (
     <div ref={rowRef} className="terminal-tabs" role="tablist" aria-label="Switch panes">
       {SURFACES.map((surface) => {

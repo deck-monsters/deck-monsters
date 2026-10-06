@@ -146,7 +146,6 @@
   padding: 0;
 }
 
-[data-theme='millefleur'] .app-header a[aria-label='Room settings'] { border-radius: var(--radius-md); }
 
 /* ── Menu drawer and dialogs: paper with a soft lilac edge ── */
 [data-theme='millefleur'] .app-menu-drawer {
@@ -395,6 +394,11 @@
   mask-image: linear-gradient(90deg, #000 80%, transparent);
 }
 [data-theme='millefleur'] .terminal-tabs::-webkit-scrollbar { display: none; }
+/* Scrolled: the left edge fades as well, so a cut tab does not end in a hard line. */
+[data-theme='millefleur'] .terminal-tabs.scrolled {
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 80%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 12%, #000 80%, transparent);
+}
 [data-theme='millefleur'] .terminal-tab {
   flex: 0 0 auto;
   min-width: max-content;
@@ -608,7 +612,7 @@
 /* Empty: lilac paper at .45, a lighter edge, a lilac plus (the "[+]" text stays for the dark themes). */
 [data-theme='millefleur'] .workshop-card-slot.empty {
   background: rgb(235 226 250 / 0.45);
-  border-color: rgb(190 170 215 / 0.35);
+  border-color: var(--mf-line-soft);
 }
 [data-theme='millefleur'] .workshop-card-slot.empty > span {
   font-size: 0;
@@ -619,7 +623,7 @@
   font-size: 22px;
   font-weight: 400;
   line-height: 1;
-  color: #b6a6d4;
+  color: var(--color-border-strong);   /* the slot's only cue: 3:1+ (the sample's #b6a6d4 is 2:1) */
 }
 /* The ⓘ strip under a slot: quiet text, still a 44px target. */
 [data-theme='millefleur'] .workshop-card-info {
@@ -863,7 +867,8 @@
 [data-theme='millefleur'] .feed-marker-disconnected::after { background: linear-gradient(270deg, transparent, var(--color-error)); }
 /* A highlight is a left band in the theme's own colours (nat 20 sea-foam, crit fail sienna,
    kill danger, big hit rose). */
-[data-theme='millefleur'] .event-highlight { border-left-width: 3px; border-radius: 2px; }
+/* Border WIDTH stays the feed's 2px: a wider band would narrow the row and change where lines wrap. */
+[data-theme='millefleur'] .event-highlight { border-radius: 2px; }
 
 /* ── Sheets (card details, level-up) ──
    24px top corners, a --mf-line-tab edge, the page colour, a painted header approximated with
@@ -889,24 +894,36 @@
 @media (min-width: 700px) {
   [data-theme='millefleur'] .card-detail-sheet { border-bottom: 1px solid var(--mf-line-tab); border-radius: 24px; }
 }
-/* The title bar: pinstripes behind, the title in a paper pill on top. */
+/* The title bar: pinstripes behind, the title in a paper pill on top, and the close box. The
+   sheet itself is the scroller, so all three are sticky items that take no height (each
+   margin-bottom cancels its height plus the sheet's 8px flex gap; a margin-top places it), and
+   stay put while a long card description scrolls underneath. */
+[data-theme='millefleur'] .card-detail-sheet { padding-top: 5px; }
 [data-theme='millefleur'] .card-detail-sheet::before {
   content: '';
-  position: absolute;
+  position: sticky;
   top: 17px;
-  left: 56px;
-  right: 24px;
+  z-index: 1;
+  flex: 0 0 auto;
   height: 11px;
+  margin: 12px 24px -19px 56px;
   background: repeating-linear-gradient(to bottom, rgb(70 50 110 / 0.22) 0 1px, transparent 1px 3px);
   -webkit-mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
   mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
   pointer-events: none;
 }
 [data-theme='millefleur'] .card-detail-sheet h2 {
-  position: relative;
+  position: sticky;
+  top: 10px;
+  z-index: 3;
   align-self: center;
-  margin-top: -50px;                  /* up into the title bar, over the stripes */
-  margin-bottom: 14px;
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  max-width: calc(100% - 112px);      /* clear of the close box (left) and an equal margin (right) */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin: 5px 0 16px;
   padding: 0 18px;
   line-height: 24px;
   border: 1px solid var(--mf-line-soft);
@@ -919,10 +936,12 @@
 }
 /* The close box: a 20px rounded square in a 44px target, top left, on a real close control. */
 [data-theme='millefleur'] .card-detail-close-box {
-  position: absolute;
+  position: sticky;
   top: 5px;
-  left: 6px;
-  z-index: 2;
+  z-index: 4;
+  align-self: flex-start;
+  flex: 0 0 auto;
+  margin: -12px 0 -52px 6px;
   width: 44px;
   height: 44px;
   padding: 0;
@@ -1090,7 +1109,7 @@
     --mf-margin: #b0587f;
     --mf-line-tab: #000000;
   }
-  [data-theme='millefleur'] .header-nav .btn { color: #000000; }
+  [data-theme='millefleur'] .header-nav .btn { color: #000000; border-color: #000000; }
   [data-theme='millefleur'] .header-nav .btn[aria-current='page'] { background: #ffffff; color: #000000; box-shadow: inset 0 -3px 0 #000000; }
   @media (hover: hover) {
     [data-theme='millefleur'] .header-nav .btn:hover:not(:disabled),
@@ -1100,7 +1119,8 @@
   [data-theme='millefleur'] .terminal-tab,
   [data-theme='millefleur'] .terminal-tab.active { color: #000000; }
   [data-theme='millefleur'] .terminal-tab.active { font-weight: 800; text-decoration: underline; text-underline-offset: 3px; }
-  [data-theme='millefleur'] .terminal-tabs { -webkit-mask-image: none; mask-image: none; }
+  [data-theme='millefleur'] .terminal-tabs,
+  [data-theme='millefleur'] .terminal-tabs.scrolled { -webkit-mask-image: none; mask-image: none; }
   /* The page keeps its shape: a solid white sheet with a 2px black edge, no fade, no shadow. */
   [data-theme='millefleur'] .terminal-slot::before { background: #ffffff; box-shadow: none; border: 2px solid #000000; border-top: 0; }
   [data-theme='millefleur'] .terminal-slot::after { background: #000000; height: 2px; }
@@ -1127,7 +1147,8 @@
   [data-theme='millefleur'] .roster-bar-track,
   [data-theme='millefleur'] .workshop-xp-meter-track { background: #ffffff; }
   [data-theme='millefleur'] .roster-bar-hurt { background: var(--color-hp-hurt); }
-  [data-theme='millefleur'] .roster-bar-track { border: 2px solid #000000; box-sizing: border-box; height: 8px; }
+  [data-theme='millefleur'] .roster-bar-track,
+  [data-theme='millefleur'] .workshop-hp-meter .roster-bar-track { border: 2px solid #000000; box-sizing: border-box; height: 8px; }
   /* Carousel dots: outlined circles, the current one a solid black disc. */
   [data-theme='millefleur'] .workshop-monster-dot::before { border: 2px solid #000000; }
   [data-theme='millefleur'] .workshop-monster-dot.active::before { background: #000000; border-color: #000000; box-shadow: none; }
