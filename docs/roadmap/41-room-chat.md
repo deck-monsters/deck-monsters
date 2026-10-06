@@ -8,7 +8,7 @@ tags: [roadmap, chat, web, server, social]
 ---
 # 41 — Room chat
 
-**Status:** Shipped in #420 (live 2026-10-01: both services deployed, migration applied, RLS on, no errors). M1–M4 done; Cursor's live check passed all 17 items ([chat-check](../reference/chat-check.md)). The plan stays active for its backlog: the Discord bridge, moderation, and notifications.
+**Status:** Shipped in #420 (live 2026-10-01: both services deployed, migration applied, RLS on, no errors). M1–M4 done; Cursor's live check passed all 17 items ([chat-check](../reference/chat-check.md)). The plan stays active for its backlog: the Discord bridge and moderation. Notifications moved to [roadmap 48](48-notifications.md).
 
 ## Why
 
@@ -158,7 +158,6 @@ Implementers use these exactly. Anything else is a `DRAFT(41)` placeholder.
 
 - [ ] A Discord bridge for room chat (see the backlog below).
 - [ ] Reporting and moderation.
-- [ ] Notifications for a DM.
 
 ## Backlog
 
@@ -169,4 +168,4 @@ Implementers use these exactly. Anything else is a `DRAFT(41)` placeholder.
   (`connector-discord/src/bot.ts`), which would collide with a bridged `dm`.
 - **Reporting and moderation:** report a message, let the room owner delete one, mute a
   player. Held while the group is small.
-- **Notifications:** a sound or browser notification for a DM.
+- **Notifications** now live in [roadmap 48](48-notifications.md): a home-screen ping for a DM when the page is closed, and the countdown cases worth coming back for. The old one-line note (a sound or a browser notification for a DM) is the start of that, not a second plan.

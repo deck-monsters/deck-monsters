@@ -108,5 +108,6 @@ bridge, would:
 - **bring messages in** by calling `send` with its own `source`.
 
 Before that can work, Discord's free-text `dm <command>` prefix in `connector-discord/src/bot.ts`
-needs a decision, because a bridged `dm` would collide with it. The bridge, moderation and
-notifications are on [roadmap 41's backlog](../roadmap/41-room-chat.md#backlog).
+needs a decision, because a bridged `dm` would collide with it. The bridge and moderation stay
+on [roadmap 41's backlog](../roadmap/41-room-chat.md#backlog). A ping when the page is closed
+is [roadmap 48](../roadmap/48-notifications.md).
