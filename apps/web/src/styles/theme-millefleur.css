@@ -449,6 +449,23 @@
 @media (hover: hover) {
   [data-theme='millefleur'] .terminal-tab:hover:not(.active) { color: var(--color-fg-bright); }
 }
+/* Keyboard focus: the row clips overflow, so the default 2px-outside outline would be cut off
+   at the top of the 44px box. Ring the folder shape itself instead (bug-prone: do not put the
+   outline back on the button). */
+[data-theme='millefleur'] .terminal-tab:focus-visible { outline: none; }
+[data-theme='millefleur'] .terminal-tab:focus-visible::after {
+  content: '';
+  position: absolute;
+  left: 3px;
+  right: 3px;
+  bottom: 1px;
+  height: 27px;
+  border: 2px solid var(--color-accent);
+  border-bottom: 0;
+  border-radius: 11px 11px 0 0;
+  pointer-events: none;
+}
+[data-theme='millefleur'] .terminal-tab.active:focus-visible::after { height: 30px; bottom: 2px; }
 /* The unread badge sits in the clear 14px above the shape, at the tab's top-right. */
 [data-theme='millefleur'] .terminal-tab-badge {
   top: 1px;
@@ -647,6 +664,22 @@
   background: linear-gradient(90deg, rgb(251 239 200 / 0.95), rgb(251 239 200 / 0.15));
   box-shadow: none;
   border-radius: 14px;
+}
+
+/* ── Full-page routes (/room/:id/workshop, /chat, /fights, ...) ──
+   The same page the tabs open onto, for the surfaces that are a route of their own. Inside the
+   terminal these hosts sit in a .terminal-slot and are not direct children of the shell. */
+[data-theme='millefleur'] .app-shell > main > .surface-panel-host,
+[data-theme='millefleur'] .app-shell > main > .workshop-view {
+  margin: 0 12px 12px;
+  background: var(--surface-page);
+  box-shadow: var(--shadow-page);
+  border-top: 1px solid var(--mf-line-tab);
+  border-radius: var(--radius-lg) var(--radius-lg) 16px 16px;
+}
+/* Where the info button is a corner badge (wide containers), keep the role label below it. */
+@container workshop (min-width: 521px) {
+  [data-theme='millefleur'] .workshop-card-slot { padding-top: 24px; }
 }
 
 /* ── The halo: a holo ring around a pearl disc, behind a roster portrait ──
@@ -1071,6 +1104,8 @@
   /* The page keeps its shape: a solid white sheet with a 2px black edge, no fade, no shadow. */
   [data-theme='millefleur'] .terminal-slot::before { background: #ffffff; box-shadow: none; border: 2px solid #000000; border-top: 0; }
   [data-theme='millefleur'] .terminal-slot::after { background: #000000; height: 2px; }
+  [data-theme='millefleur'] .app-shell > main > .surface-panel-host,
+  [data-theme='millefleur'] .app-shell > main > .workshop-view { border: 2px solid #000000; }
   [data-theme='millefleur'] .pane-header,
   [data-theme='millefleur'] .pane-header-timer { color: #000000; }
   /* Slots: 2px edges, solid role dots with a black rim, a dashed empty slot. */
