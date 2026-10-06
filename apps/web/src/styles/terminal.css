@@ -174,8 +174,13 @@
   overflow-x: hidden;
 }
 
-/* The <ol> Virtuoso renders inside the viewport. Carries the feed's gutters. */
+/* The <ol> Virtuoso renders inside the viewport. Carries the feed's gutters.
+   `list-style: none` must be set here, not only on `.event-feed`: the UA stylesheet gives
+   every <ol> `list-style-type: decimal`, which beats the value inherited from the scroller,
+   so each row drew an outside "1." marker that the feed's left edge clipped to a stray "."
+   on phones (found in the 46a screenshots). */
 .event-feed-list {
+  list-style: none;
   padding: var(--pane-padding);
 }
 

@@ -5375,3 +5375,26 @@ These were open investigations the owner closed on 2026-09-28. Reopen with new e
   Room A after #196 (wheel into history, roster collapse and expand, hiding and showing the
   ring pane), and the owner has not seen it recur.
 
+
+### 231. A stray "." at the left edge of every feed row on a phone — FIXED
+
+Found in the before-and-after screenshots for roadmap 46 pass 46a. Every row of the Ring and
+Console feeds had a clipped "." at the screen's left edge on a 390px phone. The feed's `<ol>`
+(rendered by react-virtuoso as `.event-feed-list`) showed its default decimal markers: the
+`list-style: none` sat on `.event-feed`, the scroller, but the UA stylesheet gives every `<ol>`
+`list-style-type: decimal`, which beats the inherited value. The "1." markers hang outside the
+row and the feed's edge clipped all but the full stop. `list-style: none` is now on
+`.event-feed-list` itself, with a comment.
+
+### 232. Native controls drawn light on the dark themes, and the fight log in the wrong font — FIXED
+
+Found while adding the theme plumbing for roadmap 46 (pass 46a, task 1).
+
+- **Native controls.** No stylesheet set `color-scheme`, so the browser drew unstyled native
+  controls for a light page: the Account page's display-name field was a white box, the
+  Account and Leaderboard radio buttons were white discs, and the Workshop's `×` (remove a card)
+  was dark ink on the dark card, nearly invisible. Every dark theme now declares
+  `color-scheme: dark`; a light theme declares `light`.
+- **Fight log font.** `.fight-log-detail` read `var(--font-mono, monospace)`, but `--font-mono`
+  was never defined, so the transcript in Fights rendered the browser's generic monospace
+  instead of JetBrains Mono. The token now exists (it equals `--font-family` on every theme).
