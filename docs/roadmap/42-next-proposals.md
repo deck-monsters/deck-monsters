@@ -11,7 +11,7 @@ tags: [roadmap, planning, workshop, bosses, cards]
 **Status:** Proposed (2026-10-05). B is done. F's walk is done and triaged in G. A, C and E1
 shipped as [44](../archive/roadmap/44-guides-cards-and-training.md) (#423) and G's pass I as
 [43](../archive/roadmap/43-walk-fixes.md) (#422), both archived. Open for the owner to pick:
-**D** (boss hands), the rest of **E**, **H** (the fight log), **J** (what 43 and 44 left) and **K** (rendered cards).
+**D** (boss hands), the rest of **E**, **H** (the fight log), **J** (what 43 and 44 left), **K** (rendered cards) and **L** (a Street Fighter level badge).
 Each pick gets its own plan with a task table, in the usual way.
 
 The owner's requests were A to D. E lists what Claude noticed in recent sessions. F was
@@ -373,3 +373,10 @@ which remains the default and the text form.
 - A theme opts in; the row-height guess counts the component's height the way it counts a card
   frame today (`feed-row-height.ts`).
 - Start with the Ring and Console feeds; the card details sheet already draws a card from data.
+
+## L. A Street Fighter level badge (owner, 2026-10-06)
+
+The level-up sheet's level badge is Millefleur's (a number in a halo); the terminal themes hide
+it, because a boxed number beside "Poirot at level 2" only repeated the heading. The Street
+Fighter theme could earn one of its own, drawn in that theme's SNES style (a chunky pixel frame,
+Press Start 2P, the theme's glow), if it adds something the heading doesn't.
