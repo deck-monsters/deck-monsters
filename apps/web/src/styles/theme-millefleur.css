@@ -313,12 +313,11 @@
 }
 [data-theme='millefleur'] .roster-bar-healthy { background: linear-gradient(90deg, #2c8873, #2a8570); }
 [data-theme='millefleur'] .roster-bar-critical { background: linear-gradient(90deg, #c0476f, #7a1838); }
-/* XP: the holo fill. Decorative: the figures beside it ("XP 13/28") carry the information. */
+/* XP: the design system's pale holo fill with a soft glow (Meters). It is decorative: the
+   figures beside it ("XP 13/28") carry the information, so it needs no contrast with the track. */
 [data-theme='millefleur'] .workshop-xp-meter-track > span {
-  background: linear-gradient(90deg, #f4a6cb, #f3d777, #96dcc0, #93bdf3, #b99bf0);
-  /* The pale holo tints are ~1.1:1 on the track, so a 1px control-strength edge (3.4:1) shows
-     the fill's length; the glow is only decoration. */
-  box-shadow: inset 0 0 0 1px #8f7cbc, 0 0 6px rgb(224 208 251 / 0.9);
+  background: linear-gradient(90deg, #fbd2e4, #fbecbe, #c9eedf, #cfe2fb, #e0d0fb);
+  box-shadow: 0 0 6px rgb(224 208 251 / 0.9);
 }
 
 /* ── Highlight tags in the feed: text-safe tokens, set in the shared tokens above ── */
