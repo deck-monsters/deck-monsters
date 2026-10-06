@@ -150,8 +150,8 @@ the dark themes' line ("lays down the following card", "has only 17HP"). Do not 
 `text` to match the composed sentence, and do not treat the composed sentence as a second
 canon to localise. Flavour that belongs in both (an entrance line, a boss's verb) is written
 once, in `text` and in `lines`, in the house voice. Those additive entrances and round
-beats now live in `announcements/ring-flavour.ts`; their editorial acceptance remains
-roadmap 46 task 9.
+beats now live in `announcements/ring-flavour.ts`. The Ring look is recorded on
+roadmap 46.
 
 The owner's entrance and round-beat direction (2026-10-06) is original comic narration
 in the vein of Terry Pratchett: a dry, observant narrator, concrete human reactions to

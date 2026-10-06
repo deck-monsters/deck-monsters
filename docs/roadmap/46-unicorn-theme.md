@@ -10,10 +10,10 @@ tags: [roadmap, web, theme, design, unicorn, accessibility]
 
 **Status:** Millefleur is built and live-checked on
 `claude/unicorn-monster-cards-cigpmw`. The branch review fixed feed-fidelity
-findings. Task 9's narration, including the reviewed entrance drafts, is in the live
-pools and still waiting for a look in the Ring. This page stays active until that
-review and the remaining acceptance decisions are complete. One PR for the whole
-theme, opened only when the owner asks.
+findings. Task 9's narration was looked at in the Ring: the reviewed drafts read
+cleanly after the call and the house arrival, on a phone and on a desktop. This
+page stays active until the remaining acceptance decisions are complete, including
+the CSS budget. One PR for the whole theme, opened only when the owner asks.
 
 - **The design:** [Millefleur design system](../reference/millefleur/design-system.md), with
   [the brief and artist statement](../reference/millefleur/README.md), [the final
@@ -261,7 +261,7 @@ as the build history; the statuses below describe what has actually landed.
 | 6 | 46a | **Live check and docs.** Cursor-style checklist for the screens in §7; `docs/architecture/web-themes.md`; links from `AGENTS.md` and `docs/README.md`; roadmap status | docs | Check passed or findings filed in 10 | 4, 5 | checked | 46b-cursor-check.md |
 | 7 | 46a | **Structured feed lines from the engine.** Every feed announcement also publishes `payload.lines`: clean single lines, each with a `kind` and its facts (round, actor, card, roll, damage, HP). `text` stays byte-for-byte (Discord sends it verbatim; pacing sizes pauses from it) | `packages/engine/src/announcements/*`, `events/types.ts`, `helpers/card.ts`, `ring/index.ts` | A consistency test keeps `lines` equal to `text` without its layout; engine, server and Discord tests green | 3d | built, reviewed; roll-fidelity fixes in this checkpoint | 75a52250, 653f6c2a, 3a777501, f4b4a9d5 |
 | 8 | 46a | **The feed rendered from lines.** The web draws `lines` when present (falling back to `text` for older events), with spacing from CSS rather than baked whitespace; Millefleur restyles or replaces lines by kind (the round as a divider, a play's card name, the roll as a quieter second line); row-height guesses count lines | `RingPane`, `ConsolePane`, `format-event-text`, `feed-row-height.ts`, theme CSS | Live scroll test clean under every theme; each feed screen beside its mock | — (after 7) | live-checked | b78d6f2d, 70a1309e, b51e3b1c, f4b4a9d5 |
-| 9 | 46a | **Flavour.** New narration in the house voice where the mock found room for it, per `voice-and-wording.md`, in `text` and `lines` both: an entrance line per species after a player's monster answers the call; a short beat under each round divider (a small pool, no repeats back to back); a species verb for a boss's arrival (stamps, slithers, stalks…), keeping "sent by the house". Approved direction (owner, 2026-10-06): bring together jokes and lore from across the game — the Unicorn's roses (its witness line), the Gladiator's past, the Basilisk's gaze, the Dragon's hoard, the Jinn's smoke — e.g. a boss Minotaur is "Half bull, all temper", and "…and in no mood for roses" when a Unicorn is in the ring. Refined over time like all flavour | engine announcements, strings inventory | Owner reviews the lines in the Ring | 8 | lines applied, awaiting a look in the Ring | 17ec8632 |
+| 9 | 46a | **Flavour.** New narration in the house voice where the mock found room for it, per `voice-and-wording.md`, in `text` and `lines` both: an entrance line per species after a player's monster answers the call; a short beat under each round divider (a small pool, no repeats back to back); a species verb for a boss's arrival (stamps, slithers, stalks…), keeping "sent by the house". Approved direction (owner, 2026-10-06): bring together jokes and lore from across the game — the Unicorn's roses (its witness line), the Gladiator's past, the Basilisk's gaze, the Dragon's hoard, the Jinn's smoke — e.g. a boss Minotaur is "Half bull, all temper", and "…and in no mood for roses" when a Unicorn is in the ring. Refined over time like all flavour | engine announcements, strings inventory | Owner reviews the lines in the Ring | 8 | looked in the Ring | 17ec8632, b10697cd |
 
 ### Reading the mocks
 
@@ -379,7 +379,8 @@ another PR. Cursor's task-6/task-8 browser checklist is complete in
    lines; wave and mutton-vendor beats are in the round pool. Boss Gladiator now
    rotates all four owner-approved chants. The owner's revised drafts for the other
    five species (e83eb18f) are folded into the tables below and into the live pools.
-3. Keep task 9 pending the owner's review; put every authored line here. Do not archive
+3. Task 9 was looked at in the Ring after the drafts were folded in. The lines are in
+   the tables above. Do not archive
    roadmap 46. The CSS budget and missing performance evidence stay open as item L.
 4. Before each checkpoint push: `pnpm build && pnpm typecheck && pnpm lint && pnpm test`
    and `pnpm docs:check`. The branch owner decides when to open its one PR.
@@ -389,12 +390,11 @@ another PR. Cursor's task-6/task-8 browser checklist is complete in
 Task 8 is live-checked and task 6's screen tour is recorded in
 [46b-cursor-check.md](46b-cursor-check.md). Bugs 235 and 236 are fixed (70a1309e, b51e3b1c).
 Docs owed for task 8 are updated in the same commit as this note. Do not open a PR.
-The reviewed entrance drafts are now in the live pools; task 9 still waits for a look
-in the Ring. Do not archive this plan until that review lands, and do not re-apply
-the drafts.
+The reviewed entrance drafts are in the live pools and have been looked at in the
+Ring. Do not re-apply the drafts. Do not archive this plan while the CSS budget is open.
 
-Still open: the owner's look at these lines in the Ring, then the whole-branch review
-and the one PR (handoff item 4). Task 3d's two set-aside ideas stay set aside. The
+Still open: the whole-branch review and the one PR (handoff item 4), and the CSS
+budget. Task 3d's two set-aside ideas stay set aside. The
 scratch room for the live check was deleted; Test Room A, Test Room B and Game Night
 were left in the lobby.
 
@@ -469,8 +469,7 @@ Minotaur roses clause stays on the original temper line only. The sheep bone and
 pilfered goblet connect to the Dragon's appetite and hoard; the other lines connect
 to species lore and running jokes. Generated species/pronoun examples live in the
 [strings inventories](../reference/strings/README.md), regenerated from the same source.
-**Acceptance stays open:** the owner reviews these lines in the Ring. Do not mark task 9
-done or archive this roadmap.
+The Ring look is recorded below. Do not archive this roadmap while the CSS budget is open.
 
 
 ### Task 9 — verification checkpoint (2026-10-06)
@@ -532,5 +531,24 @@ Corrections made while applying them:
 - Straight apostrophes in "wasn't" and "that's", matching the rest of the narration source.
 
 The garden beat follows "stands beyond the gate" as its own sentence, so the species
-verb and the joke both stay. Task 9 is still awaiting a look in the Ring. Do not
-archive this roadmap.
+verb and the joke both stay.
+
+
+### Task 9 — looked at in the Ring (2026-10-06)
+
+A scratch room on Millefleur, deleted afterwards. Test Room A, Test Room B and
+Game Night were not used. The feed showed the new lines after the call or the house
+arrival, then the stat card. On a phone the joke stays in the feed and wraps as
+ordinary sentences. Nothing in these lines was clipped, and no spelling correction
+turned up in the ones on screen.
+
+- [Basilisk, shoegaze, 390](46b-shots/task9-shoegaze-390.png) and [1440](46b-shots/task9-shoegaze-1440.png).
+- [Weeping Angel, the rose garden, 390](46b-shots/task9-garden-390.png) and [1440](46b-shots/task9-garden-1440.png).
+- [Jinn, three wishes, 390](46b-shots/task9-wishes-390.png).
+- [Boss Minotaur, the mason, 390](46b-shots/task9-mason-boss-390.png) and [1440](46b-shots/task9-mason-boss-1440.png). The species verb is still "stamps into the ring", and the line says "the gate".
+- [Unicorn, the gardener, 1440](46b-shots/task9-roses-1440.png).
+
+This fight ended before a round rolled over, so a round beat was not on screen.
+Those beats were already checked at the earlier flavour checkpoint and were not
+part of the draft fold. The CSS budget in [10, item L](10-bug-fixes.md#l-millefleur-size-and-performance-acceptance)
+is still open. Do not archive this roadmap.
