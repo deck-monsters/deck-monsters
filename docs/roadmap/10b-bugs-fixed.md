@@ -5436,6 +5436,12 @@ are incomplete. A result-only numeric roll uses its real total as its natural fi
 Tests: engine `announcements/feed-lines.test.ts`, web `feed-lines.test.tsx` (including
 shared renderer/height booking).
 
+**`text` changed too.** The same fix reaches `event.text`, so Discord and the fight log see it:
+a compound roll used to print `_0 on …_` (the failed conversion) and now prints the authored
+dice, e.g. Blink's `_2 & 9 on …_`. It is the one deliberate exception to "text stays
+byte-for-byte" in roadmap 46's task 7, besides task 9's new flavour lines (found in the final
+branch review, 2026-10-06).
+
 **Status**: Fixed.
 
 ### 238. Critical-roll composition drops the card's outcome explanation — FIXED

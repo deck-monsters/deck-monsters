@@ -342,8 +342,13 @@ and the list mounts then. Without ResizeObserver the fallback is used.
 
 When an event has `payload.lines`, the web draws those lines (`components/FeedLines.tsx`,
 blocks from `utils/feed-lines.ts`) instead of the engine's `text`. A `card` line is the
-frame's title and body with the ASCII rules already removed: the panel (`.event-card-block`)
-paints a title, a CSS rule (`.feed-card-title`) and the body. Spacing between lines is the
+frame's title and body with the ASCII rules already removed. Millefleur's panel
+(`.event-card-block`) paints a title, a CSS rule (`.feed-card-title`) and the body. The
+terminal themes redraw the engine's own ASCII frame (the `=` and `-` rules at 34 columns,
+inside the card body, so the row estimate counts them as lines), because the owner prefers
+the ASCII render there, as on Discord (2026-10-06). The frame has no blank line between the
+description and the stats, which the old fenced text had; roadmap 42 K can restore it from
+the line's structured fields. Spacing between lines is the
 CSS gap, not blank lines baked into `text`. Millefleur (`feedStyle` `millefleur`) replaces
 some kinds with composed sentences — a round is a divider, a play names the card, a roll
 is one dim sentence (including substantive critical outcomes), a bloodied HP line gains a rose ", bloodied" inside the sentence.

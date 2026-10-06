@@ -44,18 +44,18 @@ Seeded, cycling he, she, and they.
 Additive to the call or the house arrival; cycling he, she, and they.
 
 - Player (he): `Companion steps onto the sand. Once, the gates were locked behind him; today, he comes by choice.`
-- House (he, variant 1): `Companion stalks onto the sand. “THERE’S ONLY ONE Companion!” chant the cheap seats. While not strictly true, the house can confirm that it holds true in today's battles at least.`
-- House (he, variant 2): `Companion stalks onto the sand. “COMPANION’S ON FIRE!” sing the stands. Three attendants hurry in with buckets. Experience has taught them to check.`
+- House (he, variant 1): `Companion stalks onto the sand. “THERE'S ONLY ONE COMPANION!” chant the cheap seats. While not strictly true, the house can confirm that it holds true in today's battles at least.`
+- House (he, variant 2): `Companion stalks onto the sand. “COMPANION'S ON FIRE!” sing the stands. Three attendants hurry in with buckets. Experience has taught them to check.`
 - House (he, variant 3): `Companion stalks onto the sand. “ONE OF OUR OWN!” roar the stands. It's unclear (and highly unlikely) whether Companion has ever met these people, but they seem very certain.`
 - House (he, variant 4): `Companion stalks onto the sand. The crowd begins Companion's song. It has six verses and one rude word, somehow creatively used in all six.`
 - Player (she): `Companion steps onto the sand. Once, the gates were locked behind her; today, she comes by choice.`
-- House (she, variant 1): `Companion stalks onto the sand. “THERE’S ONLY ONE Companion!” chant the cheap seats. While not strictly true, the house can confirm that it holds true in today's battles at least.`
-- House (she, variant 2): `Companion stalks onto the sand. “COMPANION’S ON FIRE!” sing the stands. Three attendants hurry in with buckets. Experience has taught them to check.`
+- House (she, variant 1): `Companion stalks onto the sand. “THERE'S ONLY ONE COMPANION!” chant the cheap seats. While not strictly true, the house can confirm that it holds true in today's battles at least.`
+- House (she, variant 2): `Companion stalks onto the sand. “COMPANION'S ON FIRE!” sing the stands. Three attendants hurry in with buckets. Experience has taught them to check.`
 - House (she, variant 3): `Companion stalks onto the sand. “ONE OF OUR OWN!” roar the stands. It's unclear (and highly unlikely) whether Companion has ever met these people, but they seem very certain.`
 - House (she, variant 4): `Companion stalks onto the sand. The crowd begins Companion's song. It has six verses and one rude word, somehow creatively used in all six.`
 - Player (they): `Companion steps onto the sand. Once, the gates were locked behind them; today, they come by choice.`
-- House (they, variant 1): `Companion stalks onto the sand. “THERE’S ONLY ONE Companion!” chant the cheap seats. While not strictly true, the house can confirm that it holds true in today's battles at least.`
-- House (they, variant 2): `Companion stalks onto the sand. “COMPANION’S ON FIRE!” sing the stands. Three attendants hurry in with buckets. Experience has taught them to check.`
+- House (they, variant 1): `Companion stalks onto the sand. “THERE'S ONLY ONE COMPANION!” chant the cheap seats. While not strictly true, the house can confirm that it holds true in today's battles at least.`
+- House (they, variant 2): `Companion stalks onto the sand. “COMPANION'S ON FIRE!” sing the stands. Three attendants hurry in with buckets. Experience has taught them to check.`
 - House (they, variant 3): `Companion stalks onto the sand. “ONE OF OUR OWN!” roar the stands. It's unclear (and highly unlikely) whether Companion has ever met these people, but they seem very certain.`
 - House (they, variant 4): `Companion stalks onto the sand. The crowd begins Companion's song. It has six verses and one rude word, somehow creatively used in all six.`
 

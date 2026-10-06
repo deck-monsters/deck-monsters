@@ -1,5 +1,6 @@
 import { BASILISK, DRAGON, GLADIATOR, JINN, MINOTAUR, UNICORN, WEEPING_ANGEL } from '../constants/creature-types.js';
 import { agree, type PronounSet } from '../helpers/pronouns.js';
+import { RING_PATRON_NAME } from '../constants/lore.js';
 
 interface ArrivalMonster {
 	creatureType: string | undefined;
@@ -67,8 +68,8 @@ export function bossEntrances(monster: ArrivalMonster, contestants: readonly Rin
 		case GLADIATOR: {
 			const arrival = `${name} stalks onto the sand.`;
 			return [
-				`${arrival} “THERE’S ONLY ONE ${name}!” chant the cheap seats. While not strictly true, the house can confirm that it holds true in today's battles at least.`,
-				`${arrival} “${name.toUpperCase()}’S ON FIRE!” sing the stands. Three attendants hurry in with buckets. Experience has taught them to check.`,
+				`${arrival} “THERE'S ONLY ONE ${name.toUpperCase()}!” chant the cheap seats. While not strictly true, the house can confirm that it holds true in today's battles at least.`,
+				`${arrival} “${name.toUpperCase()}'S ON FIRE!” sing the stands. Three attendants hurry in with buckets. Experience has taught them to check.`,
 				`${arrival} “ONE OF OUR OWN!” roar the stands. It's unclear (and highly unlikely) whether ${name} has ever met these people, but they seem very certain.`,
 				`${arrival} The crowd begins ${name}'s song. It has six verses and one rude word, somehow creatively used in all six.`,
 			];
@@ -110,7 +111,7 @@ export function bossEntrances(monster: ArrivalMonster, contestants: readonly Rin
 				`${arrival} The palace gardener recognizes ${p.him}. This is not, on the whole, a happy reunion.`,
 			];
 		}
-		case DRAGON: return [`${name} sweeps down to the sand. The Editor deftly slips their jeweled hand into their pocket.`];
+		case DRAGON: return [`${name} sweeps down to the sand. ${RING_PATRON_NAME} deftly slips their jeweled hand into their pocket.`];
 		default: return [];
 	}
 }

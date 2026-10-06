@@ -352,7 +352,11 @@
 .feed-line {
   position: relative;
   min-width: 0;
-  /* Indent in columns: the estimate wraps that many columns earlier. */
+}
+/* Indent in columns: the estimate wraps that many columns earlier. Not on a card: its panel
+   (.event-card-block) has its own padding, which this rule overrode, so card text sat against
+   the panel's left border in every theme (final review, 2026-10-06). */
+.feed-line:not(.event-card-block) {
   padding-left: calc(var(--feed-indent, 0) * 1ch);
 }
 

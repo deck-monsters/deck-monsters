@@ -392,10 +392,11 @@ renderer (task 8), and new flavour (task 9). Discord keeps the text it has today
 - **Task 8 review decisions.** The roll is already a separate, indented dim block under
   the play/card event. Its complete arithmetic and verdict stay in one sentence, as
   approved in task 8; the mock's abbreviated roll is not a second wording contract.
-  In all themes, fresh structured cards intentionally use a title, CSS rule and body,
-  with CSS gaps replacing the engine's ASCII rules and blank lines. Old history without
-  `lines` still uses ASCII; Discord keeps `text`. This is the renderer design, not an
-  accidental change to dark-theme colours or chrome.
+  Millefleur draws fresh structured cards as a title, CSS rule and body. The terminal
+  themes first did the same, and the final review restored the engine's ASCII frame there
+  (ab9beb51), because the owner prefers the ASCII render in the terminal themes, as on
+  Discord. CSS gaps replace the engine's blank lines in every theme. Old history without
+  `lines` still renders its fenced text; Discord keeps `text`.
 - **Task 3d review.** Source and recorded dark-theme shots confirm the deliberate
   backports: Workshop portrait/status/count and first-monster Train emphasis
   (a0a3eb8c), Chat bottom anchoring/times and grouped Ring meta (18d73971), and
@@ -488,8 +489,8 @@ and Gladiator's `comes/come` agrees with them. All seven species are covered.
 | Basilisk, variant 1 | {name} slithers through the gate. The front row makes intense eye contact with the sand. |
 | Basilisk, variant 2 | {name} slithers through the gate. Somewhere, a music producer is about to invent the genre of shoegaze. |
 | Basilisk, variant 3 | {name} slithers through the gate. A man in the front row announces that he wasn't looking anyway. |
-| Gladiator, variant 1 | {name} stalks onto the sand. “THERE’S ONLY ONE {name}!” chant the cheap seats. While not strictly true, the house can confirm that it holds true in today's battles at least. |
-| Gladiator, variant 2 | {name} stalks onto the sand. “{NAME}’S ON FIRE!” sing the stands. Three attendants hurry in with buckets. Experience has taught them to check. |
+| Gladiator, variant 1 | {name} stalks onto the sand. “THERE'S ONLY ONE {NAME}!” chant the cheap seats. While not strictly true, the house can confirm that it holds true in today's battles at least. |
+| Gladiator, variant 2 | {name} stalks onto the sand. “{NAME}'S ON FIRE!” sing the stands. Three attendants hurry in with buckets. Experience has taught them to check. |
 | Gladiator, variant 3 | {name} stalks onto the sand. “ONE OF OUR OWN!” roar the stands. It's unclear (and highly unlikely) whether {name} has ever met these people, but they seem very certain. |
 | Gladiator, variant 4 | {name} stalks onto the sand. The crowd begins {name}'s song. It has six verses and one rude word, somehow creatively used in all six. |
 | Jinn, variant 1 | {name} billows through the gate. The house has sent smoke with a grudge. |
