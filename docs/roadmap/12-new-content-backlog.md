@@ -151,6 +151,24 @@ Open work:
 Built in Pass C ([32](../archive/roadmap/32-pass-c-mega-boss-and-balance.md)); its rules are in
 [boss encounters §8](../architecture/boss-encounters.md#8-the-mega-boss). Nothing is open here.
 
+## Trading and gifting cards
+
+The owner's idea (2026-10-06), prompted by a mockup chat line, "want my spare Blink after?":
+let players give a card to someone in the room, or trade one card for another. Today a card can
+only move between a player's own monsters and their own unequipped deck; `give [item] to
+[monster]` exists for items, between a player's own character and monsters, and nothing moves
+between players.
+
+- [ ] Design it: gift (one-way, the recipient accepts) and trade (both offer, both accept), in
+  the same room only (the [rooms rule](../architecture/rooms-and-identity.md)). Unequipped cards
+  only; a card on a monster in a fight cannot move.
+- [ ] Guard the economy: a daily cap or a level gate so alt accounts cannot funnel cards, and a
+  check against the shop's sell prices so trading is not a way around them.
+- [ ] Surfaces: a Console command (`give [card] to [player]`, through the
+  [catalogue](../reference/voice-and-wording.md)), a "Give or trade" action in the Workshop's
+  card details, a prompt for the recipient, a line in Chat or the feed, and Discord parity.
+- [ ] Record each transfer in the room's history, so a dispute can be checked.
+
 ## World and long-term goals
 
 - [ ] Design graveyard NPCs and a memorial-compatible return for permanently dismissed

@@ -72,6 +72,7 @@ Generated and authored player references remain at the repository root:
 | Reviewing monster flavour strings or signature-card narration (generated inventories) | [Monster and card strings](reference/strings/README.md) |
 | `channel({ question, choices })` call site or connector answer encoding | [Prompt/answer contract](reference/prompt-answer-contract.md) |
 | Sprite maps, Canvas/CSS pixel art, scaling, palettes, animation construction | [Pixel art](reference/pixel-art.md) |
+| The Millefleur theme: tokens, texture, components, final screens, and how it was designed | [Millefleur design system](reference/millefleur/design-system.md) ([brief](reference/millefleur/README.md), [process](reference/millefleur/process.md)) |
 | Player agency, bounded live items, motivation evidence, or combat-control proposals | [Player agency](reference/player-agency.md) |
 | Seeded fight simulations, `SimResult` fields, or a `sim:*` script | [Simulation harness](reference/simulation-harness.md) |
 | Balance measurements that informed a decision (class curves, catalogues, matrices) | [Balance reports](reference/balance-reports/README.md) |

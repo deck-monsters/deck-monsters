@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Direction B Gloaming Wash</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@1,9..144,600&amp;family=Nunito:wght@400;600;700;800&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.tab{flex:none;padding:9px 14px 8px;font:700 13px/1 Nunito,sans-serif;color:#b2acd6;border-bottom:2px solid transparent}
+.tab.on{color:#fffaf0;border-bottom-color:#9ee6d2}
+.slot{height:92px;border-radius:12px;background:#2d3159;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;box-shadow:0 0 0 1px #41467a}
+.slot.empty{background:transparent;box-shadow:inset 0 0 0 1px #41467a}
+.nm{font:600 12px/1.15 'JetBrains Mono',monospace;color:#e8e3f6;text-align:center;padding:0 6px}
+.rl{font:800 9px/1 Nunito,sans-serif;letter-spacing:.08em}
+</style>
+</helmet>
+<div style="width:390px;height:760px;overflow:hidden;font-family:Nunito,sans-serif;color:#e8e3f6;background-color:#1c1e3b;background-image:radial-gradient(ellipse 380px 280px at 10% 5%, rgba(91,79,158,.55), transparent 70%), radial-gradient(ellipse 340px 300px at 100% 70%, rgba(47,111,115,.45), transparent 70%)">
+
+  <header style="display:flex;align-items:center;gap:8px;padding:16px 16px 12px">
+    <span style="font:800 13px/1 Nunito,sans-serif;letter-spacing:.12em;color:#fffaf0">DECK MONSTERS</span>
+    <span style="color:#41467a">/</span>
+    <span style="font:600 italic 17px/1 Fraunces,serif;color:#9ee6d2;flex:1">Crazy chickens</span>
+    <button aria-label="Open menu" style="width:34px;height:34px;border:1px solid #41467a;border-radius:10px;background:#262a4d;display:flex;align-items:center;justify-content:center;padding:0"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#e8e3f6" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h16"></path></svg></button>
+  </header>
+
+  <nav aria-label="Places" style="display:flex;padding:0 0 0 6px;overflow:hidden;border-bottom:1px solid #41467a">
+    <span class="tab">The Ring</span><span class="tab">Console</span><span class="tab">Chat</span><span class="tab on">Workshop</span><span class="tab">Fights</span>
+  </nav>
+
+  <section style="margin:16px;padding:18px 16px;background:rgba(38,42,77,.92);border-radius:12px;box-shadow:0 0 0 1px #41467a, 0 8px 24px rgba(0,0,0,.35);display:flex;flex-direction:column;gap:12px">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div style="width:64px;height:64px;border-radius:50%;background:radial-gradient(circle,rgba(255,250,240,.25),transparent 70%);display:flex;align-items:center;justify-content:center">
+        <svg width="44" height="33" viewBox="0 0 12 9" shape-rendering="crispEdges" style="filter:drop-shadow(0 0 4px rgba(255,250,240,.6))"><rect x="8" y="0" width="1" height="1" fill="#e8c76a"></rect><rect x="7" y="1" width="2" height="1" fill="#fde9a8"></rect><rect x="6" y="2" width="4" height="1" fill="#f7f5ff"></rect><rect x="5" y="3" width="6" height="1" fill="#f7f5ff"></rect><rect x="8" y="3" width="1" height="1" fill="#2a2f6b"></rect><rect x="0" y="4" width="10" height="2" fill="#f7f5ff"></rect><rect x="0" y="6" width="9" height="1" fill="#e6e1f7"></rect><rect x="1" y="7" width="2" height="2" fill="#8f84bd"></rect><rect x="4" y="7" width="1" height="2" fill="#8f84bd"></rect><rect x="7" y="7" width="2" height="2" fill="#8f84bd"></rect></svg>
+      </div>
+      <div>
+        <h2 style="margin:0;font:600 italic 26px/1 Fraunces,serif;color:#fffaf0">Poirot</h2>
+        <div style="font-size:13px;color:#b2acd6;margin-top:4px">Unicorn · Lvl 2</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:#b2acd6"><span style="width:58px">HP 33/33</span><span style="flex:1;height:6px;border-radius:999px;background:#373c6b"><span style="display:block;height:100%;width:100%;border-radius:999px;background:#f3effd"></span></span></div>
+    <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:#b2acd6"><span style="width:58px">XP 13/28</span><span style="flex:1;height:6px;border-radius:999px;background:#373c6b"><span style="display:block;height:100%;width:46%;border-radius:999px;background:#9ee6d2"></span></span><b style="color:#9ee6d2">Lvl 3 ›</b></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button style="font:700 14px/1 Nunito,sans-serif;color:#e8e3f6;background:transparent;border:1px solid #6a6fa6;border-radius:10px;padding:11px 14px">Unequip all</button>
+      <button style="font:800 14px/1 Nunito,sans-serif;color:#1c1e3b;background:#9ee6d2;border:0;border-radius:10px;padding:11px 16px;box-shadow:0 0 14px rgba(158,230,210,.35)">Send to ring</button>
+    </div>
+    <div style="font-size:12px;color:#b2acd6">Deck 3/9 · needs 6 more to enter the ring</div>
+    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px">
+      <div class="slot"><span class="rl" style="color:#ff8a7d">ATTACK</span><span class="nm">Sticketh</span></div>
+      <div class="slot"><span class="rl" style="color:#c4ecb0">HEAL</span><span class="nm">Gloaming Rest</span></div>
+      <div class="slot"><span class="rl" style="color:#d6c8ff">TRICK</span><span class="nm">Dissonant Voice</span></div>
+      <div class="slot empty"><span style="font:700 20px/1 Nunito;color:#6a6fa6">+</span></div>
+      <div class="slot empty"><span style="font:700 20px/1 Nunito;color:#6a6fa6">+</span></div>
+      <div class="slot empty"><span style="font:700 20px/1 Nunito;color:#6a6fa6">+</span></div>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":760}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Millefleur v3 Workshop</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.tab{position:relative;flex:none;padding:11px 14px 16px;font:700 13px/1 Nunito,sans-serif;color:#7a6e98;border:1px solid rgba(176,156,208,.6);border-bottom:0;border-radius:13px 13px 0 0;background:linear-gradient(to bottom,rgba(255,253,250,.75),rgba(255,253,250,0));-webkit-mask-image:linear-gradient(to bottom,#000 45%,transparent 100%);mask-image:linear-gradient(to bottom,#000 45%,transparent 100%);margin-right:-1px}
+.tab.on{z-index:2;color:#8a2a5e;padding-top:13px;margin-top:-4px;border-color:rgba(200,120,160,.6);background:linear-gradient(to bottom,rgba(250,214,229,.95),rgba(250,214,229,.35) 60%,rgba(250,214,229,0))}
+.paper{background:rgba(255,253,250,.72);border:1px solid rgba(190,170,215,.55);border-radius:18px;box-shadow:0 1px 0 rgba(255,255,255,.9) inset, 0 8px 22px rgba(110,85,150,.08)}
+.slot{height:86px;border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;background:rgba(255,253,250,.85);border:1px solid rgba(190,170,215,.6)}
+.slot.empty{background:rgba(255,253,250,.32);border-color:rgba(190,170,215,.4)}
+.nm{font:700 12.5px/1.2 Nunito,sans-serif;color:#3b2a55;text-align:center;padding:0 8px}
+.rl{display:flex;align-items:center;gap:6px;font:700 10px/1 Nunito,sans-serif;letter-spacing:.07em;color:#7a6e98}
+.rl i{width:9px;height:9px;border-radius:50%;display:inline-block}
+.btn2{font:700 14px/1 Nunito,sans-serif;color:#3b2a55;background:rgba(255,253,250,.85);border:1px solid rgba(160,135,200,.7);border-radius:13px;padding:12px 16px}
+.btn1{font:800 14px/1 Nunito,sans-serif;color:#fff;background:linear-gradient(160deg,#5d4684,#3b2a55);border:0;border-radius:13px;padding:12px 18px;box-shadow:0 0 0 2px rgba(255,253,250,.95), 0 0 0 3.5px rgba(93,70,132,.5), 0 6px 14px rgba(93,70,132,.22)}
+</style>
+</helmet>
+<div style="position:relative;width:390px;height:940px;overflow:hidden;font-family:Nunito,sans-serif;color:#3b2a55;background:#fbf8f5">
+  <svg aria-hidden="true" width="390" height="940" style="position:absolute;inset:0">
+    <defs>
+      <filter id="w3a" x="-25%" y="-25%" width="150%" height="150%"><feTurbulence type="fractalNoise" baseFrequency="0.028" numOctaves="4" seed="9" result="n"></feTurbulence><feDisplacementMap in="SourceGraphic" in2="n" scale="11" xChannelSelector="R" yChannelSelector="G" result="d"></feDisplacementMap><feGaussianBlur in="d" stdDeviation="0.8"></feGaussianBlur></filter>
+      <filter id="w3g"><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="4" stitchTiles="stitch"></feTurbulence><feColorMatrix type="saturate" values="0"></feColorMatrix><feComponentTransfer><feFuncA type="linear" slope="0.22"></feFuncA></feComponentTransfer></filter>
+      <filter id="w3f"><feTurbulence type="fractalNoise" baseFrequency="0.012 0.18" numOctaves="2" seed="3"></feTurbulence><feColorMatrix type="saturate" values="0"></feColorMatrix><feComponentTransfer><feFuncA type="linear" slope="0.09"></feFuncA></feComponentTransfer></filter>
+    </defs>
+    <g filter="url(#w3a)">
+      <path d="M-50 30 C30 -40 200 -20 248 60 C292 132 210 214 112 208 C30 203 -70 160 -50 30Z" fill="#e3d4fa" opacity=".55"></path>
+      <path d="M-20 50 C40 0 150 10 180 70 C205 120 150 160 90 158 C30 155 -40 120 -20 50Z" fill="#d6c3f6" opacity=".35"></path>
+      <path d="M-50 30 C30 -40 200 -20 248 60 C292 132 210 214 112 208 C30 203 -70 160 -50 30Z" fill="none" stroke="#c4aaee" stroke-width="1.6" opacity=".5"></path>
+      <path d="M300 300 C360 250 450 290 440 380 C432 460 380 520 320 500 C260 480 240 350 300 300Z" fill="#cdeee2" opacity=".55"></path>
+      <path d="M330 340 C370 320 420 350 410 400 C400 450 360 470 335 450 C300 425 300 360 330 340Z" fill="#b6e4d3" opacity=".35"></path>
+      <path d="M300 300 C360 250 450 290 440 380 C432 460 380 520 320 500 C260 480 240 350 300 300Z" fill="none" stroke="#9fd6c2" stroke-width="1.6" opacity=".45"></path>
+      <path d="M-60 640 C0 580 120 590 150 660 C180 730 120 800 40 790 C-30 782 -110 700 -60 640Z" fill="#fbd9e6" opacity=".55"></path>
+      <path d="M-30 670 C10 640 80 650 95 690 C110 735 70 765 25 760 C-20 755 -60 705 -30 670Z" fill="#f6c3d7" opacity=".3"></path>
+      <path d="M220 820 C290 780 430 800 440 880 C450 960 300 990 230 950 C170 915 160 855 220 820Z" fill="#d6e6fb" opacity=".6"></path>
+      <path d="M220 820 C290 780 430 800 440 880 C450 960 300 990 230 950 C170 915 160 855 220 820Z" fill="none" stroke="#b9d2f3" stroke-width="1.6" opacity=".45"></path>
+      <path d="M200 560 C230 540 280 550 285 585 C290 620 250 640 220 630 C190 620 175 580 200 560Z" fill="#fbefc8" opacity=".5"></path>
+    </g>
+    <rect width="390" height="940" filter="url(#w3f)" style="mix-blend-mode:multiply"></rect>
+    <rect width="390" height="940" filter="url(#w3g)" style="mix-blend-mode:multiply" opacity=".55"></rect>
+  </svg>
+
+  <div style="position:relative;display:flex;flex-direction:column;height:100%">
+    <header style="display:flex;align-items:center;gap:8px;padding:16px 16px 8px">
+      <span style="font:800 13px/1 Nunito,sans-serif;letter-spacing:.14em;color:#3b2a55">DECK MONSTERS</span>
+      <span style="color:#c9b8e4">/</span>
+      <span style="font:700 15px/1 Nunito,sans-serif;color:#9a2f66;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Crazy chickens</span>
+      <button aria-label="Open menu" class="btn2" style="width:38px;height:38px;padding:0;display:flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b2a55" stroke-width="2" stroke-linecap="round"><path d="M5 7h14M5 12h14M5 17h14"></path></svg></button>
+    </header>
+
+    <nav aria-label="Places" style="display:flex;align-items:flex-end;padding:10px 0 0 10px;overflow:hidden;-webkit-mask-image:linear-gradient(to right,#000 84%,transparent);mask-image:linear-gradient(to right,#000 84%,transparent)">
+      <span class="tab">The Ring</span><span class="tab">Console</span><span class="tab">Chat</span><span class="tab on">Workshop</span><span class="tab">Fights</span><span class="tab">Leaders</span>
+    </nav>
+
+    <main style="flex:1;padding:0 14px;display:flex;flex-direction:column;gap:12px;min-height:0;margin-top:-4px">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;padding:10px 6px 0">
+        <h1 style="margin:0;font:800 22px/1 Nunito,sans-serif;color:#2f2147">Workshop</h1>
+        <span style="font-size:12px;color:#7a6e98">You can train 3 more</span>
+      </div>
+
+      <section class="paper" style="padding:18px 16px 16px;display:flex;flex-direction:column;gap:13px">
+        <div style="display:flex;gap:16px;align-items:center">
+          <div style="position:relative;width:84px;height:84px;flex:none">
+            <div aria-hidden="true" style="position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 210deg,#fbd2e4,#fbecbe,#c9eedf,#cfe2fb,#e0d0fb,#fbd2e4);filter:blur(6px);opacity:.95"></div>
+            <div aria-hidden="true" style="position:absolute;inset:7px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#fffdfa 0%,#fbf7ff 60%,#efe6fb 100%);box-shadow:inset 0 0 12px rgba(190,160,235,.45)"></div>
+            <svg width="50" height="38" viewBox="0 0 12 9" shape-rendering="crispEdges" style="position:absolute;left:17px;top:23px;filter:drop-shadow(0 2px 3px rgba(110,85,150,.35))"><rect x="8" y="0" width="1" height="1" fill="#e8c76a"></rect><rect x="7" y="1" width="2" height="1" fill="#fde9a8"></rect><rect x="6" y="2" width="4" height="1" fill="#f7f5ff"></rect><rect x="5" y="3" width="6" height="1" fill="#f7f5ff"></rect><rect x="8" y="3" width="1" height="1" fill="#2a2f6b"></rect><rect x="0" y="4" width="10" height="2" fill="#f7f5ff"></rect><rect x="0" y="6" width="9" height="1" fill="#e6e1f7"></rect><rect x="1" y="7" width="2" height="2" fill="#8f84bd"></rect><rect x="4" y="7" width="1" height="2" fill="#8f84bd"></rect><rect x="7" y="7" width="2" height="2" fill="#8f84bd"></rect></svg>
+          </div>
+          <div style="flex:1;min-width:0">
+            <h2 style="margin:0;font:800 24px/1.1 Nunito,sans-serif;color:#2f2147">Poirot</h2>
+            <div style="font-size:13px;color:#7a6e98;margin-top:4px">Unicorn · Lvl 2 · she/her</div>
+            <div style="display:inline-flex;align-items:center;gap:6px;margin-top:8px;font:700 11px/1 Nunito,sans-serif;color:#1f6b57"><span style="width:8px;height:8px;border-radius:50%;background:radial-gradient(circle,#3aa58a 40%,rgba(58,165,138,.25) 75%,transparent)"></span>Ready</div>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:10px;font-size:12px;color:#7a6e98">
+          <span style="width:58px">HP 33/33</span>
+          <span style="flex:1;height:8px;border-radius:999px;background:rgba(190,170,215,.28);box-shadow:inset 0 0 0 1px rgba(190,170,215,.35)"><span style="display:block;height:100%;width:100%;border-radius:999px;background:linear-gradient(90deg,#86cfba,#3a9f88)"></span></span>
+        </div>
+        <button style="all:unset;display:flex;align-items:center;gap:10px;font-size:12px;color:#7a6e98;cursor:pointer">
+          <span style="width:58px">XP 13/28</span>
+          <span style="flex:1;height:8px;border-radius:999px;background:rgba(190,170,215,.28);box-shadow:inset 0 0 0 1px rgba(190,170,215,.35)"><span style="display:block;height:100%;width:46%;border-radius:999px;background:linear-gradient(90deg,#f8c2dc,#fae3a3,#bfe9d9,#c4daf8,#d7c6f8);box-shadow:0 0 6px rgba(215,180,250,.6)"></span></span>
+          <span style="font-weight:800;color:#9a2f66">Lvl 3 ›</span>
+        </button>
+
+        <div style="display:flex;gap:10px;justify-content:flex-end;padding-top:2px">
+          <button class="btn2">Unequip all</button>
+          <button class="btn1">Send to ring</button>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:#7a6e98;padding:2px 2px 0">
+          <span><b style="color:#3b2a55">Deck 3/9</b> · needs 6 more to enter the ring</span><span>4W 2L</span>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px">
+          <div class="slot"><span class="rl"><i style="background:radial-gradient(circle at 40% 40%,#e88ab3,#d7679a 55%,rgba(215,103,154,.15) 80%,transparent)"></i>ATTACK</span><span class="nm">Sticketh</span></div>
+          <div class="slot"><span class="rl"><i style="background:radial-gradient(circle at 40% 40%,#79c9b2,#3aa58a 55%,rgba(58,165,138,.15) 80%,transparent)"></i>HEAL</span><span class="nm">Gloaming Rest</span></div>
+          <div class="slot"><span class="rl"><i style="background:radial-gradient(circle at 40% 40%,#b9a3ea,#8f72d1 55%,rgba(143,114,209,.15) 80%,transparent)"></i>TRICK</span><span class="nm">Dissonant Voice</span></div>
+          <div class="slot empty"><span style="font:600 20px/1 Nunito,sans-serif;color:#b6a6d4">+</span></div>
+          <div class="slot empty"><span style="font:600 20px/1 Nunito,sans-serif;color:#b6a6d4">+</span></div>
+          <div class="slot empty"><span style="font:600 20px/1 Nunito,sans-serif;color:#b6a6d4">+</span></div>
+          <div class="slot empty"><span style="font:600 20px/1 Nunito,sans-serif;color:#b6a6d4">+</span></div>
+          <div class="slot empty"><span style="font:600 20px/1 Nunito,sans-serif;color:#b6a6d4">+</span></div>
+          <div class="slot empty"><span style="font:600 20px/1 Nunito,sans-serif;color:#b6a6d4">+</span></div>
+        </div>
+      </section>
+
+      <div style="display:flex;align-items:center;justify-content:center;gap:2px;padding-bottom:10px">
+        <span aria-label="Poirot" style="width:28px;height:36px;display:flex;align-items:center;justify-content:center"><span style="width:11px;height:11px;border-radius:50%;background:conic-gradient(#f8c2dc,#fae3a3,#bfe9d9,#c4daf8,#d7c6f8,#f8c2dc);box-shadow:0 0 0 1px rgba(255,253,250,.9), 0 0 7px rgba(200,160,250,.55)"></span></span>
+        <span aria-label="Glimmer" style="width:28px;height:36px;display:flex;align-items:center;justify-content:center"><span style="width:9px;height:9px;border-radius:50%;border:1px solid rgba(160,135,200,.6)"></span></span>
+        <span aria-label="Rex" style="width:28px;height:36px;display:flex;align-items:center;justify-content:center"><span style="width:9px;height:9px;border-radius:50%;border:1px solid rgba(160,135,200,.6)"></span></span>
+        <button aria-label="Next monster" style="all:unset;width:36px;height:36px;display:flex;align-items:center;justify-content:center"><span style="width:20px;height:20px;border-radius:50%;background:rgba(255,253,250,.85);border:1px solid rgba(160,135,200,.7);display:flex;align-items:center;justify-content:center"><svg width="8" height="8" viewBox="0 0 8 8"><path d="M2.5 1 L5.5 4 L2.5 7" fill="none" stroke="#7a6e98" stroke-width="1.4" stroke-linecap="round"></path></svg></span></button>
+      </div>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":940}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

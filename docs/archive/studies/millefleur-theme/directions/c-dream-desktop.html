@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Direction C Dream Desktop</title>
+<link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@500;700&amp;family=Nunito:wght@400;600;700;800&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.tab{flex:none;padding:7px 11px;font:700 13px/1 Nunito,sans-serif;color:#1d1830;background:#fff;border:1px solid #1d1830;border-radius:6px 6px 0 0;margin-right:-1px}
+.tab.on{background:#5b34c4;color:#fff}
+.slot{height:90px;border:1px solid #1d1830;border-radius:4px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;box-shadow:2px 2px 0 #1d1830}
+.slot.empty{box-shadow:none;border-style:dotted;background:#fbf9ff}
+.nm{font:600 12px/1.15 'JetBrains Mono',monospace;color:#1d1830;text-align:center;padding:0 6px}
+.rl{font:500 10px/1 'Pixelify Sans',monospace;letter-spacing:.04em;color:#575070}
+</style>
+</head>
+<body style="margin:0">
+<div style="width:390px;height:760px;overflow:hidden;font-family:Nunito,sans-serif;color:#1d1830;background-color:#f3eefb;background-image:linear-gradient(45deg,#e8def8 25%,transparent 25%,transparent 75%,#e8def8 75%),linear-gradient(45deg,#e8def8 25%,transparent 25%,transparent 75%,#e8def8 75%);background-size:4px 4px;background-position:0 0,2px 2px">
+
+  <header style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:#fff;border-bottom:1px solid #1d1830">
+    <svg width="16" height="16" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true"><rect x="5" y="1" width="2" height="3" fill="#5b34c4"></rect><rect x="3" y="4" width="10" height="9" fill="#ffd1ec"></rect><rect x="3" y="4" width="10" height="1" fill="#1d1830"></rect></svg>
+    <span style="font:700 14px/1 'Pixelify Sans',monospace">Deck Monsters</span>
+    <span style="font:600 13px/1 Nunito,sans-serif;color:#575070;flex:1">Crazy chickens</span>
+    <button aria-label="Open menu" style="width:34px;height:30px;border:1px solid #1d1830;border-radius:6px;background:#fff;display:flex;align-items:center;justify-content:center;padding:0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1d1830" stroke-width="2.5"><path d="M4 7h16M4 12h16M4 17h16"></path></svg></button>
+  </header>
+
+  <nav aria-label="Places" style="display:flex;padding:12px 0 0 12px;overflow:hidden;border-bottom:1px solid #1d1830">
+    <span class="tab">The Ring</span><span class="tab">Console</span><span class="tab">Chat</span><span class="tab on">Workshop</span><span class="tab">Fights</span>
+  </nav>
+
+  <section style="margin:16px 14px;background:#fff;border:1px solid #1d1830;border-radius:6px;box-shadow:2px 2px 0 #1d1830;overflow:hidden">
+    <div style="position:relative;height:22px;display:flex;align-items:center;justify-content:center;border-bottom:1px solid #1d1830">
+      <div aria-hidden="true" style="position:absolute;left:28px;right:6px;top:4px;bottom:4px;background:repeating-linear-gradient(to bottom,#1d1830 0 1px,transparent 1px 2px)"></div>
+      <button aria-label="Close" style="position:absolute;left:8px;top:4px;width:13px;height:13px;border:1px solid #1d1830;background:#fff;padding:0"></button>
+      <span style="position:relative;padding:0 8px;background:#fff;font:700 13px/1 'Pixelify Sans',monospace">Poirot</span>
+    </div>
+    <div style="padding:14px;display:flex;flex-direction:column;gap:11px">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="width:58px;height:58px;border:1px solid #1d1830;background:#ece4fb;display:flex;align-items:center;justify-content:center">
+          <svg width="40" height="30" viewBox="0 0 12 9" shape-rendering="crispEdges"><rect x="8" y="0" width="1" height="1" fill="#e8c76a"></rect><rect x="7" y="1" width="2" height="1" fill="#fde9a8"></rect><rect x="6" y="2" width="4" height="1" fill="#f7f5ff"></rect><rect x="5" y="3" width="6" height="1" fill="#f7f5ff"></rect><rect x="8" y="3" width="1" height="1" fill="#2a2f6b"></rect><rect x="0" y="4" width="10" height="2" fill="#f7f5ff"></rect><rect x="0" y="6" width="9" height="1" fill="#e6e1f7"></rect><rect x="1" y="7" width="2" height="2" fill="#8f84bd"></rect><rect x="4" y="7" width="1" height="2" fill="#8f84bd"></rect><rect x="7" y="7" width="2" height="2" fill="#8f84bd"></rect></svg>
+        </div>
+        <div style="font-size:14px">Unicorn · Lvl 2<br><span style="color:#575070;font-size:12px">4 wins, 2 losses</span></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;font-size:12px"><span style="width:58px">HP 33/33</span><span style="flex:1;height:8px;border:1px solid #1d1830;background:#fff"><span style="display:block;height:100%;width:100%;background:#2f86c4"></span></span></div>
+      <div style="display:flex;align-items:center;gap:8px;font-size:12px"><span style="width:58px">XP 13/28</span><span style="flex:1;height:8px;border:1px solid #1d1830;background:#fff"><span style="display:block;height:100%;width:46%;background:repeating-linear-gradient(90deg,#5b34c4 0 2px,#ddd0fa 2px 4px)"></span></span><b style="color:#5b34c4">Lvl 3 ›</b></div>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button style="font:700 13px/1 Nunito,sans-serif;color:#1d1830;background:#fff;border:1px solid #1d1830;border-radius:8px;padding:9px 14px">Unequip all</button>
+        <button style="font:800 13px/1 Nunito,sans-serif;color:#1d1830;background:#fff;border:1px solid #1d1830;border-radius:8px;padding:9px 14px;box-shadow:0 0 0 2px #fff, 0 0 0 5px #1d1830">Send to ring</button>
+      </div>
+      <div style="font-size:12px;color:#575070">Deck 3/9 · needs 6 more to enter the ring</div>
+      <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px">
+        <div class="slot"><span class="rl">ATTACK</span><span class="nm">Sticketh</span></div>
+        <div class="slot"><span class="rl">HEAL</span><span class="nm">Gloaming Rest</span></div>
+        <div class="slot"><span class="rl">TRICK</span><span class="nm">Dissonant Voice</span></div>
+        <div class="slot empty"><span style="font:700 18px/1 'Pixelify Sans';color:#9a90b8">+</span></div>
+        <div class="slot empty"><span style="font:700 18px/1 'Pixelify Sans';color:#9a90b8">+</span></div>
+        <div class="slot empty"><span style="font:700 18px/1 'Pixelify Sans';color:#9a90b8">+</span></div>
+      </div>
+    </div>
+  </section>
+</div>
+</body>
+</html>

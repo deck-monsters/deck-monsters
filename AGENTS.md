@@ -119,6 +119,7 @@ current contract.
 | [`docs/operations/cloud-development.md`](docs/operations/cloud-development.md) | Cursor Cloud setup, Docker, or remote/local Supabase in Cloud |
 | [`docs/operations/devcontainer-auth.md`](docs/operations/devcontainer-auth.md) | Devcontainer setup, or GitHub credentials that must stay inside the container |
 | [`docs/reference/pixel-art.md`](docs/reference/pixel-art.md) | Sprite, canvas, or CSS pixel-art work |
+| [`docs/reference/millefleur/design-system.md`](docs/reference/millefleur/design-system.md) | Theme or visual design work, the Millefleur theme, or any mockup (render and look before showing: see its process notes) |
 | [`docs/reference/player-agency.md`](docs/reference/player-agency.md) | Player agency, bounded items, or live-combat-control proposals |
 | [`docs/reference/simulation-harness.md`](docs/reference/simulation-harness.md) | A `sim:*` script, a `SimResult` field, or any balance claim that needs simulation evidence |
 | [`ITEMS.md`](ITEMS.md) | Player-facing item use, inventory, targeting scrolls, and shop rules |

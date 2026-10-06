@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Millefleur Workshop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@1,9..144,600&amp;family=Nunito:wght@400;600;700;800&amp;family=JetBrains+Mono:wght@400;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.tab{flex:none;padding:9px 14px 8px;font:700 13px/1 Nunito,sans-serif;color:#66568a;background:#efe4ff;border:1px solid #d9c6ea;border-bottom:0;border-radius:10px 10px 0 0;margin-right:-4px;position:relative}
+.tab.sea{background:#dcf5ee}.tab.sky{background:#e1efff}.tab.blush{background:#ffe3ee}.tab.butter{background:#fff3d1}
+.tab.on{background:#ffffff;color:#1d0f33;z-index:2;padding-bottom:10px;margin-bottom:-1px;box-shadow:inset 0 2px 0 #ffffff, inset 0 3px 0 #e1efff}
+.pocket{position:relative;height:96px;border-radius:10px;background:#fffdfb;border:1.5px dashed #cdb8e3;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;box-sizing:border-box;background-image:radial-gradient(#e6dcf3 0.8px,transparent 1px);background-size:9px 9px}
+.pocket .lbl{position:absolute;top:-1px;left:10px;padding:2px 7px 3px;font:800 9px/1 Nunito,sans-serif;letter-spacing:.06em;border-radius:0 0 6px 6px}
+.card{background:#ffffff;border:1px solid #33204f;box-shadow:2px 2px 0 rgba(51,32,79,.18);background-image:none}
+.name{font:600 12.5px/1.15 'JetBrains Mono',monospace;color:#33204f;text-align:center;padding:0 6px}
+.plus{font:700 18px/1 Nunito,sans-serif;color:#a594c4}
+</style>
+</head>
+<body style="margin:0">
+<div style="width:390px;height:940px;box-sizing:border-box;overflow:hidden;font-family:Nunito,sans-serif;color:#33204f;background-color:#fbf7fd;background-image:radial-gradient(ellipse 420px 260px at 0% 8%, rgba(239,228,255,.95), transparent 70%), radial-gradient(ellipse 360px 300px at 110% 62%, rgba(220,245,238,.9), transparent 70%), radial-gradient(ellipse 520px 90px at 85% 96%, rgba(225,239,255,.9), transparent 70%);display:flex;flex-direction:column">
+
+  <header style="display:flex;align-items:center;gap:8px;padding:14px 16px 12px;background:#ffffff;box-shadow:0 3px 0 -0px #ffe3ee, 0 4px 0 #fff3d1, 0 5px 0 #dcf5ee, 0 6px 0 #e1efff, 0 7px 0 #efe4ff">
+    <span style="font:800 13px/1 Nunito,sans-serif;letter-spacing:.12em;color:#1d0f33">DECK MONSTERS</span>
+    <span style="color:#cdb8e3">/</span>
+    <span style="font:600 italic 17px/1 Fraunces,serif;color:#a3196b;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Crazy chickens</span>
+    <button aria-label="Room settings" style="width:34px;height:34px;border:1px solid #33204f;border-radius:8px;background:#fff;display:flex;align-items:center;justify-content:center;padding:0"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#33204f" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"></path></svg></button>
+    <button aria-label="Open menu" style="width:34px;height:34px;border:1px solid #33204f;border-radius:8px;background:#fff;display:flex;align-items:center;justify-content:center;padding:0"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#33204f" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h16"></path></svg></button>
+  </header>
+
+  <nav aria-label="Places" style="display:flex;align-items:flex-end;padding:18px 0 0 12px;overflow:hidden;border-bottom:1px solid #d9c6ea">
+    <span class="tab">The Ring</span>
+    <span class="tab sea">Console</span>
+    <span class="tab sky">Chat</span>
+    <span class="tab on">Workshop</span>
+    <span class="tab butter">Fights</span>
+    <span class="tab blush">Leaders</span>
+  </nav>
+
+  <main style="flex:1;background:#ffffff;padding:16px 16px 0;display:flex;flex-direction:column;gap:14px;min-height:0">
+    <div style="display:flex;align-items:baseline;justify-content:space-between">
+      <h1 style="margin:0;font:600 italic 24px/1 Fraunces,serif;color:#1d0f33">Workshop</h1>
+      <span style="font-size:12px;color:#66568a">You can train 3 more</span>
+    </div>
+
+    <section style="position:relative;border:1px solid #33204f;border-radius:14px;background:#ffffff;box-shadow:3px 3px 0 #efe4ff;padding:16px 16px 14px;display:flex;flex-direction:column;gap:12px">
+      <div style="display:flex;gap:14px;align-items:center">
+        <div style="position:relative;width:74px;height:66px;flex:none;border-radius:50%;background:#efe4ff;border:1.5px dashed #b9a5da;display:flex;align-items:center;justify-content:center">
+          <svg width="48" height="36" viewBox="0 0 12 9" shape-rendering="crispEdges" style="filter:drop-shadow(1px 0 0 #fff) drop-shadow(-1px 0 0 #fff) drop-shadow(0 1px 0 #fff) drop-shadow(0 -1px 0 #fff) drop-shadow(0 2px 2px rgba(51,32,79,.3))">
+            <rect x="8" y="0" width="1" height="1" fill="#e8c76a"></rect><rect x="7" y="1" width="2" height="1" fill="#fde9a8"></rect>
+            <rect x="6" y="2" width="4" height="1" fill="#f7f5ff"></rect>
+            <rect x="5" y="3" width="3" height="1" fill="#f7f5ff"></rect><rect x="8" y="3" width="1" height="1" fill="#2a2f6b"></rect><rect x="9" y="3" width="2" height="1" fill="#f7f5ff"></rect>
+            <rect x="0" y="4" width="10" height="1" fill="#f7f5ff"></rect>
+            <rect x="0" y="5" width="9" height="1" fill="#f7f5ff"></rect>
+            <rect x="0" y="6" width="1" height="1" fill="#cfc8ec"></rect><rect x="1" y="6" width="8" height="1" fill="#e6e1f7"></rect>
+            <rect x="1" y="7" width="2" height="2" fill="#8f84bd"></rect><rect x="4" y="7" width="1" height="2" fill="#8f84bd"></rect><rect x="7" y="7" width="2" height="2" fill="#8f84bd"></rect>
+          </svg>
+        </div>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:6px">
+            <h2 style="margin:0;font:600 italic 26px/1.05 Fraunces,serif;color:#1d0f33">Poirot</h2>
+            <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3c2-2 5 0 4 3 2 1 1 5-2 4-1 3-5 3-5 0-3 0-4-4-1-5-1-3 2-4 4-2z" fill="#ffe3ee" stroke="#a3196b" stroke-width="1"></path><circle cx="8" cy="6.5" r="1.2" fill="#a3196b"></circle></svg>
+          </div>
+          <div style="font-size:13px;color:#66568a;margin-top:4px">Unicorn · Lvl 2 · she/her</div>
+          <div style="display:inline-block;margin-top:6px;padding:2px 8px;font:800 10px/1.4 Nunito,sans-serif;letter-spacing:.05em;color:#0b6f55;background:#dcf5ee;border-radius:999px;box-shadow:0 0 0 1.5px #fff, 0 1px 3px rgba(51,32,79,.2)">READY</div>
+        </div>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:#66568a">
+        <span style="width:56px">HP 33/33</span>
+        <span style="flex:1;height:8px;border-radius:999px;background:#ece2f5;overflow:hidden"><span style="display:block;height:100%;width:100%;background:#2a8f80;border-radius:999px"></span></span>
+      </div>
+      <button style="all:unset;display:flex;align-items:center;gap:8px;font-size:12px;color:#66568a;cursor:pointer">
+        <span style="width:56px">XP 13/28</span>
+        <span style="flex:1;height:10px;border-radius:999px;background:#f6f0fb;border:1px solid #a3196b;overflow:hidden;box-sizing:border-box"><span style="display:block;height:100%;width:46%;background:repeating-linear-gradient(135deg,#fff3d1 0 5px,#efe4ff 5px 10px,#ffe3ee 10px 15px);border-right:1px solid #a3196b"></span></span>
+        <span style="font-weight:800;color:#a3196b">Lvl 3 ›</span>
+      </button>
+
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button style="font:700 14px/1 Nunito,sans-serif;color:#33204f;background:#fff;border:1px solid #33204f;border-radius:8px;padding:11px 14px">Unequip all</button>
+        <button style="font:800 14px/1 Nunito,sans-serif;color:#fff;background:#33204f;border:0;border-radius:8px;padding:11px 16px;box-shadow:0 0 0 2px #fff, 0 0 0 4px #33204f">Send to ring</button>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:#66568a;border-top:1px dotted #d9c6ea;padding-top:10px">
+        <span><b style="color:#33204f">Deck 3/9</b> · needs 6 more to enter the ring</span><span>4W 2L</span>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px">
+        <div class="pocket card"><span class="lbl" style="background:#ffe3ee;color:#8f1356">ATTACK</span><span class="name">Sticketh</span></div>
+        <div class="pocket card"><span class="lbl" style="background:#dcf5ee;color:#0b6f55">HEAL</span><span class="name">Gloaming Rest</span></div>
+        <div class="pocket card"><span class="lbl" style="background:#efe4ff;color:#4b2f7a">TRICK</span><span class="name">Dissonant Voice</span></div>
+        <div class="pocket"><span class="plus">+</span></div>
+        <div class="pocket"><span class="plus">+</span></div>
+        <div class="pocket"><span class="plus">+</span></div>
+        <div class="pocket"><span class="plus">+</span></div>
+        <div class="pocket"><span class="plus">+</span></div>
+        <div class="pocket"><span class="plus">+</span></div>
+      </div>
+    </section>
+
+    <div style="display:flex;align-items:center;justify-content:center;gap:4px;padding:2px 0 10px">
+      <span aria-label="Poirot" style="width:28px;height:36px;display:flex;align-items:center;justify-content:center"><svg width="14" height="14" viewBox="0 0 14 14"><g fill="#a3196b"><circle cx="7" cy="3.2" r="2.6"></circle><circle cx="10.8" cy="6" r="2.6"></circle><circle cx="9.4" cy="10.4" r="2.6"></circle><circle cx="4.6" cy="10.4" r="2.6"></circle><circle cx="3.2" cy="6" r="2.6"></circle></g><circle cx="7" cy="7" r="1.7" fill="#fff3d1"></circle></svg></span>
+      <span aria-label="Glimmer" style="width:28px;height:36px;display:flex;align-items:center;justify-content:center"><svg width="14" height="14" viewBox="0 0 14 14"><g fill="none" stroke="#a3196b" stroke-width="1"><circle cx="7" cy="3.2" r="2.3"></circle><circle cx="10.8" cy="6" r="2.3"></circle><circle cx="9.4" cy="10.4" r="2.3"></circle><circle cx="4.6" cy="10.4" r="2.3"></circle><circle cx="3.2" cy="6" r="2.3"></circle></g></svg></span>
+      <span aria-label="Rex" style="width:28px;height:36px;display:flex;align-items:center;justify-content:center"><svg width="14" height="14" viewBox="0 0 14 14"><g fill="none" stroke="#a3196b" stroke-width="1"><circle cx="7" cy="3.2" r="2.3"></circle><circle cx="10.8" cy="6" r="2.3"></circle><circle cx="9.4" cy="10.4" r="2.3"></circle><circle cx="4.6" cy="10.4" r="2.3"></circle><circle cx="3.2" cy="6" r="2.3"></circle></g></svg></span>
+      <button aria-label="Next monster" style="all:unset;width:34px;height:36px;display:flex;align-items:center;justify-content:center"><span style="width:18px;height:18px;border-radius:50%;border:1px solid #a3196b;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#fff,#efe4ff,#e1efff)"><svg width="8" height="8" viewBox="0 0 8 8"><path d="M2.5 1 L5.5 4 L2.5 7" fill="none" stroke="#a3196b" stroke-width="1.4" stroke-linecap="round"></path></svg></span></button>
+    </div>
+  </main>
+</div>
+</body>
+</html>
