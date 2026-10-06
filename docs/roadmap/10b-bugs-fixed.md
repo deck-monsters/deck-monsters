@@ -5407,3 +5407,12 @@ action row (`.workshop-monster-actions`: Revive or Send to ring, then Unequip al
 row with no `gap`, so the two buttons sat edge to edge in every theme. The dark themes' square
 1px borders butted together and read as one divided control; Millefleur's rounded buttons made
 the missing space obvious. The row now has a 0.5rem gap and wraps on a narrow card.
+
+### 234. Street Fighter's card blocks were booked 2px short in the Ring feed — FIXED
+
+Found when the Ring feed's row-height guess started reading the live CSS (roadmap 46 pass 46a,
+task 3c). The guess hard-coded a card block's chrome (padding, margin and border on both sides)
+as 30.8px, measured on phosphor. The Street Fighter theme draws card blocks with a wider
+(double) border, so each of its card blocks was 2px taller than booked. Small, but the guess
+exists to keep Virtuoso's anchor correction near zero (#196), and every card row in that theme
+was off. The chrome is now measured from the theme's own CSS (32.8px there; unchanged elsewhere).

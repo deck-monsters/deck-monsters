@@ -310,7 +310,23 @@ placeholder fills that tree. Narration is one or two lines and a card box is a t
 frame, so the list passes a per-row `heightEstimates` value
 (`apps/web/src/utils/feed-row-height.ts`) until the row is measured. The guess is the
 feed's CSS line box and the pane's measured column width; a taller line still corrects
-`scrollTop` once the row mounts. Without that guess, scrolling up into earlier fights
+`scrollTop` once the row mounts.
+
+The guess reads the live CSS, so a theme can set its own feed type. The feed's size, line
+height and letter spacing are tokens (`--feed-font-size`, `--feed-line-height`,
+`--feed-letter-spacing`, on `:root` in `theme-phosphor.css`), and `readFeedMetrics` in
+`utils/feed-row-height.ts` measures the line box, the character advance, the row and card-block
+chrome and the list's gutter from a hidden probe row in the pane. It runs when the list mounts
+and when the theme changes, never per event. Because Virtuoso reads the guesses only once, a
+theme change unmounts the list, measures, and mounts it again; a lazily loaded theme
+(Millefleur) is measured only after its stylesheet has arrived (`themeAssetsReady` in
+`useTheme.ts`). Under jsdom the reader returns `DEFAULT_FEED_METRICS`, which equal the old
+constants (14 px × 1.4, 8.4 px per character). Millefleur sets 12.5 px on a 1.65 line, its
+design's transcript (roadmap 46). Reading the CSS also corrected one theme: Street Fighter's
+card block has a wider border, so its card chrome is 32.8 px, not the 30.8 px the old constant
+assumed (bug 234). A row that needs a wider box must not change its content width: Millefleur's
+boss-arrival card reaches into the gutter with a negative inline margin and matching padding,
+so its text wraps exactly like every other row. Without that guess, scrolling up into earlier fights
 corrects `scrollTop` against the gesture (#196). The
 follow-the-bottom re-pin still scrolls the scroller's own `scrollHeight` (#159). The
 fight-log box (`.fight-log-events`) is a separate scroller and does not use this estimate.
