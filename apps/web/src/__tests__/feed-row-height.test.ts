@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   DEFAULT_FEED_METRICS,
   FEED_CHAR_PX,
@@ -85,10 +85,64 @@ describe('feed metrics', () => {
     }
   });
 
-  it('falls back to the defaults where there is no layout (jsdom)', () => {
-    expect(readFeedMetrics(document.body)).toEqual(DEFAULT_FEED_METRICS);
-    expect(readFeedMetrics(null)).toEqual(DEFAULT_FEED_METRICS);
+  it('falls back to a copy of the defaults where there is no layout (jsdom)', () => {
+    const read = readFeedMetrics(document.body);
+    expect(read).toEqual(DEFAULT_FEED_METRICS);
+    expect(read).not.toBe(DEFAULT_FEED_METRICS);
+    expect(readFeedMetrics(null)).not.toBe(DEFAULT_FEED_METRICS);
     expect(document.querySelector('.event-feed')).toBeNull();
+    expect(Object.isFrozen(DEFAULT_FEED_METRICS)).toBe(true);
+  });
+
+  describe('readFeedMetrics with layout', () => {
+    // jsdom has no layout: stub the two boxes the reader measures, keep real computed styles.
+    let style: HTMLStyleElement;
+    let rectSpy: ReturnType<typeof vi.spyOn>;
+    function stubLayout(charRun: number, lineBlock: number) {
+      rectSpy = vi
+        .spyOn(Element.prototype, 'getBoundingClientRect')
+        .mockImplementation(function (this: Element) {
+          const kind = this.getAttribute('data-probe');
+          const box = { x: 0, y: 0, top: 0, left: 0, right: 0, bottom: 0, toJSON: () => ({}) };
+          if (kind === 'char') return { ...box, width: charRun, height: 10 } as DOMRect;
+          if (kind === 'lines') return { ...box, width: 50, height: lineBlock } as DOMRect;
+          return { ...box, width: 0, height: 0 } as DOMRect;
+        });
+    }
+    beforeEach(() => {
+      style = document.createElement('style');
+      style.textContent =
+        '.event{padding:3px 0}.event-card-block{padding:0;margin:0;border:0}.event-feed-list{padding:5px 7px}';
+      document.head.appendChild(style);
+    });
+    afterEach(() => {
+      style.remove();
+      rectSpy?.mockRestore();
+    });
+
+    it('divides the long run and the line block, and trusts zero card chrome', () => {
+      stubLayout(1600, 61.875); // 200 chars at 8px (a platform with whole-pixel advances)
+      const host = document.createElement('div');
+      document.body.appendChild(host);
+      const read = readFeedMetrics(host);
+      expect(read).toEqual({ linePx: 20.63, charPx: 8, rowChromePx: 6, cardChromePx: 0, gutterPx: 14 });
+      // The probe is gone, whatever it measured.
+      expect(host.children).toHaveLength(0);
+      host.remove();
+    });
+
+    it('removes the probe when a measurement throws', () => {
+      stubLayout(1600, 60);
+      const host = document.createElement('div');
+      document.body.appendChild(host);
+      vi.spyOn(window, 'getComputedStyle').mockImplementationOnce(() => {
+        throw new Error('boom');
+      });
+      expect(() => readFeedMetrics(host)).toThrow('boom');
+      expect(host.children).toHaveLength(0);
+      host.remove();
+      vi.restoreAllMocks();
+    });
   });
 
   // Millefleur: JetBrains Mono 12.5px on a 1.65 line (theme-millefleur.css, from ring.html).

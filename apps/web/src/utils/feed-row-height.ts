@@ -42,13 +42,13 @@ export interface FeedMetrics {
   gutterPx: number;
 }
 
-export const DEFAULT_FEED_METRICS: FeedMetrics = {
+export const DEFAULT_FEED_METRICS: Readonly<FeedMetrics> = Object.freeze({
   linePx: 19.6,
   charPx: 8.4,
   rowChromePx: 12.8,
   cardChromePx: 30.8,
   gutterPx: 24,
-};
+});
 
 /** Kept for callers that only want the default advance. */
 export const FEED_CHAR_PX = DEFAULT_FEED_METRICS.charPx;
@@ -56,68 +56,89 @@ export const FEED_CHAR_PX = DEFAULT_FEED_METRICS.charPx;
 export const FEED_WRAP_COLUMNS_FALLBACK = 48;
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
+/** A fresh object: callers keep metrics in state and must not be able to mutate the defaults. */
+const defaults = (): FeedMetrics => ({ ...DEFAULT_FEED_METRICS });
+
+/** Characters in the advance probe. Long, so a platform's whole-pixel rounding averages in. */
+const CHAR_RUN = 200;
+const LINE_RUN = 3;
+/** Tolerance for treating the computed and rendered line as the same: a few 1/64px units. */
+const LINE_SNAP_PX = 0.05;
 
 /**
  * Reads the feed's real line box, glyph advance and chrome by mounting a hidden copy of one
- * row inside `host` (the feed itself may be unmounted: a theme switch unmounts the list so
- * Virtuoso re-reads its estimates). Going through the stylesheet means a theme only has to
- * set `--feed-*`; nothing here knows which theme is active. Each value falls back to the
- * default when the browser reports nothing (jsdom, `display: none`). Values are rounded to
- * 0.01px so a 1/64px layout rounding cannot make a dark theme's numbers differ from the
- * constants.
+ * row inside `host` (the feed itself may be unmounted, or hidden in another pane slot).
+ * Going through the stylesheet means a theme only has to set `--feed-*`; nothing here knows
+ * which theme is active.
+ *
+ * Both the advance and the line box are what the browser lays out, not what the font or the
+ * CSS promises. The advance is a 200-character run measured at the real size and divided, so
+ * a platform that rounds each glyph to a whole pixel (headless Linux Chrome: 12.5px JetBrains
+ * Mono draws 8px, not 7.5) is counted as it is drawn. Assuming the design 0.6em there books
+ * 45 columns where 42 fit, i.e. under-counts wrapped lines, which is the direction 10b #196
+ * warns about. The line is the height of a three-line block over three, which also covers
+ * `line-height: normal`. The advance is the resolved font's: if JetBrains Mono has not loaded
+ * yet the fallback's advance is read, so callers re-read after `document.fonts` settles.
+ *
+ * Returns the defaults (a copy) only when there is no layout at all (jsdom, `display: none`).
+ * Values are rounded to 0.01px so 1/64px layout units cannot make a dark theme differ from
+ * the constants.
  */
 export function readFeedMetrics(host: HTMLElement | null): FeedMetrics {
-  if (!host || typeof getComputedStyle !== 'function') return DEFAULT_FEED_METRICS;
+  if (!host || typeof getComputedStyle !== 'function') return defaults();
   const probe = document.createElement('div');
   probe.className = 'event-feed';
   probe.setAttribute('aria-hidden', 'true');
-  // Out of flow and invisible, but laid out (display: none would measure nothing).
+  // Out of flow and invisible, but laid out (display: none would measure nothing). Clipped
+  // to the host's width so it cannot widen an ancestor's scrollable overflow; the run is
+  // `white-space: pre`, so clipping does not change its measured width.
   probe.style.cssText =
-    'position:absolute;visibility:hidden;pointer-events:none;left:0;top:0;width:1000px;height:auto;overflow:visible;flex:none';
-  const COUNT = 40;
-  const SCALE = 10;
+    'position:absolute;visibility:hidden;pointer-events:none;left:0;top:0;width:100%;height:auto;overflow:hidden;flex:none';
   probe.innerHTML =
-    '<ol class="event-feed-list"><li class="event"><span data-probe="char" style="white-space:pre"></span>' +
+    '<ol class="event-feed-list"><li class="event">' +
+    '<span data-probe="char" style="white-space:pre"></span>' +
+    '<div data-probe="lines" style="white-space:pre"></div>' +
     '<div class="event-card-block"></div></li></ol>';
   const list = probe.querySelector<HTMLElement>('.event-feed-list');
   const row = probe.querySelector<HTMLElement>('.event');
   const span = probe.querySelector<HTMLElement>('[data-probe="char"]');
+  const lines = probe.querySelector<HTMLElement>('[data-probe="lines"]');
   const card = probe.querySelector<HTMLElement>('.event-card-block');
-  if (!list || !row || !span || !card) return DEFAULT_FEED_METRICS;
-  span.textContent = '0'.repeat(COUNT);
+  if (!list || !row || !span || !lines || !card) return defaults();
+  span.textContent = '0'.repeat(CHAR_RUN);
+  lines.textContent = Array.from({ length: LINE_RUN }, () => '0').join('\n');
   host.appendChild(probe);
   try {
     const px = (value: string) => parseFloat(value) || 0;
+    const width = span.getBoundingClientRect().width;
+    const height = lines.getBoundingClientRect().height;
+    // No stylesheet or no layout (jsdom, a hidden pane): nothing measures, so take the
+    // defaults whole rather than mixing them with zeros.
+    if (!(width > 0) || !(height > 0)) return defaults();
     const rowStyle = getComputedStyle(row);
+    // Layout snaps each line box to 1/64px (19.6 draws as 19.59375), so a rendered 19.59 would
+    // differ from the CSS's 19.6 for no visible reason. Take the CSS value when the layout
+    // agrees with it, and the layout when it does not (`line-height: normal`, a taller
+    // fallback font).
+    const computedLine = parseFloat(rowStyle.lineHeight) || 0;
+    const rendered = height / LINE_RUN;
     const cardStyle = getComputedStyle(card);
-    const line = px(rowStyle.lineHeight);
-    // No stylesheet or no layout (jsdom): every padding reads 0 too, so take the defaults
-    // whole rather than mixing them with zeros. A real theme with 0 padding has a line.
-    if (!(line > 0)) return DEFAULT_FEED_METRICS;
-    // Measure at 10x the size and divide. Some platforms (headless Linux Chrome, without
-    // subpixel text positioning) round every glyph advance to a whole pixel at the real size:
-    // 14px JetBrains Mono came out at 8px, not 8.4, and 12.5px at 8px, not 7.5. The estimate
-    // models the font's design advance (0.6em); at 10x the rounding error is a tenth as big.
-    const spanStyle = getComputedStyle(span);
-    span.style.fontSize = `${px(spanStyle.fontSize) * SCALE}px`;
-    span.style.letterSpacing = `${px(spanStyle.letterSpacing) * SCALE}px`;
-    const width = span.getBoundingClientRect().width / SCALE;
-    const rowChrome = px(rowStyle.paddingTop) + px(rowStyle.paddingBottom);
     const listStyle = getComputedStyle(list);
-    const gutter = px(listStyle.paddingLeft) + px(listStyle.paddingRight);
-    const cardChrome =
-      px(cardStyle.paddingTop) +
-      px(cardStyle.paddingBottom) +
-      px(cardStyle.marginTop) +
-      px(cardStyle.marginBottom) +
-      px(cardStyle.borderTopWidth) +
-      px(cardStyle.borderBottomWidth);
+    // Zero chrome is a real answer once the line has measured (a theme may draw a card with
+    // no padding, margin or border).
     return {
-      linePx: round2(line),
-      charPx: width > 0 ? round2(width / COUNT) : DEFAULT_FEED_METRICS.charPx,
-      rowChromePx: round2(rowChrome),
-      cardChromePx: cardChrome > 0 ? round2(cardChrome) : DEFAULT_FEED_METRICS.cardChromePx,
-      gutterPx: round2(gutter),
+      linePx: round2(Math.abs(computedLine - rendered) <= LINE_SNAP_PX ? computedLine : rendered),
+      charPx: round2(width / CHAR_RUN),
+      rowChromePx: round2(px(rowStyle.paddingTop) + px(rowStyle.paddingBottom)),
+      cardChromePx: round2(
+        px(cardStyle.paddingTop) +
+          px(cardStyle.paddingBottom) +
+          px(cardStyle.marginTop) +
+          px(cardStyle.marginBottom) +
+          px(cardStyle.borderTopWidth) +
+          px(cardStyle.borderBottomWidth),
+      ),
+      gutterPx: round2(px(listStyle.paddingLeft) + px(listStyle.paddingRight)),
     };
   } finally {
     probe.remove();
@@ -126,7 +147,7 @@ export function readFeedMetrics(host: HTMLElement | null): FeedMetrics {
 
 export function feedWrapColumns(
   contentWidthPx: number,
-  metrics: FeedMetrics = DEFAULT_FEED_METRICS,
+  metrics: Readonly<FeedMetrics> = DEFAULT_FEED_METRICS,
 ): number {
   if (!(contentWidthPx > 0)) return FEED_WRAP_COLUMNS_FALLBACK;
   return Math.max(16, Math.floor(contentWidthPx / metrics.charPx));
@@ -152,7 +173,7 @@ function visualLines(segment: string, wrapColumns: number): number {
 export function estimateFeedRowHeight(
   text: string | undefined,
   wrapColumns: number = FEED_WRAP_COLUMNS_FALLBACK,
-  metrics: FeedMetrics = DEFAULT_FEED_METRICS,
+  metrics: Readonly<FeedMetrics> = DEFAULT_FEED_METRICS,
 ): number {
   const { linePx, rowChromePx, cardChromePx } = metrics;
   const body = text ?? '';

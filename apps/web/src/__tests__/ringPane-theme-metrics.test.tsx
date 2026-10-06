@@ -1,4 +1,4 @@
-import { act, render } from '@testing-library/react';
+import { act, fireEvent, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { RingFeedContext, type RingFeedApi, type TrackedRingFeedEvent } from '../hooks/useRingFeed.js';
@@ -6,7 +6,12 @@ import { useTheme } from '../hooks/useTheme.js';
 import RingPane from '../components/RingPane.js';
 
 const listeners = new Set<(tracked: TrackedRingFeedEvent) => void>();
-const mounts: number[][] = [];
+interface Mount {
+  estimates: number[];
+  start: unknown;
+}
+const mounts: Mount[] = [];
+let lastBridge: { range: (start: number) => void; atBottom: (b: boolean) => void } | null = null;
 
 vi.mock('../hooks/useRingKeyTimestamps.js', () => ({
   useRingKeyTimestamps: () => ({ ringKeyTimestampsEnabled: false }),
@@ -23,13 +28,13 @@ vi.mock('../lib/trpc.js', () => ({
   },
 }));
 // jsdom has no layout, so stand in for the live CSS: a non-default line height when the
-// document is on the amber theme. Everything else is the real module.
+// document is on the ember theme (amber and phosphor keep the defaults, as in the app). Everything else is the real module.
 vi.mock('../utils/feed-row-height.js', async (importActual) => {
   const actual = await importActual<typeof import('../utils/feed-row-height.js')>();
   return {
     ...actual,
     readFeedMetrics: () =>
-      document.documentElement.getAttribute('data-theme') === 'amber'
+      document.documentElement.getAttribute('data-theme') === 'ember'
         ? { ...actual.DEFAULT_FEED_METRICS, linePx: 30 }
         : actual.DEFAULT_FEED_METRICS,
   };
@@ -38,10 +43,24 @@ vi.mock('react-virtuoso', () => {
   const React = require('react');
   return {
     Virtuoso: React.forwardRef(
-      (props: { heightEstimates?: number[] }, ref: React.Ref<unknown>) => {
+      (
+        props: {
+          heightEstimates?: number[];
+          initialTopMostItemIndex?: unknown;
+          rangeChanged?: (r: { startIndex: number }) => void;
+          atBottomStateChange?: (b: boolean) => void;
+        },
+        ref: React.Ref<unknown>,
+      ) => {
         React.useImperativeHandle(ref, () => ({ scrollToIndex: () => undefined }));
         // Virtuoso reads the estimates only on its first render, so record that render.
-        React.useState(() => mounts.push(props.heightEstimates ?? []));
+        React.useState(() =>
+          mounts.push({ estimates: props.heightEstimates ?? [], start: props.initialTopMostItemIndex }),
+        );
+        lastBridge = {
+          range: (startIndex) => props.rangeChanged?.({ startIndex }),
+          atBottom: (b) => props.atBottomStateChange?.(b),
+        };
         return <div data-testid="list" />;
       },
     ),
@@ -85,8 +104,7 @@ describe('RingPane feed metrics follow the theme', () => {
     document.documentElement.removeAttribute('data-theme');
   });
 
-  it('remounts the list with fresh estimates when the theme changes', () => {
-    render(<Harness />);
+  const pushEvent = () =>
     act(() => {
       for (const listener of listeners) {
         listener({
@@ -95,12 +113,37 @@ describe('RingPane feed metrics follow the theme', () => {
         } as TrackedRingFeedEvent);
       }
     });
-    expect(mounts).toHaveLength(1);
 
+  it('does not remount when the new theme has the same metrics', () => {
+    render(<Harness />);
+    pushEvent();
+    expect(mounts).toHaveLength(1);
     act(() => setTheme('amber'));
+    expect(mounts).toHaveLength(1);
+  });
+
+  it('remounts at the newest row when the metrics change while following the bottom', () => {
+    render(<Harness />);
+    pushEvent();
+    act(() => setTheme('ember'));
     // The first mount may predate the history (an empty feed), which Virtuoso handles by
     // ignoring later estimates; the second mount has the event and the new theme's line.
     expect(mounts).toHaveLength(2);
-    expect(mounts[1]![0]).toBeCloseTo(12.8 + 30, 5);
+    expect(mounts[1]!.estimates[0]).toBeCloseTo(12.8 + 30, 5);
+    expect(mounts[1]!.start).toEqual({ index: 'LAST', align: 'end' });
+  });
+
+  it('remounts at the row the reader was on when they had scrolled up', () => {
+    const { container } = render(<Harness />);
+    pushEvent();
+    // A wheel-up gesture, then Virtuoso reports leaving the bottom and the visible range.
+    fireEvent.wheel(container.querySelector('.pane-feed-area')!, { deltaY: -120 });
+    act(() => {
+      lastBridge!.atBottom(false);
+      lastBridge!.range(7);
+    });
+    act(() => setTheme('ember'));
+    expect(mounts).toHaveLength(2);
+    expect(mounts[1]!.start).toEqual({ index: 7, align: 'start' });
   });
 });
