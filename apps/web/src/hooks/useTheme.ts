@@ -33,6 +33,10 @@ function getPreferredTheme(): Theme {
   } catch {
     return currentTheme ?? 'phosphor';
   }
+  // A write that failed (quota, read-only storage) left the stored value stale; rereading it
+  // here reverted the player's choice on the next render. The in-memory choice wins until a
+  // write succeeds again.
+  if (themeWriteFailed && currentTheme) return currentTheme;
   if (isValidTheme(stored)) return stored;
   // Phosphor is the start. A light theme is a player's choice: the phone's
   // light or dark setting (prefers-color-scheme) is not a reason to switch.
@@ -128,6 +132,7 @@ function applyTheme(theme: Theme): void {
 }
 
 let currentTheme: Theme | undefined;
+let themeWriteFailed = false;
 const listeners = new Set<() => void>();
 
 function getTheme(): Theme {
@@ -144,8 +149,10 @@ function setStoredTheme(theme: Theme): void {
   currentTheme = theme;
   try {
     localStorage.setItem(STORAGE_KEY, theme);
+    themeWriteFailed = false;
   } catch {
     // Not persisted; currentTheme still holds the choice for this session.
+    themeWriteFailed = true;
   }
   applyTheme(theme);
   notify();

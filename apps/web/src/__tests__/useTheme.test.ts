@@ -103,6 +103,26 @@ describe('useTheme', () => {
     expect(document.documentElement.getAttribute('data-theme')).toBe('ember');
   });
 
+  // Reads work but writes throw (quota, read-only storage): the choice used to revert to the
+  // stale stored value on the next render, because the snapshot reread storage.
+  it('keeps the choice when only the storage write fails', () => {
+    const { result, rerender } = renderHook(() => useTheme());
+    // A successful write first: the module keeps its state between tests.
+    act(() => result.current.setTheme('amber'));
+    expect(result.current.theme).toBe('amber');
+    const write = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new DOMException('full', 'QuotaExceededError'); });
+    act(() => result.current.setTheme('millefleur'));
+    rerender();
+    expect(result.current.theme).toBe('millefleur');
+    expect(document.documentElement.getAttribute('data-theme')).toBe('millefleur');
+
+    // Once a write succeeds again, storage is the source of truth again.
+    write.mockRestore();
+    act(() => result.current.setTheme('ember'));
+    expect(localStorage.getItem(STORAGE_KEY)).toBe('ember');
+    expect(result.current.theme).toBe('ember');
+  });
+
   it('creates the theme-color meta if the page has none', () => {
     const { result } = renderHook(() => useTheme());
     act(() => result.current.setTheme('amber'));

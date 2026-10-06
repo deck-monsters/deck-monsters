@@ -27,7 +27,9 @@ dark terminals (`phosphor`, `amber`, `ember`, `street-fighter`) and one light, p
 
 Phosphor has no `data-theme` attribute; `applyTheme` removes it. The choice is stored in
 `localStorage['deck-monsters-theme']`; every read and write is guarded, because storage can
-throw (private windows, blocked site data). A failed read falls back to the in-memory choice.
+throw (private windows, blocked site data, a full quota). A failed read falls back to the
+in-memory choice, and so does every read after a failed write: storage then holds a stale
+value, and rereading it reverted the player's choice on the next render.
 
 ## The starting theme
 
