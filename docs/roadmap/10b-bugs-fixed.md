@@ -5363,62 +5363,6 @@ router's `myInventory` test.
 
 **Status**: Fixed.
 
-### 237. Compound and result-only rolls lose their figures in the structured feed — FIXED
-
-**Root cause:** the line builder forced every roll into numeric natural/total facts. Blink
-emits separate HP and XP dice as authored strings; failed conversion silently became zero.
-Millefleur then consumed the truthful verdict while composing from those zero facts. A
-numeric result-only roll also had a zero natural figure instead of its actual result.
-
-Numeric facts are now optional when unavailable. Compound authored roll/verdict text is
-preserved, and Millefleur falls back to the original line blocks when the numeric facts
-are incomplete. A result-only numeric roll uses its real total as its natural figure.
-Tests: engine `announcements/feed-lines.test.ts`, web `feed-lines.test.tsx` (including
-shared renderer/height booking).
-
-**Status**: Fixed.
-
-### 238. Critical-roll composition drops the card's outcome explanation — FIXED
-
-**Root cause:** Millefleur returned immediately for natural 20 or critical failure, while
-its composing loop consumed every following outcome line. That hid maximum-damage and
-reflected-attack explanations even though `text` and `payload.lines` both contained them.
-
-The composed verdict now keeps substantive authored outcomes after its critical label;
-only a bare redundant Hit!/Miss... is omitted. The same blocks feed rendering and row
-height booking, so the retained explanation is counted. Tests: web `feed-lines.test.tsx`.
-
-**Status**: Fixed.
-
-### 239. Feed death/loss consistency fixture sometimes never reaches a loss — FIXED
-
-**Root cause:** the simulated loss test gave the champion one HP but left boss health
-and attack/damage rolls random. Misses, reflected attacks or an early boss defeat could
-produce a win/draw, so the test failed before reaching the death/loss lines it was meant
-to verify. Deterministic ring setup only disables roster shuffling and random ring events;
-it does not make combat rolls deterministic.
-
-The loss fixture now keeps the real game/fight/announcement path while giving its boss
-ample HP and instance-scoped guaranteed Hit attack/damage rolls. Stubs are restored in
-the fixture's cleanup; production combat and the ordinary simulated-fight case are
-unchanged. The existing test still asserts a loss or permanent-death event, a death line,
-and text/lines agreement for every emitted feed event.
-
-**Status:** Fixed.
-
-## Closed without a fix
-
-These were open investigations the owner closed on 2026-09-28. Reopen with new evidence.
-
-- **J. Fight rewards may never be credited.** A player saw 2 wins, 9 losses, and no coins.
-  Pass 25 proved the in-process reward path in `reward-crediting.test.ts` (fresh, restored,
-  against a boss, and on the compiled engine). The owner believes it was an old bug since
-  fixed and has not seen it again.
-- **A. Intermittent missing `↓ Latest` button.** Not reproduced on 2026-09-28 against Test
-  Room A after #196 (wheel into history, roster collapse and expand, hiding and showing the
-  ring pane), and the owner has not seen it recur.
-
-
 ### 231. A stray "." at the left edge of every feed row on a phone — FIXED
 
 Found in the before-and-after screenshots for roadmap 46 pass 46a. Every row of the Ring and
@@ -5478,3 +5422,58 @@ line's `bloodied` flag was set, so the feed painted "is now bloodied. … has on
 bloodied." Later HP lines ("has only 4HP.") do not already say the word, and those still
 gain the rose clause. A line whose text already says "bloodied" is left as the engine
 wrote it.
+
+### 237. Compound and result-only rolls lose their figures in the structured feed — FIXED
+
+**Root cause:** the line builder forced every roll into numeric natural/total facts. Blink
+emits separate HP and XP dice as authored strings; failed conversion silently became zero.
+Millefleur then consumed the truthful verdict while composing from those zero facts. A
+numeric result-only roll also had a zero natural figure instead of its actual result.
+
+Numeric facts are now optional when unavailable. Compound authored roll/verdict text is
+preserved, and Millefleur falls back to the original line blocks when the numeric facts
+are incomplete. A result-only numeric roll uses its real total as its natural figure.
+Tests: engine `announcements/feed-lines.test.ts`, web `feed-lines.test.tsx` (including
+shared renderer/height booking).
+
+**Status**: Fixed.
+
+### 238. Critical-roll composition drops the card's outcome explanation — FIXED
+
+**Root cause:** Millefleur returned immediately for natural 20 or critical failure, while
+its composing loop consumed every following outcome line. That hid maximum-damage and
+reflected-attack explanations even though `text` and `payload.lines` both contained them.
+
+The composed verdict now keeps substantive authored outcomes after its critical label;
+only a bare redundant Hit!/Miss... is omitted. The same blocks feed rendering and row
+height booking, so the retained explanation is counted. Tests: web `feed-lines.test.tsx`.
+
+**Status**: Fixed.
+
+### 239. Feed death/loss consistency fixture sometimes never reaches a loss — FIXED
+
+**Root cause:** the simulated loss test gave the champion one HP but left boss health
+and attack/damage rolls random. Misses, reflected attacks or an early boss defeat could
+produce a win/draw, so the test failed before reaching the death/loss lines it was meant
+to verify. Deterministic ring setup only disables roster shuffling and random ring events;
+it does not make combat rolls deterministic.
+
+The loss fixture now keeps the real game/fight/announcement path while giving its boss
+ample HP and instance-scoped guaranteed Hit attack/damage rolls. Stubs are restored in
+the fixture's cleanup; production combat and the ordinary simulated-fight case are
+unchanged. The existing test still asserts a loss or permanent-death event, a death line,
+and text/lines agreement for every emitted feed event.
+
+**Status:** Fixed.
+
+## Closed without a fix
+
+These were open investigations the owner closed on 2026-09-28. Reopen with new evidence.
+
+- **J. Fight rewards may never be credited.** A player saw 2 wins, 9 losses, and no coins.
+  Pass 25 proved the in-process reward path in `reward-crediting.test.ts` (fresh, restored,
+  against a boss, and on the compiled engine). The owner believes it was an old bug since
+  fixed and has not seen it again.
+- **A. Intermittent missing `↓ Latest` button.** Not reproduced on 2026-09-28 against Test
+  Room A after #196 (wheel into history, roster collapse and expand, hiding and showing the
+  ring pane), and the owner has not seen it recur.
