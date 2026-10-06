@@ -250,10 +250,34 @@ rest can run in parallel only where noted.
 |---|---|---|---|---|---|---|---|
 | 1 | 46a | **Theme plumbing, no visual change.** Shape, font, shadow, surface, meter-track, on-accent, highlight-text, backdrop and sprite-flash tokens with defaults equal to today; define the read-but-unset tokens in all four themes; `color-scheme`; pre-paint `data-theme` and `theme-color`; per-theme `prefers-contrast`; the header class; theme button label by name; extended palette test | `styles/*.css`, `useTheme.ts`, `index.html`, `AppShell.tsx`, `theme-palettes.test.ts`, `useTheme.test.ts`, `renderer.ts` (flash parameter) | Four themes pixel-identical at 390 and 1440; the extended palette test passes for all four; no black flash on a light theme in a smoke test | docs-only work | done | 673779d8, 0c11a733, and the checkpoint after |
 | 2 | 46a | **Millefleur palette, type and components.** `theme-millefleur.css`, `THEMES` entry and icon, Nunito (the feed keeps JetBrains Mono), radii, buttons, fields, cards, banners; the lazy-loaded chunk, the first-paint block and the modulepreload, with a bundle check that other themes' CSS grew by under 1 KB | `theme-millefleur.css`, `themes/millefleur.ts` (lazy chunk), `base.css` (first-paint block), `index.html`, `useTheme.ts`, fonts and `OFL.txt` | Palette test green; card frames unchanged; a reload on Millefleur shows no dark frame; check at 390 and 1440 against the samples | — (after 1) | done | 21e639d9, 293590fa |
-| 3 | 46a | **Millefleur surfaces.** Folder tabs joined to the page, the page and card, the halo, card slots with painted role dots, meters, the ruled Chat log, the Ring transcript, sheets with the painted header, soft title bar and close box, carousel dots | `theme-millefleur.css`, small class hooks in `terminal.css`/`base.css`, the tab markup in the workspace | Each surface matches the design system and samples, rendered side by side; tap targets unchanged | 4 if 4 avoids the same selectors | proposed | — |
+| 3 | 46a | **Millefleur surfaces.** Folder tabs joined to the page, the page and card, the halo, card slots with painted role dots, meters, the ruled Chat log, the Ring transcript, sheets with the painted header, soft title bar and close box, carousel dots | `theme-millefleur.css`, small class hooks in `terminal.css`/`base.css`, the tab markup in the workspace | Each surface matches the design system and samples, rendered side by side; tap targets unchanged | 4 if 4 avoids the same selectors | done | 66fde141, ca0eca5d, 2252866a, 7f84c2f9, 8353b11a |
+| 3b | 46a | **Fidelity to the mocks.** The owner compared the app with the approved mocks at the same scale and found many differences (2026-10-06). Header spacing; the Ring's header, roster rows, card-frame tint and boss-arrival card; the Workshop's portrait, type, meters, slot ⓘ, heading count; Chat anchored to the bottom; the level-up badge, title and chips | `theme-millefleur.css`, small Millefleur-gated hooks in `RingPane`, `RingRoster`, `MonsterWorkshopPanel`, `WorkshopPanel`, `ChatPanel`, `LevelUpSheet` | Each screen beside its mock at 390 × 940 (`fid.mjs`) matches within reason; dark themes unchanged | — | in progress | — |
+| 3c | 46a | **Theme-aware feed metrics.** Row-height estimates read the feed's type from CSS, so Millefleur's transcript can be 12.5 px on a 1.65 line as designed | `feed-row-height.ts`, `RingPane.tsx`, feed CSS tokens | Dark themes' estimates identical; no scroll jumps (#196) or lost bottom pin (#159) in a live scroll test under both themes | — (after 3b) | proposed | — |
+| 3d | 46a | **Backport what the mock did better.** Remove the Millefleur gate from the case-3 changes (see *Reading the mocks*) and style them for the four dark themes | the components above, `base.css`, `terminal.css` | A deliberate, reviewed change in the dark themes, compared before and after | — (after 3b) | proposed | — |
 | 4 | 46b | **Paint and paper.** Bake the watercolour compositions and the grain tile; wire `--surface-texture`; holo only where listed | WebP assets in the lazy chunk, `theme-millefleur.css` | Budget in §8 met; no long frames while a fight scrolls | 3 (different selectors) | proposed | — |
 | 5 | 46b | **Pixel monsters on paper.** The halo, the soft lift, the pink hit flash; check pale species and white appearances at 1×/2×/3× | `terminal.css`, `renderer.ts`, `rosterSprite`/pixel tests | Struck monsters visibly flash; pale monsters read on paper; nothing smoothed | 4 | proposed | — |
 | 6 | 46b | **Live check and docs.** Cursor-style checklist for the screens in §7; `docs/architecture/web-themes.md`; links from `AGENTS.md` and `docs/README.md`; roadmap status | docs | Check passed or findings filed in 10 | 4, 5 | proposed | — |
+
+### Reading the mocks
+
+The owner's rule for every difference between the app and the mocks (2026-10-06): **matching the
+mock and the brief is paramount**, and this theme may feel unlike the others (its pale lines are
+the point; high contrast and the other themes serve people who need hard edges). Each
+difference falls into one of three cases:
+
+1. **The mock left out something the app needs.** Restore it in the design's language: the ⚙
+   room settings link, surface subtitles (in-game help), the Train button, the roster's owner,
+   level and AC, the BOSS pill and collapse toggle, presets, the card ⓘ, the feed's ASCII card
+   frames (Discord shares them), the feed markers.
+2. **The mock differs from the other themes, and that is right for this theme.** Millefleur
+   only: folder tabs, washes, the halo, role dots, pill meters, ruled Chat paper, the 12.5 px
+   transcript, the rose boss card, painted sheets, the pale lines.
+3. **The mock found something better for every player.** Build it here first, then backport it
+   (task 3d): a portrait of the monster in the Workshop; new cards as chips in the level-up
+   sheet; the level badge and a "Level up" title; the card ⓘ in the slot's corner on phones;
+   "You can train N more" beside the heading, with Train as the primary action only until the
+   player has a monster; Chat anchored to the bottom with message times; the Ring header's meta
+   as one group; perhaps single-row roster entries.
 
 ### Pass 46a record
 
