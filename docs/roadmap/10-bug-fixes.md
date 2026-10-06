@@ -10,6 +10,8 @@ tags: [bugs, roadmap, open]
 
 **Status:** Active — four open items (F, J, K, L). Fixed work and its root causes live only in
 [`10b-bugs-fixed.md`](10b-bugs-fixed.md).
+The Millefleur spacing cleanup (Chat grid, shop wallet, selected name and turn markers) is
+fixed as #241; it leaves the four open investigations below unchanged.
 
 ## Open items
 

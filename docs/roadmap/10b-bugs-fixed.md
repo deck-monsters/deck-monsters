@@ -5493,3 +5493,30 @@ appended after it (`announcements/xpGain.ts`). The coins now come first and the 
 once, "gained 12 XP and 3 coins for killing 1 monster.", and a single coin is "1 coin". Without
 a kill the line is unchanged. Discord sees the corrected text. Pinned by
 `announcements/text-golden.test.ts`.
+
+### 241. Millefleur Chat grid and compact controls drift or crowd their edges — FIXED
+
+**Root causes:** sender and timestamp use different font sizes, each with a 28px inline
+line box. Baseline alignment expanded their shared header to 29px, so messages accumulated
+one pixel of drift against the ruled background. The theme also forced section headers
+and monster actions not to wrap, removed name-filter padding, and retained a terminal
+turn-marker offset after enlarging roster portraits from 24px to 34px.
+
+The header boxes now align at the top, merchant prose can shrink and the wallet can wrap,
+selected and unselected names share padded geometry, and turn markers centre beside the
+portrait (within dense rows). Monster actions can wrap again. All changes are scoped to
+Millefleur. The Chat CSS comment now describes its actual bottom anchoring.
+
+The shop heading inherited `justify-content: space-between`. That is fine while the wallet
+shares the row, and wrong once it wraps: a line with one item packs that item to the start,
+so the balance jumped from the right edge to the left. The heading uses `flex-end` instead.
+The prose column still grows, so a wallet that fits stays where it was.
+
+Verified with Chromium at 390×844 and 1440×900, plus 320px width, using the actual
+stylesheets and Nunito faces with representative component markup. Geometry assertions
+cover public/DM messages, wrapping headers and text, a seven-digit wallet and ordinary/dense
+roster rows: message heights are multiples of 28px (56px, formerly 57px; a wrapped header
+112px, formerly 113px), the wallet keeps its inset and stays at the trailing edge when it
+wraps, and the marker centres within 1px of the portrait. These are browser layout checks;
+jsdom does not measure this geometry. `millefleur-spacing.test.ts` pins the declarations
+that layout cannot see.

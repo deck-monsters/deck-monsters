@@ -129,6 +129,15 @@ deploy can point at new hashes. The header values live in the
 
 ## Tests
 
+Millefleur's ruled Chat uses a 28px tile and 28px message lines, bottom-anchored above the
+log's 6px inset. Sender and timestamp boxes align at the top: baseline alignment of their
+different font sizes enlarged each header to 29px and accumulated drift (bug 241).
+Wrapped text and headers must still occupy whole paper rows. The theme's shop heading
+wraps its wallet onto another row when needed and keeps that row at the trailing edge
+(`justify-content: flex-end`; `space-between` parked a lone wallet on the left). Monster
+filter names keep padding in both states, and roster turn markers centre beside the 34px
+portrait (within the row in dense mode). These are theme-scoped layout rules.
+
 - `theme-palettes.test.ts` parses every theme file and checks text pairs (4.5:1 on the page
   and on fields), on-accent text, highlight text, the HP ramp's order and steps, and each meter
   stop on its track (blending translucent colours over the page). Pairs that the dark themes
@@ -139,6 +148,9 @@ deploy can point at new hashes. The header values live in the
   an unknown id) and checks the first-paint stub against the chunk.
 - `useTheme.test.ts` and `useTheme-lazy.test.ts` cover switching, the theme-colour meta,
   blocked storage and the lazy import.
+- `millefleur-spacing.test.ts` pins the Chat header's top alignment and the shop heading's
+  trailing-edge wrap (bug 241). jsdom does not measure that geometry; the browser check is
+  recorded with the bug.
 - jsdom does no layout. A visual change to a theme is checked in a real browser, before and
   after, for every theme it could touch (bug 210).
 
