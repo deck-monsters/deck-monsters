@@ -185,7 +185,9 @@ monster panel); everything else sits on the page directly.
 
 ### Fields and selects
 
-Paper at .95, 1px `--mf-line-control`, 12px radius, 14px Nunito, 11–13px padding.
+Paper at .95, 1px `--mf-line-control`, 12px radius, 14px Nunito, 11–13px padding. Placeholder
+text uses `--mf-ink-muted` at full opacity: the browser's default grey placeholder is about
+2.3:1 on paper, below the 4.5:1 rule.
 
 ### Card slots
 
@@ -248,7 +250,8 @@ The active dot is a 10px holo disc with a faint glow. Inactive dots are 9px outl
 ## Motion
 
 None on the page. A sheet slides up as today. The halo and holo surfaces do not animate. Under
-`prefers-reduced-motion`, nothing changes because nothing moves.
+`prefers-reduced-motion`, sheets appear in place without sliding (roadmap 46 §7); nothing else
+moves, so nothing else changes.
 
 ## Accessibility
 

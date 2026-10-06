@@ -12,14 +12,35 @@
 // fonts/ folder with a fonts.css beside them, and set FONTS_CSS=/abs/path/to/fonts.css; the
 // script then swaps the Google link for that file.
 //
-// Needs Playwright (globally installed here; `npm i -g playwright` elsewhere).
+// Setup: Playwright is not a workspace dependency (this is a design tool, not part of the app),
+// so install it once wherever you run this:
+//   npm i -g playwright && npx playwright install chromium
+// The script looks for Playwright beside this file first, then in the global npm root. If a
+// Chromium is already installed elsewhere (the cloud container has one at
+// /opt/pw-browsers/chromium), set CHROMIUM_PATH to it and skip `playwright install`.
 import { createRequire } from 'node:module';
 import { execSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-const require = createRequire(`${execSync('npm root -g').toString().trim()}/`);
-const { chromium } = require('playwright');
+function loadPlaywright() {
+  const roots = [import.meta.url];
+  try {
+    roots.push(`${execSync('npm root -g').toString().trim()}/`);
+  } catch {
+    // no npm on PATH; only the local lookup is possible
+  }
+  for (const root of roots) {
+    try {
+      return createRequire(root)('playwright');
+    } catch {
+      // try the next root
+    }
+  }
+  console.error('Playwright not found. Run: npm i -g playwright && npx playwright install chromium');
+  process.exit(1);
+}
+const { chromium } = loadPlaywright();
 
 const [src, out, w = '390', h = '940', scale = '2'] = process.argv.slice(2);
 if (!src || !out) {
@@ -33,7 +54,9 @@ if (process.env.FONTS_CSS) {
 const tmp = resolve(`${out}.tmp.html`);
 writeFileSync(tmp, html);
 
-const browser = await chromium.launch();
+const browser = await chromium.launch(
+  process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {},
+);
 const page = await (await browser.newContext({ viewport: { width: +w, height: +h }, deviceScaleFactor: +scale })).newPage();
 await page.goto(`file://${tmp}`);
 await page.evaluate(() => document.fonts.ready);
