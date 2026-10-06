@@ -595,9 +595,14 @@ button {
   font-size: 0.72rem;
 }
 
+/* `gap` was missing, so Revive (or Send to ring) and Unequip all touched. Square 1px borders
+   in the dark themes hid it; Millefleur's rounded buttons showed it (bug 233). Wrap so a
+   narrow card never squeezes the pair. */
 .workshop-monster-actions {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
+  gap: 0.5rem;
 }
 
 .workshop-btn-icon {

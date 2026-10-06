@@ -5399,3 +5399,11 @@ Found while adding the theme plumbing for roadmap 46 (pass 46a, task 1).
 - **Fight log font.** `.fight-log-detail` read `var(--font-mono, monospace)`, but `--font-mono`
   was never defined, so the transcript in Fights rendered the browser's generic monospace
   instead of JetBrains Mono. The token now exists (it equals `--font-family` on every theme).
+
+### 233. Revive and Unequip all touched in the Workshop — FIXED
+
+Found by the owner in the Millefleur screenshots (roadmap 46 pass 46a). The monster panel's
+action row (`.workshop-monster-actions`: Revive or Send to ring, then Unequip all) was a flex
+row with no `gap`, so the two buttons sat edge to edge in every theme. The dark themes' square
+1px borders butted together and read as one divided control; Millefleur's rounded buttons made
+the missing space obvious. The row now has a 0.5rem gap and wraps on a narrow card.
