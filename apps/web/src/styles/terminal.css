@@ -1175,6 +1175,8 @@
 .chat-message { padding: 0.15rem 0; overflow-wrap: anywhere; line-height: var(--line-height, 1.5); }
 .chat-sender { color: var(--color-fg-bright); margin-right: 0.4rem; }
 .chat-sender::after { content: ':'; }
+/* The time beside a sender: off until a theme styles it. */
+.chat-time { display: none; }
 .chat-message-dm .chat-text { font-style: italic; }
 .chat-divider {
   display: flex;

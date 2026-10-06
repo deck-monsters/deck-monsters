@@ -1022,21 +1022,32 @@
    margin anywhere in the list, every row (and so the last one) still sits exactly on a rule.
    If you add padding, a margin, a border or a line-height that is not 28px to anything in the
    list, the rules will drift: measure at 3x (see the roadmap 46 task 3 notes). */
+/* The page IS the paper: the panel gives up its padding, so the ruled list fills the page edge to
+   edge and the composer sits under it, as in the mock. The heading and its help line stay, quiet,
+   above the paper. */
+[data-theme='millefleur'] .chat-panel { padding: 0; }
+[data-theme='millefleur'] .chat-panel .surface-panel-heading { margin: 0; padding: 14px 16px 6px; align-items: flex-start; }
+[data-theme='millefleur'] .chat-panel h1 { font-size: 13px; font-weight: 800; line-height: 1.2; }
+[data-theme='millefleur'] .chat-panel .surface-panel-subtitle { margin: 2px 0 0; font-size: 12px; line-height: 1.35; }
+/* The log is anchored to the bottom: the first row takes the free space above it (margin-top:
+   auto, not justify-content: flex-end, which would make the overflow above unreachable), and the
+   rule tile is positioned from the bottom of the scrollable area, so the last row always sits on
+   a rule however few messages there are. The margin line is at the mock's x (18px into the page). */
 [data-theme='millefleur'] .chat-list {
-  /* Edge to edge: cancel the panel's own gutter, then put the gutter back as padding. */
-  margin: 0 -12px;
-  padding: 0 28px 0 46px;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 0 16px 6px 46px;
   background-image:
-    linear-gradient(to right, transparent 32px, var(--mf-margin) 32px, var(--mf-margin) 33px, transparent 33px),
+    linear-gradient(to right, transparent 18px, var(--mf-margin) 18px, var(--mf-margin) 19px, transparent 19px),
     linear-gradient(to bottom, transparent 26px, var(--mf-rule) 26px 27px, transparent 27px);
-  background-size: 100% 28px, 100% 28px;
-  background-repeat: repeat, repeat;
+  background-size: 100% 100%, 100% 28px;
+  background-repeat: no-repeat, repeat-y;
   background-attachment: local, local;
-  background-position: 0 0, 0 0;
+  background-position: 0 0, 0 calc(100% - 6px);
 }
-@container surface (min-width: 521px) {
-  [data-theme='millefleur'] .chat-list { margin: 0 -24px; padding-right: 40px; }
-}
+[data-theme='millefleur'] .chat-list > :first-child { margin-top: auto; }
+[data-theme='millefleur'] .chat-list > * { flex: 0 0 auto; }
 [data-theme='millefleur'] .chat-message,
 [data-theme='millefleur'] .chat-divider,
 [data-theme='millefleur'] .chat-empty {
@@ -1052,7 +1063,16 @@
   margin: 0;
   line-height: 28px;
 }
-[data-theme='millefleur'] .chat-sender { font-weight: 800; color: var(--color-fg-bright); }
+/* Name (800, ink) then the time (muted), on one row: the sender goes inline beside it. */
+[data-theme='millefleur'] .chat-sender { display: inline; font-size: 13px; font-weight: 800; color: var(--color-fg-bright); }
+[data-theme='millefleur'] .chat-time {
+  display: inline;
+  margin-left: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 28px;
+  color: var(--color-fg-dim);
+}
 [data-theme='millefleur'] .chat-sender::after { content: none; }
 [data-theme='millefleur'] .chat-message-dm .chat-text { font-style: normal; }
 /* A direct message: a rose band exactly as tall as its rows (inset outline, no border or padding). */
@@ -1097,7 +1117,17 @@
 }
 [data-theme='millefleur'] .chat-divider-marker::after { background: linear-gradient(270deg, transparent, rgb(154 47 102 / 0.55)); }
 [data-theme='millefleur'] .chat-divider-marker span { padding: 0 10px; }
-[data-theme='millefleur'] .chat-composer { border-top-color: var(--mf-line-soft); }
+/* The composer: a paper strip under the log, the To picker spanning its row. */
+[data-theme='millefleur'] .chat-composer {
+  border-top-color: var(--mf-line-soft);
+  padding: 12px 14px calc(18px + env(safe-area-inset-bottom, 0px));
+  background: rgb(253 250 246 / 0.9);
+  position: static;
+}
+[data-theme='millefleur'] .chat-composer-to { margin-bottom: 8px; }
+[data-theme='millefleur'] .chat-composer-to label { font-size: 12px; font-weight: 700; color: var(--color-fg-dim); }
+[data-theme='millefleur'] .chat-composer-to select { flex: 1; max-width: none; font-weight: 600; }
+[data-theme='millefleur'] .chat-composer-row { gap: 8px; }
 
 /* ── The Ring transcript ── Colour only: the feed's font, size, line height and gutters set
    the row heights the virtual list books (utils/feed-row-height.ts), so none of them move. */

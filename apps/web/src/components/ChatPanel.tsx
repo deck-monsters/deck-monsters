@@ -225,6 +225,11 @@ export default function ChatPanel({ isActive = true, headerActions }: ChatPanelP
                 return (
                   <div key={row.key} className={`chat-message${dm ? ' chat-message-dm' : ''}${mine ? ' chat-message-mine' : ''}`}>
                     <strong className="chat-sender">{header}</strong>
+                    {/* The time of day, beside the sender. Hidden by base CSS; a theme that
+                        styles .chat-time shows it (Millefleur). */}
+                    <time className="chat-time" dateTime={m.createdAt}>
+                      {new Date(m.createdAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+                    </time>
                     <span className="chat-text">{m.text}</span>
                   </div>
                 );
