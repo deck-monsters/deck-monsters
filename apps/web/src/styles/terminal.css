@@ -1087,10 +1087,15 @@
 .fight-log-retry { all: unset; box-sizing: border-box; cursor: pointer; min-height: 44px; display: inline-flex; align-items: center; color: var(--color-accent); text-decoration: underline; }
 .fight-log-retry:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 3px; }
 .fight-streak { color: var(--color-accent); font-size: .8rem; }
-.fight-log-detail { margin-top: .75rem; font-size: .85rem; /* Literal `monospace`, not --font-mono: --font-mono was unset when this was written, so
-     the generic fallback is what has always rendered. Defining the token must not move
-     pixels in 46a; swapping to var(--font-mono) is a one-line follow-up. */
-  font-family: monospace; overflow-wrap: anywhere; }
+/* The fight transcript is monospace like the feed. It used `var(--font-mono, monospace)`
+   while --font-mono was never defined, so it silently rendered the generic font; now the
+   token exists and it renders JetBrains Mono, as intended (roadmap 46 pass 46a). */
+.fight-log-detail {
+  margin-top: .75rem;
+  font-size: .85rem;
+  font-family: var(--font-mono);
+  overflow-wrap: anywhere;
+}
 /* Scrolling lives on the wrapper so the list's markers are never inside a scrollport —
    WebKit clips outside-positioned markers there, Blink does not. See 10b-bugs-fixed.md #125. */
 .fight-log-events { max-height: 15rem; overflow: auto; }

@@ -274,7 +274,7 @@ export default function InlineChoices({
               padding: '0.3rem 0.75rem',
               background: selectionOrder.length > 0 ? 'var(--color-accent)' : 'transparent',
               border: '1px solid var(--color-accent)',
-              color: selectionOrder.length > 0 ? 'var(--color-bg)' : 'var(--color-fg-dim)',
+              color: selectionOrder.length > 0 ? 'var(--color-on-accent)' : 'var(--color-fg-dim)',
               fontFamily: 'var(--font-mono)',
               fontSize: 'var(--font-size)',
               cursor: selectionOrder.length > 0 ? 'pointer' : 'default',
@@ -345,7 +345,7 @@ export default function InlineChoices({
                   // nudge toward yes (review of pass 45).
                   background: picked ? 'var(--color-accent)' : 'transparent',
                   border: '1px solid var(--color-accent)',
-                  color: picked ? 'var(--color-bg)' : 'var(--color-fg)',
+                  color: picked ? 'var(--color-on-accent)' : 'var(--color-fg)',
                   fontFamily: 'var(--font-mono)',
                   fontSize: 'var(--font-size)',
                   cursor: isDone ? 'default' : 'pointer',

@@ -93,6 +93,16 @@ describe('useTheme', () => {
     expect(meta.content).toBe('#0a0e0a');
   });
 
+  it('survives localStorage throwing, keeping the choice in memory', () => {
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => { throw new DOMException('blocked', 'SecurityError'); });
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new DOMException('blocked', 'SecurityError'); });
+    const { result } = renderHook(() => useTheme());
+    expect(result.current.theme).toBe('phosphor');
+    act(() => result.current.setTheme('ember'));
+    expect(result.current.theme).toBe('ember');
+    expect(document.documentElement.getAttribute('data-theme')).toBe('ember');
+  });
+
   it('creates the theme-color meta if the page has none', () => {
     const { result } = renderHook(() => useTheme());
     act(() => result.current.setTheme('amber'));

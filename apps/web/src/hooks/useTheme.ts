@@ -24,7 +24,14 @@ function isValidTheme(value: string | null): value is Theme {
 }
 
 function getPreferredTheme(): Theme {
-  const stored = localStorage.getItem(STORAGE_KEY);
+  // localStorage throws in private windows and with blocked site data.
+  // Fall back to the in-memory choice so a setTheme still sticks for the session.
+  let stored: string | null = null;
+  try {
+    stored = localStorage.getItem(STORAGE_KEY);
+  } catch {
+    return currentTheme ?? 'phosphor';
+  }
   if (isValidTheme(stored)) return stored;
   // Default to phosphor regardless of prefers-color-scheme — the entire app
   // is dark-first by design.
@@ -75,7 +82,11 @@ function notify(): void {
 
 function setStoredTheme(theme: Theme): void {
   currentTheme = theme;
-  localStorage.setItem(STORAGE_KEY, theme);
+  try {
+    localStorage.setItem(STORAGE_KEY, theme);
+  } catch {
+    // Not persisted; currentTheme still holds the choice for this session.
+  }
   applyTheme(theme);
   notify();
 }

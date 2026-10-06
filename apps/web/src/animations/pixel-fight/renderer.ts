@@ -6,17 +6,28 @@ export function clear(ctx: CanvasRenderingContext2D): void {
 
 export const DEFAULT_SPRITE_FLASH = '#ffffff';
 
+let cachedFlashColor: string | undefined;
+let flashObserver: MutationObserver | undefined;
+
 /**
  * The hit-flash colour for the active theme (`--color-sprite-flash`, default white).
- * Read on demand, only for a frame that is actually flashing: that is a few frames per
- * hit, and it keeps a theme switch mid-session honest without a listener. A light theme
- * needs a non-white flash, because white on a white panel makes a struck monster vanish
- * instead of blink (roadmap 46 §1).
+ * Read once and cached: getComputedStyle forces a style recalc, and a hit redraws every
+ * ~130 ms frame for every flashing sprite. A MutationObserver on <html data-theme> drops
+ * the cache when the theme changes. A light theme needs a non-white flash, because white
+ * on a white panel makes a struck monster vanish instead of blink (roadmap 46 §1).
  */
 export function readSpriteFlashColor(): string {
   if (typeof document === 'undefined') return DEFAULT_SPRITE_FLASH;
-  const value = getComputedStyle(document.documentElement).getPropertyValue('--color-sprite-flash').trim();
-  return value || DEFAULT_SPRITE_FLASH;
+  if (cachedFlashColor === undefined) {
+    const root = document.documentElement;
+    cachedFlashColor =
+      getComputedStyle(root).getPropertyValue('--color-sprite-flash').trim() || DEFAULT_SPRITE_FLASH;
+    if (!flashObserver && typeof MutationObserver !== 'undefined') {
+      flashObserver = new MutationObserver(() => { cachedFlashColor = undefined; });
+      flashObserver.observe(root, { attributes: true, attributeFilter: ['data-theme'] });
+    }
+  }
+  return cachedFlashColor;
 }
 
 export function drawSprite(

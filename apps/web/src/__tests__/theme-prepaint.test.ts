@@ -1,6 +1,9 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const WEB_ROOT = join(dirname(fileURLToPath(import.meta.url)), '../..');
 import { THEMES } from '../hooks/useTheme.js';
 
 /**
@@ -9,7 +12,7 @@ import { THEMES } from '../hooks/useTheme.js';
  * it repeats the id -> colour map. These tests keep the copy honest, and run the script for
  * real, including the case where localStorage throws.
  */
-const html = readFileSync(join(process.cwd(), 'index.html'), 'utf8');
+const html = readFileSync(join(WEB_ROOT, 'index.html'), 'utf8');
 const script = html.match(/<script>([\s\S]*?)<\/script>/)![1]!;
 
 const CSS_FILE: Record<string, string> = {
@@ -35,7 +38,7 @@ describe('index.html pre-paint theme script', () => {
     for (const { id, themeColor } of THEMES) {
       const file = CSS_FILE[id];
       expect(file, `add ${id} to CSS_FILE in this test`).toBeDefined();
-      const css = readFileSync(join(process.cwd(), 'src/styles', file!), 'utf8');
+      const css = readFileSync(join(WEB_ROOT, 'src/styles', file!), 'utf8');
       expect(css.match(/--color-bg:\s*(#[0-9a-f]{6})/i)![1], id).toBe(themeColor);
     }
   });

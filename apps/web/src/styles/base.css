@@ -623,6 +623,9 @@ button {
 }
 
 .workshop-xp-meter-track {
+  /* Not on --color-meter-track yet: this track is --color-bg inside a border, and the
+     token's default is --color-border, so swapping would move phosphor pixels (46a is
+     pixel-identical). Millefleur overrides this rule in task 2. */
   display: block;
   flex: 1;
   min-width: 2rem;

@@ -1,8 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const STYLES_DIR = join(process.cwd(), 'src/styles');
+// Resolved from this file, not process.cwd(), so it works from the repo root too.
+const STYLES_DIR = join(dirname(fileURLToPath(import.meta.url)), '../styles');
 
 /** Tokens every theme must define, or components fall back to an unstyled default. */
 const REQUIRED_TOKENS = [
@@ -48,10 +50,10 @@ const ROOT_DEFAULT_TOKENS = [
  * change a pixel of the four existing themes, so a theme that fails a rule it was never held
  * to is listed here, with the measured ratio, until someone chooses to retune its colours.
  * Key: `${file}|${rule}`. Delete an entry when the palette is fixed; the test fails if an
- * entry no longer fails, so the list cannot rot.
+ * entry no longer fails, so the list cannot rot. Values are the measured ratios; 4.5:1 is
+ * needed for text, 3:1 for the meter fill.
  */
 const KNOWN_FAILURES: Record<string, string> = {
-  // Measured ratio on the right; 4.5:1 is needed for text, 3:1 for the meter fill.
   'theme-amber.css|--color-fg-dim on --color-bg': '3.07:1',
   'theme-amber.css|--color-fg-dim on --color-input-bg': '3.05:1',
   'theme-amber.css|--color-system on --color-bg': '2.30:1',
@@ -127,6 +129,24 @@ function luminance(hex: string): number | null {
   return 0.2126 * channel(rgb[0]) + 0.7152 * channel(rgb[1]) + 0.0722 * channel(rgb[2]);
 }
 
+type Rgba = [number, number, number, number];
+
+/** #rrggbb, rgb(r g b), rgb(r g b / a) and rgba(r, g, b, a). Anything else: null. */
+function parseColor(value: string): Rgba | null {
+  const hex = parseHex(value);
+  if (hex) return [...hex, 1];
+  const m = value.trim().match(/^rgba?\(\s*(\d+)[\s,]+(\d+)[\s,]+(\d+)(?:\s*[,/]\s*([\d.]+%?))?\s*\)$/i);
+  if (!m) return null;
+  const a = m[4] === undefined ? 1 : m[4].endsWith('%') ? parseFloat(m[4]) / 100 : parseFloat(m[4]);
+  return [Number(m[1]), Number(m[2]), Number(m[3]), a];
+}
+
+/** Alpha-blend `top` over an opaque `under`, as the browser paints it. */
+function flatten(top: Rgba, under: Rgba): string {
+  const mix = (i: 0 | 1 | 2) => Math.round(top[i] * top[3] + under[i] * (1 - top[3]));
+  return '#' + [mix(0), mix(1), mix(2)].map(n => n.toString(16).padStart(2, '0')).join('');
+}
+
 function contrast(a: string, b: string): number | null {
   const la = luminance(a);
   const lb = luminance(b);
@@ -142,6 +162,24 @@ describe('theme palettes', () => {
     expect(ROOT_DEFAULT_TOKENS.filter(t => !ROOT_TOKENS.has(t))).toEqual([]);
   });
 
+  it('keeps the defaults equal to what the app drew before they existed', () => {
+    // A drive-by edit to one of these changes every theme that does not override it.
+    const expected: Record<string, string> = {
+      '--font-ui': 'var(--font-family)', '--font-mono': 'var(--font-family)',
+      '--radius-sm': '0', '--radius-md': '0', '--radius-lg': '0', '--radius-pill': '999px',
+      '--border-width': '1px', '--color-border-strong': 'var(--color-border)',
+      '--shadow-page': 'none', '--surface-page': 'var(--color-bg)',
+      '--surface-texture': 'none', '--surface-titlebar': 'none', '--holo': 'none',
+      '--color-meter-track': 'var(--color-border)', '--color-on-accent': 'var(--color-bg)',
+      '--color-highlight-good': 'var(--color-hp-healthy)', '--color-highlight-warn': 'var(--color-hp-hurt)',
+      '--color-sprite-flash': '#ffffff', '--color-backdrop': 'rgb(0 0 0 / 0.7)',
+      '--color-backdrop-light': 'rgb(0 0 0 / 0.5)',
+      '--wash-lilac': 'transparent', '--wash-seafoam': 'transparent', '--wash-blush': 'transparent',
+      '--wash-butter': 'transparent', '--wash-sky': 'transparent',
+    };
+    expect(Object.fromEntries(ROOT_DEFAULT_TOKENS.map(t => [t, ROOT_TOKENS.get(t)]))).toEqual(expected);
+  });
+
   it('finds the theme stylesheets', () => {
     expect(themeFiles().length).toBeGreaterThanOrEqual(4);
   });
@@ -155,12 +193,22 @@ describe('theme palettes', () => {
 
       /** Assert `fg` on `bg` meets `min`, or is a listed known failure. */
       function expectContrast(rule: string, fg: string, bg: string, min: number) {
-        const a = val(fg);
-        const b = val(bg);
-        expect(a, `${file}: ${fg} should resolve to a colour`).not.toBeNull();
-        expect(b, `${file}: ${bg} should resolve to a colour`).not.toBeNull();
-        const ratio = contrast(a!, b!);
-        if (ratio === null) return; // not a plain hex (e.g. rgb() with alpha): out of scope
+        const rawFg = val(fg);
+        const rawBg = val(bg);
+        expect(rawFg, `${file}: ${fg} should resolve to a colour`).not.toBeNull();
+        expect(rawBg, `${file}: ${bg} should resolve to a colour`).not.toBeNull();
+        const page = parseColor(val('--color-bg') ?? '');
+        const pf = parseColor(rawFg!);
+        const pb = parseColor(rawBg!);
+        // Never skip silently: a translucent or unusual value (Millefleur's meter track is
+        // rgb(... / 0.28)) must be evaluated or the rule is not enforcing anything.
+        if (!page || !pf || !pb || page[3] !== 1) {
+          expect.fail(`${file}: ${rule}: cannot evaluate "${rawFg}" on "${rawBg}"; use hex or rgb()/rgba() over an opaque --color-bg`);
+        }
+        // The pair's background is painted over the page; the foreground over that.
+        const bgFlat = flatten(pb, page);
+        const fgFlat = flatten(pf, parseColor(bgFlat)!);
+        const ratio = contrast(fgFlat, bgFlat)!;
         const key = `${file}|${rule}`;
         if (key in KNOWN_FAILURES) {
           expect.soft(ratio, `${key} is listed as failing but now passes; remove it from KNOWN_FAILURES`).toBeLessThan(min);
