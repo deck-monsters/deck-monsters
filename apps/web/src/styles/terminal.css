@@ -334,6 +334,75 @@
   display: block;
 }
 
+/* ── Structured feed lines (roadmap 46a) ───────────────────────────────────
+   An event with `payload.lines` draws one block per line (components/FeedLines.tsx). The
+   engine's blank lines, ASCII rules and fences are not in the lines, so every bit of
+   spacing here is CSS, and every vertical measure is one `readFeedMetrics` reads
+   (utils/feed-row-height.ts): the gap between lines (`--feed-line-gap`), a card's chrome, a
+   divider's margin. A layout change that is not in that probe moves every row estimate and
+   scroll-back with it (10b #196). Borders and rules below are drawn outside the box
+   (pseudo-elements in the row's padding, box-shadow) so they cost no height. */
+.feed-lines {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--feed-line-gap, 0.2rem);
+}
+
+.feed-line {
+  position: relative;
+  min-width: 0;
+  /* Indent in columns: the estimate wraps that many columns earlier. */
+  padding-left: calc(var(--feed-indent, 0) * 1ch);
+}
+
+/* The card's panel is `.event-card-block`; its title line sits on a rule that replaces the
+   ASCII `----` between title and description. */
+.feed-card-title {
+  box-shadow: 0 1px 0 var(--color-border);
+}
+
+/* The ASCII rules the old text carried, redrawn: above a round or the opening of a fight,
+   below the fight's close. In the row's own padding, so they add no height. */
+.feed-lines > .feed-line-round:first-child::before,
+.feed-lines > .feed-line-fight-start:first-child::before,
+.feed-lines > .feed-line-fight-end:last-child::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--color-border);
+}
+.feed-lines > .feed-line-round:first-child::before,
+.feed-lines > .feed-line-fight-start:first-child::before {
+  top: calc(var(--event-spacing) / -2);
+}
+.feed-lines > .feed-line-fight-end:last-child::after {
+  bottom: calc(var(--event-spacing) / -2);
+}
+
+/* A divider (Millefleur's round marker): small tracked label between two lines. The line box
+   is the feed's own, whatever the label's size. */
+.feed-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-fg-dim);
+  white-space: nowrap;
+  line-height: calc(var(--feed-font-size) * var(--feed-line-height));
+}
+.feed-divider::before,
+.feed-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--color-border);
+}
+
 /* Quick-action suggestions strip */
 .quick-actions {
   display: flex;

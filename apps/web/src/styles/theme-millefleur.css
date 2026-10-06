@@ -53,6 +53,8 @@
      these from the live CSS, so the row estimates follow without a per-theme constant. */
   --feed-font-size: 12.5px;
   --feed-line-height: 1.65;
+  /* The mock's 2px between transcript lines; read by readFeedMetrics. */
+  --feed-line-gap: 2px;
   /* --font-mono stays JetBrains Mono (the :root default): the feed's row-height maths and
      card frames depend on its 0.6em advance. */
   --radius-sm: 6px;
@@ -1177,6 +1179,30 @@
 [data-theme='millefleur'] .feed-marker::after { background: linear-gradient(270deg, transparent, var(--mf-line-tab, rgb(150 125 195 / 0.5))); }
 [data-theme='millefleur'] .feed-marker-disconnected::before { background: linear-gradient(90deg, transparent, var(--color-error)); }
 [data-theme='millefleur'] .feed-marker-disconnected::after { background: linear-gradient(270deg, transparent, var(--color-error)); }
+/* Structured lines (roadmap 46a), by kind. Colour, weight and the divider's margin only: a size
+   change would move the line box, so smaller text keeps the feed's own line height. */
+[data-theme='millefleur'] .feed-line { line-height: calc(var(--feed-font-size) * var(--feed-line-height)); }
+[data-theme='millefleur'] .feed-line-narration,
+[data-theme='millefleur'] .feed-line-fight-start,
+[data-theme='millefleur'] .feed-line-summary,
+[data-theme='millefleur'] .feed-line-roll-result,
+[data-theme='millefleur'] .feed-line-fight-end,
+[data-theme='millefleur'] .feed-line-temperament { color: var(--color-fg-dim); }
+[data-theme='millefleur'] .feed-line-temperament { font-style: italic; }
+[data-theme='millefleur'] .feed-line-system { color: var(--color-fg-dim); font-size: 0.9em; }
+[data-theme='millefleur'] .feed-line-win { font-weight: 700; }
+[data-theme='millefleur'] .feed-line-arrival[data-boss] { font-weight: 800; }
+[data-theme='millefleur'] .feed-danger { color: var(--color-error); font-weight: 700; }
+[data-theme='millefleur'] .feed-divider { margin: 0.4rem 0; letter-spacing: 0.1em; color: var(--color-fg-dim); }
+[data-theme='millefleur'] .feed-divider::before { background: linear-gradient(90deg, transparent, var(--mf-line-tab, rgb(150 125 195 / 0.5))); }
+[data-theme='millefleur'] .feed-divider::after { background: linear-gradient(270deg, transparent, var(--mf-line-tab, rgb(150 125 195 / 0.5))); }
+/* The soft panel has no drawn edge, so the title's rule is a soft line, not the dark border. */
+[data-theme='millefleur'] .feed-card-title { box-shadow: 0 1px 0 var(--mf-line-soft); }
+/* No ASCII-rule stand-ins here: the divider and the paper's own spacing do that job. */
+[data-theme='millefleur'] .feed-lines > .feed-line::before,
+[data-theme='millefleur'] .feed-lines > .feed-line::after { content: none; }
+[data-theme='millefleur'] .feed-lines > .feed-divider::before,
+[data-theme='millefleur'] .feed-lines > .feed-divider::after { content: ''; }
 /* A highlight is a left band in the theme's own colours (nat 20 sea-foam, crit fail sienna,
    kill danger, big hit rose). */
 /* Border WIDTH stays the feed's 2px: a wider band would narrow the row and change where lines wrap. */

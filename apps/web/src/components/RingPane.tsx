@@ -21,7 +21,8 @@ import { usePixelMonsters } from '../hooks/usePixelMonsters.js';
 import { AT_BOTTOM_THRESHOLD_PX, useFeedAutoScroll } from '../hooks/useFeedAutoScroll.js';
 import { themeAssetsReady, loadThemeAssets, subscribeThemeAssets, useTheme } from '../hooks/useTheme.js';
 import { useTimeAgo } from '../hooks/useTimeAgo.js';
-import { formatEventText } from '../utils/format-event-text.js';
+import { FeedEventBody } from './FeedLines.js';
+import { feedBlocksOf, feedLinesOf, feedStyleFor, isBossArrivalEvent } from '../utils/feed-lines.js';
 import {
   estimateFeedRowHeight,
   FEED_WRAP_COLUMNS_FALLBACK,
@@ -115,8 +116,9 @@ function eventClass(type: string): string {
  */
 function isBossArrival(event: GameEvent): boolean {
   if (event.type !== 'ring.add') return false;
-  const contestant = (event.payload as { contestant?: { isBoss?: boolean } } | undefined)?.contestant;
-  return contestant?.isBoss === true;
+  // The arrival line's own `boss` fact (roadmap 46a); events stored before it carry only the
+  // contestant on the payload.
+  return isBossArrivalEvent(event.payload, feedLinesOf(event.payload));
 }
 
 function formatCountdown(epochMs: number): string {
@@ -326,11 +328,14 @@ export default function RingPane({
       observer?.disconnect();
     };
   }, [theme]);
-  const metricsKey = `${feedMetrics.linePx}|${feedMetrics.charPx}|${feedMetrics.rowChromePx}|${feedMetrics.cardChromePx}`;
+  const feedStyle = feedStyleFor(theme);
+  const metricsKey = `${feedStyle}|${feedMetrics.linePx}|${feedMetrics.charPx}|${feedMetrics.rowChromePx}|${feedMetrics.cardChromePx}|${feedMetrics.lineGapPx}|${feedMetrics.dividerChromePx}`;
   const heightEstimates = useMemo(
     () =>
-      events.map((event) => estimateFeedRowHeight(event.text, wrapColumns, feedMetrics)),
-    [events, wrapColumns, feedMetrics],
+      events.map((event) =>
+        estimateFeedRowHeight(event.text, wrapColumns, feedMetrics, feedBlocksOf(event.payload, feedStyle)),
+      ),
+    [events, wrapColumns, feedMetrics, feedStyle],
   );
   const [isAtBottom, setIsAtBottom] = useState(true);
   // Timer state is pushed from the server via ring.state events and the handshake payload.
@@ -768,11 +773,11 @@ export default function RingPane({
               </time>
               {showKeyColumn ? (
                 <div className="event-row-inner">
-                  <div className="event-text">{formatEventText(event.text ?? '', mentions)}</div>
+                  <div className="event-text"><FeedEventBody text={event.text ?? ''} payload={event.payload} style={feedStyle} mentions={mentions} /></div>
                   <KeyRingTimeBadge at={new Date(event.timestamp)} label={keyMeta.label} />
                 </div>
               ) : (
-                <div className="event-text">{formatEventText(event.text ?? '', mentions)}</div>
+                <div className="event-text"><FeedEventBody text={event.text ?? ''} payload={event.payload} style={feedStyle} mentions={mentions} /></div>
               )}
               {mechanicNote && <div className="mechanic-note">ⓘ {mechanicNote}</div>}
             </li>

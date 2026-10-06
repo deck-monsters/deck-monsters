@@ -1,3 +1,5 @@
+import { blockText, type FeedBlock } from './feed-lines.js';
+
 /**
  * Pixel guess for an unmeasured ring-feed row.
  *
@@ -31,6 +33,9 @@
  * - `rowChromePx`: `.event` padding, `--event-spacing` (0.4rem) on both sides at a 16px root.
  * - `cardChromePx`: `.event-card-block`, 0.5rem padding, 0.4rem margin, 1px border, each on
  *   both sides. The ``` fence becomes that panel.
+ * - `lineGapPx`, `dividerChromePx`: the line-rendered feed (`.feed-lines`, roadmap 46a). Spacing
+ *   between an event's lines is CSS, never blank lines in the text; the probe measures the
+ *   gap between two `.feed-line`s and a `.feed-divider`'s margins.
  * - `gutterPx`: `.event-feed-list` horizontal padding (`--pane-padding` on both sides), what
  *   `RingPane` subtracts from the scroller's width to get the text's content box.
  */
@@ -40,6 +45,10 @@ export interface FeedMetrics {
   rowChromePx: number;
   cardChromePx: number;
   gutterPx: number;
+  /** `.feed-lines` gap between two lines of one event (`--feed-line-gap`, roadmap 46a). */
+  lineGapPx: number;
+  /** A divider's own vertical margin (`.feed-divider`); its line is `linePx` tall. */
+  dividerChromePx: number;
 }
 
 export const DEFAULT_FEED_METRICS: Readonly<FeedMetrics> = Object.freeze({
@@ -48,6 +57,8 @@ export const DEFAULT_FEED_METRICS: Readonly<FeedMetrics> = Object.freeze({
   rowChromePx: 12.8,
   cardChromePx: 30.8,
   gutterPx: 24,
+  lineGapPx: 3.2,
+  dividerChromePx: 0,
 });
 
 /** Kept for callers that only want the default advance. */
@@ -98,13 +109,19 @@ export function readFeedMetrics(host: HTMLElement | null): FeedMetrics {
     '<ol class="event-feed-list"><li class="event">' +
     '<span data-probe="char" style="white-space:pre"></span>' +
     '<div data-probe="lines" style="white-space:pre"></div>' +
-    '<div class="event-card-block"></div></li></ol>';
+    '<div class="event-card-block"></div>' +
+    '<div class="feed-lines"><div class="feed-line" data-probe="gap-a">0</div>' +
+    '<div class="feed-line" data-probe="gap-b">0</div>' +
+    '<div class="feed-line feed-divider" data-probe="divider">0</div></div></li></ol>';
   const list = probe.querySelector<HTMLElement>('.event-feed-list');
   const row = probe.querySelector<HTMLElement>('.event');
   const span = probe.querySelector<HTMLElement>('[data-probe="char"]');
   const lines = probe.querySelector<HTMLElement>('[data-probe="lines"]');
   const card = probe.querySelector<HTMLElement>('.event-card-block');
-  if (!list || !row || !span || !lines || !card) return defaults();
+  const gapA = probe.querySelector<HTMLElement>('[data-probe="gap-a"]');
+  const gapB = probe.querySelector<HTMLElement>('[data-probe="gap-b"]');
+  const divider = probe.querySelector<HTMLElement>('[data-probe="divider"]');
+  if (!list || !row || !span || !lines || !card || !gapA || !gapB || !divider) return defaults();
   span.textContent = '0'.repeat(CHAR_RUN);
   lines.textContent = Array.from({ length: LINE_RUN }, () => '0').join('\n');
   host.appendChild(probe);
@@ -124,6 +141,7 @@ export function readFeedMetrics(host: HTMLElement | null): FeedMetrics {
     const rendered = height / LINE_RUN;
     const cardStyle = getComputedStyle(card);
     const listStyle = getComputedStyle(list);
+    const dividerStyle = getComputedStyle(divider);
     // Zero chrome is a real answer once the line has measured (a theme may draw a card with
     // no padding, margin or border).
     return {
@@ -139,6 +157,8 @@ export function readFeedMetrics(host: HTMLElement | null): FeedMetrics {
           px(cardStyle.borderBottomWidth),
       ),
       gutterPx: round2(px(listStyle.paddingLeft) + px(listStyle.paddingRight)),
+      lineGapPx: round2(Math.max(0, gapB.getBoundingClientRect().top - gapA.getBoundingClientRect().bottom)),
+      dividerChromePx: round2(px(dividerStyle.marginTop) + px(dividerStyle.marginBottom)),
     };
   } finally {
     probe.remove();
@@ -170,11 +190,42 @@ function visualLines(segment: string, wrapColumns: number): number {
   return count;
 }
 
+/**
+ * A lines-rendered row (`components/FeedLines.tsx`): each block's wrapped lines times
+ * `linePx`, the line gap between blocks, card chrome on a card, margin on a divider, and the
+ * row's own padding. The blocks are the renderer's (`composeFeedBlocks`), so a replaced
+ * group is booked as what it is drawn as.
+ */
+export function estimateFeedBlocksHeight(
+  blocks: readonly FeedBlock[],
+  wrapColumns: number = FEED_WRAP_COLUMNS_FALLBACK,
+  metrics: Readonly<FeedMetrics> = DEFAULT_FEED_METRICS,
+): number {
+  const { linePx, rowChromePx, cardChromePx, lineGapPx, dividerChromePx } = metrics;
+  if (blocks.length === 0) return rowChromePx + linePx;
+  let height = rowChromePx + lineGapPx * (blocks.length - 1);
+  for (const block of blocks) {
+    if (block.divider) {
+      height += linePx + dividerChromePx;
+      continue;
+    }
+    // A card's frame text is booked at the full width, as fenced frames always were: it is
+    // at most 32 columns and the panel's padding does not narrow it on a phone.
+    const columns = block.card ? wrapColumns : Math.max(1, wrapColumns - block.indent);
+    height += visualLines(blockText(block), columns) * linePx;
+    if (block.card) height += cardChromePx;
+  }
+  return height;
+}
+
 export function estimateFeedRowHeight(
   text: string | undefined,
   wrapColumns: number = FEED_WRAP_COLUMNS_FALLBACK,
   metrics: Readonly<FeedMetrics> = DEFAULT_FEED_METRICS,
+  /** The event's blocks when it renders from `lines`; omitted for text-only events. */
+  blocks?: readonly FeedBlock[] | null,
 ): number {
+  if (blocks && blocks.length > 0) return estimateFeedBlocksHeight(blocks, wrapColumns, metrics);
   const { linePx, rowChromePx, cardChromePx } = metrics;
   const body = text ?? '';
   if (body.length === 0) return rowChromePx + linePx;

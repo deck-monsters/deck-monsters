@@ -24,7 +24,9 @@ import {
 } from '../lib/direct-message.js';
 import CommandSuggestions from './CommandSuggestions.js';
 import InlineChoices from './InlineChoices.js';
-import { formatEventText } from '../utils/format-event-text.js';
+import { FeedEventBody } from './FeedLines.js';
+import { feedStyleFor } from '../utils/feed-lines.js';
+import { useTheme } from '../hooks/useTheme.js';
 import { useMonsterMentions } from '../hooks/useMonsterMentions.js';
 import {
   classifyHighlight,
@@ -63,6 +65,8 @@ interface ConsoleEvent {
   highlight?: FightHighlight;
   /** The slice of the event payload a first-time mechanic note reads (see lib/mechanic-notes.ts). */
   payload?: Record<string, unknown>;
+  /** The event's structured feed lines, when it has them (roadmap 46a); else `text` renders. */
+  lines?: unknown;
   /** On a history line that is a question's text: the question it came from (see `feedEvents`). */
   promptRequestId?: string;
 }
@@ -268,6 +272,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
   const { data: history } = trpc.game.consoleHistory.useQuery({ roomId });
   // Monster sprites in place of their emoji, as in the Ring feed (roadmap 24).
   const mentions = useMonsterMentions(roomId);
+  const feedStyle = feedStyleFor(useTheme().theme);
   const {
     data: pendingPrompt,
     dataUpdatedAt: pendingPromptUpdatedAt,
@@ -542,6 +547,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
         type: 'highlight',
         text: event.text ?? '',
         highlight: fightHighlight,
+        lines: (event.payload as { lines?: unknown } | undefined)?.lines,
         payload: mechanicPayloadOf(event.payload),
       });
       return;
@@ -578,6 +584,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
         id: event.id,
         type: event.type === 'system' ? 'system' : 'announce',
         text: event.text,
+        lines: (event.payload as { lines?: unknown } | undefined)?.lines,
         payload: mechanicPayloadOf(event.payload),
       });
       return;
@@ -1119,7 +1126,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
             return (
               <li className={`event event-highlight event-highlight-${ev.highlight.kind}`}>
                 <span className="highlight-tag">{ev.highlight.label}</span>
-                <div className="event-text">{formatEventText(ev.text ?? '', mentions)}</div>
+                <div className="event-text"><FeedEventBody text={ev.text ?? ''} payload={{ lines: ev.lines }} style={feedStyle} mentions={mentions} /></div>
                 {noteLine}
               </li>
             );
@@ -1134,7 +1141,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
           }
           return (
             <li className={`event event-${ev.type}`}>
-              <div className="event-text">{formatEventText(ev.text ?? '', mentions)}</div>
+              <div className="event-text"><FeedEventBody text={ev.text ?? ''} payload={{ lines: ev.lines }} style={feedStyle} mentions={mentions} /></div>
               {noteLine}
             </li>
           );

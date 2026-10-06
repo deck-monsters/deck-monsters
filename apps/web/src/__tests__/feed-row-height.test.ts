@@ -125,7 +125,7 @@ describe('feed metrics', () => {
       const host = document.createElement('div');
       document.body.appendChild(host);
       const read = readFeedMetrics(host);
-      expect(read).toEqual({ linePx: 20.63, charPx: 8, rowChromePx: 6, cardChromePx: 0, gutterPx: 14 });
+      expect(read).toEqual({ linePx: 20.63, charPx: 8, rowChromePx: 6, cardChromePx: 0, gutterPx: 14, lineGapPx: 0, dividerChromePx: 0 });
       // The probe is gone, whatever it measured.
       expect(host.children).toHaveLength(0);
       host.remove();
@@ -152,6 +152,8 @@ describe('feed metrics', () => {
     rowChromePx: 12.8,
     cardChromePx: 30.8,
     gutterPx: 24,
+    lineGapPx: 2,
+    dividerChromePx: 12.8,
   };
 
   it('books Millefleur at a 20.625px line and a 7.5px advance', () => {

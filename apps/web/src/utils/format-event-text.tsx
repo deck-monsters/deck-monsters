@@ -161,3 +161,17 @@ export function truncateEventText(text: string, max: number): string {
 
 	return cut;
 }
+
+/**
+ * One feed line's text: inline markup (when the engine wrote it) and sprites in place of
+ * monster icons, the same as a non-fenced segment of `formatEventText`.
+ */
+export function formatLineText(
+  text: string,
+  keyPrefix: string,
+  mentions?: MonsterMentions | null,
+  markup = true,
+): React.ReactNode[] {
+  const run = mentions ? mentionRun(text, mentions) : plainRun;
+  return markup ? formatInlineMarkup(text, keyPrefix, run) : run(text, 0, keyPrefix);
+}
