@@ -43,12 +43,12 @@ Seeded, cycling he, she, and they.
 
 Additive to the call or the house arrival; cycling he, she, and they.
 
-- Player (he): `Companion is already here. Nobody remembers blinking.`
-- House (he): `Companion stands beyond the gate. Nobody saw the journey.`
-- Player (she): `Companion is already here. Nobody remembers blinking.`
-- House (she): `Companion stands beyond the gate. Nobody saw the journey.`
-- Player (they): `Companion is already here. Nobody remembers blinking.`
-- House (they): `Companion stands beyond the gate. Nobody saw the journey.`
+- Player (he): `Companion is already here. Nobody remembers him arriving.`
+- House (he): `Companion stands beyond the gate. The crowd can't really remember when he got there.`
+- Player (she): `Companion is already here. Nobody remembers her arriving.`
+- House (she): `Companion stands beyond the gate. The crowd can't really remember when she got there.`
+- Player (they): `Companion is already here. Nobody remembers them arriving.`
+- House (they): `Companion stands beyond the gate. The crowd can't really remember when they got there.`
 
 ### Long description
 

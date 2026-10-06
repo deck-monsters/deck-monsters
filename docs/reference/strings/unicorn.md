@@ -64,11 +64,11 @@ Seeded, cycling he, she, and they.
 
 Additive to the call or the house arrival; cycling he, she, and they.
 
-- Player (he): `Companion steps in, horn first. The witnesses agree on one thing: somebody has been eating the roses.`
+- Player (he): `Companion steps in, horn first. A woman in the front row holding a rose quickly moves it behind her back.`
 - House (he): `Companion trots through the gate. The house denies all knowledge of the missing roses.`
-- Player (she): `Companion steps in, horn first. The witnesses agree on one thing: somebody has been eating the roses.`
+- Player (she): `Companion steps in, horn first. A woman in the front row holding a rose quickly moves it behind her back.`
 - House (she): `Companion trots through the gate. The house denies all knowledge of the missing roses.`
-- Player (they): `Companion steps in, horn first. The witnesses agree on one thing: somebody has been eating the roses.`
+- Player (they): `Companion steps in, horn first. A woman in the front row holding a rose quickly moves it behind her back.`
 - House (they): `Companion trots through the gate. The house denies all knowledge of the missing roses.`
 
 ### Long description

@@ -43,11 +43,11 @@ Seeded, cycling he, she, and they.
 
 Additive to the call or the house arrival; cycling he, she, and they.
 
-- Player (he): `Companion gathers out of smoke. No lamp was rubbed; a friend called.`
+- Player (he): `Companion neatly materializes out of smoke. A close observer may catch him reflexively rubbing his bare wrists.`
 - House (he): `Companion billows through the gate. The house has sent smoke with a grudge.`
-- Player (she): `Companion gathers out of smoke. No lamp was rubbed; a friend called.`
+- Player (she): `Companion neatly materializes out of smoke. A close observer may catch her reflexively rubbing her bare wrists.`
 - House (she): `Companion billows through the gate. The house has sent smoke with a grudge.`
-- Player (they): `Companion gathers out of smoke. No lamp was rubbed; a friend called.`
+- Player (they): `Companion neatly materializes out of smoke. A close observer may catch them reflexively rubbing their bare wrists.`
 - House (they): `Companion billows through the gate. The house has sent smoke with a grudge.`
 
 ### Long description

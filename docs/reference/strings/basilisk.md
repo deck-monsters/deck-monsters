@@ -43,12 +43,12 @@ Seeded, cycling he, she, and they.
 
 Additive to the call or the house arrival; cycling he, she, and they.
 
-- Player (he): `Companion raises a crowned head. The front row studies the sand.`
-- House (he): `Companion slithers through the gate. The front row studies the sand.`
-- Player (she): `Companion raises a crowned head. The front row studies the sand.`
-- House (she): `Companion slithers through the gate. The front row studies the sand.`
-- Player (they): `Companion raises a crowned head. The front row studies the sand.`
-- House (they): `Companion slithers through the gate. The front row studies the sand.`
+- Player (he): `Companion raises a crowned head. The front row makes intense eye contact with the sand.`
+- House (he): `Companion slithers through the gate. The front row makes intense eye contact with the sand.`
+- Player (she): `Companion raises a crowned head. The front row makes intense eye contact with the sand.`
+- House (she): `Companion slithers through the gate. The front row makes intense eye contact with the sand.`
+- Player (they): `Companion raises a crowned head. The front row makes intense eye contact with the sand.`
+- House (they): `Companion slithers through the gate. The front row makes intense eye contact with the sand.`
 
 ### Long description
 

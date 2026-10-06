@@ -371,7 +371,9 @@ another PR. Cursor's task-6/task-8 browser checklist is complete in
    and `lines`, independently approved, and pass the full gate. A new owned local
    scratch room showed the Unicorn entrance, Minotaur boss and round beat on
    Millefleur at 390 and 1440. The room and disposable database were deleted; the
-   reusable remote rooms were untouched. See the evidence and copy below.
+   reusable remote rooms were untouched. The owner has since revised the entrance
+   copy; the current lines are below, and the shots retain the initial wording.
+   The player Dragon, boss Gladiator and second round beat still await a choice.
 3. Keep task 9 pending the owner's review; put every authored line here. Do not archive
    roadmap 46. The CSS budget and missing performance evidence stay open as item L.
 4. Before each checkpoint push: `pnpm build && pnpm typecheck && pnpm lint && pnpm test`
@@ -398,24 +400,24 @@ and Gladiator's `comes/come` agrees with them. All seven species are covered.
 
 | Species | After a player's monster answers the call |
 |---|---|
-| Basilisk | {name} raises a crowned head. The front row studies the sand. |
+| Basilisk | {name} raises a crowned head. The front row makes intense eye contact with the sand. |
 | Gladiator | {name} steps onto the sand. Once, the gates were locked behind {him}; today, {he} {comes/come} by choice. |
-| Jinn | {name} gathers out of smoke. No lamp was rubbed; a friend called. |
+| Jinn | {name} neatly materializes out of smoke. A close observer may catch {him} reflexively rubbing {his} bare wrists. |
 | Minotaur | {name} lowers {his} horns. The way in was easy. The way out is somebody else's problem. |
-| Weeping Angel | {name} is already here. Nobody remembers blinking. |
-| Unicorn | {name} steps in, horn first. The witnesses agree on one thing: somebody has been eating the roses. |
+| Weeping Angel | {name} is already here. Nobody remembers {him} arriving. |
+| Unicorn | {name} steps in, horn first. A woman in the front row holding a rose quickly moves it behind her back. |
 | Dragon | {name} leaves the hoard unguarded. One cup goes missing, and there will be words. Loud ones. |
 
 | Species | Added to the boss's arrival, keeping "sent by the house" |
 |---|---|
-| Basilisk | {name} slithers through the gate. The front row studies the sand. |
+| Basilisk | {name} slithers through the gate. The front row makes intense eye contact with the sand. |
 | Gladiator | {name} stalks onto the sand. The house has found an old hand. |
 | Jinn | {name} billows through the gate. The house has sent smoke with a grudge. |
 | Minotaur | {name} stamps into the ring. Half bull, all temper. |
 | Minotaur, with a living Unicorn in this ring | {name} stamps into the ring. Half bull, all temper, and in no mood for roses. |
-| Weeping Angel | {name} stands beyond the gate. Nobody saw the journey. |
+| Weeping Angel | {name} stands beyond the gate. The crowd can't really remember when {he} got there. |
 | Unicorn | {name} trots through the gate. The house denies all knowledge of the missing roses. |
-| Dragon | {name} sweeps down to the sand. The house had better have counted the silver. |
+| Dragon | {name} sweeps down to the sand. The Editor deftly slips their jeweled hand into their pocket. |
 
 Round beats rotate in a small pool, separately per room's Ring, without adjacent
 repeats or random draws that could change seeded combat:
@@ -443,7 +445,8 @@ passed. Owner editorial acceptance remains open.
 The configured remote database was unreachable. For this check, the existing test
 account authenticated normally against Supabase; a disposable localhost PostgreSQL
 instance held only the new owned scratch room. The actual engine, room manager,
-event persistence, authenticated API and web renderer produced these fresh events:
+event persistence, authenticated API and web renderer produced these fresh events
+at the initial implementation checkpoint (before the owner’s copy revisions):
 
 - [Unicorn entrance and Minotaur boss, 390 × 940](46b-shots/flavour-boss-390.png).
 - [Round divider and beat, 390 × 940](46b-shots/flavour-round-390.png).
@@ -455,3 +458,18 @@ or the outstanding performance budget. This is a targeted task-9 check; Cursor's
 completed 46b checklist was not repeated. The scratch room was deleted through the
 API, its room list was verified empty, and the disposable database was removed.
 Test Room A, Test Room B and Game Night were untouched.
+
+
+### Task 9 — owner copy revisions (2026-10-06)
+
+Applied the owner's Basilisk, Jinn, Weeping Angel, Unicorn and boss Dragon wording
+in the shared narration source and regenerated the species/pronoun inventories.
+The Jinn uses “catch … rubbing” and the Editor's hand goes “into their pocket”.
+Monster pronouns vary; the woman in the Unicorn line and the Editor retain their
+own pronouns. The table above is current. Existing screenshots remain evidence of
+the initial implementation, not captures of this revised copy.
+
+The player Dragon entrance, boss Gladiator's “old hand” sentence, and “The house
+keeps its counsel. The next card will speak.” remain unchanged pending the owner's
+choice of alternatives. Task 9 remains implemented, awaiting editorial acceptance;
+the roadmap stays active.

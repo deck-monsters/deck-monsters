@@ -53,11 +53,11 @@ Seeded, cycling he, she, and they.
 Additive to the call or the house arrival; cycling he, she, and they.
 
 - Player (he): `Companion leaves the hoard unguarded. One cup goes missing, and there will be words. Loud ones.`
-- House (he): `Companion sweeps down to the sand. The house had better have counted the silver.`
+- House (he): `Companion sweeps down to the sand. The Editor deftly slips their jeweled hand into their pocket.`
 - Player (she): `Companion leaves the hoard unguarded. One cup goes missing, and there will be words. Loud ones.`
-- House (she): `Companion sweeps down to the sand. The house had better have counted the silver.`
+- House (she): `Companion sweeps down to the sand. The Editor deftly slips their jeweled hand into their pocket.`
 - Player (they): `Companion leaves the hoard unguarded. One cup goes missing, and there will be words. Loud ones.`
-- House (they): `Companion sweeps down to the sand. The house had better have counted the silver.`
+- House (they): `Companion sweeps down to the sand. The Editor deftly slips their jeweled hand into their pocket.`
 
 ### Long description
 
