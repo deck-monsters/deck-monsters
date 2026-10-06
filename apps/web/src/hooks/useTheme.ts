@@ -46,8 +46,9 @@ function getPreferredTheme(): Theme {
  * and fonts would join every player's shared bundle. main.tsx starts the same import before
  * React renders for a returning player; the cached promise here is then already in flight.
  *
- * A failed load (offline, a stale deploy) is dropped from the cache so the next apply
- * retries, and is otherwise ignored: base.css carries a first-paint stub for the theme, so
+ * A failed load (offline, a stale deploy) is logged and dropped from the cache so a later
+ * apply tries again, though the browser may serve the same failed import until the page is
+ * reloaded. It is otherwise ignored: base.css carries a first-paint stub for the theme, so
  * the page stays readable (plain paper and ink) without the chunk.
  */
 const LAZY_THEMES: Partial<Record<ThemeId, () => Promise<unknown>>> = {

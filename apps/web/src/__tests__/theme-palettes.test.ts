@@ -41,7 +41,7 @@ const ROOT_DEFAULT_TOKENS = [
   '--border-width', '--color-border-strong', '--shadow-page', '--surface-page',
   '--surface-texture', '--surface-titlebar', '--holo', '--color-meter-track',
   '--color-on-accent', '--color-highlight-good', '--color-highlight-warn',
-  '--color-sprite-flash', '--color-backdrop', '--color-backdrop-light',
+  '--color-sprite-flash', '--color-backdrop', '--color-backdrop-light', '--color-danger-border',
   '--wash-lilac', '--wash-seafoam', '--wash-blush', '--wash-butter', '--wash-sky',
 ];
 
@@ -84,16 +84,26 @@ function themeFiles(): string[] {
  * keep the last match, so the high-contrast value would silently replace the real one and
  * the whole suite would test the wrong palette. The block is checked on its own further down.
  */
-function splitHighContrast(css: string): { base: string; high: string } {
-  const start = css.indexOf('@media (prefers-contrast: more)');
-  if (start === -1) return { base: css, high: '' };
-  let depth = 0;
-  let end = css.length;
-  for (let i = css.indexOf('{', start); i < css.length; i++) {
-    if (css[i] === '{') depth++;
-    if (css[i] === '}' && --depth === 0) { end = i + 1; break; }
+function splitHighContrast(source: string): { base: string; high: string } {
+  // Comments first: a brace or the literal "@media (prefers-contrast: more)" inside one would
+  // fool the brace counter. Then every block, not just the first: a theme may restate
+  // different selectors in several, and any left in `base` would be read as the theme's own
+  // palette by the last-match-wins scanners.
+  let base = source.replace(/\/\*[\s\S]*?\*\//g, '');
+  let high = '';
+  for (;;) {
+    const start = base.indexOf('@media (prefers-contrast: more)');
+    if (start === -1) break;
+    let depth = 0;
+    let end = base.length;
+    for (let i = base.indexOf('{', start); i < base.length; i++) {
+      if (base[i] === '{') depth++;
+      if (base[i] === '}' && --depth === 0) { end = i + 1; break; }
+    }
+    high += base.slice(start, end) + '\n';
+    base = base.slice(0, start) + base.slice(end);
   }
-  return { base: css.slice(0, start) + css.slice(end), high: css.slice(start, end) };
+  return { base, high };
 }
 
 function tokensIn(css: string): Map<string, string> {
@@ -191,7 +201,7 @@ describe('theme palettes', () => {
       '--color-meter-track': 'var(--color-border)', '--color-on-accent': 'var(--color-bg)',
       '--color-highlight-good': 'var(--color-hp-healthy)', '--color-highlight-warn': 'var(--color-hp-hurt)',
       '--color-sprite-flash': '#ffffff', '--color-backdrop': 'rgb(0 0 0 / 0.7)',
-      '--color-backdrop-light': 'rgb(0 0 0 / 0.5)',
+      '--color-backdrop-light': 'rgb(0 0 0 / 0.5)', '--color-danger-border': 'rgb(255 107 107 / 0.3)',
       '--wash-lilac': 'transparent', '--wash-seafoam': 'transparent', '--wash-blush': 'transparent',
       '--wash-butter': 'transparent', '--wash-sky': 'transparent',
     };
@@ -263,7 +273,9 @@ describe('theme palettes', () => {
         // that must still clear 3:1, and the stages darken as health falls). What has to be
         // monotonic is therefore the contrast with the ground, in the direction the ground
         // implies: falling with health on a dark page, rising as health falls on a light one
-        // (bg luminance > 0.5).
+        // (bg luminance > 0.5). Given the unconditional luminance order above, this branch is
+        // implied while every stage sits on one side of the ground; it guards a stage that
+        // crosses the ground's luminance.
         const healthy = tokens.get('--color-hp-healthy')!;
         const hurt = tokens.get('--color-hp-hurt')!;
         const critical = tokens.get('--color-hp-critical')!;
@@ -327,6 +339,21 @@ describe('theme palettes', () => {
         }
       });
 
+      it('keeps every stop of a roster-bar gradient at 3:1 on the meter track', () => {
+        // The token test above cannot see a gradient that starts paler than the token: the
+        // gradient scales to the fill's width, so a short bar is mostly its first stop.
+        for (const m of css.matchAll(/\.roster-bar-[a-z]+\s*\{\s*background:\s*linear-gradient\(([^)]*)\)/g)) {
+          for (const stop of m[1]!.match(/#[0-9a-f]{6}/gi) ?? []) {
+            const track = parseColor(val('--color-meter-track') ?? '');
+            const page = parseColor(val('--color-bg') ?? '');
+            const sp = parseColor(stop);
+            if (!track || !page || !sp) expect.fail(`${file}: cannot evaluate gradient stop ${stop}`);
+            const trackFlat = flatten(track, page);
+            expect(contrast(stop, trackFlat)!, `${file}: gradient stop ${stop} on the track`).toBeGreaterThanOrEqual(3);
+          }
+        }
+      });
+
       if (highContrastCss) {
         it('keeps its prefers-contrast: more palette at 4.5:1 for text and 3:1 for HP stages', () => {
           // The block overrides tokens on the same element, so it is the theme's tokens with
@@ -354,6 +381,19 @@ describe('theme palettes', () => {
           for (const token of ['--color-highlight-good', '--color-highlight-warn']) {
             check(`${token} on --color-bg`, token, '--color-bg', 4.5);
           }
+        });
+
+        it('keeps its prefers-contrast: more HP ramp ordered and 1.3:1 apart', () => {
+          const merged = new Map(themeTokens);
+          for (const [k, v] of allTokensIn(highContrastCss)) merged.set(k, v);
+          const [h, u, c] = ['--color-hp-healthy', '--color-hp-hurt', '--color-hp-critical']
+            .map(t => resolve(t, merged, ROOT_TOKENS)!);
+          const lum = [h, u, c].map(x => luminance(x));
+          expect(lum.every(l => l !== null), `${file}: HC HP stages must be hex`).toBe(true);
+          expect(lum[0]!).toBeGreaterThan(lum[1]!);
+          expect(lum[1]!).toBeGreaterThan(lum[2]!);
+          expect(contrast(h!, u!)!, `${file}: HC healthy→hurt`).toBeGreaterThanOrEqual(1.3);
+          expect(contrast(u!, c!)!, `${file}: HC hurt→critical`).toBeGreaterThanOrEqual(1.3);
         });
       }
     });

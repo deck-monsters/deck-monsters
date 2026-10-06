@@ -54,7 +54,7 @@
   --radius-sm: 6px;
   --radius-md: 12px;
   --radius-lg: 24px;
-  --color-border-strong: #8f7cbc;      /* edges that identify a control, 3.6:1 */
+  --color-border-strong: #8f7cbc;      /* edges that identify a control, 3.4:1 */
   --shadow-page: 0 14px 34px rgb(110 85 150 / 0.08);
   --surface-page: linear-gradient(rgb(255 253 250 / 0.9), rgb(255 253 250 / 0.74) 220px);
   --holo: linear-gradient(110deg, #fbd2e4, #fbecbe, #c9eedf, #cfe2fb, #e0d0fb);
@@ -67,6 +67,7 @@
   --color-on-accent: #ffffff;
   --color-highlight-good: #1f6b57;     /* text-safe stand-ins for the HP stages */
   --color-highlight-warn: #8a2a5e;
+  --color-danger-border: color-mix(in srgb, var(--color-error) 30%, transparent);
   --color-sprite-flash: #ff9fd2;
   --color-backdrop: linear-gradient(rgb(75 58 110 / 0.16), rgb(75 58 110 / 0.3));
   --color-backdrop-light: rgb(75 58 110 / 0.22);
@@ -110,11 +111,12 @@
 [data-theme='millefleur'] ::-webkit-scrollbar-thumb:hover { background: #8f7cbc; }
 [data-theme='millefleur'] { scrollbar-color: rgb(143 124 188 / 0.65) transparent; }
 
-/* ── Focus ring: 2px rose, 2px offset, keyboard only ── */
-[data-theme='millefleur'] :focus-visible {
-  outline: 2px solid #9a2f66;
-  outline-offset: 2px;
-}
+/* ── Focus ring ──
+   base.css's `:focus-visible` already draws 2px solid var(--color-accent) at a 2px offset, and
+   Millefleur's accent IS the rose #9a2f66 (6.7:1), so nothing is restated here. Re-declaring
+   the outline under this theme's prefix would out-rank the existing inset rules (room name,
+   chat list, tables, help blocks: -1px/-2px offsets that keep the ring inside an
+   overflow:auto ancestor) and push their rings outside, where they are clipped. */
 
 /* ── Header ── */
 [data-theme='millefleur'] .app-header {
@@ -291,7 +293,9 @@
 [data-theme='millefleur'] .workshop-status-fighting { color: var(--color-success); border-color: var(--color-success); }
 [data-theme='millefleur'] .workshop-status-fallen { color: var(--color-error); border-color: var(--color-error); }
 
-/* ── Meters ── */
+/* ── Meters ──
+   Every stop of a bar gradient must clear 3:1 on the track (the gradient scales to the fill's
+   width, so a short bar is mostly its first stop). The palette test reads these stops. */
 [data-theme='millefleur'] .roster-bar-track,
 [data-theme='millefleur'] .workshop-xp-meter-track {
   border-radius: var(--radius-pill);
@@ -299,12 +303,14 @@
   border-color: transparent;
   background: var(--color-meter-track);
 }
-[data-theme='millefleur'] .roster-bar-healthy { background: linear-gradient(90deg, #3f9c84, #2a8570); }
+[data-theme='millefleur'] .roster-bar-healthy { background: linear-gradient(90deg, #2c8873, #2a8570); }
 [data-theme='millefleur'] .roster-bar-critical { background: linear-gradient(90deg, #c0476f, #7a1838); }
 /* XP: the holo fill. Decorative: the figures beside it ("XP 13/28") carry the information. */
 [data-theme='millefleur'] .workshop-xp-meter-track > span {
-  background: linear-gradient(90deg, #fbd2e4, #fbecbe, #c9eedf, #cfe2fb, #e0d0fb);
-  box-shadow: 0 0 6px rgb(224 208 251 / 0.9);
+  background: linear-gradient(90deg, #f4a6cb, #f3d777, #96dcc0, #93bdf3, #b99bf0);
+  /* The pale holo tints are ~1.1:1 on the track, so a 1px control-strength edge (3.4:1) shows
+     the fill's length; the glow is only decoration. */
+  box-shadow: inset 0 0 0 1px #8f7cbc, 0 0 6px rgb(224 208 251 / 0.9);
 }
 
 /* ── Highlight tags in the feed: text-safe tokens, set in the shared tokens above ── */
@@ -326,7 +332,7 @@
     --color-choice-hover: #ece4f7;
     --color-choice-selected: #d9c9f0;
     --color-meter-track: #e6e0ee;
-    --color-hp-healthy: #14664f;
+    --color-hp-healthy: #1a7a60;
     --color-hp-hurt: #7a3300;
     --color-hp-critical: #5c0f28;
     --color-highlight-good: #0d4a3a;
@@ -345,6 +351,7 @@
     --mf-line-soft: #000000;
     --mf-primary: #000000;
     --mf-primary-ring: 0 0 0 2px #ffffff, 0 0 0 4px #000000;
+    --color-danger-border: #000000;
   }
   [data-theme='millefleur'] .btn,
   [data-theme='millefleur'] .btn-primary,
@@ -354,10 +361,31 @@
   [data-theme='millefleur'] .tag,
   [data-theme='millefleur'] .workshop-status-tag,
   [data-theme='millefleur'] .roster-tag { background: #ffffff; color: #000000; border: 2px solid #000000; }
+  /* Status tags keep their meaning colours (all >= 6.9:1 on white) with the 2px edge in the same colour. */
+  [data-theme='millefleur'] .workshop-status-in-ring { color: var(--color-accent); border-color: var(--color-accent); }
+  [data-theme='millefleur'] .workshop-status-fighting { color: var(--color-success); border-color: var(--color-success); }
+  [data-theme='millefleur'] .workshop-status-fallen { color: var(--color-error); border-color: var(--color-error); }
   [data-theme='millefleur'] .error-msg,
   [data-theme='millefleur'] .success-msg,
   [data-theme='millefleur'] .connection-banner { background: #ffffff; }
+  [data-theme='millefleur'] .app-header-sep { color: #000000; }
   [data-theme='millefleur'] .app-menu-drawer { border-left: 2px solid #000000; box-shadow: none; }
+  [data-theme='millefleur'] .card-detail-sheet { border-color: #000000; }
+  /* Pressed and selected states: a heavier edge and an underline, not a lilac wash. */
+  [data-theme='millefleur'] .btn[aria-pressed='true'],
+  [data-theme='millefleur'] .workshop-monster-filter-btn.active {
+    background: #ffffff;
+    border: 3px solid #000000;
+    color: #000000;
+  }
+  /* Hover must not bring the plum gradient or the lilac wash back (these out-rank the
+     plain rules above by specificity, so they are restated, inside the same media query). */
+  @media (hover: hover) {
+    [data-theme='millefleur'] .btn:hover:not(:disabled) { background: #ffffff; border-color: #000000; color: #000000; text-decoration: underline; }
+    [data-theme='millefleur'] .btn-primary:hover:not(:disabled),
+    [data-theme='millefleur'] .btn-cta:hover:not(:disabled) { background: #000000; color: #ffffff; text-decoration: underline; }
+    [data-theme='millefleur'] .quick-action-chip:hover { border-color: #000000; color: #000000; }
+  }
   [data-theme='millefleur'] .app-menu-backdrop,
   [data-theme='millefleur'] .card-detail-backdrop { background: rgb(0 0 0 / 0.6); }
   [data-theme='millefleur'] .workshop-xp-meter-track > span { background: #000000; box-shadow: none; }

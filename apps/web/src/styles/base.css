@@ -17,6 +17,9 @@
   color-scheme: light;
   --color-bg: #fbf8f5;
   --color-fg: #3b2a55;
+  --color-fg-dim: #695c8c;
+  --color-accent: #9a2f66;
+  --color-error: #a12a4f;
   --color-input-bg: #fffdfa;
   --color-border: rgb(190 170 215 / 0.55);
 }

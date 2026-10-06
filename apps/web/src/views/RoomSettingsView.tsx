@@ -137,7 +137,7 @@ export default function RoomSettingsView() {
         )}
       </div>
 
-      <div className="panel" style={{ borderColor: 'color-mix(in srgb, var(--color-error) 30%, transparent)' }}>
+      <div className="panel" style={{ borderColor: 'var(--color-danger-border)' }}>
         <p className="panel-title" style={{ color: 'var(--color-error)' }}>Danger Zone</p>
 
         {isOwner && (
