@@ -5426,3 +5426,12 @@ period already closed the sentence. The clause now goes inside the sentence ("ha
 bloodied.") and the closing markup star stays on the name's clause, so the two parts don't
 leave an open `*`. The engine's `text` is unchanged; Discord and pacing still see the
 original sentence.
+
+### 236. Millefleur repeated "bloodied" on the threshold HP line — FIXED
+
+The same live check. Crossing into bloodied is one engine sentence: "Monster is now
+bloodied. Monster has only 17HP." The composer still appended ", bloodied" whenever the
+line's `bloodied` flag was set, so the feed painted "is now bloodied. … has only 17HP,
+bloodied." Later HP lines ("has only 4HP.") do not already say the word, and those still
+gain the rose clause. A line whose text already says "bloodied" is left as the engine
+wrote it.

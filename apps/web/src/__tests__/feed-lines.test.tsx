@@ -133,6 +133,15 @@ describe('composeFeedBlocks (millefleur)', () => {
     expect(blocks[0]!.parts.map((p) => p.text)).toEqual(['🐂 *Minotaur has 7HP*', ', bloodied', '.']);
     expect(blocks[1]!.parts[0]!.text).toBe(lines[1]!.text);
   });
+
+  it('leaves a threshold hp line that already says bloodied', () => {
+    const text = '🐂 *Minotaur is now bloodied. Minotaur has only 17HP.*';
+    const blocks = composeFeedBlocks(
+      [{ kind: 'hp', text, name: 'Minotaur', hp: 17, maxHp: 31, bloodied: true }],
+      'millefleur',
+    );
+    expect(blocks[0]!.parts.map((p) => p.text)).toEqual([text]);
+  });
 });
 
 describe('events without lines', () => {

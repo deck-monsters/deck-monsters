@@ -153,7 +153,10 @@ function plainBlock(line: FeedLine, key: string, style: FeedStyle): FeedBlock {
 		const [title = '', ...rest] = line.text.split('\n');
 		return { key, kind: 'card', indent: 0, parts: [], card: { title, body: rest.join('\n') } };
 	}
-	const parts: FeedPart[] = line.kind === 'hp' && line.bloodied && style === 'millefleur'
+	// The threshold line already says "is now bloodied" (hit.ts). Appending the clause
+	// again painted "is now bloodied. … has only 17HP, bloodied." (live check, 2026-10-06).
+	const alreadySaysBloodied = line.kind === 'hp' && /bloodied/i.test(line.text);
+	const parts: FeedPart[] = line.kind === 'hp' && line.bloodied && style === 'millefleur' && !alreadySaysBloodied
 		? bloodiedHpParts(line.text)
 		: [{ text: line.text, markup: true }];
 	return {
@@ -174,7 +177,8 @@ function plainBlock(line: FeedLine, key: string, style: FeedStyle): FeedBlock {
  *   7/31 hp, bloodied." (falls back to the lines' own text when a creature has no hp).
  * - `play` + the `card` after it -> "A plays Card" (the frame stays below it).
  * - `roll` + `verdict` + `outcome` -> "A rolled 9 +1 = 10 vs 9 · hit".
- * - `hp` keeps its text and gains ", bloodied" in the danger rose when the line says so.
+ * - `hp` keeps its text and gains ", bloodied" in the danger rose when the line says so,
+ *   unless the sentence already says "bloodied" (the threshold announcement).
  */
 export function composeFeedBlocks(lines: readonly FeedLine[], style: FeedStyle): FeedBlock[] {
 	const blocks: FeedBlock[] = [];
