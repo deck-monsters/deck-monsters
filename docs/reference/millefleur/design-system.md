@@ -216,8 +216,10 @@ glow. 80px in the Workshop, 34px in the Ring roster, 76px around the level badge
 Each line of the log is exactly one 28px row, with the text's baseline 7px above the rule. The
 rule is a 28px background tile (`background-size: 100% 28px`), **anchored to the bottom**
 like the log, because a chat log grows upward from the composer. A margin line runs down the
-left at 33px. A direct message is a rose band exactly two rows high (inset outline, no border,
-so it does not break the rhythm).
+left, 18px into the page (the sample draws that same x by shifting a 32px stop back 14px). A
+direct message is a rose band exactly as tall as its rows (inset outline, no border, so it
+does not break the rhythm). A short one is two rows; a wrapped header or body adds rows, and
+each row stays 28px.
 
 Why the tile: an unsized `repeating-linear-gradient` fills the whole box and starts at the top,
 so its lines drift from bottom-anchored text by whatever the box height is not a multiple of
@@ -261,8 +263,10 @@ moves, so nothing else changes.
 - Selection is shown by colour **and** by shape: the selected tab is taller and joined to the
   page.
 - Card roles carry a word, not only a coloured dot.
-- High contrast (`prefers-contrast: more`): drop the washes and grain, keep the shapes, and use
-  `--mf-ink-heading` for every line. Roadmap 46 covers the token work this needs.
+- High contrast (`prefers-contrast: more`): white paper, black text, and 2px black edges.
+  Washes, grain and holo are removed; radii stay. Muted ink stays a dark plum so secondary
+  text still reads as secondary. This is built in `theme-millefleur.css`; the shared
+  high-contrast block in `base.css` is for the dark themes only.
 
 ## Do and don't
 

@@ -148,6 +148,9 @@ portrait (within the row in dense mode). These are theme-scoped layout rules.
   an unknown id) and checks the first-paint stub against the chunk.
 - `useTheme.test.ts` and `useTheme-lazy.test.ts` cover switching, the theme-colour meta,
   blocked storage and the lazy import.
+- `millefleur-spacing.test.ts` pins the Chat header's top alignment and the shop heading's
+  trailing-edge wrap (bug 241). jsdom does not measure that geometry; the browser check is
+  recorded with the bug.
 - jsdom does no layout. A visual change to a theme is checked in a real browser, before and
   after, for every theme it could touch (bug 210).
 
