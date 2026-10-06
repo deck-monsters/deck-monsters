@@ -65,7 +65,7 @@ export default function AppShell({ children, roomName, roomId }: AppShellProps) 
           </>
         )}
 
-        <div style={{ flex: 1 }} />
+        <div className="app-header-spacer" style={{ flex: 1 }} />
 
         {/* Desktop nav */}
         <nav

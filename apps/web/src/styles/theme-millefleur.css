@@ -134,6 +134,7 @@
   padding: 0 16px;
 }
 [data-theme='millefleur'] .app-header-sep { color: #c4b3e0; }
+[data-theme='millefleur'] .app-wordmark { line-height: 1; }
 [data-theme='millefleur'] .app-shell-room-name {
   color: var(--color-accent);
   font-size: 15px;
@@ -144,6 +145,21 @@
   min-height: 38px;
   justify-content: center;
   padding: 0;
+}
+/* The mock's header: 16px above the 38px menu button, wordmark and room name centred on it
+   (35px from the top), 8px gaps. The tab row's own 14px of empty hit area above the folder
+   shape makes up the rest of the mock's 68px (56 + 14, less the 2px the tab's padding gives). Phone only: the desktop bar has no 38px button. */
+@media (max-width: 600px) {
+  [data-theme='millefleur'] .app-header {
+    height: 56px;
+    padding: 16px 16px 2px;
+    gap: 8px;
+    box-sizing: border-box;
+  }
+  /* The name takes the free room (the mock's flex:1), so the quiet round gear sits against
+     the menu button instead of pushing the name along. */
+  [data-theme='millefleur'] .app-shell-room-name { flex: 1 1 auto; }
+  [data-theme='millefleur'] .app-header-spacer { flex: 0 0 0 !important; }
 }
 
 
