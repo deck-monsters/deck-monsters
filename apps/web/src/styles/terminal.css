@@ -143,6 +143,17 @@
   text-transform: none;
 }
 
+/* The Ring's countdown and summons count read as one right-aligned group, `boss in ~5m ·
+   3 summons left`: the timer's auto margin pushes the pair right, the summons sits against it
+   behind a "·", and an empty actions slot no longer takes half the free space (its own auto
+   margin) and strands the group mid-row. Millefleur has its own (theme-millefleur.css). */
+:root:not([data-theme='millefleur']) .pane-header-timer { margin-right: 0; }
+:root:not([data-theme='millefleur']) .pane-header-summons { margin-left: 0.35rem; }
+:root:not([data-theme='millefleur']) .pane-header-timer:not(.pane-header-summons) + .pane-header-summons::before { content: '· '; }
+:root:not([data-theme='millefleur']) .pane-header > span:first-child + .pane-header-summons { margin-left: auto; }
+:root:not([data-theme='millefleur']) .pane-header-actions:empty { display: none; }
+:root:not([data-theme='millefleur']) .pane-header-timer ~ .pane-header-actions { margin-left: 0.75rem; }
+
 /* Wraps the scrollable feed so `.jump-to-bottom` can sit at the bottom of the
    *feed*, above the pane's footer / quick actions / input dock, instead of guessing
    their combined height with a hard-coded offset. */
@@ -1178,8 +1189,24 @@
 .chat-message { padding: 0.15rem 0; overflow-wrap: anywhere; line-height: var(--line-height, 1.5); }
 .chat-sender { color: var(--color-fg-bright); margin-right: 0.4rem; }
 .chat-sender::after { content: ':'; }
-/* The time beside a sender: off until a theme styles it. */
+/* The time beside a sender: off here, shown by the themes below and Millefleur's own. */
 .chat-time { display: none; }
+/* The terminal themes: the log sits at the bottom, just above the composer, however few
+   messages there are (the first row takes the free space; justify-content: flex-end would
+   make the overflow above unreachable). The time follows the sender, dim, and the colon moves
+   after it: `Alice 3:05 PM: hi`. */
+:root:not([data-theme='millefleur']) .chat-list { display: flex; flex-direction: column; }
+:root:not([data-theme='millefleur']) .chat-list > :first-child { margin-top: auto; }
+:root:not([data-theme='millefleur']) .chat-list > * { flex: 0 0 auto; }
+:root:not([data-theme='millefleur']) .chat-time {
+  display: inline;
+  margin-right: 0.4rem;
+  font-size: 0.75rem;
+  color: var(--color-fg-dim);
+}
+:root:not([data-theme='millefleur']) .chat-sender:has(+ .chat-time) { margin-right: 0.4rem; }
+:root:not([data-theme='millefleur']) .chat-sender:has(+ .chat-time)::after { content: none; }
+:root:not([data-theme='millefleur']) .chat-time::after { content: ':'; }
 .chat-message-dm .chat-text { font-style: italic; }
 .chat-divider {
   display: flex;
