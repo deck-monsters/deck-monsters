@@ -9,7 +9,7 @@ tags: [roadmap, web, theme, design, unicorn, accessibility]
 # 46: a unicorn theme (Millefleur)
 
 **Status:** the design is final (approved by the owner 2026-10-06). **Pass 46a (tasks 1 to 3) is
-in progress** on `claude/unicorn-monster-cards-cigpmw`. This page is the build plan and the pass
+in progress** (tasks 1 and 2 done) on `claude/unicorn-monster-cards-cigpmw`. This page is the build plan and the pass
 record: the task table in §9 carries status and commits.
 
 - **The design:** [Millefleur design system](../reference/millefleur/design-system.md), with
@@ -249,7 +249,7 @@ rest can run in parallel only where noted.
 | # | Pass | Task | Area / files | Acceptance | Can run beside | Status | Commit |
 |---|---|---|---|---|---|---|---|
 | 1 | 46a | **Theme plumbing, no visual change.** Shape, font, shadow, surface, meter-track, on-accent, highlight-text, backdrop and sprite-flash tokens with defaults equal to today; define the read-but-unset tokens in all four themes; `color-scheme`; pre-paint `data-theme` and `theme-color`; per-theme `prefers-contrast`; the header class; theme button label by name; extended palette test | `styles/*.css`, `useTheme.ts`, `index.html`, `AppShell.tsx`, `theme-palettes.test.ts`, `useTheme.test.ts`, `renderer.ts` (flash parameter) | Four themes pixel-identical at 390 and 1440; the extended palette test passes for all four; no black flash on a light theme in a smoke test | docs-only work | done | 673779d8, 0c11a733, and the checkpoint after |
-| 2 | 46a | **Millefleur palette, type and components.** `theme-millefleur.css`, `THEMES` entry and icon, Nunito (the feed keeps JetBrains Mono), radii, buttons, fields, cards, banners; the lazy-loaded chunk, the first-paint block and the modulepreload, with a bundle check that other themes' CSS grew by under 1 KB | `theme-millefleur.css`, `themes/millefleur.ts` (lazy chunk), `base.css` (first-paint block), `index.html`, `useTheme.ts`, fonts and `OFL.txt` | Palette test green; card frames unchanged; a reload on Millefleur shows no dark frame; check at 390 and 1440 against the samples | — (after 1) | proposed | — |
+| 2 | 46a | **Millefleur palette, type and components.** `theme-millefleur.css`, `THEMES` entry and icon, Nunito (the feed keeps JetBrains Mono), radii, buttons, fields, cards, banners; the lazy-loaded chunk, the first-paint block and the modulepreload, with a bundle check that other themes' CSS grew by under 1 KB | `theme-millefleur.css`, `themes/millefleur.ts` (lazy chunk), `base.css` (first-paint block), `index.html`, `useTheme.ts`, fonts and `OFL.txt` | Palette test green; card frames unchanged; a reload on Millefleur shows no dark frame; check at 390 and 1440 against the samples | — (after 1) | done | 21e639d9, 293590fa |
 | 3 | 46a | **Millefleur surfaces.** Folder tabs joined to the page, the page and card, the halo, card slots with painted role dots, meters, the ruled Chat log, the Ring transcript, sheets with the painted header, soft title bar and close box, carousel dots | `theme-millefleur.css`, small class hooks in `terminal.css`/`base.css`, the tab markup in the workspace | Each surface matches the design system and samples, rendered side by side; tap targets unchanged | 4 if 4 avoids the same selectors | proposed | — |
 | 4 | 46b | **Paint and paper.** Bake the watercolour compositions and the grain tile; wire `--surface-texture`; holo only where listed | WebP assets in the lazy chunk, `theme-millefleur.css` | Budget in §8 met; no long frames while a fight scrolls | 3 (different selectors) | proposed | — |
 | 5 | 46b | **Pixel monsters on paper.** The halo, the soft lift, the pink hit flash; check pale species and white appearances at 1×/2×/3× | `terminal.css`, `renderer.ts`, `rosterSprite`/pixel tests | Struck monsters visibly flash; pale monsters read on paper; nothing smoothed | 4 | proposed | — |
@@ -267,6 +267,16 @@ rest can run in parallel only where noted.
   every theme's critical HP against its track). Fixing them would change those themes, so the
   test lists them in `KNOWN_FAILURES` (it fails if one starts passing). Millefleur has none.
   Raising them is a follow-up for a later pass, not part of this theme.
+- **Task 2.** Millefleur's lazy chunk is 10.6 KB of CSS plus Nunito 400/600/700/800 (about
+  16 KB each); the shared CSS grew by under 1 KB (the first-paint stub and the new class hooks).
+  HP ramp on paper: healthy `#2a8570` (gradient from `#2c8873`), hurt `#964214`, critical
+  `#7a1838`, 3.40 to 8.24:1 on the track. The palette test is now direction-aware: on a light
+  ground, contrast with the ground rises as health falls. `--color-danger-border` keeps the
+  dark themes' danger panel identical. Reviewed; the fix round closed six should-fix findings.
+- **Feed metrics stay put.** The design system sets the transcript at 12.5/1.65, but the Ring and
+  Console feeds book row heights in JS from 14px × 1.4 (`utils/feed-row-height.ts`, bugs 159
+  and 196). Millefleur restyles the feed's colours, separators and tags only, never its font
+  size, line height or horizontal padding.
 - **Deviation from §4:** the pre-paint script cannot name the lazy chunk (its file name is
   hashed), so instead of a `modulepreload` the chunk's import starts at the top of `main.tsx`,
   before React renders, whenever `data-theme` is already `millefleur`.
