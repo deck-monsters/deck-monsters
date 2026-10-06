@@ -35,7 +35,7 @@ export function announceContestant(
 		? `A${adjective} ${monster.creatureType} enters the ring, sent by the house (${RING_PATRON}).`
 		: `A${adjective} ${monster.creatureType} answers the call of ${character.icon} ${character.givenName}.`;
 	const arrival = `${arrivalSentence}${isBoss && temperament ? ` ${temperament}` : ''}`;
-	const entrance = isBoss ? bossEntrance(monster, ring?.contestants ?? []) : playerEntrance(monster);
+	const entrance = isBoss ? bossEntrance(monster, ring?.contestants ?? []) : playerEntrance(monster, ring);
 
 	// The structured twin of `text`: the temperament is its own line so a renderer can style
 	// or explain it without matching prose, and the card is one `card` line with no fence.

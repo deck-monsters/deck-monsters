@@ -11,7 +11,7 @@ import { FireBreathCard } from '../cards/fire-breath.js';
 import { HelmOfAweCard } from '../cards/helm-of-awe.js';
 import Dragon from '../monsters/dragon.js';
 import allMonsters from '../monsters/helpers/all.js';
-import { ROUND_BEATS } from './ring-flavour.js';
+import { playerEntrance, ROUND_BEATS } from './ring-flavour.js';
 import { DelayedHit } from '../cards/delayed-hit.js';
 import { TARGET_LOWEST_HP_PLAYER } from '../helpers/targeting-strategies.js';
 import { formatCardLine, itemCardLine, monsterCardLine, monsterTurnFeedLine } from '../helpers/card.js';
@@ -591,6 +591,43 @@ describe('feed lines: card frames carry unwrapped fields', () => {
 
 
 describe('feed lines: additive ring flavour', () => {
+	for (const gender of ['male', 'female', 'androgynous'] as const) {
+		it(`alternates both Dragon entrances for ${gender} independently of other rooms, bosses and rounds`, () => {
+			const monster = new Dragon({ name: 'Companion', gender });
+			const basilisk = new Basilisk({ name: 'Basil' });
+			const a = {}, b = {};
+			const entrance = (ring: object, target: Dragon | Basilisk = monster, isBoss = false): string => {
+				const { eb, published } = capture();
+				announceContestant(eb, 'Ring', ring, { contestant: { monster: target, isBoss, character: { givenName: 'Ada', icon: '🦊' } } });
+				return expectLinesMatchText(published[0]!).find(l => l.kind === 'narration')!.text;
+			};
+			try {
+				const bone = `${monster.givenName} lands with a sheep bone caught between ${monster.pronouns.his} teeth. Somewhere, a shepherd is still shouting.`;
+				const goblet = `${monster.givenName} folds ${monster.pronouns.his} wings. A pilfered goblet rolls out from under one of them.`;
+				expect(entrance(a)).to.equal(bone);
+				expect(entrance(b)).to.equal(bone);
+				expect(entrance(a, monster, true)).to.include('The Editor deftly slips their jeweled hand into their pocket.');
+				entrance(a, basilisk);
+				const { eb, published } = capture();
+				announceNextRound(eb, 'Ring', a, { round: 0 });
+				expect(expectLinesMatchText(published[0]!)[1]!.text).to.equal(ROUND_BEATS[0]);
+				expect(entrance(a)).to.equal(goblet);
+				expect(entrance(b)).to.equal(goblet);
+				expect(entrance(a)).to.equal(bone);
+			} finally { monster.disposeTimers(); basilisk.disposeTimers(); }
+		});
+	}
+
+	it('does not draw randomness when choosing Dragon entrance variants', () => {
+		const monster = new Dragon({ name: 'Companion', gender: 'androgynous' });
+		const ring = {};
+		const random = sinon.spy(Math, 'random');
+		try {
+			for (let at = 0; at < 6; at++) playerEntrance(monster, ring);
+			expect(random.called).to.equal(false);
+		} finally { random.restore(); monster.disposeTimers(); }
+	});
+
 	for (const Monster of allMonsters) {
 		for (const gender of ['male', 'female', 'androgynous']) {
 			it(`${Monster.creatureType} entrance agrees with ${gender} and matches text for players and bosses`, () => {

@@ -25,8 +25,8 @@ import ts from 'typescript';
 
 import allMonsters from '../monsters/helpers/all.js';
 import allCards from '../cards/helpers/all.js';
-import { bossEntrance, playerEntrance } from '../announcements/ring-flavour.js';
-import { UNICORN } from '../constants/creature-types.js';
+import { bossEntrance, dragonEntrances, playerEntrance } from '../announcements/ring-flavour.js';
+import { DRAGON, UNICORN } from '../constants/creature-types.js';
 import { GENERATED_DOC_NOTICE, normalizeLineEndings } from './root-docs.js';
 
 // dist/build and src/build both sit two levels below the package root.
@@ -406,9 +406,11 @@ export const renderStringsInventory = (Monster: any): string => {
 	for (const gender of GENDERS) {
 		const monster = new Monster({ name: 'Companion', gender });
 		try {
-			const player = playerEntrance(monster);
+			const players = monster.creatureType === DRAGON ? dragonEntrances(monster) : [playerEntrance(monster)];
 			const boss = bossEntrance(monster);
-			if (player) lines.push(`- Player (${monster.pronouns.he}): ${code(player)}`);
+			for (const [at, player] of players.entries()) {
+				if (player) lines.push(`- Player (${monster.pronouns.he}${players.length > 1 ? `, variant ${at + 1}` : ''}): ${code(player)}`);
+			}
 			if (boss) lines.push(`- House (${monster.pronouns.he}): ${code(boss)}`);
 		} finally {
 			monster.disposeTimers();

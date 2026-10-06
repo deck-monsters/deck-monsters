@@ -373,7 +373,9 @@ another PR. Cursor's task-6/task-8 browser checklist is complete in
    Millefleur at 390 and 1440. The room and disposable database were deleted; the
    reusable remote rooms were untouched. The owner has since revised the entrance
    copy; the current lines are below, and the shots retain the initial wording.
-   The player Dragon, boss Gladiator and second round beat still await a choice.
+   Player Dragon entrances now alternate between the owner’s sheep-bone and goblet
+   lines; wave and mutton-vendor beats are in the round pool. Boss Gladiator’s
+   follow-up sentence still awaits a choice.
 3. Keep task 9 pending the owner's review; put every authored line here. Do not archive
    roadmap 46. The CSS budget and missing performance evidence stay open as item L.
 4. Before each checkpoint push: `pnpm build && pnpm typecheck && pnpm lint && pnpm test`
@@ -406,7 +408,8 @@ and Gladiator's `comes/come` agrees with them. All seven species are covered.
 | Minotaur | {name} lowers {his} horns. The way in was easy. The way out is somebody else's problem. |
 | Weeping Angel | {name} is already here. Nobody remembers {him} arriving. |
 | Unicorn | {name} steps in, horn first. A woman in the front row holding a rose quickly moves it behind her back. |
-| Dragon | {name} leaves the hoard unguarded. One cup goes missing, and there will be words. Loud ones. |
+| Dragon, variant 1 | {name} lands with a sheep bone caught between {his} teeth. Somewhere, a shepherd is still shouting. |
+| Dragon, variant 2 | {name} folds {his} wings. A pilfered goblet rolls out from under one of them. |
 
 | Species | Added to the boss's arrival, keeping "sent by the house" |
 |---|---|
@@ -423,14 +426,17 @@ Round beats rotate in a small pool, separately per room's Ring, without adjacent
 repeats or random draws that could change seeded combat:
 
 - The crowd settles. The sand does not.
-- The house keeps its counsel. The next card will speak.
+- Did you know it takes a full five minutes for the wave to make it around this ring?
 - A hush runs round the benches.
 - Somewhere in the stands, a wager changes hands.
 - The gates are shut. The story is not.
+- A hush falls over the crowd, punctuated only by the cry of a vendor hawking what are apparently the biggest, juiciest mutton legs in the whole empire.
 
-The Dragon's missing cup echoes the existing Beowulf joke; the other lines connect to
-species lore and running jokes. Generated species/pronoun examples live in the
-[strings inventories](../reference/strings/README.md), regenerated from the same source.
+The Dragon's entrances alternate on player arrivals, separately per Ring, with no
+random draws or adjacent repeats in that pool. Boss arrivals and round beats do not
+advance it. The sheep bone and pilfered goblet connect to the Dragon's appetite and
+hoard; the other lines connect to species lore and running jokes. Generated
+species/pronoun examples live in the [strings inventories](../reference/strings/README.md), regenerated from the same source.
 **Acceptance stays open:** the owner reviews these lines in the Ring. Do not mark task 9
 done or archive this roadmap.
 
@@ -469,7 +475,11 @@ Monster pronouns vary; the woman in the Unicorn line and the Editor retain their
 own pronouns. The table above is current. Existing screenshots remain evidence of
 the initial implementation, not captures of this revised copy.
 
-The player Dragon entrance, boss Gladiator's “old hand” sentence, and “The house
-keeps its counsel. The next card will speak.” remain unchanged pending the owner's
-choice of alternatives. Task 9 remains implemented, awaiting editorial acceptance;
+The owner subsequently chose both player Dragon alternatives with “sheep bone” and
+“pilfered goblet”, plus the wave and mutton-vendor round lines. These are now in the
+current table/pool above. The Dragon pool rotates separately per Ring without
+changing combat RNG; both variants appear with every pronoun in the generated
+inventory. The wave replaces the stilted house/counsel beat; the vendor joins the
+remaining beats. Boss Gladiator's “old hand” sentence remains until the owner chooses
+a chant-based alternative. Task 9 remains implemented, awaiting editorial acceptance;
 the roadmap stays active.

@@ -2,13 +2,25 @@ import { BASILISK, DRAGON, GLADIATOR, JINN, MINOTAUR, UNICORN, WEEPING_ANGEL } f
 import { agree, type PronounSet } from '../helpers/pronouns.js';
 
 interface ArrivalMonster {
-	creatureType: string;
+	creatureType: string | undefined;
 	givenName: string;
 	pronouns: PronounSet;
 }
 
+/** Both samples stay available to the strings inventory without advancing a live Ring. */
+export function dragonEntrances(monster: ArrivalMonster): readonly [string, string] {
+	const { givenName: name, pronouns: p } = monster;
+	return [
+		`${name} lands with a sheep bone caught between ${p.his} teeth. Somewhere, a shepherd is still shouting.`,
+		`${name} folds ${p.his} wings. A pilfered goblet rolls out from under one of them.`,
+	];
+}
+
+// Separate from round beats, so neither pool advances the other or consumes combat RNG.
+const nextDragonEntrance = new WeakMap<object, number>();
+
 /** Additive narration: the willing call and the house's orders remain the arrival contract. */
-export function playerEntrance(monster: ArrivalMonster): string | undefined {
+export function playerEntrance(monster: ArrivalMonster, ring?: object): string | undefined {
 	const { givenName: name, pronouns: p } = monster;
 	switch (monster.creatureType) {
 		case BASILISK: return `${name} raises a crowned head. The front row makes intense eye contact with the sand.`;
@@ -17,8 +29,12 @@ export function playerEntrance(monster: ArrivalMonster): string | undefined {
 		case MINOTAUR: return `${name} lowers ${p.his} horns. The way in was easy. The way out is somebody else's problem.`;
 		case WEEPING_ANGEL: return `${name} is already here. Nobody remembers ${p.him} arriving.`;
 		case UNICORN: return `${name} steps in, horn first. A woman in the front row holding a rose quickly moves it behind her back.`;
-		// Beowulf's stolen cup, already a running joke in the Dragon's lore; no combat claim.
-		case DRAGON: return `${name} leaves the hoard unguarded. One cup goes missing, and there will be words. Loud ones.`;
+		case DRAGON: {
+			const variants = dragonEntrances(monster);
+			const at = ring ? nextDragonEntrance.get(ring) ?? 0 : 0;
+			if (ring) nextDragonEntrance.set(ring, (at + 1) % variants.length);
+			return variants[at]!;
+		}
 		default: return undefined;
 	}
 }
@@ -44,10 +60,11 @@ export function bossEntrance(monster: ArrivalMonster, contestants: readonly Ring
 
 export const ROUND_BEATS = [
 	'The crowd settles. The sand does not.',
-	'The house keeps its counsel. The next card will speak.',
+	'Did you know it takes a full five minutes for the wave to make it around this ring?',
 	'A hush runs round the benches.',
 	'Somewhere in the stands, a wager changes hands.',
 	'The gates are shut. The story is not.',
+	'A hush falls over the crowd, punctuated only by the cry of a vendor hawking what are apparently the biggest, juiciest mutton legs in the whole empire.',
 ] as const;
 
 // Each room's Ring owns its place in the pool. No random draw: narration must not change

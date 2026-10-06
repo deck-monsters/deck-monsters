@@ -237,6 +237,8 @@ retain substantive critical-roll outcomes (maximum damage, reflected attacks).
 Ring arrivals and round announcements carry additive narration in both `text` and
 `payload.lines`, authored once in `announcements/ring-flavour.ts`. Entrances are species
 specific; a boss Minotaur notices a living, present Unicorn only in this Ring. The
-round pool rotates per Ring through a weak-key index, with no random draws, new timers
-or saved state. Original arrival, temperament, card and round-marker text stays intact.
+round pool and player Dragon entrance variants rotate through separate weak-key
+indices per Ring, with no random draws, new timers or saved state. Bosses and other
+species do not advance the Dragon pool. Original arrival, temperament, card and
+round-marker text stays intact.
 Discord and pacing therefore receive the same new flavour as the web.
