@@ -757,6 +757,16 @@
   background: linear-gradient(90deg, transparent, rgb(150 125 195 / 0.38) 10%, rgb(150 125 195 / 0.38) 90%, transparent);
 }
 [data-theme='millefleur'] .roster-row { border-radius: 12px; }
+/* The portrait is 34px here; the terminal marker's top offset sat above its centre. */
+[data-theme='millefleur'] .roster-turn {
+  top: calc(0.2rem + 17px);
+  bottom: auto;
+  transform: translateY(-50%);
+  line-height: 1;
+}
+@container (max-width: 45.99rem) {
+  [data-theme='millefleur'] .roster-list-dense .roster-turn { top: 50%; }
+}
 [data-theme='millefleur'] .roster-hp {
   color: var(--color-fg-dim);
   font-size: 13px;
@@ -836,7 +846,9 @@
   order: 1;
   align-self: flex-start;
   min-height: 0;
-  padding: 0;
+  padding: 3px 7px;
+  max-width: 100%;
+  overflow-wrap: anywhere;
   font-size: 23px;
   line-height: 1.1;
   text-align: left;
@@ -878,7 +890,7 @@
 [data-theme='millefleur'] .workshop-xp-meter-track { height: 8px; margin: 0; }
 [data-theme='millefleur'] .workshop-xp-next { flex: 0 0 52px; font-size: 12px; font-weight: 800; color: var(--color-accent); text-align: right; }
 [data-theme='millefleur'] .workshop-xp-meter { min-height: 28px; }
-[data-theme='millefleur'] .workshop-monster-actions { gap: 10px; flex-wrap: nowrap; }
+[data-theme='millefleur'] .workshop-monster-actions { gap: 10px; flex-wrap: wrap; }
 /* Unequip all first, the view's one primary (Send to ring, Revive) last, as in the mock. */
 [data-theme='millefleur'] .workshop-monster-actions .btn:last-child { order: -1; }
 [data-theme='millefleur'] .workshop-monster-actions .btn { padding: 12px 16px; min-height: 44px; }
@@ -892,6 +904,10 @@
 [data-theme='millefleur'] .workshop-section-header { align-items: baseline; flex-wrap: nowrap; margin-bottom: 14px; padding: 4px 4px 0; }
 [data-theme='millefleur'] .workshop-section-header h2 { margin: 0; font-size: 17px; line-height: 1; }
 [data-theme='millefleur'] .workshop-section-header span { font-size: 12px; }
+/* Merchant prose needs a shrinkable column and a new row when the wallet cannot fit. */
+[data-theme='millefleur'] .shop-heading { align-items: flex-start; flex-wrap: wrap; }
+[data-theme='millefleur'] .shop-heading > div { flex: 1 1 12rem; min-width: 0; }
+[data-theme='millefleur'] .shop-wallet { flex: 0 0 auto; }
 
 /* ⓘ on a phone: the strip stays (base.css, 520px container query: a corner badge overlapped the
    card and swallowed drops, pass 44). Here it is the tile's quiet footer: the same rounded tile
@@ -1035,12 +1051,11 @@
    ~18.5px down the row, so a rule at 26px sits ~7px below the baseline, clear of descenders.
    No `position: relative` nudges on the rows: a nudge extends the scroller's scrollHeight and
    the log stops ending exactly on a row.
-   The tile lives on the scroller with `background-attachment: local`, so the rules scroll with
-   the messages. The sample bottom-anchors it because its log is flex-end; here messages flow
-   from the top, so the tile starts at the top of the content: with no vertical padding or
-   margin anywhere in the list, every row (and so the last one) still sits exactly on a rule.
-   If you add padding, a margin, a border or a line-height that is not 28px to anything in the
-   list, the rules will drift: measure at 3x (see the roadmap 46 task 3 notes). */
+   The tile scrolls with the messages and is anchored to the bottom, above the 6px inset.
+   Every message must occupy a multiple of 28px. Smaller inline header fonts have different
+   baselines: baseline-aligning their 28px boxes enlarges the shared line and introduces
+   cumulative drift. Align their equal-height boxes at the top instead.
+   Measure wrapped headers and DMs at 3x (see the roadmap 46 task 3 notes). */
 /* The page IS the paper: the panel gives up its padding, so the ruled list fills the page edge to
    edge and the composer sits under it, as in the mock. The heading and its help line stay, quiet,
    above the paper. */
@@ -1083,13 +1098,14 @@
   line-height: 28px;
 }
 /* Name (800, ink) then the time (muted), on one row: the sender goes inline beside it. */
-[data-theme='millefleur'] .chat-sender { display: inline; font-size: 13px; font-weight: 800; color: var(--color-fg-bright); }
+[data-theme='millefleur'] .chat-sender { display: inline; font-size: 13px; vertical-align: top; font-weight: 800; color: var(--color-fg-bright); }
 [data-theme='millefleur'] .chat-time {
   display: inline;
   margin-left: 6px;
   font-size: 11px;
   font-weight: 600;
   line-height: 28px;
+  vertical-align: top;
   color: var(--color-fg-dim);
 }
 [data-theme='millefleur'] .chat-sender::after { content: none; }

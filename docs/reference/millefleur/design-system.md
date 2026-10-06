@@ -290,7 +290,9 @@ the real app differs from the samples above, this is what was built and why:
   (⚔ ✚ ✦) is hidden in this theme, because the dot and word already say it.
 - **Chat grows from the bottom.** The short log fills the available page above the
   composer; messages and the 28px ruled tile share the bottom anchor. Message times and
-  bottom anchoring are also deliberate backports to the dark themes.
+  bottom anchoring are also deliberate backports to the dark themes. Sender and timestamp
+  boxes align at the top to keep their different font sizes within one 28px paper row;
+  baseline alignment introduced a pixel of drift per message (bug 241).
 - **The XP bar stays decorative.** Its fill is the pale holo with a soft glow, as above, and is
   barely darker than its track on purpose: the "XP 13/28" figures beside it carry the
   information. A build pass gave it saturated stops and a plum outline so a filled bar would
