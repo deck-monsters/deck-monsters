@@ -5483,3 +5483,13 @@ These were open investigations the owner closed on 2026-09-28. Reopen with new e
 - **A. Intermittent missing `↓ Latest` button.** Not reproduced on 2026-09-28 against Test
   Room A after #196 (wheel into history, roster collapse and expand, hiding and showing the
   ring pane), and the owner has not seen it recur.
+
+### 240. The XP line put a full stop in the middle of its sentence — FIXED
+
+Found by the exact-text test added in the final review of roadmap 46 (2026-10-06); present on
+`main` too. A monster that won coins and killed something read "gained 12 XP for killing 1
+monster. and 3 coins": the kill clause ended with its own full stop, and the coins clause was
+appended after it (`announcements/xpGain.ts`). The coins now come first and the sentence ends
+once, "gained 12 XP and 3 coins for killing 1 monster.", and a single coin is "1 coin". Without
+a kill the line is unchanged. Discord sees the corrected text. Pinned by
+`announcements/text-golden.test.ts`.

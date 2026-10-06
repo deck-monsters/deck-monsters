@@ -244,7 +244,8 @@ const EXPECTED: Record<string, Expected[]> = {
 		{ type: "announce", scope: "public", text: "The fight concluded in a draw after 2 rounds!\n\n≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡\n" },
 	],
 	"xpGain": [
-		{ type: "ring.xp", scope: "private", text: "🐗 Bull gained 12 XP for killing 1 monster. and 3 coins\n\nFirst blood." },
+		// CHANGED FROM MAIN: main printed "for killing 1 monster. and 3 coins" (a stop mid-sentence); fixed 2026-10-06, bug 240.
+		{ type: "ring.xp", scope: "private", text: "🐗 Bull gained 12 XP and 3 coins for killing 1 monster.\n\nFirst blood." },
 	],
 	"cardDrop": [
 		{ type: "ring.cardDrop", scope: "private", text: "🐗 Bull finds a card for 🦊 Ada in the dust of the ring:\n\n\n```\n==================================\n 🃏  Hit  •\n----------------------------------\n\n Hits.\n\n Hits hard.\n\n Level: 1\n Usable by: Barbarian\n MSRP: free\n Class: Fighter\n\n==================================\n```\n" },

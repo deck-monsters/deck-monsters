@@ -19,19 +19,22 @@ export function announceXPGain(
 ): void {
 	let coinsMessage = '';
 	if (coinsGained) {
-		coinsMessage = ` and ${coinsGained} coins`;
+		coinsMessage = ` and ${coinsGained} ${coinsGained === 1 ? 'coin' : 'coins'}`;
 	}
 
 	let killedMessage = '';
 	if (killed && killed.length > 0) {
-		killedMessage = ` for killing ${killed.length} ${killed.length > 1 ? 'monsters' : 'monster'}.`;
+		killedMessage = ` for killing ${killed.length} ${killed.length > 1 ? 'monsters' : 'monster'}`;
 	}
 
 	const reasonsMessage = reasons
 		? `\n\n${reasons}`
 		: '';
 
-	const headline = `${creature.identity} gained ${xpGained} XP${killedMessage}${coinsMessage}`;
+	// Coins before the kill clause, and one full stop at the end: the kill clause used to end
+	// with its own stop, so a win with coins read "for killing 1 monster. and 3 coins" (found by
+	// the exact-text test, 2026-10-06). Without a kill the line is unchanged.
+	const headline = `${creature.identity} gained ${xpGained} XP${coinsMessage}${killedMessage}${killedMessage ? '.' : ''}`;
 	const text = `${headline}${reasonsMessage}`;
 	const lines: FeedLine[] = [
 		{
