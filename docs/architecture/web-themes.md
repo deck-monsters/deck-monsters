@@ -133,9 +133,10 @@ Millefleur's ruled Chat uses a 28px tile and 28px message lines, bottom-anchored
 log's 6px inset. Sender and timestamp boxes align at the top: baseline alignment of their
 different font sizes enlarged each header to 29px and accumulated drift (bug 241).
 Wrapped text and headers must still occupy whole paper rows. The theme's shop heading
-wraps its wallet onto another row when needed; monster filter names keep padding in both
-states, and roster turn markers centre beside the 34px portrait (within the row in dense
-mode). These are theme-scoped layout rules.
+wraps its wallet onto another row when needed and keeps that row at the trailing edge
+(`justify-content: flex-end`; `space-between` parked a lone wallet on the left). Monster
+filter names keep padding in both states, and roster turn markers centre beside the 34px
+portrait (within the row in dense mode). These are theme-scoped layout rules.
 
 - `theme-palettes.test.ts` parses every theme file and checks text pairs (4.5:1 on the page
   and on fields), on-accent text, highlight text, the HP ramp's order and steps, and each meter

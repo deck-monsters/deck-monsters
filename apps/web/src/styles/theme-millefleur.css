@@ -904,8 +904,12 @@
 [data-theme='millefleur'] .workshop-section-header { align-items: baseline; flex-wrap: nowrap; margin-bottom: 14px; padding: 4px 4px 0; }
 [data-theme='millefleur'] .workshop-section-header h2 { margin: 0; font-size: 17px; line-height: 1; }
 [data-theme='millefleur'] .workshop-section-header span { font-size: 12px; }
-/* Merchant prose needs a shrinkable column and a new row when the wallet cannot fit. */
-[data-theme='millefleur'] .shop-heading { align-items: flex-start; flex-wrap: wrap; }
+/* Merchant prose needs a shrinkable column and a new row when the wallet cannot fit.
+   The section header's space-between packs a lone wrapped item to the start, so a wallet
+   that had sat at the right jumped to the left edge the moment it wrapped (bug 241).
+   flex-end keeps that second row at the trailing edge; the prose still grows, so a row
+   that fits is unchanged. */
+[data-theme='millefleur'] .shop-heading { align-items: flex-start; flex-wrap: wrap; justify-content: flex-end; }
 [data-theme='millefleur'] .shop-heading > div { flex: 1 1 12rem; min-width: 0; }
 [data-theme='millefleur'] .shop-wallet { flex: 0 0 auto; }
 

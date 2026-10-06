@@ -5507,9 +5507,16 @@ selected and unselected names share padded geometry, and turn markers centre bes
 portrait (within dense rows). Monster actions can wrap again. All changes are scoped to
 Millefleur. The Chat CSS comment now describes its actual bottom anchoring.
 
+The shop heading inherited `justify-content: space-between`. That is fine while the wallet
+shares the row, and wrong once it wraps: a line with one item packs that item to the start,
+so the balance jumped from the right edge to the left. The heading uses `flex-end` instead.
+The prose column still grows, so a wallet that fits stays where it was.
+
 Verified with Chromium at 390×844 and 1440×900, plus 320px width, using the actual
 stylesheets and Nunito faces with representative component markup. Geometry assertions
 cover public/DM messages, wrapping headers and text, a seven-digit wallet and ordinary/dense
 roster rows: message heights are multiples of 28px (56px, formerly 57px; a wrapped header
-112px, formerly 113px), the wallet retains its inset, and the marker centres within 1px of
-the portrait. These are browser layout checks; jsdom does not measure this geometry.
+112px, formerly 113px), the wallet keeps its inset and stays at the trailing edge when it
+wraps, and the marker centres within 1px of the portrait. These are browser layout checks;
+jsdom does not measure this geometry. `millefleur-spacing.test.ts` pins the declarations
+that layout cannot see.
