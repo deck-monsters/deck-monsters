@@ -5392,8 +5392,9 @@ Found while adding the theme plumbing for roadmap 46 (pass 46a, task 1).
 
 - **Native controls.** No stylesheet set `color-scheme`, so the browser drew unstyled native
   controls for a light page: the Account page's display-name field was a white box, the
-  Account and Leaderboard radio buttons were white discs, and the Workshop's `×` (remove a card)
-  was dark ink on the dark card, nearly invisible. Every dark theme now declares
+  Account and Leaderboard radio buttons were white discs, and the role glyph on each Workshop
+  card slot (⚔ attack, ✚ heal) drew in the default dark text colour on the dark card, nearly
+  invisible. Every dark theme now declares
   `color-scheme: dark`; a light theme declares `light`.
 - **Fight log font.** `.fight-log-detail` read `var(--font-mono, monospace)`, but `--font-mono`
   was never defined, so the transcript in Fights rendered the browser's generic monospace
