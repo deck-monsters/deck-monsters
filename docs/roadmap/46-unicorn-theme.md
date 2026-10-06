@@ -374,8 +374,9 @@ another PR. Cursor's task-6/task-8 browser checklist is complete in
    reusable remote rooms were untouched. The owner has since revised the entrance
    copy; the current lines are below, and the shots retain the initial wording.
    Player Dragon entrances now alternate between the owner’s sheep-bone and goblet
-   lines; wave and mutton-vendor beats are in the round pool. Boss Gladiator’s
-   follow-up sentence still awaits a choice.
+   lines; wave and mutton-vendor beats are in the round pool. Boss Gladiator now
+   rotates all four owner-approved chants. More species drafts are recorded below
+   for editorial review; they are not in the live pools yet.
 3. Keep task 9 pending the owner's review; put every authored line here. Do not archive
    roadmap 46. The CSS budget and missing performance evidence stay open as item L.
 4. Before each checkpoint push: `pnpm build && pnpm typecheck && pnpm lint && pnpm test`
@@ -414,7 +415,10 @@ and Gladiator's `comes/come` agrees with them. All seven species are covered.
 | Species | Added to the boss's arrival, keeping "sent by the house" |
 |---|---|
 | Basilisk | {name} slithers through the gate. The front row makes intense eye contact with the sand. |
-| Gladiator | {name} stalks onto the sand. The house has found an old hand. |
+| Gladiator, variant 1 | {name} stalks onto the sand. “THERE’S ONLY ONE {name}!” chant the cheap seats. While not strictly true, the house can confirm that it holds true in today's battles at least. |
+| Gladiator, variant 2 | {name} stalks onto the sand. “{NAME}’S ON FIRE!” sing the stands. Three attendants hurry in with buckets. Experience has taught them to check. |
+| Gladiator, variant 3 | {name} stalks onto the sand. “ONE OF OUR OWN!” roar the stands. It's unclear (and highly unlikely) whether {name} has ever met these people, but they seem very certain. |
+| Gladiator, variant 4 | {name} stalks onto the sand. The crowd begins {name}'s song. It has six verses and one rude word, somehow creatively used in all six. |
 | Jinn | {name} billows through the gate. The house has sent smoke with a grudge. |
 | Minotaur | {name} stamps into the ring. Half bull, all temper. |
 | Minotaur, with a living Unicorn in this ring | {name} stamps into the ring. Half bull, all temper, and in no mood for roses. |
@@ -432,9 +436,9 @@ repeats or random draws that could change seeded combat:
 - The gates are shut. The story is not.
 - A hush falls over the crowd, punctuated only by the cry of a vendor hawking what are apparently the biggest, juiciest mutton legs in the whole empire.
 
-The Dragon's entrances alternate on player arrivals, separately per Ring, with no
-random draws or adjacent repeats in that pool. Boss arrivals and round beats do not
-advance it. The sheep bone and pilfered goblet connect to the Dragon's appetite and
+Player Dragon and boss Gladiator entrances rotate in separate species/role pools
+per Ring, with no random draws or adjacent repeats within either pool. Other
+species, roles, rounds and inventory sampling do not advance those pools. The sheep bone and pilfered goblet connect to the Dragon's appetite and
 hoard; the other lines connect to species lore and running jokes. Generated
 species/pronoun examples live in the [strings inventories](../reference/strings/README.md), regenerated from the same source.
 **Acceptance stays open:** the owner reviews these lines in the Ring. Do not mark task 9
@@ -480,6 +484,24 @@ The owner subsequently chose both player Dragon alternatives with “sheep bone�
 current table/pool above. The Dragon pool rotates separately per Ring without
 changing combat RNG; both variants appear with every pronoun in the generated
 inventory. The wave replaces the stilted house/counsel beat; the vendor joins the
-remaining beats. Boss Gladiator's “old hand” sentence remains until the owner chooses
-a chant-based alternative. Task 9 remains implemented, awaiting editorial acceptance;
-the roadmap stays active.
+remaining beats. The owner then approved all four Gladiator chants, with the edits
+shown in the current boss table. These now rotate separately by species and role
+in each Ring; the inventory enumerates every live variant with every pronoun.
+Task 9 remains implemented, awaiting editorial acceptance; the roadmap stays active.
+
+
+### Task 9 — further entrance drafts for editorial review (2026-10-06)
+
+The owner asked for further variations in the same dry, observant comic narration.
+These are new drafts for the five species that still have single entrance lines;
+they have not been inserted into the live pools or the generated inventory. Keep
+the original call/house arrival and boss species verb when adapting an approved
+beat to a role. `{NAME}` in the live Gladiator chant is the uppercased monster name.
+
+| Species | Draft 1 | Draft 2 |
+|---|---|---|
+| Basilisk | {name} lifts a crowned head. The crowd discovers several fascinating things about its own shoes. | {name} surveys the benches. A man in the front row closes his eyes and announces that he wasn't looking anyway. |
+| Jinn | {name} steps out of a curl of smoke. A man with a lamp puts it away before anyone can get the wrong idea. | {name} takes shape beside the gate. A small boy asks for three wishes. His mother would settle for one: that he sit down. |
+| Minotaur | {name} ducks through the gate. The mason who built it suddenly remembers an urgent appointment elsewhere. | {name} lowers {his} horns. A man who has been shouting advice remembers that he is, technically, a spectator. |
+| Weeping Angel | {name} is standing by the gate. The gatekeeper is fairly certain that this is something he would have noticed. | {name} is already on the sand. Several people decide to blink in shifts, without discussing it first. |
+| Unicorn | {name} steps onto the sand. A vendor discreetly changes “fresh roses” to “seasonal produce” on his sign. | {name} pauses at the gate. The palace gardener recognizes {him}. This is not, on the whole, a happy reunion. |

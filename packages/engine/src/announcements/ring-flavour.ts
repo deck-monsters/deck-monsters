@@ -16,46 +16,68 @@ export function dragonEntrances(monster: ArrivalMonster): readonly [string, stri
 	];
 }
 
-// Separate from round beats, so neither pool advances the other or consumes combat RNG.
-const nextDragonEntrance = new WeakMap<object, number>();
-
-/** Additive narration: the willing call and the house's orders remain the arrival contract. */
-export function playerEntrance(monster: ArrivalMonster, ring?: object): string | undefined {
+/** Pure samples let the inventory enumerate every variant without advancing a live Ring. */
+export function playerEntrances(monster: ArrivalMonster): readonly string[] {
 	const { givenName: name, pronouns: p } = monster;
 	switch (monster.creatureType) {
-		case BASILISK: return `${name} raises a crowned head. The front row makes intense eye contact with the sand.`;
-		case GLADIATOR: return `${name} steps onto the sand. Once, the gates were locked behind ${p.him}; today, ${p.he} ${agree(p, 'comes', 'come')} by choice.`;
-		case JINN: return `${name} neatly materializes out of smoke. A close observer may catch ${p.him} reflexively rubbing ${p.his} bare wrists.`;
-		case MINOTAUR: return `${name} lowers ${p.his} horns. The way in was easy. The way out is somebody else's problem.`;
-		case WEEPING_ANGEL: return `${name} is already here. Nobody remembers ${p.him} arriving.`;
-		case UNICORN: return `${name} steps in, horn first. A woman in the front row holding a rose quickly moves it behind her back.`;
-		case DRAGON: {
-			const variants = dragonEntrances(monster);
-			const at = ring ? nextDragonEntrance.get(ring) ?? 0 : 0;
-			if (ring) nextDragonEntrance.set(ring, (at + 1) % variants.length);
-			return variants[at]!;
-		}
-		default: return undefined;
+		case BASILISK: return [`${name} raises a crowned head. The front row makes intense eye contact with the sand.`];
+		case GLADIATOR: return [`${name} steps onto the sand. Once, the gates were locked behind ${p.him}; today, ${p.he} ${agree(p, 'comes', 'come')} by choice.`];
+		case JINN: return [`${name} neatly materializes out of smoke. A close observer may catch ${p.him} reflexively rubbing ${p.his} bare wrists.`];
+		case MINOTAUR: return [`${name} lowers ${p.his} horns. The way in was easy. The way out is somebody else's problem.`];
+		case WEEPING_ANGEL: return [`${name} is already here. Nobody remembers ${p.him} arriving.`];
+		case UNICORN: return [`${name} steps in, horn first. A woman in the front row holding a rose quickly moves it behind her back.`];
+		case DRAGON: return dragonEntrances(monster);
+		default: return [];
 	}
 }
 
 type RingCompanion = { monster: { creatureType: string; dead?: boolean; destroyed?: boolean }; fled?: boolean };
 
-export function bossEntrance(monster: ArrivalMonster, contestants: readonly RingCompanion[] = []): string | undefined {
+export function bossEntrances(monster: ArrivalMonster, contestants: readonly RingCompanion[] = []): readonly string[] {
 	const { givenName: name, pronouns: p } = monster;
 	switch (monster.creatureType) {
-		case BASILISK: return `${name} slithers through the gate. The front row makes intense eye contact with the sand.`;
-		case GLADIATOR: return `${name} stalks onto the sand. The house has found an old hand.`;
-		case JINN: return `${name} billows through the gate. The house has sent smoke with a grudge.`;
+		case BASILISK: return [`${name} slithers through the gate. The front row makes intense eye contact with the sand.`];
+		case GLADIATOR: {
+			const arrival = `${name} stalks onto the sand.`;
+			return [
+				`${arrival} “THERE’S ONLY ONE ${name}!” chant the cheap seats. While not strictly true, the house can confirm that it holds true in today's battles at least.`,
+				`${arrival} “${name.toUpperCase()}’S ON FIRE!” sing the stands. Three attendants hurry in with buckets. Experience has taught them to check.`,
+				`${arrival} “ONE OF OUR OWN!” roar the stands. It's unclear (and highly unlikely) whether ${name} has ever met these people, but they seem very certain.`,
+				`${arrival} The crowd begins ${name}'s song. It has six verses and one rude word, somehow creatively used in all six.`,
+			];
+		}
+		case JINN: return [`${name} billows through the gate. The house has sent smoke with a grudge.`];
 		case MINOTAUR: {
 			const roses = contestants.some(c => c.monster.creatureType === UNICORN && !c.monster.dead && !c.monster.destroyed && !c.fled);
-			return `${name} stamps into the ring. Half bull, all temper${roses ? ', and in no mood for roses' : ''}.`;
+			return [`${name} stamps into the ring. Half bull, all temper${roses ? ', and in no mood for roses' : ''}.`];
 		}
-		case WEEPING_ANGEL: return `${name} stands beyond the gate. The crowd can't really remember when ${p.he} got there.`;
-		case UNICORN: return `${name} trots through the gate. The house denies all knowledge of the missing roses.`;
-		case DRAGON: return `${name} sweeps down to the sand. The Editor deftly slips their jeweled hand into their pocket.`;
-		default: return undefined;
+		case WEEPING_ANGEL: return [`${name} stands beyond the gate. The crowd can't really remember when ${p.he} got there.`];
+		case UNICORN: return [`${name} trots through the gate. The house denies all knowledge of the missing roses.`];
+		case DRAGON: return [`${name} sweeps down to the sand. The Editor deftly slips their jeweled hand into their pocket.`];
+		default: return [];
 	}
+}
+
+// Each species/role has its own place in each Ring. Narration never draws combat RNG,
+// advances another pool, or adds saved state. Sampling without a Ring takes the first line.
+const nextEntrance = new WeakMap<object, Map<string, number>>();
+function chooseEntrance(monster: ArrivalMonster, variants: readonly string[], role: 'player' | 'boss', ring?: object): string | undefined {
+	if (!ring || variants.length < 2) return variants[0];
+	let positions = nextEntrance.get(ring);
+	if (!positions) nextEntrance.set(ring, positions = new Map());
+	const key = `${role}:${monster.creatureType}`;
+	const at = positions.get(key) ?? 0;
+	positions.set(key, (at + 1) % variants.length);
+	return variants[at];
+}
+
+/** The selected sentence is shared by additive text and structured narration. */
+export function playerEntrance(monster: ArrivalMonster, ring?: object): string | undefined {
+	return chooseEntrance(monster, playerEntrances(monster), 'player', ring);
+}
+
+export function bossEntrance(monster: ArrivalMonster, contestants: readonly RingCompanion[] = [], ring?: object): string | undefined {
+	return chooseEntrance(monster, bossEntrances(monster, contestants), 'boss', ring);
 }
 
 export const ROUND_BEATS = [

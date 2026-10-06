@@ -153,6 +153,12 @@ once, in `text` and in `lines`, in the house voice. Those additive entrances and
 beats now live in `announcements/ring-flavour.ts`; their editorial acceptance remains
 roadmap 46 task 9.
 
+The owner's entrance and round-beat direction (2026-10-06) is original comic narration
+in the vein of Terry Pratchett: a dry, observant narrator, concrete human reactions to
+monsters, and the practical business of running the games intruding at the wrong
+moment. Connect each beat to its species and keep it separate from mechanical claims.
+The orchestrator writes the prose; generated inventories enumerate the live variants.
+
 ### Existing bad examples are migration targets
 
 Some legacy text is intentionally called out so it does not return: “proud owner” becomes

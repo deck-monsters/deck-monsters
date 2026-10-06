@@ -11,7 +11,7 @@ import { FireBreathCard } from '../cards/fire-breath.js';
 import { HelmOfAweCard } from '../cards/helm-of-awe.js';
 import Dragon from '../monsters/dragon.js';
 import allMonsters from '../monsters/helpers/all.js';
-import { playerEntrance, ROUND_BEATS } from './ring-flavour.js';
+import { bossEntrance, bossEntrances, playerEntrance, ROUND_BEATS } from './ring-flavour.js';
 import { DelayedHit } from '../cards/delayed-hit.js';
 import { TARGET_LOWEST_HP_PLAYER } from '../helpers/targeting-strategies.js';
 import { formatCardLine, itemCardLine, monsterCardLine, monsterTurnFeedLine } from '../helpers/card.js';
@@ -592,6 +592,45 @@ describe('feed lines: card frames carry unwrapped fields', () => {
 
 describe('feed lines: additive ring flavour', () => {
 	for (const gender of ['male', 'female', 'androgynous'] as const) {
+		it(`rotates all four Gladiator chants for ${gender} without other rooms or pools advancing them`, () => {
+			const gladiator = new Gladiator({ name: 'Companion', gender });
+			const dragon = new Dragon({ name: 'Draco', gender });
+			const basilisk = new Basilisk({ name: 'Basil', gender });
+			const a = {}, b = {};
+			const fragments = ["While not strictly true, the house can confirm that it holds true in today's battles at least.", 'Three attendants hurry in with buckets.', "It's unclear (and highly unlikely) whether", 'somehow creatively used in all six.'];
+			const entrance = (ring: object, monster: Gladiator | Dragon | Basilisk = gladiator, isBoss = true): string => {
+				const { eb, published } = capture();
+				announceContestant(eb, 'Ring', ring, { contestant: { monster, isBoss, character: { givenName: 'Ada', icon: '🦊' } } });
+				const lines = expectLinesMatchText(published[0]!);
+				expect(lines[0]!.text).to.include(isBoss ? 'sent by the house' : 'answers the call');
+				return lines.find(l => l.kind === 'narration')!.text;
+			};
+			try {
+				const seen: string[] = [];
+				for (let at = 0; at < fragments.length * 2; at++) {
+					const prose = entrance(a);
+					seen.push(prose);
+					expect(prose).to.include(fragments[at % fragments.length]);
+					if (at > 0) expect(prose).to.not.equal(seen[at - 1]);
+					entrance(a, gladiator, false);
+					entrance(a, basilisk);
+					entrance(a, dragon, true);
+					const { eb, published } = capture();
+					announceNextRound(eb, 'Ring', a, { round: at });
+					expect(expectLinesMatchText(published[0]!)[1]!.text).to.equal(ROUND_BEATS[at % ROUND_BEATS.length]);
+					expect(bossEntrances(gladiator)).to.have.lengthOf(4);
+					expect(bossEntrance(gladiator)).to.include(fragments[0]);
+				}
+				expect(entrance(b)).to.include(fragments[0]);
+				expect(new Set(seen).size).to.equal(4);
+				expect(entrance(a, dragon, false)).to.include('sheep bone');
+				entrance(a);
+				expect(entrance(a, dragon, false)).to.include('pilfered goblet');
+			} finally { gladiator.disposeTimers(); dragon.disposeTimers(); basilisk.disposeTimers(); }
+		});
+	}
+
+	for (const gender of ['male', 'female', 'androgynous'] as const) {
 		it(`alternates both Dragon entrances for ${gender} independently of other rooms, bosses and rounds`, () => {
 			const monster = new Dragon({ name: 'Companion', gender });
 			const basilisk = new Basilisk({ name: 'Basil' });
@@ -618,14 +657,18 @@ describe('feed lines: additive ring flavour', () => {
 		});
 	}
 
-	it('does not draw randomness when choosing Dragon entrance variants', () => {
+	it('does not draw randomness when choosing player or boss entrance variants', () => {
 		const monster = new Dragon({ name: 'Companion', gender: 'androgynous' });
+		const gladiator = new Gladiator({ name: 'Companion', gender: 'androgynous' });
 		const ring = {};
 		const random = sinon.spy(Math, 'random');
 		try {
-			for (let at = 0; at < 6; at++) playerEntrance(monster, ring);
+			for (let at = 0; at < 6; at++) {
+				playerEntrance(monster, ring);
+				bossEntrance(gladiator, [], ring);
+			}
 			expect(random.called).to.equal(false);
-		} finally { random.restore(); monster.disposeTimers(); }
+		} finally { random.restore(); monster.disposeTimers(); gladiator.disposeTimers(); }
 	});
 
 	for (const Monster of allMonsters) {
