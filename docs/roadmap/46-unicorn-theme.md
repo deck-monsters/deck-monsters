@@ -366,7 +366,8 @@ another PR. Cursor's task-6/task-8 browser checklist is complete in
 
 1. Review fixes 237 and 238 are implemented and independently approved; the full
    build/typecheck/lint/test/docs gate passed. Main still ends at 230, so 231–236
-   keep their numbers. Task 3d's shipped backports are reviewed.
+   keep their numbers. Task 3d's shipped backports are reviewed. The owner-copy gate
+   also exposed the nondeterministic loss fixture, now stabilized as fix 239.
 2. Task 9's additive entrance, round and boss lines (17ec8632) are implemented in both `text`
    and `lines`, independently approved, and pass the full gate. A new owned local
    scratch room showed the Unicorn entrance, Minotaur boss and round beat on

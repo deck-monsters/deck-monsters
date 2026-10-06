@@ -121,7 +121,8 @@ function expectLinesMatchText(event: Pick<Published, 'type' | 'text' | 'payload'
 
 describe('feed lines (payload.lines)', () => {
 	describe('consistency with text over simulated fights', () => {
-		async function simulate(championHp: number, bossCards: () => any[]): Promise<GameEvent[]> {
+		async function simulate(championHp: number, bossCards: () => any[], forceLoss = false): Promise<GameEvent[]> {
+			const scenario = sinon.createSandbox();
 			const previousSkip = process.env.DECK_MONSTERS_SKIP_DELAYS;
 			process.env.DECK_MONSTERS_SKIP_DELAYS = '1';
 			const game = new Game({ roomId: `feed-lines-room-${championHp}`, spawnBosses: false }, () => 0);
@@ -145,11 +146,27 @@ describe('feed lines (payload.lines)', () => {
 				const boss: any = game.ring.spawnBoss();
 				boss.monster.cards = bossCards();
 				champion.hp = championHp;
+				if (forceLoss) {
+					// One HP alone does not guarantee a loss: random attacks may miss, reflect,
+					// or let the champion kill the boss first. This fixture needs the real death
+					// and loss announcements, not a probabilistic guess at who wins (#239).
+					boss.monster.hp = 1000;
+					for (const card of boss.monster.cards) {
+						scenario.stub(card, 'getAttackRoll').returns({
+							primaryDice: '1d20', naturalRoll: { result: 20 }, modifier: 0, bonusResult: 0,
+							result: 20, strokeOfLuck: true, curseOfLoki: false,
+						});
+						scenario.stub(card, 'getDamageRoll').returns({
+							primaryDice: '1d6', naturalRoll: { result: 6 }, modifier: 0, bonusResult: 0, result: 6,
+						});
+					}
+				}
 
 				await (game.ring as any).fight();
 				return events;
 			} finally {
 				game.dispose();
+				scenario.restore();
 				if (previousSkip === undefined) delete process.env.DECK_MONSTERS_SKIP_DELAYS;
 				else process.env.DECK_MONSTERS_SKIP_DELAYS = previousSkip;
 			}
@@ -176,7 +193,7 @@ describe('feed lines (payload.lines)', () => {
 
 		it('does the same when the player loses (ring.loss / ring.permaDeath, the death lines)', async function () {
 			this.timeout(60000);
-			const events = await simulate(1, () => Array.from({ length: 9 }, () => new HitCard()));
+			const events = await simulate(1, () => Array.from({ length: 9 }, () => new HitCard()), true);
 			const feed = feedOf(events);
 			const types = new Set(feed.map(e => e.type));
 			expect(types.has('ring.loss') || types.has('ring.permaDeath')).to.equal(true);

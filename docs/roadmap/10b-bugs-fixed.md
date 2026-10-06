@@ -5390,6 +5390,22 @@ height booking, so the retained explanation is counted. Tests: web `feed-lines.t
 
 **Status**: Fixed.
 
+### 239. Feed death/loss consistency fixture sometimes never reaches a loss — FIXED
+
+**Root cause:** the simulated loss test gave the champion one HP but left boss health
+and attack/damage rolls random. Misses, reflected attacks or an early boss defeat could
+produce a win/draw, so the test failed before reaching the death/loss lines it was meant
+to verify. Deterministic ring setup only disables roster shuffling and random ring events;
+it does not make combat rolls deterministic.
+
+The loss fixture now keeps the real game/fight/announcement path while giving its boss
+ample HP and instance-scoped guaranteed Hit attack/damage rolls. Stubs are restored in
+the fixture's cleanup; production combat and the ordinary simulated-fight case are
+unchanged. The existing test still asserts a loss or permanent-death event, a death line,
+and text/lines agreement for every emitted feed event.
+
+**Status:** Fixed.
+
 ## Closed without a fix
 
 These were open investigations the owner closed on 2026-09-28. Reopen with new evidence.
