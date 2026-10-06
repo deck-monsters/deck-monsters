@@ -291,13 +291,19 @@ the real app differs from the samples above, this is what was built and why:
   up from the composer as in the sample, so the 28px tile is anchored to the content's top
   (`background-attachment: local`). Every row is still exactly 28px, so the last message sits on
   a rule.
-- **Meters and controls, for contrast.** The healthy HP gradient runs `#2c8873 → #2a8570`, not
-  from `#3f9c84`, so both ends are at least 3:1 on the track. The XP fill keeps the holo gradient
-  with stronger stops and a 1px `--mf-line-control` inner edge, so a filled bar is visibly
-  filled. Carousel dots and the empty slot's `+` are drawn in `--mf-line-control` (3.4:1) rather
-  than the paler tab line.
+- **The XP bar stays decorative.** Its fill is the pale holo with a soft glow, as above, and is
+  barely darker than its track on purpose: the "XP 13/28" figures beside it carry the
+  information. A build pass gave it saturated stops and a plum outline so a filled bar would
+  read as filled; the owner caught it as counter to the theme's softness (2026-10-06), and it was
+  reverted. Don't harden a decorative surface to pass a contrast rule meant for information.
+- **Where a contrast rule did apply.** The healthy HP gradient runs `#2c8873 → #2a8570` rather
+  than from `#3f9c84`, so both ends are at least 3:1 on the track (HP is a meter the test
+  enforces for every theme; the change is barely visible). Carousel dots and the empty slot's
+  `+` are controls, so they use `--mf-line-control` (3.4:1), the same line as fields and
+  secondary buttons, rather than the paler tab line of the samples. The `+` is the only cue that
+  an empty slot is a button.
 - **Folder tabs** fill from .97 to .92 rather than .8, because at .8 the neighbour's shoulder
-  line showed through. When the row is wider than the screen, it scrolls to keep the selected
+  line showed through (a rendering fix, not a contrast one). When the row is wider than the screen, it scrolls to keep the selected
   tab in view and fades at whichever ends have more tabs.
 - **The halo** is on the Ring roster's portraits. The app has no Workshop portrait and no
   level badge yet, so the level-up sheet has no halo.
