@@ -2,7 +2,7 @@ import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useSta
 import { surfaceDescription } from './surface-descriptions.js';
 import { useChat } from '../hooks/useChat.js';
 import { useAuth } from '../lib/auth-context.js';
-import { buildChatRows } from '../utils/chat-rows.js';
+import { buildChatRows, chatTimeOfDay } from '../utils/chat-rows.js';
 
 interface ChatPanelProps {
   /** The room is implied by the surrounding `ChatProvider`; kept so the surface registry can pass it uniformly. */
@@ -225,6 +225,13 @@ export default function ChatPanel({ isActive = true, headerActions }: ChatPanelP
                 return (
                   <div key={row.key} className={`chat-message${dm ? ' chat-message-dm' : ''}${mine ? ' chat-message-mine' : ''}`}>
                     <strong className="chat-sender">{header}</strong>
+                    {/* The time of day, beside the sender. Shown in every theme
+                        (terminal.css, theme-millefleur.css). Omitted when the timestamp does
+                        not parse, rather than printing "Invalid Date". */}
+                    {(() => {
+                      const at = chatTimeOfDay(m.createdAt);
+                      return at ? <time className="chat-time" dateTime={m.createdAt}>{at}</time> : null;
+                    })()}
                     <span className="chat-text">{m.text}</span>
                   </div>
                 );

@@ -19,6 +19,7 @@ import { sortCardsAlphabetically } from '../cards/helpers/sort.js';
 import { delaysAreSkipped, groupedBeatMs, remainingGapMs, shortDelay, subEventDelay, subEventDelayMs, veryShortDelay } from '../helpers/delay-times.js';
 import { uniqueCards } from '../cards/helpers/unique-cards.js';
 import type { RoomEventBus } from '../events/index.js';
+import { systemLine } from '../events/feed-lines.js';
 
 /**
  * A single reading beat, sized by the message just published. Used between the turn
@@ -986,11 +987,12 @@ export class Ring extends BaseClass {
 
 		// Publish fight-start event so server-side subscribers (e.g. fight-summary-writer)
 		// can record the accurate startedAt timestamp for this fight.
+		const fightBeginsText = `Fight begins with ${contestants.length} contestants`;
 		this.eventBus.publish({
 			type: 'ring.fight',
 			scope: 'public',
-			text: `Fight begins with ${contestants.length} contestants`,
-			payload: { contestants, eventName: 'fightBegins' },
+			text: fightBeginsText,
+			payload: { contestants, eventName: 'fightBegins', lines: [systemLine(fightBeginsText)] },
 		});
 
 		const isActiveContestant = (contestant: Contestant | undefined): boolean =>
@@ -1315,7 +1317,8 @@ export class Ring extends BaseClass {
 						this.emit('roundComplete', { contestants, round });
 
 						if (round === 10) {
-							this.pub('announce', 'The fight has ended in a draw after 10 rounds — no monsters could finish the job.', {});
+							const drawText = 'The fight has ended in a draw after 10 rounds — no monsters could finish the job.';
+							this.pub('announce', drawText, { lines: [systemLine(drawText)] });
 							resolve(undefined);
 							return;
 						}
@@ -1375,11 +1378,8 @@ export class Ring extends BaseClass {
 				context: 'ring.fight',
 				contestants: this.contestants.map(c => c.monster.givenName),
 			});
-			this.pub(
-				'announce',
-				'The fight has been cancelled due to an unexpected error. The ring has been cleared.',
-				{}
-			);
+			const cancelText = 'The fight has been cancelled due to an unexpected error. The ring has been cleared.';
+			this.pub('announce', cancelText, { lines: [systemLine(cancelText)] });
 			// Publish a terminal event so FightSummaryWriter's pending 'ring.fight'
 			// start (published above) doesn't linger forever, and so a cancelled
 			// fight shows up in the fight log instead of vanishing silently.
@@ -1388,6 +1388,7 @@ export class Ring extends BaseClass {
 				scope: 'public',
 				text: 'Fight cancelled due to an unexpected error',
 				payload: {
+					lines: [systemLine('Fight cancelled due to an unexpected error')],
 					rounds: round,
 					deaths: 0,
 					outcome: 'cancelled',
@@ -1458,11 +1459,13 @@ export class Ring extends BaseClass {
 					: deaths > 0 && living.length === 1));
 
 		// Emit for battle history
+		const concludedText = `Fight concluded: ${deaths} dead after ${rounds} ${rounds === 1 ? 'round' : 'rounds'}`;
 		this.eventBus.publish({
 			type: 'ring.fight',
 			scope: 'public',
-			text: `Fight concluded: ${deaths} dead after ${rounds} ${rounds === 1 ? 'round' : 'rounds'}`,
+			text: concludedText,
 			payload: {
+				lines: [systemLine(concludedText)],
 				contestants,
 				deadContestants,
 				deaths,
@@ -1487,39 +1490,43 @@ export class Ring extends BaseClass {
 				contestant.lost = true;
 
 				if (contestant.monster.destroyed) {
+					const permaDeathText = `${contestant.monster.givenName} was too badly injured to be revived.`;
 					this.eventBus.publish({
 						type: 'ring.permaDeath',
 						scope: 'private',
 						targetUserId: userId,
-						text: `${contestant.monster.givenName} was too badly injured to be revived.`,
-						payload: { contestant, xpGained: xpDelta },
+						text: permaDeathText,
+						payload: { contestant, xpGained: xpDelta, lines: [systemLine(permaDeathText, contestant.monster.givenName)] },
 					});
 				} else {
+					const lossText = `${contestant.monster.givenName} has fallen in the fight. You may now \`revive\` or \`dismiss\` ${contestant.monster.pronouns.him}.`;
 					this.eventBus.publish({
 						type: 'ring.loss',
 						scope: 'private',
 						targetUserId: userId,
-						text: `${contestant.monster.givenName} has fallen in the fight. You may now \`revive\` or \`dismiss\` ${contestant.monster.pronouns.him}.`,
-						payload: { contestant, xpGained: xpDelta },
+						text: lossText,
+						payload: { contestant, xpGained: xpDelta, lines: [systemLine(lossText, contestant.monster.givenName)] },
 					});
 				}
 			} else if (contestant.fled) {
+				const fledText = `${contestant.monster.givenName} lived to fight another day!`;
 				this.eventBus.publish({
 					type: 'ring.fled',
 					scope: 'private',
 					targetUserId: userId,
-					text: `${contestant.monster.givenName} lived to fight another day!`,
-					payload: { contestant, xpGained: xpDelta },
+					text: fledText,
+					payload: { contestant, xpGained: xpDelta, lines: [systemLine(fledText, contestant.monster.givenName)] },
 				});
 			} else if (hasDecisiveWinner) {
 				contestant.won = true;
 
+				const winText = `${contestant.monster.identity} is victorious!`;
 				this.eventBus.publish({
 					type: 'ring.win',
 					scope: 'private',
 					targetUserId: userId,
-					text: `${contestant.monster.identity} is victorious!`,
-					payload: { contestant, xpGained: xpDelta },
+					text: winText,
+					payload: { contestant, xpGained: xpDelta, lines: [systemLine(winText, contestant.monster.givenName)] },
 				});
 			} else {
 				this.eventBus.publish({
@@ -1527,7 +1534,7 @@ export class Ring extends BaseClass {
 					scope: 'private',
 					targetUserId: userId,
 					text: 'The fight ended in a draw.',
-					payload: { contestant, xpGained: xpDelta },
+					payload: { contestant, xpGained: xpDelta, lines: [systemLine('The fight ended in a draw.', contestant.monster.givenName)] },
 				});
 			}
 		});
@@ -1605,6 +1612,7 @@ export class Ring extends BaseClass {
 			scope: 'public',
 			text: `Fight resolved (${fightOutcome})`,
 			payload: {
+				lines: [systemLine(`Fight resolved (${fightOutcome})`)],
 				rounds,
 				deaths,
 				outcome: fightOutcome,

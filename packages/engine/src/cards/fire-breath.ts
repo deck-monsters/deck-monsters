@@ -100,6 +100,7 @@ An ancient dragon (level ${ANCIENT_DRAGON_LEVEL}+) breathes fire that cannot be 
 		const { success: dodged } = this.checkSuccess(dodgeRoll, difficulty - 1);
 
 		this.emit('rolled', {
+			success: dodged,
 			reason: `vs ${difficulty} to dodge the flames.`,
 			card: this,
 			roll: dodgeRoll,

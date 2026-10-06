@@ -1,4 +1,5 @@
 import type { RoomEventBus } from '../events/index.js';
+import { proseLines } from '../events/feed-lines.js';
 
 interface NarrationOpts {
 	channel?: (opts: { announce: string }) => void | Promise<void>;
@@ -22,6 +23,6 @@ export function announceNarration(
 		// Items still use the direct callback pattern; call it directly
 		void channel({ announce: narration });
 	} else {
-		eb.publish({ type: 'announce', scope: 'public', text: narration, payload: mechanic ? { mechanic } : {} });
+		eb.publish({ type: 'announce', scope: 'public', text: narration, payload: { ...(mechanic ? { mechanic } : {}), lines: proseLines(narration) } });
 	}
 }

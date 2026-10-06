@@ -1,4 +1,5 @@
 import getArray from '../helpers/get-array.js';
+import { systemLine } from '../events/feed-lines.js';
 import { announceAndThrow } from '../helpers/announce-and-throw.js';
 import { formatRelative } from '../helpers/time.js';
 import {
@@ -365,11 +366,12 @@ function summonBossAction({ channel, character, game, isDM, user }: any): Promis
 		// landed below the card and read as a second, unrelated summon rather than as the
 		// explanation for the one above it. Safe to announce first: `canAcceptBoss()` above
 		// is the only reason spawnBoss returns undefined, and nothing in between yields.
+		const summonText = `${character.givenName ?? 'A beastmaster'} has summoned a boss into the ring!`;
 		ring.eventBus.publish({
 			type: 'announce',
 			scope: 'public',
-			text: `${character.givenName ?? 'A beastmaster'} has summoned a boss into the ring!`,
-			payload: { summonedBy: userId },
+			text: summonText,
+			payload: { summonedBy: userId, lines: [systemLine(summonText)] },
 		});
 
 		// Pass summoner identity to the contestant so a pre-fight removal (last player

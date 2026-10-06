@@ -119,6 +119,7 @@ export class LuckyStrike extends HitCard {
 		}
 
 		this.emit('rolled', {
+			success: success,
 			reason,
 			card: this,
 			roll: betterRoll,

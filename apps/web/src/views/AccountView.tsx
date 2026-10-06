@@ -73,6 +73,9 @@ export default function AccountView() {
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             <input
               id="display-name"
+              // type="text" matters: the app's input styling is scoped to typed inputs, so
+              // without it this field rendered in the browser's default font and box.
+              type="text"
               value={displayName}
               onChange={(event) => setDisplayName(event.target.value)}
               maxLength={32}

@@ -1,5 +1,4 @@
 import DetailSheet from './DetailSheet.js';
-import { joinList } from '../utils/cards.js';
 
 export interface LevelUpGainsView {
   level: number;
@@ -32,6 +31,26 @@ const STAT_LABELS: Array<[keyof Omit<LevelUpGainsView, 'level'>, string]> = [
   ['int', 'INT'],
 ];
 
+/**
+ * "A, B and C" as chips. The words and separators are the same ones `joinList` writes (so the
+ * text content is identical), but each name is its own span and each separator a span of its
+ * own: the themes draw the names as chips and hide the separators.
+ */
+function CardChips({ names }: { names: string[] }) {
+  return (
+    <>
+      {names.map((name, index) => (
+        <span key={name}>
+          {index > 0 && (
+            <span className="level-up-sep">{index === names.length - 1 ? ' and ' : ', '}</span>
+          )}
+          <span className="level-up-chip">{name}</span>
+        </span>
+      ))}
+    </>
+  );
+}
+
 const signed = (n: number) => (n > 0 ? `+${n}` : `−${Math.abs(n)}`);
 
 /**
@@ -57,33 +76,58 @@ export default function LevelUpSheet({
   const gains = nextLevel ? STAT_LABELS.filter(([key]) => nextLevel[key] !== 0) : [];
   const cardsNow = nextCards && level !== undefined && nextCards.level === level ? nextCards.cards : [];
 
+  const title = level !== undefined ? `${monsterName} at level ${level}` : `${monsterName}'s next level`;
+  const xpLine = (
+    <p>
+      {toGo} more XP to go ({xpIntoLevel} of {xpNeededForLevel}). Monsters earn XP in the ring,
+      most of it from wins.
+    </p>
+  );
+
   return (
     <DetailSheet
-      title={level !== undefined ? `${monsterName} at level ${level}` : `${monsterName}'s next level`}
+      title={title}
       titleId="level-up-title"
       closeTitle="Close the level details"
       opener={opener}
       onClose={onClose}
+      barTitle="Level up"
     >
-      <p>
-        {toGo} more XP to go ({xpIntoLevel} of {xpNeededForLevel}). Monsters earn XP in the ring,
-        most of it from wins.
-      </p>
+      <div className="level-up-hero">
+        {level !== undefined && (
+          <div className="level-up-badge" aria-hidden="true">
+            <span>{level}</span>
+          </div>
+        )}
+        <div className="level-up-hero-text">
+          <h2 id="level-up-title">{title}</h2>
+          {xpLine}
+        </div>
+      </div>
       {gains.length > 0 && (
-        <ul className="card-detail-verdicts" aria-label="Stat gains">
+        <ul className="card-detail-verdicts level-up-gains" aria-label="Stat gains">
           {gains.map(([key, label]) => (
+            // Two spans so a theme can draw a tile (gain over label); unstyled they read as one
+            // line, "Max HP +3".
             <li key={key}>
-              {label} {signed(nextLevel![key])}
+              <span className="level-up-stat">{label}</span> <span className="level-up-gain">{signed(nextLevel![key])}</span>
             </li>
           ))}
         </ul>
       )}
       {cardsNow.length > 0 ? (
-        <p>New cards {who} can use: {joinList(cardsNow)}.</p>
+        <p className="level-up-cards">
+          <span className="level-up-cards-label">New cards {who} can use<span className="level-up-sep">:</span> </span>
+          <CardChips names={cardsNow} />
+          <span className="level-up-sep">.</span>
+        </p>
       ) : nextCards && nextCards.cards.length > 0 ? (
-        <p>
-          No new cards at this level. Next new cards, at level {nextCards.level}:{' '}
-          {joinList(nextCards.cards)}.
+        <p className="level-up-cards">
+          <span className="level-up-cards-label">
+            No new cards at this level. Next new cards, at level {nextCards.level}<span className="level-up-sep">:</span>{' '}
+          </span>
+          <CardChips names={nextCards.cards} />
+          <span className="level-up-sep">.</span>
         </p>
       ) : nextCards === null ? (
         <p>No new cards to come: {who} can already use all of them.</p>

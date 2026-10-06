@@ -285,6 +285,7 @@ ${ongoingDamageText}`;
 					);
 
 					this.emit('rolled', {
+						success: success,
 						reason: `and needs ${freedomThreshold + 1} or higher to break free.`,
 						card: this,
 						roll: freedomRoll,

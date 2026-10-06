@@ -89,3 +89,15 @@ export function unreadBadgeText(unread: number): string | null {
   if (unread <= 0) return null;
   return unread > 99 ? '99+' : String(unread);
 }
+
+const CHAT_TIME_FORMAT = new Intl.DateTimeFormat([], { hour: 'numeric', minute: '2-digit' });
+
+/**
+ * "4:41 PM" for a message, or '' when the timestamp is missing or unparsable. Lives here, not
+ * in ChatPanel, so its test does not import the panel: the panel pulls in the Supabase client,
+ * which throws at import when the VITE_SUPABASE_* env is unset (as in CI).
+ */
+export function chatTimeOfDay(createdAt: string | undefined): string {
+  const at = createdAt ? new Date(createdAt) : null;
+  return at && !Number.isNaN(at.getTime()) ? CHAT_TIME_FORMAT.format(at) : '';
+}

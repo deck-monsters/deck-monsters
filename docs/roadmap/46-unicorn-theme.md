@@ -8,8 +8,14 @@ tags: [roadmap, web, theme, design, unicorn, accessibility]
 ---
 # 46: a unicorn theme (Millefleur)
 
-**Status:** the design is final (approved by the owner 2026-10-06). Nothing is built yet. This
-page is the build plan.
+**Status:** Millefleur is built and live-checked on
+`claude/unicorn-monster-cards-cigpmw`. The branch review fixed feed-fidelity
+findings. Task 9's narration was looked at in the Ring: the reviewed drafts read
+cleanly after the call and the house arrival, on a phone and on a desktop. This
+page stays active. The implementation and the Ring look are done. Phosphor stays
+the starting theme, and the stylesheet size is accepted. What remains is recorded
+below for the closing pass. One PR for the whole theme, opened only when the owner
+asks.
 
 - **The design:** [Millefleur design system](../reference/millefleur/design-system.md), with
   [the brief and artist statement](../reference/millefleur/README.md), [the final
@@ -33,9 +39,54 @@ From the owner's reviews of rendered screens, 2026-10-05 to 2026-10-06:
 - **The other directions:** Holo Folder's soft rainbow became the holo fade. Gloaming (a dark
   sibling) is not planned; the owner did not favour it. Dream Desktop becomes its own theme,
   [roadmap 47](47-dream-desktop-theme.md).
-- **Still open:** whether a phone set to light mode should start on Millefleur (today every new
-  player gets phosphor, `useTheme.ts`), and painted portraits for the Workshop (a separate art
-  pass).
+- **Starting theme:** Phosphor. Millefleur is a light theme a player turns on. The app does
+  not follow the phone's light or dark setting (`prefers-color-scheme`). Recorded 2026-10-06.
+  The [brief](../reference/millefleur/README.md) already said this: a choice in its own right,
+  not a light mode.
+- **Still open:** painted portraits for the Workshop (a separate art pass). Not part of
+  finishing this branch.
+
+## Handoff — ready to finalize (2026-10-06)
+
+Continue from the tip of `claude/unicorn-monster-cards-cigpmw`. Stay on this branch.
+Do not open a pull request until the owner asks. The Ring look is `3bfef8ea`.
+
+Done. Do not redo any of it:
+
+- Tasks 1–8, including the live check in [46b](46b-cursor-check.md) and review fixes
+  237–239. Main still ended at 230 when those numbers were taken, so 231–239 keep them.
+- Task 3d's backports. The level badge stays withheld. The phone info strip and the
+  one-line roster stay set aside.
+- Task 9. The lines, including the owner's revised drafts (`e83eb18f`, applied in
+  `b10697cd`), are in `announcements/ring-flavour.ts` and in the tables below. The
+  Ring look is `3bfef8ea`, with shots in `46b-shots/task9-*.png`. Do not re-apply
+  the drafts or repeat that look.
+
+To finish the branch:
+
+1. Read this page against the code and remove any sentence that still says task 9 is
+   waiting. Do not restyle the dark themes, and do not repeat the 46b screen tour.
+2. The stylesheet size is not a ship gate. The owner said so on 2026-10-06: 80,553
+   bytes against the old 12 KB line in §8 is acceptable. Do not start a CSS diet or
+   a Fast-3G tour to close this branch. Millefleur's stylesheet, Nunito, and the
+   watercolour assets are already a lazy chunk (`LAZY_THEMES` in `useTheme.ts`,
+   started from `main.tsx` only when `data-theme` is already `millefleur`). Do not
+   add a second loader. A later pass may streamline duplicate rules. That pass is
+   [10, item L](10-bug-fixes.md#l-millefleur-stylesheet-condensation) and has to be
+   checked screen by screen, because rules that look repeated are often load-bearing.
+3. Production caching is `apps/web/serve.json`, wired by `pnpm start`
+   (`serve dist -s -c ../serve.json`). Hashed files under `assets/` are cached for a
+   year as immutable. `index.html`, including the SPA fallback, is revalidated.
+   Before that file, `serve` sent ETags and no `Cache-Control`. The header contract
+   is in the [deployment guide](../operations/deployment.md#2b-service-web-static-spa).
+4. Workshop portraits stay open, on this page. The light-theme question above is
+   closed. Dream Desktop is [roadmap 47](47-dream-desktop-theme.md).
+5. When the owner asks, open the one pull request for this branch. Do not archive
+   this page while the Workshop portraits are still only recorded here. The CSS
+   condensation checkbox already has a home on item L.
+
+Before each push: `pnpm build && pnpm typecheck && pnpm lint && pnpm test` and
+`pnpm docs:check`.
 
 ## Implementation brief
 
@@ -235,21 +286,331 @@ CRT treatment:
 |---|---|
 | Fonts (only under this theme) | ≤ 70 KB latin, one preloaded |
 | Textures | Four baked watercolour WebPs ≤ 40 KB each, one grain tile ≤ 10 KB, all in the lazy chunk |
-| CSS | `theme-millefleur.css` ≤ 12 KB unminified |
+| CSS | `theme-millefleur.css` ≤ 12 KB unminified (revised 2026-10-06: not a ship gate; see below) |
 | Other themes | No font or texture bytes. Millefleur's CSS and `@font-face` rules are a separate chunk loaded by dynamic `import()`; the shared bundle grows only by the `THEMES` entry, the pre-paint colour map, and the first-paint block (< 1 KB, §4). Pixel-identical before and after task 1 |
 | Runtime | No `backdrop-filter`, no live SVG filters, no blend modes on scrolling rows; no layout shift (the feed font is unchanged) |
 
+The owner revised the CSS line on 2026-10-06. The shipped source is 80,553 bytes, and
+that is not a reason to hold the theme. The chunk is lazy, and production caches the
+hashed files (the handoff above). Condensing duplicate rules is a later careful pass
+([10, item L](10-bug-fixes.md#l-millefleur-stylesheet-condensation)).
+
 ### 9. Task table
 
-Two passes, so each PR stays at three or four tasks (see
-[subagents budget](../agents/subagents.md#budget)). Tasks 1 and 2 must land first; the
-rest can run in parallel only where noted.
+The owner approved one PR for the whole theme. The original pass labels are retained
+as the build history; the statuses below describe what has actually landed.
 
 | # | Pass | Task | Area / files | Acceptance | Can run beside | Status | Commit |
 |---|---|---|---|---|---|---|---|
-| 1 | 46a | **Theme plumbing, no visual change.** Shape, font, shadow, surface, meter-track, on-accent, highlight-text, backdrop and sprite-flash tokens with defaults equal to today; define the read-but-unset tokens in all four themes; `color-scheme`; pre-paint `data-theme` and `theme-color`; per-theme `prefers-contrast`; the header class; theme button label by name; extended palette test | `styles/*.css`, `useTheme.ts`, `index.html`, `AppShell.tsx`, `theme-palettes.test.ts`, `useTheme.test.ts`, `renderer.ts` (flash parameter) | Four themes pixel-identical at 390 and 1440; the extended palette test passes for all four; no black flash on a light theme in a smoke test | docs-only work | proposed | — |
-| 2 | 46a | **Millefleur palette, type and components.** `theme-millefleur.css`, `THEMES` entry and icon, Nunito (the feed keeps JetBrains Mono), radii, buttons, fields, cards, banners; the lazy-loaded chunk, the first-paint block and the modulepreload, with a bundle check that other themes' CSS grew by under 1 KB | `theme-millefleur.css`, `themes/millefleur.ts` (lazy chunk), `base.css` (first-paint block), `index.html`, `useTheme.ts`, fonts and `OFL.txt` | Palette test green; card frames unchanged; a reload on Millefleur shows no dark frame; check at 390 and 1440 against the samples | — (after 1) | proposed | — |
-| 3 | 46a | **Millefleur surfaces.** Folder tabs joined to the page, the page and card, the halo, card slots with painted role dots, meters, the ruled Chat log, the Ring transcript, sheets with the painted header, soft title bar and close box, carousel dots | `theme-millefleur.css`, small class hooks in `terminal.css`/`base.css`, the tab markup in the workspace | Each surface matches the design system and samples, rendered side by side; tap targets unchanged | 4 if 4 avoids the same selectors | proposed | — |
-| 4 | 46b | **Paint and paper.** Bake the watercolour compositions and the grain tile; wire `--surface-texture`; holo only where listed | WebP assets in the lazy chunk, `theme-millefleur.css` | Budget in §8 met; no long frames while a fight scrolls | 3 (different selectors) | proposed | — |
-| 5 | 46b | **Pixel monsters on paper.** The halo, the soft lift, the pink hit flash; check pale species and white appearances at 1×/2×/3× | `terminal.css`, `renderer.ts`, `rosterSprite`/pixel tests | Struck monsters visibly flash; pale monsters read on paper; nothing smoothed | 4 | proposed | — |
-| 6 | 46b | **Live check and docs.** Cursor-style checklist for the screens in §7; `docs/architecture/web-themes.md`; links from `AGENTS.md` and `docs/README.md`; roadmap status | docs | Check passed or findings filed in 10 | 4, 5 | proposed | — |
+| 1 | 46a | **Theme plumbing, no visual change.** Shape, font, shadow, surface, meter-track, on-accent, highlight-text, backdrop and sprite-flash tokens with defaults equal to today; define the read-but-unset tokens in all four themes; `color-scheme`; pre-paint `data-theme` and `theme-color`; per-theme `prefers-contrast`; the header class; theme button label by name; extended palette test | `styles/*.css`, `useTheme.ts`, `index.html`, `AppShell.tsx`, `theme-palettes.test.ts`, `useTheme.test.ts`, `renderer.ts` (flash parameter) | Four themes pixel-identical at 390 and 1440; the extended palette test passes for all four; no black flash on a light theme in a smoke test | docs-only work | done | 673779d8, 0c11a733, 259e096b |
+| 2 | 46a | **Millefleur palette, type and components.** `theme-millefleur.css`, `THEMES` entry and icon, Nunito (the feed keeps JetBrains Mono), radii, buttons, fields, cards, banners; the lazy-loaded chunk, the first-paint block and the modulepreload, with a bundle check that other themes' CSS grew by under 1 KB | `theme-millefleur.css`, `themes/millefleur.ts` (lazy chunk), `base.css` (first-paint block), `index.html`, `useTheme.ts`, fonts and `OFL.txt` | Palette test green; card frames unchanged; a reload on Millefleur shows no dark frame; check at 390 and 1440 against the samples | — (after 1) | done | 21e639d9, 293590fa |
+| 3 | 46a | **Millefleur surfaces.** Folder tabs joined to the page, the page and card, the halo, card slots with painted role dots, meters, the ruled Chat log, the Ring transcript, sheets with the painted header, soft title bar and close box, carousel dots | `theme-millefleur.css`, small class hooks in `terminal.css`/`base.css`, the tab markup in the workspace | Each surface matches the design system and samples, rendered side by side; tap targets unchanged | 4 if 4 avoids the same selectors | done | 66fde141, ca0eca5d, 2252866a, 7f84c2f9, 8353b11a |
+| 3b | 46a | **Fidelity to the mocks.** The owner compared the app with the approved mocks at the same scale and found many differences (2026-10-06). Header spacing; the Ring's header, roster rows, card-frame tint and boss-arrival card; the Workshop's portrait, type, meters, slot ⓘ, heading count; Chat anchored to the bottom; the level-up badge, title and chips | `theme-millefleur.css`, small Millefleur-gated hooks in `RingPane`, `RingRoster`, `MonsterWorkshopPanel`, `WorkshopPanel`, `ChatPanel`, `LevelUpSheet` | Each screen beside its mock at 390 × 940 (`fid.mjs`) matches within reason; dark themes unchanged | — | built, reviewed | d2c8d594, 5c5352ae, a831d675, 8746fcba, c98f4c42 |
+| 3c | 46a | **Theme-aware feed metrics.** Row-height estimates read the feed's type from CSS, so Millefleur's transcript can be 12.5 px on a 1.65 line as designed | `feed-row-height.ts`, `RingPane.tsx`, feed CSS tokens | Dark themes' estimates identical; no scroll jumps (#196) or lost bottom pin (#159) in a live scroll test under both themes | — (after 3b) | done | 408ff656, 8e77ff57 |
+| 3d | 46a | **Backport what the mock did better.** Remove the Millefleur gate from the case-3 changes (see *Reading the mocks*) and style them for the four dark themes | the components above, `base.css`, `terminal.css` | A deliberate, reviewed change in the dark themes, compared before and after | — (after 3b) | backports shipped, reviewed; level badge withheld by design | a0a3eb8c, 18d73971, 92cdb96b, 3d082907 |
+| 4 | 46a | **Paint and paper.** Bake the watercolour compositions and the grain tile; wire `--surface-texture`; holo only where listed | WebP assets in the lazy chunk, `theme-millefleur.css` | Budget in §8 met; no long frames while a fight scrolls | 3 (different selectors) | done | 795888c3, cc7e5a3d |
+| 5 | 46a | **Pixel monsters on paper.** The halo, the soft lift, the pink hit flash; check pale species and white appearances at 1×/2×/3× | `terminal.css`, `renderer.ts`, `rosterSprite`/pixel tests | Struck monsters visibly flash; pale monsters read on paper; nothing smoothed | 4 | done | 7da2efe5; halo in 2252866a, d2c8d594 |
+| 6 | 46a | **Live check and docs.** Cursor-style checklist for the screens in §7; `docs/architecture/web-themes.md`; links from `AGENTS.md` and `docs/README.md`; roadmap status | docs | Check passed or findings filed in 10 | 4, 5 | checked | 46b-cursor-check.md |
+| 7 | 46a | **Structured feed lines from the engine.** Every feed announcement also publishes `payload.lines`: clean single lines, each with a `kind` and its facts (round, actor, card, roll, damage, HP). `text` stays byte-for-byte (Discord sends it verbatim; pacing sizes pauses from it) | `packages/engine/src/announcements/*`, `events/types.ts`, `helpers/card.ts`, `ring/index.ts` | A consistency test keeps `lines` equal to `text` without its layout; engine, server and Discord tests green | 3d | built, reviewed; roll-fidelity fixes in this checkpoint | 75a52250, 653f6c2a, 3a777501, f4b4a9d5 |
+| 8 | 46a | **The feed rendered from lines.** The web draws `lines` when present (falling back to `text` for older events), with spacing from CSS rather than baked whitespace; Millefleur restyles or replaces lines by kind (the round as a divider, a play's card name, the roll as a quieter second line); row-height guesses count lines | `RingPane`, `ConsolePane`, `format-event-text`, `feed-row-height.ts`, theme CSS | Live scroll test clean under every theme; each feed screen beside its mock | — (after 7) | live-checked | b78d6f2d, 70a1309e, b51e3b1c, f4b4a9d5 |
+| 9 | 46a | **Flavour.** New narration in the house voice where the mock found room for it, per `voice-and-wording.md`, in `text` and `lines` both: an entrance line per species after a player's monster answers the call; a short beat under each round divider (a small pool, no repeats back to back); a species verb for a boss's arrival (stamps, slithers, stalks…), keeping "sent by the house". Approved direction (owner, 2026-10-06): bring together jokes and lore from across the game — the Unicorn's roses (its witness line), the Gladiator's past, the Basilisk's gaze, the Dragon's hoard, the Jinn's smoke — e.g. a boss Minotaur is "Half bull, all temper", and "…and in no mood for roses" when a Unicorn is in the ring. Refined over time like all flavour | engine announcements, strings inventory | Looked at in the Ring | 8 | looked in the Ring | 17ec8632, b10697cd, 3bfef8ea |
+
+### Reading the mocks
+
+The owner's rule for every difference between the app and the mocks (2026-10-06): **matching the
+mock and the brief is paramount**, and this theme may feel unlike the others (its pale lines are
+the point; high contrast and the other themes serve people who need hard edges). Each
+difference falls into one of three cases:
+
+1. **The mock left out something the app needs.** Restore it in the design's language: the ⚙
+   room settings link, surface subtitles (in-game help), the Train button, the roster's owner,
+   level and AC, the BOSS pill and collapse toggle, presets, the card ⓘ, the feed's ASCII card
+   frames (Discord shares them), the feed markers.
+2. **The mock differs from the other themes, and that is right for this theme.** Millefleur
+   only: folder tabs, washes, the halo, role dots, pill meters, ruled Chat paper, the 12.5 px
+   transcript, the rose boss card, painted sheets, the pale lines.
+3. **The mock found something better for every player.** Build it here first, then backport it
+   (task 3d): a portrait of the monster in the Workshop; new cards as chips in the level-up
+   sheet; the level badge and a "Level up" title; the card ⓘ in the slot's corner on phones;
+   "You can train N more" beside the heading, with Train as the primary action only until the
+   player has a monster; Chat anchored to the bottom with message times; the Ring header's meta
+   as one group.
+
+**Pixel monsters on paper (task 5).** The halo and the soft lift shipped with the surfaces. The
+hit flash is pink in Millefleur and keeps the outline (`--color-sprite-flash-outline: none`), so a
+struck monster blinks rather than vanishing into the paper; the dark themes still flash the whole
+silhouette. Checked on paper at 1x, 2x and 3x: an ivory-white Unicorn, a moon-mist Weeping Angel,
+a white Gladiator, an ivory Jinn, a pale-cream Basilisk. The ivory Unicorn is faint at 1x but its
+outline carries it; no species palette changed.
+
+Two candidates were tested and set aside, both for reasons already in the code's history:
+
+- **The card ⓘ in the slot's corner on phones.** The phone strip exists because a corner badge
+  overlapped the card and swallowed drops (pass 44). Built again and measured with touch
+  emulation on 83 px slots: a 44 px corner target covers the slot's centre, top and right
+  edge, so the most natural tap opened the card's details instead of selecting it. Millefleur
+  keeps the strip as the tile's quiet footer (case 1). Drops now land on the whole tile in every
+  theme, the ⓘ included, because the drop handler moved from the slot button to its cell.
+- **One line per roster entry** (portrait, name, bar, figure). Bug 169 gave the name line the
+  row's width, with the figure and bar in a narrow right rail, so generated boss names stay
+  whole (the narration uses them in full). With the bar in the middle, a long boss name broke
+  mid-word over four lines at 390 px and the AC fell off the meta line. Millefleur restyles the
+  rows and keeps their layout (case 1); the ▶ turn marker stays beside the turn wash.
+
+**One PR.** The owner asked for everything about this theme, with the small fixes found along
+the way, in a single PR, however large (2026-10-06): every task in the table ships together as
+pass 46a, including what was planned as 46b. Dream Desktop (roadmap 47) is out of scope.
+
+**The transcript.** Beside the mock, the Ring's transcript differed most: the mock's author wrote
+flavour, swapped round announcements for dividers, and spaced lines evenly. The engine's text
+still carries the Slack era's layout (indents, blank lines, ASCII rules) and bundles several
+lines per event. The owner's plan (2026-10-06): structured lines with metadata from the engine
+(task 7), browser-controlled spacing and per-kind styling or judicious replacement in the
+renderer (task 8), and new flavour (task 9). Discord keeps the text it has today.
+
+### Pass 46a record
+
+- **Pixel check for task 1.** The four existing themes were compared screen by screen against
+  `main` in Chromium (390 × 844 and 1440 × 900; Ring and Console, Workshop, Chat, Fights,
+  Leaderboard, Account, Help, Rooms) on the local app, two Vite servers side by side. The only
+  differences were intended: the stray feed marker (bug 231), and native controls drawn dark
+  under `color-scheme: dark` (bug 232). Everything else was pixel-identical.
+- **Palette test exemptions.** The extended contrast rules fail some pairs in today's dark
+  themes (phosphor and amber `fg-dim` and `system`, Street Fighter's accent at 3.99:1, and
+  every theme's critical HP against its track). Fixing them would change those themes, so the
+  test lists them in `KNOWN_FAILURES` (it fails if one starts passing). Millefleur has none.
+  Raising them is a follow-up for a later pass, not part of this theme.
+- **Task 2.** Millefleur's lazy chunk is 10.6 KB of CSS plus Nunito 400/600/700/800 (about
+  16 KB each); the shared CSS grew by under 1 KB (the first-paint stub and the new class hooks).
+  HP ramp on paper: healthy `#2a8570` (gradient from `#2c8873`), hurt `#964214`, critical
+  `#7a1838`, 3.40 to 8.24:1 on the track. The palette test is now direction-aware: on a light
+  ground, contrast with the ground rises as health falls. `--color-danger-border` keeps the
+  dark themes' danger panel identical. Reviewed; the fix round closed six should-fix findings.
+- **Feed metrics follow the drawn type.** Task 3c replaced the fixed 14/1.4 guess with
+  measured CSS metrics. Millefleur now uses 12.5px on a 1.65 line; the dark themes keep
+  their own metrics. Renderer and estimate share the composed blocks (task 8).
+- **Task 8 review decisions.** The roll is already a separate, indented dim block under
+  the play/card event. Its complete arithmetic and verdict stay in one sentence, as
+  approved in task 8; the mock's abbreviated roll is not a second wording contract.
+  Millefleur draws fresh structured cards as a title, CSS rule and body. The terminal
+  themes first did the same, and the final review restored the engine's ASCII frame there
+  (ab9beb51), because the owner prefers the ASCII render in the terminal themes, as on
+  Discord. CSS gaps replace the engine's blank lines in every theme. Old history without
+  `lines` still renders its fenced text; Discord keeps `text`.
+- **Task 3d review.** Source and recorded dark-theme shots confirm the deliberate
+  backports: Workshop portrait/status/count and first-monster Train emphasis
+  (a0a3eb8c), Chat bottom anchoring/times and grouped Ring meta (18d73971), and
+  level-up title/card chips. The boxed level badge was deliberately withheld in dark
+  themes (92cdb96b); a Street Fighter badge remains roadmap 42 L. The phone info strip
+  and stacked roster stay as explained in *Reading the mocks*. No additional restyle.
+- **Budget evidence.** The task-2 10.6 KB figure describes that early checkpoint, not
+  the final stylesheet. The current CSS source is 80,553 bytes; §8's 12 KB unminified
+  limit is not met. Recorded task-6 checks do not include Fast-3G or fight-scroll frame
+  timings. The owner accepted that on 2026-10-06: the size is not a ship gate, and those
+  timings are not required to close the theme. A careful condensation pass remains in
+  [10, item L](10-bug-fixes.md#l-millefleur-stylesheet-condensation). The completed 46b
+  checklist is not being repeated.
+- **Deviation from §4:** the pre-paint script cannot name the lazy chunk (its file name is
+  hashed), so instead of a `modulepreload` the chunk's import starts at the top of `main.tsx`,
+  before React renders, whenever `data-theme` is already `millefleur`.
+
+### Handoff (Codex review, 2026-10-06)
+
+Continue on `claude/unicorn-monster-cards-cigpmw`; do not create a new branch or open
+another PR. Cursor's task-6/task-8 browser checklist is complete in
+[46b](46b-cursor-check.md) and must not be repeated.
+
+1. Review fixes 237 and 238 are implemented and independently approved; the full
+   build/typecheck/lint/test/docs gate passed. Main still ends at 230, so 231–236
+   keep their numbers. Task 3d's shipped backports are reviewed. The owner-copy gate
+   also exposed the nondeterministic loss fixture, now stabilized as fix 239.
+2. Task 9's additive entrance, round and boss lines (17ec8632) are implemented in both `text`
+   and `lines`, independently approved, and pass the full gate. A new owned local
+   scratch room showed the Unicorn entrance, Minotaur boss and round beat on
+   Millefleur at 390 and 1440. The room and disposable database were deleted; the
+   reusable remote rooms were untouched. The owner has since revised the entrance
+   copy; the current lines are below, and the shots retain the initial wording.
+   Player Dragon entrances now alternate between the owner’s sheep-bone and goblet
+   lines; wave and mutton-vendor beats are in the round pool. Boss Gladiator now
+   rotates all four owner-approved chants. The owner's revised drafts for the other
+   five species (e83eb18f) are folded into the tables below and into the live pools.
+3. Task 9 was looked at in the Ring after the drafts were folded in. The lines are in
+   the tables above. The CSS size was later accepted (see the handoff at the top). Do
+   not archive roadmap 46 while the Workshop portraits are only recorded here.
+4. Before each checkpoint push: `pnpm build && pnpm typecheck && pnpm lint && pnpm test`
+   and `pnpm docs:check`. The branch owner decides when to open its one PR.
+
+### Progress (Cursor, 2026-10-06)
+
+Task 8 is live-checked and task 6's screen tour is recorded in
+[46b-cursor-check.md](46b-cursor-check.md). Bugs 235 and 236 are fixed (70a1309e, b51e3b1c).
+Docs owed for task 8 are updated in the same commit as this note. Do not open a PR.
+The reviewed entrance drafts are in the live pools and have been looked at in the
+Ring. Do not re-apply the drafts. The stylesheet size was later accepted; see the
+handoff at the top. Do not archive this plan while the Workshop portraits are only
+recorded here.
+
+Still open from this note: the one PR, when the owner asks. Task 3d's two set-aside
+ideas stay set aside. The
+scratch room for the live check was deleted; Test Room A, Test Room B and Game Night
+were left in the lobby.
+
+
+### Task 9 — lines for the owner's review (2026-10-06)
+
+These are additive narration after the existing call/house arrival and beneath round
+markers. The house sentence, temperament and card remain; composed play/roll/HP
+sentences do not change. `{name}` is the monster's name; pronouns come from the monster
+and Gladiator's `comes/come` agrees with them. All seven species are covered.
+
+| Species | After a player's monster answers the call |
+|---|---|
+| Basilisk, variant 1 | {name} raises a crowned head. The front row makes intense eye contact with the sand. |
+| Basilisk, variant 2 | {name} lifts a crowned head. Somewhere, a music producer is about to invent the genre of shoegaze. |
+| Basilisk, variant 3 | {name} surveys the benches. A man in the front row announces that he wasn't looking anyway. |
+| Gladiator | {name} steps onto the sand. Once, the gates were locked behind {him}; today, {he} {comes/come} by choice. |
+| Jinn, variant 1 | {name} neatly materializes out of smoke. A close observer may catch {him} reflexively rubbing {his} bare wrists. |
+| Jinn, variant 2 | {name} steps out of a curl of smoke. A man with a lamp puts it away before anyone can get the wrong idea. |
+| Jinn, variant 3 | {name} takes shape beside the gate. A small boy (for what must be the 100th time) asks for three wishes. His mother would settle for one. |
+| Minotaur, variant 1 | {name} lowers {his} horns. The way in was easy. The way out is somebody else's problem. |
+| Minotaur, variant 2 | {name} just barely ducks through the gate. The mason who maintains it suddenly remembers an urgent appointment elsewhere. |
+| Minotaur, variant 3 | {name} lowers {his} horns. At just that moment a man who has been shouting advice wisely remembers that he is, technically, a spectator. |
+| Weeping Angel, variant 1 | {name} is already here. Nobody remembers {him} arriving. |
+| Weeping Angel, variant 2 | {name} is standing on the inside of the closed gates. The gatekeeper is fairly certain that he never opened them. |
+| Weeping Angel, variant 3 | {name} sits demurely, almost statue-like, on the edge of a small fountain in the middle of a beautiful rose garden. No wait, the spectators rub their eyes, that's just the sand. |
+| Unicorn, variant 1 | {name} steps in, horn first. A woman in the front row holding a rose quickly moves it behind her back. |
+| Unicorn, variant 2 | {name} steps onto the sand. A vendor discreetly changes “fresh roses” to “seasonal produce” on her sign. |
+| Unicorn, variant 3 | {name} pauses at the gate. The palace gardener recognizes {him}. This is not, on the whole, a happy reunion. |
+| Dragon, variant 1 | {name} lands with a sheep bone caught between {his} teeth. Somewhere, a shepherd is still shouting. |
+| Dragon, variant 2 | {name} folds {his} wings. A pilfered goblet rolls out from under one of them. |
+
+| Species | Added to the boss's arrival, keeping "sent by the house" |
+|---|---|
+| Basilisk, variant 1 | {name} slithers through the gate. The front row makes intense eye contact with the sand. |
+| Basilisk, variant 2 | {name} slithers through the gate. Somewhere, a music producer is about to invent the genre of shoegaze. |
+| Basilisk, variant 3 | {name} slithers through the gate. A man in the front row announces that he wasn't looking anyway. |
+| Gladiator, variant 1 | {name} stalks onto the sand. “THERE'S ONLY ONE {NAME}!” chant the cheap seats. While not strictly true, the house can confirm that it holds true in today's battles at least. |
+| Gladiator, variant 2 | {name} stalks onto the sand. “{NAME}'S ON FIRE!” sing the stands. Three attendants hurry in with buckets. Experience has taught them to check. |
+| Gladiator, variant 3 | {name} stalks onto the sand. “ONE OF OUR OWN!” roar the stands. It's unclear (and highly unlikely) whether {name} has ever met these people, but they seem very certain. |
+| Gladiator, variant 4 | {name} stalks onto the sand. The crowd begins {name}'s song. It has six verses and one rude word, somehow creatively used in all six. |
+| Jinn, variant 1 | {name} billows through the gate. The house has sent smoke with a grudge. |
+| Jinn, variant 2 | {name} billows through the gate. A man with a lamp puts it away before anyone can get the wrong idea. |
+| Jinn, variant 3 | {name} billows through the gate. A small boy (for what must be the 100th time) asks for three wishes. His mother would settle for one. |
+| Minotaur, variant 1 | {name} stamps into the ring. Half bull, all temper. |
+| Minotaur, variant 1, with a living Unicorn in this ring | {name} stamps into the ring. Half bull, all temper, and in no mood for roses. |
+| Minotaur, variant 2 | {name} stamps into the ring. The mason who maintains the gate suddenly remembers an urgent appointment elsewhere. |
+| Minotaur, variant 3 | {name} stamps into the ring. At just that moment a man who has been shouting advice wisely remembers that he is, technically, a spectator. |
+| Weeping Angel, variant 1 | {name} stands beyond the gate. The crowd can't really remember when {he} got there. |
+| Weeping Angel, variant 2 | {name} stands beyond the gate. The gatekeeper is fairly certain that he never opened it. |
+| Weeping Angel, variant 3 | {name} stands beyond the gate. {name} sits demurely, almost statue-like, on the edge of a small fountain in the middle of a beautiful rose garden. No wait, the spectators rub their eyes, that's just the sand. |
+| Unicorn, variant 1 | {name} trots through the gate. The house denies all knowledge of the missing roses. |
+| Unicorn, variant 2 | {name} trots through the gate. A vendor discreetly changes “fresh roses” to “seasonal produce” on her sign. |
+| Unicorn, variant 3 | {name} trots through the gate. The palace gardener recognizes {him}. This is not, on the whole, a happy reunion. |
+| Dragon | {name} sweeps down to the sand. The Editor deftly slips their jeweled hand into their pocket. |
+
+Round beats rotate in a small pool, separately per room's Ring, without adjacent
+repeats or random draws that could change seeded combat:
+
+- The crowd settles. The sand does not.
+- Did you know it takes a full five minutes for the wave to make it around this ring?
+- A hush runs round the benches.
+- Somewhere in the stands, a wager changes hands.
+- The gates are shut. The story is not.
+- A hush falls over the crowd, punctuated only by the cry of a vendor hawking what are apparently the biggest, juiciest mutton legs in the whole empire.
+
+Basilisk, Jinn, Minotaur, Weeping Angel and Unicorn each rotate three player lines
+and three boss lines, in separate species/role pools per Ring. Player Dragon and boss
+Gladiator keep their own pools. No pool draws at random or repeats the line it just
+used. Sampling without a Ring takes the first line and does not advance a pool. The
+Minotaur roses clause stays on the original temper line only. The sheep bone and
+pilfered goblet connect to the Dragon's appetite and hoard; the other lines connect
+to species lore and running jokes. Generated species/pronoun examples live in the
+[strings inventories](../reference/strings/README.md), regenerated from the same source.
+The Ring look is recorded below. The stylesheet size was later accepted; see the handoff
+at the top. Do not archive this roadmap while the Workshop portraits are only recorded here.
+
+
+### Task 9 — verification checkpoint (2026-10-06)
+
+The independent implementation review approved species/pronoun coverage, additive
+text/lines consistency, ring-scoped Minotaur roses, deterministic round rotation and
+the regenerated strings inventories. Build, typecheck, lint, all tests and docs checks
+passed. Owner editorial acceptance was still open at this checkpoint. The Ring look
+below closed it.
+
+The configured remote database was unreachable. For this check, the existing test
+account authenticated normally against Supabase; a disposable localhost PostgreSQL
+instance held only the new owned scratch room. The actual engine, room manager,
+event persistence, authenticated API and web renderer produced these fresh events
+at the initial implementation checkpoint (before the owner’s copy revisions):
+
+- [Unicorn entrance and Minotaur boss, 390 × 940](46b-shots/flavour-boss-390.png).
+- [Round divider and beat, 390 × 940](46b-shots/flavour-round-390.png).
+- [Round divider and beat, 1440 × 900](46b-shots/flavour-round-1440.png).
+
+The fixture used short Heal decks, skipped pacing delays and a locally initialized
+schema. It verifies narration rendering, not production migrations, combat balance
+or the outstanding performance budget. This is a targeted task-9 check; Cursor's
+completed 46b checklist was not repeated. The scratch room was deleted through the
+API, its room list was verified empty, and the disposable database was removed.
+Test Room A, Test Room B and Game Night were untouched.
+
+
+### Task 9 — owner copy revisions (2026-10-06)
+
+Applied the owner's Basilisk, Jinn, Weeping Angel, Unicorn and boss Dragon wording
+in the shared narration source and regenerated the species/pronoun inventories.
+The Jinn uses “catch … rubbing” and the Editor's hand goes “into their pocket”.
+Monster pronouns vary; the woman in the Unicorn line and the Editor retain their
+own pronouns. The table above is current. Existing screenshots remain evidence of
+the initial implementation, not captures of this revised copy.
+
+The owner subsequently chose both player Dragon alternatives with “sheep bone” and
+“pilfered goblet”, plus the wave and mutton-vendor round lines. These are now in the
+current table/pool above. The Dragon pool rotates separately per Ring without
+changing combat RNG; both variants appear with every pronoun in the generated
+inventory. The wave replaces the stilted house/counsel beat; the vendor joins the
+remaining beats. The owner then approved all four Gladiator chants, with the edits
+shown in the current boss table. These now rotate separately by species and role
+in each Ring; the inventory enumerates every live variant with every pronoun.
+The Ring look below is the acceptance for these lines. The roadmap stays active
+for the leftovers named in the handoff.
+
+
+### Task 9 — reviewed entrance drafts folded in (2026-10-06)
+
+The owner's revised drafts (e83eb18f) are in the tables above and in the live pools.
+Player lines use those sentences. Boss lines keep the species verb and then the joke.
+`{NAME}` in the live Gladiator chant is still the uppercased monster name.
+
+Corrections made while applying them:
+
+- A comma after "Somewhere", matching the shepherd line.
+- The boss Minotaur says "the gate". "Stamps into the ring" does not name a gate for "it" to point at. The player line still says "maintains it", because that sentence has already named the gate.
+- The boss Weeping Angel says "opened it". The arrival names one gate. The player line still says "closed gates" and "them".
+- Straight apostrophes in "wasn't" and "that's", matching the rest of the narration source.
+
+The garden beat follows "stands beyond the gate" as its own sentence, so the species
+verb and the joke both stay.
+
+
+### Task 9 — looked at in the Ring (2026-10-06)
+
+A scratch room on Millefleur, deleted afterwards. Test Room A, Test Room B and
+Game Night were not used. The feed showed the new lines after the call or the house
+arrival, then the stat card. On a phone the joke stays in the feed and wraps as
+ordinary sentences. Nothing in these lines was clipped, and no spelling correction
+turned up in the ones on screen.
+
+- [Basilisk, shoegaze, 390](46b-shots/task9-shoegaze-390.png) and [1440](46b-shots/task9-shoegaze-1440.png).
+- [Weeping Angel, the rose garden, 390](46b-shots/task9-garden-390.png) and [1440](46b-shots/task9-garden-1440.png).
+- [Jinn, three wishes, 390](46b-shots/task9-wishes-390.png).
+- [Boss Minotaur, the mason, 390](46b-shots/task9-mason-boss-390.png) and [1440](46b-shots/task9-mason-boss-1440.png). The species verb is still "stamps into the ring", and the line says "the gate".
+- [Unicorn, the gardener, 1440](46b-shots/task9-roses-1440.png).
+
+This fight ended before a round rolled over, so a round beat was not on screen.
+Those beats were already checked at the earlier flavour checkpoint and were not
+part of the draft fold. The stylesheet size was later accepted. Condensing duplicate
+rules remains a careful pass in
+[10, item L](10-bug-fixes.md#l-millefleur-stylesheet-condensation). Do not archive this
+roadmap while the Workshop portraits are only recorded here.

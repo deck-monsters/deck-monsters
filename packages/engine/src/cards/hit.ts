@@ -90,6 +90,7 @@ export class HitCard extends BaseCard<HitCardOptions> {
 		}
 
 		this.emit('rolled', {
+			success: success,
 			reason,
 			card: this,
 			roll: attackRoll,

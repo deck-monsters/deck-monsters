@@ -39,6 +39,29 @@ Seeded, cycling he, she, and they.
 |---|---|
 | description → returns | `a {adjective}, {color}, {location}-dwelling basilisk with a nasty disposition and the ability to turn creatures to stone with {his} gaze. In the forest {he} {is} king and (weighing {weight}) in the ring {he} {is} much to be feared. See how {he} rear{verbSuffix} {his} head, and roll{verbSuffix} about {his} dreadful eyes, to drive all virtue out, or look it dead!` |
 
+### Ring entrance
+
+Additive to the call or the house arrival; cycling he, she, and they.
+
+- Player (he, variant 1): `Companion raises a crowned head. The front row makes intense eye contact with the sand.`
+- Player (he, variant 2): `Companion lifts a crowned head. Somewhere, a music producer is about to invent the genre of shoegaze.`
+- Player (he, variant 3): `Companion surveys the benches. A man in the front row announces that he wasn't looking anyway.`
+- House (he, variant 1): `Companion slithers through the gate. The front row makes intense eye contact with the sand.`
+- House (he, variant 2): `Companion slithers through the gate. Somewhere, a music producer is about to invent the genre of shoegaze.`
+- House (he, variant 3): `Companion slithers through the gate. A man in the front row announces that he wasn't looking anyway.`
+- Player (she, variant 1): `Companion raises a crowned head. The front row makes intense eye contact with the sand.`
+- Player (she, variant 2): `Companion lifts a crowned head. Somewhere, a music producer is about to invent the genre of shoegaze.`
+- Player (she, variant 3): `Companion surveys the benches. A man in the front row announces that he wasn't looking anyway.`
+- House (she, variant 1): `Companion slithers through the gate. The front row makes intense eye contact with the sand.`
+- House (she, variant 2): `Companion slithers through the gate. Somewhere, a music producer is about to invent the genre of shoegaze.`
+- House (she, variant 3): `Companion slithers through the gate. A man in the front row announces that he wasn't looking anyway.`
+- Player (they, variant 1): `Companion raises a crowned head. The front row makes intense eye contact with the sand.`
+- Player (they, variant 2): `Companion lifts a crowned head. Somewhere, a music producer is about to invent the genre of shoegaze.`
+- Player (they, variant 3): `Companion surveys the benches. A man in the front row announces that he wasn't looking anyway.`
+- House (they, variant 1): `Companion slithers through the gate. The front row makes intense eye contact with the sand.`
+- House (they, variant 2): `Companion slithers through the gate. Somewhere, a music producer is about to invent the genre of shoegaze.`
+- House (they, variant 3): `Companion slithers through the gate. A man in the front row announces that he wasn't looking anyway.`
+
 ### Long description
 
 ```text

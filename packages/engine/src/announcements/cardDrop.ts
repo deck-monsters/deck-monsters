@@ -1,5 +1,6 @@
-import { actionCard } from '../helpers/card.js';
+import { actionCard, actionCardLine } from '../helpers/card.js';
 import type { RoomEventBus } from '../events/index.js';
+import type { FeedLine } from '../events/types.js';
 
 interface CardDropOpts {
 	contestant: any;
@@ -18,10 +19,15 @@ export function announceCardDrop(
 	// keep the class name.
 	const cardDropName = (card?.cardType ?? card?.name ?? (card?.constructor as { name?: string })?.name ?? 'Card') as string;
 
-	const text = `${contestant.monster.identity} finds a card for ${contestant.character.identity} in the dust of the ring:\n\n${cardDropped}`;
+	const dropText = `${contestant.monster.identity} finds a card for ${contestant.character.identity} in the dust of the ring:`;
+	const text = `${dropText}\n\n${cardDropped}`;
+	const lines: FeedLine[] = [
+		{ kind: 'card-drop', text: dropText, name: contestant.monster.givenName, card: cardDropName },
+		actionCardLine(card, true),
+	];
 
 	// Send privately to the player and also broadcast publicly
-	const payload = { contestant, card, cardDropName };
+	const payload = { contestant, card, cardDropName, lines };
 	eb.publish({ type: 'ring.cardDrop', scope: 'private', targetUserId: contestant.userId, text, payload });
 	eb.publish({ type: 'ring.cardDrop', scope: 'public', text, payload });
 }

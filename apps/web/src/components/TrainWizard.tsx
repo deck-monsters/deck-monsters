@@ -362,9 +362,9 @@ export default function TrainWizard({
           <button type="button" className="btn" title="Go back to the last step" onClick={() => { setError(null); setStepIndex((at) => Math.max(at - 1, 0)); }}>Back</button>
         )}
         {last ? (
-          <button type="submit" className="btn" title={`Train ${trimmedName} with these answers`} disabled={busy}>Train {trimmedName}</button>
+          <button type="submit" className="btn btn-cta" title={`Train ${trimmedName} with these answers`} disabled={busy}>Train {trimmedName}</button>
         ) : (
-          <button type="submit" className="btn" title="Go to the next step" disabled={!canNext}>Next</button>
+          <button type="submit" className="btn btn-cta" title="Go to the next step" disabled={!canNext}>Next</button>
         )}
       </div>
     </form>

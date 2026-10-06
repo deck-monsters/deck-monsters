@@ -119,6 +119,10 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
       ? Math.max(monsterSlots - monsters.length, 0)
       : undefined;
   const trainingFull = freePlaces === 0;
+  // One primary per view: once there is a monster, the view's primary is Send to ring, so
+  // Train monster steps down to a secondary button; it is the primary only while the player
+  // has no monster to send.
+  const quietTrain = monsters.length > 0;
   const trainLine =
     freePlaces === undefined
       ? null
@@ -713,7 +717,14 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
     >
       <div className="workshop-header">
         <div>
-          <h1>Workshop</h1>
+          <div className="workshop-title-row">
+            <h1>Workshop</h1>
+            {/* Same fact as the train line below, at the heading's right: shown in every theme
+                (the sentence below hides itself while the count is up). */}
+            {freePlaces !== undefined && freePlaces > 0 && (
+              <span className="workshop-train-count">You can train {freePlaces} more</span>
+            )}
+          </div>
           <p>{surfaceDescription('workshop')}</p>
         </div>
         <div className="workshop-header-actions">
@@ -729,10 +740,12 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
         so no places to count, and keeps the plain button.
       */}
       <div className="workshop-train-row">
-        {trainLine && <p className="workshop-train-line">{trainLine}</p>}
+        {trainLine && (
+          <p className={`workshop-train-line${freePlaces ? ' workshop-train-line-count' : ''}`}>{trainLine}</p>
+        )}
         <button
           title={showSpawn ? 'Close without training' : 'Choose a type, a name and a look for a new monster'}
-          className="btn"
+          className={showSpawn || quietTrain ? 'btn' : 'btn btn-primary'}
           onClick={() => setShowSpawn((shown) => !shown)}
           disabled={!roomId || busy || (trainingFull && !showSpawn)}
         >

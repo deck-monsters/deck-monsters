@@ -148,7 +148,7 @@ describe('MonsterWorkshopPanel header — HP first, no slot bar (10b-bugs-fixed.
     const revivesAt = Date.now() + 5 * 60_000;
     const { container } = renderPanel({ dead: true, hp: 0, revivesAt });
 
-    expect(screen.getByText('fallen')).toBeTruthy();
+    expect(tags()).toEqual(['Fallen']);
     const fill = container.querySelector('.roster-bar-fill') as HTMLElement;
     expect(fill.style.width).toBe('0%');
     expect(fill.className).toContain('roster-bar-critical');
@@ -157,7 +157,8 @@ describe('MonsterWorkshopPanel header — HP first, no slot bar (10b-bugs-fixed.
   it('reads plain "Fallen" with no revive estimate when no revival timer is running', () => {
     renderPanel({ dead: true, hp: 0, revivesAt: null });
 
-    expect(screen.getByText('Fallen')).toBeTruthy();
+    // The HP line and the status tag both say it.
+    expect(screen.getAllByText('Fallen')).toHaveLength(2);
     expect(screen.queryByText(/back (at|in)/)).toBeNull();
   });
 
@@ -210,6 +211,9 @@ describe('MonsterWorkshopPanel header — HP first, no slot bar (10b-bugs-fixed.
     expect(screen.queryByRole('progressbar', { name: /slots used/ })).toBeNull();
   });
 
+  // The status tag by its class: a fallen monster's HP line also says "Fallen".
+  const tags = () => Array.from(document.querySelectorAll('.workshop-status-tag')).map((el) => el.textContent);
+
   it('shows exactly one status tag, preferring "in the ring" over "fighting" over "fallen"', () => {
     const { rerender } = render(
       <MonsterWorkshopPanel
@@ -227,9 +231,7 @@ describe('MonsterWorkshopPanel header — HP first, no slot bar (10b-bugs-fixed.
         onDeletePreset={noop}
       />,
     );
-    expect(screen.getByText('in the ring')).toBeTruthy();
-    expect(screen.queryByText('fighting')).toBeNull();
-    expect(screen.queryByText('fallen')).toBeNull();
+    expect(tags()).toEqual(['In the ring']);
 
     rerender(
       <MonsterWorkshopPanel
@@ -247,15 +249,12 @@ describe('MonsterWorkshopPanel header — HP first, no slot bar (10b-bugs-fixed.
         onDeletePreset={noop}
       />,
     );
-    expect(screen.getByText('fighting')).toBeTruthy();
-    expect(screen.queryByText('fallen')).toBeNull();
+    expect(tags()).toEqual(['Fighting']);
   });
 
-  it('shows no status tag for a healthy, benched monster', () => {
+  it('says Ready for a healthy, benched monster, and nothing else', () => {
     renderPanel({ inRing: false, inEncounter: false, dead: false });
-    expect(screen.queryByText('in the ring')).toBeNull();
-    expect(screen.queryByText('fighting')).toBeNull();
-    expect(screen.queryByText('fallen')).toBeNull();
+    expect(tags()).toEqual(['Ready']);
   });
 });
 

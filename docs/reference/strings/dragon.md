@@ -48,6 +48,20 @@ Seeded, cycling he, she, and they.
 | description → ancient | ` {He} {is/are} ancient. {His} fire cannot be dodged, but {he} can still be tricked.` |
 | description → returns | `{article} {head} dragon, {body}, with {wings} wings. {His} scales are {color}, and {he} {keeps/keep} to {home}. {profile}{ancient}` |
 
+### Ring entrance
+
+Additive to the call or the house arrival; cycling he, she, and they.
+
+- Player (he, variant 1): `Companion lands with a sheep bone caught between his teeth. Somewhere, a shepherd is still shouting.`
+- Player (he, variant 2): `Companion folds his wings. A pilfered goblet rolls out from under one of them.`
+- House (he): `Companion sweeps down to the sand. The Editor deftly slips their jeweled hand into their pocket.`
+- Player (she, variant 1): `Companion lands with a sheep bone caught between her teeth. Somewhere, a shepherd is still shouting.`
+- Player (she, variant 2): `Companion folds her wings. A pilfered goblet rolls out from under one of them.`
+- House (she): `Companion sweeps down to the sand. The Editor deftly slips their jeweled hand into their pocket.`
+- Player (they, variant 1): `Companion lands with a sheep bone caught between their teeth. Somewhere, a shepherd is still shouting.`
+- Player (they, variant 2): `Companion folds their wings. A pilfered goblet rolls out from under one of them.`
+- House (they): `Companion sweeps down to the sand. The Editor deftly slips their jeweled hand into their pocket.`
+
 ### Long description
 
 ```text

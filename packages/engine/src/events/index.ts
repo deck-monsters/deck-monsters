@@ -8,4 +8,5 @@ export type {
 	EventScope,
 	EventSubscriber,
 	EventsSinceResult,
+	FeedLine,
 } from './types.js';

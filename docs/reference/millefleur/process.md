@@ -96,6 +96,16 @@ to the page with no line under it read as a folder, and as System 7.
 - Chromium in the cloud sandbox could not load Google Fonts, so early renders used fallback
   fonts and looked wrong. Download the woff2 files once and point the page at them.
 
+### Review findings against design decisions
+
+In the build, a code review flagged that the XP bar's filled part barely differed from its
+track. The fix (saturated stops and a plum outline) went in without anyone checking that the
+design had already decided the bar was decorative, because the figures beside it carry the
+information. The owner caught the drift. A reviewer checks rules; it does not know which rules
+the design deliberately chose not to apply. **Before passing on a contrast or legibility finding,
+check whether the surface is information or decoration, and whether the design system already
+decided.** Apply the 3:1 and 4.5:1 rules to controls and information, and leave decoration soft.
+
 ### Working with the owner
 
 - Show options side by side, with the previous round still visible, and name what changed.

@@ -1,6 +1,7 @@
-import { monsterCard, monsterTurnLine } from '../helpers/card.js';
+import { monsterCard, monsterCardLine, monsterTurnFeedLine, monsterTurnLine } from '../helpers/card.js';
 import { isRivalTeam } from '../ring/ring-events.js';
 import type { RoomEventBus } from '../events/index.js';
+import type { FeedLine } from '../events/types.js';
 
 import { possessive } from '../helpers/possessive.js';
 
@@ -25,19 +26,31 @@ export function announceTurnBegin(
 	const { monster } = contestant;
 	const alreadySeen = contestant.lastMonsterPlayed === monster;
 
+	const team = isRivalTeam(contestant.team) ? undefined : contestant.team;
 	const body = alreadySeen
-		? monsterTurnLine(monster, isRivalTeam(contestant.team) ? undefined : contestant.team)
+		? monsterTurnLine(monster, team)
 		: `${contestant.character.identity} plays the following monster:\n${monsterCard(monster, true)}`;
 
 	// A boss's character is the shared "The Editor", which names nobody in the roster or the
 	// feed; the monster's own given name is what a player can match to the roster row.
 	const turnName = contestant.isBoss ? monster.givenName : contestant.character.givenName;
 
+	const turnText = `*It's ${possessive(turnName)} turn. ${monster.givenName} plays the next card in ${monster.pronouns?.his ?? 'their'} deck.*`;
+	const lines: FeedLine[] = [
+		{ kind: 'turn-begin', text: turnText, actor: monster.givenName },
+		...(alreadySeen
+			? [monsterTurnFeedLine(monster, team)]
+			: [
+					{ kind: 'narration', text: `${contestant.character.identity} plays the following monster:` } satisfies FeedLine,
+					monsterCardLine(monster, true),
+				]),
+	];
+
 	eb.publish({
 		type: 'announce',
 		scope: 'public',
 		text: `*It's ${possessive(turnName)} turn. ${monster.givenName} plays the next card in ${monster.pronouns?.his ?? 'their'} deck.*\n\n${body}`,
-		payload: { contestant },
+		payload: { contestant, lines },
 	});
 
 	contestant.lastMonsterPlayed = monster;

@@ -5363,6 +5363,115 @@ router's `myInventory` test.
 
 **Status**: Fixed.
 
+### 231. A stray "." at the left edge of every feed row on a phone — FIXED
+
+Found in the before-and-after screenshots for roadmap 46 pass 46a. Every row of the Ring and
+Console feeds had a clipped "." at the screen's left edge on a 390px phone. The feed's `<ol>`
+(rendered by react-virtuoso as `.event-feed-list`) showed its default decimal markers: the
+`list-style: none` sat on `.event-feed`, the scroller, but the UA stylesheet gives every `<ol>`
+`list-style-type: decimal`, which beats the inherited value. The "1." markers hang outside the
+row and the feed's edge clipped all but the full stop. `list-style: none` is now on
+`.event-feed-list` itself, with a comment.
+
+### 232. Native controls drawn light on the dark themes, and the fight log in the wrong font — FIXED
+
+Found while adding the theme plumbing for roadmap 46 (pass 46a, task 1).
+
+- **Native controls.** No stylesheet set `color-scheme`, so the browser drew unstyled native
+  controls for a light page: the Account page's display-name field was a white box, the
+  Account and Leaderboard radio buttons were white discs, and the role glyph on each Workshop
+  card slot (⚔ attack, ✚ heal) drew in the default dark text colour on the dark card, nearly
+  invisible. Every dark theme now declares
+  `color-scheme: dark`; a light theme declares `light`.
+- **Fight log font.** `.fight-log-detail` read `var(--font-mono, monospace)`, but `--font-mono`
+  was never defined, so the transcript in Fights rendered the browser's generic monospace
+  instead of JetBrains Mono. The token now exists (it equals `--font-family` on every theme).
+
+### 233. Revive and Unequip all touched in the Workshop — FIXED
+
+Found by the owner in the Millefleur screenshots (roadmap 46 pass 46a). The monster panel's
+action row (`.workshop-monster-actions`: Revive or Send to ring, then Unequip all) was a flex
+row with no `gap`, so the two buttons sat edge to edge in every theme. The dark themes' square
+1px borders butted together and read as one divided control; Millefleur's rounded buttons made
+the missing space obvious. The row now has a 0.5rem gap and wraps on a narrow card.
+
+### 234. Street Fighter's card blocks were booked 2px short in the Ring feed — FIXED
+
+Found when the Ring feed's row-height guess started reading the live CSS (roadmap 46 pass 46a,
+task 3c). The guess hard-coded a card block's chrome (padding, margin and border on both sides)
+as 30.8px, measured on phosphor. The Street Fighter theme draws card blocks with a wider
+(double) border, so each of its card blocks was 2px taller than booked. Small, but the guess
+exists to keep Virtuoso's anchor correction near zero (#196), and every card row in that theme
+was off. The chrome is now measured from the theme's own CSS (32.8px there; unchanged elsewhere).
+
+### 235. Millefleur's bloodied clause sat after the HP sentence's period — FIXED
+
+Found in the live check of the line renderer (roadmap 46, task 8, 2026-10-06). A bloodied HP
+line is the engine sentence (`*Quoloth has -4HP.*`) plus a rose ", bloodied". The composer
+appended that clause after the whole string, so the feed painted "has -4HP., bloodied": the
+period already closed the sentence. The clause now goes inside the sentence ("has -4HP,
+bloodied.") and the closing markup star stays on the name's clause, so the two parts don't
+leave an open `*`. The engine's `text` is unchanged; Discord and pacing still see the
+original sentence.
+
+### 236. Millefleur repeated "bloodied" on the threshold HP line — FIXED
+
+The same live check. Crossing into bloodied is one engine sentence: "Monster is now
+bloodied. Monster has only 17HP." The composer still appended ", bloodied" whenever the
+line's `bloodied` flag was set, so the feed painted "is now bloodied. … has only 17HP,
+bloodied." Later HP lines ("has only 4HP.") do not already say the word, and those still
+gain the rose clause. A line whose text already says "bloodied" is left as the engine
+wrote it.
+
+### 237. Compound and result-only rolls lose their figures in the structured feed — FIXED
+
+**Root cause:** the line builder forced every roll into numeric natural/total facts. Blink
+emits separate HP and XP dice as authored strings; failed conversion silently became zero.
+Millefleur then consumed the truthful verdict while composing from those zero facts. A
+numeric result-only roll also had a zero natural figure instead of its actual result.
+
+Numeric facts are now optional when unavailable. Compound authored roll/verdict text is
+preserved, and Millefleur falls back to the original line blocks when the numeric facts
+are incomplete. A result-only numeric roll uses its real total as its natural figure.
+Tests: engine `announcements/feed-lines.test.ts`, web `feed-lines.test.tsx` (including
+shared renderer/height booking).
+
+**`text` changed too.** The same fix reaches `event.text`, so Discord and the fight log see it:
+a compound roll used to print `_0 on …_` (the failed conversion) and now prints the authored
+dice, e.g. Blink's `_2 & 9 on …_`. It is the one deliberate exception to "text stays
+byte-for-byte" in roadmap 46's task 7, besides task 9's new flavour lines (found in the final
+branch review, 2026-10-06).
+
+**Status**: Fixed.
+
+### 238. Critical-roll composition drops the card's outcome explanation — FIXED
+
+**Root cause:** Millefleur returned immediately for natural 20 or critical failure, while
+its composing loop consumed every following outcome line. That hid maximum-damage and
+reflected-attack explanations even though `text` and `payload.lines` both contained them.
+
+The composed verdict now keeps substantive authored outcomes after its critical label;
+only a bare redundant Hit!/Miss... is omitted. The same blocks feed rendering and row
+height booking, so the retained explanation is counted. Tests: web `feed-lines.test.tsx`.
+
+**Status**: Fixed.
+
+### 239. Feed death/loss consistency fixture sometimes never reaches a loss — FIXED
+
+**Root cause:** the simulated loss test gave the champion one HP but left boss health
+and attack/damage rolls random. Misses, reflected attacks or an early boss defeat could
+produce a win/draw, so the test failed before reaching the death/loss lines it was meant
+to verify. Deterministic ring setup only disables roster shuffling and random ring events;
+it does not make combat rolls deterministic.
+
+The loss fixture now keeps the real game/fight/announcement path while giving its boss
+ample HP and instance-scoped guaranteed Hit attack/damage rolls. Stubs are restored in
+the fixture's cleanup; production combat and the ordinary simulated-fight case are
+unchanged. The existing test still asserts a loss or permanent-death event, a death line,
+and text/lines agreement for every emitted feed event.
+
+**Status:** Fixed.
+
 ## Closed without a fix
 
 These were open investigations the owner closed on 2026-09-28. Reopen with new evidence.
@@ -5375,3 +5484,12 @@ These were open investigations the owner closed on 2026-09-28. Reopen with new e
   Room A after #196 (wheel into history, roster collapse and expand, hiding and showing the
   ring pane), and the owner has not seen it recur.
 
+### 240. The XP line put a full stop in the middle of its sentence — FIXED
+
+Found by the exact-text test added in the final review of roadmap 46 (2026-10-06); present on
+`main` too. A monster that won coins and killed something read "gained 12 XP for killing 1
+monster. and 3 coins": the kill clause ended with its own full stop, and the coins clause was
+appended after it (`announcements/xpGain.ts`). The coins now come first and the sentence ends
+once, "gained 12 XP and 3 coins for killing 1 monster.", and a single coin is "1 coin". Without
+a kill the line is unchanged. Discord sees the corrected text. Pinned by
+`announcements/text-golden.test.ts`.

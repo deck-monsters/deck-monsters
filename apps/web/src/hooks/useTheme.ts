@@ -1,12 +1,19 @@
 import { useCallback, useEffect, useSyncExternalStore } from 'react';
 
 const STORAGE_KEY = 'deck-monsters-theme';
+/**
+ * `themeColor` is the theme's `--color-bg`, for `<meta name="theme-color">` (the phone's
+ * status bar and the browser chrome). It is repeated in the inline pre-paint script in
+ * index.html, which cannot import this file; `theme-prepaint.test.ts` fails if the two
+ * drift apart, or from the theme stylesheets.
+ */
 export const THEMES = [
-  { id: 'phosphor', label: 'Phosphor (green on black)' },
-  { id: 'amber', label: 'Amber (orange on black)' },
-  { id: 'ember', label: 'Ember (red on black)' },
-  { id: 'street-fighter', label: 'Street Fighter (SNES, 1992)' },
-] as const satisfies ReadonlyArray<{ id: string; label: string }>;
+  { id: 'phosphor', label: 'Phosphor (green on black)', themeColor: '#0a0e0a' },
+  { id: 'amber', label: 'Amber (orange on black)', themeColor: '#0a0800' },
+  { id: 'ember', label: 'Ember (red on black)', themeColor: '#12060a' },
+  { id: 'street-fighter', label: 'Street Fighter (SNES, 1992)', themeColor: '#060c1e' },
+  { id: 'millefleur', label: 'Millefleur (watercolour, light)', themeColor: '#fbf8f5' },
+] as const satisfies ReadonlyArray<{ id: string; label: string; themeColor: string }>;
 
 export type ThemeId = typeof THEMES[number]['id'];
 export type Theme = ThemeId;
@@ -18,18 +25,101 @@ function isValidTheme(value: string | null): value is Theme {
 }
 
 function getPreferredTheme(): Theme {
-  const stored = localStorage.getItem(STORAGE_KEY);
+  // localStorage throws in private windows and with blocked site data.
+  // Fall back to the in-memory choice so a setTheme still sticks for the session.
+  let stored: string | null = null;
+  try {
+    stored = localStorage.getItem(STORAGE_KEY);
+  } catch {
+    return currentTheme ?? 'phosphor';
+  }
+  // A write that failed (quota, read-only storage) left the stored value stale; rereading it
+  // here reverted the player's choice on the next render. The in-memory choice wins until a
+  // write succeeds again.
+  if (themeWriteFailed && currentTheme) return currentTheme;
   if (isValidTheme(stored)) return stored;
-  // Default to phosphor regardless of prefers-color-scheme — the entire app
-  // is dark-first by design.
+  // Phosphor is the start. A light theme is a player's choice: the phone's
+  // light or dark setting (prefers-color-scheme) is not a reason to switch.
+  // Millefleur stays available as a theme button, loaded only when chosen.
   return 'phosphor';
 }
 
+/**
+ * Themes whose stylesheet is a lazy chunk (roadmap 46). Each entry loads once, on the first
+ * applyTheme for that theme, and the promise is cached so repeat applies (every mount, every
+ * storage event) cost nothing. Nothing from a lazy theme may be imported statically: its CSS
+ * and fonts would join every player's shared bundle. main.tsx starts the same import before
+ * React renders for a returning player; the cached promise here is then already in flight.
+ *
+ * A failed load (offline, a stale deploy) is logged and dropped from the cache so a later
+ * apply tries again, though the browser may serve the same failed import until the page is
+ * reloaded. It is otherwise ignored: base.css carries a first-paint stub for the theme, so
+ * the page stays readable (plain paper and ink) without the chunk.
+ */
+const LAZY_THEMES: Partial<Record<ThemeId, () => Promise<unknown>>> = {
+  millefleur: () => import('../themes/millefleur.js'),
+};
+const lazyLoads = new Map<ThemeId, Promise<unknown>>();
+const settledLoads = new Set<ThemeId>();
+
+const assetListeners = new Set<(theme: ThemeId) => void>();
+
+/**
+ * Called each time a lazy theme's chunk lands (the first success, or a later retry after a
+ * failure). The Ring re-reads its feed metrics then: a chunk that was slow, or failed once,
+ * arrives after the list was measured against the stub CSS.
+ */
+export function subscribeThemeAssets(listener: (theme: ThemeId) => void): () => void {
+  assetListeners.add(listener);
+  return () => {
+    assetListeners.delete(listener);
+  };
+}
+
+/** True when the theme's stylesheet is in the page: no chunk to wait for, or it has landed. */
+export function themeAssetsReady(theme: ThemeId): boolean {
+  return !LAZY_THEMES[theme] || settledLoads.has(theme);
+}
+
+export function loadThemeAssets(theme: ThemeId): Promise<unknown> {
+  const load = LAZY_THEMES[theme];
+  if (!load) return Promise.resolve();
+  let pending = lazyLoads.get(theme);
+  if (!pending) {
+    pending = load().catch((error: unknown) => {
+      lazyLoads.delete(theme);
+      console.error(`[theme] failed to load ${theme}`, error);
+    });
+    lazyLoads.set(theme, pending);
+    // A failed load leaves the cache empty (above) and is not "ready"; a later apply retries.
+    void pending.then(() => {
+      if (lazyLoads.get(theme) !== pending) return;
+      settledLoads.add(theme);
+      assetListeners.forEach((listener) => listener(theme));
+    });
+  }
+  return pending;
+}
+
 function applyTheme(theme: Theme): void {
+  void loadThemeAssets(theme);
   if (theme === 'phosphor') {
     document.documentElement.removeAttribute('data-theme');
   } else {
     document.documentElement.setAttribute('data-theme', theme);
+  }
+
+  // The status bar follows the theme. index.html's pre-paint script sets it before first
+  // paint for a returning player; this keeps it right on every later change.
+  const themeColor = THEMES.find(({ id }) => id === theme)?.themeColor;
+  if (themeColor) {
+    let meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
+    if (!meta) {
+      meta = document.createElement('meta');
+      meta.name = 'theme-color';
+      document.head.appendChild(meta);
+    }
+    meta.content = themeColor;
   }
 
   // There used to be a per-theme `features` list here, mirrored onto a
@@ -42,6 +132,7 @@ function applyTheme(theme: Theme): void {
 }
 
 let currentTheme: Theme | undefined;
+let themeWriteFailed = false;
 const listeners = new Set<() => void>();
 
 function getTheme(): Theme {
@@ -56,7 +147,13 @@ function notify(): void {
 
 function setStoredTheme(theme: Theme): void {
   currentTheme = theme;
-  localStorage.setItem(STORAGE_KEY, theme);
+  try {
+    localStorage.setItem(STORAGE_KEY, theme);
+    themeWriteFailed = false;
+  } catch {
+    // Not persisted; currentTheme still holds the choice for this session.
+    themeWriteFailed = true;
+  }
   applyTheme(theme);
   notify();
 }

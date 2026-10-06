@@ -52,7 +52,7 @@ export default function CommandReference({ open, onClose, onInsertCommand }: Com
             position: 'fixed',
             inset: 0,
             zIndex: 100,
-            background: 'rgba(0,0,0,0.5)',
+            background: 'var(--color-backdrop-light)',
           }}
           onClick={onClose}
           aria-hidden="true"
@@ -106,7 +106,7 @@ export default function CommandReference({ open, onClose, onInsertCommand }: Com
               background: 'transparent',
               border: '1px solid var(--color-border)',
               color: 'var(--color-fg)',
-              fontFamily: 'var(--font-family)',
+              fontFamily: 'var(--font-ui)',
               fontSize: '0.8rem',
               padding: '0.2rem 0.5rem',
               cursor: 'pointer',
@@ -179,7 +179,7 @@ export default function CommandReference({ open, onClose, onInsertCommand }: Com
                       border: 'none',
                       borderBottom: '1px solid var(--color-border)',
                       color: 'var(--color-fg)',
-                      fontFamily: 'var(--font-family)',
+                      fontFamily: 'var(--font-ui)',
                       fontSize: '0.8rem',
                       padding: '0.5rem 1rem',
                       cursor: 'pointer',

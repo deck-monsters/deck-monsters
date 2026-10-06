@@ -135,6 +135,7 @@ export class CloakOfInvisibilityCard extends BaseCard {
 						}
 
 						this.emit('rolled', {
+							success: success,
 							reason: `vs ${invisibilityTarget.givenName}'s int (${target.int}) to determine if ${player.pronouns.he} can find ${invisibilityTarget.pronouns.him}.`,
 							card,
 							roll: savingThrow,

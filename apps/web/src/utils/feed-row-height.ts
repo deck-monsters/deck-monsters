@@ -1,3 +1,5 @@
+import { blockText, type FeedBlock } from './feed-lines.js';
+
 /**
  * Pixel guess for an unmeasured ring-feed row.
  *
@@ -15,28 +17,160 @@
  * the wheel had moved. Matching the line box keeps that correction near zero.
  */
 
-/** `--font-size` 14px × `--line-height` 1.4, on `.event` and `.event-card-block`. */
-const LINE_PX = 19.6;
-/** `.event` padding: `--event-spacing` (0.4rem) on both sides, at a 16px root. */
-const ROW_CHROME_PX = 12.8;
 /**
- * `.event-card-block`: 0.5rem padding, 0.4rem margin, 1px border, each on both sides.
- * The ``` fence becomes that panel.
+ * The type and chrome the estimate multiplies. A theme sets its own feed type through the
+ * `--feed-*` tokens (terminal.css `.event-feed`), so these are read from the live CSS by
+ * `readFeedMetrics` rather than assumed. The defaults below are what the four dark themes
+ * draw (and what jsdom, which has no layout, falls back to); `feed-row-height.test.ts`
+ * pins them, because a drift here moves every dark theme's scroll-back (10b #196).
+ *
+ * - `linePx`: `--feed-font-size` 14px × `--feed-line-height` 1.4, on `.event` and
+ *   `.event-card-block`.
+ * - `charPx`: JetBrains Mono's 0.6em advance at 14px (plus `--feed-letter-spacing`).
+ *   `RingPane` divides the feed's content box by it. Below a card frame (34 columns) a
+ *   phone still wraps prose the same way the estimate does; a wider guess books a wrapped
+ *   line as one and the anchor yanks `scrollTop` back toward newer events.
+ * - `rowChromePx`: `.event` padding, `--event-spacing` (0.4rem) on both sides at a 16px root.
+ * - `cardChromePx`: `.event-card-block`, 0.5rem padding, 0.4rem margin, 1px border, each on
+ *   both sides. The ``` fence becomes that panel.
+ * - `lineGapPx`, `dividerChromePx`: the line-rendered feed (`.feed-lines`, roadmap 46a). Spacing
+ *   between an event's lines is CSS, never blank lines in the text; the probe measures the
+ *   gap between two `.feed-line`s and a `.feed-divider`'s margins.
+ * - `gutterPx`: `.event-feed-list` horizontal padding (`--pane-padding` on both sides), what
+ *   `RingPane` subtracts from the scroller's width to get the text's content box.
  */
-const CARD_BLOCK_CHROME_PX = 30.8;
-/**
- * JetBrains Mono at 14px is 8.4px wide. `RingPane` divides the feed's content box by
- * this. Below a card frame (34 columns) a phone still wraps prose the same way the
- * estimate does; a wider guess books a wrapped line as one and the anchor yanks
- * `scrollTop` back toward newer events.
- */
-export const FEED_CHAR_PX = 8.4;
+export interface FeedMetrics {
+  linePx: number;
+  charPx: number;
+  rowChromePx: number;
+  cardChromePx: number;
+  gutterPx: number;
+  /** `.feed-lines` gap between two lines of one event (`--feed-line-gap`, roadmap 46a). */
+  lineGapPx: number;
+  /** A divider's own vertical margin (`.feed-divider`); its line is `linePx` tall. */
+  dividerChromePx: number;
+}
+
+export const DEFAULT_FEED_METRICS: Readonly<FeedMetrics> = Object.freeze({
+  linePx: 19.6,
+  charPx: 8.4,
+  rowChromePx: 12.8,
+  cardChromePx: 30.8,
+  gutterPx: 24,
+  lineGapPx: 3.2,
+  dividerChromePx: 0,
+});
+
+/** Kept for callers that only want the default advance. */
+export const FEED_CHAR_PX = DEFAULT_FEED_METRICS.charPx;
 /** Used until the feed has a width. Wide enough that a 34-column frame stays one line. */
 export const FEED_WRAP_COLUMNS_FALLBACK = 48;
 
-export function feedWrapColumns(contentWidthPx: number): number {
+const round2 = (n: number) => Math.round(n * 100) / 100;
+/** A fresh object: callers keep metrics in state and must not be able to mutate the defaults. */
+const defaults = (): FeedMetrics => ({ ...DEFAULT_FEED_METRICS });
+
+/** Characters in the advance probe. Long, so a platform's whole-pixel rounding averages in. */
+const CHAR_RUN = 200;
+const LINE_RUN = 3;
+/** Tolerance for treating the computed and rendered line as the same: a few 1/64px units. */
+const LINE_SNAP_PX = 0.05;
+
+/**
+ * Reads the feed's real line box, glyph advance and chrome by mounting a hidden copy of one
+ * row inside `host` (the feed itself may be unmounted, or hidden in another pane slot).
+ * Going through the stylesheet means a theme only has to set `--feed-*`; nothing here knows
+ * which theme is active.
+ *
+ * Both the advance and the line box are what the browser lays out, not what the font or the
+ * CSS promises. The advance is a 200-character run measured at the real size and divided, so
+ * a platform that rounds each glyph to a whole pixel (headless Linux Chrome: 12.5px JetBrains
+ * Mono draws 8px, not 7.5) is counted as it is drawn. Assuming the design 0.6em there books
+ * 45 columns where 42 fit, i.e. under-counts wrapped lines, which is the direction 10b #196
+ * warns about. The line is the height of a three-line block over three, which also covers
+ * `line-height: normal`. The advance is the resolved font's: if JetBrains Mono has not loaded
+ * yet the fallback's advance is read, so callers re-read after `document.fonts` settles.
+ *
+ * Returns the defaults (a copy) only when there is no layout at all (jsdom, `display: none`).
+ * Values are rounded to 0.01px so 1/64px layout units cannot make a dark theme differ from
+ * the constants.
+ */
+export function readFeedMetrics(host: HTMLElement | null): FeedMetrics {
+  if (!host || typeof getComputedStyle !== 'function') return defaults();
+  const probe = document.createElement('div');
+  probe.className = 'event-feed';
+  probe.setAttribute('aria-hidden', 'true');
+  // Out of flow and invisible, but laid out (display: none would measure nothing). Clipped
+  // to the host's width so it cannot widen an ancestor's scrollable overflow; the run is
+  // `white-space: pre`, so clipping does not change its measured width.
+  probe.style.cssText =
+    'position:absolute;visibility:hidden;pointer-events:none;left:0;top:0;width:100%;height:auto;overflow:hidden;flex:none';
+  probe.innerHTML =
+    '<ol class="event-feed-list"><li class="event">' +
+    '<span data-probe="char" style="white-space:pre"></span>' +
+    '<div data-probe="lines" style="white-space:pre"></div>' +
+    '<div class="event-card-block"></div>' +
+    '<div class="feed-lines"><div class="feed-line" data-probe="gap-a">0</div>' +
+    '<div class="feed-line" data-probe="gap-b">0</div>' +
+    '<div class="feed-line feed-divider" data-probe="divider">0</div></div></li></ol>';
+  const list = probe.querySelector<HTMLElement>('.event-feed-list');
+  const row = probe.querySelector<HTMLElement>('.event');
+  const span = probe.querySelector<HTMLElement>('[data-probe="char"]');
+  const lines = probe.querySelector<HTMLElement>('[data-probe="lines"]');
+  const card = probe.querySelector<HTMLElement>('.event-card-block');
+  const gapA = probe.querySelector<HTMLElement>('[data-probe="gap-a"]');
+  const gapB = probe.querySelector<HTMLElement>('[data-probe="gap-b"]');
+  const divider = probe.querySelector<HTMLElement>('[data-probe="divider"]');
+  if (!list || !row || !span || !lines || !card || !gapA || !gapB || !divider) return defaults();
+  span.textContent = '0'.repeat(CHAR_RUN);
+  lines.textContent = Array.from({ length: LINE_RUN }, () => '0').join('\n');
+  host.appendChild(probe);
+  try {
+    const px = (value: string) => parseFloat(value) || 0;
+    const width = span.getBoundingClientRect().width;
+    const height = lines.getBoundingClientRect().height;
+    // No stylesheet or no layout (jsdom, a hidden pane): nothing measures, so take the
+    // defaults whole rather than mixing them with zeros.
+    if (!(width > 0) || !(height > 0)) return defaults();
+    const rowStyle = getComputedStyle(row);
+    // Layout snaps each line box to 1/64px (19.6 draws as 19.59375), so a rendered 19.59 would
+    // differ from the CSS's 19.6 for no visible reason. Take the CSS value when the layout
+    // agrees with it, and the layout when it does not (`line-height: normal`, a taller
+    // fallback font).
+    const computedLine = parseFloat(rowStyle.lineHeight) || 0;
+    const rendered = height / LINE_RUN;
+    const cardStyle = getComputedStyle(card);
+    const listStyle = getComputedStyle(list);
+    const dividerStyle = getComputedStyle(divider);
+    // Zero chrome is a real answer once the line has measured (a theme may draw a card with
+    // no padding, margin or border).
+    return {
+      linePx: round2(Math.abs(computedLine - rendered) <= LINE_SNAP_PX ? computedLine : rendered),
+      charPx: round2(width / CHAR_RUN),
+      rowChromePx: round2(px(rowStyle.paddingTop) + px(rowStyle.paddingBottom)),
+      cardChromePx: round2(
+        px(cardStyle.paddingTop) +
+          px(cardStyle.paddingBottom) +
+          px(cardStyle.marginTop) +
+          px(cardStyle.marginBottom) +
+          px(cardStyle.borderTopWidth) +
+          px(cardStyle.borderBottomWidth),
+      ),
+      gutterPx: round2(px(listStyle.paddingLeft) + px(listStyle.paddingRight)),
+      lineGapPx: round2(Math.max(0, gapB.getBoundingClientRect().top - gapA.getBoundingClientRect().bottom)),
+      dividerChromePx: round2(px(dividerStyle.marginTop) + px(dividerStyle.marginBottom)),
+    };
+  } finally {
+    probe.remove();
+  }
+}
+
+export function feedWrapColumns(
+  contentWidthPx: number,
+  metrics: Readonly<FeedMetrics> = DEFAULT_FEED_METRICS,
+): number {
   if (!(contentWidthPx > 0)) return FEED_WRAP_COLUMNS_FALLBACK;
-  return Math.max(16, Math.floor(contentWidthPx / FEED_CHAR_PX));
+  return Math.max(16, Math.floor(contentWidthPx / metrics.charPx));
 }
 
 function visualLines(segment: string, wrapColumns: number): number {
@@ -56,20 +190,53 @@ function visualLines(segment: string, wrapColumns: number): number {
   return count;
 }
 
+/**
+ * A lines-rendered row (`components/FeedLines.tsx`): each block's wrapped lines times
+ * `linePx`, the line gap between blocks, card chrome on a card, margin on a divider, and the
+ * row's own padding. The blocks are the renderer's (`composeFeedBlocks`), so a replaced
+ * group is booked as what it is drawn as.
+ */
+export function estimateFeedBlocksHeight(
+  blocks: readonly FeedBlock[],
+  wrapColumns: number = FEED_WRAP_COLUMNS_FALLBACK,
+  metrics: Readonly<FeedMetrics> = DEFAULT_FEED_METRICS,
+): number {
+  const { linePx, rowChromePx, cardChromePx, lineGapPx, dividerChromePx } = metrics;
+  if (blocks.length === 0) return rowChromePx + linePx;
+  let height = rowChromePx + lineGapPx * (blocks.length - 1);
+  for (const block of blocks) {
+    if (block.divider) {
+      height += linePx + dividerChromePx;
+      continue;
+    }
+    // A card's frame text is booked at the full width, as fenced frames always were: it is
+    // at most 32 columns and the panel's padding does not narrow it on a phone.
+    const columns = block.card ? wrapColumns : Math.max(1, wrapColumns - block.indent);
+    height += visualLines(blockText(block), columns) * linePx;
+    if (block.card) height += cardChromePx;
+  }
+  return height;
+}
+
 export function estimateFeedRowHeight(
   text: string | undefined,
   wrapColumns: number = FEED_WRAP_COLUMNS_FALLBACK,
+  metrics: Readonly<FeedMetrics> = DEFAULT_FEED_METRICS,
+  /** The event's blocks when it renders from `lines`; omitted for text-only events. */
+  blocks?: readonly FeedBlock[] | null,
 ): number {
+  if (blocks && blocks.length > 0) return estimateFeedBlocksHeight(blocks, wrapColumns, metrics);
+  const { linePx, rowChromePx, cardChromePx } = metrics;
   const body = text ?? '';
-  if (body.length === 0) return ROW_CHROME_PX + LINE_PX;
+  if (body.length === 0) return rowChromePx + linePx;
 
   const parts = body.split('```');
-  let height = ROW_CHROME_PX;
+  let height = rowChromePx;
   parts.forEach((part, index) => {
     if (!part) return;
-    height += visualLines(part, wrapColumns) * LINE_PX;
+    height += visualLines(part, wrapColumns) * linePx;
     // Odd segments are the fenced card panel.
-    if (index % 2 === 1) height += CARD_BLOCK_CHROME_PX;
+    if (index % 2 === 1) height += cardChromePx;
   });
   return height;
 }

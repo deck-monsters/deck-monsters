@@ -1,3 +1,4 @@
+import { usePaintSurface } from '../hooks/usePaintSurface.js';
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
 import { Link } from 'react-router-dom';
 import PaneDivider from './PaneDivider.js';
@@ -104,8 +105,38 @@ function TerminalTabs({
   onSelect: (surfaceId: SurfaceId) => void;
 }) {
   const { unread } = useChat();
+  const rowRef = useRef<HTMLDivElement>(null);
+  // Millefleur's folder tabs keep their natural width and the row scrolls, fading out over its
+  // last 20%. Bring the selected tab clear of that fade, but only when it is really in the faint
+  // part (past 90%), and then by the least that lands its end at 80%. The first version scrolled
+  // at 76% and centred the tab, so choosing Workshop or Chat cut The Ring off at the left, which
+  // the approved mock never does. Other themes squeeze every tab into the bar (nothing
+  // overflows, so this does nothing there) and are left alone on purpose.
+  const activeSurface = SURFACES.find((surface) => isVisible(surface.id))?.id;
+  useEffect(() => {
+    if (document.documentElement.getAttribute('data-theme') !== 'millefleur') return;
+    const row = rowRef.current;
+    const tab = row?.querySelector<HTMLElement>('.terminal-tab.active');
+    if (!row || !tab || row.scrollWidth <= row.clientWidth) return;
+    const tabEnd = tab.offsetLeft + tab.offsetWidth;
+    if (tab.offsetLeft < row.scrollLeft + 12) {
+      row.scrollLeft = Math.max(0, tab.offsetLeft - 12);
+    } else if (tabEnd > row.scrollLeft + row.clientWidth * 0.9) {
+      row.scrollLeft = tabEnd - row.clientWidth * 0.8;
+    }
+  }, [activeSurface]);
+  // Millefleur fades the row's right end; once it has scrolled, a tab cut at the left edge
+  // fades too. The class is only styled under that theme, so toggling it is inert elsewhere.
+  useEffect(() => {
+    const row = rowRef.current;
+    if (!row) return;
+    const sync = () => row.classList.toggle('scrolled', row.scrollLeft > 0);
+    sync();
+    row.addEventListener('scroll', sync, { passive: true });
+    return () => row.removeEventListener('scroll', sync);
+  }, []);
   return (
-    <div className="terminal-tabs" role="tablist" aria-label="Switch panes">
+    <div ref={rowRef} className="terminal-tabs" role="tablist" aria-label="Switch panes">
       {SURFACES.map((surface) => {
         const badgeText = unreadBadgeText(surface.badge?.({ chatUnread: unread }) ?? 0);
         return (
@@ -277,6 +308,9 @@ export default function Terminal({ roomId }: TerminalProps) {
   function isVisible(surfaceId: SurfaceId): boolean {
     return isSideBySide ? slots.includes(surfaceId) : slots[activeSlot] === surfaceId;
   }
+
+  // Chat or the Workshop wins the painted ground when it is on screen; otherwise the Ring's.
+  usePaintSurface(isVisible('chat') ? 'chat' : isVisible('workshop') ? 'workshop' : 'ring');
 
   return (
     <div

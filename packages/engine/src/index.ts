@@ -10,6 +10,7 @@ import { RoomEventBus, PROMPT_CANCELLED, PromptCancelledError, toCombatActor } f
 import type {
 	CombatActor,
 	CombatPayload,
+	FeedLine,
 	GameEvent,
 	EventType,
 	EventScope,
@@ -25,6 +26,7 @@ export type {
 	ChannelCallback,
 	CombatActor,
 	CombatPayload,
+	FeedLine,
 	GameEvent,
 	EventType,
 	EventScope,

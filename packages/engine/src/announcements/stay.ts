@@ -1,4 +1,5 @@
 import type { RoomEventBus } from '../events/index.js';
+import type { FeedLine } from '../events/types.js';
 
 interface StayOpts {
 	fleeRoll?: any;
@@ -17,18 +18,20 @@ export function announceStay(
 			.filter(contestant => contestant.monster !== player)
 			.map(contestant => contestant.monster.identityWithHp);
 
+		const failedText = `${player.identityWithHp} tries to flee from ${assailants.join(' and ')}, but fails!`;
 		eb.publish({
 			type: 'announce',
 			scope: 'public',
-			text: `${player.identityWithHp} tries to flee from ${assailants.join(' and ')}, but fails!`,
-			payload: {},
+			text: failedText,
+			payload: { lines: [{ kind: 'system', text: failedText, name: player.givenName }] satisfies FeedLine[] },
 		});
 	} else {
+		const stayText = `${player.identityWithHp} bravely stays in the ring.`;
 		eb.publish({
 			type: 'announce',
 			scope: 'public',
-			text: `${player.identityWithHp} bravely stays in the ring.`,
-			payload: {},
+			text: stayText,
+			payload: { lines: [{ kind: 'system', text: stayText, name: player.givenName }] satisfies FeedLine[] },
 		});
 	}
 }

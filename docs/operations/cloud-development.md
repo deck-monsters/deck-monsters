@@ -96,6 +96,30 @@ The local auth issuer uses `http://127.0.0.1:54321/auth/v1`. Keep `SUPABASE_URL`
 `127.0.0.1`, not `localhost`, or JWT verification rejects the issuer. The setup script
 reads the URL from `supabase status` to keep this consistent.
 
+### Local Supabase in a Claude Code cloud container
+
+Three things blocked `pnpm setup:local` there (2026-10-06), each with a workaround:
+
+- **Docker is installed but not running.** Start it with `dockerd &` (as root) and wait for
+  `docker info` to show a server.
+- **The default registry is refused.** `public.ecr.aws` image layers come from a CDN the network
+  policy rejects (403). Pull from Docker Hub instead:
+  `export SUPABASE_INTERNAL_IMAGE_REGISTRY=docker.io`. Docker Hub rate-limits anonymous pulls
+  (429); rerun after a minute and the pulled layers are kept.
+- **No IPv6.** The kernel has none, and Supabase Realtime's seed step listens on IPv6, so
+  `supabase start` fails with `eafnosupport`. The app does not use Realtime. Replace that one
+  image locally with a no-op before starting:
+
+  ```bash
+  printf 'FROM supabase/realtime:v2.80.7\nENTRYPOINT ["/bin/true"]\nCMD []\n' > /tmp/rt/Dockerfile
+  docker build -t supabase/realtime:v2.80.7 /tmp/rt
+  npx supabase start -x realtime,storage-api,imgproxy,studio,edge-runtime,logflare,vector,postgres-meta,supavisor,mailpit
+  pnpm setup:local --skip-install   # skips start, applies migrations, seeds the test user
+  ```
+
+  Match the tag to the version `supabase start` pulls. `supabase/.branches/` and
+  `supabase/.temp/cli-latest` change as a side effect; do not commit them.
+
 ## Docker in Cursor Cloud
 
 The VM needs:

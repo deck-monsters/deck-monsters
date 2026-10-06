@@ -138,6 +138,33 @@ describe('pixel fight sprites', () => {
     }
   });
 
+  // The hit flash (roadmap 46 §6): the dark themes flash the whole silhouette; a light theme can
+  // keep the outline (flashOutline null) so a pale monster struck on paper keeps its edge.
+  describe('hit flash', () => {
+    function fills(flashOutline: string | null | undefined) {
+      const frame = ['O#', '#O'];
+      const palette = { O: '#111111', '#': '#eeeeee' };
+      const styles: string[] = [];
+      const ctx = {
+        imageSmoothingEnabled: true,
+        save: vi.fn(),
+        restore: vi.fn(),
+        set fillStyle(value: string) { styles.push(value); },
+        fillRect: vi.fn(),
+      } as unknown as CanvasRenderingContext2D;
+      drawSprite(ctx, frame, palette, 0, 0, 1, { mirror: false, flash: true, flashColor: '#ff9fd2', flashOutline });
+      return styles;
+    }
+
+    it('flashes the outline with the body by default', () => {
+      expect(new Set(fills(undefined))).toEqual(new Set(['#ff9fd2']));
+    });
+
+    it('keeps the outline its own colour when the theme asks for it', () => {
+      expect(fills(null)).toEqual(['#111111', '#ff9fd2', '#ff9fd2', '#111111']);
+    });
+  });
+
   it('uses the generic beast for unknown creature types', () => {
     expect(spriteFor('Unknown monster')).toBe(SPRITES.fallback);
   });

@@ -1,3 +1,4 @@
+import { usePaintSurface } from '../hooks/usePaintSurface.js';
 import { useParams } from 'react-router-dom';
 import { trpc } from '../lib/trpc.js';
 import AppShell from '../components/AppShell.js';
@@ -11,6 +12,7 @@ import { ChatProvider } from '../hooks/useChat.js';
  * own (chat frames ride the `ringFeed` connection).
  */
 export default function ChatView() {
+  usePaintSurface('chat');
   const { roomId } = useParams<{ roomId: string }>();
   const { data: room } = trpc.room.info.useQuery(
     { roomId: roomId ?? '' },

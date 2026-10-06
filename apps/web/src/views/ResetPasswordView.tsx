@@ -84,7 +84,7 @@ export default function ResetPasswordView() {
           justifyContent: 'center',
           background: 'var(--color-bg)',
           color: 'var(--color-fg-dim)',
-          fontFamily: 'var(--font-family)',
+          fontFamily: 'var(--font-ui)',
         }}
       >
         loading…
@@ -103,7 +103,7 @@ export default function ResetPasswordView() {
             justifyContent: 'center',
             background: 'var(--color-bg)',
             color: 'var(--color-fg-dim)',
-            fontFamily: 'var(--font-family)',
+            fontFamily: 'var(--font-ui)',
           }}
         >
           Verifying reset link…

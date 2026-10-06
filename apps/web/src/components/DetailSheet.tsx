@@ -1,5 +1,6 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { useTheme } from '../hooks/useTheme.js';
 
 interface DetailSheetProps {
   title: string;
@@ -10,6 +11,12 @@ interface DetailSheetProps {
   /** The control that opened the sheet, from the click event; focus returns to it on close. */
   opener?: HTMLElement | null;
   onClose: () => void;
+  /**
+   * A short title for the sheet's top line ("Level up"; Millefleur draws it as a pill in its
+   * title bar). When given, the sheet draws it and the caller renders its own heading
+   * (`<h2 id={titleId}>`) in the body, which must exist: the dialog is named by that heading.
+   */
+  barTitle?: string;
   children?: ReactNode;
 }
 
@@ -21,7 +28,8 @@ interface DetailSheetProps {
  * whose overflow and stacking would clip a `position: fixed` child. Focus moves to Close on
  * open and returns to the control that opened it; Escape and a tap on the backdrop close it.
  */
-export default function DetailSheet({ title, titleId, closeTitle, opener, onClose, children }: DetailSheetProps) {
+export default function DetailSheet({ title, titleId, closeTitle, opener, onClose, barTitle, children }: DetailSheetProps) {
+  const { theme } = useTheme();
   const closeRef = useRef<HTMLButtonElement>(null);
   const sheetRef = useRef<HTMLDivElement>(null);
 
@@ -87,7 +95,29 @@ export default function DetailSheet({ title, titleId, closeTitle, opener, onClos
       }}
     >
       <div ref={sheetRef} className="card-detail-sheet" role="dialog" aria-modal="true" aria-labelledby={titleId}>
-        <h2 id={titleId}>{title}</h2>
+        {/*
+          A second way to close, drawn only by the Millefleur theme: the System 7 close box in the
+          title bar's corner (`.card-detail-close-box`). It is a real button on the same handler,
+          not a drawing. It is not rendered at all in the other themes, so their sheets keep
+          Close as the one control (a square box beside a bottom Close would be two ways to do
+          one thing in a terminal-style sheet).
+        */}
+        {theme === 'millefleur' && (
+          <button
+            type="button"
+            className="card-detail-close-box"
+            aria-label={closeTitle}
+            title={closeTitle}
+            onClick={onClose}
+          >
+            <span aria-hidden="true">×</span>
+          </button>
+        )}
+        {barTitle ? (
+          <span className="card-detail-pill" aria-hidden="true">{barTitle}</span>
+        ) : (
+          <h2 id={titleId}>{title}</h2>
+        )}
         {children}
         <button
           ref={closeRef}

@@ -8,7 +8,7 @@ tags: [bugs, roadmap, open]
 ---
 # Bug Fixes and Code Quality
 
-**Status:** Active — three open items (F, J, K). Fixed work and its root causes live only in
+**Status:** Active — four open items (F, J, K, L). Fixed work and its root causes live only in
 [`10b-bugs-fixed.md`](10b-bugs-fixed.md).
 
 ## Open items
@@ -62,6 +62,28 @@ printed nothing for 10 minutes, and a 4-batch run took over 120 s. Not investiga
 a slow seed or a fight that never ends.
 
 - [ ] Time each fight in a long run and look at the slowest seeds' logs.
+
+### L. Millefleur stylesheet condensation
+
+**Owner:** Web themes. Found in roadmap 46's branch review (2026-10-06). The size
+decision below is from the owner the same day.
+
+**Root cause:** successive surface/mock-fidelity passes appended overrides to the lazy
+stylesheet without rechecking the original source-size budget. The final source is
+80,553 bytes, against roadmap 46 §8's 12 KB unminified limit; the roadmap's 10.6 KB claim
+was from task 2. Duplicate-looking rules are often load-bearing, so a sweep that deletes
+them can change a screen without a test noticing.
+
+**Decided (2026-10-06):** that size is not a ship gate. Millefleur's stylesheet, Nunito,
+and the watercolour assets are already a lazy chunk, so a player who stays on phosphor
+never downloads them. Production now caches hashed `assets/` for a year and revalidates
+`index.html` ([deployment](../operations/deployment.md#2b-service-web-static-spa)). The
+Fast-3G run and fight-scroll frame timings from §7 were never recorded; they are not
+required to ship this theme.
+
+- [ ] Condense duplicate rules in `theme-millefleur.css` in a careful pass, checked
+  screen by screen at 390 and 1440 on Millefleur and on phosphor. Do not treat the old
+  12 KB figure as the target, and do not restyle the dark themes.
 
 ## Historical detail
 

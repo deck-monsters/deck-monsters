@@ -19,12 +19,17 @@ import { useRingFeedListener, type TrackedRingFeedEvent } from '../hooks/useRing
 import { useRingKeyTimestamps } from '../hooks/useRingKeyTimestamps.js';
 import { usePixelMonsters } from '../hooks/usePixelMonsters.js';
 import { AT_BOTTOM_THRESHOLD_PX, useFeedAutoScroll } from '../hooks/useFeedAutoScroll.js';
+import { themeAssetsReady, loadThemeAssets, subscribeThemeAssets, useTheme } from '../hooks/useTheme.js';
 import { useTimeAgo } from '../hooks/useTimeAgo.js';
-import { formatEventText } from '../utils/format-event-text.js';
+import { FeedEventBody } from './FeedLines.js';
+import { feedBlocksOf, feedLinesOf, feedStyleFor, isBossArrivalEvent } from '../utils/feed-lines.js';
 import {
   estimateFeedRowHeight,
   FEED_WRAP_COLUMNS_FALLBACK,
   feedWrapColumns,
+  readFeedMetrics,
+  DEFAULT_FEED_METRICS,
+  type FeedMetrics,
 } from '../utils/feed-row-height.js';
 import { rememberMonsters } from '../hooks/useKnownMonsters.js';
 import { loadInlineSprites } from '../hooks/useInlineSprites.js';
@@ -104,6 +109,18 @@ function eventClass(type: string): string {
   return 'event-announce';
 }
 
+/**
+ * A boss joining the ring: `ring.add` carries the contestant it announces, and a boss's
+ * arrival is the one entrance a player should not miss. The attribute is a styling hook only
+ * (Millefleur draws it as a rose card); no theme but that one reads it.
+ */
+function isBossArrival(event: GameEvent): boolean {
+  if (event.type !== 'ring.add') return false;
+  // The arrival line's own `boss` fact (roadmap 46a); events stored before it carry only the
+  // contestant on the payload.
+  return isBossArrivalEvent(event.payload, feedLinesOf(event.payload));
+}
+
 function formatCountdown(epochMs: number): string {
   const deltaMs = epochMs - Date.now();
   if (deltaMs <= 0) return 'now';
@@ -161,6 +178,14 @@ function LastFightFooter({
 }
 
 
+/** How long a not-yet-landed theme chunk may hold the feed unmounted. */
+const THEME_ASSET_WAIT_MS = 3000;
+type ResumeAt = { index: number | 'LAST'; align: 'start' | 'end' };
+
+function sameMetrics(a: FeedMetrics, b: FeedMetrics): boolean {
+  return (Object.keys(b) as (keyof FeedMetrics)[]).every((key) => a[key] === b[key]);
+}
+
 export default function RingPane({
   roomId,
   isActive,
@@ -187,14 +212,68 @@ export default function RingPane({
   // waits for a real width: mounting on the 48-column fallback booked narration on a
   // wider pane at up to twice its height, and measuring it moved scroll-back again (a
   // Codex review of PR #406). ResizeObserver reports the width once the pane is shown.
+  //
+  // The feed's type is a theme token (`--feed-font-size`, `--feed-line-height`), so the
+  // estimate's line height, glyph advance and chrome are read from the live CSS
+  // (`readFeedMetrics`). Virtuoso ignores new estimates once its size tree has anything in
+  // it, so the list is keyed on the metrics: it remounts when they change and only then (a
+  // dark-to-dark theme switch changes nothing and must not flash the list). A remount
+  // starts where the reader was (`resumeAt`): at the newest row if they were following,
+  // otherwise at the row they were reading; without it Virtuoso starts at the oldest event.
+  // A lazy theme's stylesheet may not be in the page yet (a slow or hung chunk), and fonts
+  // load late: both re-read the metrics when they land.
+  const { theme } = useTheme();
   const feedAreaRef = useRef<HTMLDivElement>(null);
   const [wrapColumns, setWrapColumns] = useState(FEED_WRAP_COLUMNS_FALLBACK);
+  const [feedMetrics, setFeedMetrics] = useState<FeedMetrics>(() => ({ ...DEFAULT_FEED_METRICS }));
   const [widthMeasured, setWidthMeasured] = useState(false);
+  const [resumeAt, setResumeAt] = useState<ResumeAt | undefined>(undefined);
+  const appliedMetricsRef = useRef<FeedMetrics>(feedMetrics);
+  const metricsCacheRef = useRef(new Map<string, FeedMetrics>());
+  const lastTopIndexRef = useRef(0);
+  const listMountedRef = useRef(false);
+  // `useFeedAutoScroll` is declared below (it needs the Virtuoso ref); it fills this in.
+  const followRef = useRef<{ current: boolean } | null>(null);
+  useLayoutEffect(() => {
+    listMountedRef.current = listReady && widthMeasured;
+  });
   useLayoutEffect(() => {
     const area = feedAreaRef.current;
     if (!area) return;
-    const measure = (observed?: number) => {
-      const scroller = area.querySelector('.event-feed');
+    let cancelled = false;
+    let started = false;
+    let observer: ResizeObserver | undefined;
+    let frame = 0;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let current: FeedMetrics | undefined;
+    const fonts = typeof document !== 'undefined' ? document.fonts : undefined;
+    const cacheKey = () => `${theme}|${fonts?.status ?? 'none'}`;
+    // Reads the CSS once per theme (and font state), not per ResizeObserver tick: a divider
+    // drag fires every frame, and each read mounts and lays out a probe. Width changes only
+    // need the column count recomputed from the cached advance.
+    const metricsFor = (force: boolean): FeedMetrics => {
+      if (!force && current) return current;
+      const ready = themeAssetsReady(theme);
+      const cached = !force && ready ? metricsCacheRef.current.get(cacheKey()) : undefined;
+      current = cached ?? readFeedMetrics(area);
+      if (ready) metricsCacheRef.current.set(cacheKey(), current);
+      return current;
+    };
+    const applyMetrics = (metrics: FeedMetrics) => {
+      if (sameMetrics(appliedMetricsRef.current, metrics)) return;
+      appliedMetricsRef.current = metrics;
+      if (listMountedRef.current) {
+        setResumeAt(
+          (followRef.current?.current ?? true)
+            ? { index: 'LAST', align: 'end' }
+            : { index: lastTopIndexRef.current, align: 'start' },
+        );
+      }
+      setFeedMetrics(metrics);
+    };
+    const measure = (observed?: number, force = false) => {
+      if (cancelled) return;
+      const scroller = area.querySelector('.event-feed:not([aria-hidden])');
       const width =
         scroller instanceof HTMLElement && scroller.clientWidth > 0
           ? scroller.clientWidth
@@ -202,29 +281,61 @@ export default function RingPane({
             ? area.clientWidth
             : (observed ?? 0);
       if (width <= 0) return;
-      const list = area.querySelector('.event-feed-list');
-      let pad = 24;
-      if (list instanceof HTMLElement) {
-        const style = getComputedStyle(list);
-        pad = (parseFloat(style.paddingLeft) || 0) + (parseFloat(style.paddingRight) || 0);
-      }
-      const columns = feedWrapColumns(width - pad);
+      const metrics = metricsFor(force);
+      applyMetrics(metrics);
+      const columns = feedWrapColumns(width - metrics.gutterPx, metrics);
       setWrapColumns((prev) => (prev === columns ? prev : columns));
       setWidthMeasured(true);
     };
-    measure();
-    // Without ResizeObserver there is no later report to wait for; keep the fallback.
-    if (typeof ResizeObserver === 'undefined') {
-      setWidthMeasured(true);
-      return;
+    const remeasure = () => {
+      if (started) measure(undefined, true);
+    };
+    const start = () => {
+      if (started || cancelled) return;
+      started = true;
+      measure();
+      // Without ResizeObserver there is no later report to wait for; keep the fallback.
+      if (typeof ResizeObserver === 'undefined') {
+        applyMetrics(metricsFor(false));
+        setWidthMeasured(true);
+        return;
+      }
+      observer = new ResizeObserver((entries) => measure(entries[0]?.contentRect.width));
+      observer.observe(area);
+    };
+    const unsubscribeAssets = subscribeThemeAssets((landed) => {
+      if (landed === theme) frame = requestAnimationFrame(remeasure);
+    });
+    const onFonts = () => remeasure();
+    fonts?.addEventListener?.('loadingdone', onFonts);
+    void fonts?.ready?.then(onFonts);
+    if (themeAssetsReady(theme)) {
+      start();
+    } else {
+      // A hung chunk must not leave the feed unmounted: after a few seconds measure what CSS
+      // is there and mount. `subscribeThemeAssets` re-reads when the chunk does land.
+      timer = setTimeout(start, THEME_ASSET_WAIT_MS);
+      void loadThemeAssets(theme).then(() => {
+        if (!cancelled) frame = requestAnimationFrame(start);
+      });
     }
-    const observer = new ResizeObserver((entries) => measure(entries[0]?.contentRect.width));
-    observer.observe(area);
-    return () => observer.disconnect();
-  }, []);
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(frame);
+      if (timer) clearTimeout(timer);
+      unsubscribeAssets();
+      fonts?.removeEventListener?.('loadingdone', onFonts);
+      observer?.disconnect();
+    };
+  }, [theme]);
+  const feedStyle = feedStyleFor(theme);
+  const metricsKey = `${feedStyle}|${feedMetrics.linePx}|${feedMetrics.charPx}|${feedMetrics.rowChromePx}|${feedMetrics.cardChromePx}|${feedMetrics.lineGapPx}|${feedMetrics.dividerChromePx}`;
   const heightEstimates = useMemo(
-    () => events.map((event) => estimateFeedRowHeight(event.text, wrapColumns)),
-    [events, wrapColumns],
+    () =>
+      events.map((event) =>
+        estimateFeedRowHeight(event.text, wrapColumns, feedMetrics, feedBlocksOf(event.payload, feedStyle)),
+      ),
+    [events, wrapColumns, feedMetrics, feedStyle],
   );
   const [isAtBottom, setIsAtBottom] = useState(true);
   // Timer state is pushed from the server via ring.state events and the handshake payload.
@@ -280,6 +391,7 @@ export default function RingPane({
   }, []);
   const virtuosoRef = useRef<VirtuosoHandle>(null);
   const autoScroll = useFeedAutoScroll(virtuosoRef);
+  followRef.current = autoScroll.shouldFollowRef;
   const seenRef = useRef(new Set<string>());
   const historyApplied = useRef(false);
   // True once the first handshake has landed, so a later handshake is a *re*connect.
@@ -556,7 +668,7 @@ export default function RingPane({
         )}
         {showHeaderBadges && summonBadge && (
           <span
-            className="pane-header-timer"
+            className="pane-header-timer pane-header-summons"
             title={SUMMONS_BADGE_TITLE}
           >
             {summonBadge}
@@ -595,6 +707,11 @@ export default function RingPane({
       <div className="pane-feed-area" ref={feedAreaRef} {...autoScroll.gestureHandlers}>
       {listReady && widthMeasured ? (
       <Virtuoso
+        key={metricsKey}
+        {...(resumeAt ? { initialTopMostItemIndex: resumeAt } : {})}
+        rangeChanged={(range) => {
+          lastTopIndexRef.current = range.startIndex;
+        }}
         ref={virtuosoRef}
         scrollerRef={autoScroll.setScroller}
         className="event-feed"
@@ -647,6 +764,8 @@ export default function RingPane({
             <li
               className={`event ${eventClass(event.type)}`}
               data-event-at={iso}
+              data-event-type={event.type}
+              data-boss-arrival={isBossArrival(event) ? '' : undefined}
               title={hoverTitle}
             >
               <time className="event-sr-only" dateTime={iso}>
@@ -654,11 +773,11 @@ export default function RingPane({
               </time>
               {showKeyColumn ? (
                 <div className="event-row-inner">
-                  <div className="event-text">{formatEventText(event.text ?? '', mentions)}</div>
+                  <div className="event-text"><FeedEventBody text={event.text ?? ''} payload={event.payload} style={feedStyle} mentions={mentions} /></div>
                   <KeyRingTimeBadge at={new Date(event.timestamp)} label={keyMeta.label} />
                 </div>
               ) : (
-                <div className="event-text">{formatEventText(event.text ?? '', mentions)}</div>
+                <div className="event-text"><FeedEventBody text={event.text ?? ''} payload={event.payload} style={feedStyle} mentions={mentions} /></div>
               )}
               {mechanicNote && <div className="mechanic-note">ⓘ {mechanicNote}</div>}
             </li>

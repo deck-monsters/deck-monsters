@@ -8,10 +8,12 @@ tags: [design, theme, millefleur, tokens, accessibility]
 ---
 # Millefleur design system
 
-The design is final as of 2026-10-06. Nothing is built yet: [roadmap 46](../../roadmap/46-unicorn-theme.md)
-is the plan for building it on the theme system. This page is the reference that plan builds
-toward. Read [the brief](README.md) first for what the theme is for; [process](process.md)
-explains how it got here.
+The design is final as of 2026-10-06. The theme is built on the branch recorded in
+[roadmap 46](../../roadmap/46-unicorn-theme.md); the live check is
+[46b](../../roadmap/46b-cursor-check.md). Entrance narration is in the engine and has
+been looked at in the Ring. This page is the visual reference the theme is built
+toward. Read [the brief](README.md) first for what the theme is for;
+[process](process.md) explains how it got here.
 
 The four final screens are in [samples/](samples/). Each is an HTML page you can open, with a
 render beside it. They are the visual source of truth. Where this page and a sample disagree,
@@ -272,6 +274,42 @@ moves, so nothing else changes.
 | Render and look before shipping a change | Trust the code; every round had faults only visible in pixels |
 | Anchor ruled lines to the text they rule | Use an unsized repeating gradient |
 | Add a doodle only if it means something | Decorate controls |
+
+## In the app
+
+Built in pass 46a of [roadmap 46](../../roadmap/46-unicorn-theme.md) as
+`apps/web/src/styles/theme-millefleur.css`, a lazily loaded chunk with the Nunito faces. Where
+the real app differs from the samples above, this is what was built and why:
+
+- **The transcript uses the design's metrics.** The app now reads feed size, line height,
+  spacing and character advance from the drawn CSS, so Millefleur uses 12.5px on a 1.65
+  line. The renderer and row-height estimate share composed blocks; changes to a block's
+  layout must be reflected in the measured metrics (bugs 159 and 196).
+- **A fifth card role.** The engine has a guard role (labelled DEFENCE) that the samples did not
+  show. Its dot is woad sky `#5f93d6`. Every role dot sits beside its word; the role glyph
+  (⚔ ✚ ✦) is hidden in this theme, because the dot and word already say it.
+- **Chat grows from the bottom.** The short log fills the available page above the
+  composer; messages and the 28px ruled tile share the bottom anchor. Message times and
+  bottom anchoring are also deliberate backports to the dark themes.
+- **The XP bar stays decorative.** Its fill is the pale holo with a soft glow, as above, and is
+  barely darker than its track on purpose: the "XP 13/28" figures beside it carry the
+  information. A build pass gave it saturated stops and a plum outline so a filled bar would
+  read as filled; the owner caught it as counter to the theme's softness (2026-10-06), and it was
+  reverted. Don't harden a decorative surface to pass a contrast rule meant for information.
+- **Where a contrast rule did apply.** The healthy HP gradient runs `#2c8873 → #2a8570` rather
+  than from `#3f9c84`, so both ends are at least 3:1 on the track (HP is a meter the test
+  enforces for every theme; the change is barely visible). Carousel dots and the empty slot's
+  `+` are controls, so they use `--mf-line-control` (3.4:1), the same line as fields and
+  secondary buttons, rather than the paler tab line of the samples. The `+` is the only cue that
+  an empty slot is a button.
+- **Folder tabs** fill from .97 to .92 rather than .8, because at .8 the neighbour's shoulder
+  line showed through (a rendering fix, not a contrast one). When the row is wider than the screen, it scrolls to keep the selected
+  tab in view and fades at whichever ends have more tabs.
+- **The halo** surrounds Ring portraits, the Workshop portrait and the level-up badge.
+  The portrait is also available in dark themes, without the Millefleur halo; the level
+  badge stays hidden there by the owner's design decision.
+- **Sheets** get the close box as a second, real close control (the sheet's own Close button
+  stays at the bottom); it and the title bar stay visible while a tall sheet scrolls.
 
 ## Related
 

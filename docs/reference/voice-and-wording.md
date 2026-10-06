@@ -141,6 +141,27 @@ September 2026).
 - Good: `lifts the whole sea until all roads, rather than leading to Rome as per Imperial Regulation MCCCXCVII, subsection C, lead to Neptune, and drops it on`
 - Good: `The courage runs out of ${name} like mead from a cracked horn, and ${pronouns.he} ${agree(pronouns, 'flees', 'flee')} the ring!`
 
+### The Millefleur feed restates the same facts
+
+On the Millefleur theme the web Ring draws shorter sentences from `payload.lines`: "A plays
+Card", "A rolled 9 +1 = 10 vs 9 · hit", "A is at 24/33 hp, bloodied", and a round as a
+divider. Those sentences are display only. The engine's `text` stays the Discord line and
+the dark themes' line ("lays down the following card", "has only 17HP"). Do not change
+`text` to match the composed sentence, and do not treat the composed sentence as a second
+canon to localise. Flavour that belongs in both (an entrance line, a boss's verb) is written
+once, in `text` and in `lines`, in the house voice. Those additive entrances and round
+beats now live in `announcements/ring-flavour.ts`. The Ring look is recorded on
+roadmap 46.
+
+The owner's entrance and round-beat direction (2026-10-06) is original comic narration
+in the vein of Terry Pratchett: a dry, observant narrator, concrete human reactions to
+monsters, and the practical business of running the games intruding at the wrong
+moment. Connect each beat to its species and keep it separate from mechanical claims.
+The orchestrator writes the prose; generated inventories enumerate the live variants.
+Basilisk, Jinn, Minotaur, Weeping Angel and Unicorn each rotate three player lines
+and three boss lines. Every boss line keeps that species' arrival verb. The Minotaur's
+roses clause stays on the original temper line.
+
 ### Existing bad examples are migration targets
 
 Some legacy text is intentionally called out so it does not return: “proud owner” becomes

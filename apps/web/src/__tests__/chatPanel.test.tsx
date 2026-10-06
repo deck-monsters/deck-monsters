@@ -37,6 +37,15 @@ describe('ChatPanel', () => {
     expect(screen.getByText('No messages yet. Say hello, or cheer on a fight.')).toBeTruthy();
   });
 
+  it('puts the time right after the sender, and leaves it out when the timestamp does not parse', () => {
+    setChat([msg(1, { createdAt: '2026-10-06T12:05:00.000Z' }), msg(2, { createdAt: 'not a date' })]);
+    const { container } = render(<ChatPanel roomId="r" />);
+    const [first, second] = Array.from(container.querySelectorAll('.chat-message'));
+    expect(first!.querySelector('.chat-sender')?.nextElementSibling?.className).toBe('chat-time');
+    expect(first!.querySelector('.chat-time')?.getAttribute('datetime')).toBe('2026-10-06T12:05:00.000Z');
+    expect(second!.querySelector('.chat-time')).toBeNull();
+  });
+
   it('writes DMs the way the Console does, with no separate tag', () => {
     setChat([
       msg(1, { recipientUserId: 'me', recipientName: 'Ada', text: 'psst' }),

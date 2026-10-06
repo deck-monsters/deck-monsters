@@ -1,4 +1,5 @@
 import type { RoomEventBus } from '../events/index.js';
+import type { FeedLine } from '../events/types.js';
 import { RING_PATRON } from '../constants/lore.js';
 
 export function announceContestantLeave(
@@ -30,6 +31,9 @@ export function announceContestantLeave(
 		type: 'ring.remove',
 		scope: 'public',
 		text: departure,
-		payload: { contestant },
+		payload: {
+			contestant,
+			lines: [{ kind: 'system', text: departure, name: monster.givenName, boss: Boolean(isBoss) }] satisfies FeedLine[],
+		},
 	});
 }

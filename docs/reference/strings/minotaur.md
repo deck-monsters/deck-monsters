@@ -39,6 +39,30 @@ Seeded, cycling he, she, and they.
 |---|---|
 | description → returns | `a battle-hardened, {color} minotaur with a {pattern} pattern shaved into {his} thick fur. Make no mistake, despite {his} {descriptor} bulk {he} {is} a first-class host who has never been put to shame at a dinner party.` |
 
+### Ring entrance
+
+Additive to the call or the house arrival; cycling he, she, and they.
+
+- Player (he, variant 1): `Companion lowers his horns. The way in was easy. The way out is somebody else's problem.`
+- Player (he, variant 2): `Companion just barely ducks through the gate. The mason who maintains it suddenly remembers an urgent appointment elsewhere.`
+- Player (he, variant 3): `Companion lowers his horns. At just that moment a man who has been shouting advice wisely remembers that he is, technically, a spectator.`
+- House (he, variant 1): `Companion stamps into the ring. Half bull, all temper.`
+- House (he, variant 2): `Companion stamps into the ring. The mason who maintains the gate suddenly remembers an urgent appointment elsewhere.`
+- House (he, variant 3): `Companion stamps into the ring. At just that moment a man who has been shouting advice wisely remembers that he is, technically, a spectator.`
+- Player (she, variant 1): `Companion lowers her horns. The way in was easy. The way out is somebody else's problem.`
+- Player (she, variant 2): `Companion just barely ducks through the gate. The mason who maintains it suddenly remembers an urgent appointment elsewhere.`
+- Player (she, variant 3): `Companion lowers her horns. At just that moment a man who has been shouting advice wisely remembers that he is, technically, a spectator.`
+- House (she, variant 1): `Companion stamps into the ring. Half bull, all temper.`
+- House (she, variant 2): `Companion stamps into the ring. The mason who maintains the gate suddenly remembers an urgent appointment elsewhere.`
+- House (she, variant 3): `Companion stamps into the ring. At just that moment a man who has been shouting advice wisely remembers that he is, technically, a spectator.`
+- Player (they, variant 1): `Companion lowers their horns. The way in was easy. The way out is somebody else's problem.`
+- Player (they, variant 2): `Companion just barely ducks through the gate. The mason who maintains it suddenly remembers an urgent appointment elsewhere.`
+- Player (they, variant 3): `Companion lowers their horns. At just that moment a man who has been shouting advice wisely remembers that he is, technically, a spectator.`
+- House (they, variant 1): `Companion stamps into the ring. Half bull, all temper.`
+- House (they, variant 2): `Companion stamps into the ring. The mason who maintains the gate suddenly remembers an urgent appointment elsewhere.`
+- House (they, variant 3): `Companion stamps into the ring. At just that moment a man who has been shouting advice wisely remembers that he is, technically, a spectator.`
+- House, with a Unicorn in the ring: `Companion stamps into the ring. Half bull, all temper, and in no mood for roses.`
+
 ### Long description
 
 ```text

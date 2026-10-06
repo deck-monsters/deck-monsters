@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth-context.js';
 import { THEMES, useTheme } from '../hooks/useTheme.js';
 import { useCommandInsert } from '../lib/command-insert-context.js';
@@ -20,7 +20,7 @@ export default function AppShell({ children, roomName, roomId }: AppShellProps) 
   // The menu shows a theme's name, not its id ("Street Fighter", not "street-fighter").
   const nameOf = (id: string) => (THEMES.find((entry) => entry.id === id)?.label ?? id).replace(/ \(.*\)$/, '');
   const themeName = nameOf(theme);
-  const THEME_ICON: Record<string, string> = { phosphor: '🟢', amber: '🟡', ember: '🔴', 'street-fighter': '🕹️' };
+  const THEME_ICON: Record<string, string> = { phosphor: '🟢', amber: '🟡', ember: '🔴', 'street-fighter': '🕹️', millefleur: '🦄' };
   const nextTheme = validThemes[(validThemes.indexOf(theme) + 1) % validThemes.length];
   const [refOpen, setRefOpen] = useState(false);
   const { insertCommand } = useCommandInsert();
@@ -32,66 +32,30 @@ export default function AppShell({ children, roomName, roomId }: AppShellProps) 
 
   return (
     <div className="app-shell">
-      <header
-        style={{
-          height: 'var(--header-height)',
-          borderBottom: '1px solid var(--color-border)',
-          display: 'flex',
-          alignItems: 'center',
-          padding: '0 1rem',
-          gap: '1rem',
-          flexShrink: 0,
-          background: 'var(--color-bg)',
-        }}
-      >
-        <Link
-          to="/rooms"
-          style={{
-            flexShrink: 0,
-            whiteSpace: 'nowrap',
-            color: 'var(--color-fg-bright)',
-            textDecoration: 'none',
-            fontWeight: 700,
-            letterSpacing: '0.05em',
-            fontSize: '0.9rem',
-          }}
-        >
+      <header className="app-header">
+        <Link to="/rooms" className="app-wordmark">
           DECK MONSTERS
         </Link>
 
         {roomName && (
           <>
-            <span style={{ color: 'var(--color-fg-dim)' }}>/</span>
+            <span className="app-header-sep">/</span>
             {roomId ? (
               <Link
                 to={`/room/${roomId}`}
                 className="app-shell-room-name"
-                style={{
-                  color: 'var(--color-fg)',
-                  fontSize: '0.9rem',
-                  textDecoration: 'none',
-                  borderBottom: '1px solid transparent',
-                }}
                 title={`${roomName}: back to The Ring and Console`}
                 aria-label={`Back to ${roomName}: The Ring and Console`}
               >
                 {roomName}
               </Link>
             ) : (
-              <span className="app-shell-room-name" title={roomName} style={{ color: 'var(--color-fg)', fontSize: '0.9rem' }}>{roomName}</span>
+              <span className="app-shell-room-name" title={roomName}>{roomName}</span>
             )}
             {roomId && (
               <Link
                 to={`/room/${roomId}/settings`}
-                style={{
-                  flexShrink: 0,
-                  whiteSpace: 'nowrap',
-                  color: 'var(--color-fg-dim)',
-                  textDecoration: 'none',
-                  fontSize: '0.8rem',
-                  padding: '0.15rem 0.3rem',
-                  border: '1px solid var(--color-border)',
-                }}
+                className="app-room-settings-link"
                 title="Room settings"
                 aria-label="Room settings"
               >
@@ -101,7 +65,7 @@ export default function AppShell({ children, roomName, roomId }: AppShellProps) 
           </>
         )}
 
-        <div style={{ flex: 1 }} />
+        <div className="app-header-spacer" style={{ flex: 1 }} />
 
         {/* Desktop nav */}
         <nav
@@ -110,9 +74,9 @@ export default function AppShell({ children, roomName, roomId }: AppShellProps) 
           aria-label="Main navigation"
         >
           {roomId && (
-            <Link to={`/room/${roomId}`} className="btn" style={{ fontSize: '0.8rem' }}>
+            <NavLink end to={`/room/${roomId}`} className="btn" style={{ fontSize: '0.8rem' }}>
               The Ring
-            </Link>
+            </NavLink>
           )}
           <button
             className="btn"
@@ -124,42 +88,42 @@ export default function AppShell({ children, roomName, roomId }: AppShellProps) 
           >
             ?
           </button>
-          <Link to="/rooms" className="btn" style={{ fontSize: '0.8rem' }}>
+          <NavLink to="/rooms" className="btn" style={{ fontSize: '0.8rem' }}>
             Rooms
-          </Link>
+          </NavLink>
           {roomId && (
-            <Link
+            <NavLink
               to={`/room/${roomId}/chat`}
               className="btn"
               style={{ fontSize: '0.8rem' }}
               title={surfaceDescription('chat')}
             >
               Chat
-            </Link>
+            </NavLink>
           )}
-          <Link
+          <NavLink
             to={roomId ? `/room/${roomId}/leaderboard` : '/leaderboard'}
             className="btn"
             style={{ fontSize: '0.8rem' }}
           >
             Leaders
-          </Link>
+          </NavLink>
           {roomId && (
-            <Link to={`/room/${roomId}/workshop`} className="btn" style={{ fontSize: '0.8rem' }}>
+            <NavLink to={`/room/${roomId}/workshop`} className="btn" style={{ fontSize: '0.8rem' }}>
               Workshop
-            </Link>
+            </NavLink>
           )}
           {roomId && (
-            <Link to={`/room/${roomId}/fights`} className="btn" style={{ fontSize: '0.8rem' }}>
+            <NavLink to={`/room/${roomId}/fights`} className="btn" style={{ fontSize: '0.8rem' }}>
               Fights
-            </Link>
+            </NavLink>
           )}
-          <Link to={roomId ? `/room/${roomId}/help` : '/help'} className="btn" style={{ fontSize: '0.8rem' }}>
+          <NavLink to={roomId ? `/room/${roomId}/help` : '/help'} className="btn" style={{ fontSize: '0.8rem' }}>
             Help and guides
-          </Link>
-          <Link to="/account" className="btn" style={{ fontSize: '0.8rem' }}>
+          </NavLink>
+          <NavLink to="/account" className="btn" style={{ fontSize: '0.8rem' }}>
             Account
-          </Link>
+          </NavLink>
           <button
             className="btn"
             style={{ fontSize: '0.8rem' }}
@@ -195,29 +159,12 @@ export default function AppShell({ children, roomName, roomId }: AppShellProps) 
 
       {menuOpen && (
         <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 200,
-            background: 'rgba(0,0,0,0.7)',
-          }}
+          className="app-menu-backdrop"
           onClick={() => setMenuOpen(false)}
           role="presentation"
         >
           <nav
-            style={{
-              position: 'absolute',
-              top: 0,
-              right: 0,
-              width: 240,
-              height: '100%',
-              background: 'var(--color-bg)',
-              borderLeft: '1px solid var(--color-border)',
-              padding: '1rem',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '0.5rem',
-            }}
+            className="app-menu-drawer"
             aria-label="Mobile menu"
             onClick={(e) => e.stopPropagation()}
           >

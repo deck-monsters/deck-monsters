@@ -1,4 +1,5 @@
 import type { RoomEventBus } from '../events/index.js';
+import type { FeedLine } from '../events/types.js';
 
 interface WinnerLike {
 	monsterName: string;
@@ -29,7 +30,7 @@ function winnerLine(winners: WinnerLike[]): string {
 	if (winners.length < 1) return '';
 
 	if (winners.length === 1) {
-		return `🏆 ${winners[0]!.monsterName} wins!\n`;
+		return `🏆 ${winners[0]!.monsterName} wins!`;
 	}
 
 	// A team victory: every survivor of the winning faction wins together.
@@ -37,7 +38,7 @@ function winnerLine(winners: WinnerLike[]): string {
 	const sameTeam = team && winners.every(w => w.team === team);
 	const names = winners.map(w => w.monsterName).join(', ');
 
-	return sameTeam ? `🏆 ${team} wins! (${names})\n` : `🏆 ${names} win!\n`;
+	return sameTeam ? `🏆 ${team} wins! (${names})` : `🏆 ${names} win!`;
 }
 
 export function announceFightConcludes(
@@ -49,10 +50,17 @@ export function announceFightConcludes(
 	const outcome = isDraw ? 'in a draw' : `with ${deaths} dead`;
 	const roundWord = rounds === 1 ? 'round' : 'rounds';
 
+	const winner = winnerLine(winners);
+	const concluded = `The fight concluded ${outcome} after ${rounds} ${roundWord}!`;
+	const lines: FeedLine[] = [
+		...(winner ? [{ kind: 'win', text: winner, winners: winners.map(w => w.monsterName) } satisfies FeedLine] : []),
+		{ kind: 'fight-end', text: concluded, deaths, rounds, isDraw },
+	];
+
 	eb.publish({
 		type: 'announce',
 		scope: 'public',
-		text: `${winnerLine(winners)}The fight concluded ${outcome} after ${rounds} ${roundWord}!\n\n≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡\n`,
-		payload: { deaths, isDraw, rounds, winners },
+		text: `${winner ? `${winner}\n` : ''}${concluded}\n\n≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡\n`,
+		payload: { deaths, isDraw, rounds, winners, lines },
 	});
 }

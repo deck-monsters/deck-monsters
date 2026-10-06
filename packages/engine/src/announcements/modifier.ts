@@ -1,5 +1,6 @@
 import { signedNumber } from '../helpers/signed-number.js';
 import type { RoomEventBus } from '../events/index.js';
+import { leadLines } from '../events/feed-lines.js';
 
 interface ModifierOpts {
 	amount: number;
@@ -29,5 +30,19 @@ export function announceModifier(
 		text = `${monster.identity}'s ${attr} is now ${newValue} (${dir} by ${Math.abs(amount)}${total})`;
 	}
 
-	eb.publish({ type: 'announce', scope: 'public', text, payload: {} });
+	eb.publish({
+		type: 'announce',
+		scope: 'public',
+		text,
+		payload: {
+			lines: leadLines(text, line => ({
+				kind: 'modifier',
+				text: line,
+				name: monster.givenName,
+				attr,
+				amount,
+				value: newValue,
+			})),
+		},
+	});
 }

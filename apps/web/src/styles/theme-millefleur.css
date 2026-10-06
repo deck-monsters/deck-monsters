@@ -1,0 +1,1587 @@
+/* ── Millefleur: a light, rounded watercolour theme ──
+   Design: docs/reference/millefleur/design-system.md. Plan: docs/roadmap/46-unicorn-theme.md.
+
+   This file is a LAZY CHUNK (themes/millefleur.ts, imported by useTheme's applyTheme the
+   first time the theme is applied), so the four dark themes never download it or Nunito.
+   The shared CSS carries only a first-paint stub for this theme (base.css: bg, fg, input-bg,
+   border, color-scheme) so a returning player's first frame is paper, not black.
+
+   Every text pair below is >= 4.5:1 on paper #fbf8f5 and on the input surface #fffdfa
+   (theme-palettes.test.ts enforces it). Do NOT soften text with lighter lilacs: the first
+   renders used #7d72a0 (4.2:1) and #8a7fa8 (3.5:1) and failed. Soften with size or weight.
+
+   This task (46a/2) covers tokens, type and the generic components. The folder tabs, the
+   translucent page sheet, halos, painted card slots, ruled Chat and the Ring transcript are
+   task 3; watercolour textures are task 4 (the ground is flat paper until then). */
+
+[data-theme='millefleur'] {
+  color-scheme: light;
+
+  /* Ink, paper and lines. */
+  --color-bg: #fbf8f5;                 /* paper */
+  --color-fg: #3b2a55;                 /* ink, 12.0:1 */
+  --color-fg-bright: #2f2147;          /* heading ink, 13.9:1 */
+  --color-fg-dim: #695c8c;             /* muted ink, 5.65:1: timestamps, captions, hints */
+  --color-accent: #9a2f66;             /* rose: links, timers, room name, 6.7:1 */
+  /* System lines take the lilac "label" ink rather than the muted ink: it is a different
+     hue from fg-dim so announcements still read as a separate voice, and at 7.8:1 it is the
+     safer of the two on the translucent page. */
+  --color-system: #5a4380;
+  --color-error: #a12a4f;              /* danger, 6.7:1 */
+  --color-success: #1f6b57;            /* ok, 6.0:1 */
+  --color-prompt-glyph: var(--color-accent);
+  --color-border: rgb(190 170 215 / 0.55);   /* decorative edges: cards, chips, rules */
+  --color-input-bg: #fffdfa;           /* solid paper-white; the design's .95 is for fields over paint */
+  --color-choice-hover: #f3ecfb;
+  --color-choice-selected: #e8dcf8;
+  --color-bg-elevated: #ffffff;
+  --color-hover: #f6ecfc;
+  --color-accent-muted: #efe4ff;
+  --color-warning: #8a5a00;
+
+  /* HP ramp. On a light ground "healthier" is the LIGHTER stage, so luminance still falls
+     healthy -> hurt -> critical, and contrast with paper (and with the track) rises as health
+     falls: 3.54, 5.38, 8.24 on the track. A burnt sienna in the middle keeps the three
+     stages apart in greyscale and for a colour-blind viewer (1.5:1 between neighbours). */
+  --color-hp-healthy: #2a8570;
+  --color-hp-hurt: #964214;
+  --color-hp-critical: #7a1838;
+
+  /* Plumbing tokens (theme-phosphor.css documents each). */
+  --font-ui: 'Nunito', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  /* The Ring transcript's type, from samples/ring.html (.ln). feed-row-height.ts reads
+     these from the live CSS, so the row estimates follow without a per-theme constant. */
+  --feed-font-size: 12.5px;
+  --feed-line-height: 1.65;
+  /* The mock's 2px between transcript lines; read by readFeedMetrics. */
+  --feed-line-gap: 2px;
+  /* --font-mono stays JetBrains Mono (the :root default): the feed's row-height maths and
+     card frames depend on its 0.6em advance. */
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 24px;
+  --color-border-strong: #8f7cbc;      /* edges that identify a control, 3.4:1 */
+  --shadow-page: 0 14px 34px rgb(110 85 150 / 0.08);
+  --surface-page: linear-gradient(rgb(255 253 250 / 0.9), rgb(255 253 250 / 0.74) 220px);
+  --holo: linear-gradient(110deg, #fbd2e4, #fbecbe, #c9eedf, #cfe2fb, #e0d0fb);
+  --wash-lilac: #e3d4fa;
+  --wash-seafoam: #cdeee2;
+  --wash-blush: #fbd9e6;
+  --wash-butter: #fbefc8;
+  --wash-sky: #d6e6fb;
+  --color-meter-track: rgb(190 170 215 / 0.28);
+  --color-on-accent: #ffffff;
+  --color-highlight-good: #1f6b57;     /* text-safe stand-ins for the HP stages */
+  --color-highlight-warn: #8a2a5e;
+  --color-danger-border: color-mix(in srgb, var(--color-error) 30%, transparent);
+  --color-sprite-flash: #ff9fd2;
+  --color-sprite-flash-outline: none;   /* keep the dark outline: a pale monster keeps its edge */
+  --color-backdrop: linear-gradient(rgb(75 58 110 / 0.16), rgb(75 58 110 / 0.3));
+  --color-backdrop-light: rgb(75 58 110 / 0.22);
+
+  /* The sheet's own tokens, used below. Not part of the cross-theme contract. */
+  --mf-primary: linear-gradient(160deg, #5d4684, #3b2a55);
+  --mf-primary-ring: 0 0 0 2px rgb(255 253 250 / 0.95), 0 0 0 3.5px rgb(93 70 132 / 0.45);
+  --mf-card: rgb(255 253 250 / 0.9);
+  --mf-line-soft: rgb(190 170 215 / 0.55);
+  --mf-line-tab: rgb(150 125 195 / 0.5);
+  --mf-rule: rgb(140 170 220 / 0.24);
+  --mf-margin: rgb(232 160 190 / 0.4);
+  --mf-tab-un-l: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='30' viewBox='0 0 14 30'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%23f5f0f9' stop-opacity='.97'/><stop offset='1' stop-color='%23f5f0f9' stop-opacity='.92'/></linearGradient></defs><path d='M0 30C4 30 6 3 12 1.5H14V30Z' fill='url(%23g)'/><path d='M.5 30C4.5 30 6.5 3 12 1.5H14' fill='none' stroke='rgb(150,125,195)' stroke-opacity='.5'/></svg>");
+  --mf-tab-un-r: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='30' viewBox='0 0 14 30'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%23f5f0f9' stop-opacity='.97'/><stop offset='1' stop-color='%23f5f0f9' stop-opacity='.92'/></linearGradient></defs><path d='M14 30C10 30 8 3 2 1.5H0V30Z' fill='url(%23g)'/><path d='M13.5 30C9.5 30 7.5 3 2 1.5H0' fill='none' stroke='rgb(150,125,195)' stroke-opacity='.5'/></svg>");
+  --mf-tab-un-m: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='2' height='30' preserveAspectRatio='none' viewBox='0 0 2 30'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%23f5f0f9' stop-opacity='.97'/><stop offset='1' stop-color='%23f5f0f9' stop-opacity='.92'/></linearGradient></defs><rect y='1.5' width='2' height='28.5' fill='url(%23g)'/><path d='M0 1.5H2' stroke='rgb(150,125,195)' stroke-opacity='.5'/></svg>");
+  --mf-tab-se-l: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='34' viewBox='0 0 14 34'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%23f8d8e6'/><stop offset='.85' stop-color='%23fffdfa'/><stop offset='1' stop-color='%23fffdfa'/></linearGradient></defs><path d='M0 33C4 33 6 3 12 1.5H14V34H0Z' fill='url(%23g)'/><path d='M.5 34V33C4.5 33 6.5 3 12 1.5H14' fill='none' stroke='rgb(150,125,195)' stroke-opacity='.5'/></svg>");
+  --mf-tab-se-r: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='34' viewBox='0 0 14 34'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%23f8d8e6'/><stop offset='.85' stop-color='%23fffdfa'/><stop offset='1' stop-color='%23fffdfa'/></linearGradient></defs><path d='M14 33C10 33 8 3 2 1.5H0V34H14Z' fill='url(%23g)'/><path d='M13.5 34V33C9.5 33 7.5 3 2 1.5H0' fill='none' stroke='rgb(150,125,195)' stroke-opacity='.5'/></svg>");
+  --mf-tab-se-m: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='2' height='34' preserveAspectRatio='none' viewBox='0 0 2 34'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%23f8d8e6'/><stop offset='.85' stop-color='%23fffdfa'/><stop offset='1' stop-color='%23fffdfa'/></linearGradient></defs><rect y='1.5' width='2' height='32.5' fill='url(%23g)'/><path d='M0 1.5H2' stroke='rgb(150,125,195)' stroke-opacity='.5'/></svg>");
+}
+
+/* ── Type: the chrome is Nunito; the feed and Console keep --font-mono (set per selector). ── */
+[data-theme='millefleur'] body { font-weight: 400; }
+[data-theme='millefleur'] .app-wordmark {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+}
+[data-theme='millefleur'] .page h1,
+[data-theme='millefleur'] .surface-panel h1 { font-size: 22px; font-weight: 800; }
+[data-theme='millefleur'] .page h2 { font-weight: 800; }
+[data-theme='millefleur'] .panel-title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+}
+
+[data-theme='millefleur'] ::selection { background: #e0d0fb; color: #2f2147; }
+[data-theme='millefleur'] input[type='checkbox'],
+[data-theme='millefleur'] input[type='radio'] { accent-color: #9a2f66; }
+
+/* ── Links ── Class-less links only (the Markdown guides): a link with a class is styled by
+   that class, and the browser's default blue is unreadable on lilac. */
+[data-theme='millefleur'] a:not([class]) { color: var(--color-accent); }
+
+/* ── Scrollbars ── */
+[data-theme='millefleur'] ::-webkit-scrollbar-thumb {
+  background: rgb(143 124 188 / 0.65);
+  border-radius: 3px;
+}
+[data-theme='millefleur'] ::-webkit-scrollbar-thumb:hover { background: #8f7cbc; }
+[data-theme='millefleur'] { scrollbar-color: rgb(143 124 188 / 0.65) transparent; }
+
+/* ── Focus ring ──
+   base.css's `:focus-visible` already draws 2px solid var(--color-accent) at a 2px offset, and
+   Millefleur's accent IS the rose #9a2f66 (6.7:1), so nothing is restated here. Re-declaring
+   the outline under this theme's prefix would out-rank the existing inset rules (room name,
+   chat list, tables, help blocks: -1px/-2px offsets that keep the ring inside an
+   overflow:auto ancestor) and push their rings outside, where they are clipped. */
+
+/* ── Header ── */
+[data-theme='millefleur'] .app-header {
+  background: transparent;
+  border-bottom-color: transparent;
+  padding: 0 16px;
+}
+[data-theme='millefleur'] .app-header-sep { color: #c4b3e0; }
+[data-theme='millefleur'] .app-wordmark { line-height: 1; }
+[data-theme='millefleur'] .app-shell-room-name {
+  color: var(--color-accent);
+  font-size: 15px;
+  font-weight: 700;
+}
+[data-theme='millefleur'] .app-header .header-hamburger {
+  min-width: 38px;
+  min-height: 38px;
+  justify-content: center;
+  padding: 0;
+}
+/* The mock's header: 16px above the 38px menu button, wordmark and room name centred on it
+   (35px from the top), 8px gaps. The tab row's own 14px of empty hit area above the folder
+   shape makes up the rest of the mock's 68px (56 + 14, less the 2px the tab's padding gives). Phone only: the desktop bar has no 38px button. */
+@media (max-width: 600px) {
+  [data-theme='millefleur'] .app-header {
+    height: 56px;
+    padding: 16px 16px 2px;
+    gap: 8px;
+    box-sizing: border-box;
+  }
+  /* The name takes the free room (the mock's flex:1), so the quiet round gear sits against
+     the menu button instead of pushing the name along. */
+  [data-theme='millefleur'] .app-shell-room-name { flex: 1 1 auto; }
+  [data-theme='millefleur'] .app-header-spacer { flex: 0 0 0 !important; }
+}
+
+
+/* ── The painted ground ──
+   Each surface's watercolour from its sample, baked once (tools/bake.mjs) and never run as live
+   filters (§5, §8): the Ring's by default, the Workshop's and Chat's when that surface is on
+   screen (<html data-paint>, hooks/usePaintSurface.ts). The paper's fibre and grain are a
+   separate 128px tile multiplied over it, so the grain stays crisp at any width. The page and
+   cards are translucent paper, so the paint shows through them, faintly, as in the mocks.
+   The body carries it, behind the header and tabs too, because the mocks' washes bleed in from
+   the top of the screen. Painted once for the viewport: no blend modes on scrolling rows. */
+[data-theme='millefleur'] body {
+  --mf-paint: url('../themes/millefleur-paint/ring.webp');
+  background-color: var(--color-bg);
+  background-image: url('../themes/millefleur-paint/grain.webp'), var(--mf-paint);
+  background-size: 128px 128px, 100% auto;
+  background-position: 0 0, top center;
+  background-repeat: repeat, no-repeat;
+  background-blend-mode: multiply, normal;
+}
+/* The shells paint the page colour in every theme; here they let the ground through, or the
+   paint would show only behind the header. */
+[data-theme='millefleur'] .terminal-shell { background: transparent; }
+[data-theme='millefleur'][data-paint='workshop'] body { --mf-paint: url('../themes/millefleur-paint/workshop.webp'); }
+[data-theme='millefleur'][data-paint='chat'] body { --mf-paint: url('../themes/millefleur-paint/chat.webp'); }
+/* On a wide screen the 390px painting, width-fitted, would be ~3.7x tall; fit it to the
+   viewport instead and keep it still while the panes scroll (desktop only: a fixed background
+   is costly on phones). */
+@media (min-width: 1024px) {
+  [data-theme='millefleur'] body {
+    background-size: 128px 128px, 100% 100vh;
+    background-attachment: scroll, fixed;
+  }
+}
+
+/* ── Menu drawer and dialogs: paper with a soft lilac edge ── */
+[data-theme='millefleur'] .app-menu-drawer {
+  background: var(--color-bg);
+  border-left-color: #b9a8dc;
+  box-shadow: -14px 0 34px rgb(110 85 150 / 0.14);
+}
+[data-theme='millefleur'] .card-detail-backdrop { background: rgb(75 58 110 / 0.3); }
+[data-theme='millefleur'] .card-detail-sheet {
+  background: var(--color-bg);
+  border-color: #b9a8dc;
+}
+
+/* ── Buttons ──
+   Secondary (every .btn): translucent paper, a control-strength edge, ink 700.
+   Primary (.btn-primary, .btn-cta): plum gradient, white 14/800, and the System 7 double ring. */
+[data-theme='millefleur'] .btn {
+  background: rgb(255 253 250 / 0.7);
+  border-color: var(--color-border-strong);
+  border-radius: var(--radius-md);
+  color: var(--color-fg);
+  font-weight: 700;
+}
+[data-theme='millefleur'] .btn-primary,
+[data-theme='millefleur'] .btn-cta {
+  background: var(--mf-primary);
+  border-color: transparent;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+  box-shadow: var(--mf-primary-ring), 0 6px 14px rgb(59 42 85 / 0.22);
+}
+/* The ring is the "default button" cue; a disabled one should not look pressable. */
+[data-theme='millefleur'] .btn-primary:disabled,
+[data-theme='millefleur'] .btn-cta:disabled { box-shadow: none; }
+/* The monster's name is a borderless filter toggle; it only gets a shape when pressed. */
+[data-theme='millefleur'] .workshop-monster-filter-btn {
+  border-radius: var(--radius-md);
+  color: var(--color-fg-bright);
+  font-weight: 800;
+}
+[data-theme='millefleur'] .btn[aria-pressed='true'],
+[data-theme='millefleur'] .workshop-monster-filter-btn.active {
+  background: var(--color-choice-selected);
+  border-color: var(--color-accent);
+  color: var(--color-fg-bright);
+}
+@media (hover: hover) {
+  [data-theme='millefleur'] .btn:hover:not(:disabled) {
+    background: var(--color-choice-hover);
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+  }
+  [data-theme='millefleur'] .btn-primary:hover:not(:disabled),
+  [data-theme='millefleur'] .btn-cta:hover:not(:disabled) {
+    background: linear-gradient(160deg, #6a5294, #46325f);
+    color: #fff;
+  }
+}
+
+/* ── Fields, selects and text areas ──
+   The Console's .command-input is excluded: it is typed-command text in the monospace face,
+   in a dock that is the prompt, not a form field. */
+[data-theme='millefleur'] input[type='text'],
+[data-theme='millefleur'] input[type='email'],
+[data-theme='millefleur'] input[type='password'],
+[data-theme='millefleur'] input[type='number'],
+[data-theme='millefleur'] input:not([type]):not(.command-input),
+[data-theme='millefleur'] select,
+[data-theme='millefleur'] textarea,
+[data-theme='millefleur'] .workshop-input,
+[data-theme='millefleur'] .workshop-select,
+[data-theme='millefleur'] .chat-input,
+[data-theme='millefleur'] .shop-sell-qty {
+  background: var(--color-input-bg);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  color: var(--color-fg);
+  font-family: var(--font-ui);
+}
+[data-theme='millefleur'] input[type='text'],
+[data-theme='millefleur'] input[type='email'],
+[data-theme='millefleur'] input[type='password'] { padding: 0.65rem 0.8rem; }
+[data-theme='millefleur'] input[type='text']:focus,
+[data-theme='millefleur'] input[type='email']:focus,
+[data-theme='millefleur'] input[type='password']:focus { border-color: var(--color-accent); }
+/* The browser's grey placeholder is ~2.3:1 on paper; muted ink at full opacity is 5.9:1. */
+[data-theme='millefleur'] ::placeholder,
+[data-theme='millefleur'] .command-input::placeholder {
+  color: var(--color-fg-dim);
+  opacity: 1;
+}
+
+/* ── Panels and cards ── (16px; the translucent sheet and its shadow are task 3) */
+[data-theme='millefleur'] .panel,
+[data-theme='millefleur'] .fight-log-card,
+[data-theme='millefleur'] .workshop-monster-panel,
+[data-theme='millefleur'] .workshop-item-row,
+[data-theme='millefleur'] .shop-stock-row,
+[data-theme='millefleur'] .workshop-no-monsters,
+[data-theme='millefleur'] .ftux-guide {
+  border-color: var(--mf-line-soft);
+  border-radius: 16px;
+}
+[data-theme='millefleur'] .panel,
+[data-theme='millefleur'] .fight-log-card,
+[data-theme='millefleur'] .workshop-monster-panel { background: var(--mf-card); }
+
+/* ── Banners and notices ── tinted paper, not the dark themes' translucent salmon/green */
+[data-theme='millefleur'] .error-msg,
+[data-theme='millefleur'] .success-msg,
+[data-theme='millefleur'] .workshop-flow-blocked,
+[data-theme='millefleur'] .command-blocked-banner,
+[data-theme='millefleur'] .workshop-warning,
+[data-theme='millefleur'] .workshop-flash-error,
+[data-theme='millefleur'] .workshop-banner {
+  border-radius: var(--radius-md);
+}
+[data-theme='millefleur'] .error-msg { background: #fdeef2; }
+[data-theme='millefleur'] .success-msg { background: #e9f6f1; }
+[data-theme='millefleur'] .workshop-flow-blocked,
+[data-theme='millefleur'] .command-blocked-banner { background: var(--color-input-bg); }
+[data-theme='millefleur'] .connection-banner { background: #f6f0fb; }
+
+/* ── Chips, pills and tags ── */
+[data-theme='millefleur'] .quick-action-chip,
+[data-theme='millefleur'] .train-wizard-chip {
+  background: var(--color-input-bg);
+  border-color: var(--mf-line-soft);
+  border-radius: var(--radius-pill);
+  color: var(--color-fg);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+@media (hover: hover) {
+  [data-theme='millefleur'] .quick-action-chip:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+  }
+}
+[data-theme='millefleur'] .tag,
+[data-theme='millefleur'] .workshop-status-tag,
+[data-theme='millefleur'] .roster-tag {
+  background: rgb(227 212 250 / 0.8);
+  border-color: var(--mf-line-soft);
+  border-radius: var(--radius-pill);
+  color: #5a4380;                        /* label ink on the lilac pill, 6.3:1 */
+  font-weight: 700;
+}
+/* The Workshop status tag carries its meaning in its colour (in the ring, fighting, fallen):
+   keep those text colours (4.8 to 5.4:1 on the pill), only the shape changes. */
+[data-theme='millefleur'] .workshop-status-in-ring { color: var(--color-accent); border-color: var(--color-accent); }
+[data-theme='millefleur'] .workshop-status-fighting { color: var(--color-success); border-color: var(--color-success); }
+[data-theme='millefleur'] .workshop-status-fallen { color: var(--color-error); border-color: var(--color-error); }
+
+/* ── Meters ──
+   Every stop of a bar gradient must clear 3:1 on the track (the gradient scales to the fill's
+   width, so a short bar is mostly its first stop). The palette test reads these stops. */
+[data-theme='millefleur'] .roster-bar-track,
+[data-theme='millefleur'] .workshop-xp-meter-track {
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+  border-color: transparent;
+  background: var(--color-meter-track);
+}
+[data-theme='millefleur'] .roster-bar-healthy { background: linear-gradient(90deg, #2c8873, #2a8570); }
+[data-theme='millefleur'] .roster-bar-critical { background: linear-gradient(90deg, #c0476f, #7a1838); }
+/* XP: the design system's pale holo fill with a soft glow (Meters). It is decorative: the
+   figures beside it ("XP 13/28") carry the information, so it needs no contrast with the track. */
+[data-theme='millefleur'] .workshop-xp-meter-track > span {
+  background: linear-gradient(90deg, #fbd2e4, #fbecbe, #c9eedf, #cfe2fb, #e0d0fb);
+  box-shadow: 0 0 6px rgb(224 208 251 / 0.9);
+}
+
+/* ── Highlight tags in the feed: text-safe tokens, set in the shared tokens above ── */
+
+/* ═══ Task 3: surfaces ═══════════════════════════════════════════════════════════════════
+   Everything below is scoped to this theme, so the dark themes' pixels cannot move. The shapes
+   are CSS-only (pseudo-elements, data-URI backgrounds); the watercolour is task 4. */
+
+/* ── Header: the nav row is quiet text, the ⚙ and ☰ are the secondary button's round cousins ── */
+[data-theme='millefleur'] .header-nav .btn {
+  background: transparent;
+  border-color: transparent;
+  border-radius: var(--radius-pill);
+  color: var(--color-fg-dim);
+  font-weight: 700;
+  /* Same hit area as the outlined pills had: the padding and the 2.1rem line are untouched. */
+}
+/* The current place: a rose tint and a rose underline (colour and shape, not colour alone). */
+[data-theme='millefleur'] .header-nav .btn[aria-current='page'] {
+  background: #fbe6ef;
+  color: #8a2a5e;
+  box-shadow: inset 0 -2px 0 #9a2f66;
+}
+[data-theme='millefleur'] .header-nav .btn[aria-expanded='true'] { background: var(--color-choice-selected); color: var(--color-fg-bright); }
+@media (hover: hover) {
+  [data-theme='millefleur'] .header-nav .btn:hover:not(:disabled) {
+    background: #efe6fb;
+    border-color: transparent;
+    color: var(--color-fg-bright);
+  }
+  [data-theme='millefleur'] .header-nav .btn[aria-current='page']:hover:not(:disabled) { background: #fbe6ef; color: #8a2a5e; }
+}
+/* ⚙ room settings: a 30px circle, secondary-button edge. */
+[data-theme='millefleur'] .app-room-settings-link {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 50%;
+  background: rgb(255 253 250 / 0.7);
+  color: var(--color-fg);
+  line-height: 1;
+}
+@media (hover: hover) {
+  [data-theme='millefleur'] .app-room-settings-link:hover { border-color: var(--color-accent); color: var(--color-accent); }
+}
+[data-theme='millefleur'] .app-header .header-hamburger { border-radius: var(--radius-md); }
+
+/* ── Folder tabs (phone and tablet: the tabbed layout) ──
+   Each tab is a button with its 44px hit area intact; the folder shape is a ::before drawn
+   in the bottom 30px (33 + 1 when selected), as a 3-piece background: two fixed 14px
+   shoulders and a stretched middle, so the slope keeps its curve at any label width.
+   Colours are baked into the SVGs (a data URI cannot read a custom property), mirroring
+   --mf-line-tab and the rose wash; the high-contrast block swaps the images. */
+[data-theme='millefleur'] .terminal-tabs {
+  align-items: flex-end;
+  gap: 0;
+  /* Starts 12px in, level with the page, and leaves 22% of room after the last tab so a
+     selected "Leaders" can scroll clear of the fade. */
+  padding: 0 22% 1px 12px;
+  /* The row ends 1px lower than its tabs and overlaps the page by that 1px, so the selected
+     tab can extend over the page's top line and join it. */
+  margin-bottom: -1px;
+  border-bottom: 0;
+  background: transparent;
+  position: relative;
+  z-index: 3;
+  scrollbar-width: none;
+  -webkit-mask-image: linear-gradient(90deg, #000 80%, transparent);
+  mask-image: linear-gradient(90deg, #000 80%, transparent);
+}
+[data-theme='millefleur'] .terminal-tabs::-webkit-scrollbar { display: none; }
+/* Scrolled: the left edge fades as well, so a cut tab does not end in a hard line. */
+[data-theme='millefleur'] .terminal-tabs.scrolled {
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 80%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 12%, #000 80%, transparent);
+}
+[data-theme='millefleur'] .terminal-tab {
+  flex: 0 0 auto;
+  min-width: max-content;
+  min-height: 44px;
+  margin-left: -8px;                  /* each tab sits behind its left neighbour */
+  padding: 14px 16px 0;               /* label centred in the 30px shape */
+  border: 0;
+  background: transparent;
+  color: var(--color-fg-dim);
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0;
+  z-index: 1;
+  isolation: isolate;
+  transition: color 0.1s;
+}
+[data-theme='millefleur'] .terminal-tab:first-child { margin-left: 0; }
+/* Descending z-index: tab N is behind tab N-1, so the shoulders' lines never cross. */
+[data-theme='millefleur'] .terminal-tab:nth-child(1) { z-index: 9; }
+[data-theme='millefleur'] .terminal-tab:nth-child(2) { z-index: 8; }
+[data-theme='millefleur'] .terminal-tab:nth-child(3) { z-index: 7; }
+[data-theme='millefleur'] .terminal-tab:nth-child(4) { z-index: 6; }
+[data-theme='millefleur'] .terminal-tab:nth-child(5) { z-index: 5; }
+[data-theme='millefleur'] .terminal-tab:nth-child(6) { z-index: 4; }
+[data-theme='millefleur'] .terminal-tab:nth-child(n + 7) { z-index: 3; }
+[data-theme='millefleur'] .terminal-tab::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 30px;
+  z-index: -1;
+  pointer-events: none;
+  background-image: var(--mf-tab-un-l), var(--mf-tab-un-r), var(--mf-tab-un-m);
+  background-repeat: no-repeat;
+  background-position: left bottom, right bottom, 14px bottom;
+  background-size: 14px 100%, 14px 100%, calc(100% - 28px) 100%;
+}
+[data-theme='millefleur'] .terminal-tab.active {
+  z-index: 20;
+  padding-top: 11px;                  /* 3px taller shape: the label rises with it */
+  padding-left: 18px;
+  padding-right: 18px;
+  color: var(--color-highlight-warn); /* #8a2a5e, the selected label */
+}
+[data-theme='millefleur'] .terminal-tab.active::before {
+  height: 34px;
+  bottom: -1px;                       /* 1px over the page's top edge */
+  background-image: var(--mf-tab-se-l), var(--mf-tab-se-r), var(--mf-tab-se-m);
+}
+@media (hover: hover) {
+  [data-theme='millefleur'] .terminal-tab:hover:not(.active) { color: var(--color-fg-bright); }
+}
+/* Keyboard focus: the row clips overflow, so the default 2px-outside outline would be cut off
+   at the top of the 44px box. Ring the folder shape itself instead (bug-prone: do not put the
+   outline back on the button). */
+[data-theme='millefleur'] .terminal-tab:focus-visible { outline: none; }
+[data-theme='millefleur'] .terminal-tab:focus-visible::after {
+  content: '';
+  position: absolute;
+  left: 3px;
+  right: 3px;
+  bottom: 1px;
+  height: 27px;
+  border: 2px solid var(--color-accent);
+  border-bottom: 0;
+  border-radius: 11px 11px 0 0;
+  pointer-events: none;
+}
+[data-theme='millefleur'] .terminal-tab.active:focus-visible::after { height: 30px; bottom: 2px; }
+/* The unread badge sits in the clear 14px above the shape, at the tab's top-right. */
+[data-theme='millefleur'] .terminal-tab-badge {
+  top: 1px;
+  right: 2px;
+  z-index: 2;
+}
+
+/* ── The page: what a tab (or, on a desktop, a pane) opens onto ──
+   Drawn as the slot's ::before so the slot itself keeps its full grid-cell width: PaneDivider
+   reads the left slot's clientWidth to start a drag, and a margin would shift it by the inset.
+   The slot's padding is the inset; its children sit inside it. */
+[data-theme='millefleur'] .terminal-slot {
+  isolation: isolate;
+  border-right: 0;
+  padding: 0 12px;
+}
+[data-theme='millefleur'] .terminal-slot::before,
+[data-theme='millefleur'] .terminal-slot::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 12px;
+  right: 12px;
+  pointer-events: none;
+}
+[data-theme='millefleur'] .terminal-slot::before {
+  z-index: -1;
+  background: var(--surface-page);
+  box-shadow: var(--shadow-page);
+}
+/* The top edge: 1px of --mf-line-tab, fading out over the first and last 6%. */
+[data-theme='millefleur'] .terminal-slot::after {
+  bottom: auto;
+  height: 1px;
+  z-index: 2;
+  background: linear-gradient(90deg, transparent, var(--mf-line-tab) 6%, var(--mf-line-tab) 94%, transparent);
+}
+/* Desktop: two pages side by side, rounded at the top, with a gap the divider lives in. */
+@media (min-width: 1024px) {
+  [data-theme='millefleur'] .terminal-shell { padding-top: 4px; }
+  [data-theme='millefleur'] .terminal-slot { padding-bottom: 12px; }
+  [data-theme='millefleur'] .terminal-slot[data-pane-slot='0'] { padding-right: 6px; }
+  [data-theme='millefleur'] .terminal-slot[data-pane-slot='1'] { padding-left: 6px; }
+  [data-theme='millefleur'] .terminal-slot[data-pane-slot='0']::before,
+  [data-theme='millefleur'] .terminal-slot[data-pane-slot='0']::after { right: 6px; }
+  [data-theme='millefleur'] .terminal-slot[data-pane-slot='1']::before,
+  [data-theme='millefleur'] .terminal-slot[data-pane-slot='1']::after { left: 6px; }
+  [data-theme='millefleur'] .terminal-slot::before {
+    bottom: 12px;
+    border-radius: var(--radius-lg) var(--radius-lg) 16px 16px;
+  }
+  [data-theme='millefleur'] .terminal-slot::after {
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  }
+  [data-theme='millefleur'] .pane-divider { background: transparent; }
+}
+/* Inside the page, surfaces are transparent so the page (and, in task 4, the paint) shows. */
+[data-theme='millefleur'] .command-dock,
+[data-theme='millefleur'] .chat-composer,
+[data-theme='millefleur'] .ring-roster,
+[data-theme='millefleur'] .ring-items { background: transparent; }
+/* The pane's own heading, inside the page: Nunito 13/800 like the mock's, not the dark themes'
+   small caps. The Ring's timer and summons count form one right-aligned group: the timer in
+   rose 700, then a "·" and the count in muted 400. */
+[data-theme='millefleur'] .pane-header {
+  border-bottom: 0;
+  padding: 14px 16px 6px;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--color-fg-bright);
+}
+[data-theme='millefleur'] .pane-header-timer {
+  color: var(--color-accent);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0;
+  margin-right: 0;
+}
+[data-theme='millefleur'] .pane-header-summons {
+  margin-left: 0;
+  color: var(--color-fg-dim);
+  font-weight: 400;
+}
+[data-theme='millefleur'] .pane-header-timer:not(.pane-header-summons) + .pane-header-summons::before { content: '· '; }
+/* An empty actions slot would take half the free space (its own margin-left:auto) and strand the group mid-row. */
+[data-theme='millefleur'] .pane-header-actions:empty { display: none; }
+/* With no countdown to its left, the count is the group by itself. */
+[data-theme='millefleur'] .pane-header > span:first-child + .pane-header-summons { margin-left: auto; }
+
+/* ── Card slots (Workshop and Your cards) ──
+   Role, in the engine's one table: attack rose, area apricot, heal sea-foam, trick lilac, and
+   guard (the engine's fifth role, "DEFENCE", which the design has no colour for) woad sky.
+   The dot sits beside a word, never alone. The role glyph is hidden here: it was drawn in the
+   button's default text colour, and the dot + word say the same thing. */
+[data-theme='millefleur'] .workshop-card-slot {
+  --mf-dot: #8f7cbc;
+  min-height: 84px;
+  padding: 8px 6px;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid var(--mf-line-soft);
+  border-radius: 13px;
+  background: rgb(255 253 250 / 0.95);
+  color: var(--color-fg);
+}
+[data-theme='millefleur'] .workshop-card-slot.role-attack { --mf-dot: #d7679a; }
+[data-theme='millefleur'] .workshop-card-slot.role-area { --mf-dot: #e0925a; }
+[data-theme='millefleur'] .workshop-card-slot.role-heal { --mf-dot: #3aa58a; }
+[data-theme='millefleur'] .workshop-card-slot.role-trick { --mf-dot: #8f72d1; }
+[data-theme='millefleur'] .workshop-card-slot.role-guard { --mf-dot: #5f93d6; }
+/* The role tints that the dark themes put on the border are the dot's job here. */
+[data-theme='millefleur'] .workshop-card-slot.role-attack,
+[data-theme='millefleur'] .workshop-card-slot.role-area,
+[data-theme='millefleur'] .workshop-card-slot.role-heal,
+[data-theme='millefleur'] .workshop-card-slot.role-trick,
+[data-theme='millefleur'] .workshop-card-slot.role-guard { border-color: var(--mf-line-soft); }
+[data-theme='millefleur'] .workshop-card-slot.drop-over,
+[data-theme='millefleur'] .workshop-card-slot.selected { border-color: var(--color-accent); }
+[data-theme='millefleur'] .workshop-card-slot.selected { box-shadow: inset 0 0 0 1px var(--color-accent); background: #fff6fa; }
+[data-theme='millefleur'] .workshop-card-icon { display: none; }
+[data-theme='millefleur'] .workshop-card-class {
+  order: -1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  color: var(--color-fg-dim);
+}
+/* The painted dot: a radial gradient with a soft rim. */
+[data-theme='millefleur'] .workshop-card-class::before {
+  content: '';
+  flex: 0 0 auto;
+  width: 9px;
+  height: 9px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--mf-dot) 45%, #fff), var(--mf-dot) 68%);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--mf-dot) 35%, transparent);
+}
+[data-theme='millefleur'] .workshop-card-name {
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--color-fg-bright);
+}
+[data-theme='millefleur'] .workshop-card-name.compact { font-size: 11.5px; }
+/* Empty: lilac paper at .45, a lighter edge, a lilac plus (the "[+]" text stays for the dark themes). */
+[data-theme='millefleur'] .workshop-card-slot.empty {
+  background: rgb(235 226 250 / 0.45);
+  border-color: var(--mf-line-soft);
+}
+[data-theme='millefleur'] .workshop-card-slot.empty > span {
+  font-size: 0;
+  line-height: 0;
+}
+[data-theme='millefleur'] .workshop-card-slot.empty > span::before {
+  content: '+';
+  font-size: 22px;
+  font-weight: 400;
+  line-height: 1;
+  color: #b6a6d4;   /* the sample's pale plus; the paler lines are the theme (high contrast has its own) */
+}
+/* The ⓘ strip under a slot: quiet text, still a 44px target. */
+[data-theme='millefleur'] .workshop-card-info {
+  border: 0;
+  color: var(--color-fg-dim);
+}
+
+/* ── Meters ── 6px tracks in the Workshop; the roster keeps its 4px. */
+[data-theme='millefleur'] .workshop-hp-meter .roster-bar-track { height: 6px; }
+[data-theme='millefleur'] .roster-bar-hurt { background: linear-gradient(90deg, #a24c18, #964214); }
+[data-theme='millefleur'] .roster-bar-fill { border-radius: var(--radius-pill); }
+/* The XP glow needs room outside the track, so the track no longer clips; the fill rounds itself. */
+[data-theme='millefleur'] .workshop-xp-meter-track { overflow: visible; }
+[data-theme='millefleur'] .workshop-xp-meter-track > span { border-radius: var(--radius-pill); }
+
+/* ── Workshop odds and ends ──
+   "Your cards" sits on the page directly (the monster panel is the screen's one card), and
+   the Train wizard takes the card and field shapes. */
+[data-theme='millefleur'] .workshop-inventory {
+  border-color: transparent;
+  background: transparent;
+  padding-inline: 0;
+}
+[data-theme='millefleur'] .train-wizard {
+  border-color: var(--mf-line-soft);
+  border-radius: 16px;
+  background: var(--mf-card);
+}
+[data-theme='millefleur'] .train-wizard-type,
+[data-theme='millefleur'] .train-wizard-choice {
+  border-color: var(--mf-line-soft);
+  border-radius: var(--radius-md);
+  background: var(--color-input-bg);
+}
+[data-theme='millefleur'] .train-wizard-type.is-selected,
+[data-theme='millefleur'] .train-wizard-choice.is-selected { border-color: var(--color-accent); background: #fff6fa; }
+[data-theme='millefleur'] .train-wizard-type-name { color: var(--color-fg-bright); font-weight: 800; }
+[data-theme='millefleur'] .train-wizard-heading { color: var(--color-fg-bright); font-weight: 800; }
+
+/* ── The Ring roster ──
+   The mock draws one line per monster: [portrait][name][bar][hp]. The app keeps the dark themes'
+   structure on purpose: the name line holds only the name and the BOSS pill and gets the row's
+   width, and the HP figure sits in a narrow right rail with its bar beneath (10b #169, a
+   reorganisation the owner asked for from photos of real play). A bar between name and figure
+   took that width back: at 390px a generated boss name broke mid-word over four lines and the AC
+   fell off the meta line (checked 2026-10-06). So Millefleur restyles the rows (type, the soft
+   rail, the halo, the turn wash) and leaves their layout alone. */
+[data-theme='millefleur'] .ring-roster { border-bottom: 0; }
+/* "▾ In the ring — 2 standing" is not in the mock: a quiet, small tracked label. */
+[data-theme='millefleur'] .roster-toggle {
+  padding: 2px 16px 0;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--color-fg-dim);
+}
+[data-theme='millefleur'] .roster-list { padding: 4px 10px 10px; gap: 2px 10px; }
+/* Under the roster: the mock's fading rule, not a solid border. */
+[data-theme='millefleur'] .ring-roster::after {
+  content: '';
+  flex: 0 0 1px;
+  margin: 0 16px;
+  background: linear-gradient(90deg, transparent, rgb(150 125 195 / 0.38) 10%, rgb(150 125 195 / 0.38) 90%, transparent);
+}
+[data-theme='millefleur'] .roster-row { border-radius: 12px; }
+[data-theme='millefleur'] .roster-hp {
+  color: var(--color-fg-dim);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+[data-theme='millefleur'] .roster-rail .roster-bar-track { height: 6px; }
+[data-theme='millefleur'] .roster-name-text { font-size: 15px; font-weight: 800; color: var(--color-fg-bright); }
+[data-theme='millefleur'] .roster-row-sub { font-size: 11px; }
+[data-theme='millefleur'] .roster-row-dead .roster-dead-text { font-size: 11px; }
+/* The ▶ turn marker (terminal.css) stays beside the wash: the wash alone would carry "whose
+   turn" by colour only (the roster contract: ▶ and the row tint, never colour alone). */
+/* The acting row: the mock's butter wash fading to the right, rounded. */
+[data-theme='millefleur'] .roster-row-acting {
+  background: linear-gradient(90deg, rgb(251 239 200 / 0.7), rgb(251 239 200 / 0));
+  box-shadow: none;
+  border-radius: 12px;
+}
+
+/* ═══ The Workshop, as the mock draws it ═══ */
+[data-theme='millefleur'] .workshop-view { padding: 18px 14px 12px; gap: 14px; }
+/* Heading row: "Workshop" 21/800 with "You can train N more" muted at the right. The surface's
+   own subtitle stays under it as quiet help. */
+[data-theme='millefleur'] .workshop-header > div:first-child { flex: 1 1 12rem; min-width: 0; }
+[data-theme='millefleur'] .workshop-title-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 4px;
+}
+[data-theme='millefleur'] .workshop-header h1 { margin: 0; font-size: 21px; line-height: 1; font-weight: 800; color: var(--color-fg-bright); }
+[data-theme='millefleur'] .workshop-train-count { display: inline; font-size: 12px; color: var(--color-fg-dim); }
+[data-theme='millefleur'] .workshop-header p { margin: 6px 4px 0; font-size: 13px; line-height: 1.35; color: var(--color-fg-dim); }
+/* The count moved up beside the heading; the sentence below would only repeat it. (When every
+   place is taken the sentence stays: that is the only place it is said.) */
+[data-theme='millefleur'] .workshop-train-line-count { display: none; }
+[data-theme='millefleur'] .workshop-train-row { padding: 0 4px; }
+
+[data-theme='millefleur'] .workshop-monster-panel { padding: 16px 14px 14px; gap: 12px; }
+[data-theme='millefleur'] .workshop-monster-header { align-items: center; gap: 16px; }
+/* The portrait: a soft holo glow around a pearl disc, 80px, with the monster's pixel art at 2x. */
+[data-theme='millefleur'] .workshop-monster-portrait {
+  position: relative;
+  isolation: isolate;
+  flex: 0 0 80px;
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+[data-theme='millefleur'] .workshop-monster-portrait::before,
+[data-theme='millefleur'] .workshop-monster-portrait::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  border-radius: 50%;
+  pointer-events: none;
+}
+[data-theme='millefleur'] .workshop-monster-portrait::before {
+  inset: 0;
+  background: conic-gradient(from 210deg, #fbd2e4, #fbecbe, #c9eedf, #cfe2fb, #e0d0fb, #fbd2e4);
+  filter: blur(6px);
+  opacity: 0.95;
+}
+[data-theme='millefleur'] .workshop-monster-portrait::after {
+  inset: 7px;
+  background: radial-gradient(circle at 40% 35%, #fffdfa 0%, #fbf7ff 60%, #efe6fb 100%);
+  box-shadow: inset 0 0 12px rgb(190 160 235 / 0.45);
+}
+[data-theme='millefleur'] .workshop-monster-portrait-emoji { font-size: 34px; line-height: 1; }
+/* Name, then the type line, then the status: the tag's DOM position is beside the name, so
+   the title row dissolves into the column and each part takes its place by order. */
+[data-theme='millefleur'] .workshop-monster-title { gap: 4px; justify-content: center; min-width: 0; }
+[data-theme='millefleur'] .workshop-monster-title-row { display: contents; }
+[data-theme='millefleur'] .workshop-monster-filter-btn {
+  order: 1;
+  align-self: flex-start;
+  min-height: 0;
+  padding: 0;
+  font-size: 23px;
+  line-height: 1.1;
+  text-align: left;
+}
+[data-theme='millefleur'] .workshop-monster-header p { order: 2; margin: 0; font-size: 13px; color: var(--color-fg-dim); }
+[data-theme='millefleur'] .workshop-status-tag {
+  order: 3;
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--color-success);
+}
+[data-theme='millefleur'] .workshop-status-tag::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: radial-gradient(circle, currentColor 40%, transparent 78%);
+}
+[data-theme='millefleur'] .workshop-status-in-ring,
+[data-theme='millefleur'] .workshop-status-fighting,
+[data-theme='millefleur'] .workshop-status-fallen { border: 0; }
+/* Meters: label, 8px track, and (XP) the rose "Lvl 3 ›", the tracks ending together. */
+[data-theme='millefleur'] .workshop-hp-meter,
+[data-theme='millefleur'] .workshop-xp-meter { gap: 10px; margin: 0; min-height: 0; font-size: 12px; }
+[data-theme='millefleur'] .workshop-hp-meter { padding-right: 62px; }
+[data-theme='millefleur'] .workshop-hp-meter > span,
+[data-theme='millefleur'] .workshop-xp-meter > span:first-child { flex: 0 0 auto; min-width: 62px; font-size: 12px; color: var(--color-fg-dim); }
+[data-theme='millefleur'] .workshop-hp-meter .roster-bar-track,
+[data-theme='millefleur'] .workshop-xp-meter-track { height: 8px; margin: 0; }
+[data-theme='millefleur'] .workshop-xp-next { flex: 0 0 52px; font-size: 12px; font-weight: 800; color: var(--color-accent); text-align: right; }
+[data-theme='millefleur'] .workshop-xp-meter { min-height: 28px; }
+[data-theme='millefleur'] .workshop-monster-actions { gap: 10px; flex-wrap: nowrap; }
+/* Unequip all first, the view's one primary (Send to ring, Revive) last, as in the mock. */
+[data-theme='millefleur'] .workshop-monster-actions .btn:last-child { order: -1; }
+[data-theme='millefleur'] .workshop-monster-actions .btn { padding: 12px 16px; min-height: 44px; }
+[data-theme='millefleur'] .workshop-deck-status { padding: 0 2px; font-size: 12px; }
+[data-theme='millefleur'] .workshop-deck-label { color: var(--color-fg); font-weight: 700; }
+[data-theme='millefleur'] .workshop-deck-needs-more { opacity: 1; }
+/* Three to a row, 9px apart (the dark themes keep their 70px minimum). */
+[data-theme='millefleur'] .workshop-slot-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; }
+[data-theme='millefleur'] .workshop-monster-nav { min-height: 36px; align-items: center; }
+/* "Your cards" 17/800 with its count muted at the right, on one line. */
+[data-theme='millefleur'] .workshop-section-header { align-items: baseline; flex-wrap: nowrap; margin-bottom: 14px; padding: 4px 4px 0; }
+[data-theme='millefleur'] .workshop-section-header h2 { margin: 0; font-size: 17px; line-height: 1; }
+[data-theme='millefleur'] .workshop-section-header span { font-size: 12px; }
+
+/* ⓘ on a phone: the strip stays (base.css, 520px container query: a corner badge overlapped the
+   card and swallowed drops, pass 44). Here it is the tile's quiet footer: the same rounded tile
+   carried on, a faint line between, no bold edge of its own.
+   A corner ⓘ was built and measured (scratchpad slot-touch.mjs, 83px-wide slots): its 44x44 hit
+   area covers the slot's centre and top edge, so the most natural tap opens details instead of
+   selecting the card. It is kept behind <html data-slot-info="corner"> for comparison only. */
+@container workshop (max-width: 520px) {
+  [data-theme='millefleur'] .workshop-card-cell > .workshop-card-slot:not(.empty) {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    border-bottom-color: rgb(190 170 215 / 0.3);
+  }
+  [data-theme='millefleur'] .workshop-card-info {
+    border: 1px solid var(--mf-line-soft);
+    border-top: 0;
+    border-radius: 0 0 13px 13px;
+    background: rgb(255 253 250 / 0.95);
+    font-size: 13px;
+  }
+  [data-theme='millefleur'][data-slot-info='corner'] .workshop-card-cell { flex-direction: row; }
+  [data-theme='millefleur'][data-slot-info='corner'] .workshop-card-cell > .workshop-card-slot:not(.empty) {
+    border-bottom-left-radius: 13px;
+    border-bottom-right-radius: 13px;
+    border-bottom-color: var(--mf-line-soft);
+  }
+  [data-theme='millefleur'][data-slot-info='corner'] .workshop-card-info {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 44px;
+    height: 44px;
+    min-height: 0;
+    align-items: flex-start;
+    justify-content: flex-end;
+    padding: 3px 6px 0 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    font-size: 12px;
+  }
+}
+
+/* ── Full-page routes (/room/:id/workshop, /chat, /fights, ...) ──
+   The same page the tabs open onto, for the surfaces that are a route of their own. Inside the
+   terminal these hosts sit in a .terminal-slot and are not direct children of the shell. */
+[data-theme='millefleur'] .app-shell > main > .surface-panel-host,
+[data-theme='millefleur'] .app-shell > main > .workshop-view {
+  margin: 0 12px 12px;
+  background: var(--surface-page);
+  box-shadow: var(--shadow-page);
+  border-top: 1px solid var(--mf-line-tab);
+  border-radius: var(--radius-lg) var(--radius-lg) 16px 16px;
+}
+/* Where the info button is a corner badge (wide containers), keep the role label below it. */
+@container workshop (min-width: 521px) {
+  [data-theme='millefleur'] .workshop-card-slot { padding-top: 24px; }
+}
+
+/* ── The halo: a soft, blurred holo glow around a pearl disc, behind the player's OWN portrait ──
+   34px, like the mock's. The blur is on a static 34px element in the roster, which sits
+   outside the scrolling feed (the feed itself takes no blur or blend mode). Monsters that are
+   not yours (the Minotaur) get the 34px box and the sprite, no halo. */
+[data-theme='millefleur'] .roster-icon {
+  position: relative;
+  isolation: isolate;
+  overflow: visible;
+  width: 34px;
+  height: 34px;
+}
+[data-theme='millefleur'] .roster-icon::before,
+[data-theme='millefleur'] .roster-icon::after { display: none; }
+[data-theme='millefleur'] .roster-row-mine .roster-icon::before,
+[data-theme='millefleur'] .roster-row-mine .roster-icon::after {
+  display: block;
+  content: '';
+  position: absolute;
+  z-index: -1;
+  border-radius: 50%;
+  pointer-events: none;
+}
+[data-theme='millefleur'] .roster-row-mine .roster-icon::before {
+  inset: 0;
+  background: conic-gradient(#fbd2e4, #fbecbe, #c9eedf, #cfe2fb, #e0d0fb, #fbd2e4);
+  filter: blur(3px);
+}
+[data-theme='millefleur'] .roster-row-mine .roster-icon::after {
+  inset: 4px;
+  background: #fffdfa;
+}
+[data-theme='millefleur'] .roster-sprite,
+[data-theme='millefleur'] .inline-sprite {
+  filter: drop-shadow(0 2px 3px rgb(110 85 150 / 0.35));
+  image-rendering: pixelated;
+}
+
+/* ── Carousel dots and arrow ── The buttons (28 x 44 and 32 x 44) are untouched; the marker is the ::before. */
+[data-theme='millefleur'] .workshop-monster-dot::before {
+  width: 9px;
+  height: 9px;
+  border: 1px solid rgb(150 125 195 / 0.55);   /* the sample's pale ring */
+  border-radius: 50%;
+}
+[data-theme='millefleur'] .workshop-monster-dot.active::before {
+  width: 10px;
+  height: 10px;
+  border-color: transparent;
+  background: var(--holo);
+  box-shadow: 0 0 0 1px rgb(150 125 195 / 0.5), 0 0 7px rgb(200 160 230 / 0.6);
+}
+[data-theme='millefleur'] .workshop-monster-next { color: var(--color-fg); }
+[data-theme='millefleur'] .workshop-monster-next-mark {
+  width: 20px;
+  height: 20px;
+  border: 1px solid rgb(150 125 195 / 0.6);
+  background: rgb(255 253 250 / 0.9);
+  border-radius: 50%;
+  font-size: 13px;
+  line-height: 1;
+}
+
+/* ── Tags in the feed: pills; only the natural 20 gets the holo ── */
+[data-theme='millefleur'] .highlight-tag {
+  background: var(--color-input-bg);
+  border-color: var(--mf-line-soft);
+  border-radius: var(--radius-pill);
+  font-weight: 700;
+}
+[data-theme='millefleur'] .event-highlight-nat20 .highlight-tag {
+  background: var(--holo);
+  border-color: rgb(143 124 188 / 0.55);
+  color: var(--color-fg-bright);
+  box-shadow: 0 0 6px rgb(224 208 251 / 0.8);
+}
+
+/* ── Ruled Chat paper ──
+   Every line is exactly one 28px row, and the rule is a 28px TILE (background-size: 100% 28px),
+   never an unsized repeating-linear-gradient: that fills the whole box from the top, so its
+   lines drift from the text by whatever the box height is not a multiple of 28 (the
+   misalignment the owner saw on 2026-10-06). Nunito 14px in a 28px line has its baseline
+   ~18.5px down the row, so a rule at 26px sits ~7px below the baseline, clear of descenders.
+   No `position: relative` nudges on the rows: a nudge extends the scroller's scrollHeight and
+   the log stops ending exactly on a row.
+   The tile lives on the scroller with `background-attachment: local`, so the rules scroll with
+   the messages. The sample bottom-anchors it because its log is flex-end; here messages flow
+   from the top, so the tile starts at the top of the content: with no vertical padding or
+   margin anywhere in the list, every row (and so the last one) still sits exactly on a rule.
+   If you add padding, a margin, a border or a line-height that is not 28px to anything in the
+   list, the rules will drift: measure at 3x (see the roadmap 46 task 3 notes). */
+/* The page IS the paper: the panel gives up its padding, so the ruled list fills the page edge to
+   edge and the composer sits under it, as in the mock. The heading and its help line stay, quiet,
+   above the paper. */
+[data-theme='millefleur'] .chat-panel { padding: 0; }
+[data-theme='millefleur'] .chat-panel .surface-panel-heading { margin: 0; padding: 14px 16px 6px; align-items: flex-start; }
+[data-theme='millefleur'] .chat-panel h1 { font-size: 13px; font-weight: 800; line-height: 1.2; }
+[data-theme='millefleur'] .chat-panel .surface-panel-subtitle { margin: 2px 0 0; font-size: 12px; line-height: 1.35; }
+/* The log is anchored to the bottom: the first row takes the free space above it (margin-top:
+   auto, not justify-content: flex-end, which would make the overflow above unreachable), and the
+   rule tile is positioned from the bottom of the scrollable area, so the last row always sits on
+   a rule however few messages there are. The margin line is at the mock's x (18px into the page). */
+[data-theme='millefleur'] .chat-list {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 0 16px 6px 46px;
+  background-image:
+    linear-gradient(to right, transparent 18px, var(--mf-margin) 18px, var(--mf-margin) 19px, transparent 19px),
+    linear-gradient(to bottom, transparent 26px, var(--mf-rule) 26px 27px, transparent 27px);
+  background-size: 100% 100%, 100% 28px;
+  background-repeat: no-repeat, repeat-y;
+  background-attachment: local, local;
+  background-position: 0 0, 0 calc(100% - 6px);
+}
+[data-theme='millefleur'] .chat-list > :first-child { margin-top: auto; }
+[data-theme='millefleur'] .chat-list > * { flex: 0 0 auto; }
+[data-theme='millefleur'] .chat-message,
+[data-theme='millefleur'] .chat-divider,
+[data-theme='millefleur'] .chat-empty {
+  margin: 0;
+  padding: 0;
+  line-height: 28px;
+}
+[data-theme='millefleur'] .chat-message { font-size: 14px; }
+/* The sender takes a line of its own (the design's name line); the message follows. */
+[data-theme='millefleur'] .chat-sender,
+[data-theme='millefleur'] .chat-text {
+  display: block;
+  margin: 0;
+  line-height: 28px;
+}
+/* Name (800, ink) then the time (muted), on one row: the sender goes inline beside it. */
+[data-theme='millefleur'] .chat-sender { display: inline; font-size: 13px; font-weight: 800; color: var(--color-fg-bright); }
+[data-theme='millefleur'] .chat-time {
+  display: inline;
+  margin-left: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 28px;
+  color: var(--color-fg-dim);
+}
+[data-theme='millefleur'] .chat-sender::after { content: none; }
+[data-theme='millefleur'] .chat-message-dm .chat-text { font-style: normal; }
+/* A direct message: a rose band exactly as tall as its rows (inset outline, no border or padding). */
+[data-theme='millefleur'] .chat-message-dm {
+  margin: 0 -8px 0 -10px;
+  padding: 0 8px 0 10px;
+  border-radius: 10px;
+  background: rgb(251 217 230 / 0.45);
+  box-shadow: inset 0 0 0 1px rgb(220 160 190 / 0.42);
+}
+[data-theme='millefleur'] .chat-message-dm .chat-sender { color: var(--color-accent); }
+/* Date, fight and "new since" separators: one row each. */
+[data-theme='millefleur'] .chat-divider {
+  height: 28px;
+  justify-content: center;
+  gap: 0;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--color-fg-dim);
+}
+[data-theme='millefleur'] .chat-divider-time::before,
+[data-theme='millefleur'] .chat-divider-time::after,
+[data-theme='millefleur'] .chat-divider-fight::before,
+[data-theme='millefleur'] .chat-divider-fight::after { content: none; }
+/* "During fight #58": the lilac pill, at the text's left edge. */
+[data-theme='millefleur'] .chat-divider-fight { justify-content: flex-start; }
+[data-theme='millefleur'] .chat-divider-fight span {
+  padding: 0 10px;
+  border-radius: var(--radius-pill);
+  background: rgb(227 212 250 / 0.8);
+  box-shadow: inset 0 0 0 1px var(--mf-line-soft);
+  color: #5a4380;
+  line-height: 20px;
+}
+[data-theme='millefleur'] .chat-divider-marker { color: var(--color-accent); }
+[data-theme='millefleur'] .chat-divider-marker::before,
+[data-theme='millefleur'] .chat-divider-marker::after {
+  border-top: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgb(154 47 102 / 0.55));
+}
+[data-theme='millefleur'] .chat-divider-marker::after { background: linear-gradient(270deg, transparent, rgb(154 47 102 / 0.55)); }
+[data-theme='millefleur'] .chat-divider-marker span { padding: 0 10px; }
+/* The composer: a paper strip under the log, the To picker spanning its row. */
+[data-theme='millefleur'] .chat-composer {
+  border-top-color: var(--mf-line-soft);
+  padding: 12px 14px calc(18px + env(safe-area-inset-bottom, 0px));
+  background: rgb(253 250 246 / 0.9);
+  position: static;
+}
+[data-theme='millefleur'] .chat-composer-to { margin-bottom: 8px; }
+[data-theme='millefleur'] .chat-composer-to label { font-size: 12px; font-weight: 700; color: var(--color-fg-dim); }
+[data-theme='millefleur'] .chat-composer-to select { flex: 1; max-width: none; font-weight: 600; }
+[data-theme='millefleur'] .chat-composer-row { gap: 8px; }
+
+/* ── The Ring transcript ── The feed's type is the --feed-* tokens above (the mock's 12.5px on
+   a 1.65 line); utils/feed-row-height.ts reads them, so the row estimates follow. Below that,
+   colour and shape only: a gutter, border or padding change must go through the same reader. */
+/* Card frames: a soft lilac paper tint, no drawn edge. The 1px border stays (transparent)
+   because utils/feed-row-height.ts books it; removing it would shift every row estimate. */
+[data-theme='millefleur'] .event-card-block {
+  background: rgb(235 226 250 / 0.38);
+  border-color: transparent;
+  border-radius: 12px;
+}
+/* A boss arriving: the mock's rose card with an inset edge (the ring.add row, boss only).
+   Colour, radius and an inset shadow only: the feed's own font, padding and line-height are
+   what the virtual list's row estimates assume. */
+[data-theme='millefleur'] .event[data-boss-arrival] {
+  /* The card grows outward into the list's gutter (--pane-padding) and the padding hands the
+     same width back, so the text sits where every other row's text does and wraps at the same
+     column. Inline padding that narrowed the content box would make this row wrap earlier than
+     feed-row-height.ts books it. Vertical: none, the row chrome is the estimate's. */
+  margin-inline: calc(4px - var(--pane-padding));
+  padding-inline: calc(var(--pane-padding) - 4px);
+  border-radius: 14px;
+  background: rgb(251 217 230 / 0.4);
+  box-shadow: inset 0 0 0 1px rgb(220 160 190 / 0.5);
+}
+[data-theme='millefleur'] .event[data-boss-arrival] .event-card-block { background: rgb(255 253 250 / 0.55); }
+/* The feed's own markers (where you joined, where the connection dropped): a small tracked
+   label between two lines that fade out at their far ends. */
+[data-theme='millefleur'] .feed-marker::before { background: linear-gradient(90deg, transparent, var(--mf-line-tab, rgb(150 125 195 / 0.5))); }
+[data-theme='millefleur'] .feed-marker::after { background: linear-gradient(270deg, transparent, var(--mf-line-tab, rgb(150 125 195 / 0.5))); }
+[data-theme='millefleur'] .feed-marker-disconnected::before { background: linear-gradient(90deg, transparent, var(--color-error)); }
+[data-theme='millefleur'] .feed-marker-disconnected::after { background: linear-gradient(270deg, transparent, var(--color-error)); }
+/* Structured lines (roadmap 46a), by kind. Colour, weight and the divider's margin only: a size
+   change would move the line box, so smaller text keeps the feed's own line height. */
+[data-theme='millefleur'] .feed-line { line-height: calc(var(--feed-font-size) * var(--feed-line-height)); }
+[data-theme='millefleur'] .feed-line-narration,
+[data-theme='millefleur'] .feed-line-fight-start,
+[data-theme='millefleur'] .feed-line-summary,
+[data-theme='millefleur'] .feed-line-roll-result,
+[data-theme='millefleur'] .feed-line-fight-end,
+[data-theme='millefleur'] .feed-line-temperament { color: var(--color-fg-dim); }
+[data-theme='millefleur'] .feed-line-temperament { font-style: italic; }
+[data-theme='millefleur'] .feed-line-system { color: var(--color-fg-dim); font-size: 0.9em; }
+[data-theme='millefleur'] .feed-line-win { font-weight: 700; }
+[data-theme='millefleur'] .feed-line-arrival[data-boss] { font-weight: 800; }
+[data-theme='millefleur'] .feed-danger { color: var(--color-error); font-weight: 700; }
+[data-theme='millefleur'] .feed-divider { margin: 0.4rem 0; letter-spacing: 0.1em; color: var(--color-fg-dim); }
+[data-theme='millefleur'] .feed-divider::before { background: linear-gradient(90deg, transparent, var(--mf-line-tab, rgb(150 125 195 / 0.5))); }
+[data-theme='millefleur'] .feed-divider::after { background: linear-gradient(270deg, transparent, var(--mf-line-tab, rgb(150 125 195 / 0.5))); }
+/* The soft panel has no drawn edge, so the title's rule is a soft line, not the dark border. */
+[data-theme='millefleur'] .feed-card-title { box-shadow: 0 1px 0 var(--mf-line-soft); }
+/* No ASCII-rule stand-ins here: the divider and the paper's own spacing do that job. */
+[data-theme='millefleur'] .feed-lines > .feed-line::before,
+[data-theme='millefleur'] .feed-lines > .feed-line::after { content: none; }
+[data-theme='millefleur'] .feed-lines > .feed-divider::before,
+[data-theme='millefleur'] .feed-lines > .feed-divider::after { content: ''; }
+/* A highlight is a left band in the theme's own colours (nat 20 sea-foam, crit fail sienna,
+   kill danger, big hit rose). */
+/* Border WIDTH stays the feed's 2px: a wider band would narrow the row and change where lines wrap. */
+[data-theme='millefleur'] .event-highlight { border-radius: 2px; }
+
+/* ── Sheets (card details, level-up) ──
+   24px top corners, a --mf-line-tab edge, the page colour, a painted header approximated with
+   five layered radial gradients (the baked watercolour is task 4), a soft System 7 title bar
+   (pinstripes that fade at both ends, the title in a paper pill) and a close box. */
+[data-theme='millefleur'] .card-detail-sheet {
+  position: relative;
+  padding-top: 62px;
+  border: 1px solid var(--mf-line-tab);
+  border-bottom: 0;
+  border-radius: 24px 24px 0 0;
+  background-color: #fdfaf6;
+  /* The level-up sample's own painted header, baked (docs/reference/millefleur/tools/bake.mjs):
+     its five washes and the paper's grain, over the sheet's paper. Five CSS radial gradients
+     stood in here first and read as an amorphous blur beside the tuned watercolour (owner,
+     2026-10-06). Width-fitted, so a wider dialog shows the same painting, a little larger. */
+  background-image: url('../themes/millefleur-paint/sheet.webp');
+  background-position: top center;
+  background-size: 100% auto;
+  background-repeat: no-repeat;
+}
+@media (min-width: 700px) {
+  [data-theme='millefleur'] .card-detail-sheet { border-bottom: 1px solid var(--mf-line-tab); border-radius: 24px; }
+}
+/* The title bar: pinstripes behind, the title in a paper pill on top, and the close box. The
+   sheet itself is the scroller, so all three are sticky items that take no height (each
+   margin-bottom cancels its height plus the sheet's 8px flex gap; a margin-top places it), and
+   stay put while a long card description scrolls underneath. */
+[data-theme='millefleur'] .card-detail-sheet { padding: 3px 22px calc(28px + env(safe-area-inset-bottom, 0px)); }
+[data-theme='millefleur'] .card-detail-sheet::before {
+  content: '';
+  position: sticky;
+  top: 14px;
+  z-index: 1;
+  flex: 0 0 auto;
+  height: 11px;
+  margin: 12px 38px -19px 38px;
+  background: repeating-linear-gradient(to bottom, rgb(70 50 110 / 0.22) 0 1px, transparent 1px 3px);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
+  pointer-events: none;
+}
+[data-theme='millefleur'] .card-detail-sheet > h2,
+[data-theme='millefleur'] .card-detail-pill {
+  position: sticky;
+  top: 7px;
+  z-index: 3;
+  align-self: center;
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  max-width: calc(100% - 112px);      /* clear of the close box (left) and an equal margin (right) */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin: 5px 0 16px;
+  padding: 0 18px;
+  line-height: 24px;
+  border: 1px solid var(--mf-line-soft);
+  border-radius: var(--radius-pill);
+  background: #fffdfa;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--color-fg-bright);
+  text-align: center;
+}
+/* The close box: a 20px rounded square in a 44px target, top left, on a real close control. */
+[data-theme='millefleur'] .card-detail-close-box {
+  position: sticky;
+  top: 2px;
+  z-index: 4;
+  align-self: flex-start;
+  flex: 0 0 auto;
+  margin: -12px 0 -52px -14px;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  color: var(--color-fg-bright);
+  cursor: pointer;
+}
+[data-theme='millefleur'] .card-detail-close-box > span {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  box-shadow: inset 0 0 0 1px rgb(90 67 128 / 0.5);   /* the sample's close box */
+  border-radius: 6px;
+  background: rgb(253 250 246 / 0.96);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1;
+}
+@media (hover: hover) {
+  [data-theme='millefleur'] .card-detail-close-box:hover > span { border-color: var(--color-accent); color: var(--color-accent); }
+}
+[data-theme='millefleur'] .card-detail-sheet h2 + p,
+[data-theme='millefleur'] .card-detail-sheet .card-detail-role { color: var(--color-fg-dim); }
+/* The bottom Close is the sheet's one primary button. */
+[data-theme='millefleur'] .card-detail-sheet .card-detail-close {
+  background: var(--mf-primary);
+  border-color: transparent;
+  color: #fff;
+  font-weight: 800;
+  box-shadow: var(--mf-primary-ring), 0 6px 14px rgb(59 42 85 / 0.22);
+  margin: 4px 0 0;
+}
+@media (hover: hover) {
+  [data-theme='millefleur'] .card-detail-sheet .card-detail-close:hover:not(:disabled) {
+    background: linear-gradient(160deg, #6a5294, #46325f);
+    color: #fff;
+  }
+}
+/* Level-up: the level in a halo beside the heading, as the mock draws it. */
+[data-theme='millefleur'] .level-up-hero { display: flex; align-items: center; gap: 16px; margin-top: 5px; }
+[data-theme='millefleur'] .level-up-badge {
+  position: relative;
+  isolation: isolate;
+  flex: 0 0 76px;
+  width: 76px;
+  height: 76px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--color-accent);
+}
+[data-theme='millefleur'] .level-up-badge::before,
+[data-theme='millefleur'] .level-up-badge::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  border-radius: 50%;
+}
+[data-theme='millefleur'] .level-up-badge::before {
+  inset: 0;
+  background: conic-gradient(from 210deg, #fbd2e4, #fbecbe, #c9eedf, #cfe2fb, #e0d0fb, #fbd2e4);
+  filter: blur(6px);
+}
+[data-theme='millefleur'] .level-up-badge::after { inset: 7px; background: radial-gradient(circle at 40% 35%, #fffdfa, #f6f0fd); }
+[data-theme='millefleur'] .level-up-hero-text { min-width: 0; }
+[data-theme='millefleur'] .level-up-hero-text h2 { margin: 0; font-size: 22px; font-weight: 800; line-height: 1.15; color: var(--color-fg-bright); }
+[data-theme='millefleur'] .level-up-hero-text p { margin: 6px 0 0; font-size: 13px; line-height: 1.45; color: var(--color-fg-dim); }
+/* New cards as chips; the sentence's own separators are still in the text, just not drawn. */
+[data-theme='millefleur'] .level-up-cards { margin-top: 10px; }
+[data-theme='millefleur'] .level-up-cards-label {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--color-fg-dim);
+}
+[data-theme='millefleur'] .level-up-sep { display: none; }
+[data-theme='millefleur'] .level-up-chip {
+  display: inline-block;
+  margin: 0 6px 8px 0;
+  padding: 7px 12px;
+  border: 1px solid rgb(190 170 215 / 0.65);
+  border-radius: var(--radius-pill);
+  background: rgb(255 253 250 / 0.9);
+  font-size: 12.5px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--color-fg);
+}
+/* Level-up stat tiles: one tile per gain, the gain over a tracked label. */
+[data-theme='millefleur'] .level-up-gains {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 7px;
+  margin-top: 10px;
+}
+[data-theme='millefleur'] .level-up-gains li {
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-width: 0;
+  padding: 10px 0;
+  border: 1px solid var(--mf-line-soft);
+  border-radius: 13px;
+  background: rgb(255 253 250 / 0.95);
+  font-size: 0;                          /* the separating space between the two spans */
+  text-align: center;
+}
+[data-theme='millefleur'] .level-up-gain { font-size: 17px; font-weight: 800; line-height: 1.1; color: var(--color-success); }
+[data-theme='millefleur'] .level-up-stat {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  color: var(--color-fg-dim);
+}
+
+/* ── High contrast: white and black, 2px black borders, no washes, holo or texture; radii kept ── */
+@media (prefers-contrast: more) {
+  /* No paint and no grain under high contrast: plain white paper. */
+  [data-theme='millefleur'] body { background-image: none; background-color: #ffffff; }
+  [data-theme='millefleur'] {
+    --color-bg: #ffffff;
+    --color-fg: #000000;
+    --color-fg-bright: #000000;
+    --color-fg-dim: #3a2f55;
+    --color-accent: #7a1d50;
+    --color-system: #000000;
+    --color-error: #8a0f33;
+    --color-success: #0d4a3a;
+    --color-border: #000000;
+    --color-border-strong: #000000;
+    --color-input-bg: #ffffff;
+    --color-choice-hover: #ece4f7;
+    --color-choice-selected: #d9c9f0;
+    --color-meter-track: #e6e0ee;
+    --color-hp-healthy: #1a7a60;
+    --color-hp-hurt: #7a3300;
+    --color-hp-critical: #5c0f28;
+    --color-highlight-good: #0d4a3a;
+    --color-highlight-warn: #6f1d4a;
+    --border-width: 2px;
+    --shadow-page: none;
+    --surface-page: #ffffff;
+    --surface-texture: none;
+    --holo: none;
+    --wash-lilac: transparent;
+    --wash-seafoam: transparent;
+    --wash-blush: transparent;
+    --wash-butter: transparent;
+    --wash-sky: transparent;
+    --mf-card: #ffffff;
+    --mf-line-soft: #000000;
+    --mf-primary: #000000;
+    --mf-primary-ring: 0 0 0 2px #ffffff, 0 0 0 4px #000000;
+    --color-danger-border: #000000;
+  }
+  [data-theme='millefleur'] .btn,
+  [data-theme='millefleur'] .btn-primary,
+  [data-theme='millefleur'] .btn-cta { background: #ffffff; color: #000000; border: 2px solid #000000; }
+  [data-theme='millefleur'] .btn-primary,
+  [data-theme='millefleur'] .btn-cta { background: #000000; color: #ffffff; box-shadow: var(--mf-primary-ring); }
+  [data-theme='millefleur'] .tag,
+  [data-theme='millefleur'] .workshop-status-tag,
+  [data-theme='millefleur'] .roster-tag { background: #ffffff; color: #000000; border: 2px solid #000000; }
+  /* Status tags keep their meaning colours (all >= 6.9:1 on white) with the 2px edge in the same colour. */
+  [data-theme='millefleur'] .workshop-status-in-ring { color: var(--color-accent); border-color: var(--color-accent); }
+  [data-theme='millefleur'] .workshop-status-fighting { color: var(--color-success); border-color: var(--color-success); }
+  [data-theme='millefleur'] .workshop-status-fallen { color: var(--color-error); border-color: var(--color-error); }
+  [data-theme='millefleur'] .error-msg,
+  [data-theme='millefleur'] .success-msg,
+  [data-theme='millefleur'] .connection-banner { background: #ffffff; }
+  [data-theme='millefleur'] .app-header-sep { color: #000000; }
+  [data-theme='millefleur'] .app-menu-drawer { border-left: 2px solid #000000; box-shadow: none; }
+  [data-theme='millefleur'] .card-detail-sheet { border-color: #000000; }
+  /* Pressed and selected states: a heavier edge and an underline, not a lilac wash. */
+  [data-theme='millefleur'] .btn[aria-pressed='true'],
+  [data-theme='millefleur'] .workshop-monster-filter-btn.active {
+    background: #ffffff;
+    border: 3px solid #000000;
+    color: #000000;
+  }
+  /* Hover must not bring the plum gradient or the lilac wash back (these out-rank the
+     plain rules above by specificity, so they are restated, inside the same media query). */
+  @media (hover: hover) {
+    [data-theme='millefleur'] .btn:hover:not(:disabled) { background: #ffffff; border-color: #000000; color: #000000; text-decoration: underline; }
+    [data-theme='millefleur'] .btn-primary:hover:not(:disabled),
+    [data-theme='millefleur'] .btn-cta:hover:not(:disabled) { background: #000000; color: #ffffff; text-decoration: underline; }
+    [data-theme='millefleur'] .quick-action-chip:hover { border-color: #000000; color: #000000; }
+  }
+  [data-theme='millefleur'] .app-menu-backdrop,
+  [data-theme='millefleur'] .card-detail-backdrop { background: rgb(0 0 0 / 0.6); }
+  [data-theme='millefleur'] .workshop-xp-meter-track > span { background: #000000; box-shadow: none; }
+  [data-theme='millefleur'] .roster-bar-healthy { background: var(--color-hp-healthy); }
+  [data-theme='millefleur'] .roster-bar-critical { background: var(--color-hp-critical); }
+  [data-theme='millefleur'] .roster-bar-track,
+  [data-theme='millefleur'] .workshop-xp-meter-track { border: 2px solid #000000; }
+  [data-theme='millefleur'] ::-webkit-scrollbar-thumb { background: #000000; }
+
+  /* ── Task 3 surfaces: solid shapes, black edges, no paint ── */
+  [data-theme='millefleur'] {
+    --mf-tab-un-l: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='30' viewBox='0 0 14 30'><path d='M0 30C4 30 6 3 12 1.5H14V30Z' fill='white'/><path d='M.5 30C4.5 30 6.5 3 12 1.5H14' fill='none' stroke='black' stroke-width='2'/></svg>");
+    --mf-tab-un-r: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='30' viewBox='0 0 14 30'><path d='M14 30C10 30 8 3 2 1.5H0V30Z' fill='white'/><path d='M13.5 30C9.5 30 7.5 3 2 1.5H0' fill='none' stroke='black' stroke-width='2'/></svg>");
+    --mf-tab-un-m: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='2' height='30' preserveAspectRatio='none' viewBox='0 0 2 30'><rect y='1.5' width='2' height='28.5' fill='white'/><path d='M0 1.5H2' stroke='black' stroke-width='2'/></svg>");
+    --mf-tab-se-l: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='34' viewBox='0 0 14 34'><path d='M0 33C4 33 6 3 12 1.5H14V34H0Z' fill='white'/><path d='M.5 34V33C4.5 33 6.5 3 12 1.5H14' fill='none' stroke='black' stroke-width='2'/></svg>");
+    --mf-tab-se-r: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='34' viewBox='0 0 14 34'><path d='M14 33C10 33 8 3 2 1.5H0V34H14Z' fill='white'/><path d='M13.5 34V33C9.5 33 7.5 3 2 1.5H0' fill='none' stroke='black' stroke-width='2'/></svg>");
+    --mf-tab-se-m: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='2' height='34' preserveAspectRatio='none' viewBox='0 0 2 34'><rect y='1.5' width='2' height='32.5' fill='white'/><path d='M0 1.5H2' stroke='black' stroke-width='2'/></svg>");
+    --mf-rule: #cfc8dc;
+    --mf-margin: #b0587f;
+    --mf-line-tab: #000000;
+  }
+  [data-theme='millefleur'] .header-nav .btn { color: #000000; border-color: #000000; }
+  [data-theme='millefleur'] .header-nav .btn[aria-current='page'] { background: #ffffff; color: #000000; box-shadow: inset 0 -3px 0 #000000; }
+  @media (hover: hover) {
+    [data-theme='millefleur'] .header-nav .btn:hover:not(:disabled),
+    [data-theme='millefleur'] .header-nav .btn[aria-current='page']:hover:not(:disabled) { background: #ffffff; color: #000000; text-decoration: underline; }
+  }
+  [data-theme='millefleur'] .app-room-settings-link { border: 2px solid #000000; background: #ffffff; color: #000000; }
+  [data-theme='millefleur'] .terminal-tab,
+  [data-theme='millefleur'] .terminal-tab.active { color: #000000; }
+  [data-theme='millefleur'] .terminal-tab.active { font-weight: 800; text-decoration: underline; text-underline-offset: 3px; }
+  [data-theme='millefleur'] .terminal-tabs,
+  [data-theme='millefleur'] .terminal-tabs.scrolled { -webkit-mask-image: none; mask-image: none; }
+  /* The page keeps its shape: a solid white sheet with a 2px black edge, no fade, no shadow. */
+  [data-theme='millefleur'] .terminal-slot::before { background: #ffffff; box-shadow: none; border: 2px solid #000000; border-top: 0; }
+  [data-theme='millefleur'] .terminal-slot::after { background: #000000; height: 2px; }
+  [data-theme='millefleur'] .app-shell > main > .surface-panel-host,
+  [data-theme='millefleur'] .app-shell > main > .workshop-view { border: 2px solid #000000; }
+  [data-theme='millefleur'] .pane-header,
+  [data-theme='millefleur'] .pane-header-timer { color: #000000; }
+  /* Slots: 2px edges, solid role dots with a black rim, a dashed empty slot. */
+  [data-theme='millefleur'] .workshop-card-slot { border: 2px solid #000000; background: #ffffff; }
+  [data-theme='millefleur'] .workshop-card-slot.empty { border: 2px dashed #000000; background: #ffffff; }
+  [data-theme='millefleur'] .workshop-card-slot.empty > span::before { color: #000000; }
+  [data-theme='millefleur'] .workshop-card-class { color: #000000; }
+  [data-theme='millefleur'] .workshop-card-class::before { background: var(--mf-dot); box-shadow: 0 0 0 1px #000000; }
+  [data-theme='millefleur'] .workshop-card-slot.selected { background: #ffffff; border-color: #000000; box-shadow: inset 0 0 0 3px #000000; }
+  [data-theme='millefleur'] .workshop-card-name { color: #000000; }
+  [data-theme='millefleur'] .workshop-card-info { color: #000000; }
+  [data-theme='millefleur'] .workshop-inventory { border-color: transparent; }
+  [data-theme='millefleur'] .train-wizard,
+  [data-theme='millefleur'] .train-wizard-type,
+  [data-theme='millefleur'] .train-wizard-choice { border: 2px solid #000000; background: #ffffff; }
+  [data-theme='millefleur'] .train-wizard-type.is-selected,
+  [data-theme='millefleur'] .train-wizard-choice.is-selected { border-width: 3px; background: #ffffff; }
+  /* Meters: a white track with a 2px black edge, so empty reads as empty; fills are solid. */
+  [data-theme='millefleur'] .roster-bar-track,
+  [data-theme='millefleur'] .workshop-xp-meter-track { background: #ffffff; }
+  [data-theme='millefleur'] .roster-bar-hurt { background: var(--color-hp-hurt); }
+  [data-theme='millefleur'] .roster-bar-track,
+  [data-theme='millefleur'] .workshop-hp-meter .roster-bar-track { border: 2px solid #000000; box-sizing: border-box; height: 8px; }
+  /* Carousel dots: outlined circles, the current one a solid black disc. */
+  [data-theme='millefleur'] .workshop-monster-dot::before { border: 2px solid #000000; }
+  [data-theme='millefleur'] .workshop-monster-dot.active::before { background: #000000; border-color: #000000; box-shadow: none; }
+  [data-theme='millefleur'] .workshop-monster-next-mark { border: 2px solid #000000; }
+  /* The halo: a plain white disc with a black outline; no ring. */
+  [data-theme='millefleur'] .workshop-monster-portrait::before { display: none; }
+  [data-theme='millefleur'] .workshop-monster-portrait::after { background: #ffffff; box-shadow: inset 0 0 0 2px #000000; }
+  [data-theme='millefleur'] .roster-row-mine .roster-icon::before { display: none; }
+  [data-theme='millefleur'] .roster-row-mine .roster-icon::after { background: #ffffff; box-shadow: inset 0 0 0 1px #000000; }
+  [data-theme='millefleur'] .roster-sprite,
+  [data-theme='millefleur'] .inline-sprite { filter: none; }
+  [data-theme='millefleur'] .roster-row-acting { background: #ffffff; box-shadow: inset 4px 0 0 #000000; border-radius: 0; }
+  [data-theme='millefleur'] .highlight-tag,
+  [data-theme='millefleur'] .event-highlight-nat20 .highlight-tag { background: #ffffff; border: 2px solid #000000; color: #000000; box-shadow: none; }
+  [data-theme='millefleur'] .event-card-block { background: #ffffff; border: 2px solid #000000; }
+  [data-theme='millefleur'] .feed-marker::before,
+  [data-theme='millefleur'] .feed-marker::after { background: #000000; opacity: 1; }
+  /* Chat: faint decorative rules stay (they are not information); a DM is a boxed band. */
+  [data-theme='millefleur'] .chat-message-dm { background: #ffffff; box-shadow: inset 0 0 0 2px #000000; }
+  [data-theme='millefleur'] .chat-message-dm .chat-sender { color: #000000; }
+  [data-theme='millefleur'] .chat-divider-fight span { background: #ffffff; box-shadow: inset 0 0 0 2px #000000; color: #000000; }
+  [data-theme='millefleur'] .chat-divider { color: #000000; }
+  [data-theme='millefleur'] .chat-composer { border-top: 2px solid #000000; }
+  /* Sheets: white, a 2px black edge, no paint, no pinstripes. */
+  [data-theme='millefleur'] .card-detail-sheet { background: #ffffff; border: 2px solid #000000; border-bottom: 0; }
+  @media (min-width: 700px) { [data-theme='millefleur'] .card-detail-sheet { border-bottom: 2px solid #000000; } }
+  [data-theme='millefleur'] .card-detail-sheet::before { display: none; }
+  [data-theme='millefleur'] .card-detail-sheet > h2,
+  [data-theme='millefleur'] .card-detail-pill { border: 2px solid #000000; background: #ffffff; color: #000000; }
+  [data-theme='millefleur'] .card-detail-close-box > span { border: 2px solid #000000; color: #000000; }
+  [data-theme='millefleur'] .card-detail-sheet .card-detail-close { background: #000000; color: #ffffff; box-shadow: var(--mf-primary-ring); }
+  [data-theme='millefleur'] .level-up-badge::before { display: none; }
+  [data-theme='millefleur'] .level-up-badge::after { background: #ffffff; box-shadow: inset 0 0 0 2px #000000; }
+  [data-theme='millefleur'] .level-up-badge { color: #000000; }
+  [data-theme='millefleur'] .level-up-chip { border: 2px solid #000000; background: #ffffff; color: #000000; }
+  [data-theme='millefleur'] .level-up-gains li { border: 2px solid #000000; background: #ffffff; }
+  [data-theme='millefleur'] .level-up-gain,
+  [data-theme='millefleur'] .level-up-stat { color: #000000; }
+}

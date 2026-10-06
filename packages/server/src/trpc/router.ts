@@ -114,6 +114,13 @@ type InventoryMonsterSummary = {
 	// The monster's subject pronoun ("she", "he", "they"), so the level-up details can say
 	// "New cards she can use" rather than "it" (bug 230). Empty when the record has none.
 	pronoun: string;
+	// The monster's own emoji and the Beastmaster's description of its colour ("gold and
+	// black"), so the Workshop can draw the same pixel portrait the Ring roster does (palette
+	// from `appearance`) and fall back to the emoji when pixel monsters are off. Empty when a
+	// record has none (the client draws a paw); both capped, `appearance` like `ring.state`'s
+	// snapshot.
+	icon: string;
+	appearance: string;
 };
 
 // Per-item summary for the web item list (docs/architecture/workshop-and-items.md).
@@ -479,6 +486,8 @@ const summarizeInventory = ({
 					nextCards: nextCardsFor(type, level),
 					nextLevel: levelUpGains(type, level),
 					pronoun: subjectPronoun(record.pronouns),
+					icon: typeof record.icon === 'string' ? record.icon.slice(0, 16) : '',
+					appearance: typeof record.color === 'string' ? record.color.slice(0, 100) : '',
 				} satisfies InventoryMonsterSummary,
 			};
 		})

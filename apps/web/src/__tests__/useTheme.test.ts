@@ -10,6 +10,7 @@ describe('useTheme', () => {
     localStorage.clear();
     document.documentElement.removeAttribute('data-theme');
     document.documentElement.removeAttribute('data-theme-features');
+    document.head.querySelectorAll('meta[name="theme-color"]').forEach((m) => m.remove());
   });
 
   afterEach(() => {
@@ -76,6 +77,56 @@ describe('useTheme', () => {
   it('includes street-fighter in validThemes', () => {
     const { result } = renderHook(() => useTheme());
     expect(result.current.validThemes).toContain('street-fighter');
+  });
+
+  it('keeps <meta name="theme-color"> in step with the theme', () => {
+    const meta = document.createElement('meta');
+    meta.name = 'theme-color';
+    meta.content = '#0a0e0a';
+    document.head.appendChild(meta);
+
+    const { result } = renderHook(() => useTheme());
+    expect(meta.content).toBe('#0a0e0a');
+    act(() => result.current.setTheme('street-fighter'));
+    expect(meta.content).toBe('#060c1e');
+    act(() => result.current.setTheme('phosphor'));
+    expect(meta.content).toBe('#0a0e0a');
+  });
+
+  it('survives localStorage throwing, keeping the choice in memory', () => {
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => { throw new DOMException('blocked', 'SecurityError'); });
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new DOMException('blocked', 'SecurityError'); });
+    const { result } = renderHook(() => useTheme());
+    expect(result.current.theme).toBe('phosphor');
+    act(() => result.current.setTheme('ember'));
+    expect(result.current.theme).toBe('ember');
+    expect(document.documentElement.getAttribute('data-theme')).toBe('ember');
+  });
+
+  // Reads work but writes throw (quota, read-only storage): the choice used to revert to the
+  // stale stored value on the next render, because the snapshot reread storage.
+  it('keeps the choice when only the storage write fails', () => {
+    const { result, rerender } = renderHook(() => useTheme());
+    // A successful write first: the module keeps its state between tests.
+    act(() => result.current.setTheme('amber'));
+    expect(result.current.theme).toBe('amber');
+    const write = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new DOMException('full', 'QuotaExceededError'); });
+    act(() => result.current.setTheme('millefleur'));
+    rerender();
+    expect(result.current.theme).toBe('millefleur');
+    expect(document.documentElement.getAttribute('data-theme')).toBe('millefleur');
+
+    // Once a write succeeds again, storage is the source of truth again.
+    write.mockRestore();
+    act(() => result.current.setTheme('ember'));
+    expect(localStorage.getItem(STORAGE_KEY)).toBe('ember');
+    expect(result.current.theme).toBe('ember');
+  });
+
+  it('creates the theme-color meta if the page has none', () => {
+    const { result } = renderHook(() => useTheme());
+    act(() => result.current.setTheme('amber'));
+    expect(document.querySelector('meta[name="theme-color"]')?.getAttribute('content')).toBe('#0a0800');
   });
 
   it('clears a stale theme-features attribute left by an older build', () => {

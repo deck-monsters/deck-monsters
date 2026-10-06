@@ -48,7 +48,7 @@ export default function CardSlot({
 }: CardSlotProps) {
   const role = cardName ? getCardRole(cardName) : undefined;
 
-  async function handleDrop(event: React.DragEvent<HTMLButtonElement>) {
+  async function handleDrop(event: React.DragEvent<HTMLElement>) {
     if (disabled) return;
     const payload = event.dataTransfer.getData('application/x-deck-monsters-card');
     if (!payload) return;
@@ -65,7 +65,7 @@ export default function CardSlot({
     }
   }
 
-  function handleDragOver(event: React.DragEvent<HTMLButtonElement>) {
+  function handleDragOver(event: React.DragEvent<HTMLElement>) {
     if (disabled) return;
     event.preventDefault();
   }
@@ -90,8 +90,11 @@ export default function CardSlot({
     await onTapSlot?.(location);
   }
 
+  // Drop handlers sit on the cell, not the slot button: the ⓘ is the slot's sibling, and a
+  // theme that lays it over the tile's corner (Millefleur) must not make that corner a place a
+  // dragged card cannot land. Events from the button bubble up to the cell.
   return (
-    <div className="workshop-card-cell">
+    <div className="workshop-card-cell" onDragOver={handleDragOver} onDrop={(event) => void handleDrop(event)}>
     <button
       type="button"
       className={[
@@ -107,8 +110,6 @@ export default function CardSlot({
       disabled={disabled}
       draggable={Boolean(cardName && !disabled)}
       onDragStart={handleDragStart}
-      onDragOver={handleDragOver}
-      onDrop={(event) => void handleDrop(event)}
       onClick={() => void handleClick()}
       title={cardName ? (incompatible ? `${cardName} (not usable for current filter)` : cardName) : 'Empty slot. Tap to see cards for it'}
       aria-label={cardName ? (incompatible ? `${cardName} (not usable for current filter)` : cardName) : 'Empty slot'}

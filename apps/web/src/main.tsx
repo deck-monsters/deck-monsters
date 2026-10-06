@@ -8,6 +8,7 @@ import { trpc, createTRPCClient } from './lib/trpc.js';
 import { AuthProvider } from './lib/auth-context.js';
 import { CommandInsertProvider } from './lib/command-insert-context.js';
 import App from './App.js';
+import { loadThemeAssets } from './hooks/useTheme.js';
 
 import '@fontsource/jetbrains-mono/400.css';
 import '@fontsource/jetbrains-mono/700.css';
@@ -19,6 +20,17 @@ import './styles/theme-street-fighter.css';
 import './styles/base.css';
 import './styles/terminal.css';
 import './styles/effects.css';
+
+/*
+  Start a lazy theme's chunk before React renders. Roadmap 46 §4 planned a <link
+  rel="modulepreload"> from index.html's pre-paint script, but the chunk's file name is hashed
+  and an inline script cannot name it. Starting the dynamic import here instead is the
+  earliest point the bundler can name it. useTheme's applyTheme asks for the same module and
+  gets this in-flight promise's result. Nothing Millefleur is imported statically.
+*/
+if (document.documentElement.dataset.theme === 'millefleur') {
+  void loadThemeAssets('millefleur');
+}
 
 class ErrorBoundary extends Component<
   { children: ReactNode },

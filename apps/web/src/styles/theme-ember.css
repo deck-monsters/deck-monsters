@@ -28,6 +28,11 @@
   --color-input-bg: #1a080d;
   --color-choice-hover: #2a0f14;
   --color-choice-selected: #40161d;
+  /* Read-but-never-set before 46a; each value is what the call site's fallback drew. */
+  --color-bg-elevated: var(--color-bg);              /* CatchUpBanner, .fight-log-card */
+  --color-hover: rgb(255 255 255 / 0.05);            /* CommandReference row hover */
+  --color-accent-muted: rgb(255 200 0 / 0.15);       /* LeaderboardPanel highlight row */
+  --color-warning: var(--color-accent);              /* .command-blocked-banner border */
   /* Ring-roster health bar. Deliberately its own ramp rather than reusing
      --color-success/--color-accent/--color-error: those carry unrelated semantic
      meanings and are not ordered by brightness, so a bar built from them could read

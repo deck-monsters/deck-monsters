@@ -135,6 +135,7 @@ No damage. Does not stack.`;
 			const { success, curseOfLoki } = this.checkSuccess(saveRoll, threshold);
 			const triesToFlee = curseOfLoki && fleeOnLoki === 'healthy' && !target.bloodied;
 			this.emit('rolled', {
+				success: success,
 				reason: `vs ${threshold} to meet the dragon's eye.`,
 				card: this,
 				roll: saveRoll,
@@ -157,6 +158,7 @@ No damage. Does not stack.`;
 				// Strict `<` in checkSuccess: 9 makes a natural 10 succeed, as Flee does.
 				const runs = this.checkSuccess(fleeRoll, 9).success;
 				this.emit('rolled', {
+					success: runs,
 					reason: 'and needs 10 or higher to flee.',
 					card: this,
 					roll: fleeRoll,
@@ -199,6 +201,7 @@ No damage. Does not stack.`;
 			: `${target.givenName} looks upon the helm of awe, and ${target.pronouns.his} knees turn to water.`;
 
 		this.emit('rolled', {
+			success: success,
 			reason: `vs ${AWE_DC_BASE} + ${player.givenName}'s int modifier (${dc}) to resist awe.`,
 			card: this,
 			roll: saveRoll,

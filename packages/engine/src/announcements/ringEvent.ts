@@ -1,4 +1,5 @@
 import type { RoomEventBus } from '../events/index.js';
+import type { FeedLine } from '../events/types.js';
 import type { RingEventDefinition } from '../ring/ring-events.js';
 
 /**
@@ -19,6 +20,9 @@ export function announceRingEvent(
 		type: 'announce',
 		scope: 'public',
 		text: ringEvent.banner,
-		payload: { ringEvent: { id: ringEvent.id, name: ringEvent.name } },
+		payload: {
+			ringEvent: { id: ringEvent.id, name: ringEvent.name },
+			lines: [{ kind: 'ring-event', text: ringEvent.banner, id: ringEvent.id, name: ringEvent.name }] satisfies FeedLine[],
+		},
 	});
 }

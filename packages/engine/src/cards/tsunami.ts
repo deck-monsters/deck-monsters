@@ -70,6 +70,7 @@ You roll 1d20 + dex vs ${RIDE_THE_WAVE_DIFFICULTY} to ride your own wave and tak
 		const rideRoll = roll({ primaryDice: '1d20', modifier: player.dexModifier, crit: true });
 		const { success: rides } = this.checkSuccess(rideRoll, RIDE_THE_WAVE_DIFFICULTY - 1);
 		this.emit('rolled', {
+			success: rides,
 			reason: `vs ${RIDE_THE_WAVE_DIFFICULTY} to ride the wave.`,
 			card: this,
 			roll: rideRoll,

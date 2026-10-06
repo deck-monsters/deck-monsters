@@ -40,6 +40,7 @@ Generated and authored player references remain at the repository root:
 | Writing or changing a card or monster, card play resolution, fight-scoped card state, holds | [Cards and encounter effects](architecture/cards-and-encounter-effects.md) |
 | Boss creation/summoning, ring events, teams, targeting, boss timers | [Boss encounters](architecture/boss-encounters.md) |
 | `Terminal`, surfaces, pane slots, routes, 1024px breakpoint, divider, navigation reveal | [Web workspace](architecture/web-workspace.md) |
+| Themes: tokens, the phosphor start, light themes, lazy theme chunks and first paint, high contrast, the palette tests | [Web themes](architecture/web-themes.md) |
 | Room chat: `msg` and `dm`, the Chat tab, retention, the bridge seam | [Room chat](architecture/room-chat.md) |
 | Workshop inventory, item use, lifecycle actions, prompt-free mutations, room shop | [Workshop and items](architecture/workshop-and-items.md) |
 | Leaderboards, event history, fight summaries, catch-up, reward projections, retention | [Analytics and history](architecture/analytics-and-history.md) |
@@ -49,7 +50,7 @@ Generated and authored player references remain at the repository root:
 
 | Trigger | Canonical document |
 |---|---|
-| Railway/Supabase deployment, production auth URLs, service configuration, production env vars | [Deployment](operations/deployment.md) |
+| Railway/Supabase deployment, production auth URLs, service configuration, production env vars, static asset cache headers | [Deployment](operations/deployment.md) |
 | The `rooms.state_blob` column drop (step B): its guard, lock note and rollback | [State blob drop](operations/state-blob-drop.md) |
 | Metrics endpoint, metrics variables, Grafana scrape, metric names, alerts | [Observability](operations/observability.md) |
 | Cursor Cloud setup, remote/local Supabase in Cloud, Docker/start scripts | [Cloud development](operations/cloud-development.md) |
@@ -69,6 +70,7 @@ Generated and authored player references remain at the repository root:
 | What confused a first-time player on production | [New-player walk 2](reference/new-player-walk-2.md) |
 | Whether roadmap 43's walk fixes match production | [Live check of the walk fixes](reference/walk-fixes-check.md) |
 | Whether roadmap 44's card guides and training wizard match production | [Live check of the guides and wizard](reference/guides-wizard-check.md) |
+| Whether roadmap 46's Millefleur feed and screens match the mocks | [Millefleur live check](roadmap/46b-cursor-check.md) |
 | Reviewing monster flavour strings or signature-card narration (generated inventories) | [Monster and card strings](reference/strings/README.md) |
 | `channel({ question, choices })` call site or connector answer encoding | [Prompt/answer contract](reference/prompt-answer-contract.md) |
 | Sprite maps, Canvas/CSS pixel art, scaling, palettes, animation construction | [Pixel art](reference/pixel-art.md) |

@@ -63,6 +63,14 @@ At 1440px the same destinations are text links: **Terminal**, **?**, **Rooms**,
 | `YOU JOINED HERE` | A bookmark of when this player arrived | A marker in the feed, above later hits | The words | It sits in the middle of combat lines |
 | Pane menu on desktop (`The Ring`, `Console`, …) | Picks what that half of the screen shows | Replaces that pane. Choosing Workshop on the right removed the command box | Aria `Surface shown in the left/right pane` | The only place to type a command disappears with the Console pane |
 
+Millefleur (checked 2026-10-06) restates some Ring lines in plainer sentences. A play reads
+"Quoloth plays Hit" above the card. A round is a divider, "ROUND 2". A standing line reads
+"Round 2, turn 5. Mabo is at 13/35 hp, bloodied." The word bloodied is rose. A roll reads
+"Mabo rolled 2 +1 = 3 vs 6 · hit", in a dimmer colour. The dark themes, Discord, and the
+Console's own record keep the engine's sentences ("lays down the following card", "has only
+17HP"). Nothing in Help and guides says the Ring will shorten them. The words are the same
+facts: plays, rolled, hp, bloodied.
+
 ## Console and prompts
 
 | Where | Guess | What it did | What explains it | Confusion |
@@ -141,7 +149,7 @@ the generated display name.
 | Account > **Display name** and **Save** | The name other players see | The help under the field says it is shown on leaderboards and in room member lists, that new characters start with this name, and that a character renamed with `edit my character` keeps its own name | That paragraph | This is the place the Console training path never offered. It is easy to miss because training does not point here |
 | **Show key event times in the Ring** | Timestamps on the feed | The paragraph under it says join, leave, fight start, and fight end show a label and "time ago", that it is off by default on a narrow screen, and that hover still shows the exact time | That paragraph | The clearest help in the app, on a page a new player may never open. The ring still showed clock times during the fight |
 | **Show pixel monsters** | Pictures of monsters | The paragraph says each monster is a sprite coloured by the appearance its Beastmaster gave it, and that turning it off shows the emoji | That paragraph | Appearance was asked at training and this is the first time the game says the colours are that answer |
-| **Terminal theme** | The same control as the header circle | Lists the themes | Label `Terminal theme` | Clear *Bug 230: the label is now `Theme`.* |
+| **Terminal theme** | The same control as the header circle | Lists the themes | Label `Terminal theme` | Clear *Bug 230: the label is now `Theme`.* *Roadmap 46: the list adds `Millefleur (watercolour, light)`, the first light theme; its header control is 🦄.* |
 | Room settings > invite, **Copy Code**, **Copy Link** | Share the room | The page says the code or the link invites players, and the link opens the join page | That sentence | Clear. The code is not repeated here |
 | Danger zone > **Reset game state**, **Delete room** | Destructive, and the page should say so | Reset copy says monsters, characters, and ring progress are erased and the room and members stay | That paragraph | Clear |
 

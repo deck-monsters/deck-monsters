@@ -1,5 +1,6 @@
 import wrap from 'word-wrap';
 
+import type { CardFact, FeedLine } from '../events/types.js';
 import { upperFirst } from './upper-first.js';
 import { findProbabilityMatch } from './probabilities.js';
 import cardOdds from '../card-odds.json' with { type: 'json' };
@@ -220,6 +221,83 @@ ${wrapCardText(rankings)}`
 \`\`\`
 `;
 
+/**
+ * Lines-returning sibling of `formatCard`: the same sections, wrapped by the same rules,
+ * but as one `card` feed line with no fences and no `===`/`---` rules. Each inner line is
+ * trimmed of the frame's indent, blank separator lines are dropped, and the rest are
+ * joined with `\n`. Built from the same inputs as the text so the two cannot drift
+ * (`announcements/feed-lines.test.ts` checks it). `heading` and `icon` are the title split
+ * into the facts a renderer styles on its own; `text` still carries the whole title line.
+ */
+/**
+ * Splits a stats or rankings block into facts: one per line, and one per ` | ` within a line
+ * ("Level: 3 | XP: 5" is two). A segment with no `: ` keeps its text as the value of an empty
+ * label rather than losing it.
+ */
+export const parseCardFacts = (block: string | undefined): CardFact[] =>
+	(block ?? '')
+		.split('\n')
+		.flatMap(line => line.split(' | '))
+		.map(segment => segment.trim())
+		.filter(segment => segment !== '')
+		.map(segment => {
+			const at = segment.indexOf(': ');
+			return at < 0
+				? { label: '', value: segment }
+				: { label: segment.slice(0, at), value: segment.slice(at + 2) };
+		});
+
+type StructuredCardFields = {
+	description?: string;
+	stats?: string;
+	rankings?: string;
+	level?: string;
+};
+
+export const formatCardLine = ({
+	title,
+	description,
+	stats,
+	rankings,
+	verbose,
+	heading,
+	icon,
+	structured
+}: FormatCardOptions & {
+	heading?: string;
+	icon?: string;
+	/** What the frame shows, by meaning, when `description`/`stats` carry something else (a monster's repeat card). */
+	structured?: StructuredCardFields;
+}): FeedLine => {
+	const fields = structured ?? {
+		description,
+		stats: verbose ? stats : undefined,
+		rankings: verbose ? rankings : undefined
+	};
+	const sections = [
+		wrapCardText(title),
+		!description ? '' : wrapCardText(description),
+		!verbose || !stats ? '' : wrapCardText(stats),
+		!verbose || !rankings ? '' : wrapCardText(rankings)
+	];
+	const text = sections
+		.join('\n')
+		.split('\n')
+		.map((line) => line.trim())
+		.filter((line) => line !== '')
+		.join('\n');
+	return {
+		kind: 'card',
+		text,
+		title: heading ?? title,
+		...(icon ? { icon } : {}),
+		...(fields.description ? { description: fields.description } : {}),
+		...(fields.stats ? { stats: parseCardFacts(fields.stats) } : {}),
+		...(fields.rankings ? { rankings: parseCardFacts(fields.rankings) } : {}),
+		...(fields.level ? { level: fields.level } : {})
+	};
+};
+
 export const formatCardAsHTML = (card: ItemLike): string =>
 	`
 	<article>
@@ -254,10 +332,26 @@ export const itemCard = (item: ItemLike, verbose = false): string =>
 		verbose
 	});
 
+export const itemCardLine = (item: ItemLike, verbose = false): FeedLine => {
+	const heading = `${item.itemType}  ${itemRarity(item)}`;
+	return formatCardLine({
+		title: `${item.icon}  ${heading}`,
+		description: item.description,
+		stats: item.stats,
+		rankings: getItemRequirements(item).join('\n'),
+		verbose,
+		heading,
+		icon: item.icon
+	});
+};
+
 export const itemCardHTML = (item: ItemLike): string => formatCardAsHTML(item);
 
 export const actionCard = (card: ItemLike, verbose?: boolean): string =>
 	itemCard(card, verbose);
+
+export const actionCardLine = (card: ItemLike, verbose?: boolean): FeedLine =>
+	itemCardLine(card, verbose);
 
 export const actionCardHTML = (card: ItemLike): string => itemCardHTML(card);
 
@@ -270,6 +364,29 @@ export const monsterCard = (monster: MonsterLike, verbose = true): string =>
 		stats: verbose ? monster.stats : upperFirst(monster.individualDescription),
 		rankings: monster.rankings,
 		verbose
+	});
+
+export const monsterCardLine = (monster: MonsterLike, verbose = true): FeedLine =>
+	formatCardLine({
+		title: `${monster.icon}  ${monster.givenName}`,
+		description: verbose
+			? upperFirst(monster.individualDescription)
+			: monster.stats,
+		stats: verbose ? monster.stats : upperFirst(monster.individualDescription),
+		rankings: monster.rankings,
+		verbose,
+		heading: monster.givenName,
+		icon: monster.icon,
+		// By meaning, not by slot: a non-verbose card puts the stats in the description slot
+		// and shows nothing else.
+		structured: verbose
+			? {
+					description: upperFirst(monster.individualDescription),
+					stats: monster.stats,
+					rankings: monster.rankings,
+					level: monster.displayLevel
+				}
+			: { stats: monster.stats, level: monster.displayLevel }
 	});
 
 /**
@@ -297,6 +414,22 @@ export const monsterTurnLine = (monster: MonsterLike, team?: string): string => 
 
 	return `${monster.icon ?? ''} ${monster.givenName ?? ''}${hp}${ac}${level}${teamLabel}`.trim();
 };
+
+/**
+ * The `standing` feed line for `monsterTurnLine`: the same text, with the hp/ac/level/team
+ * it was built from as fields. Facts that were not in the text (a monster without numeric
+ * hp) are omitted rather than guessed.
+ */
+export const monsterTurnFeedLine = (monster: MonsterLike, team?: string): FeedLine => ({
+	kind: 'standing',
+	text: monsterTurnLine(monster, team),
+	name: monster.givenName ?? '',
+	...(typeof monster.hp === 'number' ? { hp: monster.hp } : {}),
+	...(typeof monster.maxHp === 'number' ? { maxHp: monster.maxHp } : {}),
+	...(typeof monster.ac === 'number' ? { ac: monster.ac } : {}),
+	...(monster.displayLevel ? { level: monster.displayLevel } : {}),
+	...(team ? { team } : {})
+});
 
 export const characterCard = (character: CharacterLike, verbose = true): string =>
 	formatCard({

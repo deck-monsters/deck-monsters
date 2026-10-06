@@ -1,6 +1,6 @@
-import { actionCard } from '../helpers/card.js';
+import { actionCard, actionCardLine } from '../helpers/card.js';
 import { toCombatActor } from '../events/combat.js';
-import type { CombatPayload } from '../events/types.js';
+import type { CombatPayload, FeedLine } from '../events/types.js';
 import type { RoomEventBus } from '../events/index.js';
 
 export function announceCard(
@@ -25,10 +25,16 @@ export function announceCard(
 		},
 	};
 
+	const playText = `${player.identity} lays down the following card:`;
+	const lines: FeedLine[] = [
+		{ kind: 'play', text: playText, actor: player.givenName, card: typeof card?.name === 'string' ? card.name : '' },
+		actionCardLine(card),
+	];
+
 	eb.publish({
 		type: 'card.played',
 		scope: 'public',
-		text: `${player.identity} lays down the following card:\n${cardPlayed}`,
-		payload: { player, card, combat },
+		text: `${playText}\n${cardPlayed}`,
+		payload: { player, card, combat, lines },
 	});
 }

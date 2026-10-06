@@ -35,6 +35,9 @@ the code.
 - **Fill lists**: the module-level lists the monster samples from.
 - **Templates**: every string and template literal in the monster's class, with `${...}`
   shown as `{placeholders}`.
+- **Ring entrance**: additive player and house narration from `announcements/ring-flavour.ts`,
+  rendered with he, she and they; every live player/boss variant is enumerated without
+  advancing the Ring’s rotation. The Minotaur also shows its Unicorn/roses variant.
 - **Long description**: the lore shown in `MONSTERS.md`.
 - **Signature cards**: every card whose permitted types name the monster. Each card shows
   its description, its rules text, its narration and outcome templates, and any line
