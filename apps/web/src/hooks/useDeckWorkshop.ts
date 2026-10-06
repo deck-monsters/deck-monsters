@@ -31,6 +31,9 @@ type WorkshopMonster = {
   nextCards?: { level: number; cards: string[] } | null;
   nextLevel?: { level: number; hp: number; ac: number; str: number; dex: number; int: number };
   pronoun?: string;
+  /** The monster's emoji and colour words, for the Workshop's pixel portrait (Millefleur). */
+  icon?: string;
+  appearance?: string;
 };
 
 type WorkshopInventory = {

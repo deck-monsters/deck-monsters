@@ -714,30 +714,35 @@
   margin: 0 16px;
   background: linear-gradient(90deg, transparent, rgb(150 125 195 / 0.38) 10%, rgb(150 125 195 / 0.38) 90%, transparent);
 }
-[data-theme='millefleur'] .roster-list:not(.roster-list-dense) .roster-row {
-  align-items: center;
-  gap: 10px;
-  padding: 5px 8px;
-  font-size: 15px;
-  border-radius: 12px;
-}
-[data-theme='millefleur'] .roster-list:not(.roster-list-dense) .roster-row-body { flex: 1.3 1 0; }
-[data-theme='millefleur'] .roster-list:not(.roster-list-dense) .roster-rail { display: contents; }
-[data-theme='millefleur'] .roster-list:not(.roster-list-dense) .roster-rail .roster-bar-track {
-  order: 1;
-  flex: 1 1 0;
-  min-width: 48px;
-  height: 6px;
-  margin: 0;
-}
-[data-theme='millefleur'] .roster-list:not(.roster-list-dense) .roster-hp {
-  order: 2;
-  flex: 0 0 auto;
-  min-width: 38px;
-  text-align: right;
-  color: var(--color-fg-dim);
-  font-size: 13px;
-  font-variant-numeric: tabular-nums;
+/* One line (portrait, name, bar, figure) only where the pane is wide enough to give the name
+   room: under 21rem the dark themes' stacked rail stays, so a boss's long name still wraps
+   rather than losing the row (10b #168/#169: the name outranks everything on the row). */
+@container (min-width: 21rem) {
+  [data-theme='millefleur'] .roster-list:not(.roster-list-dense) .roster-row {
+    align-items: center;
+    gap: 10px;
+    padding: 5px 8px;
+    font-size: 15px;
+    border-radius: 12px;
+  }
+  [data-theme='millefleur'] .roster-list:not(.roster-list-dense) .roster-row-body { flex: 1.3 1 0; }
+  [data-theme='millefleur'] .roster-list:not(.roster-list-dense) .roster-rail { display: contents; }
+  [data-theme='millefleur'] .roster-list:not(.roster-list-dense) .roster-rail .roster-bar-track {
+    order: 1;
+    flex: 1 1 0;
+    min-width: 48px;
+    height: 6px;
+    margin: 0;
+  }
+  [data-theme='millefleur'] .roster-list:not(.roster-list-dense) .roster-hp {
+    order: 2;
+    flex: 0 0 auto;
+    min-width: 38px;
+    text-align: right;
+    color: var(--color-fg-dim);
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+  }
 }
 [data-theme='millefleur'] .roster-name-text { font-size: 15px; font-weight: 800; color: var(--color-fg-bright); }
 [data-theme='millefleur'] .roster-row-sub { font-size: 11px; }
@@ -749,6 +754,166 @@
   background: linear-gradient(90deg, rgb(251 239 200 / 0.7), rgb(251 239 200 / 0));
   box-shadow: none;
   border-radius: 12px;
+}
+
+/* ═══ The Workshop, as the mock draws it ═══ */
+[data-theme='millefleur'] .workshop-view { padding: 18px 14px 12px; gap: 14px; }
+/* Heading row: "Workshop" 21/800 with "You can train N more" muted at the right. The surface's
+   own subtitle stays under it as quiet help. */
+[data-theme='millefleur'] .workshop-header > div:first-child { flex: 1 1 12rem; min-width: 0; }
+[data-theme='millefleur'] .workshop-title-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 4px;
+}
+[data-theme='millefleur'] .workshop-header h1 { margin: 0; font-size: 21px; line-height: 1; font-weight: 800; color: var(--color-fg-bright); }
+[data-theme='millefleur'] .workshop-train-count { display: inline; font-size: 12px; color: var(--color-fg-dim); }
+[data-theme='millefleur'] .workshop-header p { margin: 6px 4px 0; font-size: 13px; line-height: 1.35; color: var(--color-fg-dim); }
+/* The count moved up beside the heading; the sentence below would only repeat it. (When every
+   place is taken the sentence stays: that is the only place it is said.) */
+[data-theme='millefleur'] .workshop-train-line-count { display: none; }
+[data-theme='millefleur'] .workshop-train-row { padding: 0 4px; }
+
+[data-theme='millefleur'] .workshop-monster-panel { padding: 16px 14px 14px; gap: 12px; }
+[data-theme='millefleur'] .workshop-monster-header { align-items: center; gap: 16px; }
+/* The portrait: a soft holo glow around a pearl disc, 80px, with the monster's pixel art at 2x. */
+[data-theme='millefleur'] .workshop-monster-portrait {
+  position: relative;
+  isolation: isolate;
+  flex: 0 0 80px;
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+[data-theme='millefleur'] .workshop-monster-portrait::before,
+[data-theme='millefleur'] .workshop-monster-portrait::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  border-radius: 50%;
+  pointer-events: none;
+}
+[data-theme='millefleur'] .workshop-monster-portrait::before {
+  inset: 0;
+  background: conic-gradient(from 210deg, #fbd2e4, #fbecbe, #c9eedf, #cfe2fb, #e0d0fb, #fbd2e4);
+  filter: blur(6px);
+  opacity: 0.95;
+}
+[data-theme='millefleur'] .workshop-monster-portrait::after {
+  inset: 7px;
+  background: radial-gradient(circle at 40% 35%, #fffdfa 0%, #fbf7ff 60%, #efe6fb 100%);
+  box-shadow: inset 0 0 12px rgb(190 160 235 / 0.45);
+}
+[data-theme='millefleur'] .workshop-monster-portrait-emoji { font-size: 34px; line-height: 1; }
+/* Name, then the type line, then the status: the tag's DOM position is beside the name, so
+   the title row dissolves into the column and each part takes its place by order. */
+[data-theme='millefleur'] .workshop-monster-title { gap: 4px; justify-content: center; min-width: 0; }
+[data-theme='millefleur'] .workshop-monster-title-row { display: contents; }
+[data-theme='millefleur'] .workshop-monster-filter-btn {
+  order: 1;
+  align-self: flex-start;
+  min-height: 0;
+  padding: 0;
+  font-size: 23px;
+  line-height: 1.1;
+  text-align: left;
+}
+[data-theme='millefleur'] .workshop-monster-header p { order: 2; margin: 0; font-size: 13px; color: var(--color-fg-dim); }
+[data-theme='millefleur'] .workshop-status-tag {
+  order: 3;
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--color-success);
+}
+[data-theme='millefleur'] .workshop-status-tag::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: radial-gradient(circle, currentColor 40%, transparent 78%);
+}
+[data-theme='millefleur'] .workshop-status-in-ring,
+[data-theme='millefleur'] .workshop-status-fighting,
+[data-theme='millefleur'] .workshop-status-fallen { border: 0; }
+/* Meters: label, 8px track, and (XP) the rose "Lvl 3 ›", the tracks ending together. */
+[data-theme='millefleur'] .workshop-hp-meter,
+[data-theme='millefleur'] .workshop-xp-meter { gap: 10px; margin: 0; min-height: 0; font-size: 12px; }
+[data-theme='millefleur'] .workshop-hp-meter { padding-right: 62px; }
+[data-theme='millefleur'] .workshop-hp-meter > span,
+[data-theme='millefleur'] .workshop-xp-meter > span:first-child { flex: 0 0 auto; min-width: 62px; font-size: 12px; color: var(--color-fg-dim); }
+[data-theme='millefleur'] .workshop-hp-meter .roster-bar-track,
+[data-theme='millefleur'] .workshop-xp-meter-track { height: 8px; margin: 0; }
+[data-theme='millefleur'] .workshop-xp-next { flex: 0 0 52px; font-size: 12px; font-weight: 800; color: var(--color-accent); text-align: right; }
+[data-theme='millefleur'] .workshop-xp-meter { min-height: 28px; }
+[data-theme='millefleur'] .workshop-monster-actions { gap: 10px; flex-wrap: nowrap; }
+/* Unequip all first, the view's one primary (Send to ring, Revive) last, as in the mock. */
+[data-theme='millefleur'] .workshop-monster-actions .btn:last-child { order: -1; }
+[data-theme='millefleur'] .workshop-monster-actions .btn { padding: 12px 16px; min-height: 44px; }
+[data-theme='millefleur'] .workshop-deck-status { padding: 0 2px; font-size: 12px; }
+[data-theme='millefleur'] .workshop-deck-label { color: var(--color-fg); font-weight: 700; }
+[data-theme='millefleur'] .workshop-deck-needs-more { opacity: 1; }
+/* Three to a row, 9px apart (the dark themes keep their 70px minimum). */
+[data-theme='millefleur'] .workshop-slot-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; }
+[data-theme='millefleur'] .workshop-monster-nav { min-height: 36px; align-items: center; }
+/* "Your cards" 17/800 with its count muted at the right, on one line. */
+[data-theme='millefleur'] .workshop-section-header { align-items: baseline; flex-wrap: nowrap; margin-bottom: 14px; padding: 4px 4px 0; }
+[data-theme='millefleur'] .workshop-section-header h2 { margin: 0; font-size: 17px; line-height: 1; }
+[data-theme='millefleur'] .workshop-section-header span { font-size: 12px; }
+
+/* ⓘ on a phone: the strip stays (base.css, 520px container query: a corner badge overlapped the
+   card and swallowed drops, pass 44). Here it is the tile's quiet footer: the same rounded tile
+   carried on, a faint line between, no bold edge of its own.
+   A corner ⓘ was built and measured (scratchpad slot-touch.mjs, 83px-wide slots): its 44x44 hit
+   area covers the slot's centre and top edge, so the most natural tap opens details instead of
+   selecting the card. It is kept behind <html data-slot-info="corner"> for comparison only. */
+@container workshop (max-width: 520px) {
+  [data-theme='millefleur'] .workshop-card-cell > .workshop-card-slot:not(.empty) {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    border-bottom-color: rgb(190 170 215 / 0.3);
+  }
+  [data-theme='millefleur'] .workshop-card-info {
+    border: 1px solid var(--mf-line-soft);
+    border-top: 0;
+    border-radius: 0 0 13px 13px;
+    background: rgb(255 253 250 / 0.95);
+    font-size: 13px;
+  }
+  [data-theme='millefleur'][data-slot-info='corner'] .workshop-card-cell { flex-direction: row; }
+  [data-theme='millefleur'][data-slot-info='corner'] .workshop-card-cell > .workshop-card-slot:not(.empty) {
+    border-bottom-left-radius: 13px;
+    border-bottom-right-radius: 13px;
+    border-bottom-color: var(--mf-line-soft);
+  }
+  [data-theme='millefleur'][data-slot-info='corner'] .workshop-card-info {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 44px;
+    height: 44px;
+    min-height: 0;
+    align-items: flex-start;
+    justify-content: flex-end;
+    padding: 3px 6px 0 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    font-size: 12px;
+  }
 }
 
 /* ── Full-page routes (/room/:id/workshop, /chat, /fights, ...) ──
@@ -1248,6 +1413,8 @@
   [data-theme='millefleur'] .workshop-monster-dot.active::before { background: #000000; border-color: #000000; box-shadow: none; }
   [data-theme='millefleur'] .workshop-monster-next-mark { border: 2px solid #000000; }
   /* The halo: a plain white disc with a black outline; no ring. */
+  [data-theme='millefleur'] .workshop-monster-portrait::before { display: none; }
+  [data-theme='millefleur'] .workshop-monster-portrait::after { background: #ffffff; box-shadow: inset 0 0 0 2px #000000; }
   [data-theme='millefleur'] .roster-row-mine .roster-icon::before { display: none; }
   [data-theme='millefleur'] .roster-row-mine .roster-icon::after { background: #ffffff; box-shadow: inset 0 0 0 1px #000000; }
   [data-theme='millefleur'] .roster-sprite,

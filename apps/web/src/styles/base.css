@@ -382,6 +382,9 @@ button {
   gap: 0.75rem;
 }
 
+/* "You can train N more" beside the Workshop heading: a theme turns it on (Millefleur). */
+.workshop-train-count { display: none; }
+
 .workshop-train-line {
   flex: 1 1 12rem;
   min-width: 0;

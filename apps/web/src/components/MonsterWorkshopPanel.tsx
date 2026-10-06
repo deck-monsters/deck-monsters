@@ -1,4 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
+import { useTheme } from '../hooks/useTheme.js';
+import { usePixelMonsters } from '../hooks/usePixelMonsters.js';
 import { formatRelativeFromNow } from '../utils/format-relative.js';
 import CardSlot, { type WorkshopCardLocation } from './CardSlot.js';
 import PresetControl from './PresetControl.js';
@@ -10,6 +12,13 @@ import LevelUpSheet, { type LevelUpGainsView } from './LevelUpSheet.js';
 // row bakes hp/ac/name text into the same block the bar lives in and splitting that out
 // carried more refactor risk than the (small, now duplicated) bar/track markup was worth.
 import { hpBand, hpRatio } from './RingRoster.js';
+
+// The portrait is the Ring roster's pixel art at 2x, in its own lazy chunk like the roster's, so
+// a player who has pixel monsters off (or another theme) never fetches it.
+const MonsterPortrait = lazy(() => import('../animations/pixel-fight/MonsterPortrait.js'));
+
+/** The engine stores the subject pronoun only ("she"); the mock reads "she/her". */
+const PRONOUN_PAIRS: Record<string, string> = { she: 'she/her', he: 'he/him', they: 'they/them', it: 'it/its' };
 
 type MonsterCompatibilityHint = 'none' | 'eligible' | 'ineligible';
 
@@ -38,6 +47,8 @@ type MonsterPanelProps = {
     nextCards?: { level: number; cards: string[] } | null;
     nextLevel?: LevelUpGainsView;
     pronoun?: string;
+    icon?: string;
+    appearance?: string;
   };
   showSelectionHint: boolean;
   selectedCards: Array<{ location: WorkshopCardLocation; cardName: string; selectionId: string }>;
@@ -110,6 +121,10 @@ export default function MonsterWorkshopPanel({
   onShowDetails,
 }: MonsterPanelProps) {
   const [now, setNow] = useState(() => Date.now());
+  // The mock's Workshop (portrait, status line, primary Send to ring) is Millefleur's for now.
+  // The markup and logic are theme-neutral; removing this one condition turns it on everywhere.
+  const richPanel = useTheme().theme === 'millefleur';
+  const { pixelMonstersEnabled } = usePixelMonsters();
   // The XP bar that opened the level-up details, or null while they are closed.
   const [levelSheetOpener, setLevelSheetOpener] = useState<HTMLElement | null>(null);
   const locked = monster.inEncounter;
@@ -131,7 +146,9 @@ export default function MonsterWorkshopPanel({
       ? { key: 'fighting', label: 'fighting' }
       : monster.dead
         ? { key: 'fallen', label: 'fallen' }
-        : null;
+        : richPanel
+          ? { key: 'ready', label: 'ready' }
+          : null;
 
   // Required props can still be absent in vi.mock test doubles.
   const hp = Number.isFinite(monster.hp) ? monster.hp : 0;
@@ -198,6 +215,17 @@ export default function MonsterWorkshopPanel({
         .join(' ')}
     >
       <div className="workshop-monster-header">
+        {richPanel && (
+          <div className="workshop-monster-portrait" aria-hidden="true">
+            {pixelMonstersEnabled ? (
+              <Suspense fallback={<span className="workshop-monster-portrait-emoji">{monster.icon}</span>}>
+                <MonsterPortrait creatureType={monster.type} appearance={monster.appearance} name={monster.name} />
+              </Suspense>
+            ) : (
+              <span className="workshop-monster-portrait-emoji">{monster.icon}</span>
+            )}
+          </div>
+        )}
         <div className="workshop-monster-title">
           <div className="workshop-monster-title-row">
             <button
@@ -215,12 +243,13 @@ export default function MonsterWorkshopPanel({
             </button>
             {statusTag && (
               <span className={`workshop-status-tag workshop-status-${statusTag.key}`}>
-                {statusTag.label}
+                {richPanel ? statusTag.label.charAt(0).toUpperCase() + statusTag.label.slice(1) : statusTag.label}
               </span>
             )}
           </div>
           <p>
             {monster.type} · Lvl {monster.level}
+            {richPanel && monster.pronoun ? ` · ${PRONOUN_PAIRS[monster.pronoun] ?? monster.pronoun}` : ''}
           </p>
         </div>
       </div>
@@ -283,13 +312,13 @@ export default function MonsterWorkshopPanel({
       )}
       <div className="workshop-monster-actions">
         {monster.dead ? (
-          <button title={reviving ? `${monster.name} is on the way back` : `Bring ${monster.name} back. Above level 0 it takes a few minutes`} type="button" className="btn" disabled={busy || monster.inEncounter || reviving} onClick={onRevive}>
+          <button title={reviving ? `${monster.name} is on the way back` : `Bring ${monster.name} back. Above level 0 it takes a few minutes`} type="button" className={richPanel ? 'btn btn-primary' : 'btn'} disabled={busy || monster.inEncounter || reviving} onClick={onRevive}>
             {reviving ? 'Reviving…' : 'Revive'}
           </button>
         ) : !monster.inRing ? (
           <button
             type="button"
-            className="btn"
+            className={richPanel ? 'btn btn-primary' : 'btn'}
             disabled={busy || anotherMonsterInRing || monster.cards.length < monster.cardSlots}
             // A disabled control with no reason reads as a bug rather than a rule, so say
             // which rule is stopping you.
@@ -342,7 +371,7 @@ export default function MonsterWorkshopPanel({
       */}
       <div className="workshop-deck-status">
         <span className="workshop-deck-count">
-          {deckLabel}
+          <span className="workshop-deck-label">{deckLabel}</span>
           {deckNeedsMore > 0 && (
             <span className="workshop-deck-needs-more"> · needs {deckNeedsMore} more to enter the ring</span>
           )}

@@ -13,6 +13,7 @@ import GuidedStartBox from './GuidedStartBox.js';
 import TrainWizard, { toTrainFailure, type TrainFailure, type TrainWizardInput } from './TrainWizard.js';
 import { useGuidedStart } from '../hooks/useGuidedStart.js';
 import { useDeckWorkshop } from '../hooks/useDeckWorkshop.js';
+import { useTheme } from '../hooks/useTheme.js';
 import { RingFeedContext, type TrackedRingFeedEvent } from '../hooks/useRingFeed.js';
 import { cardRefusalReason, cardRefusalSentence, equipResultMessage } from '../lib/cardRefusal.js';
 import { groupSelectionByCardName, isSameSource, toggleWorkshopSelection } from '../utils/workshop-selection.js';
@@ -119,6 +120,10 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
       ? Math.max(monsterSlots - monsters.length, 0)
       : undefined;
   const trainingFull = freePlaces === 0;
+  // One primary per view: once there is a monster, the view's primary is Send to ring, so
+  // Train monster steps down to a secondary button. Millefleur only for now; dropping the
+  // theme test here turns it on for every theme.
+  const quietTrain = useTheme().theme === 'millefleur' && monsters.length > 0;
   const trainLine =
     freePlaces === undefined
       ? null
@@ -713,7 +718,14 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
     >
       <div className="workshop-header">
         <div>
-          <h1>Workshop</h1>
+          <div className="workshop-title-row">
+            <h1>Workshop</h1>
+            {/* Same fact as the train line below, at the heading's right: shown by the themes
+                that style .workshop-train-count (it is display:none in base.css). */}
+            {freePlaces !== undefined && freePlaces > 0 && (
+              <span className="workshop-train-count">You can train {freePlaces} more</span>
+            )}
+          </div>
           <p>{surfaceDescription('workshop')}</p>
         </div>
         <div className="workshop-header-actions">
@@ -729,10 +741,12 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
         so no places to count, and keeps the plain button.
       */}
       <div className="workshop-train-row">
-        {trainLine && <p className="workshop-train-line">{trainLine}</p>}
+        {trainLine && (
+          <p className={`workshop-train-line${freePlaces ? ' workshop-train-line-count' : ''}`}>{trainLine}</p>
+        )}
         <button
           title={showSpawn ? 'Close without training' : 'Choose a type, a name and a look for a new monster'}
-          className={showSpawn ? 'btn' : 'btn btn-cta'}
+          className={showSpawn || quietTrain ? 'btn' : 'btn btn-cta'}
           onClick={() => setShowSpawn((shown) => !shown)}
           disabled={!roomId || busy || (trainingFull && !showSpawn)}
         >
