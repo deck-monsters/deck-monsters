@@ -77,6 +77,15 @@
   --mf-primary-ring: 0 0 0 2px rgb(255 253 250 / 0.95), 0 0 0 3.5px rgb(93 70 132 / 0.45);
   --mf-card: rgb(255 253 250 / 0.9);
   --mf-line-soft: rgb(190 170 215 / 0.55);
+  --mf-line-tab: rgb(150 125 195 / 0.5);
+  --mf-rule: rgb(140 170 220 / 0.24);
+  --mf-margin: rgb(232 160 190 / 0.4);
+  --mf-tab-un-l: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='30' viewBox='0 0 14 30'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%23f5f0f9' stop-opacity='.97'/><stop offset='1' stop-color='%23f5f0f9' stop-opacity='.92'/></linearGradient></defs><path d='M0 30C4 30 6 3 12 1.5H14V30Z' fill='url(%23g)'/><path d='M.5 30C4.5 30 6.5 3 12 1.5H14' fill='none' stroke='rgb(150,125,195)' stroke-opacity='.5'/></svg>");
+  --mf-tab-un-r: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='30' viewBox='0 0 14 30'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%23f5f0f9' stop-opacity='.97'/><stop offset='1' stop-color='%23f5f0f9' stop-opacity='.92'/></linearGradient></defs><path d='M14 30C10 30 8 3 2 1.5H0V30Z' fill='url(%23g)'/><path d='M13.5 30C9.5 30 7.5 3 2 1.5H0' fill='none' stroke='rgb(150,125,195)' stroke-opacity='.5'/></svg>");
+  --mf-tab-un-m: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='2' height='30' preserveAspectRatio='none' viewBox='0 0 2 30'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%23f5f0f9' stop-opacity='.97'/><stop offset='1' stop-color='%23f5f0f9' stop-opacity='.92'/></linearGradient></defs><rect y='1.5' width='2' height='28.5' fill='url(%23g)'/><path d='M0 1.5H2' stroke='rgb(150,125,195)' stroke-opacity='.5'/></svg>");
+  --mf-tab-se-l: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='34' viewBox='0 0 14 34'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%23f8d8e6'/><stop offset='.85' stop-color='%23fffdfa'/><stop offset='1' stop-color='%23fffdfa'/></linearGradient></defs><path d='M0 33C4 33 6 3 12 1.5H14V34H0Z' fill='url(%23g)'/><path d='M.5 34V33C4.5 33 6.5 3 12 1.5H14' fill='none' stroke='rgb(150,125,195)' stroke-opacity='.5'/></svg>");
+  --mf-tab-se-r: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='34' viewBox='0 0 14 34'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%23f8d8e6'/><stop offset='.85' stop-color='%23fffdfa'/><stop offset='1' stop-color='%23fffdfa'/></linearGradient></defs><path d='M14 33C10 33 8 3 2 1.5H0V34H14Z' fill='url(%23g)'/><path d='M13.5 34V33C9.5 33 7.5 3 2 1.5H0' fill='none' stroke='rgb(150,125,195)' stroke-opacity='.5'/></svg>");
+  --mf-tab-se-m: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='2' height='34' preserveAspectRatio='none' viewBox='0 0 2 34'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%23f8d8e6'/><stop offset='.85' stop-color='%23fffdfa'/><stop offset='1' stop-color='%23fffdfa'/></linearGradient></defs><rect y='1.5' width='2' height='32.5' fill='url(%23g)'/><path d='M0 1.5H2' stroke='rgb(150,125,195)' stroke-opacity='.5'/></svg>");
 }
 
 /* ── Type: the chrome is Nunito; the feed and Console keep --font-mono (set per selector). ── */
@@ -315,6 +324,647 @@
 
 /* ── Highlight tags in the feed: text-safe tokens, set in the shared tokens above ── */
 
+/* ═══ Task 3: surfaces ═══════════════════════════════════════════════════════════════════
+   Everything below is scoped to this theme, so the dark themes' pixels cannot move. The shapes
+   are CSS-only (pseudo-elements, data-URI backgrounds); the watercolour is task 4. */
+
+/* ── Header: the nav row is quiet text, the ⚙ and ☰ are the secondary button's round cousins ── */
+[data-theme='millefleur'] .header-nav .btn {
+  background: transparent;
+  border-color: transparent;
+  border-radius: var(--radius-pill);
+  color: var(--color-fg-dim);
+  font-weight: 700;
+  /* Same hit area as the outlined pills had: the padding and the 2.1rem line are untouched. */
+}
+/* The current place: a rose tint and a rose underline (colour and shape, not colour alone). */
+[data-theme='millefleur'] .header-nav .btn[aria-current='page'] {
+  background: #fbe6ef;
+  color: #8a2a5e;
+  box-shadow: inset 0 -2px 0 #9a2f66;
+}
+[data-theme='millefleur'] .header-nav .btn[aria-expanded='true'] { background: var(--color-choice-selected); color: var(--color-fg-bright); }
+@media (hover: hover) {
+  [data-theme='millefleur'] .header-nav .btn:hover:not(:disabled) {
+    background: #efe6fb;
+    border-color: transparent;
+    color: var(--color-fg-bright);
+  }
+  [data-theme='millefleur'] .header-nav .btn[aria-current='page']:hover:not(:disabled) { background: #fbe6ef; color: #8a2a5e; }
+}
+/* ⚙ room settings: a 30px circle, secondary-button edge. */
+[data-theme='millefleur'] .app-room-settings-link {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 50%;
+  background: rgb(255 253 250 / 0.7);
+  color: var(--color-fg);
+  line-height: 1;
+}
+@media (hover: hover) {
+  [data-theme='millefleur'] .app-room-settings-link:hover { border-color: var(--color-accent); color: var(--color-accent); }
+}
+[data-theme='millefleur'] .app-header .header-hamburger { border-radius: var(--radius-md); }
+
+/* ── Folder tabs (phone and tablet: the tabbed layout) ──
+   Each tab is a button with its 44px hit area intact; the folder shape is a ::before drawn
+   in the bottom 30px (33 + 1 when selected), as a 3-piece background: two fixed 14px
+   shoulders and a stretched middle, so the slope keeps its curve at any label width.
+   Colours are baked into the SVGs (a data URI cannot read a custom property), mirroring
+   --mf-line-tab and the rose wash; the high-contrast block swaps the images. */
+[data-theme='millefleur'] .terminal-tabs {
+  align-items: flex-end;
+  gap: 0;
+  /* Starts 12px in, level with the page, and leaves 22% of room after the last tab so a
+     selected "Leaders" can scroll clear of the fade. */
+  padding: 0 22% 1px 12px;
+  /* The row ends 1px lower than its tabs and overlaps the page by that 1px, so the selected
+     tab can extend over the page's top line and join it. */
+  margin-bottom: -1px;
+  border-bottom: 0;
+  background: transparent;
+  position: relative;
+  z-index: 3;
+  scrollbar-width: none;
+  -webkit-mask-image: linear-gradient(90deg, #000 80%, transparent);
+  mask-image: linear-gradient(90deg, #000 80%, transparent);
+}
+[data-theme='millefleur'] .terminal-tabs::-webkit-scrollbar { display: none; }
+[data-theme='millefleur'] .terminal-tab {
+  flex: 0 0 auto;
+  min-width: max-content;
+  min-height: 44px;
+  margin-left: -8px;                  /* each tab sits behind its left neighbour */
+  padding: 14px 16px 0;               /* label centred in the 30px shape */
+  border: 0;
+  background: transparent;
+  color: var(--color-fg-dim);
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0;
+  z-index: 1;
+  isolation: isolate;
+  transition: color 0.1s;
+}
+[data-theme='millefleur'] .terminal-tab:first-child { margin-left: 0; }
+/* Descending z-index: tab N is behind tab N-1, so the shoulders' lines never cross. */
+[data-theme='millefleur'] .terminal-tab:nth-child(1) { z-index: 9; }
+[data-theme='millefleur'] .terminal-tab:nth-child(2) { z-index: 8; }
+[data-theme='millefleur'] .terminal-tab:nth-child(3) { z-index: 7; }
+[data-theme='millefleur'] .terminal-tab:nth-child(4) { z-index: 6; }
+[data-theme='millefleur'] .terminal-tab:nth-child(5) { z-index: 5; }
+[data-theme='millefleur'] .terminal-tab:nth-child(6) { z-index: 4; }
+[data-theme='millefleur'] .terminal-tab:nth-child(n + 7) { z-index: 3; }
+[data-theme='millefleur'] .terminal-tab::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 30px;
+  z-index: -1;
+  pointer-events: none;
+  background-image: var(--mf-tab-un-l), var(--mf-tab-un-r), var(--mf-tab-un-m);
+  background-repeat: no-repeat;
+  background-position: left bottom, right bottom, 14px bottom;
+  background-size: 14px 100%, 14px 100%, calc(100% - 28px) 100%;
+}
+[data-theme='millefleur'] .terminal-tab.active {
+  z-index: 20;
+  padding-top: 11px;                  /* 3px taller shape: the label rises with it */
+  padding-left: 18px;
+  padding-right: 18px;
+  color: var(--color-highlight-warn); /* #8a2a5e, the selected label */
+}
+[data-theme='millefleur'] .terminal-tab.active::before {
+  height: 34px;
+  bottom: -1px;                       /* 1px over the page's top edge */
+  background-image: var(--mf-tab-se-l), var(--mf-tab-se-r), var(--mf-tab-se-m);
+}
+@media (hover: hover) {
+  [data-theme='millefleur'] .terminal-tab:hover:not(.active) { color: var(--color-fg-bright); }
+}
+/* The unread badge sits in the clear 14px above the shape, at the tab's top-right. */
+[data-theme='millefleur'] .terminal-tab-badge {
+  top: 1px;
+  right: 2px;
+  z-index: 2;
+}
+
+/* ── The page: what a tab (or, on a desktop, a pane) opens onto ──
+   Drawn as the slot's ::before so the slot itself keeps its full grid-cell width: PaneDivider
+   reads the left slot's clientWidth to start a drag, and a margin would shift it by the inset.
+   The slot's padding is the inset; its children sit inside it. */
+[data-theme='millefleur'] .terminal-slot {
+  isolation: isolate;
+  border-right: 0;
+  padding: 0 12px;
+}
+[data-theme='millefleur'] .terminal-slot::before,
+[data-theme='millefleur'] .terminal-slot::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 12px;
+  right: 12px;
+  pointer-events: none;
+}
+[data-theme='millefleur'] .terminal-slot::before {
+  z-index: -1;
+  background: var(--surface-page);
+  box-shadow: var(--shadow-page);
+}
+/* The top edge: 1px of --mf-line-tab, fading out over the first and last 6%. */
+[data-theme='millefleur'] .terminal-slot::after {
+  bottom: auto;
+  height: 1px;
+  z-index: 2;
+  background: linear-gradient(90deg, transparent, var(--mf-line-tab) 6%, var(--mf-line-tab) 94%, transparent);
+}
+/* Desktop: two pages side by side, rounded at the top, with a gap the divider lives in. */
+@media (min-width: 1024px) {
+  [data-theme='millefleur'] .terminal-shell { padding-top: 4px; }
+  [data-theme='millefleur'] .terminal-slot { padding-bottom: 12px; }
+  [data-theme='millefleur'] .terminal-slot[data-pane-slot='0'] { padding-right: 6px; }
+  [data-theme='millefleur'] .terminal-slot[data-pane-slot='1'] { padding-left: 6px; }
+  [data-theme='millefleur'] .terminal-slot[data-pane-slot='0']::before,
+  [data-theme='millefleur'] .terminal-slot[data-pane-slot='0']::after { right: 6px; }
+  [data-theme='millefleur'] .terminal-slot[data-pane-slot='1']::before,
+  [data-theme='millefleur'] .terminal-slot[data-pane-slot='1']::after { left: 6px; }
+  [data-theme='millefleur'] .terminal-slot::before {
+    bottom: 12px;
+    border-radius: var(--radius-lg) var(--radius-lg) 16px 16px;
+  }
+  [data-theme='millefleur'] .terminal-slot::after {
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  }
+  [data-theme='millefleur'] .pane-divider { background: transparent; }
+}
+/* Inside the page, surfaces are transparent so the page (and, in task 4, the paint) shows. */
+[data-theme='millefleur'] .command-dock,
+[data-theme='millefleur'] .chat-composer,
+[data-theme='millefleur'] .ring-roster,
+[data-theme='millefleur'] .ring-items { background: transparent; }
+/* The pane's own heading, inside the page: Nunito, not the dark themes' small caps. */
+[data-theme='millefleur'] .pane-header {
+  border-bottom: 0;
+  padding: 14px var(--pane-padding) 6px;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--color-fg-bright);
+}
+[data-theme='millefleur'] .pane-header-timer {
+  color: var(--color-accent);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+/* ── Card slots (Workshop and Your cards) ──
+   Role, in the engine's one table: attack rose, area apricot, heal sea-foam, trick lilac, and
+   guard (the engine's fifth role, "DEFENCE", which the design has no colour for) woad sky.
+   The dot sits beside a word, never alone. The role glyph is hidden here: it was drawn in the
+   button's default text colour, and the dot + word say the same thing. */
+[data-theme='millefleur'] .workshop-card-slot {
+  --mf-dot: #8f7cbc;
+  min-height: 84px;
+  padding: 8px 6px;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid var(--mf-line-soft);
+  border-radius: 13px;
+  background: rgb(255 253 250 / 0.95);
+  color: var(--color-fg);
+}
+[data-theme='millefleur'] .workshop-card-slot.role-attack { --mf-dot: #d7679a; }
+[data-theme='millefleur'] .workshop-card-slot.role-area { --mf-dot: #e0925a; }
+[data-theme='millefleur'] .workshop-card-slot.role-heal { --mf-dot: #3aa58a; }
+[data-theme='millefleur'] .workshop-card-slot.role-trick { --mf-dot: #8f72d1; }
+[data-theme='millefleur'] .workshop-card-slot.role-guard { --mf-dot: #5f93d6; }
+/* The role tints that the dark themes put on the border are the dot's job here. */
+[data-theme='millefleur'] .workshop-card-slot.role-attack,
+[data-theme='millefleur'] .workshop-card-slot.role-area,
+[data-theme='millefleur'] .workshop-card-slot.role-heal,
+[data-theme='millefleur'] .workshop-card-slot.role-trick,
+[data-theme='millefleur'] .workshop-card-slot.role-guard { border-color: var(--mf-line-soft); }
+[data-theme='millefleur'] .workshop-card-slot.drop-over,
+[data-theme='millefleur'] .workshop-card-slot.selected { border-color: var(--color-accent); }
+[data-theme='millefleur'] .workshop-card-slot.selected { box-shadow: inset 0 0 0 1px var(--color-accent); background: #fff6fa; }
+[data-theme='millefleur'] .workshop-card-icon { display: none; }
+[data-theme='millefleur'] .workshop-card-class {
+  order: -1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  color: var(--color-fg-dim);
+}
+/* The painted dot: a radial gradient with a soft rim. */
+[data-theme='millefleur'] .workshop-card-class::before {
+  content: '';
+  flex: 0 0 auto;
+  width: 9px;
+  height: 9px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--mf-dot) 45%, #fff), var(--mf-dot) 68%);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--mf-dot) 35%, transparent);
+}
+[data-theme='millefleur'] .workshop-card-name {
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--color-fg-bright);
+}
+[data-theme='millefleur'] .workshop-card-name.compact { font-size: 11.5px; }
+/* Empty: lilac paper at .45, a lighter edge, a lilac plus (the "[+]" text stays for the dark themes). */
+[data-theme='millefleur'] .workshop-card-slot.empty {
+  background: rgb(235 226 250 / 0.45);
+  border-color: rgb(190 170 215 / 0.35);
+}
+[data-theme='millefleur'] .workshop-card-slot.empty > span {
+  font-size: 0;
+  line-height: 0;
+}
+[data-theme='millefleur'] .workshop-card-slot.empty > span::before {
+  content: '+';
+  font-size: 22px;
+  font-weight: 400;
+  line-height: 1;
+  color: #b6a6d4;
+}
+/* The ⓘ strip under a slot: quiet text, still a 44px target. */
+[data-theme='millefleur'] .workshop-card-info {
+  border: 0;
+  color: var(--color-fg-dim);
+}
+
+/* ── Meters ── 6px tracks in the Workshop; the roster keeps its 4px. */
+[data-theme='millefleur'] .workshop-hp-meter .roster-bar-track { height: 6px; }
+[data-theme='millefleur'] .roster-bar-hurt { background: linear-gradient(90deg, #a24c18, #964214); }
+[data-theme='millefleur'] .roster-bar-fill { border-radius: var(--radius-pill); }
+/* The XP glow needs room outside the track, so the track no longer clips; the fill rounds itself. */
+[data-theme='millefleur'] .workshop-xp-meter-track { overflow: visible; }
+[data-theme='millefleur'] .workshop-xp-meter-track > span { border-radius: var(--radius-pill); }
+
+/* ── Workshop odds and ends ──
+   "Your cards" sits on the page directly (the monster panel is the screen's one card), and
+   the Train wizard takes the card and field shapes. */
+[data-theme='millefleur'] .workshop-inventory {
+  border-color: transparent;
+  background: transparent;
+  padding-inline: 0;
+}
+[data-theme='millefleur'] .train-wizard {
+  border-color: var(--mf-line-soft);
+  border-radius: 16px;
+  background: var(--mf-card);
+}
+[data-theme='millefleur'] .train-wizard-type,
+[data-theme='millefleur'] .train-wizard-choice {
+  border-color: var(--mf-line-soft);
+  border-radius: var(--radius-md);
+  background: var(--color-input-bg);
+}
+[data-theme='millefleur'] .train-wizard-type.is-selected,
+[data-theme='millefleur'] .train-wizard-choice.is-selected { border-color: var(--color-accent); background: #fff6fa; }
+[data-theme='millefleur'] .train-wizard-type-name { color: var(--color-fg-bright); font-weight: 800; }
+[data-theme='millefleur'] .train-wizard-heading { color: var(--color-fg-bright); font-weight: 800; }
+
+/* The acting row: a butter wash that fades to the right, rounded, in place of the bar. */
+[data-theme='millefleur'] .roster-row-acting {
+  background: linear-gradient(90deg, rgb(251 239 200 / 0.95), rgb(251 239 200 / 0.15));
+  box-shadow: none;
+  border-radius: 14px;
+}
+
+/* ── The halo: a holo ring around a pearl disc, behind a roster portrait ──
+   The ring is the holo gradient under a radial mask (soft edges, no blur filter and no
+   blend mode: the roster sits beside a scrolling feed, §8). The sprite stays the 24px
+   pixelated canvas above it. */
+[data-theme='millefleur'] .roster-icon {
+  position: relative;
+  isolation: isolate;
+  overflow: visible;
+}
+[data-theme='millefleur'] .roster-icon::before,
+[data-theme='millefleur'] .roster-icon::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  border-radius: 50%;
+  pointer-events: none;
+}
+/* 34px ring, centred on the 24px icon box. The richer XP stops, not the pale tints: at 3px
+   wide the tints are lost on paper. */
+[data-theme='millefleur'] .roster-icon::before {
+  inset: -5px;
+  background: linear-gradient(110deg, #f4a6cb, #f3d777, #96dcc0, #93bdf3, #b99bf0);
+  -webkit-mask-image: radial-gradient(circle closest-side, transparent 70%, #000 82%, #000 90%, transparent 100%);
+  mask-image: radial-gradient(circle closest-side, transparent 70%, #000 82%, #000 90%, transparent 100%);
+}
+/* The pearl disc with a faint lilac inner glow. */
+[data-theme='millefleur'] .roster-icon::after {
+  inset: -2px;
+  background: radial-gradient(circle, #fffdfa, #fbf7ff, #efe6fb);
+  box-shadow: inset 0 0 5px rgb(190 170 215 / 0.55);
+}
+[data-theme='millefleur'] .roster-sprite,
+[data-theme='millefleur'] .inline-sprite {
+  filter: drop-shadow(0 2px 3px rgb(110 85 150 / 0.35));
+  image-rendering: pixelated;
+}
+
+/* ── Carousel dots and arrow ── The buttons (28 x 44 and 32 x 44) are untouched; the marker is the ::before. */
+[data-theme='millefleur'] .workshop-monster-dot::before {
+  width: 9px;
+  height: 9px;
+  border: 1px solid var(--color-border-strong);   /* 3.4:1: a control's edge, a notch darker than --mf-line-tab */
+  border-radius: 50%;
+}
+[data-theme='millefleur'] .workshop-monster-dot.active::before {
+  width: 10px;
+  height: 10px;
+  border-color: rgb(143 124 188 / 0.75);
+  background: var(--holo);
+  box-shadow: 0 0 6px rgb(224 208 251 / 0.9);
+}
+[data-theme='millefleur'] .workshop-monster-next { color: var(--color-fg); }
+[data-theme='millefleur'] .workshop-monster-next-mark {
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 50%;
+  font-size: 13px;
+  line-height: 1;
+}
+
+/* ── Tags in the feed: pills; only the natural 20 gets the holo ── */
+[data-theme='millefleur'] .highlight-tag {
+  background: var(--color-input-bg);
+  border-color: var(--mf-line-soft);
+  border-radius: var(--radius-pill);
+  font-weight: 700;
+}
+[data-theme='millefleur'] .event-highlight-nat20 .highlight-tag {
+  background: var(--holo);
+  border-color: rgb(143 124 188 / 0.55);
+  color: var(--color-fg-bright);
+  box-shadow: 0 0 6px rgb(224 208 251 / 0.8);
+}
+
+/* ── Ruled Chat paper ──
+   Every line is exactly one 28px row, and the rule is a 28px TILE (background-size: 100% 28px),
+   never an unsized repeating-linear-gradient: that fills the whole box from the top, so its
+   lines drift from the text by whatever the box height is not a multiple of 28 (the
+   misalignment the owner saw on 2026-10-06). Nunito 14px in a 28px line has its baseline
+   ~18.5px down the row, so a rule at 26px sits ~7px below the baseline, clear of descenders.
+   No `position: relative` nudges on the rows: a nudge extends the scroller's scrollHeight and
+   the log stops ending exactly on a row.
+   The tile lives on the scroller with `background-attachment: local`, so the rules scroll with
+   the messages. The sample bottom-anchors it because its log is flex-end; here messages flow
+   from the top, so the tile starts at the top of the content: with no vertical padding or
+   margin anywhere in the list, every row (and so the last one) still sits exactly on a rule.
+   If you add padding, a margin, a border or a line-height that is not 28px to anything in the
+   list, the rules will drift: measure at 3x (see the roadmap 46 task 3 notes). */
+[data-theme='millefleur'] .chat-list {
+  /* Edge to edge: cancel the panel's own gutter, then put the gutter back as padding. */
+  margin: 0 -12px;
+  padding: 0 28px 0 46px;
+  background-image:
+    linear-gradient(to right, transparent 32px, var(--mf-margin) 32px, var(--mf-margin) 33px, transparent 33px),
+    linear-gradient(to bottom, transparent 26px, var(--mf-rule) 26px 27px, transparent 27px);
+  background-size: 100% 28px, 100% 28px;
+  background-repeat: repeat, repeat;
+  background-attachment: local, local;
+  background-position: 0 0, 0 0;
+}
+@container surface (min-width: 521px) {
+  [data-theme='millefleur'] .chat-list { margin: 0 -24px; padding-right: 40px; }
+}
+[data-theme='millefleur'] .chat-message,
+[data-theme='millefleur'] .chat-divider,
+[data-theme='millefleur'] .chat-empty {
+  margin: 0;
+  padding: 0;
+  line-height: 28px;
+}
+[data-theme='millefleur'] .chat-message { font-size: 14px; }
+/* The sender takes a line of its own (the design's name line); the message follows. */
+[data-theme='millefleur'] .chat-sender,
+[data-theme='millefleur'] .chat-text {
+  display: block;
+  margin: 0;
+  line-height: 28px;
+}
+[data-theme='millefleur'] .chat-sender { font-weight: 800; color: var(--color-fg-bright); }
+[data-theme='millefleur'] .chat-sender::after { content: none; }
+[data-theme='millefleur'] .chat-message-dm .chat-text { font-style: normal; }
+/* A direct message: a rose band exactly as tall as its rows (inset outline, no border or padding). */
+[data-theme='millefleur'] .chat-message-dm {
+  margin: 0 -8px 0 -10px;
+  padding: 0 8px 0 10px;
+  border-radius: 10px;
+  background: rgb(251 217 230 / 0.45);
+  box-shadow: inset 0 0 0 1px rgb(220 160 190 / 0.42);
+}
+[data-theme='millefleur'] .chat-message-dm .chat-sender { color: var(--color-accent); }
+/* Date, fight and "new since" separators: one row each. */
+[data-theme='millefleur'] .chat-divider {
+  height: 28px;
+  justify-content: center;
+  gap: 0;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--color-fg-dim);
+}
+[data-theme='millefleur'] .chat-divider-time::before,
+[data-theme='millefleur'] .chat-divider-time::after,
+[data-theme='millefleur'] .chat-divider-fight::before,
+[data-theme='millefleur'] .chat-divider-fight::after { content: none; }
+/* "During fight #58": the lilac pill, at the text's left edge. */
+[data-theme='millefleur'] .chat-divider-fight { justify-content: flex-start; }
+[data-theme='millefleur'] .chat-divider-fight span {
+  padding: 0 10px;
+  border-radius: var(--radius-pill);
+  background: rgb(227 212 250 / 0.8);
+  box-shadow: inset 0 0 0 1px var(--mf-line-soft);
+  color: #5a4380;
+  line-height: 20px;
+}
+[data-theme='millefleur'] .chat-divider-marker { color: var(--color-accent); }
+[data-theme='millefleur'] .chat-divider-marker::before,
+[data-theme='millefleur'] .chat-divider-marker::after {
+  border-top: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgb(154 47 102 / 0.55));
+}
+[data-theme='millefleur'] .chat-divider-marker::after { background: linear-gradient(270deg, transparent, rgb(154 47 102 / 0.55)); }
+[data-theme='millefleur'] .chat-divider-marker span { padding: 0 10px; }
+[data-theme='millefleur'] .chat-composer { border-top-color: var(--mf-line-soft); }
+
+/* ── The Ring transcript ── Colour only: the feed's font, size, line height and gutters set
+   the row heights the virtual list books (utils/feed-row-height.ts), so none of them move. */
+[data-theme='millefleur'] .event-card-block {
+  background: rgb(255 253 250 / 0.7);
+  border-color: var(--mf-line-soft);
+  border-radius: 12px;
+}
+/* The feed's own markers (where you joined, where the connection dropped): a small tracked
+   label between two lines that fade out at their far ends. */
+[data-theme='millefleur'] .feed-marker::before { background: linear-gradient(90deg, transparent, var(--color-border-strong)); opacity: 0.55; }
+[data-theme='millefleur'] .feed-marker::after { background: linear-gradient(270deg, transparent, var(--color-border-strong)); opacity: 0.55; }
+[data-theme='millefleur'] .feed-marker-disconnected::before { background: linear-gradient(90deg, transparent, var(--color-error)); }
+[data-theme='millefleur'] .feed-marker-disconnected::after { background: linear-gradient(270deg, transparent, var(--color-error)); }
+/* A highlight is a left band in the theme's own colours (nat 20 sea-foam, crit fail sienna,
+   kill danger, big hit rose). */
+[data-theme='millefleur'] .event-highlight { border-left-width: 3px; border-radius: 2px; }
+
+/* ── Sheets (card details, level-up) ──
+   24px top corners, a --mf-line-tab edge, the page colour, a painted header approximated with
+   five layered radial gradients (the baked watercolour is task 4), a soft System 7 title bar
+   (pinstripes that fade at both ends, the title in a paper pill) and a close box. */
+[data-theme='millefleur'] .card-detail-sheet {
+  position: relative;
+  padding-top: 62px;
+  border: 1px solid var(--mf-line-tab);
+  border-bottom: 0;
+  border-radius: 24px 24px 0 0;
+  background-color: #fffdfa;
+  background-image:
+    radial-gradient(ellipse 36% 100% at 8% 18%, rgb(251 217 230 / 0.95), transparent 72%),
+    radial-gradient(ellipse 34% 90% at 32% 4%, rgb(251 239 200 / 0.95), transparent 72%),
+    radial-gradient(ellipse 36% 100% at 55% 22%, rgb(205 238 226 / 0.95), transparent 72%),
+    radial-gradient(ellipse 34% 90% at 77% 6%, rgb(214 230 251 / 0.95), transparent 72%),
+    radial-gradient(ellipse 36% 100% at 98% 24%, rgb(227 212 250 / 0.95), transparent 72%),
+    linear-gradient(#fffdfa, #fbf8f5);
+  background-size: 100% 130px, 100% 130px, 100% 130px, 100% 130px, 100% 130px, 100% 100%;
+  background-repeat: no-repeat;
+}
+@media (min-width: 700px) {
+  [data-theme='millefleur'] .card-detail-sheet { border-bottom: 1px solid var(--mf-line-tab); border-radius: 24px; }
+}
+/* The title bar: pinstripes behind, the title in a paper pill on top. */
+[data-theme='millefleur'] .card-detail-sheet::before {
+  content: '';
+  position: absolute;
+  top: 17px;
+  left: 56px;
+  right: 24px;
+  height: 11px;
+  background: repeating-linear-gradient(to bottom, rgb(70 50 110 / 0.22) 0 1px, transparent 1px 3px);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
+  pointer-events: none;
+}
+[data-theme='millefleur'] .card-detail-sheet h2 {
+  position: relative;
+  align-self: center;
+  margin-top: -50px;                  /* up into the title bar, over the stripes */
+  margin-bottom: 14px;
+  padding: 0 18px;
+  line-height: 24px;
+  border: 1px solid var(--mf-line-soft);
+  border-radius: var(--radius-pill);
+  background: #fffdfa;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--color-fg-bright);
+  text-align: center;
+}
+/* The close box: a 20px rounded square in a 44px target, top left, on a real close control. */
+[data-theme='millefleur'] .card-detail-close-box {
+  position: absolute;
+  top: 5px;
+  left: 6px;
+  z-index: 2;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  color: var(--color-fg-bright);
+  cursor: pointer;
+}
+[data-theme='millefleur'] .card-detail-close-box > span {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 6px;
+  background: #fffdfa;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1;
+}
+@media (hover: hover) {
+  [data-theme='millefleur'] .card-detail-close-box:hover > span { border-color: var(--color-accent); color: var(--color-accent); }
+}
+[data-theme='millefleur'] .card-detail-sheet h2 + p,
+[data-theme='millefleur'] .card-detail-sheet .card-detail-role { color: var(--color-fg-dim); }
+/* The bottom Close is the sheet's one primary button. */
+[data-theme='millefleur'] .card-detail-sheet .card-detail-close {
+  background: var(--mf-primary);
+  border-color: transparent;
+  color: #fff;
+  font-weight: 800;
+  box-shadow: var(--mf-primary-ring), 0 6px 14px rgb(59 42 85 / 0.22);
+  margin: 6px 4px 0;
+}
+@media (hover: hover) {
+  [data-theme='millefleur'] .card-detail-sheet .card-detail-close:hover:not(:disabled) {
+    background: linear-gradient(160deg, #6a5294, #46325f);
+    color: #fff;
+  }
+}
+/* Level-up stat tiles: one tile per gain, the gain over a tracked label. */
+[data-theme='millefleur'] .level-up-gains {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 8px;
+}
+[data-theme='millefleur'] .level-up-gains li {
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-width: 0;
+  padding: 10px 4px 8px;
+  border: 1px solid var(--mf-line-soft);
+  border-radius: 14px;
+  background: rgb(255 253 250 / 0.95);
+  font-size: 0;                          /* the separating space between the two spans */
+  text-align: center;
+}
+[data-theme='millefleur'] .level-up-gain { font-size: 17px; font-weight: 800; line-height: 1.1; color: var(--color-success); }
+[data-theme='millefleur'] .level-up-stat {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  color: var(--color-fg-dim);
+}
+
 /* ── High contrast: white and black, 2px black borders, no washes, holo or texture; radii kept ── */
 @media (prefers-contrast: more) {
   [data-theme='millefleur'] {
@@ -394,4 +1044,84 @@
   [data-theme='millefleur'] .roster-bar-track,
   [data-theme='millefleur'] .workshop-xp-meter-track { border: 2px solid #000000; }
   [data-theme='millefleur'] ::-webkit-scrollbar-thumb { background: #000000; }
+
+  /* ── Task 3 surfaces: solid shapes, black edges, no paint ── */
+  [data-theme='millefleur'] {
+    --mf-tab-un-l: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='30' viewBox='0 0 14 30'><path d='M0 30C4 30 6 3 12 1.5H14V30Z' fill='white'/><path d='M.5 30C4.5 30 6.5 3 12 1.5H14' fill='none' stroke='black' stroke-width='2'/></svg>");
+    --mf-tab-un-r: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='30' viewBox='0 0 14 30'><path d='M14 30C10 30 8 3 2 1.5H0V30Z' fill='white'/><path d='M13.5 30C9.5 30 7.5 3 2 1.5H0' fill='none' stroke='black' stroke-width='2'/></svg>");
+    --mf-tab-un-m: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='2' height='30' preserveAspectRatio='none' viewBox='0 0 2 30'><rect y='1.5' width='2' height='28.5' fill='white'/><path d='M0 1.5H2' stroke='black' stroke-width='2'/></svg>");
+    --mf-tab-se-l: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='34' viewBox='0 0 14 34'><path d='M0 33C4 33 6 3 12 1.5H14V34H0Z' fill='white'/><path d='M.5 34V33C4.5 33 6.5 3 12 1.5H14' fill='none' stroke='black' stroke-width='2'/></svg>");
+    --mf-tab-se-r: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='34' viewBox='0 0 14 34'><path d='M14 33C10 33 8 3 2 1.5H0V34H14Z' fill='white'/><path d='M13.5 34V33C9.5 33 7.5 3 2 1.5H0' fill='none' stroke='black' stroke-width='2'/></svg>");
+    --mf-tab-se-m: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='2' height='34' preserveAspectRatio='none' viewBox='0 0 2 34'><rect y='1.5' width='2' height='32.5' fill='white'/><path d='M0 1.5H2' stroke='black' stroke-width='2'/></svg>");
+    --mf-rule: #cfc8dc;
+    --mf-margin: #b0587f;
+    --mf-line-tab: #000000;
+  }
+  [data-theme='millefleur'] .header-nav .btn { color: #000000; }
+  [data-theme='millefleur'] .header-nav .btn[aria-current='page'] { background: #ffffff; color: #000000; box-shadow: inset 0 -3px 0 #000000; }
+  @media (hover: hover) {
+    [data-theme='millefleur'] .header-nav .btn:hover:not(:disabled),
+    [data-theme='millefleur'] .header-nav .btn[aria-current='page']:hover:not(:disabled) { background: #ffffff; color: #000000; text-decoration: underline; }
+  }
+  [data-theme='millefleur'] .app-room-settings-link { border: 2px solid #000000; background: #ffffff; color: #000000; }
+  [data-theme='millefleur'] .terminal-tab,
+  [data-theme='millefleur'] .terminal-tab.active { color: #000000; }
+  [data-theme='millefleur'] .terminal-tab.active { font-weight: 800; text-decoration: underline; text-underline-offset: 3px; }
+  [data-theme='millefleur'] .terminal-tabs { -webkit-mask-image: none; mask-image: none; }
+  /* The page keeps its shape: a solid white sheet with a 2px black edge, no fade, no shadow. */
+  [data-theme='millefleur'] .terminal-slot::before { background: #ffffff; box-shadow: none; border: 2px solid #000000; border-top: 0; }
+  [data-theme='millefleur'] .terminal-slot::after { background: #000000; height: 2px; }
+  [data-theme='millefleur'] .pane-header,
+  [data-theme='millefleur'] .pane-header-timer { color: #000000; }
+  /* Slots: 2px edges, solid role dots with a black rim, a dashed empty slot. */
+  [data-theme='millefleur'] .workshop-card-slot { border: 2px solid #000000; background: #ffffff; }
+  [data-theme='millefleur'] .workshop-card-slot.empty { border: 2px dashed #000000; background: #ffffff; }
+  [data-theme='millefleur'] .workshop-card-slot.empty > span::before { color: #000000; }
+  [data-theme='millefleur'] .workshop-card-class { color: #000000; }
+  [data-theme='millefleur'] .workshop-card-class::before { background: var(--mf-dot); box-shadow: 0 0 0 1px #000000; }
+  [data-theme='millefleur'] .workshop-card-slot.selected { background: #ffffff; border-color: #000000; box-shadow: inset 0 0 0 3px #000000; }
+  [data-theme='millefleur'] .workshop-card-name { color: #000000; }
+  [data-theme='millefleur'] .workshop-card-info { color: #000000; }
+  [data-theme='millefleur'] .workshop-inventory { border-color: transparent; }
+  [data-theme='millefleur'] .train-wizard,
+  [data-theme='millefleur'] .train-wizard-type,
+  [data-theme='millefleur'] .train-wizard-choice { border: 2px solid #000000; background: #ffffff; }
+  [data-theme='millefleur'] .train-wizard-type.is-selected,
+  [data-theme='millefleur'] .train-wizard-choice.is-selected { border-width: 3px; background: #ffffff; }
+  /* Meters: a white track with a 2px black edge, so empty reads as empty; fills are solid. */
+  [data-theme='millefleur'] .roster-bar-track,
+  [data-theme='millefleur'] .workshop-xp-meter-track { background: #ffffff; }
+  [data-theme='millefleur'] .roster-bar-hurt { background: var(--color-hp-hurt); }
+  [data-theme='millefleur'] .roster-bar-track { border: 2px solid #000000; box-sizing: border-box; height: 8px; }
+  /* Carousel dots: outlined circles, the current one a solid black disc. */
+  [data-theme='millefleur'] .workshop-monster-dot::before { border: 2px solid #000000; }
+  [data-theme='millefleur'] .workshop-monster-dot.active::before { background: #000000; border-color: #000000; box-shadow: none; }
+  [data-theme='millefleur'] .workshop-monster-next-mark { border: 2px solid #000000; }
+  /* The halo: a plain white disc with a black outline; no ring. */
+  [data-theme='millefleur'] .roster-icon::before { display: none; }
+  [data-theme='millefleur'] .roster-icon::after { background: #ffffff; box-shadow: inset 0 0 0 1px #000000; }
+  [data-theme='millefleur'] .roster-sprite,
+  [data-theme='millefleur'] .inline-sprite { filter: none; }
+  [data-theme='millefleur'] .roster-row-acting { background: #ffffff; box-shadow: inset 4px 0 0 #000000; border-radius: 0; }
+  [data-theme='millefleur'] .highlight-tag,
+  [data-theme='millefleur'] .event-highlight-nat20 .highlight-tag { background: #ffffff; border: 2px solid #000000; color: #000000; box-shadow: none; }
+  [data-theme='millefleur'] .event-card-block { background: #ffffff; border: 2px solid #000000; }
+  [data-theme='millefleur'] .feed-marker::before,
+  [data-theme='millefleur'] .feed-marker::after { background: #000000; opacity: 1; }
+  /* Chat: faint decorative rules stay (they are not information); a DM is a boxed band. */
+  [data-theme='millefleur'] .chat-message-dm { background: #ffffff; box-shadow: inset 0 0 0 2px #000000; }
+  [data-theme='millefleur'] .chat-message-dm .chat-sender { color: #000000; }
+  [data-theme='millefleur'] .chat-divider-fight span { background: #ffffff; box-shadow: inset 0 0 0 2px #000000; color: #000000; }
+  [data-theme='millefleur'] .chat-divider { color: #000000; }
+  [data-theme='millefleur'] .chat-composer { border-top: 2px solid #000000; }
+  /* Sheets: white, a 2px black edge, no paint, no pinstripes. */
+  [data-theme='millefleur'] .card-detail-sheet { background: #ffffff; border: 2px solid #000000; border-bottom: 0; }
+  @media (min-width: 700px) { [data-theme='millefleur'] .card-detail-sheet { border-bottom: 2px solid #000000; } }
+  [data-theme='millefleur'] .card-detail-sheet::before { display: none; }
+  [data-theme='millefleur'] .card-detail-sheet h2 { border: 2px solid #000000; background: #ffffff; color: #000000; }
+  [data-theme='millefleur'] .card-detail-close-box > span { border: 2px solid #000000; color: #000000; }
+  [data-theme='millefleur'] .card-detail-sheet .card-detail-close { background: #000000; color: #ffffff; box-shadow: var(--mf-primary-ring); }
+  [data-theme='millefleur'] .level-up-gains li { border: 2px solid #000000; background: #ffffff; }
+  [data-theme='millefleur'] .level-up-gain,
+  [data-theme='millefleur'] .level-up-stat { color: #000000; }
 }

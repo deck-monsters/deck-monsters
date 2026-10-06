@@ -104,8 +104,23 @@ function TerminalTabs({
   onSelect: (surfaceId: SurfaceId) => void;
 }) {
   const { unread } = useChat();
+  const rowRef = useRef<HTMLDivElement>(null);
+  // Millefleur's folder tabs keep their natural width and the row scrolls, fading out over its
+  // last 20%. Bring the selected tab clear of that fade. Other themes squeeze every tab into
+  // the bar (nothing overflows, so this would do nothing there) and are left alone on purpose.
+  const activeSurface = SURFACES.find((surface) => isVisible(surface.id))?.id;
+  useEffect(() => {
+    if (document.documentElement.getAttribute('data-theme') !== 'millefleur') return;
+    const row = rowRef.current;
+    const tab = row?.querySelector<HTMLElement>('.terminal-tab.active');
+    if (!row || !tab || row.scrollWidth <= row.clientWidth) return;
+    const visibleEnd = row.scrollLeft + row.clientWidth * 0.76;
+    if (tab.offsetLeft < row.scrollLeft + 12 || tab.offsetLeft + tab.offsetWidth > visibleEnd) {
+      row.scrollLeft = Math.max(0, tab.offsetLeft - row.clientWidth * 0.4);
+    }
+  }, [activeSurface]);
   return (
-    <div className="terminal-tabs" role="tablist" aria-label="Switch panes">
+    <div ref={rowRef} className="terminal-tabs" role="tablist" aria-label="Switch panes">
       {SURFACES.map((surface) => {
         const badgeText = unreadBadgeText(surface.badge?.({ chatUnread: unread }) ?? 0);
         return (

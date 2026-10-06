@@ -1,5 +1,6 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { useTheme } from '../hooks/useTheme.js';
 
 interface DetailSheetProps {
   title: string;
@@ -22,6 +23,7 @@ interface DetailSheetProps {
  * open and returns to the control that opened it; Escape and a tap on the backdrop close it.
  */
 export default function DetailSheet({ title, titleId, closeTitle, opener, onClose, children }: DetailSheetProps) {
+  const { theme } = useTheme();
   const closeRef = useRef<HTMLButtonElement>(null);
   const sheetRef = useRef<HTMLDivElement>(null);
 
@@ -87,6 +89,23 @@ export default function DetailSheet({ title, titleId, closeTitle, opener, onClos
       }}
     >
       <div ref={sheetRef} className="card-detail-sheet" role="dialog" aria-modal="true" aria-labelledby={titleId}>
+        {/*
+          A second way to close, drawn only by the Millefleur theme: the System 7 close box in the
+          title bar's corner (`.card-detail-close-box`). It is a real button on the same handler,
+          not a drawing. It is not rendered at all in the other themes, so their sheets keep
+          Close as the one control.
+        */}
+        {theme === 'millefleur' && (
+          <button
+            type="button"
+            className="card-detail-close-box"
+            aria-label={closeTitle}
+            title={closeTitle}
+            onClick={onClose}
+          >
+            <span aria-hidden="true">×</span>
+          </button>
+        )}
         <h2 id={titleId}>{title}</h2>
         {children}
         <button

@@ -70,10 +70,12 @@ export default function LevelUpSheet({
         most of it from wins.
       </p>
       {gains.length > 0 && (
-        <ul className="card-detail-verdicts" aria-label="Stat gains">
+        <ul className="card-detail-verdicts level-up-gains" aria-label="Stat gains">
           {gains.map(([key, label]) => (
+            // Two spans so Millefleur can draw a tile (gain over label). Everywhere else they
+            // read as one line, "Max HP +3", exactly as before.
             <li key={key}>
-              {label} {signed(nextLevel![key])}
+              <span className="level-up-stat">{label}</span> <span className="level-up-gain">{signed(nextLevel![key])}</span>
             </li>
           ))}
         </ul>

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth-context.js';
 import { THEMES, useTheme } from '../hooks/useTheme.js';
 import { useCommandInsert } from '../lib/command-insert-context.js';
@@ -55,15 +55,7 @@ export default function AppShell({ children, roomName, roomId }: AppShellProps) 
             {roomId && (
               <Link
                 to={`/room/${roomId}/settings`}
-                style={{
-                  flexShrink: 0,
-                  whiteSpace: 'nowrap',
-                  color: 'var(--color-fg-dim)',
-                  textDecoration: 'none',
-                  fontSize: '0.8rem',
-                  padding: '0.15rem 0.3rem',
-                  border: '1px solid var(--color-border)',
-                }}
+                className="app-room-settings-link"
                 title="Room settings"
                 aria-label="Room settings"
               >
@@ -82,9 +74,9 @@ export default function AppShell({ children, roomName, roomId }: AppShellProps) 
           aria-label="Main navigation"
         >
           {roomId && (
-            <Link to={`/room/${roomId}`} className="btn" style={{ fontSize: '0.8rem' }}>
+            <NavLink end to={`/room/${roomId}`} className="btn" style={{ fontSize: '0.8rem' }}>
               The Ring
-            </Link>
+            </NavLink>
           )}
           <button
             className="btn"
@@ -96,42 +88,42 @@ export default function AppShell({ children, roomName, roomId }: AppShellProps) 
           >
             ?
           </button>
-          <Link to="/rooms" className="btn" style={{ fontSize: '0.8rem' }}>
+          <NavLink to="/rooms" className="btn" style={{ fontSize: '0.8rem' }}>
             Rooms
-          </Link>
+          </NavLink>
           {roomId && (
-            <Link
+            <NavLink
               to={`/room/${roomId}/chat`}
               className="btn"
               style={{ fontSize: '0.8rem' }}
               title={surfaceDescription('chat')}
             >
               Chat
-            </Link>
+            </NavLink>
           )}
-          <Link
+          <NavLink
             to={roomId ? `/room/${roomId}/leaderboard` : '/leaderboard'}
             className="btn"
             style={{ fontSize: '0.8rem' }}
           >
             Leaders
-          </Link>
+          </NavLink>
           {roomId && (
-            <Link to={`/room/${roomId}/workshop`} className="btn" style={{ fontSize: '0.8rem' }}>
+            <NavLink to={`/room/${roomId}/workshop`} className="btn" style={{ fontSize: '0.8rem' }}>
               Workshop
-            </Link>
+            </NavLink>
           )}
           {roomId && (
-            <Link to={`/room/${roomId}/fights`} className="btn" style={{ fontSize: '0.8rem' }}>
+            <NavLink to={`/room/${roomId}/fights`} className="btn" style={{ fontSize: '0.8rem' }}>
               Fights
-            </Link>
+            </NavLink>
           )}
-          <Link to={roomId ? `/room/${roomId}/help` : '/help'} className="btn" style={{ fontSize: '0.8rem' }}>
+          <NavLink to={roomId ? `/room/${roomId}/help` : '/help'} className="btn" style={{ fontSize: '0.8rem' }}>
             Help and guides
-          </Link>
-          <Link to="/account" className="btn" style={{ fontSize: '0.8rem' }}>
+          </NavLink>
+          <NavLink to="/account" className="btn" style={{ fontSize: '0.8rem' }}>
             Account
-          </Link>
+          </NavLink>
           <button
             className="btn"
             style={{ fontSize: '0.8rem' }}
