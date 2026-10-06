@@ -1,0 +1,369 @@
+/* ── Millefleur: a light, rounded watercolour theme ──
+   Design: docs/reference/millefleur/design-system.md. Plan: docs/roadmap/46-unicorn-theme.md.
+
+   This file is a LAZY CHUNK (themes/millefleur.ts, imported by useTheme's applyTheme the
+   first time the theme is applied), so the four dark themes never download it or Nunito.
+   The shared CSS carries only a first-paint stub for this theme (base.css: bg, fg, input-bg,
+   border, color-scheme) so a returning player's first frame is paper, not black.
+
+   Every text pair below is >= 4.5:1 on paper #fbf8f5 and on the input surface #fffdfa
+   (theme-palettes.test.ts enforces it). Do NOT soften text with lighter lilacs: the first
+   renders used #7d72a0 (4.2:1) and #8a7fa8 (3.5:1) and failed. Soften with size or weight.
+
+   This task (46a/2) covers tokens, type and the generic components. The folder tabs, the
+   translucent page sheet, halos, painted card slots, ruled Chat and the Ring transcript are
+   task 3; watercolour textures are task 4 (the ground is flat paper until then). */
+
+[data-theme='millefleur'] {
+  color-scheme: light;
+
+  /* Ink, paper and lines. */
+  --color-bg: #fbf8f5;                 /* paper */
+  --color-fg: #3b2a55;                 /* ink, 12.0:1 */
+  --color-fg-bright: #2f2147;          /* heading ink, 13.9:1 */
+  --color-fg-dim: #695c8c;             /* muted ink, 5.65:1: timestamps, captions, hints */
+  --color-accent: #9a2f66;             /* rose: links, timers, room name, 6.7:1 */
+  /* System lines take the lilac "label" ink rather than the muted ink: it is a different
+     hue from fg-dim so announcements still read as a separate voice, and at 7.8:1 it is the
+     safer of the two on the translucent page. */
+  --color-system: #5a4380;
+  --color-error: #a12a4f;              /* danger, 6.7:1 */
+  --color-success: #1f6b57;            /* ok, 6.0:1 */
+  --color-prompt-glyph: var(--color-accent);
+  --color-border: rgb(190 170 215 / 0.55);   /* decorative edges: cards, chips, rules */
+  --color-input-bg: #fffdfa;           /* solid paper-white; the design's .95 is for fields over paint */
+  --color-choice-hover: #f3ecfb;
+  --color-choice-selected: #e8dcf8;
+  --color-bg-elevated: #ffffff;
+  --color-hover: #f6ecfc;
+  --color-accent-muted: #efe4ff;
+  --color-warning: #8a5a00;
+
+  /* HP ramp. On a light ground "healthier" is the LIGHTER stage, so luminance still falls
+     healthy -> hurt -> critical, and contrast with paper (and with the track) rises as health
+     falls: 3.54, 5.38, 8.24 on the track. A burnt sienna in the middle keeps the three
+     stages apart in greyscale and for a colour-blind viewer (1.5:1 between neighbours). */
+  --color-hp-healthy: #2a8570;
+  --color-hp-hurt: #964214;
+  --color-hp-critical: #7a1838;
+
+  /* Plumbing tokens (theme-phosphor.css documents each). */
+  --font-ui: 'Nunito', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  /* --font-mono stays JetBrains Mono (the :root default): the feed's row-height maths and
+     card frames depend on its 0.6em advance. */
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 24px;
+  --color-border-strong: #8f7cbc;      /* edges that identify a control, 3.6:1 */
+  --shadow-page: 0 14px 34px rgb(110 85 150 / 0.08);
+  --surface-page: linear-gradient(rgb(255 253 250 / 0.9), rgb(255 253 250 / 0.74) 220px);
+  --holo: linear-gradient(110deg, #fbd2e4, #fbecbe, #c9eedf, #cfe2fb, #e0d0fb);
+  --wash-lilac: #e3d4fa;
+  --wash-seafoam: #cdeee2;
+  --wash-blush: #fbd9e6;
+  --wash-butter: #fbefc8;
+  --wash-sky: #d6e6fb;
+  --color-meter-track: rgb(190 170 215 / 0.28);
+  --color-on-accent: #ffffff;
+  --color-highlight-good: #1f6b57;     /* text-safe stand-ins for the HP stages */
+  --color-highlight-warn: #8a2a5e;
+  --color-sprite-flash: #ff9fd2;
+  --color-backdrop: linear-gradient(rgb(75 58 110 / 0.16), rgb(75 58 110 / 0.3));
+  --color-backdrop-light: rgb(75 58 110 / 0.22);
+
+  /* The sheet's own tokens, used below. Not part of the cross-theme contract. */
+  --mf-primary: linear-gradient(160deg, #5d4684, #3b2a55);
+  --mf-primary-ring: 0 0 0 2px rgb(255 253 250 / 0.95), 0 0 0 3.5px rgb(93 70 132 / 0.45);
+  --mf-card: rgb(255 253 250 / 0.9);
+  --mf-line-soft: rgb(190 170 215 / 0.55);
+}
+
+/* ── Type: the chrome is Nunito; the feed and Console keep --font-mono (set per selector). ── */
+[data-theme='millefleur'] body { font-weight: 400; }
+[data-theme='millefleur'] .app-wordmark {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+}
+[data-theme='millefleur'] .page h1,
+[data-theme='millefleur'] .surface-panel h1 { font-size: 22px; font-weight: 800; }
+[data-theme='millefleur'] .page h2 { font-weight: 800; }
+[data-theme='millefleur'] .panel-title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+}
+
+[data-theme='millefleur'] ::selection { background: #e0d0fb; color: #2f2147; }
+[data-theme='millefleur'] input[type='checkbox'],
+[data-theme='millefleur'] input[type='radio'] { accent-color: #9a2f66; }
+
+/* ── Links ── Class-less links only (the Markdown guides): a link with a class is styled by
+   that class, and the browser's default blue is unreadable on lilac. */
+[data-theme='millefleur'] a:not([class]) { color: var(--color-accent); }
+
+/* ── Scrollbars ── */
+[data-theme='millefleur'] ::-webkit-scrollbar-thumb {
+  background: rgb(143 124 188 / 0.65);
+  border-radius: 3px;
+}
+[data-theme='millefleur'] ::-webkit-scrollbar-thumb:hover { background: #8f7cbc; }
+[data-theme='millefleur'] { scrollbar-color: rgb(143 124 188 / 0.65) transparent; }
+
+/* ── Focus ring: 2px rose, 2px offset, keyboard only ── */
+[data-theme='millefleur'] :focus-visible {
+  outline: 2px solid #9a2f66;
+  outline-offset: 2px;
+}
+
+/* ── Header ── */
+[data-theme='millefleur'] .app-header {
+  background: transparent;
+  border-bottom-color: transparent;
+  padding: 0 16px;
+}
+[data-theme='millefleur'] .app-header-sep { color: #c4b3e0; }
+[data-theme='millefleur'] .app-shell-room-name {
+  color: var(--color-accent);
+  font-size: 15px;
+  font-weight: 700;
+}
+[data-theme='millefleur'] .app-header .header-hamburger {
+  min-width: 38px;
+  min-height: 38px;
+  justify-content: center;
+  padding: 0;
+}
+
+[data-theme='millefleur'] .app-header a[aria-label='Room settings'] { border-radius: var(--radius-md); }
+
+/* ── Menu drawer and dialogs: paper with a soft lilac edge ── */
+[data-theme='millefleur'] .app-menu-drawer {
+  background: var(--color-bg);
+  border-left-color: #b9a8dc;
+  box-shadow: -14px 0 34px rgb(110 85 150 / 0.14);
+}
+[data-theme='millefleur'] .card-detail-backdrop { background: rgb(75 58 110 / 0.3); }
+[data-theme='millefleur'] .card-detail-sheet {
+  background: var(--color-bg);
+  border-color: #b9a8dc;
+}
+
+/* ── Buttons ──
+   Secondary (every .btn): translucent paper, a control-strength edge, ink 700.
+   Primary (.btn-primary, .btn-cta): plum gradient, white 14/800, and the System 7 double ring. */
+[data-theme='millefleur'] .btn {
+  background: rgb(255 253 250 / 0.7);
+  border-color: var(--color-border-strong);
+  border-radius: var(--radius-md);
+  color: var(--color-fg);
+  font-weight: 700;
+}
+[data-theme='millefleur'] .btn-primary,
+[data-theme='millefleur'] .btn-cta {
+  background: var(--mf-primary);
+  border-color: transparent;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+  box-shadow: var(--mf-primary-ring), 0 6px 14px rgb(59 42 85 / 0.22);
+}
+/* The ring is the "default button" cue; a disabled one should not look pressable. */
+[data-theme='millefleur'] .btn-primary:disabled,
+[data-theme='millefleur'] .btn-cta:disabled { box-shadow: none; }
+/* The monster's name is a borderless filter toggle; it only gets a shape when pressed. */
+[data-theme='millefleur'] .workshop-monster-filter-btn {
+  border-radius: var(--radius-md);
+  color: var(--color-fg-bright);
+  font-weight: 800;
+}
+[data-theme='millefleur'] .btn[aria-pressed='true'],
+[data-theme='millefleur'] .workshop-monster-filter-btn.active {
+  background: var(--color-choice-selected);
+  border-color: var(--color-accent);
+  color: var(--color-fg-bright);
+}
+@media (hover: hover) {
+  [data-theme='millefleur'] .btn:hover:not(:disabled) {
+    background: var(--color-choice-hover);
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+  }
+  [data-theme='millefleur'] .btn-primary:hover:not(:disabled),
+  [data-theme='millefleur'] .btn-cta:hover:not(:disabled) {
+    background: linear-gradient(160deg, #6a5294, #46325f);
+    color: #fff;
+  }
+}
+
+/* ── Fields, selects and text areas ──
+   The Console's .command-input is excluded: it is typed-command text in the monospace face,
+   in a dock that is the prompt, not a form field. */
+[data-theme='millefleur'] input[type='text'],
+[data-theme='millefleur'] input[type='email'],
+[data-theme='millefleur'] input[type='password'],
+[data-theme='millefleur'] input[type='number'],
+[data-theme='millefleur'] input:not([type]):not(.command-input),
+[data-theme='millefleur'] select,
+[data-theme='millefleur'] textarea,
+[data-theme='millefleur'] .workshop-input,
+[data-theme='millefleur'] .workshop-select,
+[data-theme='millefleur'] .chat-input,
+[data-theme='millefleur'] .shop-sell-qty {
+  background: var(--color-input-bg);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  color: var(--color-fg);
+  font-family: var(--font-ui);
+}
+[data-theme='millefleur'] input[type='text'],
+[data-theme='millefleur'] input[type='email'],
+[data-theme='millefleur'] input[type='password'] { padding: 0.65rem 0.8rem; }
+[data-theme='millefleur'] input[type='text']:focus,
+[data-theme='millefleur'] input[type='email']:focus,
+[data-theme='millefleur'] input[type='password']:focus { border-color: var(--color-accent); }
+/* The browser's grey placeholder is ~2.3:1 on paper; muted ink at full opacity is 5.9:1. */
+[data-theme='millefleur'] ::placeholder,
+[data-theme='millefleur'] .command-input::placeholder {
+  color: var(--color-fg-dim);
+  opacity: 1;
+}
+
+/* ── Panels and cards ── (16px; the translucent sheet and its shadow are task 3) */
+[data-theme='millefleur'] .panel,
+[data-theme='millefleur'] .fight-log-card,
+[data-theme='millefleur'] .workshop-monster-panel,
+[data-theme='millefleur'] .workshop-item-row,
+[data-theme='millefleur'] .shop-stock-row,
+[data-theme='millefleur'] .workshop-no-monsters,
+[data-theme='millefleur'] .ftux-guide {
+  border-color: var(--mf-line-soft);
+  border-radius: 16px;
+}
+[data-theme='millefleur'] .panel,
+[data-theme='millefleur'] .fight-log-card,
+[data-theme='millefleur'] .workshop-monster-panel { background: var(--mf-card); }
+
+/* ── Banners and notices ── tinted paper, not the dark themes' translucent salmon/green */
+[data-theme='millefleur'] .error-msg,
+[data-theme='millefleur'] .success-msg,
+[data-theme='millefleur'] .workshop-flow-blocked,
+[data-theme='millefleur'] .command-blocked-banner,
+[data-theme='millefleur'] .workshop-warning,
+[data-theme='millefleur'] .workshop-flash-error,
+[data-theme='millefleur'] .workshop-banner {
+  border-radius: var(--radius-md);
+}
+[data-theme='millefleur'] .error-msg { background: #fdeef2; }
+[data-theme='millefleur'] .success-msg { background: #e9f6f1; }
+[data-theme='millefleur'] .workshop-flow-blocked,
+[data-theme='millefleur'] .command-blocked-banner { background: var(--color-input-bg); }
+[data-theme='millefleur'] .connection-banner { background: #f6f0fb; }
+
+/* ── Chips, pills and tags ── */
+[data-theme='millefleur'] .quick-action-chip,
+[data-theme='millefleur'] .train-wizard-chip {
+  background: var(--color-input-bg);
+  border-color: var(--mf-line-soft);
+  border-radius: var(--radius-pill);
+  color: var(--color-fg);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+@media (hover: hover) {
+  [data-theme='millefleur'] .quick-action-chip:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+  }
+}
+[data-theme='millefleur'] .tag,
+[data-theme='millefleur'] .workshop-status-tag,
+[data-theme='millefleur'] .roster-tag {
+  background: rgb(227 212 250 / 0.8);
+  border-color: var(--mf-line-soft);
+  border-radius: var(--radius-pill);
+  color: #5a4380;                        /* label ink on the lilac pill, 6.3:1 */
+  font-weight: 700;
+}
+/* The Workshop status tag carries its meaning in its colour (in the ring, fighting, fallen):
+   keep those text colours (4.8 to 5.4:1 on the pill), only the shape changes. */
+[data-theme='millefleur'] .workshop-status-in-ring { color: var(--color-accent); border-color: var(--color-accent); }
+[data-theme='millefleur'] .workshop-status-fighting { color: var(--color-success); border-color: var(--color-success); }
+[data-theme='millefleur'] .workshop-status-fallen { color: var(--color-error); border-color: var(--color-error); }
+
+/* ── Meters ── */
+[data-theme='millefleur'] .roster-bar-track,
+[data-theme='millefleur'] .workshop-xp-meter-track {
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+  border-color: transparent;
+  background: var(--color-meter-track);
+}
+[data-theme='millefleur'] .roster-bar-healthy { background: linear-gradient(90deg, #3f9c84, #2a8570); }
+[data-theme='millefleur'] .roster-bar-critical { background: linear-gradient(90deg, #c0476f, #7a1838); }
+/* XP: the holo fill. Decorative: the figures beside it ("XP 13/28") carry the information. */
+[data-theme='millefleur'] .workshop-xp-meter-track > span {
+  background: linear-gradient(90deg, #fbd2e4, #fbecbe, #c9eedf, #cfe2fb, #e0d0fb);
+  box-shadow: 0 0 6px rgb(224 208 251 / 0.9);
+}
+
+/* ── Highlight tags in the feed: text-safe tokens, set in the shared tokens above ── */
+
+/* ── High contrast: white and black, 2px black borders, no washes, holo or texture; radii kept ── */
+@media (prefers-contrast: more) {
+  [data-theme='millefleur'] {
+    --color-bg: #ffffff;
+    --color-fg: #000000;
+    --color-fg-bright: #000000;
+    --color-fg-dim: #3a2f55;
+    --color-accent: #7a1d50;
+    --color-system: #000000;
+    --color-error: #8a0f33;
+    --color-success: #0d4a3a;
+    --color-border: #000000;
+    --color-border-strong: #000000;
+    --color-input-bg: #ffffff;
+    --color-choice-hover: #ece4f7;
+    --color-choice-selected: #d9c9f0;
+    --color-meter-track: #e6e0ee;
+    --color-hp-healthy: #14664f;
+    --color-hp-hurt: #7a3300;
+    --color-hp-critical: #5c0f28;
+    --color-highlight-good: #0d4a3a;
+    --color-highlight-warn: #6f1d4a;
+    --border-width: 2px;
+    --shadow-page: none;
+    --surface-page: #ffffff;
+    --surface-texture: none;
+    --holo: none;
+    --wash-lilac: transparent;
+    --wash-seafoam: transparent;
+    --wash-blush: transparent;
+    --wash-butter: transparent;
+    --wash-sky: transparent;
+    --mf-card: #ffffff;
+    --mf-line-soft: #000000;
+    --mf-primary: #000000;
+    --mf-primary-ring: 0 0 0 2px #ffffff, 0 0 0 4px #000000;
+  }
+  [data-theme='millefleur'] .btn,
+  [data-theme='millefleur'] .btn-primary,
+  [data-theme='millefleur'] .btn-cta { background: #ffffff; color: #000000; border: 2px solid #000000; }
+  [data-theme='millefleur'] .btn-primary,
+  [data-theme='millefleur'] .btn-cta { background: #000000; color: #ffffff; box-shadow: var(--mf-primary-ring); }
+  [data-theme='millefleur'] .tag,
+  [data-theme='millefleur'] .workshop-status-tag,
+  [data-theme='millefleur'] .roster-tag { background: #ffffff; color: #000000; border: 2px solid #000000; }
+  [data-theme='millefleur'] .error-msg,
+  [data-theme='millefleur'] .success-msg,
+  [data-theme='millefleur'] .connection-banner { background: #ffffff; }
+  [data-theme='millefleur'] .app-menu-drawer { border-left: 2px solid #000000; box-shadow: none; }
+  [data-theme='millefleur'] .app-menu-backdrop,
+  [data-theme='millefleur'] .card-detail-backdrop { background: rgb(0 0 0 / 0.6); }
+  [data-theme='millefleur'] .workshop-xp-meter-track > span { background: #000000; box-shadow: none; }
+  [data-theme='millefleur'] .roster-bar-healthy { background: var(--color-hp-healthy); }
+  [data-theme='millefleur'] .roster-bar-critical { background: var(--color-hp-critical); }
+  [data-theme='millefleur'] .roster-bar-track,
+  [data-theme='millefleur'] .workshop-xp-meter-track { border: 2px solid #000000; }
+  [data-theme='millefleur'] ::-webkit-scrollbar-thumb { background: #000000; }
+}

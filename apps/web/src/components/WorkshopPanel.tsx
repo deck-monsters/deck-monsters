@@ -732,7 +732,7 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
         {trainLine && <p className="workshop-train-line">{trainLine}</p>}
         <button
           title={showSpawn ? 'Close without training' : 'Choose a type, a name and a look for a new monster'}
-          className="btn"
+          className={showSpawn ? 'btn' : 'btn btn-cta'}
           onClick={() => setShowSpawn((shown) => !shown)}
           disabled={!roomId || busy || (trainingFull && !showSpawn)}
         >

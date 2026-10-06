@@ -12,6 +12,7 @@ export const THEMES = [
   { id: 'amber', label: 'Amber (orange on black)', themeColor: '#0a0800' },
   { id: 'ember', label: 'Ember (red on black)', themeColor: '#12060a' },
   { id: 'street-fighter', label: 'Street Fighter (SNES, 1992)', themeColor: '#060c1e' },
+  { id: 'millefleur', label: 'Millefleur (watercolour, light)', themeColor: '#fbf8f5' },
 ] as const satisfies ReadonlyArray<{ id: string; label: string; themeColor: string }>;
 
 export type ThemeId = typeof THEMES[number]['id'];
@@ -38,7 +39,38 @@ function getPreferredTheme(): Theme {
   return 'phosphor';
 }
 
+/**
+ * Themes whose stylesheet is a lazy chunk (roadmap 46). Each entry loads once, on the first
+ * applyTheme for that theme, and the promise is cached so repeat applies (every mount, every
+ * storage event) cost nothing. Nothing from a lazy theme may be imported statically: its CSS
+ * and fonts would join every player's shared bundle. main.tsx starts the same import before
+ * React renders for a returning player; the cached promise here is then already in flight.
+ *
+ * A failed load (offline, a stale deploy) is dropped from the cache so the next apply
+ * retries, and is otherwise ignored: base.css carries a first-paint stub for the theme, so
+ * the page stays readable (plain paper and ink) without the chunk.
+ */
+const LAZY_THEMES: Partial<Record<ThemeId, () => Promise<unknown>>> = {
+  millefleur: () => import('../themes/millefleur.js'),
+};
+const lazyLoads = new Map<ThemeId, Promise<unknown>>();
+
+export function loadThemeAssets(theme: ThemeId): Promise<unknown> {
+  const load = LAZY_THEMES[theme];
+  if (!load) return Promise.resolve();
+  let pending = lazyLoads.get(theme);
+  if (!pending) {
+    pending = load().catch((error: unknown) => {
+      lazyLoads.delete(theme);
+      console.error(`[theme] failed to load ${theme}`, error);
+    });
+    lazyLoads.set(theme, pending);
+  }
+  return pending;
+}
+
 function applyTheme(theme: Theme): void {
+  void loadThemeAssets(theme);
   if (theme === 'phosphor') {
     document.documentElement.removeAttribute('data-theme');
   } else {

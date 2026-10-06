@@ -78,6 +78,24 @@ function themeFiles(): string[] {
   return readdirSync(STYLES_DIR).filter(f => f.startsWith('theme-') && f.endsWith('.css'));
 }
 
+/**
+ * Split off a theme's `@media (prefers-contrast: more) { ... }` block. Its token lines
+ * (`--color-bg: #ffffff`) must not be read as the theme's own values: the line scanners below
+ * keep the last match, so the high-contrast value would silently replace the real one and
+ * the whole suite would test the wrong palette. The block is checked on its own further down.
+ */
+function splitHighContrast(css: string): { base: string; high: string } {
+  const start = css.indexOf('@media (prefers-contrast: more)');
+  if (start === -1) return { base: css, high: '' };
+  let depth = 0;
+  let end = css.length;
+  for (let i = css.indexOf('{', start); i < css.length; i++) {
+    if (css[i] === '{') depth++;
+    if (css[i] === '}' && --depth === 0) { end = i + 1; break; }
+  }
+  return { base: css.slice(0, start) + css.slice(end), high: css.slice(start, end) };
+}
+
 function tokensIn(css: string): Map<string, string> {
   const found = new Map<string, string>();
   for (const line of css.split('\n')) {
@@ -186,7 +204,7 @@ describe('theme palettes', () => {
 
   themeFiles().forEach((file) => {
     describe(file, () => {
-      const css = readFileSync(join(STYLES_DIR, file), 'utf8');
+      const { base: css, high: highContrastCss } = splitHighContrast(readFileSync(join(STYLES_DIR, file), 'utf8'));
       const tokens = tokensIn(css);
       const themeTokens = allTokensIn(css);
       const val = (name: string) => resolve(name, themeTokens, ROOT_TOKENS);
@@ -232,22 +250,42 @@ describe('theme palettes', () => {
         expect(ratio, `${file}: --color-fg on --color-bg`).toBeGreaterThanOrEqual(4.5);
       });
 
-      it('keeps the HP-bar ramp monotonic in luminance so it reads without hue', () => {
-        // A draining health bar must read as draining in greyscale and for a
-        // colour-blind viewer, so the three stages have to fall in brightness — not
-        // merely differ in hue. Monotonicity alone is not enough: two colours can be
-        // ordered yet only 1.00:1 apart, which is invisible. Require a real step.
+      it('keeps the HP-bar ramp monotonic so it reads without hue', () => {
+        // A draining health bar must read as draining in greyscale and for a colour-blind
+        // viewer, so the three stages must be ordered by lightness, not merely differ in hue.
+        // Monotonicity alone is not enough: two colours can be ordered yet only 1.00:1 apart,
+        // which is invisible. Require a real step (1.3:1) between neighbours.
+        //
+        // The direction depends on the ground. "Healthy is the brightest stage" holds in both
+        // (healthy is always the lightest of the three), but on a dark ground that also means
+        // healthy has the MOST contrast with the page, while on a light ground the lightest
+        // stage has the LEAST (a pale healthy bar would vanish into paper, so it is a mid-tone
+        // that must still clear 3:1, and the stages darken as health falls). What has to be
+        // monotonic is therefore the contrast with the ground, in the direction the ground
+        // implies: falling with health on a dark page, rising as health falls on a light one
+        // (bg luminance > 0.5).
         const healthy = tokens.get('--color-hp-healthy')!;
         const hurt = tokens.get('--color-hp-hurt')!;
         const critical = tokens.get('--color-hp-critical')!;
+        const bg = tokens.get('--color-bg')!;
 
         const lh = luminance(healthy);
         const lu = luminance(hurt);
         const lc = luminance(critical);
-        if (lh === null || lu === null || lc === null) return;
+        const lb = luminance(bg);
+        if (lh === null || lu === null || lc === null || lb === null) return;
 
-        expect(lh, `${file}: healthy must be brighter than hurt`).toBeGreaterThan(lu);
-        expect(lu, `${file}: hurt must be brighter than critical`).toBeGreaterThan(lc);
+        expect(lh, `${file}: healthy must be lighter than hurt`).toBeGreaterThan(lu);
+        expect(lu, `${file}: hurt must be lighter than critical`).toBeGreaterThan(lc);
+
+        const against = (c: string) => contrast(c, bg)!;
+        if (lb > 0.5) {
+          expect(against(healthy), `${file}: on a light ground healthy must contrast least with it`).toBeLessThan(against(hurt));
+          expect(against(hurt), `${file}: on a light ground critical must contrast most with it`).toBeLessThan(against(critical));
+        } else {
+          expect(against(healthy), `${file}: on a dark ground healthy must contrast most with it`).toBeGreaterThan(against(hurt));
+          expect(against(hurt), `${file}: on a dark ground critical must contrast least with it`).toBeGreaterThan(against(critical));
+        }
 
         expect(contrast(healthy, hurt)!, `${file}: healthy→hurt step too small to see`)
           .toBeGreaterThanOrEqual(1.3);
@@ -288,6 +326,36 @@ describe('theme palettes', () => {
           expectContrast(`${token} on --color-bg`, token, '--color-bg', 4.5);
         }
       });
+
+      if (highContrastCss) {
+        it('keeps its prefers-contrast: more palette at 4.5:1 for text and 3:1 for HP stages', () => {
+          // The block overrides tokens on the same element, so it is the theme's tokens with
+          // these lines replaced. Everything it does not restate keeps the base value.
+          const merged = new Map(themeTokens);
+          for (const [k, v] of allTokensIn(highContrastCss)) merged.set(k, v);
+          const at = (name: string) => resolve(name, merged, ROOT_TOKENS);
+          const check = (rule: string, fg: string, bg: string, min: number) => {
+            const page = parseColor(at('--color-bg') ?? '');
+            const pb = parseColor(at(bg) ?? '');
+            const pf = parseColor(at(fg) ?? '');
+            if (!page || !pb || !pf) expect.fail(`${file} (high contrast): ${rule} must resolve to colours`);
+            const bgFlat = flatten(pb, page);
+            const ratio = contrast(flatten(pf, parseColor(bgFlat)!), bgFlat)!;
+            expect.soft(ratio, `${file} (high contrast): ${rule} is ${ratio.toFixed(2)}:1`).toBeGreaterThanOrEqual(min);
+          };
+          for (const surface of ['--color-bg', '--color-input-bg']) {
+            for (const token of ['--color-fg', '--color-fg-dim', '--color-accent', '--color-system', '--color-error', '--color-success']) {
+              check(`${token} on ${surface}`, token, surface, 4.5);
+            }
+          }
+          for (const token of ['--color-hp-healthy', '--color-hp-hurt', '--color-hp-critical']) {
+            check(`${token} on --color-meter-track`, token, '--color-meter-track', 3);
+          }
+          for (const token of ['--color-highlight-good', '--color-highlight-warn']) {
+            check(`${token} on --color-bg`, token, '--color-bg', 4.5);
+          }
+        });
+      }
     });
   });
 });

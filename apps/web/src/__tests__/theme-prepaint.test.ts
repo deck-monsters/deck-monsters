@@ -20,6 +20,7 @@ const CSS_FILE: Record<string, string> = {
   amber: 'theme-amber.css',
   ember: 'theme-ember.css',
   'street-fighter': 'theme-street-fighter.css',
+  millefleur: 'theme-millefleur.css',
 };
 
 function inlineMap(): Record<string, string> {
@@ -41,6 +42,18 @@ describe('index.html pre-paint theme script', () => {
       const css = readFileSync(join(WEB_ROOT, 'src/styles', file!), 'utf8');
       expect(css.match(/--color-bg:\s*(#[0-9a-f]{6})/i)![1], id).toBe(themeColor);
     }
+  });
+
+  it('keeps base.css\'s Millefleur first-paint stub equal to the lazy stylesheet', () => {
+    // The stub is what a returning player's first frames use before the chunk arrives; if the
+    // two drift, the page repaints in different colours when the chunk lands.
+    const read = (f: string) => readFileSync(join(WEB_ROOT, 'src/styles', f), 'utf8');
+    const stub = read('base.css').match(/\[data-theme='millefleur'\]\s*\{([^}]*)\}/)![1]!;
+    const full = read('theme-millefleur.css');
+    for (const m of stub.matchAll(/(--color-[a-z-]+)\s*:\s*([^;]+);/g)) {
+      expect(full, m[1]).toContain(`${m[1]}: ${m[2]!.trim()};`);
+    }
+    expect(stub.length, 'first-paint stub must stay tiny').toBeLessThan(1024);
   });
 
   describe('when run', () => {

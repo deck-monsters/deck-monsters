@@ -8,6 +8,19 @@
   padding: 0;
 }
 
+/* First-paint stub for Millefleur (roadmap 46 §4). The theme's real stylesheet is a lazy chunk
+   (themes/millefleur.ts); for a returning player index.html's pre-paint script sets
+   data-theme before React runs, and without this the first frames would take phosphor's black
+   tokens. Only what a frame of plain paper and ink needs; keep it under 1 KB. The chunk
+   re-states all of these with the same values (theme-palettes.test.ts keeps them equal). */
+[data-theme='millefleur'] {
+  color-scheme: light;
+  --color-bg: #fbf8f5;
+  --color-fg: #3b2a55;
+  --color-input-bg: #fffdfa;
+  --color-border: rgb(190 170 215 / 0.55);
+}
+
 html,
 body {
   height: 100%;
@@ -124,6 +137,39 @@ input[type='password']:focus {
   gap: 1rem;
   flex-shrink: 0;
   background: var(--color-bg);
+}
+
+/* Header pieces. These were inline styles, which a theme cannot restyle without !important. */
+.app-wordmark {
+  flex-shrink: 0;
+  white-space: nowrap;
+  color: var(--color-fg-bright);
+  text-decoration: none;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  font-size: 0.9rem;
+}
+.app-header-sep { color: var(--color-fg-dim); }
+
+/* The ☰ menu: a backdrop and a right-hand drawer (inline styles before 46a task 2). */
+.app-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: var(--color-backdrop);
+}
+.app-menu-drawer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 240px;
+  height: 100%;
+  background: var(--color-bg);
+  border-left: var(--border-width) solid var(--color-border);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 /* Buttons */
@@ -1469,7 +1515,13 @@ button {
   tabs down. One line with an ellipsis; the full name is in the element's title. The header is
   a flex row, so the name must be allowed to shrink (min-width: 0) or the ellipsis never fires.
 */
+a.app-shell-room-name {
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+}
 .app-shell-room-name {
+  color: var(--color-fg);
+  font-size: 0.9rem;
   flex: 0 1 auto;
   min-width: 0;
   overflow: hidden;
