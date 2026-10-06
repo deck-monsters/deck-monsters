@@ -1,5 +1,6 @@
-import { itemCard } from '../helpers/card.js';
+import { itemCard, itemCardLine } from '../helpers/card.js';
 import type { RoomEventBus } from '../events/index.js';
+import type { FeedLine } from '../events/types.js';
 
 interface ItemUsedOpts {
 	channel?: (opts: { announce: string }) => void | Promise<void>;
@@ -16,7 +17,12 @@ export function announceItem(
 ): void {
 	const itemUsed = itemCard(item, true);
 	const targetStr = monster ? monster.givenName : `${character.pronouns.him}self`;
-	const announce = `${character.identity} uses the following item on ${targetStr}:\n${itemUsed}`;
+	const useText = `${character.identity} uses the following item on ${targetStr}:`;
+	const announce = `${useText}\n${itemUsed}`;
+	const lines: FeedLine[] = [
+		{ kind: 'item', text: useText, actor: character.givenName, target: monster ? monster.givenName : character.givenName },
+		itemCardLine(item, true),
+	];
 
 	if (channel) {
 		// Items still use the direct callback pattern; call it directly
@@ -24,6 +30,6 @@ export function announceItem(
 	}
 
 	if (!channel || (monster && monster.inEncounter)) {
-		eb.publish({ type: 'announce', scope: 'public', text: announce, payload: { item, character, monster } });
+		eb.publish({ type: 'announce', scope: 'public', text: announce, payload: { item, character, monster, lines } });
 	}
 }

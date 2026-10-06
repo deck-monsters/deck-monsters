@@ -1,5 +1,6 @@
 import { signedNumber } from '../helpers/signed-number.js';
 import type { RoomEventBus } from '../events/index.js';
+import type { FeedLine } from '../events/types.js';
 
 type RollFlags = {
 	primaryDice?: string;
@@ -30,6 +31,13 @@ interface RolledOpts {
 	vs?: number | string;
 	who: any;
 }
+
+const outcomeLines = (outcome: string): FeedLine[] =>
+	outcome
+		.split('\n')
+		.map(line => line.trim())
+		.filter(line => line !== '')
+		.map(line => ({ kind: 'outcome', text: line }));
 
 const toNumber = (value: unknown, fallback = 0): number => {
 	const parsed = Number(value);
@@ -64,10 +72,48 @@ export function announceRolled(
 	let rollResult: string = roll?.strokeOfLuck ? 'Nat 20!' : String(result);
 	if (roll?.curseOfLoki) rollResult = 'Crit Fail!';
 
+	// Facts for the structured twin. `bonus` folds the bonus dice and the modifier together
+	// (the text shows them as two signed numbers); `result` mirrors the verdict line: a
+	// natural 20 / critical failure first, then success against `vs` (a tie goes to the
+	// defender, as in `hitCheck`), and plain success when there is nothing to beat.
+	const numericVs = vs ? Number(vs) : undefined;
+	const vsValue = numericVs !== undefined && Number.isFinite(numericVs) ? numericVs : undefined;
+	const total = toNumber(result, fallbackResult);
+	const verdict: 'success' | 'fail' | 'nat20' | 'nat1' = roll?.curseOfLoki
+		? 'nat1'
+		: roll?.strokeOfLuck
+			? 'nat20'
+			: vsValue !== undefined && !(total > vsValue)
+				? 'fail'
+				: 'success';
+	const verdictText = `🎲 *${rollResult}${vsMsg}*`;
+	const lines: FeedLine[] = [
+		{
+			kind: 'roll',
+			text,
+			who: whoName,
+			die: roll?.primaryDice ?? '',
+			natural: naturalRoll,
+			bonus: bonusResult + modifier,
+			total,
+			...(vsValue === undefined ? {} : { vs: vsValue }),
+			result: verdict,
+			reason,
+		},
+		{
+			kind: 'verdict',
+			text: verdictText,
+			total,
+			...(vsValue === undefined ? {} : { vs: vsValue }),
+			result: verdict,
+		},
+		...(outcome ? outcomeLines(outcome) : []),
+	];
+
 	eb.publish({
 		type: 'announce',
 		scope: 'public',
-		text: `${text}\n🎲 *${rollResult}${vsMsg}*${outcome ? `\n    ${outcome}` : ''}\n `,
-		payload: { roll: roll ?? { result }, who, outcome },
+		text: `${text}\n${verdictText}${outcome ? `\n    ${outcome}` : ''}\n `,
+		payload: { roll: roll ?? { result }, who, outcome, lines },
 	});
 }

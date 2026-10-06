@@ -1,4 +1,6 @@
 import type { RoomEventBus } from '../events/index.js';
+import type { FeedLine } from '../events/types.js';
+import { proseLines } from '../events/feed-lines.js';
 
 interface XpGainOpts {
 	contestant: any;
@@ -29,13 +31,25 @@ export function announceXPGain(
 		? `\n\n${reasons}`
 		: '';
 
-	const text = `${creature.identity} gained ${xpGained} XP${killedMessage}${coinsMessage}${reasonsMessage}`;
+	const headline = `${creature.identity} gained ${xpGained} XP${killedMessage}${coinsMessage}`;
+	const text = `${headline}${reasonsMessage}`;
+	const lines: FeedLine[] = [
+		{
+			kind: 'xp',
+			text: headline,
+			name: creature.givenName,
+			xp: xpGained,
+			...(coinsGained ? { coins: coinsGained } : {}),
+			...(killed && killed.length > 0 ? { killed: killed.length } : {}),
+		},
+		...proseLines(reasons),
+	];
 
 	eb.publish({
 		type: 'ring.xp',
 		scope: 'private',
 		targetUserId: contestant.userId,
 		text,
-		payload: { contestant, creature, xpGained, killed, coinsGained },
+		payload: { contestant, creature, xpGained, killed, coinsGained, lines },
 	});
 }

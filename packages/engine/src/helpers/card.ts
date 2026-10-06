@@ -1,5 +1,6 @@
 import wrap from 'word-wrap';
 
+import type { FeedLine } from '../events/types.js';
 import { upperFirst } from './upper-first.js';
 import { findProbabilityMatch } from './probabilities.js';
 import cardOdds from '../card-odds.json' with { type: 'json' };
@@ -220,6 +221,43 @@ ${wrapCardText(rankings)}`
 \`\`\`
 `;
 
+/**
+ * Lines-returning sibling of `formatCard`: the same sections, wrapped by the same rules,
+ * but as one `card` feed line with no fences and no `===`/`---` rules. Each inner line is
+ * trimmed of the frame's indent, blank separator lines are dropped, and the rest are
+ * joined with `\n`. Built from the same inputs as the text so the two cannot drift
+ * (`announcements/feed-lines.test.ts` checks it). `heading` and `icon` are the title split
+ * into the facts a renderer styles on its own; `text` still carries the whole title line.
+ */
+export const formatCardLine = ({
+	title,
+	description,
+	stats,
+	rankings,
+	verbose,
+	heading,
+	icon
+}: FormatCardOptions & { heading?: string; icon?: string }): FeedLine => {
+	const sections = [
+		wrapCardText(title),
+		!description ? '' : wrapCardText(description),
+		!verbose || !stats ? '' : wrapCardText(stats),
+		!verbose || !rankings ? '' : wrapCardText(rankings)
+	];
+	const text = sections
+		.join('\n')
+		.split('\n')
+		.map((line) => line.trim())
+		.filter((line) => line !== '')
+		.join('\n');
+	return {
+		kind: 'card',
+		text,
+		title: heading ?? title,
+		...(icon ? { icon } : {})
+	};
+};
+
 export const formatCardAsHTML = (card: ItemLike): string =>
 	`
 	<article>
@@ -254,10 +292,26 @@ export const itemCard = (item: ItemLike, verbose = false): string =>
 		verbose
 	});
 
+export const itemCardLine = (item: ItemLike, verbose = false): FeedLine => {
+	const heading = `${item.itemType}  ${itemRarity(item)}`;
+	return formatCardLine({
+		title: `${item.icon}  ${heading}`,
+		description: item.description,
+		stats: item.stats,
+		rankings: getItemRequirements(item).join('\n'),
+		verbose,
+		heading,
+		icon: item.icon
+	});
+};
+
 export const itemCardHTML = (item: ItemLike): string => formatCardAsHTML(item);
 
 export const actionCard = (card: ItemLike, verbose?: boolean): string =>
 	itemCard(card, verbose);
+
+export const actionCardLine = (card: ItemLike, verbose?: boolean): FeedLine =>
+	itemCardLine(card, verbose);
 
 export const actionCardHTML = (card: ItemLike): string => itemCardHTML(card);
 
@@ -270,6 +324,19 @@ export const monsterCard = (monster: MonsterLike, verbose = true): string =>
 		stats: verbose ? monster.stats : upperFirst(monster.individualDescription),
 		rankings: monster.rankings,
 		verbose
+	});
+
+export const monsterCardLine = (monster: MonsterLike, verbose = true): FeedLine =>
+	formatCardLine({
+		title: `${monster.icon}  ${monster.givenName}`,
+		description: verbose
+			? upperFirst(monster.individualDescription)
+			: monster.stats,
+		stats: verbose ? monster.stats : upperFirst(monster.individualDescription),
+		rankings: monster.rankings,
+		verbose,
+		heading: monster.givenName,
+		icon: monster.icon
 	});
 
 /**
@@ -297,6 +364,22 @@ export const monsterTurnLine = (monster: MonsterLike, team?: string): string => 
 
 	return `${monster.icon ?? ''} ${monster.givenName ?? ''}${hp}${ac}${level}${teamLabel}`.trim();
 };
+
+/**
+ * The `standing` feed line for `monsterTurnLine`: the same text, with the hp/ac/level/team
+ * it was built from as fields. Facts that were not in the text (a monster without numeric
+ * hp) are omitted rather than guessed.
+ */
+export const monsterTurnFeedLine = (monster: MonsterLike, team?: string): FeedLine => ({
+	kind: 'standing',
+	text: monsterTurnLine(monster, team),
+	name: monster.givenName ?? '',
+	hp: typeof monster.hp === 'number' ? monster.hp : 0,
+	maxHp: typeof monster.maxHp === 'number' ? monster.maxHp : 0,
+	...(typeof monster.ac === 'number' ? { ac: monster.ac } : {}),
+	...(monster.displayLevel ? { level: monster.displayLevel } : {}),
+	...(team ? { team } : {})
+});
 
 export const characterCard = (character: CharacterLike, verbose = true): string =>
 	formatCard({

@@ -59,6 +59,78 @@ export type CombatPayload =
 	| { kind: 'death'; target: CombatActor; actor?: CombatActor; destroyed: boolean }
 	| { kind: 'flee'; actor: CombatActor };
 
+/**
+ * One clean line of the fight feed, carried as `payload.lines` beside `GameEvent.text`.
+ *
+ * `text` is the Discord-and-pacing contract: fences, ASCII rules, blank lines and
+ * indentation are part of it and must not change. `lines` is the same content with that
+ * layout removed (every `text` is trimmed, no blank lines, no rules, no fences), each
+ * line tagged with the facts a renderer needs to style it or to replace it. Consumers
+ * prefer `lines` and fall back to `text`. Plain JSON only: it is persisted to
+ * `room_events.payload` and replayed.
+ *
+ * Inline markup (`*bold*`, `_italic_`, `**bold**`) and icon-cluster spacing stay exactly
+ * as they are in `text`; only layout whitespace is gone. A `card` line is the one
+ * multi-line exception: its `text` is the frame's inner lines joined by `\n`.
+ */
+export type FeedLine =
+	| { kind: 'narration'; text: string }
+	| { kind: 'arrival'; text: string; name: string; boss: boolean; owner?: string }
+	| { kind: 'temperament'; text: string }
+	| { kind: 'fight-start'; text: string; contestants: number }
+	| { kind: 'round'; text: string; round: number }
+	| { kind: 'turn'; text: string; round: number; turn: number; actor?: string }
+	| {
+			kind: 'standing';
+			text: string;
+			name: string;
+			hp: number;
+			maxHp: number;
+			ac?: number;
+			level?: string;
+			team?: string;
+	  }
+	| { kind: 'turn-begin'; text: string; actor: string }
+	| { kind: 'play'; text: string; actor: string; card: string }
+	| {
+			kind: 'roll';
+			text: string;
+			who: string;
+			die: string;
+			natural: number;
+			bonus: number;
+			total: number;
+			vs?: number;
+			result: 'success' | 'fail' | 'nat20' | 'nat1';
+			reason?: string;
+	  }
+	| { kind: 'verdict'; text: string; total: number; vs?: number; result: 'success' | 'fail' | 'nat20' | 'nat1' }
+	| { kind: 'outcome'; text: string }
+	| { kind: 'hit'; text: string; assailant: string; target: string; damage: number }
+	| { kind: 'hp'; text: string; name: string; hp: number; maxHp: number; bloodied: boolean }
+	| { kind: 'miss'; text: string; assailant: string; target: string; blocked: boolean }
+	| { kind: 'heal'; text: string; name: string; amount: number; hp: number; maxHp?: number }
+	| { kind: 'death'; text: string; name: string; by?: string; destroyed: boolean }
+	| { kind: 'flee'; text: string; name: string }
+	| { kind: 'win'; text: string; winners: string[] }
+	| { kind: 'fight-end'; text: string; deaths: number; rounds: number; isDraw: boolean }
+	| {
+			kind:
+				| 'xp'
+				| 'card-drop'
+				| 'effect'
+				| 'modifier'
+				| 'level-up'
+				| 'boss-soon'
+				| 'ring-event'
+				| 'end-of-deck'
+				| 'item'
+				| 'system';
+			text: string;
+			[field: string]: string | number | boolean | string[] | undefined;
+	  }
+	| { kind: 'card'; text: string; title: string; icon?: string };
+
 export interface GameEvent {
 	id: string;
 	roomId: string;

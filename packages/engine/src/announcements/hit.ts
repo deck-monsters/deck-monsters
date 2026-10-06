@@ -1,6 +1,7 @@
 import flavor from '../helpers/flavor.js';
 import { toCombatActor } from '../events/combat.js';
-import type { CombatPayload } from '../events/types.js';
+import type { CombatPayload, FeedLine } from '../events/types.js';
+import { leadLines } from '../events/feed-lines.js';
 import type { RoomEventBus } from '../events/index.js';
 
 interface FloorIcon {
@@ -66,10 +67,32 @@ export function announceHit(
 		flavorText = `${assailant.icon} ${icon} ${monster.icon}  ${assailant.givenName} ${flavorResult.text} ${target} for ${damage} damage.`;
 	}
 
+	const hpText = `${monster.icon} *${bloodied}${monster.givenName} has ${only}${monster.hp}HP.*`;
+	// The hit line carries the damage; the hp line under it carries the new total and
+	// whether the target is now at or under half health, so a renderer never re-parses
+	// either sentence. Custom `flavorText` may span lines: the first is the hit, the rest prose.
+	const lines: FeedLine[] = [
+		...leadLines(flavorText, text => ({
+			kind: 'hit',
+			text,
+			assailant: assailant?.givenName ?? '',
+			target: monster.givenName,
+			damage,
+		})),
+		{
+			kind: 'hp',
+			text: hpText,
+			name: monster.givenName,
+			hp: monster.hp,
+			maxHp: monster.maxHp,
+			bloodied: Boolean(monster.bloodied),
+		},
+	];
+
 	eb.publish({
 		type: 'announce',
 		scope: 'public',
-		text: `${flavorText}\n\n${monster.icon} *${bloodied}${monster.givenName} has ${only}${monster.hp}HP.*\n`,
+		text: `${flavorText}\n\n${hpText}\n`,
 		// This used to publish an empty payload, so the one number the event is *about*
 		// was recoverable only by parsing the prose. Consumers that want to weigh a hit —
 		// the web console's fight highlights, and anything after it — need the figures
@@ -87,6 +110,7 @@ export function announceHit(
 			monsterName: monster.givenName,
 			assailantName: assailant?.givenName,
 			combat,
+			lines,
 		},
 	});
 }

@@ -1,5 +1,5 @@
 import { toCombatActor } from '../events/combat.js';
-import type { CombatPayload } from '../events/types.js';
+import type { CombatPayload, FeedLine } from '../events/types.js';
 import type { RoomEventBus } from '../events/index.js';
 
 interface MissOpts {
@@ -43,11 +43,25 @@ export function announceMiss(
 
 	const targetIdentifier = target === player ? `${target.pronouns.him}self` : target.givenName;
 
+	const text = `${player.icon} ${icon} ${target.icon}    ${player.givenName} ${action} ${targetIdentifier} ${flavor}\n`;
+	const lines: FeedLine[] = [
+		{
+			kind: 'miss',
+			// The sentence ends in an empty `flavor` slot (a trailing space) when it is not a
+			// curse of Loki; the line is trimmed, the text stays as it was.
+			text: text.trim(),
+			assailant: player.givenName,
+			target: target.givenName,
+			blocked,
+		},
+	];
+
 	eb.publish({
 		type: 'announce',
 		scope: 'public',
-		text: `${player.icon} ${icon} ${target.icon}    ${player.givenName} ${action} ${targetIdentifier} ${flavor}\n`,
+		text,
 		payload: {
+			lines,
 			combat: {
 				kind: 'miss',
 				actor: toCombatActor(player),
