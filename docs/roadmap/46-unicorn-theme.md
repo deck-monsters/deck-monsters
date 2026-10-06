@@ -255,7 +255,7 @@ rest can run in parallel only where noted.
 | 3c | 46a | **Theme-aware feed metrics.** Row-height estimates read the feed's type from CSS, so Millefleur's transcript can be 12.5 px on a 1.65 line as designed | `feed-row-height.ts`, `RingPane.tsx`, feed CSS tokens | Dark themes' estimates identical; no scroll jumps (#196) or lost bottom pin (#159) in a live scroll test under both themes | — (after 3b) | done | 408ff656, 8e77ff57 |
 | 3d | 46a | **Backport what the mock did better.** Remove the Millefleur gate from the case-3 changes (see *Reading the mocks*) and style them for the four dark themes | the components above, `base.css`, `terminal.css` | A deliberate, reviewed change in the dark themes, compared before and after | — (after 3b) | proposed | — |
 | 4 | 46a | **Paint and paper.** Bake the watercolour compositions and the grain tile; wire `--surface-texture`; holo only where listed | WebP assets in the lazy chunk, `theme-millefleur.css` | Budget in §8 met; no long frames while a fight scrolls | 3 (different selectors) | done | 795888c3, cc7e5a3d |
-| 5 | 46a | **Pixel monsters on paper.** The halo, the soft lift, the pink hit flash; check pale species and white appearances at 1×/2×/3× | `terminal.css`, `renderer.ts`, `rosterSprite`/pixel tests | Struck monsters visibly flash; pale monsters read on paper; nothing smoothed | 4 | proposed | — |
+| 5 | 46a | **Pixel monsters on paper.** The halo, the soft lift, the pink hit flash; check pale species and white appearances at 1×/2×/3× | `terminal.css`, `renderer.ts`, `rosterSprite`/pixel tests | Struck monsters visibly flash; pale monsters read on paper; nothing smoothed | 4 | done | this commit; halo in 2252866a, d2c8d594 |
 | 6 | 46a | **Live check and docs.** Cursor-style checklist for the screens in §7; `docs/architecture/web-themes.md`; links from `AGENTS.md` and `docs/README.md`; roadmap status | docs | Check passed or findings filed in 10 | 4, 5 | proposed | — |
 | 7 | 46a | **Structured feed lines from the engine.** Every feed announcement also publishes `payload.lines`: clean single lines, each with a `kind` and its facts (round, actor, card, roll, damage, HP). `text` stays byte-for-byte (Discord sends it verbatim; pacing sizes pauses from it) | `packages/engine/src/announcements/*`, `events/types.ts`, `helpers/card.ts`, `ring/index.ts` | A consistency test keeps `lines` equal to `text` without its layout; engine, server and Discord tests green | 3d | in progress | — |
 | 8 | 46a | **The feed rendered from lines.** The web draws `lines` when present (falling back to `text` for older events), with spacing from CSS rather than baked whitespace; Millefleur restyles or replaces lines by kind (the round as a divider, a play's card name, the roll as a quieter second line); row-height guesses count lines | `RingPane`, `ConsolePane`, `format-event-text`, `feed-row-height.ts`, theme CSS | Live scroll test clean under every theme; each feed screen beside its mock | — (after 7) | proposed | — |
@@ -281,6 +281,13 @@ difference falls into one of three cases:
    "You can train N more" beside the heading, with Train as the primary action only until the
    player has a monster; Chat anchored to the bottom with message times; the Ring header's meta
    as one group.
+
+**Pixel monsters on paper (task 5).** The halo and the soft lift shipped with the surfaces. The
+hit flash is pink in Millefleur and keeps the outline (`--color-sprite-flash-outline: none`), so a
+struck monster blinks rather than vanishing into the paper; the dark themes still flash the whole
+silhouette. Checked on paper at 1x, 2x and 3x: an ivory-white Unicorn, a moon-mist Weeping Angel,
+a white Gladiator, an ivory Jinn, a pale-cream Basilisk. The ivory Unicorn is faint at 1x but its
+outline carries it; no species palette changed.
 
 Two candidates were tested and set aside, both for reasons already in the code's history:
 

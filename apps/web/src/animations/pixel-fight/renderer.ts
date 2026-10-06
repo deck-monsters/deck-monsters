@@ -6,28 +6,45 @@ export function clear(ctx: CanvasRenderingContext2D): void {
 
 export const DEFAULT_SPRITE_FLASH = '#ffffff';
 
-let cachedFlashColor: string | undefined;
+let cachedFlash: { color: string; outline: string | null } | undefined;
 let flashObserver: MutationObserver | undefined;
 
 /**
- * The hit-flash colour for the active theme (`--color-sprite-flash`, default white).
- * Read once and cached: getComputedStyle forces a style recalc, and a hit redraws every
- * ~130 ms frame for every flashing sprite. A MutationObserver on <html data-theme> drops
- * the cache when the theme changes. A light theme needs a non-white flash, because white
- * on a white panel makes a struck monster vanish instead of blink (roadmap 46 §1).
+ * The active theme's hit flash, read once and cached: getComputedStyle forces a style recalc,
+ * and a hit redraws every ~130 ms frame for every flashing sprite. A MutationObserver on
+ * <html data-theme> drops the cache when the theme changes.
+ *
+ * - `--color-sprite-flash` (default white) fills the sprite's body. A light theme needs a
+ *   non-white flash, because white on a white panel makes a struck monster vanish instead of
+ *   blink (roadmap 46 §1).
+ * - `--color-sprite-flash-outline` fills the outline pixels (palette key `O`). Its default is the
+ *   flash colour, so the dark themes flash the whole silhouette as they always have; `none`
+ *   keeps the outline's own dark colour, which Millefleur uses so a pale monster struck on paper
+ *   still has its edge (roadmap 46 §6).
  */
-export function readSpriteFlashColor(): string {
-  if (typeof document === 'undefined') return DEFAULT_SPRITE_FLASH;
-  if (cachedFlashColor === undefined) {
+function readSpriteFlash(): { color: string; outline: string | null } {
+  if (typeof document === 'undefined') return { color: DEFAULT_SPRITE_FLASH, outline: DEFAULT_SPRITE_FLASH };
+  if (cachedFlash === undefined) {
     const root = document.documentElement;
-    cachedFlashColor =
-      getComputedStyle(root).getPropertyValue('--color-sprite-flash').trim() || DEFAULT_SPRITE_FLASH;
+    const style = getComputedStyle(root);
+    const color = style.getPropertyValue('--color-sprite-flash').trim() || DEFAULT_SPRITE_FLASH;
+    const outlineValue = style.getPropertyValue('--color-sprite-flash-outline').trim();
+    cachedFlash = { color, outline: outlineValue === 'none' ? null : outlineValue || color };
     if (!flashObserver && typeof MutationObserver !== 'undefined') {
-      flashObserver = new MutationObserver(() => { cachedFlashColor = undefined; });
+      flashObserver = new MutationObserver(() => { cachedFlash = undefined; });
       flashObserver.observe(root, { attributes: true, attributeFilter: ['data-theme'] });
     }
   }
-  return cachedFlashColor;
+  return cachedFlash;
+}
+
+export function readSpriteFlashColor(): string {
+  return readSpriteFlash().color;
+}
+
+/** The outline's flash colour, or null to keep the outline's own colour while flashing. */
+export function readSpriteFlashOutline(): string | null {
+  return readSpriteFlash().outline;
 }
 
 export function drawSprite(
@@ -37,7 +54,12 @@ export function drawSprite(
   x: number,
   y: number,
   scale: number,
-  { mirror, flash, flashColor = DEFAULT_SPRITE_FLASH }: { mirror: boolean; flash: boolean; flashColor?: string },
+  {
+    mirror,
+    flash,
+    flashColor = DEFAULT_SPRITE_FLASH,
+    flashOutline = flashColor,
+  }: { mirror: boolean; flash: boolean; flashColor?: string; flashOutline?: string | null },
 ): void {
   ctx.imageSmoothingEnabled = false;
   ctx.save();
@@ -57,11 +79,11 @@ export function drawSprite(
     for (let column = 0; column < pixels.length; column += 1) {
       const color = pixels[column]!;
       if (color === '.') continue;
-      // TODO(roadmap 46 task 5): today the flash covers the outline (key 'O') too, so the
-      // whole sprite is one flat colour. A light theme wants the outline kept dark so a
-      // struck monster blinks rather than disappears; changing it here would alter every
-      // theme, so it waits for that task.
-      ctx.fillStyle = flash ? flashColor : palette[color]!;
+      // A flash fills the body with the flash colour; the outline takes `flashOutline`, or keeps
+      // its own colour when the theme asks for that (null), so a struck monster blinks rather
+      // than disappearing into a light page.
+      const flashFill = color === 'O' ? (flashOutline ?? palette[color]!) : flashColor;
+      ctx.fillStyle = flash ? flashFill : palette[color]!;
       ctx.fillRect(x + (column - SPRITE_PAD) * scale, y + row * scale, scale, scale);
     }
   }

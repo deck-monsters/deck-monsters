@@ -73,6 +73,7 @@
   --color-highlight-warn: #8a2a5e;
   --color-danger-border: color-mix(in srgb, var(--color-error) 30%, transparent);
   --color-sprite-flash: #ff9fd2;
+  --color-sprite-flash-outline: none;   /* keep the dark outline: a pale monster keeps its edge */
   --color-backdrop: linear-gradient(rgb(75 58 110 / 0.16), rgb(75 58 110 / 0.3));
   --color-backdrop-light: rgb(75 58 110 / 0.22);
 

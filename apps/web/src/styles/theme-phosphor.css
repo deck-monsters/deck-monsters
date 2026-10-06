@@ -80,6 +80,7 @@
   --color-highlight-warn: var(--color-hp-hurt);
   --color-danger-border: rgb(255 107 107 / 0.3);   /* RoomSettingsView's danger panel */
   --color-sprite-flash: #ffffff;
+  --color-sprite-flash-outline: var(--color-sprite-flash);   /* the whole silhouette flashes */
   --color-backdrop: rgb(0 0 0 / 0.7);
   --color-backdrop-light: rgb(0 0 0 / 0.5);
   /* Read by components with a fallback but never set before 46a. The values below are

@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { clear, drawSprite, readSpriteFlashColor } from './renderer.js';
+import { clear, drawSprite, readSpriteFlashColor, readSpriteFlashOutline } from './renderer.js';
 import { SPRITE_ART, spriteFor } from './sprites.js';
 import { paletteFor } from './appearance-palette.js';
 import { subscribeToFrames } from './frame-ticker.js';
@@ -71,6 +71,7 @@ export default function RosterSprite({
         mirror: false,
         flash: flashing,
         flashColor: flashing ? readSpriteFlashColor() : undefined,
+        flashOutline: flashing ? readSpriteFlashOutline() : undefined,
       });
     };
 
@@ -92,6 +93,7 @@ export default function RosterSprite({
       mirror: false,
       flash,
       flashColor: flash ? readSpriteFlashColor() : undefined,
+      flashOutline: flash ? readSpriteFlashOutline() : undefined,
     });
   }, [creatureType, appearance, appearanceHex, name, anim, flash, startedAt]);
 
