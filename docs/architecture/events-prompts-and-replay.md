@@ -228,3 +228,8 @@ half is task 8. The composed sentences are display only; they are not a second c
 - [ ] Cursor frames retain the timestamp-prefixed id shape.
 - [ ] Live subscription is attached before asynchronous replay.
 - [ ] Room changes reset the client cursor, listeners, watchdog, and pending frames.
+
+Roll lines carry numeric facts only when the source has them. Compound results (Blink's
+HP/XP dice) keep their authored text and verdict rather than invented zero figures. A web
+composer must fall back to those original blocks when numeric facts are incomplete, and
+retain substantive critical-roll outcomes (maximum damage, reflected attacks).

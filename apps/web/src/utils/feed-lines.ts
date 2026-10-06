@@ -115,8 +115,12 @@ function rollOutcomePhrase(
 	roll: Extract<FeedLine, { kind: 'roll' }>,
 	outcome: string | undefined,
 ): string | null {
-	if (roll.result === 'nat20') return 'natural 20!';
-	if (roll.result === 'nat1') return 'critical failure!';
+	const special = roll.result === 'nat20' ? 'natural 20!' : roll.result === 'nat1' ? 'critical failure!' : null;
+	if (special) {
+		// Bare Hit!/Miss... repeats the verdict; explanations still belong to the card.
+		const redundant = !outcome || /^(hit!|miss\.\.\.)$/i.test(outcome.trim());
+		return redundant ? special : `${special} ${outcome}`;
+	}
 	if (outcome) {
 		const plain = outcome.replace(/^\s*(hit!|miss\.\.\.)\s*/i, '').trim();
 		const word = /^hit/i.test(outcome) ? 'hit' : /^miss/i.test(outcome) ? 'misses' : null;
@@ -137,6 +141,7 @@ export function composeRoll(
 	roll: Extract<FeedLine, { kind: 'roll' }>,
 	outcome?: string,
 ): FeedPart[] {
+	if (!hasNumericRollFacts(roll)) return [{ text: roll.text, markup: true }];
 	let text = `${roll.who} rolled ${roll.natural}`;
 	if (roll.bonus !== 0) text += `${signed(roll.bonus)} = ${roll.total}`;
 	const die = roll.die?.replace(/\s/g, '').toLowerCase();
@@ -146,6 +151,10 @@ export function composeRoll(
 	const phrase = rollOutcomePhrase(roll, outcome);
 	if (phrase) text += ` · ${phrase}`;
 	return [{ text }];
+}
+
+function hasNumericRollFacts(roll: Extract<FeedLine, { kind: 'roll' }>): roll is Extract<FeedLine, { kind: 'roll' }> & { natural: number; bonus: number; total: number } {
+	return Number.isFinite(roll.natural) && Number.isFinite(roll.bonus) && Number.isFinite(roll.total) && roll.result !== undefined;
 }
 
 function plainBlock(line: FeedLine, key: string, style: FeedStyle): FeedBlock {
@@ -227,7 +236,7 @@ export function composeFeedBlocks(lines: readonly FeedLine[], style: FeedStyle):
 			}
 		}
 
-		if (line.kind === 'roll') {
+		if (line.kind === 'roll' && hasNumericRollFacts(line)) {
 			let end = i + 1;
 			if (lines[end]?.kind === 'verdict') end += 1;
 			const outcomes: string[] = [];

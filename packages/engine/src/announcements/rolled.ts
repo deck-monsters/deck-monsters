@@ -9,7 +9,7 @@ type RollFlags = {
 };
 
 type RollWithParts = RollFlags & {
-	naturalRoll: { result: number };
+	naturalRoll: { result: number | string };
 	bonusResult: number;
 	modifier: number;
 	result?: number | string;
@@ -17,7 +17,7 @@ type RollWithParts = RollFlags & {
 
 type RollWithResultOnly = RollFlags & {
 	result: number | string;
-	naturalRoll?: { result?: number };
+	naturalRoll?: { result?: number | string };
 	bonusResult?: number;
 	modifier?: number;
 };
@@ -45,9 +45,10 @@ const outcomeLines = (outcome: string): FeedLine[] =>
 		.filter(line => line !== '')
 		.map(line => ({ kind: 'outcome', text: line }) satisfies FeedLine);
 
-const toNumber = (value: unknown, fallback = 0): number => {
+const toNumber = (value: unknown): number | undefined => {
+	if (typeof value !== 'number' && (typeof value !== 'string' || value.trim() === '')) return undefined;
 	const parsed = Number(value);
-	return Number.isFinite(parsed) ? parsed : fallback;
+	return Number.isFinite(parsed) ? parsed : undefined;
 };
 
 export function announceRolled(
@@ -56,11 +57,12 @@ export function announceRolled(
 	monster: any,
 	{ outcome, reason, roll, vs, who, success }: RolledOpts,
 ): void {
-	const naturalRoll = toNumber(roll?.naturalRoll?.result);
-	const bonusResult = toNumber(roll?.bonusResult);
-	const modifier = toNumber(roll?.modifier);
-	const fallbackResult = naturalRoll + bonusResult + modifier;
-	const result = roll?.result ?? fallbackResult;
+	const numericNatural = toNumber(roll?.naturalRoll?.result);
+	const naturalRoll = numericNatural ?? roll?.naturalRoll?.result ?? 0;
+	const bonusResult = toNumber(roll?.bonusResult) ?? 0;
+	const modifier = toNumber(roll?.modifier) ?? 0;
+	const fallbackResult = numericNatural === undefined ? undefined : numericNatural + bonusResult + modifier;
+	const result = roll?.result ?? fallbackResult ?? 0;
 	const hasDetailedRollDescription = roll?.naturalRoll?.result !== undefined ||
 		roll?.bonusResult !== undefined ||
 		roll?.modifier !== undefined ||
@@ -84,16 +86,22 @@ export function announceRolled(
 	// defender, as in `hitCheck`), and plain success when there is nothing to beat.
 	const numericVs = vs ? Number(vs) : undefined;
 	const vsValue = numericVs !== undefined && Number.isFinite(numericVs) ? numericVs : undefined;
-	const total = toNumber(result, fallbackResult);
-	const verdict: 'success' | 'fail' | 'nat20' | 'nat1' = roll?.curseOfLoki
+	// Composite rolls (Blink's hp and XP dice) have authored strings, not a single total.
+	// Keep those strings in text and leave unavailable facts out rather than inventing zero.
+	const total = toNumber(roll?.result ?? fallbackResult);
+	const hasRollParts = roll?.naturalRoll?.result !== undefined || roll?.bonusResult !== undefined || roll?.modifier !== undefined;
+	const natural = hasRollParts ? numericNatural : total;
+	const verdict: 'success' | 'fail' | 'nat20' | 'nat1' | undefined = roll?.curseOfLoki
 		? 'nat1'
 		: roll?.strokeOfLuck
 			? 'nat20'
 			: success !== undefined
 				? (success ? 'success' : 'fail')
-				: vsValue !== undefined && !(total > vsValue)
-					? 'fail'
-					: 'success';
+				: total === undefined
+					? undefined
+					: vsValue !== undefined && !(total > vsValue)
+						? 'fail'
+						: 'success';
 	const verdictText = `🎲 *${rollResult}${vsMsg}*`;
 	const lines: FeedLine[] = [
 		{
@@ -101,19 +109,19 @@ export function announceRolled(
 			text,
 			who: whoName,
 			...(roll?.primaryDice ? { die: roll.primaryDice } : {}),
-			natural: naturalRoll,
+			...(natural === undefined ? {} : { natural }),
 			bonus: bonusResult + modifier,
-			total,
+			...(total === undefined ? {} : { total }),
 			...(vsValue === undefined ? {} : { vs: vsValue }),
-			result: verdict,
+			...(verdict === undefined ? {} : { result: verdict }),
 			...(reason ? { reason } : {}),
 		},
 		{
 			kind: 'verdict',
 			text: verdictText,
-			total,
+			...(total === undefined ? {} : { total }),
 			...(vsValue === undefined ? {} : { vs: vsValue }),
-			result: verdict,
+			...(verdict === undefined ? {} : { result: verdict }),
 		},
 		...(outcome ? outcomeLines(outcome) : []),
 	];

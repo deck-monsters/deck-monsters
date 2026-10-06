@@ -5363,6 +5363,33 @@ router's `myInventory` test.
 
 **Status**: Fixed.
 
+### 237. Compound and result-only rolls lose their figures in the structured feed — FIXED
+
+**Root cause:** the line builder forced every roll into numeric natural/total facts. Blink
+emits separate HP and XP dice as authored strings; failed conversion silently became zero.
+Millefleur then consumed the truthful verdict while composing from those zero facts. A
+numeric result-only roll also had a zero natural figure instead of its actual result.
+
+Numeric facts are now optional when unavailable. Compound authored roll/verdict text is
+preserved, and Millefleur falls back to the original line blocks when the numeric facts
+are incomplete. A result-only numeric roll uses its real total as its natural figure.
+Tests: engine `announcements/feed-lines.test.ts`, web `feed-lines.test.tsx` (including
+shared renderer/height booking).
+
+**Status**: Fixed.
+
+### 238. Critical-roll composition drops the card's outcome explanation — FIXED
+
+**Root cause:** Millefleur returned immediately for natural 20 or critical failure, while
+its composing loop consumed every following outcome line. That hid maximum-damage and
+reflected-attack explanations even though `text` and `payload.lines` both contained them.
+
+The composed verdict now keeps substantive authored outcomes after its critical label;
+only a bare redundant Hit!/Miss... is omitted. The same blocks feed rendering and row
+height booking, so the retained explanation is counted. Tests: web `feed-lines.test.tsx`.
+
+**Status**: Fixed.
+
 ## Closed without a fix
 
 These were open investigations the owner closed on 2026-09-28. Reopen with new evidence.

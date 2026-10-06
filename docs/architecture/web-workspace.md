@@ -346,8 +346,10 @@ frame's title and body with the ASCII rules already removed: the panel (`.event-
 paints a title, a CSS rule (`.feed-card-title`) and the body. Spacing between lines is the
 CSS gap, not blank lines baked into `text`. Millefleur (`feedStyle` `millefleur`) replaces
 some kinds with composed sentences — a round is a divider, a play names the card, a roll
-is one dim sentence, a bloodied HP line gains a rose ", bloodied" inside the sentence.
-Every other theme is `terminal`: one block per line, the engine's own words. `text` is
+is one dim sentence (including substantive critical outcomes), a bloodied HP line gains a rose ", bloodied" inside the sentence.
+Rolls without complete numeric facts (such as Blink's combined HP/XP dice) retain their
+original roll, verdict and outcome blocks. Every other theme is `terminal`: one block per
+line, the engine's own words. `text` is
 not rewritten. Discord and pacing still use it.
 
 Events with no lines (history from before roadmap 46, private command replies) still draw

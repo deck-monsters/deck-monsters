@@ -105,12 +105,44 @@ describe('composeFeedBlocks (millefleur)', () => {
     [roll({ natural: 6, bonus: 1, total: 7, vs: 7, result: 'success' }), 'Hit!', 'Poirot rolled 6 +1 = 7 vs 7 · hit'],
     [roll({ natural: 6, bonus: 1, total: 7, vs: 7, result: 'fail' }), 'Miss... Tie goes to the defender.', 'Poirot rolled 6 +1 = 7 vs 7 · misses. Tie goes to the defender.'],
     [roll({ result: 'nat1', natural: 1, bonus: 0, total: 1 }), undefined, 'Poirot rolled 1 vs 7 · critical failure!'],
+    [roll({ result: 'nat20' }), 'Hit! Max damage!', 'Poirot rolled 20 +2 = 22 vs 7 · natural 20! Hit! Max damage!'],
+    [roll({ result: 'nat1', natural: 1, bonus: 0, total: 1 }), 'The attack is reflected back at Poirot.', 'Poirot rolled 1 vs 7 · critical failure! The attack is reflected back at Poirot.'],
   ])('composes a roll: %#', (line, outcome, expected) => {
     const lines: FeedLine[] = [line, { kind: 'verdict', text: '🎲', total: 1, result: 'success' }];
     if (outcome) lines.push({ kind: 'outcome', text: outcome });
     const blocks = composeFeedBlocks(lines, 'millefleur');
     expect(blocks).toHaveLength(1);
     expect(blocks[0]!.parts[0]!.text).toBe(expected);
+  });
+
+  it.each([
+    { natural: undefined, total: undefined, result: undefined },
+    { natural: undefined },
+    { bonus: undefined },
+    { total: undefined },
+    { natural: Number.NaN },
+  ])('keeps original roll, verdict and outcome blocks with incomplete numeric facts: %#', (over) => {
+    const lines: FeedLine[] = [
+      roll({ ...over, text: 'Blink rolled _2 & 9_ to steal potential energy.' }),
+      { kind: 'verdict', text: '🎲 *2 (hp) & 9 (xp)*' },
+      { kind: 'outcome', text: 'Blink steals potential energy.' },
+    ];
+    expect(text(lines, 'millefleur')).toEqual(lines.map((line) => line.text));
+    expect(composeFeedBlocks(lines, 'millefleur').map((block) => block.kind)).toEqual(['roll', 'verdict', 'outcome']);
+  });
+
+  it('books and draws all special-roll outcomes through the shared block composition', () => {
+    const outcome = 'Hit! Max damage! The attack is reflected back at Poirot, who takes the full damage.';
+    const lines: FeedLine[] = [roll({ result: 'nat20' }), { kind: 'outcome', text: outcome }];
+    const blocks = composeFeedBlocks(lines, 'millefleur');
+    const { container } = render(<FeedEventBody text="" payload={{ lines }} style="millefleur" />);
+    expect(container.querySelector('.feed-line-roll-result')!.textContent).toBe(blocks[0]!.parts[0]!.text);
+    expect(blocks[0]!.parts[0]!.text).toContain(outcome);
+    const columns = 30;
+    const rows = Math.ceil(blocks[0]!.parts[0]!.text.length / (columns - blocks[0]!.indent));
+    const height = DEFAULT_FEED_METRICS.rowChromePx + rows * DEFAULT_FEED_METRICS.linePx;
+    expect(estimateFeedBlocksHeight(blocks, columns, DEFAULT_FEED_METRICS)).toBe(height);
+    expect(estimateFeedRowHeight('', columns, DEFAULT_FEED_METRICS, blocks)).toBe(height);
   });
 
   it('states a damage roll with its reason and no verdict', () => {

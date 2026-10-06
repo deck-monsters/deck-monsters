@@ -8,9 +8,11 @@ tags: [roadmap, web, theme, design, unicorn, accessibility]
 ---
 # 46: a unicorn theme (Millefleur)
 
-**Status:** the design is final (approved by the owner 2026-10-06). **Pass 46a (tasks 1 to 3) is
-in progress** (tasks 1 and 2 done) on `claude/unicorn-monster-cards-cigpmw`. This page is the build plan and the pass
-record: the task table in §9 carries status and commits.
+**Status:** Millefleur is built and live-checked on
+`claude/unicorn-monster-cards-cigpmw`. The branch review fixed feed-fidelity
+findings; task 9's narration remains pending the owner's review. This page stays active
+until that review and the remaining acceptance decisions are complete. One PR for the
+whole theme, opened only when the owner asks.
 
 - **The design:** [Millefleur design system](../reference/millefleur/design-system.md), with
   [the brief and artist statement](../reference/millefleur/README.md), [the final
@@ -242,22 +244,21 @@ CRT treatment:
 
 ### 9. Task table
 
-Two passes, so each PR stays at three or four tasks (see
-[subagents budget](../agents/subagents.md#budget)). Tasks 1 and 2 must land first; the
-rest can run in parallel only where noted.
+The owner approved one PR for the whole theme. The original pass labels are retained
+as the build history; the statuses below describe what has actually landed.
 
 | # | Pass | Task | Area / files | Acceptance | Can run beside | Status | Commit |
 |---|---|---|---|---|---|---|---|
-| 1 | 46a | **Theme plumbing, no visual change.** Shape, font, shadow, surface, meter-track, on-accent, highlight-text, backdrop and sprite-flash tokens with defaults equal to today; define the read-but-unset tokens in all four themes; `color-scheme`; pre-paint `data-theme` and `theme-color`; per-theme `prefers-contrast`; the header class; theme button label by name; extended palette test | `styles/*.css`, `useTheme.ts`, `index.html`, `AppShell.tsx`, `theme-palettes.test.ts`, `useTheme.test.ts`, `renderer.ts` (flash parameter) | Four themes pixel-identical at 390 and 1440; the extended palette test passes for all four; no black flash on a light theme in a smoke test | docs-only work | done | 673779d8, 0c11a733, and the checkpoint after |
+| 1 | 46a | **Theme plumbing, no visual change.** Shape, font, shadow, surface, meter-track, on-accent, highlight-text, backdrop and sprite-flash tokens with defaults equal to today; define the read-but-unset tokens in all four themes; `color-scheme`; pre-paint `data-theme` and `theme-color`; per-theme `prefers-contrast`; the header class; theme button label by name; extended palette test | `styles/*.css`, `useTheme.ts`, `index.html`, `AppShell.tsx`, `theme-palettes.test.ts`, `useTheme.test.ts`, `renderer.ts` (flash parameter) | Four themes pixel-identical at 390 and 1440; the extended palette test passes for all four; no black flash on a light theme in a smoke test | docs-only work | done | 673779d8, 0c11a733, 259e096b |
 | 2 | 46a | **Millefleur palette, type and components.** `theme-millefleur.css`, `THEMES` entry and icon, Nunito (the feed keeps JetBrains Mono), radii, buttons, fields, cards, banners; the lazy-loaded chunk, the first-paint block and the modulepreload, with a bundle check that other themes' CSS grew by under 1 KB | `theme-millefleur.css`, `themes/millefleur.ts` (lazy chunk), `base.css` (first-paint block), `index.html`, `useTheme.ts`, fonts and `OFL.txt` | Palette test green; card frames unchanged; a reload on Millefleur shows no dark frame; check at 390 and 1440 against the samples | — (after 1) | done | 21e639d9, 293590fa |
 | 3 | 46a | **Millefleur surfaces.** Folder tabs joined to the page, the page and card, the halo, card slots with painted role dots, meters, the ruled Chat log, the Ring transcript, sheets with the painted header, soft title bar and close box, carousel dots | `theme-millefleur.css`, small class hooks in `terminal.css`/`base.css`, the tab markup in the workspace | Each surface matches the design system and samples, rendered side by side; tap targets unchanged | 4 if 4 avoids the same selectors | done | 66fde141, ca0eca5d, 2252866a, 7f84c2f9, 8353b11a |
-| 3b | 46a | **Fidelity to the mocks.** The owner compared the app with the approved mocks at the same scale and found many differences (2026-10-06). Header spacing; the Ring's header, roster rows, card-frame tint and boss-arrival card; the Workshop's portrait, type, meters, slot ⓘ, heading count; Chat anchored to the bottom; the level-up badge, title and chips | `theme-millefleur.css`, small Millefleur-gated hooks in `RingPane`, `RingRoster`, `MonsterWorkshopPanel`, `WorkshopPanel`, `ChatPanel`, `LevelUpSheet` | Each screen beside its mock at 390 × 940 (`fid.mjs`) matches within reason; dark themes unchanged | — | done, in review | d2c8d594, 5c5352ae, a831d675, 8746fcba, c98f4c42 |
+| 3b | 46a | **Fidelity to the mocks.** The owner compared the app with the approved mocks at the same scale and found many differences (2026-10-06). Header spacing; the Ring's header, roster rows, card-frame tint and boss-arrival card; the Workshop's portrait, type, meters, slot ⓘ, heading count; Chat anchored to the bottom; the level-up badge, title and chips | `theme-millefleur.css`, small Millefleur-gated hooks in `RingPane`, `RingRoster`, `MonsterWorkshopPanel`, `WorkshopPanel`, `ChatPanel`, `LevelUpSheet` | Each screen beside its mock at 390 × 940 (`fid.mjs`) matches within reason; dark themes unchanged | — | built, reviewed | d2c8d594, 5c5352ae, a831d675, 8746fcba, c98f4c42 |
 | 3c | 46a | **Theme-aware feed metrics.** Row-height estimates read the feed's type from CSS, so Millefleur's transcript can be 12.5 px on a 1.65 line as designed | `feed-row-height.ts`, `RingPane.tsx`, feed CSS tokens | Dark themes' estimates identical; no scroll jumps (#196) or lost bottom pin (#159) in a live scroll test under both themes | — (after 3b) | done | 408ff656, 8e77ff57 |
-| 3d | 46a | **Backport what the mock did better.** Remove the Millefleur gate from the case-3 changes (see *Reading the mocks*) and style them for the four dark themes | the components above, `base.css`, `terminal.css` | A deliberate, reviewed change in the dark themes, compared before and after | — (after 3b) | proposed | — |
+| 3d | 46a | **Backport what the mock did better.** Remove the Millefleur gate from the case-3 changes (see *Reading the mocks*) and style them for the four dark themes | the components above, `base.css`, `terminal.css` | A deliberate, reviewed change in the dark themes, compared before and after | — (after 3b) | backports shipped, reviewed; level badge withheld by design | a0a3eb8c, 18d73971, 92cdb96b, 3d082907 |
 | 4 | 46a | **Paint and paper.** Bake the watercolour compositions and the grain tile; wire `--surface-texture`; holo only where listed | WebP assets in the lazy chunk, `theme-millefleur.css` | Budget in §8 met; no long frames while a fight scrolls | 3 (different selectors) | done | 795888c3, cc7e5a3d |
-| 5 | 46a | **Pixel monsters on paper.** The halo, the soft lift, the pink hit flash; check pale species and white appearances at 1×/2×/3× | `terminal.css`, `renderer.ts`, `rosterSprite`/pixel tests | Struck monsters visibly flash; pale monsters read on paper; nothing smoothed | 4 | done | this commit; halo in 2252866a, d2c8d594 |
+| 5 | 46a | **Pixel monsters on paper.** The halo, the soft lift, the pink hit flash; check pale species and white appearances at 1×/2×/3× | `terminal.css`, `renderer.ts`, `rosterSprite`/pixel tests | Struck monsters visibly flash; pale monsters read on paper; nothing smoothed | 4 | done | 7da2efe5; halo in 2252866a, d2c8d594 |
 | 6 | 46a | **Live check and docs.** Cursor-style checklist for the screens in §7; `docs/architecture/web-themes.md`; links from `AGENTS.md` and `docs/README.md`; roadmap status | docs | Check passed or findings filed in 10 | 4, 5 | checked | 46b-cursor-check.md |
-| 7 | 46a | **Structured feed lines from the engine.** Every feed announcement also publishes `payload.lines`: clean single lines, each with a `kind` and its facts (round, actor, card, roll, damage, HP). `text` stays byte-for-byte (Discord sends it verbatim; pacing sizes pauses from it) | `packages/engine/src/announcements/*`, `events/types.ts`, `helpers/card.ts`, `ring/index.ts` | A consistency test keeps `lines` equal to `text` without its layout; engine, server and Discord tests green | 3d | in progress | — |
+| 7 | 46a | **Structured feed lines from the engine.** Every feed announcement also publishes `payload.lines`: clean single lines, each with a `kind` and its facts (round, actor, card, roll, damage, HP). `text` stays byte-for-byte (Discord sends it verbatim; pacing sizes pauses from it) | `packages/engine/src/announcements/*`, `events/types.ts`, `helpers/card.ts`, `ring/index.ts` | A consistency test keeps `lines` equal to `text` without its layout; engine, server and Discord tests green | 3d | built, reviewed; roll-fidelity fixes in this checkpoint | 75a52250, 653f6c2a, 3a777501 |
 | 8 | 46a | **The feed rendered from lines.** The web draws `lines` when present (falling back to `text` for older events), with spacing from CSS rather than baked whitespace; Millefleur restyles or replaces lines by kind (the round as a divider, a play's card name, the roll as a quieter second line); row-height guesses count lines | `RingPane`, `ConsolePane`, `format-event-text`, `feed-row-height.ts`, theme CSS | Live scroll test clean under every theme; each feed screen beside its mock | — (after 7) | live-checked | b78d6f2d, 70a1309e, b51e3b1c |
 | 9 | 46a | **Flavour.** New narration in the house voice where the mock found room for it, per `voice-and-wording.md`, in `text` and `lines` both: an entrance line per species after a player's monster answers the call; a short beat under each round divider (a small pool, no repeats back to back); a species verb for a boss's arrival (stamps, slithers, stalks…), keeping "sent by the house". Approved direction (owner, 2026-10-06): bring together jokes and lore from across the game — the Unicorn's roses (its witness line), the Gladiator's past, the Basilisk's gaze, the Dragon's hoard, the Jinn's smoke — e.g. a boss Minotaur is "Half bull, all temper", and "…and in no mood for roses" when a Unicorn is in the ring. Refined over time like all flavour | engine announcements, strings inventory | Owner reviews the lines in the Ring | 8 | approved, after 8 | — |
 
@@ -332,47 +333,47 @@ renderer (task 8), and new flavour (task 9). Discord keeps the text it has today
   `#7a1838`, 3.40 to 8.24:1 on the track. The palette test is now direction-aware: on a light
   ground, contrast with the ground rises as health falls. `--color-danger-border` keeps the
   dark themes' danger panel identical. Reviewed; the fix round closed six should-fix findings.
-- **Feed metrics stay put.** The design system sets the transcript at 12.5/1.65, but the Ring and
-  Console feeds book row heights in JS from 14px × 1.4 (`utils/feed-row-height.ts`, bugs 159
-  and 196). Millefleur restyles the feed's colours, separators and tags only, never its font
-  size, line height or horizontal padding.
+- **Feed metrics follow the drawn type.** Task 3c replaced the fixed 14/1.4 guess with
+  measured CSS metrics. Millefleur now uses 12.5px on a 1.65 line; the dark themes keep
+  their own metrics. Renderer and estimate share the composed blocks (task 8).
+- **Task 8 review decisions.** The roll is already a separate, indented dim block under
+  the play/card event. Its complete arithmetic and verdict stay in one sentence, as
+  approved in task 8; the mock's abbreviated roll is not a second wording contract.
+  In all themes, fresh structured cards intentionally use a title, CSS rule and body,
+  with CSS gaps replacing the engine's ASCII rules and blank lines. Old history without
+  `lines` still uses ASCII; Discord keeps `text`. This is the renderer design, not an
+  accidental change to dark-theme colours or chrome.
+- **Task 3d review.** Source and recorded dark-theme shots confirm the deliberate
+  backports: Workshop portrait/status/count and first-monster Train emphasis
+  (a0a3eb8c), Chat bottom anchoring/times and grouped Ring meta (18d73971), and
+  level-up title/card chips. The boxed level badge was deliberately withheld in dark
+  themes (92cdb96b); a Street Fighter badge remains roadmap 42 L. The phone info strip
+  and stacked roster stay as explained in *Reading the mocks*. No additional restyle.
+- **Budget evidence.** The task-2 10.6 KB figure describes that early checkpoint, not
+  the final stylesheet. The current CSS source is 80,553 bytes; §8's 12 KB unminified
+  limit is not met. Recorded task-6 checks do not include Fast-3G or fight-scroll frame
+  timings. These remain open in [10, item L](10-bug-fixes.md#l-millefleur-size-and-performance-acceptance).
+  The completed 46b checklist is not being repeated.
 - **Deviation from §4:** the pre-paint script cannot name the lazy chunk (its file name is
   hashed), so instead of a `modulepreload` the chunk's import starts at the top of `main.tsx`,
   before React renders, whenever `data-theme` is already `millefleur`.
 
-### Handoff (2026-10-06, end of session)
+### Handoff (Codex review, 2026-10-06)
 
-Everything is committed and pushed on `claude/unicorn-monster-cards-cigpmw`; no PR yet (one PR
-for the whole theme, owner's call). Web 957 tests, engine 1565, server 345, Discord 91 green.
+Continue on `claude/unicorn-monster-cards-cigpmw`; do not create a new branch or open
+another PR. Cursor's task-6/task-8 browser checklist is complete in
+[46b](46b-cursor-check.md) and must not be repeated.
 
-Next, in order:
-
-1. **Task 8, live acceptance and review.** The renderer (b78d6f2d) is built and unit-tested but
-   not yet checked in a browser: run the scroll test (300 px wheel steps through the whole
-   history, Millefleur and phosphor at 390 and one at 1440, expect no back-steps), following the
-   bottom in a live fight, a theme switch, the Millefleur Ring beside `samples/ring.html`, and the
-   dark themes against `main`. Only fresh fights carry `lines`; the API must run the rebuilt
-   engine (`pnpm --filter @deck-monsters/engine build`, then restart the server). Risks the
-   implementer flagged: Millefleur's smaller system lines, the card-title rule, the `ch` indent,
-   and the rule pseudo-elements relying on `--event-spacing`. Then an independent review.
-   Docs owed: `web-workspace.md` (row heights with lines, card frames drawn from lines, the line
-   renderer and Millefleur's composed sentences), `events-prompts-and-replay.md` (the web reads
-   lines), `help-inventory.md` and `voice-and-wording.md` (the composed wording: "plays", "rolled
-   … · hit", "is at X/Y hp, bloodied"). An engine nicety: `play.card` is the class name, so the
-   renderer takes the display name from the next card line's title.
-2. **Task 9, flavour,** in the approved direction above; then show the owner the lines in the
-   Ring.
-3. **Task 6, the live check and docs:** every screen in §7 at 390 and 1440 in all five themes;
-   AGENTS.md and the docs map already link `web-themes.md`; fold this pass's decisions into
-   `web-themes.md` and the design system, move this plan to `docs/archive/roadmap/`.
-4. **Close-out:** a whole-branch review, the verification gate, the PR (renumber bugs 231–234
-   if `main` has moved), subscribe.
-
-Local environment notes: local Supabase needs the workarounds in
-`docs/operations/cloud-development.md` (Docker started by hand, images from Docker Hub, a no-op
-Realtime image). The test room is `d5338a52-1c72-4044-9d9f-7a3ab6be037a` (local
-`localtester@example.com`). Render helpers live in the session scratchpad and are not in the
-repo, apart from `docs/reference/millefleur/tools/render.mjs` and `bake.mjs`.
+1. Review fixes 237 and 238 are implemented and independently approved; the full
+   build/typecheck/lint/test/docs gate passed. Main still ends at 230, so 231–236
+   keep their numbers. Task 3d's shipped backports are reviewed.
+2. Add task 9's approved entrance, round and boss lines in both `text` and `lines`.
+   Show fresh events in a new owned scratch room on Millefleur, with a boss and round
+   divider, then delete only that scratch room. Leave the reusable rooms alone.
+3. Keep task 9 pending the owner's review; put every authored line here. Do not archive
+   roadmap 46. The CSS budget and missing performance evidence stay open as item L.
+4. Before each checkpoint push: `pnpm build && pnpm typecheck && pnpm lint && pnpm test`
+   and `pnpm docs:check`. The branch owner decides when to open its one PR.
 
 ### Progress (Cursor, 2026-10-06)
 

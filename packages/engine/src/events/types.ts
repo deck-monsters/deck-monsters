@@ -109,21 +109,23 @@ export type FeedLine =
 			who: string;
 			/** Omitted when the roll names no dice. */
 			die?: string;
-			natural: number;
+			/** Numeric facts are omitted for opaque/composite or incomplete rolls. */
+			natural?: number;
 			/** Bonus dice and modifier folded together (the text shows them as two signed numbers). */
-			bonus: number;
-			total: number;
+			bonus?: number;
+			total?: number;
 			vs?: number;
 			/**
 			 * The card's own verdict when it passed one (`success` on the rolled event), else
 			 * "total beats vs" (a tie loses) when there is a `vs`, else `success`. Natural 20 and
-			 * critical failure take precedence. Damage rolls have no verdict: always `success`.
+			 * critical failure take precedence. Damage rolls use `success`; opaque totals without a
+			 * card verdict omit `result`.
 			 */
-			result: RollResult;
+			result?: RollResult;
 			reason?: string;
 	  }
 	/** The "🎲 *18 v 12*" line under a roll: the same facts as the roll line, as the line shows them. */
-	| { kind: 'verdict'; text: string; total: number; vs?: number; result: RollResult }
+	| { kind: 'verdict'; text: string; total?: number; vs?: number; result?: RollResult }
 	| { kind: 'outcome'; text: string }
 	| { kind: 'hit'; text: string; assailant?: string; target: string; damage: number }
 	| {

@@ -8,7 +8,7 @@ tags: [bugs, roadmap, open]
 ---
 # Bug Fixes and Code Quality
 
-**Status:** Active — three open items (F, J, K). Fixed work and its root causes live only in
+**Status:** Active — four open items (F, J, K, L). Fixed work and its root causes live only in
 [`10b-bugs-fixed.md`](10b-bugs-fixed.md).
 
 ## Open items
@@ -62,6 +62,25 @@ printed nothing for 10 minutes, and a 4-batch run took over 120 s. Not investiga
 a slow seed or a fight that never ends.
 
 - [ ] Time each fight in a long run and look at the slowest seeds' logs.
+
+### L. Millefleur size and performance acceptance
+
+**Owner:** Web themes. Found in roadmap 46's branch review (2026-10-06).
+
+**Root cause:** successive surface/mock-fidelity passes appended overrides to the lazy
+stylesheet without rechecking the original source-size budget. The final source is
+80,553 bytes, against roadmap 46 §8's 12 KB unminified limit; the roadmap's 10.6 KB claim
+was from task 2. Lazy loading still isolates this CSS from players who never choose
+Millefleur. Recorded live checks cover screens, scrolling and first paint, but do not
+record the required Fast-3G run or fight-scroll frame timings, so they cannot establish
+runtime-budget acceptance.
+
+- [ ] Consolidate the cascade while preserving the approved screens, or have the owner
+  explicitly revise the budget with measured production CSS size.
+- [ ] Add or explicitly reconcile the planned Nunito 400 font preload; the lazy chunk
+  imports font faces but currently creates no font preload link.
+- [ ] Record the missing slow-network and scrolling frame-timing evidence. This is a
+  bounded performance check, not a repeat of the completed 46b screen checklist.
 
 ## Historical detail
 
