@@ -64,6 +64,23 @@ const TERMINAL_INDENT: Partial<Record<string, number>> = { outcome: 4 };
 
 const MILLEFLEUR_INDENT = 2;
 
+/**
+ * The engine's hp sentence already ends ("*Quoloth has -4HP.*"). Appending ", bloodied"
+ * after that period painted "has -4HP., bloodied" (live check, 2026-10-06). The rose
+ * clause goes inside the sentence, and the closing markup star stays on the name's clause
+ * so the two parts don't leave an open `*`.
+ */
+function bloodiedHpParts(text: string): FeedPart[] {
+	const match = text.match(/^(.*?)(\.)(\**)\s*$/);
+	if (!match) return [{ text, markup: true }, { text: ', bloodied', danger: true }];
+	const [, stem, dot, stars] = match;
+	return [
+		{ text: `${stem}${stars}`, markup: true },
+		{ text: ', bloodied', danger: true },
+		{ text: dot },
+	];
+}
+
 /** The part of a line's text before `name`: the monster's icon cluster, so sprites still draw. */
 function iconBefore(text: string, name: string): string {
 	const at = text.indexOf(name);
@@ -136,8 +153,9 @@ function plainBlock(line: FeedLine, key: string, style: FeedStyle): FeedBlock {
 		const [title = '', ...rest] = line.text.split('\n');
 		return { key, kind: 'card', indent: 0, parts: [], card: { title, body: rest.join('\n') } };
 	}
-	const parts: FeedPart[] = [{ text: line.text, markup: true }];
-	if (style === 'millefleur' && line.kind === 'hp' && line.bloodied) parts.push({ text: ', bloodied', danger: true });
+	const parts: FeedPart[] = line.kind === 'hp' && line.bloodied && style === 'millefleur'
+		? bloodiedHpParts(line.text)
+		: [{ text: line.text, markup: true }];
 	return {
 		key,
 		kind: line.kind,

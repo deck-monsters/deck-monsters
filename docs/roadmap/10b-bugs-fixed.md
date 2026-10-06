@@ -5416,3 +5416,13 @@ as 30.8px, measured on phosphor. The Street Fighter theme draws card blocks with
 (double) border, so each of its card blocks was 2px taller than booked. Small, but the guess
 exists to keep Virtuoso's anchor correction near zero (#196), and every card row in that theme
 was off. The chrome is now measured from the theme's own CSS (32.8px there; unchanged elsewhere).
+
+### 235. Millefleur's bloodied clause sat after the HP sentence's period — FIXED
+
+Found in the live check of the line renderer (roadmap 46, task 8, 2026-10-06). A bloodied HP
+line is the engine sentence (`*Quoloth has -4HP.*`) plus a rose ", bloodied". The composer
+appended that clause after the whole string, so the feed painted "has -4HP., bloodied": the
+period already closed the sentence. The clause now goes inside the sentence ("has -4HP,
+bloodied.") and the closing markup star stays on the name's clause, so the two parts don't
+leave an open `*`. The engine's `text` is unchanged; Discord and pacing still see the
+original sentence.

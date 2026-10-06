@@ -130,7 +130,7 @@ describe('composeFeedBlocks (millefleur)', () => {
       { kind: 'hit', text: '🦄 Poirot trounces Minotaur for 3 damage.', target: 'Minotaur', damage: 3 },
     ];
     const blocks = composeFeedBlocks(lines, 'millefleur');
-    expect(blocks[0]!.parts.map((p) => p.text)).toEqual(['🐂 *Minotaur has 7HP.*', ', bloodied']);
+    expect(blocks[0]!.parts.map((p) => p.text)).toEqual(['🐂 *Minotaur has 7HP*', ', bloodied', '.']);
     expect(blocks[1]!.parts[0]!.text).toBe(lines[1]!.text);
   });
 });

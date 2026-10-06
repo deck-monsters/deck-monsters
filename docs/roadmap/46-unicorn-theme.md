@@ -258,7 +258,7 @@ rest can run in parallel only where noted.
 | 5 | 46a | **Pixel monsters on paper.** The halo, the soft lift, the pink hit flash; check pale species and white appearances at 1×/2×/3× | `terminal.css`, `renderer.ts`, `rosterSprite`/pixel tests | Struck monsters visibly flash; pale monsters read on paper; nothing smoothed | 4 | done | this commit; halo in 2252866a, d2c8d594 |
 | 6 | 46a | **Live check and docs.** Cursor-style checklist for the screens in §7; `docs/architecture/web-themes.md`; links from `AGENTS.md` and `docs/README.md`; roadmap status | docs | Check passed or findings filed in 10 | 4, 5 | proposed | — |
 | 7 | 46a | **Structured feed lines from the engine.** Every feed announcement also publishes `payload.lines`: clean single lines, each with a `kind` and its facts (round, actor, card, roll, damage, HP). `text` stays byte-for-byte (Discord sends it verbatim; pacing sizes pauses from it) | `packages/engine/src/announcements/*`, `events/types.ts`, `helpers/card.ts`, `ring/index.ts` | A consistency test keeps `lines` equal to `text` without its layout; engine, server and Discord tests green | 3d | in progress | — |
-| 8 | 46a | **The feed rendered from lines.** The web draws `lines` when present (falling back to `text` for older events), with spacing from CSS rather than baked whitespace; Millefleur restyles or replaces lines by kind (the round as a divider, a play's card name, the roll as a quieter second line); row-height guesses count lines | `RingPane`, `ConsolePane`, `format-event-text`, `feed-row-height.ts`, theme CSS | Live scroll test clean under every theme; each feed screen beside its mock | — (after 7) | built, not yet verified live or reviewed | b78d6f2d |
+| 8 | 46a | **The feed rendered from lines.** The web draws `lines` when present (falling back to `text` for older events), with spacing from CSS rather than baked whitespace; Millefleur restyles or replaces lines by kind (the round as a divider, a play's card name, the roll as a quieter second line); row-height guesses count lines | `RingPane`, `ConsolePane`, `format-event-text`, `feed-row-height.ts`, theme CSS | Live scroll test clean under every theme; each feed screen beside its mock | — (after 7) | live check in progress | b78d6f2d; bloodied punctuation in this commit |
 | 9 | 46a | **Flavour.** New narration in the house voice where the mock found room for it, per `voice-and-wording.md`, in `text` and `lines` both: an entrance line per species after a player's monster answers the call; a short beat under each round divider (a small pool, no repeats back to back); a species verb for a boss's arrival (stamps, slithers, stalks…), keeping "sent by the house". Approved direction (owner, 2026-10-06): bring together jokes and lore from across the game — the Unicorn's roses (its witness line), the Gladiator's past, the Basilisk's gaze, the Dragon's hoard, the Jinn's smoke — e.g. a boss Minotaur is "Half bull, all temper", and "…and in no mood for roses" when a Unicorn is in the ring. Refined over time like all flavour | engine announcements, strings inventory | Owner reviews the lines in the Ring | 8 | approved, after 8 | — |
 
 ### Reading the mocks
@@ -373,4 +373,17 @@ Local environment notes: local Supabase needs the workarounds in
 Realtime image). The test room is `d5338a52-1c72-4044-9d9f-7a3ab6be037a` (local
 `localtester@example.com`). Render helpers live in the session scratchpad and are not in the
 repo, apart from `docs/reference/millefleur/tools/render.mjs` and `bake.mjs`.
+
+### Progress (Cursor, 2026-10-06, mid-check)
+
+Task 8 live check is underway on this branch. Do not open a PR. Leave task 9 (flavour) alone.
+
+- Scroll-up in 300px steps: 0 back-jumps on Millefleur 390, phosphor 390, and phosphor 1440.
+  A theme switch mid-history kept the same passage; a switch while near the bottom did not
+  flash the oldest events. The Ring-pane follow-the-bottom sample during a live fight is still
+  open (an earlier sample was the Console scroller).
+- Bug 235: Millefleur painted "has -4HP., bloodied". The rose clause now sits inside the
+  sentence. Confirmed live as "Quoloth has -4HP, bloodied."
+- The check record will be `docs/roadmap/46b-cursor-check.md`. Task 6 (every §7 screen) and
+  the owed docs are not done yet. Do not archive this plan until task 9 lands.
 
