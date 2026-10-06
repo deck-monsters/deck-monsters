@@ -106,17 +106,22 @@ function TerminalTabs({
   const { unread } = useChat();
   const rowRef = useRef<HTMLDivElement>(null);
   // Millefleur's folder tabs keep their natural width and the row scrolls, fading out over its
-  // last 20%. Bring the selected tab clear of that fade. Other themes squeeze every tab into
-  // the bar (nothing overflows, so this would do nothing there) and are left alone on purpose.
+  // last 20%. Bring the selected tab clear of that fade, but only when it is really in the faint
+  // part (past 90%), and then by the least that lands its end at 80%. The first version scrolled
+  // at 76% and centred the tab, so choosing Workshop or Chat cut The Ring off at the left, which
+  // the approved mock never does. Other themes squeeze every tab into the bar (nothing
+  // overflows, so this does nothing there) and are left alone on purpose.
   const activeSurface = SURFACES.find((surface) => isVisible(surface.id))?.id;
   useEffect(() => {
     if (document.documentElement.getAttribute('data-theme') !== 'millefleur') return;
     const row = rowRef.current;
     const tab = row?.querySelector<HTMLElement>('.terminal-tab.active');
     if (!row || !tab || row.scrollWidth <= row.clientWidth) return;
-    const visibleEnd = row.scrollLeft + row.clientWidth * 0.76;
-    if (tab.offsetLeft < row.scrollLeft + 12 || tab.offsetLeft + tab.offsetWidth > visibleEnd) {
-      row.scrollLeft = Math.max(0, tab.offsetLeft - row.clientWidth * 0.4);
+    const tabEnd = tab.offsetLeft + tab.offsetWidth;
+    if (tab.offsetLeft < row.scrollLeft + 12) {
+      row.scrollLeft = Math.max(0, tab.offsetLeft - 12);
+    } else if (tabEnd > row.scrollLeft + row.clientWidth * 0.9) {
+      row.scrollLeft = tabEnd - row.clientWidth * 0.8;
     }
   }, [activeSurface]);
   // Millefleur fades the row's right end; once it has scrolled, a tab cut at the left edge
