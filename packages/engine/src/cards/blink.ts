@@ -81,6 +81,7 @@ export class BlinkCard extends CurseCard {
 		}
 
 		this.emit('rolled', {
+			success: attackSuccess.success,
 			reason: timeShiftReason,
 			card: this,
 			roll: attackRoll,

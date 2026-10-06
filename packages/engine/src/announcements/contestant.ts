@@ -45,7 +45,7 @@ export function announceContestant(
 			boss: Boolean(isBoss),
 			...(isBoss ? {} : { owner: character.givenName }),
 		},
-		...(isBoss && temperament ? [{ kind: 'temperament', text: temperament } as FeedLine] : []),
+		...(isBoss && temperament ? [{ kind: 'temperament', text: temperament } satisfies FeedLine] : []),
 		monsterCardLine(monster),
 	];
 

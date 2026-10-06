@@ -23,7 +23,7 @@ export function announceStay(
 			type: 'announce',
 			scope: 'public',
 			text: failedText,
-			payload: { lines: [{ kind: 'system', text: failedText, name: player.givenName, fled: false }] satisfies FeedLine[] },
+			payload: { lines: [{ kind: 'system', text: failedText, name: player.givenName }] satisfies FeedLine[] },
 		});
 	} else {
 		const stayText = `${player.identityWithHp} bravely stays in the ring.`;
@@ -31,7 +31,7 @@ export function announceStay(
 			type: 'announce',
 			scope: 'public',
 			text: stayText,
-			payload: { lines: [{ kind: 'system', text: stayText, name: player.givenName, fled: false }] satisfies FeedLine[] },
+			payload: { lines: [{ kind: 'system', text: stayText, name: player.givenName }] satisfies FeedLine[] },
 		});
 	}
 }

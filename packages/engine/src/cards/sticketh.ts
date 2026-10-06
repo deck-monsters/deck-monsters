@@ -127,6 +127,7 @@ Natural 1 on either roll fails. Natural 20 on the charge deals max damage.`;
 				: `vs ${target.givenName}'s ac (${target.ac}) to see if the charge lands.`;
 
 		this.emit('rolled', {
+			success: success,
 			reason,
 			card: this,
 			roll: attackRoll,
@@ -172,6 +173,7 @@ Natural 1 on either roll fails. Natural 20 on the charge deals max damage.`;
 				: `${target.givenName}'s dex (${target.dex})`;
 
 		this.emit('rolled', {
+			success: success,
 			reason: `vs ${feint} to pull up before the horn sticks.`,
 			card: this,
 			roll: saveRoll,

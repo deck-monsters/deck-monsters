@@ -75,7 +75,7 @@ export function announceHit(
 		...leadLines(flavorText, text => ({
 			kind: 'hit',
 			text,
-			assailant: assailant?.givenName ?? '',
+			...(assailant?.givenName === undefined ? {} : { assailant: assailant.givenName }),
 			target: monster.givenName,
 			damage,
 		})),

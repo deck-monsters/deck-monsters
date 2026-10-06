@@ -1,4 +1,5 @@
 import { expect } from 'chai';
+import sinon from 'sinon';
 
 import Game from '../game.js';
 import { createTestChannel, noopStateStore } from '../testing/index.js';
@@ -6,10 +7,29 @@ import Basilisk from '../monsters/basilisk.js';
 import Gladiator from '../monsters/gladiator.js';
 import HitCard from '../cards/hit.js';
 import BlastCard from '../cards/blast.js';
+import { FireBreathCard } from '../cards/fire-breath.js';
+import { HelmOfAweCard } from '../cards/helm-of-awe.js';
+import Dragon from '../monsters/dragon.js';
 import { DelayedHit } from '../cards/delayed-hit.js';
 import { TARGET_LOWEST_HP_PLAYER } from '../helpers/targeting-strategies.js';
-import { formatCardLine, itemCardLine, monsterCardLine } from '../helpers/card.js';
+import { formatCardLine, itemCardLine, monsterCardLine, monsterTurnFeedLine } from '../helpers/card.js';
 import { announceContestant } from './contestant.js';
+import { announceBossWillSpawn } from './bossWillSpawn.js';
+import { announceCardDrop } from './cardDrop.js';
+import { announceContestantLeave } from './contestantLeave.js';
+import { announceDeath } from './death.js';
+import { announceEffect } from './effect.js';
+import { announceEndOfDeck } from './endOfDeck.js';
+import { announceFight } from './fight.js';
+import { announceFightConcludes } from './fightConcludes.js';
+import { announceHeal } from './heal.js';
+import { announceItem } from './item-used.js';
+import { announceLeave } from './leave.js';
+import { announceLevelUp } from './level-up.js';
+import { announceModifier } from './modifier.js';
+import { announceRingEvent } from './ringEvent.js';
+import { announceStay } from './stay.js';
+import { announceXPGain } from './xpGain.js';
 import { announceHit } from './hit.js';
 import { announceMiss } from './miss.js';
 import { announceNextRound } from './nextRound.js';
@@ -40,32 +60,69 @@ const cleanLines = (text: string): string[] =>
 		.map(line => line.trim())
 		.filter(line => line !== '' && line !== '```' && !RULE.test(line));
 
-describe('feed lines (payload.lines)', () => {
-	describe('consistency with text over a simulated fight', () => {
-		// Public ring traffic and the private fight-result events. Private `announce` and
-		// `ring.remove` events are command replies to one player ("The ring is empty."), which
-		// are not fight-feed lines and are deliberately left without `lines`.
-		const FEED_TYPES = new Set([
-			'announce',
-			'card.played',
-			'ring.add',
-			'ring.remove',
-			'ring.fight',
-			'ring.fightResolved',
-			'ring.fled',
-			'ring.win',
-			'ring.loss',
-			'ring.draw',
-			'ring.permaDeath',
-			'ring.xp',
-			'ring.cardDrop',
-		]);
+const FEED_TYPES = new Set([
+	'announce',
+	'card.played',
+	'ring.add',
+	'ring.remove',
+	'ring.fight',
+	'ring.fightResolved',
+	'ring.fled',
+	'ring.win',
+	'ring.loss',
+	'ring.draw',
+	'ring.permaDeath',
+	'ring.xp',
+	'ring.cardDrop',
+]);
 
-		it('gives every feed event lines that say exactly what its text says', async function () {
-			this.timeout(60000);
+/**
+ * The contract between an event's `text` and its `lines`, checked line by line: every line is
+ * clean (single line unless a card, no layout whitespace, no rules or fences), the lines
+ * are plain JSON, and they are exactly `text` with layout removed. Two splits are allowed
+ * because a text line holds two facts: a boss's temperament follows its arrival sentence, and
+ * the turn banner's roster line is "A vs B".
+ */
+function expectLinesMatchText(event: Pick<Published, 'type' | 'text' | 'payload'>): FeedLine[] {
+	const lines = event.payload.lines as FeedLine[] | undefined;
+	const label = `${event.type}: ${JSON.stringify(event.text)}`;
+	expect(lines, `no lines on ${label}`).to.be.an('array').that.is.not.empty;
+
+	for (const line of lines!) {
+		expect(line.text, `${line.kind} text`).to.be.a('string').and.not.equal('');
+		if (line.kind !== 'card') expect(line.text, `${line.kind} spans lines`).to.not.include('\n');
+		for (const inner of line.text.split('\n')) {
+			expect(inner, `${line.kind} has layout whitespace`).to.equal(inner.trim()).and.not.equal('');
+			expect(inner).to.not.match(RULE);
+			expect(inner).to.not.include('```');
+		}
+	}
+
+	const expected = cleanLines(event.text);
+	for (const line of lines!) {
+		if (line.kind !== 'temperament') continue;
+		const at = expected.findIndex(text => text.endsWith(` ${line.text}`));
+		if (at >= 0) expected.splice(at, 1, expected[at]!.slice(0, -line.text.length - 1), line.text);
+	}
+	const turnAt = lines!.findIndex(line => line.kind === 'turn');
+	if (turnAt >= 0) {
+		const rosterAt = expected.findIndex(text => text.includes(' vs '));
+		const standings = lines!.filter(line => line.kind === 'standing').length;
+		if (rosterAt >= 0 && standings > 1) expected.splice(rosterAt, 1, ...expected[rosterAt]!.split(' vs '));
+	}
+	const actual = lines!.flatMap(line => line.text.split('\n'));
+	expect(actual, `lines drifted from text of ${label}`).to.deep.equal(expected);
+
+	expect(JSON.parse(JSON.stringify(lines))).to.deep.equal(lines);
+	return lines!;
+}
+
+describe('feed lines (payload.lines)', () => {
+	describe('consistency with text over simulated fights', () => {
+		async function simulate(championHp: number, bossCards: () => any[]): Promise<GameEvent[]> {
 			const previousSkip = process.env.DECK_MONSTERS_SKIP_DELAYS;
 			process.env.DECK_MONSTERS_SKIP_DELAYS = '1';
-			const game = new Game({ roomId: 'feed-lines-room', spawnBosses: false }, () => 0);
+			const game = new Game({ roomId: `feed-lines-room-${championHp}`, spawnBosses: false }, () => 0);
 			game.stateStore = noopStateStore;
 			try {
 				const events: GameEvent[] = [];
@@ -84,51 +141,146 @@ describe('feed lines (payload.lines)', () => {
 				await player.sendMonsterToTheRing({ ring: game.ring, channel: channel.fn, channelName: 'ring', userId: 'user-a' });
 
 				const boss: any = game.ring.spawnBoss();
-				boss.monster.cards = [new BlastCard(), new DelayedHit(), ...Array.from({ length: 7 }, () => new HitCard())];
-				champion.hp = 200;
+				boss.monster.cards = bossCards();
+				champion.hp = championHp;
 
 				await (game.ring as any).fight();
-
-				const feed = events.filter(e => FEED_TYPES.has(e.type) && !(e.scope === 'private' && ['announce', 'ring.remove'].includes(e.type)));
-				const kinds = new Set<string>();
-				expect(feed.length).to.be.greaterThan(20);
-
-				for (const event of feed) {
-					const lines = event.payload.lines as FeedLine[] | undefined;
-					expect(lines, `${event.type} has no lines: ${JSON.stringify(event.text)}`).to.be.an('array').that.is.not.empty;
-
-					for (const line of lines!) {
-						kinds.add(line.kind);
-						expect(line.text, `${event.type}/${line.kind}`).to.be.a('string').and.not.equal('');
-						// Single lines, except a card, which is its frame's inner lines.
-						if (line.kind !== 'card') expect(line.text, `${line.kind} spans lines`).to.not.include('\n');
-						for (const inner of line.text.split('\n')) {
-							expect(inner, `${line.kind} has layout whitespace`).to.equal(inner.trim()).and.not.equal('');
-							expect(inner).to.not.match(RULE);
-							expect(inner).to.not.include('```');
-						}
-					}
-
-					let expected = cleanLines(event.text).join(' ');
-					// The turn banner's `A vs B` roster line is one text line and one `standing`
-					// line per contestant: " vs " is layout between them.
-					if (lines!.some(line => line.kind === 'turn')) expected = expected.replace(/ vs /g, ' ');
-					const actual = lines!.flatMap(line => line.text.split('\n')).join(' ');
-					expect(actual, `${event.type} lines drifted from text`).to.equal(expected);
-
-					// Plain JSON: it is persisted and replayed.
-					expect(JSON.parse(JSON.stringify(lines))).to.deep.equal(lines);
-				}
-
-				// The simulated fight exercised the structured kinds this test is here to guard.
-				for (const kind of ['arrival', 'card', 'turn', 'standing', 'turn-begin', 'play', 'roll', 'hit', 'hp', 'fight-end']) {
-					expect(kinds.has(kind), `no ${kind} line in the fight`).to.equal(true);
-				}
+				return events;
 			} finally {
 				game.dispose();
 				if (previousSkip === undefined) delete process.env.DECK_MONSTERS_SKIP_DELAYS;
 				else process.env.DECK_MONSTERS_SKIP_DELAYS = previousSkip;
 			}
+		}
+
+		// Private `announce` and `ring.remove` events are command replies to one player ("The
+		// ring is empty."), not fight-feed lines, and are deliberately left without `lines`.
+		const feedOf = (events: GameEvent[]) =>
+			events.filter(e => FEED_TYPES.has(e.type) && !(e.scope === 'private' && ['announce', 'ring.remove'].includes(e.type)));
+
+		it('gives every feed event of a won fight lines that say exactly what its text says', async function () {
+			this.timeout(60000);
+			const events = await simulate(200, () => [new BlastCard(), new DelayedHit(), ...Array.from({ length: 7 }, () => new HitCard())]);
+			const feed = feedOf(events);
+			expect(feed.length).to.be.greaterThan(20);
+
+			const kinds = new Set<string>();
+			for (const event of feed) for (const line of expectLinesMatchText(event)) kinds.add(line.kind);
+
+			for (const kind of ['arrival', 'card', 'turn', 'standing', 'turn-begin', 'play', 'roll', 'hit', 'hp', 'fight-end']) {
+				expect(kinds.has(kind), `no ${kind} line in the fight`).to.equal(true);
+			}
+		});
+
+		it('does the same when the player loses (ring.loss / ring.permaDeath, the death lines)', async function () {
+			this.timeout(60000);
+			const events = await simulate(1, () => Array.from({ length: 9 }, () => new HitCard()));
+			const feed = feedOf(events);
+			const types = new Set(feed.map(e => e.type));
+			expect(types.has('ring.loss') || types.has('ring.permaDeath')).to.equal(true);
+			const kinds = new Set<string>();
+			for (const event of feed) for (const line of expectLinesMatchText(event)) kinds.add(line.kind);
+			expect(kinds.has('death')).to.equal(true);
+		});
+	});
+
+	describe('announcers the fights do not reach', () => {
+		const gladiator = (name: string) => new Gladiator({ name, hpVariance: 0, acVariance: 0 });
+		const run = (announce: (eb: any) => void): FeedLine[] => {
+			const { eb, published } = capture();
+			announce(eb);
+			expect(published, 'publishes exactly once').to.have.lengthOf(1);
+			return expectLinesMatchText(published[0]!);
+		};
+
+		it('a doctrine death and an ordinary one', () => {
+			const monster = gladiator('victim');
+			const assailant = gladiator('slayer');
+			const destroyed = run(eb => announceDeath(eb, '', monster, { assailant, destroyed: true }));
+			expect(destroyed.map(l => l.kind)).to.deep.equal(['narration', 'death', 'narration', 'system']);
+			expect(destroyed[1]).to.include({ name: 'Victim', by: 'Slayer', destroyed: true });
+
+			const killed = run(eb => announceDeath(eb, '', monster, { assailant, destroyed: false }));
+			expect(killed[0]).to.include({ kind: 'death', destroyed: false });
+		});
+
+		it('flee, a failed flee and staying', () => {
+			const a = gladiator('runner');
+			const b = gladiator('chaser');
+			const activeContestants = [{ monster: a }, { monster: b }];
+			expect(run(eb => announceLeave(eb, '', a, { activeContestants }))[0]).to.include({ kind: 'flee', name: 'Runner' });
+			expect(run(eb => announceStay(eb, '', a, { fleeRoll: {}, player: a, activeContestants }))[0]).to.include({ kind: 'system', name: 'Runner' });
+			expect(run(eb => announceStay(eb, '', a, { player: a, activeContestants }))[0]!.text).to.include('bravely stays');
+		});
+
+		it('an item use, with its card', () => {
+			const item = { icon: '🧪', itemType: 'Potion', description: 'Heals a little.', stats: 'Heals 5', probability: 50 };
+			const character = { identity: '🦊 Ada', givenName: 'Ada', pronouns: { him: 'him' } };
+			const lines = run(eb => announceItem(eb, '', item, { character, monster: gladiator('target') }));
+			expect(lines.map(l => l.kind)).to.deep.equal(['item', 'card']);
+			expect(lines[0]).to.include({ actor: 'Ada', target: 'Target' });
+		});
+
+		it('level-up, boss-soon, ring event and end of deck', () => {
+			const monster = gladiator('rising');
+			expect(run(eb => announceLevelUp(eb, monster, 3))[0]).to.include({ kind: 'level-up', name: 'Rising', level: 3 });
+			expect(run(eb => announceBossWillSpawn(eb, '', {}, { delay: 60000 }))[0]).to.include({ kind: 'boss-soon', delay: 60000 });
+			const ringEvent: any = { id: 'blood-feud', name: 'Blood Feud', banner: '🩸  BLOOD FEUD — every monster fights for itself.' };
+			expect(run(eb => announceRingEvent(eb, '', {}, { ringEvent }))[0]).to.include({ kind: 'ring-event', id: 'blood-feud', name: 'Blood Feud' });
+			expect(run(eb => announceEndOfDeck(eb, '', {}, { contestant: { monster } }))[0]).to.include({ kind: 'end-of-deck', name: 'Rising' });
+		});
+
+		it('an effect (with multi-line narration) and a modifier', () => {
+			const player = gladiator('caster');
+			const target = gladiator('victim');
+			const lines = run(eb => announceEffect(eb, '', {}, { player, target, effectResult: 'cursed by', narration: 'It stings.\nAgain.' }));
+			expect(lines.map(l => l.kind)).to.deep.equal(['effect', 'narration']);
+			expect(lines[0]).to.include({ target: 'Victim', source: 'Caster' });
+
+			const monster: any = { identity: '🐍 Snake', givenName: 'Snake', ac: 12, encounterModifiers: { ac: 2 }, pronouns: { his: 'his' } };
+			expect(run(eb => announceModifier(eb, '', monster, { amount: 2, attr: 'ac', prevValue: 10 }))[0]).to.include({
+				kind: 'modifier', name: 'Snake', attr: 'ac', amount: 2, value: 12,
+			});
+		});
+
+		it('a heal, and a contestant leaving', () => {
+			const monster = gladiator('patient');
+			const ring = { monsterIsInRing: () => true };
+			expect(run(eb => announceHeal(eb, ring, '', monster, { amount: 4 }))[0]).to.include({ kind: 'heal', name: 'Patient', amount: 4, hp: monster.hp });
+
+			const character = { identity: '🦊 Ada', givenName: 'Ada' };
+			expect(run(eb => announceContestantLeave(eb, '', {}, { contestant: { character, monster, isBoss: false } }))[0]).to.include({ kind: 'system', name: 'Patient', boss: false });
+			expect(run(eb => announceContestantLeave(eb, '', {}, { contestant: { character, monster, isBoss: true } }))[0]).to.include({ boss: true });
+		});
+
+		it('a curse-of-Loki miss, a summon, xp, a card drop and the fight banner', () => {
+			const player = gladiator('swinger');
+			const target = gladiator('dodger');
+			const cursed = run(eb => announceMiss(eb, '', {}, { attackResult: 1, curseOfLoki: true, player, target }));
+			expect(cursed[0]).to.include({ kind: 'miss', blocked: false });
+
+			const xp = run(eb => announceXPGain(eb, '', {}, { contestant: { userId: 'u' }, creature: player, xpGained: 12, killed: [1], coinsGained: 3, reasons: 'First blood.\nAgain.' }));
+			expect(xp.map(l => l.kind)).to.deep.equal(['xp', 'narration', 'narration']);
+			expect(xp[0]).to.include({ xp: 12, coins: 3, killed: 1 });
+
+			const { eb, published } = capture();
+			announceCardDrop(eb, '', {}, { contestant: { monster: player, character: { identity: '🦊 Ada' }, userId: 'u' }, card: { icon: '🃏', itemType: 'Hit', cardType: 'Hit', description: 'Hits.', probability: 50 } });
+			expect(published).to.have.lengthOf(2);
+			for (const event of published) expectLinesMatchText(event);
+
+			const fight = run(eb => announceFight(eb, '', {}, { contestants: [{}, {}] }));
+			expect(fight.map(l => l.kind)).to.deep.equal(['fight-start', 'fight-start']);
+
+			const conclude = run(eb => announceFightConcludes(eb, '', {}, { deaths: 1, isDraw: false, rounds: 2, winners: [{ monsterName: 'A', team: 'T' }, { monsterName: 'B', team: 'T' }] }));
+			expect(conclude[0]).to.include({ kind: 'win' });
+		});
+
+		it('a repeat monster turn line, with no made-up hp', () => {
+			const withHp = monsterTurnFeedLine({ icon: '🐗', givenName: 'Boar', hp: 10, maxHp: 20, ac: 5, displayLevel: 'L2' }, 'Reds');
+			expect(withHp).to.deep.equal({ kind: 'standing', text: '🐗 Boar — 10/20 hp · ac 5 · L2 · Reds', name: 'Boar', hp: 10, maxHp: 20, ac: 5, level: 'L2', team: 'Reds' });
+			const noHp = monsterTurnFeedLine({ icon: '🐗', givenName: 'Boar' });
+			expect(noHp).to.not.have.property('hp');
+			expect(noHp).to.not.have.property('maxHp');
 		});
 	});
 
@@ -314,5 +466,118 @@ describe('feed lines (payload.lines)', () => {
 			expect(card!.kind).to.equal('card');
 			expect(rest).to.deep.equal([]);
 		});
+	});
+});
+
+describe('feed lines: the card decides the verdict', () => {
+	const tie = { naturalRoll: { result: 10 }, bonusResult: 5, modifier: 0, result: 15, primaryDice: '1d20' };
+
+	it('takes `success` over the default "total beats vs" rule', () => {
+		const { eb, published } = capture();
+		announceRolled(eb, 'Card', {}, { who: { givenName: 'Ada' }, reason: 'vs 15 to dodge.', roll: tie, vs: 15, success: true });
+		announceRolled(eb, 'Card', {}, { who: { givenName: 'Ada' }, reason: 'and needs 10 or higher to flee.', roll: tie, success: false });
+
+		expect(linesOf(published[0]!)[0]).to.include({ kind: 'roll', result: 'success', total: 15, vs: 15 });
+		expect(linesOf(published[0]!)[1]).to.include({ kind: 'verdict', result: 'success' });
+		// A flee roll shows no `vs`, but a failed one is still a fail.
+		expect(linesOf(published[1]!)[0]).to.include({ result: 'fail' });
+	});
+
+	it('still lets a natural 20 or a curse of Loki win over `success`', () => {
+		const { eb, published } = capture();
+		announceRolled(eb, 'Card', {}, { who: { givenName: 'Ada' }, reason: 'r', roll: { ...tie, curseOfLoki: true }, success: true });
+		expect(linesOf(published[0]!)[0]).to.include({ result: 'nat1' });
+	});
+
+	it("Fire Breath's dodge passes its own verdict, so meeting the difficulty reads as a success", () => {
+		const card = new FireBreathCard();
+		const dragon = new Dragon({ name: 'Ember' });
+		const target = new Gladiator({ name: 'Tor' });
+		const emitted: any[] = [];
+		card.on('rolled', (_c: string, _card: any, opts: any) => emitted.push(opts));
+		sinon.stub(card, 'checkSuccess').returns({ success: true, strokeOfLuck: false, curseOfLoki: false, tie: false } as any);
+
+		card.dodge(dragon, target);
+		sinon.restore();
+
+		expect(emitted[0].success).to.equal(true);
+		const { eb, published } = capture();
+		announceRolled(eb, 'Card', {}, { ...emitted[0], roll: { ...tie, result: emitted[0].vs } });
+		expect(linesOf(published[0]!)[0]).to.include({ result: 'success', total: emitted[0].vs, vs: emitted[0].vs });
+	});
+
+	it("Helm of Awe's failed flee roll is a fail, though it shows no vs", async () => {
+		const dragon = new Dragon({ name: 'Ember', xp: 300 });
+		const foe = new Gladiator({ name: 'Tor' });
+		const contestants = [dragon, foe].map(monster => ({ monster, character: {} }));
+		const ring: any = { contestants, encounterEffects: [], channelManager: { sendMessages: () => Promise.resolve() } };
+		for (const { monster } of contestants) monster.startEncounter(ring);
+
+		const fake = (natural: number) => ({
+			primaryDice: '1d20', result: natural, naturalRoll: { result: natural }, bonusResult: 0, modifier: 0,
+			strokeOfLuck: natural === 20, curseOfLoki: natural === 1,
+		});
+		const card = new HelmOfAweCard();
+		const save = sinon.stub(card, 'getSaveRoll');
+		save.onCall(0).returns(fake(2));
+		save.onCall(1).returns(fake(1));
+		sinon.stub(card, 'getFleeRoll').returns(fake(3));
+		const emitted: any[] = [];
+		card.on('rolled', (_c: string, _card: any, opts: any) => emitted.push(opts));
+
+		await card.effect(dragon, foe, ring, contestants);
+		await new HitCard().play(foe, dragon, ring, contestants);
+		await new HitCard().play(foe, dragon, ring, contestants);
+		sinon.restore();
+
+		const flee = emitted.find(opts => String(opts.reason).includes('to flee'));
+		expect(flee, 'a flee roll was emitted').to.not.equal(undefined);
+		expect(flee.success).to.equal(false);
+		const { eb, published } = capture();
+		announceRolled(eb, 'Card', {}, flee);
+		expect(linesOf(published[0]!)[0]).to.include({ kind: 'roll', result: 'fail' });
+		expect(linesOf(published[0]!)[0]).to.not.have.property('vs');
+	});
+});
+
+describe('feed lines: card frames carry unwrapped fields', () => {
+	const long = 'A massive, tan, desert-dwelling basilisk with a nasty temper and a worse stare.';
+
+	it('keeps the description on one line though the frame wraps it', () => {
+		const line = monsterCardLine({
+			icon: '🦎',
+			givenName: 'Basil',
+			individualDescription: long,
+			stats: 'Type: Basilisk\nClass: Fighter\nLevel: 3 | XP: 40',
+			rankings: 'Fights: 9 · Won: 4',
+			displayLevel: 'Level 3',
+		}) as Extract<FeedLine, { kind: 'card' }>;
+
+		expect(line.text).to.not.include(long); // wrapped in the frame body
+		expect(line.description).to.equal(long);
+		expect(line.stats).to.deep.equal([
+			{ label: 'Type', value: 'Basilisk' },
+			{ label: 'Class', value: 'Fighter' },
+			{ label: 'Level', value: '3' },
+			{ label: 'XP', value: '40' },
+		]);
+		expect(line.rankings).to.deep.equal([{ label: 'Fights', value: '9 · Won: 4' }]);
+		expect(line.level).to.equal('Level 3');
+	});
+
+	it('shows only stats on a non-verbose monster card, as the frame does', () => {
+		const line = monsterCardLine({ icon: '🦎', givenName: 'Basil', individualDescription: long, stats: 'Type: Basilisk' }, false) as Extract<FeedLine, { kind: 'card' }>;
+		expect(line).to.not.have.property('description');
+		expect(line.stats).to.deep.equal([{ label: 'Type', value: 'Basilisk' }]);
+	});
+
+	it('gates an item card\'s stats and requirements on verbose, like the frame', () => {
+		const item = { icon: '🧪', itemType: 'Potion', description: 'Heals.', stats: 'Heals 5', probability: 50 };
+		const terse = itemCardLine(item, false) as Extract<FeedLine, { kind: 'card' }>;
+		const full = itemCardLine(item, true) as Extract<FeedLine, { kind: 'card' }>;
+		expect(terse.description).to.equal('Heals.');
+		expect(terse).to.not.have.property('stats');
+		expect(full.stats).to.deep.equal([{ label: '', value: 'Heals 5' }]);
+		expect(full.rankings!.some(f => f.label === 'Usable by')).to.equal(true);
 	});
 });

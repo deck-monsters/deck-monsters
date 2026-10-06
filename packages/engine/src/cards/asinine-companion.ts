@@ -101,6 +101,7 @@ export class AsinineCompanionCard extends BoostCard {
 		);
 		const { success } = this.checkSuccess(attackRoll, target.ac);
 		this.emit('rolled', {
+			success: success,
 			reason: `vs ${target.givenName}'s ac (${target.ac}) to determine if the kick landed.`,
 			card: this,
 			roll: attackRoll,

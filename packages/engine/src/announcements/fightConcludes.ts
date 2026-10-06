@@ -53,7 +53,7 @@ export function announceFightConcludes(
 	const winner = winnerLine(winners);
 	const concluded = `The fight concluded ${outcome} after ${rounds} ${roundWord}!`;
 	const lines: FeedLine[] = [
-		...(winner ? [{ kind: 'win', text: winner, winners: winners.map(w => w.monsterName) } as FeedLine] : []),
+		...(winner ? [{ kind: 'win', text: winner, winners: winners.map(w => w.monsterName) } satisfies FeedLine] : []),
 		{ kind: 'fight-end', text: concluded, deaths, rounds, isDraw },
 	];
 

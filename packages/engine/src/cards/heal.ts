@@ -127,6 +127,7 @@ export class HealCard extends BaseCard<HealCardOptions> {
 		}
 
 		this.emit('rolled', {
+			success: success,
 			reason: 'to determine how much to drink.',
 			card: this,
 			roll: healRoll,

@@ -27,7 +27,7 @@ export function announceCard(
 
 	const playText = `${player.identity} lays down the following card:`;
 	const lines: FeedLine[] = [
-		{ kind: 'play', text: playText, actor: player.givenName, card: combat.kind === 'card' ? combat.card.name : '' },
+		{ kind: 'play', text: playText, actor: player.givenName, card: typeof card?.name === 'string' ? card.name : '' },
 		actionCardLine(card),
 	];
 

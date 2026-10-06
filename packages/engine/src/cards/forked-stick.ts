@@ -62,6 +62,7 @@ export class ForkedStickCard extends ImmobilizeCard {
 			: failMessage;
 
 		this.emit('rolled', {
+			success: immobilizeSuccess,
 			reason: `to see if ${player.pronouns.he} ${this.actions.IMMOBILIZES} ${target.givenName}.`,
 			card: this,
 			roll: immobilizeRoll,

@@ -38,6 +38,7 @@ export class FleeCard extends BaseCard {
 			const { success } = this.checkSuccess(fleeRoll, 9);
 
 			this.emit('rolled', {
+				success: success,
 				reason: 'and needs 10 or higher to flee.',
 				card: this,
 				roll: fleeRoll,

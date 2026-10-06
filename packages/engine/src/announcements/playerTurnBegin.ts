@@ -41,7 +41,7 @@ export function announceTurnBegin(
 		...(alreadySeen
 			? [monsterTurnFeedLine(monster, team)]
 			: [
-					{ kind: 'narration', text: `${contestant.character.identity} plays the following monster:` } as FeedLine,
+					{ kind: 'narration', text: `${contestant.character.identity} plays the following monster:` } satisfies FeedLine,
 					monsterCardLine(monster, true),
 				]),
 	];

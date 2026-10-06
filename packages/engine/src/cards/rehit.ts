@@ -69,6 +69,7 @@ export class Rehit extends HitCard {
 		}
 
 		this.emit('rolled', {
+			success: success,
 			reason,
 			card: this,
 			roll: attackRoll,

@@ -29,6 +29,12 @@ interface RolledOpts {
 	reason: string;
 	roll?: RollResult;
 	vs?: number | string;
+	/**
+	 * The card's own decision, when it made one. Cards judge differently (Fire Breath meets
+	 * its difficulty to dodge, a flee needs 10 or higher and shows no `vs`), so the feed line
+	 * takes this over the default "total beats vs" rule.
+	 */
+	success?: boolean;
 	who: any;
 }
 
@@ -37,7 +43,7 @@ const outcomeLines = (outcome: string): FeedLine[] =>
 		.split('\n')
 		.map(line => line.trim())
 		.filter(line => line !== '')
-		.map(line => ({ kind: 'outcome', text: line }));
+		.map(line => ({ kind: 'outcome', text: line }) satisfies FeedLine);
 
 const toNumber = (value: unknown, fallback = 0): number => {
 	const parsed = Number(value);
@@ -48,7 +54,7 @@ export function announceRolled(
 	eb: RoomEventBus,
 	className: string,
 	monster: any,
-	{ outcome, reason, roll, vs, who }: RolledOpts,
+	{ outcome, reason, roll, vs, who, success }: RolledOpts,
 ): void {
 	const naturalRoll = toNumber(roll?.naturalRoll?.result);
 	const bonusResult = toNumber(roll?.bonusResult);
@@ -83,22 +89,24 @@ export function announceRolled(
 		? 'nat1'
 		: roll?.strokeOfLuck
 			? 'nat20'
-			: vsValue !== undefined && !(total > vsValue)
-				? 'fail'
-				: 'success';
+			: success !== undefined
+				? (success ? 'success' : 'fail')
+				: vsValue !== undefined && !(total > vsValue)
+					? 'fail'
+					: 'success';
 	const verdictText = `🎲 *${rollResult}${vsMsg}*`;
 	const lines: FeedLine[] = [
 		{
 			kind: 'roll',
 			text,
 			who: whoName,
-			die: roll?.primaryDice ?? '',
+			...(roll?.primaryDice ? { die: roll.primaryDice } : {}),
 			natural: naturalRoll,
 			bonus: bonusResult + modifier,
 			total,
 			...(vsValue === undefined ? {} : { vs: vsValue }),
 			result: verdict,
-			reason,
+			...(reason ? { reason } : {}),
 		},
 		{
 			kind: 'verdict',

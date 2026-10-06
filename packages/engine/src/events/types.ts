@@ -73,6 +73,15 @@ export type CombatPayload =
  * as they are in `text`; only layout whitespace is gone. A `card` line is the one
  * multi-line exception: its `text` is the frame's inner lines joined by `\n`.
  */
+/** One "Label: value" fact from a card's stats or rankings block ("Class: Barbarian"). */
+export interface CardFact {
+	label: string;
+	value: string;
+}
+
+/** Result of a dice roll as the card judged it (see `roll` and `verdict`). */
+export type RollResult = 'success' | 'fail' | 'nat20' | 'nat1';
+
 export type FeedLine =
 	| { kind: 'narration'; text: string }
 	| { kind: 'arrival'; text: string; name: string; boss: boolean; owner?: string }
@@ -84,8 +93,10 @@ export type FeedLine =
 			kind: 'standing';
 			text: string;
 			name: string;
-			hp: number;
-			maxHp: number;
+			/** Omitted when the creature has no numeric hp (never a made-up 0). */
+			hp?: number;
+			maxHp?: number;
+			/** `ac`, `level` and `team` are only present on the turn-begin form, not the turn banner's roster. */
 			ac?: number;
 			level?: string;
 			team?: string;
@@ -96,40 +107,64 @@ export type FeedLine =
 			kind: 'roll';
 			text: string;
 			who: string;
-			die: string;
+			/** Omitted when the roll names no dice. */
+			die?: string;
 			natural: number;
+			/** Bonus dice and modifier folded together (the text shows them as two signed numbers). */
 			bonus: number;
 			total: number;
 			vs?: number;
-			result: 'success' | 'fail' | 'nat20' | 'nat1';
+			/**
+			 * The card's own verdict when it passed one (`success` on the rolled event), else
+			 * "total beats vs" (a tie loses) when there is a `vs`, else `success`. Natural 20 and
+			 * critical failure take precedence. Damage rolls have no verdict: always `success`.
+			 */
+			result: RollResult;
 			reason?: string;
 	  }
-	| { kind: 'verdict'; text: string; total: number; vs?: number; result: 'success' | 'fail' | 'nat20' | 'nat1' }
+	/** The "🎲 *18 v 12*" line under a roll: the same facts as the roll line, as the line shows them. */
+	| { kind: 'verdict'; text: string; total: number; vs?: number; result: RollResult }
 	| { kind: 'outcome'; text: string }
-	| { kind: 'hit'; text: string; assailant: string; target: string; damage: number }
-	| { kind: 'hp'; text: string; name: string; hp: number; maxHp: number; bloodied: boolean }
+	| { kind: 'hit'; text: string; assailant?: string; target: string; damage: number }
+	| {
+			kind: 'hp';
+			text: string;
+			name: string;
+			hp: number;
+			maxHp: number;
+			/** The target is currently at or under half health (not "just crossed the line"). */
+			bloodied: boolean;
+	  }
 	| { kind: 'miss'; text: string; assailant: string; target: string; blocked: boolean }
 	| { kind: 'heal'; text: string; name: string; amount: number; hp: number; maxHp?: number }
 	| { kind: 'death'; text: string; name: string; by?: string; destroyed: boolean }
 	| { kind: 'flee'; text: string; name: string }
 	| { kind: 'win'; text: string; winners: string[] }
 	| { kind: 'fight-end'; text: string; deaths: number; rounds: number; isDraw: boolean }
+	| { kind: 'xp'; text: string; name: string; xp: number; coins?: number; killed?: number }
+	| { kind: 'card-drop'; text: string; name: string; card: string }
+	| { kind: 'effect'; text: string; target: string; source: string }
+	| { kind: 'modifier'; text: string; name: string; attr: string; amount: number; value: number }
+	| { kind: 'level-up'; text: string; name: string; level: number }
+	| { kind: 'boss-soon'; text: string; delay: number }
+	| { kind: 'ring-event'; text: string; id: string; name: string }
+	| { kind: 'end-of-deck'; text: string; name: string }
+	| { kind: 'item'; text: string; actor: string; target: string }
+	/** Bookkeeping and command-flow lines; `name` is the creature it is about, when there is one. */
+	| { kind: 'system'; text: string; name?: string; boss?: boolean }
 	| {
-			kind:
-				| 'xp'
-				| 'card-drop'
-				| 'effect'
-				| 'modifier'
-				| 'level-up'
-				| 'boss-soon'
-				| 'ring-event'
-				| 'end-of-deck'
-				| 'item'
-				| 'system';
+			kind: 'card';
+			/** The frame body: inner lines joined by `\n`, no fences or rules. Fallback for `description`/`stats`. */
 			text: string;
-			[field: string]: string | number | boolean | string[] | undefined;
-	  }
-	| { kind: 'card'; text: string; title: string; icon?: string };
+			title: string;
+			icon?: string;
+			/** Unwrapped prose, as authored (the frame hard-wraps at 32 columns; this does not). */
+			description?: string;
+			stats?: CardFact[];
+			rankings?: CardFact[];
+			/** A monster's display level, when the frame is a monster's. */
+			level?: string;
+	  };
 
 export interface GameEvent {
 	id: string;

@@ -139,6 +139,7 @@ export class HornGore extends ImmobilizeCard {
 		}
 
 		this.emit('rolled', {
+			success: success,
 			reason,
 			card: this,
 			roll: rolled,
@@ -211,6 +212,7 @@ export class HornGore extends ImmobilizeCard {
 			: failMessage;
 
 		this.emit('rolled', {
+			success: immobilizeSuccess,
 			reason: `to see if ${player.pronouns.he} ${this.actions.IMMOBILIZES} ${target.givenName}.`,
 			card: this,
 			roll: immobilizeRoll,
