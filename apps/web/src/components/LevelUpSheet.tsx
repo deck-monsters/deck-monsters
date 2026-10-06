@@ -1,5 +1,4 @@
 import DetailSheet from './DetailSheet.js';
-import { useTheme } from '../hooks/useTheme.js';
 
 export interface LevelUpGainsView {
   level: number;
@@ -35,7 +34,7 @@ const STAT_LABELS: Array<[keyof Omit<LevelUpGainsView, 'level'>, string]> = [
 /**
  * "A, B and C" as chips. The words and separators are the same ones `joinList` writes (so the
  * text content is identical), but each name is its own span and each separator a span of its
- * own, which Millefleur draws as chips and hides; elsewhere they read as one sentence.
+ * own: the themes draw the names as chips and hide the separators.
  */
 function CardChips({ names }: { names: string[] }) {
   return (
@@ -77,10 +76,6 @@ export default function LevelUpSheet({
   const gains = nextLevel ? STAT_LABELS.filter(([key]) => nextLevel[key] !== 0) : [];
   const cardsNow = nextCards && level !== undefined && nextCards.level === level ? nextCards.cards : [];
 
-  // The mock's sheet (a "Level up" title bar, the level in a halo beside the heading) is
-  // Millefleur's for now; the chips and their spans are neutral. Removing this one condition
-  // turns the title bar and badge on everywhere.
-  const rich = useTheme().theme === 'millefleur';
   const title = level !== undefined ? `${monsterName} at level ${level}` : `${monsterName}'s next level`;
   const xpLine = (
     <p>
@@ -96,28 +91,24 @@ export default function LevelUpSheet({
       closeTitle="Close the level details"
       opener={opener}
       onClose={onClose}
-      barTitle={rich ? 'Level up' : undefined}
+      barTitle="Level up"
     >
-      {rich ? (
-        <div className="level-up-hero">
-          {level !== undefined && (
-            <div className="level-up-badge" aria-hidden="true">
-              <span>{level}</span>
-            </div>
-          )}
-          <div className="level-up-hero-text">
-            <h2 id="level-up-title">{title}</h2>
-            {xpLine}
+      <div className="level-up-hero">
+        {level !== undefined && (
+          <div className="level-up-badge" aria-hidden="true">
+            <span>{level}</span>
           </div>
+        )}
+        <div className="level-up-hero-text">
+          <h2 id="level-up-title">{title}</h2>
+          {xpLine}
         </div>
-      ) : (
-        xpLine
-      )}
+      </div>
       {gains.length > 0 && (
         <ul className="card-detail-verdicts level-up-gains" aria-label="Stat gains">
           {gains.map(([key, label]) => (
-            // Two spans so Millefleur can draw a tile (gain over label). Everywhere else they
-            // read as one line, "Max HP +3", exactly as before.
+            // Two spans so a theme can draw a tile (gain over label); unstyled they read as one
+            // line, "Max HP +3".
             <li key={key}>
               <span className="level-up-stat">{label}</span> <span className="level-up-gain">{signed(nextLevel![key])}</span>
             </li>

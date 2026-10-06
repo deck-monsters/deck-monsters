@@ -1552,3 +1552,101 @@ a.app-shell-room-name {
 
 /* overflow: hidden clips an outset focus ring, so draw it inside the box. */
 .app-shell-room-name:focus-visible { outline: 2px solid var(--color-accent); outline-offset: -2px; }
+
+/*
+  ── Workshop and sheets: what the Millefleur mock did better, in the terminal themes ──
+  (roadmap 46, task 3d.) The markup is shared by every theme; Millefleur draws it its own way
+  (theme-millefleur.css), so these rules are scoped to the other four with the :not() and never
+  reach it. Square, ruled in --color-border, no washes or glows. */
+
+/* "You can train N more" beside the Workshop heading, as the first line of the same fact
+   (the sentence under it hides itself while the count is up). */
+:root:not([data-theme='millefleur']) .workshop-title-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+:root:not([data-theme='millefleur']) .workshop-train-count {
+  display: inline;
+  font-size: 0.72rem;
+  color: var(--color-fg-dim);
+}
+:root:not([data-theme='millefleur']) .workshop-train-line-count { display: none; }
+
+/* The monster's portrait: its pixel sprite (48px, whole-number scale) or its emoji in a plain
+   square frame. Just tall enough for the sprite, so a phone's panel grows by a few pixels. */
+:root:not([data-theme='millefleur']) .workshop-monster-header { align-items: center; }
+:root:not([data-theme='millefleur']) .workshop-monster-portrait {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 52px;
+  height: 52px;
+  border: var(--border-width) solid var(--color-border);
+  background: var(--color-bg);
+}
+:root:not([data-theme='millefleur']) .workshop-monster-portrait-emoji { font-size: 1.6rem; line-height: 1; }
+
+/* The status keeps its tag; a square dot before the word says "state" at a glance. Ready is
+   the one state that asks something of you (send it to the ring), so it takes the success
+   colour; the rest keep the ramp above. */
+:root:not([data-theme='millefleur']) .workshop-status-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+:root:not([data-theme='millefleur']) .workshop-status-tag::before {
+  content: '';
+  width: 0.4rem;
+  height: 0.4rem;
+  background: currentColor;
+}
+:root:not([data-theme='millefleur']) .workshop-status-ready {
+  border-color: var(--color-success);
+  color: var(--color-success);
+}
+
+/* Level-up sheet: "Level up" as the sheet's top line, the level in a square box beside the
+   heading, and the new cards as bordered tags like the feed's .highlight-tag. */
+:root:not([data-theme='millefleur']) .card-detail-pill {
+  color: var(--color-fg-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.72rem;
+}
+:root:not([data-theme='millefleur']) .level-up-hero {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+:root:not([data-theme='millefleur']) .level-up-badge {
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  min-width: 3rem;
+  height: 3rem;
+  padding: 0 0.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: var(--border-width) solid var(--color-accent);
+  color: var(--color-accent);
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1;
+}
+:root:not([data-theme='millefleur']) .level-up-hero-text { min-width: 0; }
+:root:not([data-theme='millefleur']) .level-up-hero-text p { margin-top: 0.3rem; }
+:root:not([data-theme='millefleur']) .level-up-cards-label { display: block; margin-bottom: 0.4rem; }
+:root:not([data-theme='millefleur']) .level-up-sep { display: none; }
+:root:not([data-theme='millefleur']) .level-up-chip {
+  display: inline-block;
+  margin: 0 0.4rem 0.4rem 0;
+  padding: 0.15rem 0.4rem;
+  border: var(--border-width) solid var(--color-border);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--color-fg-bright);
+}

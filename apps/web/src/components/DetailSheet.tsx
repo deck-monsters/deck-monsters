@@ -12,9 +12,9 @@ interface DetailSheetProps {
   opener?: HTMLElement | null;
   onClose: () => void;
   /**
-   * Millefleur only: a short title for the title bar's pill ("Level up"). When given (and the
-   * theme is Millefleur), the sheet draws that pill and the caller renders its own heading
-   * (`<h2 id={titleId}>`) in the body; the dialog stays named by that heading.
+   * A short title for the sheet's top line ("Level up"; Millefleur draws it as a pill in its
+   * title bar). When given, the sheet draws it and the caller renders its own heading
+   * (`<h2 id={titleId}>`) in the body, which must exist: the dialog is named by that heading.
    */
   barTitle?: string;
   children?: ReactNode;
@@ -99,7 +99,8 @@ export default function DetailSheet({ title, titleId, closeTitle, opener, onClos
           A second way to close, drawn only by the Millefleur theme: the System 7 close box in the
           title bar's corner (`.card-detail-close-box`). It is a real button on the same handler,
           not a drawing. It is not rendered at all in the other themes, so their sheets keep
-          Close as the one control.
+          Close as the one control (a square box beside a bottom Close would be two ways to do
+          one thing in a terminal-style sheet).
         */}
         {theme === 'millefleur' && (
           <button
@@ -112,7 +113,7 @@ export default function DetailSheet({ title, titleId, closeTitle, opener, onClos
             <span aria-hidden="true">×</span>
           </button>
         )}
-        {theme === 'millefleur' && barTitle ? (
+        {barTitle ? (
           <span className="card-detail-pill" aria-hidden="true">{barTitle}</span>
         ) : (
           <h2 id={titleId}>{title}</h2>

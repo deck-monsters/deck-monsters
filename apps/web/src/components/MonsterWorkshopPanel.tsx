@@ -1,5 +1,4 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
-import { useTheme } from '../hooks/useTheme.js';
 import { usePixelMonsters } from '../hooks/usePixelMonsters.js';
 import { formatRelativeFromNow } from '../utils/format-relative.js';
 import CardSlot, { type WorkshopCardLocation } from './CardSlot.js';
@@ -143,9 +142,6 @@ export default function MonsterWorkshopPanel({
   onShowDetails,
 }: MonsterPanelProps) {
   const [now, setNow] = useState(() => Date.now());
-  // The mock's Workshop (portrait, status line, primary Send to ring) is Millefleur's for now.
-  // The markup and logic are theme-neutral; removing this one condition turns it on everywhere.
-  const richPanel = useTheme().theme === 'millefleur';
   // The XP bar that opened the level-up details, or null while they are closed.
   const [levelSheetOpener, setLevelSheetOpener] = useState<HTMLElement | null>(null);
   const locked = monster.inEncounter;
@@ -156,7 +152,8 @@ export default function MonsterWorkshopPanel({
   const xpNeeded = Math.max(monster.xpNeededForLevel, 1);
   const xpPct = Math.min(100, Math.max(0, Math.round((monster.xpIntoLevel / xpNeeded) * 100)));
 
-  // One tag, in priority order — a monster can technically be flagged more than one of
+  // One tag, in priority order, and always one: a monster at rest is "Ready" (it can be sent to
+  // the ring), so the row never shows a gap where a state should be — a monster can technically be flagged more than one of
   // these at once (e.g. a boss variant mid-fight while also marked dead pending cleanup),
   // and showing all three would crowd the title row for no added information: "in the
   // ring" already implies "not benched", and either ring state already implies "not what
@@ -167,9 +164,7 @@ export default function MonsterWorkshopPanel({
       ? { key: 'fighting', label: 'fighting' }
       : monster.dead
         ? { key: 'fallen', label: 'fallen' }
-        : richPanel
-          ? { key: 'ready', label: 'ready' }
-          : null;
+        : { key: 'ready', label: 'ready' };
 
   // Required props can still be absent in vi.mock test doubles.
   const hp = Number.isFinite(monster.hp) ? monster.hp : 0;
@@ -236,7 +231,7 @@ export default function MonsterWorkshopPanel({
         .join(' ')}
     >
       <div className="workshop-monster-header">
-        {richPanel && <WorkshopPortrait monster={monster} />}
+        <WorkshopPortrait monster={monster} />
         <div className="workshop-monster-title">
           <div className="workshop-monster-title-row">
             <button
@@ -252,15 +247,13 @@ export default function MonsterWorkshopPanel({
             >
               <span>{monster.name}</span>
             </button>
-            {statusTag && (
-              <span className={`workshop-status-tag workshop-status-${statusTag.key}`}>
-                {richPanel ? statusTag.label.charAt(0).toUpperCase() + statusTag.label.slice(1) : statusTag.label}
-              </span>
-            )}
+            <span className={`workshop-status-tag workshop-status-${statusTag.key}`}>
+              {statusTag.label.charAt(0).toUpperCase() + statusTag.label.slice(1)}
+            </span>
           </div>
           <p>
             {monster.type} · Lvl {monster.level}
-            {richPanel && monster.pronoun ? ` · ${PRONOUN_PAIRS[monster.pronoun] ?? monster.pronoun}` : ''}
+            {monster.pronoun ? ` · ${PRONOUN_PAIRS[monster.pronoun] ?? monster.pronoun}` : ''}
           </p>
         </div>
       </div>
@@ -323,13 +316,13 @@ export default function MonsterWorkshopPanel({
       )}
       <div className="workshop-monster-actions">
         {monster.dead ? (
-          <button title={reviving ? `${monster.name} is on the way back` : `Bring ${monster.name} back. Above level 0 it takes a few minutes`} type="button" className={richPanel ? 'btn btn-primary' : 'btn'} disabled={busy || monster.inEncounter || reviving} onClick={onRevive}>
+          <button title={reviving ? `${monster.name} is on the way back` : `Bring ${monster.name} back. Above level 0 it takes a few minutes`} type="button" className="btn btn-primary" disabled={busy || monster.inEncounter || reviving} onClick={onRevive}>
             {reviving ? 'Reviving…' : 'Revive'}
           </button>
         ) : !monster.inRing ? (
           <button
             type="button"
-            className={richPanel ? 'btn btn-primary' : 'btn'}
+            className="btn btn-primary"
             disabled={busy || anotherMonsterInRing || monster.cards.length < monster.cardSlots}
             // A disabled control with no reason reads as a bug rather than a rule, so say
             // which rule is stopping you.
