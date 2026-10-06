@@ -74,6 +74,7 @@ samples. Dark themes kept their own chrome.
 | Reload, no dark first paint | pass | Millefleur, 390. At DOMContentLoaded the page background was `rgb(251, 248, 245)` and `color-scheme` was `light` | [reload-millefleur-390.png](46b-shots/reload-millefleur-390.png) |
 
 Reading the mocks: the Ring matches the mock's structure (folder tabs, roster, composed
-plays, rose boss card, round divider, bloodied in the standing line). It does not match
-the mock's flavour or the two-line roll, on purpose until task 9. The phone ⓘ stays a
+plays, rose boss card, round divider, bloodied in the standing line). Flavour has since
+landed as task 9. The roll stays one sentence, which is the approved wording from the
+task 8 review, rather than the mock's abbreviated second line. The phone ⓘ stays a
 strip. The roster stays two lines.
