@@ -251,7 +251,7 @@ rest can run in parallel only where noted.
 | 1 | 46a | **Theme plumbing, no visual change.** Shape, font, shadow, surface, meter-track, on-accent, highlight-text, backdrop and sprite-flash tokens with defaults equal to today; define the read-but-unset tokens in all four themes; `color-scheme`; pre-paint `data-theme` and `theme-color`; per-theme `prefers-contrast`; the header class; theme button label by name; extended palette test | `styles/*.css`, `useTheme.ts`, `index.html`, `AppShell.tsx`, `theme-palettes.test.ts`, `useTheme.test.ts`, `renderer.ts` (flash parameter) | Four themes pixel-identical at 390 and 1440; the extended palette test passes for all four; no black flash on a light theme in a smoke test | docs-only work | done | 673779d8, 0c11a733, and the checkpoint after |
 | 2 | 46a | **Millefleur palette, type and components.** `theme-millefleur.css`, `THEMES` entry and icon, Nunito (the feed keeps JetBrains Mono), radii, buttons, fields, cards, banners; the lazy-loaded chunk, the first-paint block and the modulepreload, with a bundle check that other themes' CSS grew by under 1 KB | `theme-millefleur.css`, `themes/millefleur.ts` (lazy chunk), `base.css` (first-paint block), `index.html`, `useTheme.ts`, fonts and `OFL.txt` | Palette test green; card frames unchanged; a reload on Millefleur shows no dark frame; check at 390 and 1440 against the samples | — (after 1) | done | 21e639d9, 293590fa |
 | 3 | 46a | **Millefleur surfaces.** Folder tabs joined to the page, the page and card, the halo, card slots with painted role dots, meters, the ruled Chat log, the Ring transcript, sheets with the painted header, soft title bar and close box, carousel dots | `theme-millefleur.css`, small class hooks in `terminal.css`/`base.css`, the tab markup in the workspace | Each surface matches the design system and samples, rendered side by side; tap targets unchanged | 4 if 4 avoids the same selectors | done | 66fde141, ca0eca5d, 2252866a, 7f84c2f9, 8353b11a |
-| 3b | 46a | **Fidelity to the mocks.** The owner compared the app with the approved mocks at the same scale and found many differences (2026-10-06). Header spacing; the Ring's header, roster rows, card-frame tint and boss-arrival card; the Workshop's portrait, type, meters, slot ⓘ, heading count; Chat anchored to the bottom; the level-up badge, title and chips | `theme-millefleur.css`, small Millefleur-gated hooks in `RingPane`, `RingRoster`, `MonsterWorkshopPanel`, `WorkshopPanel`, `ChatPanel`, `LevelUpSheet` | Each screen beside its mock at 390 × 940 (`fid.mjs`) matches within reason; dark themes unchanged | — | in progress | — |
+| 3b | 46a | **Fidelity to the mocks.** The owner compared the app with the approved mocks at the same scale and found many differences (2026-10-06). Header spacing; the Ring's header, roster rows, card-frame tint and boss-arrival card; the Workshop's portrait, type, meters, slot ⓘ, heading count; Chat anchored to the bottom; the level-up badge, title and chips | `theme-millefleur.css`, small Millefleur-gated hooks in `RingPane`, `RingRoster`, `MonsterWorkshopPanel`, `WorkshopPanel`, `ChatPanel`, `LevelUpSheet` | Each screen beside its mock at 390 × 940 (`fid.mjs`) matches within reason; dark themes unchanged | — | done, in review | d2c8d594, 5c5352ae, a831d675, 8746fcba, c98f4c42 |
 | 3c | 46a | **Theme-aware feed metrics.** Row-height estimates read the feed's type from CSS, so Millefleur's transcript can be 12.5 px on a 1.65 line as designed | `feed-row-height.ts`, `RingPane.tsx`, feed CSS tokens | Dark themes' estimates identical; no scroll jumps (#196) or lost bottom pin (#159) in a live scroll test under both themes | — (after 3b) | proposed | — |
 | 3d | 46a | **Backport what the mock did better.** Remove the Millefleur gate from the case-3 changes (see *Reading the mocks*) and style them for the four dark themes | the components above, `base.css`, `terminal.css` | A deliberate, reviewed change in the dark themes, compared before and after | — (after 3b) | proposed | — |
 | 4 | 46b | **Paint and paper.** Bake the watercolour compositions and the grain tile; wire `--surface-texture`; holo only where listed | WebP assets in the lazy chunk, `theme-millefleur.css` | Budget in §8 met; no long frames while a fight scrolls | 3 (different selectors) | proposed | — |
@@ -277,7 +277,24 @@ difference falls into one of three cases:
    sheet; the level badge and a "Level up" title; the card ⓘ in the slot's corner on phones;
    "You can train N more" beside the heading, with Train as the primary action only until the
    player has a monster; Chat anchored to the bottom with message times; the Ring header's meta
-   as one group; perhaps single-row roster entries.
+   as one group.
+
+Two candidates were tested and set aside, both for reasons already in the code's history:
+
+- **The card ⓘ in the slot's corner on phones.** The phone strip exists because a corner badge
+  overlapped the card and swallowed drops (pass 44). Built again and measured with touch
+  emulation on 83 px slots: a 44 px corner target covers the slot's centre, top and right
+  edge, so the most natural tap opened the card's details instead of selecting it. Millefleur
+  keeps the strip as the tile's quiet footer (case 1). Drops now land on the whole tile in every
+  theme, the ⓘ included, because the drop handler moved from the slot button to its cell.
+- **One line per roster entry** (portrait, name, bar, figure). Bug 169 gave the name line the
+  row's width, with the figure and bar in a narrow right rail, so generated boss names stay
+  whole (the narration uses them in full). With the bar in the middle, a long boss name broke
+  mid-word over four lines at 390 px and the AC fell off the meta line. Millefleur restyles the
+  rows and keeps their layout (case 1); the ▶ turn marker stays beside the turn wash.
+
+**One PR.** The owner asked for everything about this theme, with the small fixes found along
+the way, in a single PR, however large (2026-10-06): tasks 1 to 3d ship together as pass 46a.
 
 ### Pass 46a record
 
