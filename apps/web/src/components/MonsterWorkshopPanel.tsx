@@ -98,6 +98,28 @@ function revivalStatus(revivesAt: number, now: number): string {
   return `Fallen · back at ${time} (${formatRelativeFromNow(revivesAt, now)})`;
 }
 
+/**
+ * The monster's portrait in the Workshop's halo: its pixel sprite, or its emoji when pixel
+ * monsters are off. A component of its own so the setting is only read where a portrait shows.
+ * The emoji falls back to a paw when the record has none (older monsters), so the halo is never
+ * an empty ring.
+ */
+function WorkshopPortrait({ monster }: { monster: MonsterPanelProps['monster'] }) {
+  const { pixelMonstersEnabled } = usePixelMonsters();
+  const emoji = <span className="workshop-monster-portrait-emoji">{monster.icon || '🐾'}</span>;
+  return (
+    <div className="workshop-monster-portrait" aria-hidden="true">
+      {pixelMonstersEnabled ? (
+        <Suspense fallback={emoji}>
+          <MonsterPortrait creatureType={monster.type} appearance={monster.appearance} name={monster.name} />
+        </Suspense>
+      ) : (
+        emoji
+      )}
+    </div>
+  );
+}
+
 export default function MonsterWorkshopPanel({
   monster,
   showSelectionHint,
@@ -124,7 +146,6 @@ export default function MonsterWorkshopPanel({
   // The mock's Workshop (portrait, status line, primary Send to ring) is Millefleur's for now.
   // The markup and logic are theme-neutral; removing this one condition turns it on everywhere.
   const richPanel = useTheme().theme === 'millefleur';
-  const { pixelMonstersEnabled } = usePixelMonsters();
   // The XP bar that opened the level-up details, or null while they are closed.
   const [levelSheetOpener, setLevelSheetOpener] = useState<HTMLElement | null>(null);
   const locked = monster.inEncounter;
@@ -215,17 +236,7 @@ export default function MonsterWorkshopPanel({
         .join(' ')}
     >
       <div className="workshop-monster-header">
-        {richPanel && (
-          <div className="workshop-monster-portrait" aria-hidden="true">
-            {pixelMonstersEnabled ? (
-              <Suspense fallback={<span className="workshop-monster-portrait-emoji">{monster.icon}</span>}>
-                <MonsterPortrait creatureType={monster.type} appearance={monster.appearance} name={monster.name} />
-              </Suspense>
-            ) : (
-              <span className="workshop-monster-portrait-emoji">{monster.icon}</span>
-            )}
-          </div>
-        )}
+        {richPanel && <WorkshopPortrait monster={monster} />}
         <div className="workshop-monster-title">
           <div className="workshop-monster-title-row">
             <button

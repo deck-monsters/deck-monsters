@@ -36,6 +36,14 @@ function useLocalDay(): string {
   return day;
 }
 
+const CHAT_TIME_FORMAT = new Intl.DateTimeFormat([], { hour: 'numeric', minute: '2-digit' });
+
+/** "4:41 PM" for a message, or '' when the timestamp is missing or unparsable. */
+export function chatTimeOfDay(createdAt: string | undefined): string {
+  const at = createdAt ? new Date(createdAt) : null;
+  return at && !Number.isNaN(at.getTime()) ? CHAT_TIME_FORMAT.format(at) : '';
+}
+
 export default function ChatPanel({ isActive = true, headerActions }: ChatPanelProps) {
   const { messages, lastReadId, loaded, markRead, send, members } = useChat();
   const { user } = useAuth();
@@ -226,10 +234,12 @@ export default function ChatPanel({ isActive = true, headerActions }: ChatPanelP
                   <div key={row.key} className={`chat-message${dm ? ' chat-message-dm' : ''}${mine ? ' chat-message-mine' : ''}`}>
                     <strong className="chat-sender">{header}</strong>
                     {/* The time of day, beside the sender. Hidden by base CSS; a theme that
-                        styles .chat-time shows it (Millefleur). */}
-                    <time className="chat-time" dateTime={m.createdAt}>
-                      {new Date(m.createdAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
-                    </time>
+                        styles .chat-time shows it (Millefleur). Omitted when the timestamp does
+                        not parse, rather than printing "Invalid Date". */}
+                    {(() => {
+                      const at = chatTimeOfDay(m.createdAt);
+                      return at ? <time className="chat-time" dateTime={m.createdAt}>{at}</time> : null;
+                    })()}
                     <span className="chat-text">{m.text}</span>
                   </div>
                 );

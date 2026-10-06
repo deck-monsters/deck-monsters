@@ -116,8 +116,9 @@ type InventoryMonsterSummary = {
 	pronoun: string;
 	// The monster's own emoji and the Beastmaster's description of its colour ("gold and
 	// black"), so the Workshop can draw the same pixel portrait the Ring roster does (palette
-	// from `appearance`) and fall back to the emoji when pixel monsters are off. Optional on
-	// the wire for older clients; capped like `ring.state`'s snapshot.
+	// from `appearance`) and fall back to the emoji when pixel monsters are off. Empty when a
+	// record has none (the client draws a paw); both capped, `appearance` like `ring.state`'s
+	// snapshot.
 	icon: string;
 	appearance: string;
 };
@@ -485,7 +486,7 @@ const summarizeInventory = ({
 					nextCards: nextCardsFor(type, level),
 					nextLevel: levelUpGains(type, level),
 					pronoun: subjectPronoun(record.pronouns),
-					icon: typeof record.icon === 'string' ? record.icon : '',
+					icon: typeof record.icon === 'string' ? record.icon.slice(0, 16) : '',
 					appearance: typeof record.color === 'string' ? record.color.slice(0, 100) : '',
 				} satisfies InventoryMonsterSummary,
 			};
