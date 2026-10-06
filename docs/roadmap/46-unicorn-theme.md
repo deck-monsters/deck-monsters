@@ -258,7 +258,7 @@ rest can run in parallel only where noted.
 | 5 | 46a | **Pixel monsters on paper.** The halo, the soft lift, the pink hit flash; check pale species and white appearances at 1×/2×/3× | `terminal.css`, `renderer.ts`, `rosterSprite`/pixel tests | Struck monsters visibly flash; pale monsters read on paper; nothing smoothed | 4 | done | this commit; halo in 2252866a, d2c8d594 |
 | 6 | 46a | **Live check and docs.** Cursor-style checklist for the screens in §7; `docs/architecture/web-themes.md`; links from `AGENTS.md` and `docs/README.md`; roadmap status | docs | Check passed or findings filed in 10 | 4, 5 | proposed | — |
 | 7 | 46a | **Structured feed lines from the engine.** Every feed announcement also publishes `payload.lines`: clean single lines, each with a `kind` and its facts (round, actor, card, roll, damage, HP). `text` stays byte-for-byte (Discord sends it verbatim; pacing sizes pauses from it) | `packages/engine/src/announcements/*`, `events/types.ts`, `helpers/card.ts`, `ring/index.ts` | A consistency test keeps `lines` equal to `text` without its layout; engine, server and Discord tests green | 3d | in progress | — |
-| 8 | 46a | **The feed rendered from lines.** The web draws `lines` when present (falling back to `text` for older events), with spacing from CSS rather than baked whitespace; Millefleur restyles or replaces lines by kind (the round as a divider, a play's card name, the roll as a quieter second line); row-height guesses count lines | `RingPane`, `ConsolePane`, `format-event-text`, `feed-row-height.ts`, theme CSS | Live scroll test clean under every theme; each feed screen beside its mock | — (after 7) | proposed | — |
+| 8 | 46a | **The feed rendered from lines.** The web draws `lines` when present (falling back to `text` for older events), with spacing from CSS rather than baked whitespace; Millefleur restyles or replaces lines by kind (the round as a divider, a play's card name, the roll as a quieter second line); row-height guesses count lines | `RingPane`, `ConsolePane`, `format-event-text`, `feed-row-height.ts`, theme CSS | Live scroll test clean under every theme; each feed screen beside its mock | — (after 7) | built, not yet verified live or reviewed | b78d6f2d |
 | 9 | 46a | **Flavour.** New narration in the house voice where the mock found room for it, per `voice-and-wording.md`, in `text` and `lines` both: an entrance line per species after a player's monster answers the call; a short beat under each round divider (a small pool, no repeats back to back); a species verb for a boss's arrival (stamps, slithers, stalks…), keeping "sent by the house". Approved direction (owner, 2026-10-06): bring together jokes and lore from across the game — the Unicorn's roses (its witness line), the Gladiator's past, the Basilisk's gaze, the Dragon's hoard, the Jinn's smoke — e.g. a boss Minotaur is "Half bull, all temper", and "…and in no mood for roses" when a Unicorn is in the ring. Refined over time like all flavour | engine announcements, strings inventory | Owner reviews the lines in the Ring | 8 | approved, after 8 | — |
 
 ### Reading the mocks
@@ -339,4 +339,38 @@ renderer (task 8), and new flavour (task 9). Discord keeps the text it has today
 - **Deviation from §4:** the pre-paint script cannot name the lazy chunk (its file name is
   hashed), so instead of a `modulepreload` the chunk's import starts at the top of `main.tsx`,
   before React renders, whenever `data-theme` is already `millefleur`.
+
+### Handoff (2026-10-06, end of session)
+
+Everything is committed and pushed on `claude/unicorn-monster-cards-cigpmw`; no PR yet (one PR
+for the whole theme, owner's call). Web 957 tests, engine 1565, server 345, Discord 91 green.
+
+Next, in order:
+
+1. **Task 8, live acceptance and review.** The renderer (b78d6f2d) is built and unit-tested but
+   not yet checked in a browser: run the scroll test (300 px wheel steps through the whole
+   history, Millefleur and phosphor at 390 and one at 1440, expect no back-steps), following the
+   bottom in a live fight, a theme switch, the Millefleur Ring beside `samples/ring.html`, and the
+   dark themes against `main`. Only fresh fights carry `lines`; the API must run the rebuilt
+   engine (`pnpm --filter @deck-monsters/engine build`, then restart the server). Risks the
+   implementer flagged: Millefleur's smaller system lines, the card-title rule, the `ch` indent,
+   and the rule pseudo-elements relying on `--event-spacing`. Then an independent review.
+   Docs owed: `web-workspace.md` (row heights with lines, card frames drawn from lines, the line
+   renderer and Millefleur's composed sentences), `events-prompts-and-replay.md` (the web reads
+   lines), `help-inventory.md` and `voice-and-wording.md` (the composed wording: "plays", "rolled
+   … · hit", "is at X/Y hp, bloodied"). An engine nicety: `play.card` is the class name, so the
+   renderer takes the display name from the next card line's title.
+2. **Task 9, flavour,** in the approved direction above; then show the owner the lines in the
+   Ring.
+3. **Task 6, the live check and docs:** every screen in §7 at 390 and 1440 in all five themes;
+   AGENTS.md and the docs map already link `web-themes.md`; fold this pass's decisions into
+   `web-themes.md` and the design system, move this plan to `docs/archive/roadmap/`.
+4. **Close-out:** a whole-branch review, the verification gate, the PR (renumber bugs 231–234
+   if `main` has moved), subscribe.
+
+Local environment notes: local Supabase needs the workarounds in
+`docs/operations/cloud-development.md` (Docker started by hand, images from Docker Hub, a no-op
+Realtime image). The test room is `d5338a52-1c72-4044-9d9f-7a3ab6be037a` (local
+`localtester@example.com`). Render helpers live in the session scratchpad and are not in the
+repo, apart from `docs/reference/millefleur/tools/render.mjs` and `bake.mjs`.
 
