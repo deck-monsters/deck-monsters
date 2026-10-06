@@ -273,6 +273,37 @@ moves, so nothing else changes.
 | Anchor ruled lines to the text they rule | Use an unsized repeating gradient |
 | Add a doodle only if it means something | Decorate controls |
 
+## In the app
+
+Built in pass 46a of [roadmap 46](../../roadmap/46-unicorn-theme.md) as
+`apps/web/src/styles/theme-millefleur.css`, a lazily loaded chunk with the Nunito faces. Where
+the real app differs from the samples above, this is what was built and why:
+
+- **The transcript keeps the feed's metrics.** The samples set the Ring at 12.5px on a 1.65 line.
+  The app's feed reserves each row's height in JavaScript from 14px × 1.4 JetBrains Mono, so a
+  different size or line height makes the list jump while scrolling (bugs 159 and 196).
+  Millefleur changes the feed's colours, tags, separators and bands, never its font size, line
+  height or horizontal padding. That includes the highlight band, which stays 2px wide.
+- **A fifth card role.** The engine has a guard role (labelled DEFENCE) that the samples did not
+  show. Its dot is woad sky `#5f93d6`. Every role dot sits beside its word; the role glyph
+  (⚔ ✚ ✦) is hidden in this theme, because the dot and word already say it.
+- **Chat's ruled tile starts at the top of the log.** The app's chat log flows from the top, not
+  up from the composer as in the sample, so the 28px tile is anchored to the content's top
+  (`background-attachment: local`). Every row is still exactly 28px, so the last message sits on
+  a rule.
+- **Meters and controls, for contrast.** The healthy HP gradient runs `#2c8873 → #2a8570`, not
+  from `#3f9c84`, so both ends are at least 3:1 on the track. The XP fill keeps the holo gradient
+  with stronger stops and a 1px `--mf-line-control` inner edge, so a filled bar is visibly
+  filled. Carousel dots and the empty slot's `+` are drawn in `--mf-line-control` (3.4:1) rather
+  than the paler tab line.
+- **Folder tabs** fill from .97 to .92 rather than .8, because at .8 the neighbour's shoulder
+  line showed through. When the row is wider than the screen, it scrolls to keep the selected
+  tab in view and fades at whichever ends have more tabs.
+- **The halo** is on the Ring roster's portraits. The app has no Workshop portrait and no
+  level badge yet, so the level-up sheet has no halo.
+- **Sheets** get the close box as a second, real close control (the sheet's own Close button
+  stays at the bottom); it and the title bar stay visible while a tall sheet scrolls.
+
 ## Related
 
 - [The brief and artist statement](README.md)
