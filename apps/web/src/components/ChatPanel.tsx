@@ -2,7 +2,7 @@ import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useSta
 import { surfaceDescription } from './surface-descriptions.js';
 import { useChat } from '../hooks/useChat.js';
 import { useAuth } from '../lib/auth-context.js';
-import { buildChatRows } from '../utils/chat-rows.js';
+import { buildChatRows, chatTimeOfDay } from '../utils/chat-rows.js';
 
 interface ChatPanelProps {
   /** The room is implied by the surrounding `ChatProvider`; kept so the surface registry can pass it uniformly. */
@@ -34,14 +34,6 @@ function useLocalDay(): string {
     return () => clearTimeout(timer);
   }, [day]);
   return day;
-}
-
-const CHAT_TIME_FORMAT = new Intl.DateTimeFormat([], { hour: 'numeric', minute: '2-digit' });
-
-/** "4:41 PM" for a message, or '' when the timestamp is missing or unparsable. */
-export function chatTimeOfDay(createdAt: string | undefined): string {
-  const at = createdAt ? new Date(createdAt) : null;
-  return at && !Number.isNaN(at.getTime()) ? CHAT_TIME_FORMAT.format(at) : '';
 }
 
 export default function ChatPanel({ isActive = true, headerActions }: ChatPanelProps) {

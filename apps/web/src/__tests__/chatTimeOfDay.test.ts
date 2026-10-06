@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { chatTimeOfDay } from '../components/ChatPanel';
+import { chatTimeOfDay } from '../utils/chat-rows';
 
 describe('chatTimeOfDay', () => {
   it('formats a message time as a time of day', () => {
