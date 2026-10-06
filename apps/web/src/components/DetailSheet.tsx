@@ -11,6 +11,12 @@ interface DetailSheetProps {
   /** The control that opened the sheet, from the click event; focus returns to it on close. */
   opener?: HTMLElement | null;
   onClose: () => void;
+  /**
+   * Millefleur only: a short title for the title bar's pill ("Level up"). When given (and the
+   * theme is Millefleur), the sheet draws that pill and the caller renders its own heading
+   * (`<h2 id={titleId}>`) in the body; the dialog stays named by that heading.
+   */
+  barTitle?: string;
   children?: ReactNode;
 }
 
@@ -22,7 +28,7 @@ interface DetailSheetProps {
  * whose overflow and stacking would clip a `position: fixed` child. Focus moves to Close on
  * open and returns to the control that opened it; Escape and a tap on the backdrop close it.
  */
-export default function DetailSheet({ title, titleId, closeTitle, opener, onClose, children }: DetailSheetProps) {
+export default function DetailSheet({ title, titleId, closeTitle, opener, onClose, barTitle, children }: DetailSheetProps) {
   const { theme } = useTheme();
   const closeRef = useRef<HTMLButtonElement>(null);
   const sheetRef = useRef<HTMLDivElement>(null);
@@ -106,7 +112,11 @@ export default function DetailSheet({ title, titleId, closeTitle, opener, onClos
             <span aria-hidden="true">×</span>
           </button>
         )}
-        <h2 id={titleId}>{title}</h2>
+        {theme === 'millefleur' && barTitle ? (
+          <span className="card-detail-pill" aria-hidden="true">{barTitle}</span>
+        ) : (
+          <h2 id={titleId}>{title}</h2>
+        )}
         {children}
         <button
           ref={closeRef}

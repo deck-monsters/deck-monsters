@@ -223,6 +223,8 @@ describe('level-up details from the XP bar (bug 225)', () => {
       />,
     );
   const gains = { level: 3, hp: 3, ac: 1, str: 0, dex: 1, int: 1 };
+  // The sentence is chips and separator spans (Millefleur draws them as chips): its text is unchanged.
+  const cardsSentence = () => document.querySelector('.level-up-cards')?.textContent?.replace(/\s+/g, ' ');
   const openSheet = () => {
     fireEvent.click(screen.getByRole('button', { name: /See what level 3 brings/ }));
     return within(screen.getByRole('dialog'));
@@ -247,17 +249,20 @@ describe('level-up details from the XP bar (bug 225)', () => {
 
   it('names the cards the level opens', () => {
     renderPanel(makeMonster({ level: 2, nextLevel: gains, nextCards: { level: 3, cards: ['Fire Breath', 'Gore', 'Hit'] } }));
-    expect(openSheet().getByText('New cards Rex can use: Fire Breath, Gore and Hit.')).toBeTruthy();
+    openSheet();
+    expect(cardsSentence()).toBe('New cards Rex can use: Fire Breath, Gore and Hit.');
   });
 
   it("uses the monster's pronoun rather than \"it\" (bug 230)", () => {
     renderPanel(makeMonster({ level: 2, pronoun: 'she', nextLevel: gains, nextCards: { level: 3, cards: ['Gore'] } }));
-    expect(openSheet().getByText('New cards she can use: Gore.')).toBeTruthy();
+    openSheet();
+    expect(cardsSentence()).toBe('New cards she can use: Gore.');
   });
 
   it('says when the next new cards come later', () => {
     renderPanel(makeMonster({ level: 2, nextLevel: gains, nextCards: { level: 5, cards: ['Gore'] } }));
-    expect(openSheet().getByText('No new cards at this level. Next new cards, at level 5: Gore.')).toBeTruthy();
+    openSheet();
+    expect(cardsSentence()).toBe('No new cards at this level. Next new cards, at level 5: Gore.');
   });
 
   it('says when no new cards are left', () => {

@@ -1168,15 +1168,18 @@
   border: 1px solid var(--mf-line-tab);
   border-bottom: 0;
   border-radius: 24px 24px 0 0;
-  background-color: #fffdfa;
+  background-color: #fdfaf6;
+  /* Five washes, as strong as the mock's multiplied blobs and as deep (~135px): pink, butter,
+     sea-foam, sky and lilac, left to right, over paper. Positions are percentages of the width
+     so they hold on the wider dialog. The baked watercolour replaces this in pass 46b. */
   background-image:
-    radial-gradient(ellipse 36% 100% at 8% 18%, rgb(251 217 230 / 0.95), transparent 72%),
-    radial-gradient(ellipse 34% 90% at 32% 4%, rgb(251 239 200 / 0.95), transparent 72%),
-    radial-gradient(ellipse 36% 100% at 55% 22%, rgb(205 238 226 / 0.95), transparent 72%),
-    radial-gradient(ellipse 34% 90% at 77% 6%, rgb(214 230 251 / 0.95), transparent 72%),
-    radial-gradient(ellipse 36% 100% at 98% 24%, rgb(227 212 250 / 0.95), transparent 72%),
-    linear-gradient(#fffdfa, #fbf8f5);
-  background-size: 100% 130px, 100% 130px, 100% 130px, 100% 130px, 100% 130px, 100% 100%;
+    radial-gradient(150px 64px at 14% 22px, rgb(246 199 218 / 0.8) 0 45%, transparent 100%),
+    radial-gradient(130px 66px at 40% 26px, rgb(250 226 168 / 0.8) 0 45%, transparent 100%),
+    radial-gradient(95px 58px at 58% 62px, rgb(196 235 219 / 0.8) 0 45%, transparent 100%),
+    radial-gradient(140px 62px at 85% 20px, rgb(201 220 249 / 0.8) 0 45%, transparent 100%),
+    radial-gradient(75px 70px at 99% 72px, rgb(220 201 248 / 0.8) 0 45%, transparent 100%),
+    linear-gradient(#fdfaf6, #fdfaf6);
+  background-size: 100% 150px, 100% 150px, 100% 150px, 100% 150px, 100% 150px, 100% 100%;
   background-repeat: no-repeat;
 }
 @media (min-width: 700px) {
@@ -1186,23 +1189,24 @@
    sheet itself is the scroller, so all three are sticky items that take no height (each
    margin-bottom cancels its height plus the sheet's 8px flex gap; a margin-top places it), and
    stay put while a long card description scrolls underneath. */
-[data-theme='millefleur'] .card-detail-sheet { padding-top: 5px; }
+[data-theme='millefleur'] .card-detail-sheet { padding: 3px 22px calc(28px + env(safe-area-inset-bottom, 0px)); }
 [data-theme='millefleur'] .card-detail-sheet::before {
   content: '';
   position: sticky;
-  top: 17px;
+  top: 14px;
   z-index: 1;
   flex: 0 0 auto;
   height: 11px;
-  margin: 12px 24px -19px 56px;
+  margin: 12px 38px -19px 38px;
   background: repeating-linear-gradient(to bottom, rgb(70 50 110 / 0.22) 0 1px, transparent 1px 3px);
   -webkit-mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
   mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
   pointer-events: none;
 }
-[data-theme='millefleur'] .card-detail-sheet h2 {
+[data-theme='millefleur'] .card-detail-sheet > h2,
+[data-theme='millefleur'] .card-detail-pill {
   position: sticky;
-  top: 10px;
+  top: 7px;
   z-index: 3;
   align-self: center;
   flex: 0 0 auto;
@@ -1225,11 +1229,11 @@
 /* The close box: a 20px rounded square in a 44px target, top left, on a real close control. */
 [data-theme='millefleur'] .card-detail-close-box {
   position: sticky;
-  top: 5px;
+  top: 2px;
   z-index: 4;
   align-self: flex-start;
   flex: 0 0 auto;
-  margin: -12px 0 -52px 6px;
+  margin: -12px 0 -52px -14px;
   width: 44px;
   height: 44px;
   padding: 0;
@@ -1267,7 +1271,7 @@
   color: #fff;
   font-weight: 800;
   box-shadow: var(--mf-primary-ring), 0 6px 14px rgb(59 42 85 / 0.22);
-  margin: 6px 4px 0;
+  margin: 4px 0 0;
 }
 @media (hover: hover) {
   [data-theme='millefleur'] .card-detail-sheet .card-detail-close:hover:not(:disabled) {
@@ -1275,23 +1279,79 @@
     color: #fff;
   }
 }
+/* Level-up: the level in a halo beside the heading, as the mock draws it. */
+[data-theme='millefleur'] .level-up-hero { display: flex; align-items: center; gap: 16px; margin-top: 5px; }
+[data-theme='millefleur'] .level-up-badge {
+  position: relative;
+  isolation: isolate;
+  flex: 0 0 76px;
+  width: 76px;
+  height: 76px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--color-accent);
+}
+[data-theme='millefleur'] .level-up-badge::before,
+[data-theme='millefleur'] .level-up-badge::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  border-radius: 50%;
+}
+[data-theme='millefleur'] .level-up-badge::before {
+  inset: 0;
+  background: conic-gradient(from 210deg, #fbd2e4, #fbecbe, #c9eedf, #cfe2fb, #e0d0fb, #fbd2e4);
+  filter: blur(6px);
+}
+[data-theme='millefleur'] .level-up-badge::after { inset: 7px; background: radial-gradient(circle at 40% 35%, #fffdfa, #f6f0fd); }
+[data-theme='millefleur'] .level-up-hero-text { min-width: 0; }
+[data-theme='millefleur'] .level-up-hero-text h2 { margin: 0; font-size: 22px; font-weight: 800; line-height: 1.15; color: var(--color-fg-bright); }
+[data-theme='millefleur'] .level-up-hero-text p { margin: 6px 0 0; font-size: 13px; line-height: 1.45; color: var(--color-fg-dim); }
+/* New cards as chips; the sentence's own separators are still in the text, just not drawn. */
+[data-theme='millefleur'] .level-up-cards { margin-top: 10px; }
+[data-theme='millefleur'] .level-up-cards-label {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--color-fg-dim);
+}
+[data-theme='millefleur'] .level-up-sep { display: none; }
+[data-theme='millefleur'] .level-up-chip {
+  display: inline-block;
+  margin: 0 6px 8px 0;
+  padding: 7px 12px;
+  border: 1px solid rgb(190 170 215 / 0.65);
+  border-radius: var(--radius-pill);
+  background: rgb(255 253 250 / 0.9);
+  font-size: 12.5px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--color-fg);
+}
 /* Level-up stat tiles: one tile per gain, the gain over a tracked label. */
 [data-theme='millefleur'] .level-up-gains {
   display: grid;
   grid-auto-flow: column;
   grid-auto-columns: 1fr;
-  gap: 8px;
+  gap: 7px;
+  margin-top: 10px;
 }
 [data-theme='millefleur'] .level-up-gains li {
   display: flex;
   flex-direction: column-reverse;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: 5px;
   min-width: 0;
-  padding: 10px 4px 8px;
+  padding: 10px 0;
   border: 1px solid var(--mf-line-soft);
-  border-radius: 14px;
+  border-radius: 13px;
   background: rgb(255 253 250 / 0.95);
   font-size: 0;                          /* the separating space between the two spans */
   text-align: center;
@@ -1465,9 +1525,14 @@
   [data-theme='millefleur'] .card-detail-sheet { background: #ffffff; border: 2px solid #000000; border-bottom: 0; }
   @media (min-width: 700px) { [data-theme='millefleur'] .card-detail-sheet { border-bottom: 2px solid #000000; } }
   [data-theme='millefleur'] .card-detail-sheet::before { display: none; }
-  [data-theme='millefleur'] .card-detail-sheet h2 { border: 2px solid #000000; background: #ffffff; color: #000000; }
+  [data-theme='millefleur'] .card-detail-sheet > h2,
+  [data-theme='millefleur'] .card-detail-pill { border: 2px solid #000000; background: #ffffff; color: #000000; }
   [data-theme='millefleur'] .card-detail-close-box > span { border: 2px solid #000000; color: #000000; }
   [data-theme='millefleur'] .card-detail-sheet .card-detail-close { background: #000000; color: #ffffff; box-shadow: var(--mf-primary-ring); }
+  [data-theme='millefleur'] .level-up-badge::before { display: none; }
+  [data-theme='millefleur'] .level-up-badge::after { background: #ffffff; box-shadow: inset 0 0 0 2px #000000; }
+  [data-theme='millefleur'] .level-up-badge { color: #000000; }
+  [data-theme='millefleur'] .level-up-chip { border: 2px solid #000000; background: #ffffff; color: #000000; }
   [data-theme='millefleur'] .level-up-gains li { border: 2px solid #000000; background: #ffffff; }
   [data-theme='millefleur'] .level-up-gain,
   [data-theme='millefleur'] .level-up-stat { color: #000000; }
