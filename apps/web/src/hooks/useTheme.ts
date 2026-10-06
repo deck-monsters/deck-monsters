@@ -55,6 +55,12 @@ const LAZY_THEMES: Partial<Record<ThemeId, () => Promise<unknown>>> = {
   millefleur: () => import('../themes/millefleur.js'),
 };
 const lazyLoads = new Map<ThemeId, Promise<unknown>>();
+const settledLoads = new Set<ThemeId>();
+
+/** True when the theme's stylesheet is in the page: no chunk to wait for, or it has landed. */
+export function themeAssetsReady(theme: ThemeId): boolean {
+  return !LAZY_THEMES[theme] || settledLoads.has(theme);
+}
 
 export function loadThemeAssets(theme: ThemeId): Promise<unknown> {
   const load = LAZY_THEMES[theme];
@@ -66,6 +72,10 @@ export function loadThemeAssets(theme: ThemeId): Promise<unknown> {
       console.error(`[theme] failed to load ${theme}`, error);
     });
     lazyLoads.set(theme, pending);
+    // A failed load leaves the cache empty (above) and is not "ready"; a later apply retries.
+    void pending.then(() => {
+      if (lazyLoads.get(theme) === pending) settledLoads.add(theme);
+    });
   }
   return pending;
 }

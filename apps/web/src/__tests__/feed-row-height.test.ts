@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { estimateFeedRowHeight, feedWrapColumns } from '../utils/feed-row-height.js';
+import {
+  DEFAULT_FEED_METRICS,
+  FEED_CHAR_PX,
+  estimateFeedRowHeight,
+  feedWrapColumns,
+  readFeedMetrics,
+  type FeedMetrics,
+} from '../utils/feed-row-height.js';
 
 const narration = 'one short narration line';
 const card = [
@@ -54,6 +61,68 @@ describe('estimateFeedRowHeight', () => {
     const inside = '==================================\n title\n==================================';
     expect(estimateFeedRowHeight(`before\n\`\`\`\n${inside}\n\`\`\``)).toBeGreaterThan(
       estimateFeedRowHeight(`before\n${inside}`),
+    );
+  });
+});
+
+// The old hard-coded numbers. The four dark themes must keep drawing and booking exactly these.
+describe('feed metrics', () => {
+  it('defaults equal the constants the estimate used before it read the CSS', () => {
+    expect(DEFAULT_FEED_METRICS.linePx).toBeCloseTo(14 * 1.4, 10);
+    expect(DEFAULT_FEED_METRICS.charPx).toBeCloseTo(14 * 0.6, 10);
+    expect(DEFAULT_FEED_METRICS.rowChromePx).toBeCloseTo(0.4 * 16 * 2, 10);
+    expect(DEFAULT_FEED_METRICS.cardChromePx).toBeCloseTo(0.5 * 16 * 2 + 0.4 * 16 * 2 + 2, 10);
+    expect(DEFAULT_FEED_METRICS.gutterPx).toBe(24);
+    expect(FEED_CHAR_PX).toBe(8.4);
+    expect(estimateFeedRowHeight('')).toBeCloseTo(32.4, 5);
+  });
+
+  it('passing the default metrics explicitly changes nothing', () => {
+    for (const text of [narration, card, 'a\n\nb', '']) {
+      expect(estimateFeedRowHeight(text, 40, DEFAULT_FEED_METRICS)).toBe(
+        estimateFeedRowHeight(text, 40),
+      );
+    }
+  });
+
+  it('falls back to the defaults where there is no layout (jsdom)', () => {
+    expect(readFeedMetrics(document.body)).toEqual(DEFAULT_FEED_METRICS);
+    expect(readFeedMetrics(null)).toEqual(DEFAULT_FEED_METRICS);
+    expect(document.querySelector('.event-feed')).toBeNull();
+  });
+
+  // Millefleur: JetBrains Mono 12.5px on a 1.65 line (theme-millefleur.css, from ring.html).
+  const millefleur: FeedMetrics = {
+    linePx: 12.5 * 1.65,
+    charPx: 12.5 * 0.6,
+    rowChromePx: 12.8,
+    cardChromePx: 30.8,
+    gutterPx: 24,
+  };
+
+  it('books Millefleur at a 20.625px line and a 7.5px advance', () => {
+    expect(millefleur.linePx).toBeCloseTo(20.625, 5);
+    expect(millefleur.charPx).toBeCloseTo(7.5, 5);
+    expect(estimateFeedRowHeight('one line', 48, millefleur)).toBeCloseTo(12.8 + 20.625, 5);
+    expect(estimateFeedRowHeight('x'.repeat(100), 48, millefleur)).toBeCloseTo(
+      12.8 + 3 * 20.625,
+      5,
+    );
+  });
+
+  it('wraps at the Millefleur advance: a 342px phone column is 45 columns, not 40', () => {
+    expect(feedWrapColumns(342, millefleur)).toBe(45);
+    expect(feedWrapColumns(342)).toBe(40);
+    // A 34-column card frame still fits one line on that column.
+    expect(feedWrapColumns(342, millefleur)).toBeGreaterThanOrEqual(34);
+  });
+
+  it('books a Millefleur card block from its own line and chrome', () => {
+    const text = 'before\n```\n==========\n title\n==========\n```';
+    // 1 narration line + 4 card lines (the blank after the fence counts), one row padding and one card panel.
+    expect(estimateFeedRowHeight(text, 45, millefleur)).toBeCloseTo(
+      12.8 + 30.8 + 5 * 20.625,
+      5,
     );
   });
 });

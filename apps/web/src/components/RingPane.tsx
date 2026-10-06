@@ -19,12 +19,16 @@ import { useRingFeedListener, type TrackedRingFeedEvent } from '../hooks/useRing
 import { useRingKeyTimestamps } from '../hooks/useRingKeyTimestamps.js';
 import { usePixelMonsters } from '../hooks/usePixelMonsters.js';
 import { AT_BOTTOM_THRESHOLD_PX, useFeedAutoScroll } from '../hooks/useFeedAutoScroll.js';
+import { themeAssetsReady, loadThemeAssets, useTheme } from '../hooks/useTheme.js';
 import { useTimeAgo } from '../hooks/useTimeAgo.js';
 import { formatEventText } from '../utils/format-event-text.js';
 import {
   estimateFeedRowHeight,
   FEED_WRAP_COLUMNS_FALLBACK,
   feedWrapColumns,
+  readFeedMetrics,
+  DEFAULT_FEED_METRICS,
+  type FeedMetrics,
 } from '../utils/feed-row-height.js';
 import { rememberMonsters } from '../hooks/useKnownMonsters.js';
 import { loadInlineSprites } from '../hooks/useInlineSprites.js';
@@ -172,6 +176,10 @@ function LastFightFooter({
 }
 
 
+function sameMetrics(a: FeedMetrics, b: FeedMetrics): boolean {
+  return (Object.keys(b) as (keyof FeedMetrics)[]).every((key) => a[key] === b[key]);
+}
+
 export default function RingPane({
   roomId,
   isActive,
@@ -198,14 +206,28 @@ export default function RingPane({
   // waits for a real width: mounting on the 48-column fallback booked narration on a
   // wider pane at up to twice its height, and measuring it moved scroll-back again (a
   // Codex review of PR #406). ResizeObserver reports the width once the pane is shown.
+  //
+  // The feed's type is a theme token (`--feed-font-size`, `--feed-line-height`), so the
+  // estimate's line height, glyph advance and chrome are read from the live CSS. A theme
+  // switch changes them, and Virtuoso ignores new estimates once its size tree has
+  // anything in it, so a switch unmounts the list (`measuredTheme` no longer matches) and
+  // it mounts again with the new numbers. A lazy theme's stylesheet may not be in the page
+  // yet; measuring before it lands would book the old theme's type.
+  const { theme } = useTheme();
   const feedAreaRef = useRef<HTMLDivElement>(null);
   const [wrapColumns, setWrapColumns] = useState(FEED_WRAP_COLUMNS_FALLBACK);
+  const [feedMetrics, setFeedMetrics] = useState<FeedMetrics>(DEFAULT_FEED_METRICS);
   const [widthMeasured, setWidthMeasured] = useState(false);
+  const [measuredTheme, setMeasuredTheme] = useState<string | null>(null);
   useLayoutEffect(() => {
     const area = feedAreaRef.current;
     if (!area) return;
+    let cancelled = false;
+    let observer: ResizeObserver | undefined;
+    let frame = 0;
     const measure = (observed?: number) => {
-      const scroller = area.querySelector('.event-feed');
+      if (cancelled) return;
+      const scroller = area.querySelector('.event-feed:not([aria-hidden])');
       const width =
         scroller instanceof HTMLElement && scroller.clientWidth > 0
           ? scroller.clientWidth
@@ -213,29 +235,43 @@ export default function RingPane({
             ? area.clientWidth
             : (observed ?? 0);
       if (width <= 0) return;
-      const list = area.querySelector('.event-feed-list');
-      let pad = 24;
-      if (list instanceof HTMLElement) {
-        const style = getComputedStyle(list);
-        pad = (parseFloat(style.paddingLeft) || 0) + (parseFloat(style.paddingRight) || 0);
-      }
-      const columns = feedWrapColumns(width - pad);
+      const metrics = readFeedMetrics(area);
+      const columns = feedWrapColumns(width - metrics.gutterPx, metrics);
+      setFeedMetrics((prev) => (sameMetrics(prev, metrics) ? prev : metrics));
       setWrapColumns((prev) => (prev === columns ? prev : columns));
       setWidthMeasured(true);
+      setMeasuredTheme(theme);
     };
-    measure();
-    // Without ResizeObserver there is no later report to wait for; keep the fallback.
-    if (typeof ResizeObserver === 'undefined') {
-      setWidthMeasured(true);
-      return;
+    const start = () => {
+      measure();
+      // Without ResizeObserver there is no later report to wait for; keep the fallback.
+      if (typeof ResizeObserver === 'undefined') {
+        const metrics = readFeedMetrics(area);
+        setFeedMetrics((prev) => (sameMetrics(prev, metrics) ? prev : metrics));
+        setWidthMeasured(true);
+        setMeasuredTheme(theme);
+        return;
+      }
+      observer = new ResizeObserver((entries) => measure(entries[0]?.contentRect.width));
+      observer.observe(area);
+    };
+    if (themeAssetsReady(theme)) {
+      start();
+    } else {
+      void loadThemeAssets(theme).then(() => {
+        if (!cancelled) frame = requestAnimationFrame(start);
+      });
     }
-    const observer = new ResizeObserver((entries) => measure(entries[0]?.contentRect.width));
-    observer.observe(area);
-    return () => observer.disconnect();
-  }, []);
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(frame);
+      observer?.disconnect();
+    };
+  }, [theme]);
   const heightEstimates = useMemo(
-    () => events.map((event) => estimateFeedRowHeight(event.text, wrapColumns)),
-    [events, wrapColumns],
+    () =>
+      events.map((event) => estimateFeedRowHeight(event.text, wrapColumns, feedMetrics)),
+    [events, wrapColumns, feedMetrics],
   );
   const [isAtBottom, setIsAtBottom] = useState(true);
   // Timer state is pushed from the server via ring.state events and the handshake payload.
@@ -604,7 +640,7 @@ export default function RingPane({
       {/* Gesture listeners sit on the wrapper because Virtuoso owns the scroller element;
           wheel/touch/pointer/key events bubble up from it. */}
       <div className="pane-feed-area" ref={feedAreaRef} {...autoScroll.gestureHandlers}>
-      {listReady && widthMeasured ? (
+      {listReady && widthMeasured && measuredTheme === theme ? (
       <Virtuoso
         ref={virtuosoRef}
         scrollerRef={autoScroll.setScroller}

@@ -26,6 +26,12 @@
   --line-height: 1.4;
   --pane-padding: 0.75rem;
   --event-spacing: 0.4rem;
+  /* The feed's own type (.event-feed). A theme may set these; utils/feed-row-height.ts
+     reads the resolved values from the live CSS, so the virtual list's row estimates follow.
+     Defaults are the page type, i.e. what the feed drew before the tokens existed. */
+  --feed-font-size: var(--font-size);
+  --feed-line-height: var(--line-height);
+  --feed-letter-spacing: normal;
   --crt-scanline-opacity: 0;
   --input-height: 2.5rem;
   --header-height: 3rem;

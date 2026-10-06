@@ -168,6 +168,9 @@
   /* The feed is monospace on every theme: rows are booked at JetBrains Mono's advance
      (utils/feed-row-height.ts) and card frames are ASCII rules. */
   font-family: var(--font-mono);
+  font-size: var(--feed-font-size);
+  line-height: var(--feed-line-height);
+  letter-spacing: var(--feed-letter-spacing);
   list-style: none;
   flex: 1;
   overflow-y: auto;

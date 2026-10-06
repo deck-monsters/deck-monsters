@@ -49,6 +49,10 @@
 
   /* Plumbing tokens (theme-phosphor.css documents each). */
   --font-ui: 'Nunito', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  /* The Ring transcript's type, from samples/ring.html (.ln). feed-row-height.ts reads
+     these from the live CSS, so the row estimates follow without a per-theme constant. */
+  --feed-font-size: 12.5px;
+  --feed-line-height: 1.65;
   /* --font-mono stays JetBrains Mono (the :root default): the feed's row-height maths and
      card frames depend on its 0.6em advance. */
   --radius-sm: 6px;
@@ -1109,8 +1113,9 @@
 [data-theme='millefleur'] .chat-composer-to select { flex: 1; max-width: none; font-weight: 600; }
 [data-theme='millefleur'] .chat-composer-row { gap: 8px; }
 
-/* ── The Ring transcript ── Colour only: the feed's font, size, line height and gutters set
-   the row heights the virtual list books (utils/feed-row-height.ts), so none of them move. */
+/* ── The Ring transcript ── The feed's type is the --feed-* tokens above (the mock's 12.5px on
+   a 1.65 line); utils/feed-row-height.ts reads them, so the row estimates follow. Below that,
+   colour and shape only: a gutter, border or padding change must go through the same reader. */
 /* Card frames: a soft lilac paper tint, no drawn edge. The 1px border stays (transparent)
    because utils/feed-row-height.ts books it; removing it would shift every row estimate. */
 [data-theme='millefleur'] .event-card-block {
@@ -1122,6 +1127,12 @@
    Colour, radius and an inset shadow only: the feed's own font, padding and line-height are
    what the virtual list's row estimates assume. */
 [data-theme='millefleur'] .event[data-boss-arrival] {
+  /* The card grows outward into the list's gutter (--pane-padding) and the padding hands the
+     same width back, so the text sits where every other row's text does and wraps at the same
+     column. Inline padding that narrowed the content box would make this row wrap earlier than
+     feed-row-height.ts books it. Vertical: none, the row chrome is the estimate's. */
+  margin-inline: calc(4px - var(--pane-padding));
+  padding-inline: calc(var(--pane-padding) - 4px);
   border-radius: 14px;
   background: rgb(251 217 230 / 0.4);
   box-shadow: inset 0 0 0 1px rgb(220 160 190 / 0.5);
