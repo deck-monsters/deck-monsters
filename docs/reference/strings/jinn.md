@@ -43,12 +43,24 @@ Seeded, cycling he, she, and they.
 
 Additive to the call or the house arrival; cycling he, she, and they.
 
-- Player (he): `Companion neatly materializes out of smoke. A close observer may catch him reflexively rubbing his bare wrists.`
-- House (he): `Companion billows through the gate. The house has sent smoke with a grudge.`
-- Player (she): `Companion neatly materializes out of smoke. A close observer may catch her reflexively rubbing her bare wrists.`
-- House (she): `Companion billows through the gate. The house has sent smoke with a grudge.`
-- Player (they): `Companion neatly materializes out of smoke. A close observer may catch them reflexively rubbing their bare wrists.`
-- House (they): `Companion billows through the gate. The house has sent smoke with a grudge.`
+- Player (he, variant 1): `Companion neatly materializes out of smoke. A close observer may catch him reflexively rubbing his bare wrists.`
+- Player (he, variant 2): `Companion steps out of a curl of smoke. A man with a lamp puts it away before anyone can get the wrong idea.`
+- Player (he, variant 3): `Companion takes shape beside the gate. A small boy (for what must be the 100th time) asks for three wishes. His mother would settle for one.`
+- House (he, variant 1): `Companion billows through the gate. The house has sent smoke with a grudge.`
+- House (he, variant 2): `Companion billows through the gate. A man with a lamp puts it away before anyone can get the wrong idea.`
+- House (he, variant 3): `Companion billows through the gate. A small boy (for what must be the 100th time) asks for three wishes. His mother would settle for one.`
+- Player (she, variant 1): `Companion neatly materializes out of smoke. A close observer may catch her reflexively rubbing her bare wrists.`
+- Player (she, variant 2): `Companion steps out of a curl of smoke. A man with a lamp puts it away before anyone can get the wrong idea.`
+- Player (she, variant 3): `Companion takes shape beside the gate. A small boy (for what must be the 100th time) asks for three wishes. His mother would settle for one.`
+- House (she, variant 1): `Companion billows through the gate. The house has sent smoke with a grudge.`
+- House (she, variant 2): `Companion billows through the gate. A man with a lamp puts it away before anyone can get the wrong idea.`
+- House (she, variant 3): `Companion billows through the gate. A small boy (for what must be the 100th time) asks for three wishes. His mother would settle for one.`
+- Player (they, variant 1): `Companion neatly materializes out of smoke. A close observer may catch them reflexively rubbing their bare wrists.`
+- Player (they, variant 2): `Companion steps out of a curl of smoke. A man with a lamp puts it away before anyone can get the wrong idea.`
+- Player (they, variant 3): `Companion takes shape beside the gate. A small boy (for what must be the 100th time) asks for three wishes. His mother would settle for one.`
+- House (they, variant 1): `Companion billows through the gate. The house has sent smoke with a grudge.`
+- House (they, variant 2): `Companion billows through the gate. A man with a lamp puts it away before anyone can get the wrong idea.`
+- House (they, variant 3): `Companion billows through the gate. A small boy (for what must be the 100th time) asks for three wishes. His mother would settle for one.`
 
 ### Long description
 

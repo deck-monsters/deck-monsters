@@ -10,9 +10,10 @@ tags: [roadmap, web, theme, design, unicorn, accessibility]
 
 **Status:** Millefleur is built and live-checked on
 `claude/unicorn-monster-cards-cigpmw`. The branch review fixed feed-fidelity
-findings; task 9's narration remains pending the owner's review. This page stays active
-until that review and the remaining acceptance decisions are complete. One PR for the
-whole theme, opened only when the owner asks.
+findings. Task 9's narration, including the reviewed entrance drafts, is in the live
+pools and still waiting for a look in the Ring. This page stays active until that
+review and the remaining acceptance decisions are complete. One PR for the whole
+theme, opened only when the owner asks.
 
 - **The design:** [Millefleur design system](../reference/millefleur/design-system.md), with
   [the brief and artist statement](../reference/millefleur/README.md), [the final
@@ -260,7 +261,7 @@ as the build history; the statuses below describe what has actually landed.
 | 6 | 46a | **Live check and docs.** Cursor-style checklist for the screens in §7; `docs/architecture/web-themes.md`; links from `AGENTS.md` and `docs/README.md`; roadmap status | docs | Check passed or findings filed in 10 | 4, 5 | checked | 46b-cursor-check.md |
 | 7 | 46a | **Structured feed lines from the engine.** Every feed announcement also publishes `payload.lines`: clean single lines, each with a `kind` and its facts (round, actor, card, roll, damage, HP). `text` stays byte-for-byte (Discord sends it verbatim; pacing sizes pauses from it) | `packages/engine/src/announcements/*`, `events/types.ts`, `helpers/card.ts`, `ring/index.ts` | A consistency test keeps `lines` equal to `text` without its layout; engine, server and Discord tests green | 3d | built, reviewed; roll-fidelity fixes in this checkpoint | 75a52250, 653f6c2a, 3a777501, f4b4a9d5 |
 | 8 | 46a | **The feed rendered from lines.** The web draws `lines` when present (falling back to `text` for older events), with spacing from CSS rather than baked whitespace; Millefleur restyles or replaces lines by kind (the round as a divider, a play's card name, the roll as a quieter second line); row-height guesses count lines | `RingPane`, `ConsolePane`, `format-event-text`, `feed-row-height.ts`, theme CSS | Live scroll test clean under every theme; each feed screen beside its mock | — (after 7) | live-checked | b78d6f2d, 70a1309e, b51e3b1c, f4b4a9d5 |
-| 9 | 46a | **Flavour.** New narration in the house voice where the mock found room for it, per `voice-and-wording.md`, in `text` and `lines` both: an entrance line per species after a player's monster answers the call; a short beat under each round divider (a small pool, no repeats back to back); a species verb for a boss's arrival (stamps, slithers, stalks…), keeping "sent by the house". Approved direction (owner, 2026-10-06): bring together jokes and lore from across the game — the Unicorn's roses (its witness line), the Gladiator's past, the Basilisk's gaze, the Dragon's hoard, the Jinn's smoke — e.g. a boss Minotaur is "Half bull, all temper", and "…and in no mood for roses" when a Unicorn is in the ring. Refined over time like all flavour | engine announcements, strings inventory | Owner reviews the lines in the Ring | 8 | implemented, awaiting owner review | 17ec8632 |
+| 9 | 46a | **Flavour.** New narration in the house voice where the mock found room for it, per `voice-and-wording.md`, in `text` and `lines` both: an entrance line per species after a player's monster answers the call; a short beat under each round divider (a small pool, no repeats back to back); a species verb for a boss's arrival (stamps, slithers, stalks…), keeping "sent by the house". Approved direction (owner, 2026-10-06): bring together jokes and lore from across the game — the Unicorn's roses (its witness line), the Gladiator's past, the Basilisk's gaze, the Dragon's hoard, the Jinn's smoke — e.g. a boss Minotaur is "Half bull, all temper", and "…and in no mood for roses" when a Unicorn is in the ring. Refined over time like all flavour | engine announcements, strings inventory | Owner reviews the lines in the Ring | 8 | lines applied, awaiting a look in the Ring | 17ec8632 |
 
 ### Reading the mocks
 
@@ -376,8 +377,8 @@ another PR. Cursor's task-6/task-8 browser checklist is complete in
    copy; the current lines are below, and the shots retain the initial wording.
    Player Dragon entrances now alternate between the owner’s sheep-bone and goblet
    lines; wave and mutton-vendor beats are in the round pool. Boss Gladiator now
-   rotates all four owner-approved chants. More species drafts are recorded below
-   for editorial review; they are not in the live pools yet.
+   rotates all four owner-approved chants. The owner's revised drafts for the other
+   five species (e83eb18f) are folded into the tables below and into the live pools.
 3. Keep task 9 pending the owner's review; put every authored line here. Do not archive
    roadmap 46. The CSS budget and missing performance evidence stay open as item L.
 4. Before each checkpoint push: `pnpm build && pnpm typecheck && pnpm lint && pnpm test`
@@ -387,12 +388,15 @@ another PR. Cursor's task-6/task-8 browser checklist is complete in
 
 Task 8 is live-checked and task 6's screen tour is recorded in
 [46b-cursor-check.md](46b-cursor-check.md). Bugs 235 and 236 are fixed (70a1309e, b51e3b1c).
-Docs owed for task 8 are updated in the same commit as this note. Do not open a PR. Leave
-task 9 (flavour) alone. Do not archive this plan until task 9 lands.
+Docs owed for task 8 are updated in the same commit as this note. Do not open a PR.
+The reviewed entrance drafts are now in the live pools; task 9 still waits for a look
+in the Ring. Do not archive this plan until that review lands, and do not re-apply
+the drafts.
 
-Still open for the next session: task 9, then the whole-branch review and the one PR
-(handoff item 4). Task 3d stays proposed. The scratch room for this check was deleted;
-Test Room A, Test Room B and Game Night were left in the lobby.
+Still open: the owner's look at these lines in the Ring, then the whole-branch review
+and the one PR (handoff item 4). Task 3d's two set-aside ideas stay set aside. The
+scratch room for the live check was deleted; Test Room A, Test Room B and Game Night
+were left in the lobby.
 
 
 ### Task 9 — lines for the owner's review (2026-10-06)
@@ -404,27 +408,47 @@ and Gladiator's `comes/come` agrees with them. All seven species are covered.
 
 | Species | After a player's monster answers the call |
 |---|---|
-| Basilisk | {name} raises a crowned head. The front row makes intense eye contact with the sand. |
+| Basilisk, variant 1 | {name} raises a crowned head. The front row makes intense eye contact with the sand. |
+| Basilisk, variant 2 | {name} lifts a crowned head. Somewhere, a music producer is about to invent the genre of shoegaze. |
+| Basilisk, variant 3 | {name} surveys the benches. A man in the front row announces that he wasn't looking anyway. |
 | Gladiator | {name} steps onto the sand. Once, the gates were locked behind {him}; today, {he} {comes/come} by choice. |
-| Jinn | {name} neatly materializes out of smoke. A close observer may catch {him} reflexively rubbing {his} bare wrists. |
-| Minotaur | {name} lowers {his} horns. The way in was easy. The way out is somebody else's problem. |
-| Weeping Angel | {name} is already here. Nobody remembers {him} arriving. |
-| Unicorn | {name} steps in, horn first. A woman in the front row holding a rose quickly moves it behind her back. |
+| Jinn, variant 1 | {name} neatly materializes out of smoke. A close observer may catch {him} reflexively rubbing {his} bare wrists. |
+| Jinn, variant 2 | {name} steps out of a curl of smoke. A man with a lamp puts it away before anyone can get the wrong idea. |
+| Jinn, variant 3 | {name} takes shape beside the gate. A small boy (for what must be the 100th time) asks for three wishes. His mother would settle for one. |
+| Minotaur, variant 1 | {name} lowers {his} horns. The way in was easy. The way out is somebody else's problem. |
+| Minotaur, variant 2 | {name} just barely ducks through the gate. The mason who maintains it suddenly remembers an urgent appointment elsewhere. |
+| Minotaur, variant 3 | {name} lowers {his} horns. At just that moment a man who has been shouting advice wisely remembers that he is, technically, a spectator. |
+| Weeping Angel, variant 1 | {name} is already here. Nobody remembers {him} arriving. |
+| Weeping Angel, variant 2 | {name} is standing on the inside of the closed gates. The gatekeeper is fairly certain that he never opened them. |
+| Weeping Angel, variant 3 | {name} sits demurely, almost statue-like, on the edge of a small fountain in the middle of a beautiful rose garden. No wait, the spectators rub their eyes, that's just the sand. |
+| Unicorn, variant 1 | {name} steps in, horn first. A woman in the front row holding a rose quickly moves it behind her back. |
+| Unicorn, variant 2 | {name} steps onto the sand. A vendor discreetly changes “fresh roses” to “seasonal produce” on her sign. |
+| Unicorn, variant 3 | {name} pauses at the gate. The palace gardener recognizes {him}. This is not, on the whole, a happy reunion. |
 | Dragon, variant 1 | {name} lands with a sheep bone caught between {his} teeth. Somewhere, a shepherd is still shouting. |
 | Dragon, variant 2 | {name} folds {his} wings. A pilfered goblet rolls out from under one of them. |
 
 | Species | Added to the boss's arrival, keeping "sent by the house" |
 |---|---|
-| Basilisk | {name} slithers through the gate. The front row makes intense eye contact with the sand. |
+| Basilisk, variant 1 | {name} slithers through the gate. The front row makes intense eye contact with the sand. |
+| Basilisk, variant 2 | {name} slithers through the gate. Somewhere, a music producer is about to invent the genre of shoegaze. |
+| Basilisk, variant 3 | {name} slithers through the gate. A man in the front row announces that he wasn't looking anyway. |
 | Gladiator, variant 1 | {name} stalks onto the sand. “THERE’S ONLY ONE {name}!” chant the cheap seats. While not strictly true, the house can confirm that it holds true in today's battles at least. |
 | Gladiator, variant 2 | {name} stalks onto the sand. “{NAME}’S ON FIRE!” sing the stands. Three attendants hurry in with buckets. Experience has taught them to check. |
 | Gladiator, variant 3 | {name} stalks onto the sand. “ONE OF OUR OWN!” roar the stands. It's unclear (and highly unlikely) whether {name} has ever met these people, but they seem very certain. |
 | Gladiator, variant 4 | {name} stalks onto the sand. The crowd begins {name}'s song. It has six verses and one rude word, somehow creatively used in all six. |
-| Jinn | {name} billows through the gate. The house has sent smoke with a grudge. |
-| Minotaur | {name} stamps into the ring. Half bull, all temper. |
-| Minotaur, with a living Unicorn in this ring | {name} stamps into the ring. Half bull, all temper, and in no mood for roses. |
-| Weeping Angel | {name} stands beyond the gate. The crowd can't really remember when {he} got there. |
-| Unicorn | {name} trots through the gate. The house denies all knowledge of the missing roses. |
+| Jinn, variant 1 | {name} billows through the gate. The house has sent smoke with a grudge. |
+| Jinn, variant 2 | {name} billows through the gate. A man with a lamp puts it away before anyone can get the wrong idea. |
+| Jinn, variant 3 | {name} billows through the gate. A small boy (for what must be the 100th time) asks for three wishes. His mother would settle for one. |
+| Minotaur, variant 1 | {name} stamps into the ring. Half bull, all temper. |
+| Minotaur, variant 1, with a living Unicorn in this ring | {name} stamps into the ring. Half bull, all temper, and in no mood for roses. |
+| Minotaur, variant 2 | {name} stamps into the ring. The mason who maintains the gate suddenly remembers an urgent appointment elsewhere. |
+| Minotaur, variant 3 | {name} stamps into the ring. At just that moment a man who has been shouting advice wisely remembers that he is, technically, a spectator. |
+| Weeping Angel, variant 1 | {name} stands beyond the gate. The crowd can't really remember when {he} got there. |
+| Weeping Angel, variant 2 | {name} stands beyond the gate. The gatekeeper is fairly certain that he never opened it. |
+| Weeping Angel, variant 3 | {name} stands beyond the gate. {name} sits demurely, almost statue-like, on the edge of a small fountain in the middle of a beautiful rose garden. No wait, the spectators rub their eyes, that's just the sand. |
+| Unicorn, variant 1 | {name} trots through the gate. The house denies all knowledge of the missing roses. |
+| Unicorn, variant 2 | {name} trots through the gate. A vendor discreetly changes “fresh roses” to “seasonal produce” on her sign. |
+| Unicorn, variant 3 | {name} trots through the gate. The palace gardener recognizes {him}. This is not, on the whole, a happy reunion. |
 | Dragon | {name} sweeps down to the sand. The Editor deftly slips their jeweled hand into their pocket. |
 
 Round beats rotate in a small pool, separately per room's Ring, without adjacent
@@ -437,11 +461,14 @@ repeats or random draws that could change seeded combat:
 - The gates are shut. The story is not.
 - A hush falls over the crowd, punctuated only by the cry of a vendor hawking what are apparently the biggest, juiciest mutton legs in the whole empire.
 
-Player Dragon and boss Gladiator entrances rotate in separate species/role pools
-per Ring, with no random draws or adjacent repeats within either pool. Other
-species, roles, rounds and inventory sampling do not advance those pools. The sheep bone and pilfered goblet connect to the Dragon's appetite and
-hoard; the other lines connect to species lore and running jokes. Generated
-species/pronoun examples live in the [strings inventories](../reference/strings/README.md), regenerated from the same source.
+Basilisk, Jinn, Minotaur, Weeping Angel and Unicorn each rotate three player lines
+and three boss lines, in separate species/role pools per Ring. Player Dragon and boss
+Gladiator keep their own pools. No pool draws at random or repeats the line it just
+used. Sampling without a Ring takes the first line and does not advance a pool. The
+Minotaur roses clause stays on the original temper line only. The sheep bone and
+pilfered goblet connect to the Dragon's appetite and hoard; the other lines connect
+to species lore and running jokes. Generated species/pronoun examples live in the
+[strings inventories](../reference/strings/README.md), regenerated from the same source.
 **Acceptance stays open:** the owner reviews these lines in the Ring. Do not mark task 9
 done or archive this roadmap.
 
@@ -491,18 +518,19 @@ in each Ring; the inventory enumerates every live variant with every pronoun.
 Task 9 remains implemented, awaiting editorial acceptance; the roadmap stays active.
 
 
-### Task 9 — further entrance drafts for editorial review (2026-10-06)
+### Task 9 — reviewed entrance drafts folded in (2026-10-06)
 
-The owner asked for further variations in the same dry, observant comic narration.
-These are new drafts for the five species that still have single entrance lines;
-they have not been inserted into the live pools or the generated inventory. Keep
-the original call/house arrival and boss species verb when adapting an approved
-beat to a role. `{NAME}` in the live Gladiator chant is the uppercased monster name.
+The owner's revised drafts (e83eb18f) are in the tables above and in the live pools.
+Player lines use those sentences. Boss lines keep the species verb and then the joke.
+`{NAME}` in the live Gladiator chant is still the uppercased monster name.
 
-| Species | Draft 1 | Draft 2 |
-|---|---|---|
-| Basilisk | {name} lifts a crowned head. Somewhere a music producer is about to invent the genre of shoegaze. | {name} surveys the benches. A man in the front row announces that he wasn't looking anyway. |
-| Jinn | {name} steps out of a curl of smoke. A man with a lamp puts it away before anyone can get the wrong idea. | {name} takes shape beside the gate. A small boy (for what must be the 100th time) asks for three wishes. His mother would settle for one. |
-| Minotaur | {name} just barely ducks through the gate. The mason who maintains it suddenly remembers an urgent appointment elsewhere. | {name} lowers {his} horns. At just that moment a man who has been shouting advice wisely remembers that he is, technically, a spectator. |
-| Weeping Angel | {name} is standing on the inside of the closed gates. The gatekeeper is fairly certain that he never opened them. | {name} sits demurely, almost statue-like, on the edge of a small fountain in the middle of a beautiful rose garden. No wait, the spectators rub their eyes, that's just the sand. |
-| Unicorn | {name} steps onto the sand. A vendor discreetly changes “fresh roses” to “seasonal produce” on her sign. | {name} pauses at the gate. The palace gardener recognizes {him}. This is not, on the whole, a happy reunion. |
+Corrections made while applying them:
+
+- A comma after "Somewhere", matching the shepherd line.
+- The boss Minotaur says "the gate". "Stamps into the ring" does not name a gate for "it" to point at. The player line still says "maintains it", because that sentence has already named the gate.
+- The boss Weeping Angel says "opened it". The arrival names one gate. The player line still says "closed gates" and "them".
+- Straight apostrophes in "wasn't" and "that's", matching the rest of the narration source.
+
+The garden beat follows "stands beyond the gate" as its own sentence, so the species
+verb and the joke both stay. Task 9 is still awaiting a look in the Ring. Do not
+archive this roadmap.

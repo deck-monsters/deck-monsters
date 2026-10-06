@@ -11,7 +11,7 @@ import { FireBreathCard } from '../cards/fire-breath.js';
 import { HelmOfAweCard } from '../cards/helm-of-awe.js';
 import Dragon from '../monsters/dragon.js';
 import allMonsters from '../monsters/helpers/all.js';
-import { bossEntrance, bossEntrances, playerEntrance, ROUND_BEATS } from './ring-flavour.js';
+import { bossEntrance, bossEntrances, playerEntrance, playerEntrances, ROUND_BEATS } from './ring-flavour.js';
 import { DelayedHit } from '../cards/delayed-hit.js';
 import { TARGET_LOWEST_HP_PLAYER } from '../helpers/targeting-strategies.js';
 import { formatCardLine, itemCardLine, monsterCardLine, monsterTurnFeedLine } from '../helpers/card.js';
@@ -709,6 +709,60 @@ describe('feed lines: additive ring flavour', () => {
 			});
 		}
 	}
+
+	it('rotates the reviewed drafts for the five species that had one line', () => {
+		const verbs: Record<string, string> = {
+			Basilisk: 'slithers through the gate',
+			Jinn: 'billows through the gate',
+			Minotaur: 'stamps into the ring',
+			'Weeping Angel': 'stands beyond the gate',
+			Unicorn: 'trots through the gate',
+		};
+		const monsters = Object.entries(verbs).map(([type, verb]) => ({
+			verb,
+			monster: new (allMonsters.find(M => M.creatureType === type)!)({ name: 'Companion', gender: 'female' }),
+		}));
+		const random = sinon.spy(Math, 'random');
+		try {
+			for (const { monster, verb } of monsters) {
+				const players = playerEntrances(monster);
+				const bosses = bossEntrances(monster);
+				expect(players).to.have.lengthOf(3);
+				expect(bosses).to.have.lengthOf(3);
+				expect(bosses.every(line => line.startsWith(`${monster.givenName} ${verb}.`))).to.equal(true);
+				const ring = {};
+				const seenPlayers: string[] = [];
+				const seenBosses: string[] = [];
+				for (let at = 0; at < 6; at++) {
+					const player = playerEntrance(monster, ring)!;
+					const boss = bossEntrance(monster, [], ring)!;
+					seenPlayers.push(player);
+					seenBosses.push(boss);
+					if (at > 0) {
+						expect(player).to.not.equal(seenPlayers[at - 1]);
+						expect(boss).to.not.equal(seenBosses[at - 1]);
+					}
+				}
+				expect(new Set(seenPlayers).size).to.equal(3);
+				expect(new Set(seenBosses).size).to.equal(3);
+				expect(playerEntrance(monster)).to.equal(players[0]);
+				expect(bossEntrance(monster)).to.equal(bosses[0]);
+			}
+			const minotaur = monsters.find(({ monster }) => monster.creatureType === 'Minotaur')!.monster;
+			const withRoses = bossEntrances(minotaur, [{ monster: { creatureType: 'Unicorn' } }]);
+			expect(withRoses[0]).to.include('in no mood for roses');
+			expect(withRoses.slice(1).some(line => line.includes('roses'))).to.equal(false);
+			const ring = {};
+			expect(bossEntrance(minotaur, [{ monster: { creatureType: 'Unicorn' } }], ring)).to.include('in no mood for roses');
+			expect(bossEntrance(minotaur, [{ monster: { creatureType: 'Unicorn' } }], ring)).to.not.include('roses');
+			expect(playerEntrances(monsters[0]!.monster).join('\n')).to.include('shoegaze');
+			expect(playerEntrances(monsters[0]!.monster).join('\n')).to.include("wasn't looking anyway");
+			expect(random.called).to.equal(false);
+		} finally {
+			random.restore();
+			for (const { monster } of monsters) monster.disposeTimers();
+		}
+	});
 
 	it('adds the roses only for a living Unicorn in this ring', () => {
 		const monster = new (allMonsters.find(M => M.creatureType === 'Minotaur')!)({ name: 'Bull' });

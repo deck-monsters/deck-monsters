@@ -64,12 +64,24 @@ Seeded, cycling he, she, and they.
 
 Additive to the call or the house arrival; cycling he, she, and they.
 
-- Player (he): `Companion steps in, horn first. A woman in the front row holding a rose quickly moves it behind her back.`
-- House (he): `Companion trots through the gate. The house denies all knowledge of the missing roses.`
-- Player (she): `Companion steps in, horn first. A woman in the front row holding a rose quickly moves it behind her back.`
-- House (she): `Companion trots through the gate. The house denies all knowledge of the missing roses.`
-- Player (they): `Companion steps in, horn first. A woman in the front row holding a rose quickly moves it behind her back.`
-- House (they): `Companion trots through the gate. The house denies all knowledge of the missing roses.`
+- Player (he, variant 1): `Companion steps in, horn first. A woman in the front row holding a rose quickly moves it behind her back.`
+- Player (he, variant 2): `Companion steps onto the sand. A vendor discreetly changes “fresh roses” to “seasonal produce” on her sign.`
+- Player (he, variant 3): `Companion pauses at the gate. The palace gardener recognizes him. This is not, on the whole, a happy reunion.`
+- House (he, variant 1): `Companion trots through the gate. The house denies all knowledge of the missing roses.`
+- House (he, variant 2): `Companion trots through the gate. A vendor discreetly changes “fresh roses” to “seasonal produce” on her sign.`
+- House (he, variant 3): `Companion trots through the gate. The palace gardener recognizes him. This is not, on the whole, a happy reunion.`
+- Player (she, variant 1): `Companion steps in, horn first. A woman in the front row holding a rose quickly moves it behind her back.`
+- Player (she, variant 2): `Companion steps onto the sand. A vendor discreetly changes “fresh roses” to “seasonal produce” on her sign.`
+- Player (she, variant 3): `Companion pauses at the gate. The palace gardener recognizes her. This is not, on the whole, a happy reunion.`
+- House (she, variant 1): `Companion trots through the gate. The house denies all knowledge of the missing roses.`
+- House (she, variant 2): `Companion trots through the gate. A vendor discreetly changes “fresh roses” to “seasonal produce” on her sign.`
+- House (she, variant 3): `Companion trots through the gate. The palace gardener recognizes her. This is not, on the whole, a happy reunion.`
+- Player (they, variant 1): `Companion steps in, horn first. A woman in the front row holding a rose quickly moves it behind her back.`
+- Player (they, variant 2): `Companion steps onto the sand. A vendor discreetly changes “fresh roses” to “seasonal produce” on her sign.`
+- Player (they, variant 3): `Companion pauses at the gate. The palace gardener recognizes them. This is not, on the whole, a happy reunion.`
+- House (they, variant 1): `Companion trots through the gate. The house denies all knowledge of the missing roses.`
+- House (they, variant 2): `Companion trots through the gate. A vendor discreetly changes “fresh roses” to “seasonal produce” on her sign.`
+- House (they, variant 3): `Companion trots through the gate. The palace gardener recognizes them. This is not, on the whole, a happy reunion.`
 
 ### Long description
 

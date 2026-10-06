@@ -11,21 +11,23 @@ tags: [roadmap, theme, millefleur, web]
 
 **Done.** Task 8's feed renderer was checked live, and the screens in
 [roadmap 46 §7](46-unicorn-theme.md) were visited in all five themes at 390 and 1440.
-Two feed bugs were fixed (235, 236). Task 9 (flavour) was left for Claude. No pull
-request: the owner wants the whole theme in one.
+Two feed bugs were fixed (235, 236). Task 9 (flavour) was left for later in this
+check. Those lines, including the reviewed entrance drafts, are now in the Ring;
+the shots below predate that copy. No pull request: the owner wants the whole theme
+in one.
 
 **Fixed.** A bloodied HP line painted "has -4HP., bloodied" (the clause sat after the
 period). A threshold line painted "is now bloodied" and ", bloodied" on the same
 sentence. Both are web-only; the engine's `text` is unchanged.
 
-**Open for the owner.** Flavour lines (task 9) are not in the Ring yet, so the boss
-card still says the engine's arrival sentence rather than the mock's "stamps" / "Half
-bull, all temper". The Millefleur roll is one dim sentence ("rolled 9 +1 = 10 vs 8 ·
+**Open for the owner.** Flavour lines are in the feed now, as an extra narration
+sentence after the call or the house arrival. The boss card is still the engine's
+card. The Millefleur roll is one dim sentence ("rolled 9 +1 = 10 vs 8 ·
 hit"), not the mock's quieter second line under the play. Dark themes no longer draw
 ASCII `=` rules inside a card; the frame is a title, a CSS rule and the body, and
 lines are separated by the CSS gap. Colours and chrome otherwise match each dark
-theme. This check did not boot `main` beside them. Task 3d (backport) is still
-proposed. The level-up sheet opened from the XP bar at 4/28; a real level-up was not
+theme. This check did not boot `main` beside them. Task 3d's backports have since
+been reviewed; the level badge stays withheld. The level-up sheet opened from the XP bar at 4/28; a real level-up was not
 reached. Do not archive roadmap 46 until task 9 lands.
 
 Shots below live in `docs/roadmap/46b-shots/`. Widths are CSS pixels. Phosphor is the

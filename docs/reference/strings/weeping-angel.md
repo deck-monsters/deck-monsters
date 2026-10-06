@@ -43,12 +43,24 @@ Seeded, cycling he, she, and they.
 
 Additive to the call or the house arrival; cycling he, she, and they.
 
-- Player (he): `Companion is already here. Nobody remembers him arriving.`
-- House (he): `Companion stands beyond the gate. The crowd can't really remember when he got there.`
-- Player (she): `Companion is already here. Nobody remembers her arriving.`
-- House (she): `Companion stands beyond the gate. The crowd can't really remember when she got there.`
-- Player (they): `Companion is already here. Nobody remembers them arriving.`
-- House (they): `Companion stands beyond the gate. The crowd can't really remember when they got there.`
+- Player (he, variant 1): `Companion is already here. Nobody remembers him arriving.`
+- Player (he, variant 2): `Companion is standing on the inside of the closed gates. The gatekeeper is fairly certain that he never opened them.`
+- Player (he, variant 3): `Companion sits demurely, almost statue-like, on the edge of a small fountain in the middle of a beautiful rose garden. No wait, the spectators rub their eyes, that's just the sand.`
+- House (he, variant 1): `Companion stands beyond the gate. The crowd can't really remember when he got there.`
+- House (he, variant 2): `Companion stands beyond the gate. The gatekeeper is fairly certain that he never opened it.`
+- House (he, variant 3): `Companion stands beyond the gate. Companion sits demurely, almost statue-like, on the edge of a small fountain in the middle of a beautiful rose garden. No wait, the spectators rub their eyes, that's just the sand.`
+- Player (she, variant 1): `Companion is already here. Nobody remembers her arriving.`
+- Player (she, variant 2): `Companion is standing on the inside of the closed gates. The gatekeeper is fairly certain that he never opened them.`
+- Player (she, variant 3): `Companion sits demurely, almost statue-like, on the edge of a small fountain in the middle of a beautiful rose garden. No wait, the spectators rub their eyes, that's just the sand.`
+- House (she, variant 1): `Companion stands beyond the gate. The crowd can't really remember when she got there.`
+- House (she, variant 2): `Companion stands beyond the gate. The gatekeeper is fairly certain that he never opened it.`
+- House (she, variant 3): `Companion stands beyond the gate. Companion sits demurely, almost statue-like, on the edge of a small fountain in the middle of a beautiful rose garden. No wait, the spectators rub their eyes, that's just the sand.`
+- Player (they, variant 1): `Companion is already here. Nobody remembers them arriving.`
+- Player (they, variant 2): `Companion is standing on the inside of the closed gates. The gatekeeper is fairly certain that he never opened them.`
+- Player (they, variant 3): `Companion sits demurely, almost statue-like, on the edge of a small fountain in the middle of a beautiful rose garden. No wait, the spectators rub their eyes, that's just the sand.`
+- House (they, variant 1): `Companion stands beyond the gate. The crowd can't really remember when they got there.`
+- House (they, variant 2): `Companion stands beyond the gate. The gatekeeper is fairly certain that he never opened it.`
+- House (they, variant 3): `Companion stands beyond the gate. Companion sits demurely, almost statue-like, on the edge of a small fountain in the middle of a beautiful rose garden. No wait, the spectators rub their eyes, that's just the sand.`
 
 ### Long description
 

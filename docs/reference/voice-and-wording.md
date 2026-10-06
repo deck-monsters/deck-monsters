@@ -158,6 +158,9 @@ in the vein of Terry Pratchett: a dry, observant narrator, concrete human reacti
 monsters, and the practical business of running the games intruding at the wrong
 moment. Connect each beat to its species and keep it separate from mechanical claims.
 The orchestrator writes the prose; generated inventories enumerate the live variants.
+Basilisk, Jinn, Minotaur, Weeping Angel and Unicorn each rotate three player lines
+and three boss lines. Every boss line keeps that species' arrival verb. The Minotaur's
+roses clause stays on the original temper line.
 
 ### Existing bad examples are migration targets
 
