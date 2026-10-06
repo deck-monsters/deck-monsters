@@ -1202,7 +1202,8 @@
   display: inline;
   margin-right: 0.4rem;
   font-size: 0.75rem;
-  color: var(--color-fg-dim);
+  /* --color-fg (4.5:1 or better in all four themes; fg-dim fails in three): the time is information. */
+  color: var(--color-fg);
 }
 :root:not([data-theme='millefleur']) .chat-sender:has(+ .chat-time) { margin-right: 0.4rem; }
 :root:not([data-theme='millefleur']) .chat-sender:has(+ .chat-time)::after { content: none; }

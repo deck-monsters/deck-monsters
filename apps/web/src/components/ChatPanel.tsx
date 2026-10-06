@@ -233,8 +233,8 @@ export default function ChatPanel({ isActive = true, headerActions }: ChatPanelP
                 return (
                   <div key={row.key} className={`chat-message${dm ? ' chat-message-dm' : ''}${mine ? ' chat-message-mine' : ''}`}>
                     <strong className="chat-sender">{header}</strong>
-                    {/* The time of day, beside the sender. Hidden by base CSS; a theme that
-                        styles .chat-time shows it (Millefleur). Omitted when the timestamp does
+                    {/* The time of day, beside the sender. Shown in every theme
+                        (terminal.css, theme-millefleur.css). Omitted when the timestamp does
                         not parse, rather than printing "Invalid Date". */}
                     {(() => {
                       const at = chatTimeOfDay(m.createdAt);

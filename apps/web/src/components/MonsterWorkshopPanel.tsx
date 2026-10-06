@@ -153,8 +153,8 @@ export default function MonsterWorkshopPanel({
   const xpPct = Math.min(100, Math.max(0, Math.round((monster.xpIntoLevel / xpNeeded) * 100)));
 
   // One tag, in priority order, and always one: a monster at rest is "Ready" (it can be sent to
-  // the ring), so the row never shows a gap where a state should be — a monster can technically be flagged more than one of
-  // these at once (e.g. a boss variant mid-fight while also marked dead pending cleanup),
+  // the ring), so the row never shows a gap where a state should be. A monster can technically
+  // be flagged more than one of these at once (e.g. a boss variant mid-fight while also marked dead pending cleanup),
   // and showing all three would crowd the title row for no added information: "in the
   // ring" already implies "not benched", and either ring state already implies "not what
   // you'd do next with this monster right now" the way "fallen" does.

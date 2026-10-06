@@ -1570,7 +1570,8 @@ a.app-shell-room-name {
 :root:not([data-theme='millefleur']) .workshop-train-count {
   display: inline;
   font-size: 0.72rem;
-  color: var(--color-fg-dim);
+  /* --color-fg, not fg-dim: this is information, and fg-dim fails 4.5:1 in three themes. */
+  color: var(--color-fg);
 }
 :root:not([data-theme='millefleur']) .workshop-train-line-count { display: none; }
 
@@ -1591,8 +1592,8 @@ a.app-shell-room-name {
 :root:not([data-theme='millefleur']) .workshop-monster-portrait-emoji { font-size: 1.6rem; line-height: 1; }
 
 /* The status keeps its tag; a square dot before the word says "state" at a glance. Ready is
-   the one state that asks something of you (send it to the ring), so it takes the success
-   colour; the rest keep the ramp above. */
+   the one state that asks something of you (send it to the ring), so it has its own look
+   (bright text, success dot); the rest keep the ramp above. */
 :root:not([data-theme='millefleur']) .workshop-status-tag {
   display: inline-flex;
   align-items: center;
@@ -1605,16 +1606,19 @@ a.app-shell-room-name {
   background: currentColor;
 }
 :root:not([data-theme='millefleur']) .workshop-status-ready {
-  border-color: var(--color-success);
-  color: var(--color-success);
+  border-color: var(--color-fg);
+  color: var(--color-fg-bright);
 }
+/* Ready is not Fighting: Fighting keeps the success border and text; Ready is the neutral tag
+   with only its dot in success, so a benched monster never looks like one mid-fight. */
+:root:not([data-theme='millefleur']) .workshop-status-ready::before { background: var(--color-success); }
 
 /* Level-up sheet: "Level up" as the sheet's top line and the new cards as bordered tags like the
    feed's .highlight-tag. The level badge is Millefleur's (its halo is part of that design); in
    the terminal themes a boxed number beside "Poirot at level 2" only repeated the heading, so it
    is hidden (owner, 2026-10-06). */
 :root:not([data-theme='millefleur']) .card-detail-pill {
-  color: var(--color-fg-dim);
+  color: var(--color-fg);
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-size: 0.72rem;

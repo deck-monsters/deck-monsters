@@ -74,6 +74,25 @@ afterEach(() => {
 });
 
 describe('WorkshopPanel: Train monster row', () => {
+  it('makes Train monster the primary only while the player has no monsters', () => {
+    hookMock.monsters = [];
+    const { unmount } = render(<WorkshopPanel roomId="room-1" />);
+    expect(screen.getByRole('button', { name: 'Train monster' })).toHaveClass('btn-primary');
+    unmount();
+    hookMock.monsters = [monster('Ash')];
+    render(<WorkshopPanel roomId="room-1" />);
+    expect(screen.getByRole('button', { name: 'Train monster' })).not.toHaveClass('btn-primary');
+  });
+
+  it('puts "You can train N more" beside the heading only while a place is free', () => {
+    const { unmount } = render(<WorkshopPanel roomId="room-1" />);
+    expect(document.querySelector('.workshop-title-row .workshop-train-count')?.textContent).toBe('You can train 2 more');
+    unmount();
+    hookMock.monsters = [monster('Ash'), monster('Bran'), monster('Cinder')];
+    render(<WorkshopPanel roomId="room-1" />);
+    expect(document.querySelector('.workshop-train-count')).toBeNull();
+  });
+
   it('says how many more the player can train', () => {
     render(<WorkshopPanel roomId="room-1" />);
     expect(screen.getByText('Train a new monster to fight at your side. You can train 2 more.')).toBeInTheDocument();
