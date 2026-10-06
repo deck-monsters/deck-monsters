@@ -547,11 +547,14 @@
 [data-theme='millefleur'] .chat-composer,
 [data-theme='millefleur'] .ring-roster,
 [data-theme='millefleur'] .ring-items { background: transparent; }
-/* The pane's own heading, inside the page: Nunito, not the dark themes' small caps. */
+/* The pane's own heading, inside the page: Nunito 13/800 like the mock's, not the dark themes'
+   small caps. The Ring's timer and summons count form one right-aligned group: the timer in
+   rose 700, then a "·" and the count in muted 400. */
 [data-theme='millefleur'] .pane-header {
   border-bottom: 0;
-  padding: 14px var(--pane-padding) 6px;
-  font-size: 15px;
+  padding: 14px 16px 6px;
+  gap: 8px;
+  font-size: 13px;
   font-weight: 800;
   letter-spacing: 0;
   text-transform: none;
@@ -562,7 +565,18 @@
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0;
+  margin-right: 0;
 }
+[data-theme='millefleur'] .pane-header-summons {
+  margin-left: 0;
+  color: var(--color-fg-dim);
+  font-weight: 400;
+}
+[data-theme='millefleur'] .pane-header-timer:not(.pane-header-summons) + .pane-header-summons::before { content: '· '; }
+/* An empty actions slot would take half the free space (its own margin-left:auto) and strand the group mid-row. */
+[data-theme='millefleur'] .pane-header-actions:empty { display: none; }
+/* With no countdown to its left, the count is the group by itself. */
+[data-theme='millefleur'] .pane-header > span:first-child + .pane-header-summons { margin-left: auto; }
 
 /* ── Card slots (Workshop and Your cards) ──
    Role, in the engine's one table: attack rose, area apricot, heal sea-foam, trick lilac, and
@@ -678,11 +692,63 @@
 [data-theme='millefleur'] .train-wizard-type-name { color: var(--color-fg-bright); font-weight: 800; }
 [data-theme='millefleur'] .train-wizard-heading { color: var(--color-fg-bright); font-weight: 800; }
 
-/* The acting row: a butter wash that fades to the right, rounded, in place of the bar. */
+/* ── The Ring roster, as the mock draws it ──
+   One row = [34px portrait][name (+ BOSS)][bar][hp]. The rail's two children (figure and bar)
+   are lifted into the row with display:contents and reordered, so the markup is the dark
+   themes' own. The owner/level/AC line stays as a small muted line under the name. The dense
+   (more than eight monsters) single-column layout keeps its own compressed rows. */
+[data-theme='millefleur'] .ring-roster { border-bottom: 0; }
+/* "▾ In the ring — 2 standing" is not in the mock: a quiet, small tracked label. */
+[data-theme='millefleur'] .roster-toggle {
+  padding: 2px 16px 0;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--color-fg-dim);
+}
+[data-theme='millefleur'] .roster-list { padding: 4px 10px 10px; gap: 2px 10px; }
+/* Under the roster: the mock's fading rule, not a solid border. */
+[data-theme='millefleur'] .ring-roster::after {
+  content: '';
+  flex: 0 0 1px;
+  margin: 0 16px;
+  background: linear-gradient(90deg, transparent, rgb(150 125 195 / 0.38) 10%, rgb(150 125 195 / 0.38) 90%, transparent);
+}
+[data-theme='millefleur'] .roster-list:not(.roster-list-dense) .roster-row {
+  align-items: center;
+  gap: 10px;
+  padding: 5px 8px;
+  font-size: 15px;
+  border-radius: 12px;
+}
+[data-theme='millefleur'] .roster-list:not(.roster-list-dense) .roster-row-body { flex: 1.3 1 0; }
+[data-theme='millefleur'] .roster-list:not(.roster-list-dense) .roster-rail { display: contents; }
+[data-theme='millefleur'] .roster-list:not(.roster-list-dense) .roster-rail .roster-bar-track {
+  order: 1;
+  flex: 1 1 0;
+  min-width: 48px;
+  height: 6px;
+  margin: 0;
+}
+[data-theme='millefleur'] .roster-list:not(.roster-list-dense) .roster-hp {
+  order: 2;
+  flex: 0 0 auto;
+  min-width: 38px;
+  text-align: right;
+  color: var(--color-fg-dim);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+[data-theme='millefleur'] .roster-name-text { font-size: 15px; font-weight: 800; color: var(--color-fg-bright); }
+[data-theme='millefleur'] .roster-row-sub { font-size: 11px; }
+[data-theme='millefleur'] .roster-row-dead .roster-dead-text { font-size: 11px; }
+/* The turn glyph the dark themes show is the wash's job here. */
+[data-theme='millefleur'] .roster-turn { display: none; }
+/* The acting row: the mock's butter wash fading to the right, rounded. */
 [data-theme='millefleur'] .roster-row-acting {
-  background: linear-gradient(90deg, rgb(251 239 200 / 0.95), rgb(251 239 200 / 0.15));
+  background: linear-gradient(90deg, rgb(251 239 200 / 0.7), rgb(251 239 200 / 0));
   box-shadow: none;
-  border-radius: 14px;
+  border-radius: 12px;
 }
 
 /* ── Full-page routes (/room/:id/workshop, /chat, /fights, ...) ──
@@ -701,36 +767,36 @@
   [data-theme='millefleur'] .workshop-card-slot { padding-top: 24px; }
 }
 
-/* ── The halo: a holo ring around a pearl disc, behind a roster portrait ──
-   The ring is the holo gradient under a radial mask (soft edges, no blur filter and no
-   blend mode: the roster sits beside a scrolling feed, §8). The sprite stays the 24px
-   pixelated canvas above it. */
+/* ── The halo: a soft, blurred holo glow around a pearl disc, behind the player's OWN portrait ──
+   34px, like the mock's. The blur is on a static 34px element in the roster, which sits
+   outside the scrolling feed (the feed itself takes no blur or blend mode). Monsters that are
+   not yours (the Minotaur) get the 34px box and the sprite, no halo. */
 [data-theme='millefleur'] .roster-icon {
   position: relative;
   isolation: isolate;
   overflow: visible;
+  width: 34px;
+  height: 34px;
 }
 [data-theme='millefleur'] .roster-icon::before,
-[data-theme='millefleur'] .roster-icon::after {
+[data-theme='millefleur'] .roster-icon::after { display: none; }
+[data-theme='millefleur'] .roster-row-mine .roster-icon::before,
+[data-theme='millefleur'] .roster-row-mine .roster-icon::after {
+  display: block;
   content: '';
   position: absolute;
   z-index: -1;
   border-radius: 50%;
   pointer-events: none;
 }
-/* 34px ring, centred on the 24px icon box. The richer XP stops, not the pale tints: at 3px
-   wide the tints are lost on paper. */
-[data-theme='millefleur'] .roster-icon::before {
-  inset: -5px;
-  background: linear-gradient(110deg, #f4a6cb, #f3d777, #96dcc0, #93bdf3, #b99bf0);
-  -webkit-mask-image: radial-gradient(circle closest-side, transparent 70%, #000 82%, #000 90%, transparent 100%);
-  mask-image: radial-gradient(circle closest-side, transparent 70%, #000 82%, #000 90%, transparent 100%);
+[data-theme='millefleur'] .roster-row-mine .roster-icon::before {
+  inset: 0;
+  background: conic-gradient(#fbd2e4, #fbecbe, #c9eedf, #cfe2fb, #e0d0fb, #fbd2e4);
+  filter: blur(3px);
 }
-/* The pearl disc with a faint lilac inner glow. */
-[data-theme='millefleur'] .roster-icon::after {
-  inset: -2px;
-  background: radial-gradient(circle, #fffdfa, #fbf7ff, #efe6fb);
-  box-shadow: inset 0 0 5px rgb(190 170 215 / 0.55);
+[data-theme='millefleur'] .roster-row-mine .roster-icon::after {
+  inset: 4px;
+  background: #fffdfa;
 }
 [data-theme='millefleur'] .roster-sprite,
 [data-theme='millefleur'] .inline-sprite {
@@ -870,11 +936,22 @@
 
 /* ── The Ring transcript ── Colour only: the feed's font, size, line height and gutters set
    the row heights the virtual list books (utils/feed-row-height.ts), so none of them move. */
+/* Card frames: a soft lilac paper tint, no drawn edge. The 1px border stays (transparent)
+   because utils/feed-row-height.ts books it; removing it would shift every row estimate. */
 [data-theme='millefleur'] .event-card-block {
-  background: rgb(255 253 250 / 0.7);
-  border-color: var(--mf-line-soft);
+  background: rgb(235 226 250 / 0.38);
+  border-color: transparent;
   border-radius: 12px;
 }
+/* A boss arriving: the mock's rose card with an inset edge (the ring.add row, boss only).
+   Colour, radius and an inset shadow only: the feed's own font, padding and line-height are
+   what the virtual list's row estimates assume. */
+[data-theme='millefleur'] .event[data-boss-arrival] {
+  border-radius: 14px;
+  background: rgb(251 217 230 / 0.4);
+  box-shadow: inset 0 0 0 1px rgb(220 160 190 / 0.5);
+}
+[data-theme='millefleur'] .event[data-boss-arrival] .event-card-block { background: rgb(255 253 250 / 0.55); }
 /* The feed's own markers (where you joined, where the connection dropped): a small tracked
    label between two lines that fade out at their far ends. */
 [data-theme='millefleur'] .feed-marker::before { background: linear-gradient(90deg, transparent, var(--mf-line-tab, rgb(150 125 195 / 0.5))); }
@@ -1171,8 +1248,8 @@
   [data-theme='millefleur'] .workshop-monster-dot.active::before { background: #000000; border-color: #000000; box-shadow: none; }
   [data-theme='millefleur'] .workshop-monster-next-mark { border: 2px solid #000000; }
   /* The halo: a plain white disc with a black outline; no ring. */
-  [data-theme='millefleur'] .roster-icon::before { display: none; }
-  [data-theme='millefleur'] .roster-icon::after { background: #ffffff; box-shadow: inset 0 0 0 1px #000000; }
+  [data-theme='millefleur'] .roster-row-mine .roster-icon::before { display: none; }
+  [data-theme='millefleur'] .roster-row-mine .roster-icon::after { background: #ffffff; box-shadow: inset 0 0 0 1px #000000; }
   [data-theme='millefleur'] .roster-sprite,
   [data-theme='millefleur'] .inline-sprite { filter: none; }
   [data-theme='millefleur'] .roster-row-acting { background: #ffffff; box-shadow: inset 4px 0 0 #000000; border-radius: 0; }

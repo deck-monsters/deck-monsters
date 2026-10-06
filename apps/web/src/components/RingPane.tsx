@@ -104,6 +104,17 @@ function eventClass(type: string): string {
   return 'event-announce';
 }
 
+/**
+ * A boss joining the ring: `ring.add` carries the contestant it announces, and a boss's
+ * arrival is the one entrance a player should not miss. The attribute is a styling hook only
+ * (Millefleur draws it as a rose card); no theme but that one reads it.
+ */
+function isBossArrival(event: GameEvent): boolean {
+  if (event.type !== 'ring.add') return false;
+  const contestant = (event.payload as { contestant?: { isBoss?: boolean } } | undefined)?.contestant;
+  return contestant?.isBoss === true;
+}
+
 function formatCountdown(epochMs: number): string {
   const deltaMs = epochMs - Date.now();
   if (deltaMs <= 0) return 'now';
@@ -556,7 +567,7 @@ export default function RingPane({
         )}
         {showHeaderBadges && summonBadge && (
           <span
-            className="pane-header-timer"
+            className="pane-header-timer pane-header-summons"
             title={SUMMONS_BADGE_TITLE}
           >
             {summonBadge}
@@ -647,6 +658,8 @@ export default function RingPane({
             <li
               className={`event ${eventClass(event.type)}`}
               data-event-at={iso}
+              data-event-type={event.type}
+              data-boss-arrival={isBossArrival(event) ? '' : undefined}
               title={hoverTitle}
             >
               <time className="event-sr-only" dateTime={iso}>
