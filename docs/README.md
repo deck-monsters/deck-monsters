@@ -92,6 +92,8 @@ Generated and authored player references remain at the repository root:
 
 - Start planning work at [`roadmap/README.md`](roadmap/README.md). Active roadmap files
   contain actionable work and current status, not shipped implementation diaries.
+- A home-screen ping when the page is closed (a DM, and the few countdown cases) is
+  [roadmap 48](roadmap/48-notifications.md). Nothing there is built.
 - The Dragon shipped in September 2026; its follow-ups are in
   [`roadmap/12-new-content-backlog.md`](roadmap/12-new-content-backlog.md#dragon-follow-ups).
 - Use [`archive/README.md`](archive/README.md) only to recover historical reasoning.
