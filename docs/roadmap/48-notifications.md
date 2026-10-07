@@ -75,8 +75,9 @@ Send when `startFightTimer` arms the 60 second countdown **and** some contestant
 
 - Audience: players who already have a monster in that ring. They are exactly the people `ring.countdown` is already addressed to. Their monster is about to fight a boss, and the page is closed.
 - The countdown event cannot be filtered on its own. Its payload is `{}`. The notifier has to read the roster at that moment (`isBoss` on a contestant, or on the `ring.state` snapshot).
-- One banner per countdown, not one per boss.
+- One banner per arming, not one per boss and not one per private event. `startFightTimer` publishes a separate `ring.countdown` for every player already in the ring. The arming is the `nextFightAt` that `publishState` sets immediately after that loop. Key the push by `roomId` and `nextFightAt`, and send each recipient at most one banner for that value.
 - Copy has to say the fight starts in a minute, and name the boss if there is one name to give. "A boss entered" is the ping we are not building.
+- The same hold test as the join ping, below. A boss countdown that the hold will cancel is the same false promise.
 
 A mega boss is a different clock (announced 30 minutes ahead, reminded at 10 and 2, and the ordinary countdown is held in the last stretch). Do not wire this rule to those reminders. If a mega boss is ever worth a ping, it is its own decision.
 
@@ -86,7 +87,7 @@ Send when the countdown arms, there is no requirement that a boss be present, an
 
 - Audience: members of the room who do **not** already have a monster in the ring. The ones who do are already in the fight; the boss rule above covers them when a boss is there, and a second ping for the same countdown would be noise.
 - Do not send when the ring is already full. There is nothing to join.
-- Do not send for a countdown that the mega-boss hold then cancels.
+- Do not send when this countdown will not become a fight. `holdForMegaBoss` refuses at arm time only once the mega boss is already inside `MEGA_BOSS_HOLD_MS` (2 minutes), so a countdown armed while it is between 2 and 3 minutes away still publishes `ring.countdown`. The 2-minute reminder then calls `startFightTimer` again and clears the timer (`mega-boss.ts`), and the countdown callback refuses the fight once the hold has begun. Suppress when `nextMegaBossAt` is set and `nextMegaBossAt - now <= MEGA_BOSS_HOLD_MS + FIGHT_DELAY`. Watching the event is not that test.
 
 **What "smaller" means is open.** Two readings, and they should not be mixed up:
 
@@ -132,11 +133,11 @@ The server pushes when it has not heard, recently, that this user is **looking a
 Not a design to implement blindly. The constraints under it are the part that has already been wrong in older notes.
 
 1. **Opt in, from a control with words.** Default off. Ask the browser for permission only after the player turns it on. A phone never shows a tooltip, so the control is a label, not an icon. Room Settings is the invite code, the member list, and owner actions; this switch is the player's, not the room's. Say, on that screen, that an iPhone only receives the ping after the site is added to the Home Screen.
-2. **Register a service worker and store the subscription.** One row per device: the user, the endpoint, the keys, when it was created. Not a `room_id` on the subscription. The endpoint is unique. A payload always carries `roomId` and the room's name. Before send, check that this user is still a member of that room. Stale endpoints (the browser returns 404 or 410) get deleted.
+2. **Register a service worker and store the subscription.** One row per device: the user, the endpoint, the keys, when it was created. Not a `room_id` on the subscription. The endpoint is unique. A payload always carries `roomId` and the room's name. A countdown payload also carries `nextFightAt`. Before send, check that this user is still a member of that room. Stale endpoints (the browser returns 404 or 410) get deleted.
 3. **Keys.** A VAPID key pair is a server secret, the same kind of thing as the other server secrets. The public key is what the page uses to subscribe. Proposed names, not chosen: `WEB_PUSH_VAPID_PUBLIC_KEY` and `WEB_PUSH_VAPID_PRIVATE_KEY`.
 4. **DM path.** `ChatService` already notifies listeners on send. The push sender is another listener, beside `ringFeed`. It does not write a `GameEvent` and does not go through the engine, so Discord and fight pacing never see it.
-5. **Countdown path.** A server subscriber on the room bus, the fight-stats shape, watching `ring.countdown`. It reads the live roster for `isBoss` and for who already has a monster in. It does not persist a new event. `ring.countdown` is already private and already stored; the push is a side effect, not a second copy in `room_events`.
-6. **Click.** The service worker opens `/room/:roomId/chat` for a DM, and the ring (`/room/:roomId`) for a countdown. If that room is already open, focus it.
+5. **Countdown path.** A server subscriber on the room bus, the fight-stats shape. It reads the live roster for `isBoss` and for who already has a monster in, then sends once per `roomId` + `nextFightAt`. One private `ring.countdown` per player is not one countdown: fanning the small-ring audience out from each of those events would ping every outsider once per contestant. Skip the arming when `nextMegaBossAt - now <= MEGA_BOSS_HOLD_MS + FIGHT_DELAY`, as above. Set the Web Push TTL to the seconds left until `nextFightAt`, and have the service worker drop the banner if that time has passed. A phone that was offline must not be told to join after the fight has started. A DM has no such deadline. The push does not persist a new event. `ring.countdown` is already stored; this is not a second copy in `room_events`.
+6. **Click.** The service worker opens `/room/:roomId/chat` for a DM, and the ring (`/room/:roomId`) for a countdown that has not expired. If that room is already open, focus it.
 7. **Discord.** Do not push a game event that the connector is already delivering to that user in this room. A web DM is not such an event. The countdown is: a linked Discord user already gets the private "Fight will begin in 60 seconds." Skip them for that one, or they get it twice. Skipping requires knowing the connector is actually delivering, not merely that a Discord account is linked somewhere.
 
 Preferences, once there is more than the DM:
