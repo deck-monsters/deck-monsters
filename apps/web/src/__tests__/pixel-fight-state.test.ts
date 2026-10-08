@@ -68,6 +68,19 @@ describe('pixel fight animations', () => {
     expect(nextDeadline(NO_ANIMATIONS)).toBeUndefined();
   });
 
+  it('lunges a fled monster away, then idles instead of freezing in a fighting pose', () => {
+    const left = reduce(NO_ANIMATIONS, combatEvent({ kind: 'flee', actor: { name: 'Aster' } }), 0);
+    const fled = { ...contestant('Aster'), fled: true };
+
+    expect(poseFor(left, fled, 0).anim).toBe('flee');
+    expect(poseFor(left, fled, 400).anim).toBe('idle');
+
+    const struck = reduce(NO_ANIMATIONS, combatEvent({
+      kind: 'hit', actor: { name: 'Heyus' }, target: { name: 'Aster' },
+    }), 0);
+    expect(poseFor(struck, fled, 0).anim).toBe('idle');
+  });
+
   it('reads death from the roster, not from a stored pose', () => {
     // Storing `faint` would let a revived monster keep a stale fallen pose. The roster's
     // `dead` flag outlives any animation, so it is the source of truth.

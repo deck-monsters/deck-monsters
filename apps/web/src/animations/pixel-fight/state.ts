@@ -86,14 +86,22 @@ export function pruneToRoster(
 /**
  * The pose to draw for one contestant. Death wins over any transient pose: the roster's
  * `dead` flag is authoritative and outlives the animation map.
+ *
+ * A fled monster keeps the short leave-lunge, then idles. Any other pose (a hit recoil,
+ * an attack) would leave them looking frozen mid-fight after the lunge expired. The
+ * roster label is what says they left; the sprite must not keep arguing.
  */
 export function poseFor(
   animations: FightAnimations,
-  contestant: Pick<RingContestantSnapshot, 'name' | 'dead'>,
+  contestant: Pick<RingContestantSnapshot, 'name' | 'dead' | 'fled'>,
   now: number,
 ): { anim: FighterAnimation; flash: boolean } {
   if (contestant.dead) return { anim: 'faint', flash: false };
   const pose = animations[contestant.name];
+  if (contestant.fled) {
+    if (pose?.anim === 'flee' && now < pose.startedAt + FLEE_MS) return { anim: 'flee', flash: false };
+    return { anim: 'idle', flash: false };
+  }
   if (!pose) return { anim: 'idle', flash: false };
   return { anim: pose.anim, flash: pose.anim === 'hit' && now - pose.startedAt < HIT_FLASH_MS };
 }

@@ -167,7 +167,13 @@ Workshop (words only, under the Train row, hidden while a Console flow is runnin
 the ring with fewer cards than slots; the old `equip_send` step suggested sending a monster
 whose deck was not full and the send was refused), `send` (full deck, none in the ring),
 `waiting` (a monster in the ring, no fight yet; says a boss can be summoned, with
-`BOSS_SUMMON_LIMIT` from the engine), `fallen`, `change_card`, `hidden`. `fallen` wins over
+`BOSS_SUMMON_LIMIT` from the engine), `fallen`, `change_card`, `hidden`. While the guide's
+own monster is in a fight the box says `{name} is fighting. Watch The Ring.` A live
+`ring.state` that marks that monster fled replaces it with `{name} has fled. Watch The Ring.`,
+including on the first fight's `waiting` step: the room is still in an encounter, and the
+waiting poll would otherwise keep saying they are fighting. Inventory cannot carry `fled`
+(`inEncounter` stays true until the fight ends), so a later inventory refresh does not
+undo that line. `fallen` wins over
 `change_card`. `change_card` ends when the deck fingerprint (each monster's cards, order
 ignored) differs from the one taken as the step began, which is how the web sees an equip,
 unequip or move however it was made (Console or Workshop); in-memory baseline, so a reload
@@ -351,7 +357,7 @@ description and the stats, which the old fenced text had; roadmap 42 K can resto
 the line's structured fields. Spacing between lines is the
 CSS gap, not blank lines baked into `text`. Millefleur (`feedStyle` `millefleur`) replaces
 some kinds with composed sentences — a round is a divider, a play names the card, a roll
-is one dim sentence (including substantive critical outcomes), a bloodied HP line gains a rose ", bloodied" inside the sentence.
+is one dim sentence (including substantive critical outcomes), a bloodied HP line gains a rose ", bloodied" inside the sentence while the target is still standing. At 0 HP or below the clause is ", fallen". A standing summary at 0 HP says "has fallen".
 Rolls without complete numeric facts (such as Blink's combined HP/XP dice) retain their
 original roll, verdict and outcome blocks. Every other theme is `terminal`: one block per
 line, the engine's own words. `text` is

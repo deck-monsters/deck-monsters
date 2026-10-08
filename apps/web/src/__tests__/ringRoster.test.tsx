@@ -93,6 +93,42 @@ describe('RingRoster', () => {
     expect(screen.getByText(/1 standing · 1 fallen/)).toBeTruthy();
   });
 
+  it('marks a fled monster instead of leaving its last hp on the row', () => {
+    const { container } = render(
+      <RingRoster
+        contestants={[
+          contestant(),
+          contestant({ name: 'Bjoranak', hp: 7, maxHp: 35, fled: true, acting: true, userId: 'user-2' }),
+        ]}
+        collapsed={false}
+        onToggle={noop}
+      />
+    );
+
+    expect(screen.getByText(/1 standing · 1 fled/)).toBeTruthy();
+    expect(screen.getByText('fled')).toBeTruthy();
+    expect(screen.queryByText('7/35')).toBeNull();
+    const row = container.querySelectorAll('.roster-row')[1]!;
+    expect(row.classList.contains('roster-row-fled')).toBe(true);
+    expect(row.classList.contains('roster-row-acting')).toBe(false);
+    expect(row.getAttribute('aria-label')).toContain('fled');
+    expect(row.querySelector('[role="meter"]')).toBeNull();
+  });
+
+  it('marks a monster at 0 hp as fallen even without the dead flag', () => {
+    render(
+      <RingRoster
+        contestants={[contestant({ hp: 0, dead: false })]}
+        collapsed={false}
+        onToggle={noop}
+      />
+    );
+
+    expect(screen.getByText('fallen')).toBeTruthy();
+    expect(screen.getByText(/0 standing · 1 fallen/)).toBeTruthy();
+    expect(screen.queryByText('0/50')).toBeNull();
+  });
+
   it('marks a fallen monster instead of showing its hp numbers', () => {
     render(
       <RingRoster

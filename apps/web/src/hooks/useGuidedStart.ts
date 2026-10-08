@@ -192,7 +192,7 @@ export function resetGuidedStartForTests(): void {
 
 type InventoryMonster = Partial<GuidedMonster> & { name: string };
 
-export function useGuidedStart(roomId: string | undefined): GuidedStep & { fightComing: boolean; fightOn: boolean; dismiss: () => void } {
+export function useGuidedStart(roomId: string | undefined): GuidedStep & { fightComing: boolean; fightOn: boolean; hasFled: boolean; dismiss: () => void } {
 	const { user } = useAuth();
 	const userId = user?.id;
 	useSyncExternalStore(subscribe, () => version, () => version);
@@ -275,20 +275,23 @@ export function useGuidedStart(roomId: string | undefined): GuidedStep & { fight
 	const ringFeed = useContext(RingFeedContext);
 	// Tagged with its room and arrival time: a push from another room is not this room's, and
 	// a push newer than the last inventory fetch outranks that fetch's `inEncounter`.
-	const [liveState, setLive] = useState<{ roomId: string | undefined; at: number; names: Set<string> } | null>(null);
+	const [liveState, setLive] = useState<{ roomId: string | undefined; at: number; names: Set<string>; fled: Set<string> } | null>(null);
 	const live = liveState && liveState.roomId === roomId ? liveState : null;
 	useEffect(() => {
 		if (!ringFeed) return;
 		return ringFeed.subscribe((tracked) => {
 			const event = tracked.data;
-			let state: { inEncounter?: boolean; contestants?: Array<{ name?: string; dead?: boolean; userId?: string | null }> } | undefined;
+			let state: { inEncounter?: boolean; contestants?: Array<{ name?: string; dead?: boolean; fled?: boolean; userId?: string | null }> } | undefined;
 			if (event.type === 'ring.state') state = event.payload as typeof state;
 			else if (event.type === 'handshake') state = (event.payload as { ringState?: typeof state }).ringState;
 			if (!state) return;
-			const names = new Set(
-				state.inEncounter ? (state.contestants ?? []).filter((c) => !c.dead && c.name && c.userId === userId).map((c) => c.name!) : [],
-			);
-			setLive({ roomId, at: Date.now(), names });
+			const contestants = state.inEncounter ? (state.contestants ?? []) : [];
+			const mine = (c: { name?: string; userId?: string | null }) => Boolean(c.name && c.userId === userId);
+			const names = new Set(contestants.filter((c) => mine(c) && !c.dead && !c.fled).map((c) => c.name!));
+			// Inventory's `inEncounter` stays true until the fight ends, so it cannot say
+			// who left. The snapshot is the only source that carries `fled`.
+			const fled = new Set(contestants.filter((c) => mine(c) && c.fled && !c.dead).map((c) => c.name!));
+			setLive({ roomId, at: Date.now(), names, fled });
 		});
 	}, [ringFeed, userId, roomId]);
 
@@ -302,7 +305,7 @@ export function useGuidedStart(roomId: string | undefined): GuidedStep & { fight
 	 * card. It is now true whenever the guide's own monster is in a fight, from whichever source
 	 * is freshest: the live `ring.state` push (instant), the inventory's per-monster
 	 * `inEncounter` (no extra request), or the `waiting` poll. A fallen monster is never
-	 * "fighting", whatever the ring is doing.
+	 * "fighting", whatever the ring is doing. A fled one is not either.
 	 */
 	const subject = monsters?.find((m) => m.name === step.name);
 	const subjectFighting =
@@ -315,7 +318,18 @@ export function useGuidedStart(roomId: string | undefined): GuidedStep & { fight
 			: subject
 				? subject.inEncounter === true
 				: (live?.names.has(step.name) ?? false));
-	const fightOn = subjectFighting || (phase === 'waiting' && ringData?.inEncounter === true);
-	const fightComing = !fightOn && (ringData?.contestants?.length ?? 0) > 1;
-	return { ...step, fightComing, fightOn, dismiss };
+	/*
+	 * Flee leaves `monster.inEncounter` true until the fight ends, so a later inventory
+	 * refresh still looks like "fighting". The live snapshot is what knows they left.
+	 * During the first fight the step stays `waiting` (no completed battle yet), and the
+	 * room poll would otherwise put `fightOn` back the moment anyone else is still in it
+	 * (Codex on #431). A newer inventory that says the encounter is over drops the flag:
+	 * keeping a stale flee after a missed end-of-fight push would stick the fled line.
+	 */
+	const liveSaysFled = Boolean(live?.fled.has(step.name));
+	const inventoryCaughtUp = Boolean(live && live.at <= inventory.dataUpdatedAt && subject?.inEncounter !== true);
+	const subjectFled = liveSaysFled && !inventoryCaughtUp && phase !== 'fallen' && phase !== 'spawn' && phase !== 'hidden';
+	const fightOn = !subjectFled && (subjectFighting || (phase === 'waiting' && ringData?.inEncounter === true));
+	const fightComing = !fightOn && !subjectFled && (ringData?.contestants?.length ?? 0) > 1;
+	return { ...step, fightComing, fightOn, hasFled: subjectFled, dismiss };
 }

@@ -245,5 +245,44 @@ describe('./announcements/hit.ts', () => {
 			});
 			expect(JSON.parse(JSON.stringify(combat))).to.deep.equal(combat);
 		});
+
+		it('does not call a killing blow bloodied, from above half or from below', () => {
+			// `bloodied` is hp <= half, so a monster at 0 used to be announced as bloodied.
+			const card = { flavors: { hits: [['hits', 100]] as [string, number][] } };
+			const assailant = new Gladiator({ name: 'assailant', hpVariance: 0, acVariance: 0 });
+
+			const fromHealthy = new Gladiator({ name: 'monster', hpVariance: 0, acVariance: 0 });
+			const healthyPrev = fromHealthy.maxHp;
+			fromHealthy.hp = 0;
+			const healthyEb = makeEb(text => {
+				expect(text).to.include('has 0HP');
+				expect(text).to.not.include('bloodied');
+				expect(text).to.not.include('only');
+			});
+			announceHit(healthyEb, '', fromHealthy, { assailant, card, damage: healthyPrev, prevHp: healthyPrev });
+
+			const fromWounded = new Gladiator({ name: 'monster', hpVariance: 0, acVariance: 0 });
+			fromWounded.hp = -4;
+			const woundedEb = makeEb(text => {
+				expect(text).to.include('has -4HP');
+				expect(text).to.not.include('bloodied');
+			});
+			announceHit(woundedEb, '', fromWounded, { assailant, card, damage: 9, prevHp: 5 });
+		});
+
+		it('leaves the bloodied flag false once the target has fallen', () => {
+			const { eb, published } = makeCaptureEb();
+			const monster = new Gladiator({ name: 'monster', hpVariance: 0, acVariance: 0 });
+			const assailant = new Gladiator({ name: 'assailant', hpVariance: 0, acVariance: 0 });
+			const card = { flavors: { hits: [['hits', 100]] as [string, number][] } };
+			const prevHp = monster.maxHp;
+			monster.hp = 0;
+
+			announceHit(eb, '', monster, { assailant, card, damage: prevHp, prevHp });
+
+			expect(published[0]?.payload.bloodied).to.equal(false);
+			const lines = published[0]?.payload.lines as Array<{ kind: string; bloodied?: boolean; hp?: number }>;
+			expect(lines.find(line => line.kind === 'hp')).to.include({ bloodied: false, hp: 0 });
+		});
 	});
 });

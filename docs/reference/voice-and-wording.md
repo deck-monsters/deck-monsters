@@ -145,7 +145,9 @@ September 2026).
 
 On the Millefleur theme the web Ring draws shorter sentences from `payload.lines`: "A plays
 Card", "A rolled 9 +1 = 10 vs 9 · hit", "A is at 24/33 hp, bloodied", and a round as a
-divider. Those sentences are display only. The engine's `text` stays the Discord line and
+divider. Those sentences are display only. Bloodied means still standing at half HP or less.
+At 0 HP or below the clause is ", fallen" ("has 0HP, fallen"), and a standing summary says
+"has fallen". The engine's `text` stays the Discord line and
 the dark themes' line ("lays down the following card", "has only 17HP"). Do not change
 `text` to match the composed sentence, and do not treat the composed sentence as a second
 canon to localise. Flavour that belongs in both (an entrance line, a boss's verb) is written
@@ -180,7 +182,9 @@ Some legacy text is intentionally called out so it does not return: “proud own
 | Ring exit | **call [monster] out of the ring** | `remove`/`fetch`/`bring … from/out of the ring` | `summon … from the ring` | command catalog, help, handbook |
 | House boss entry | **summon a boss** | — | — | player command; admin `spawn a boss` remains out-of-world |
 | Fallen monster recovery | **revive** | — | resurrect, respawn | commands, controls, Discord |
-| Fallen state | **fallen**, “has fallen”; `💀 dead` is valid in a stat line | — | knocked-out, KO | status, FTUX, Discord |
+| Fallen state | **fallen**, “has fallen”; `💀 dead` is valid in a stat line | — | knocked-out, KO; calling 0 HP **bloodied** | status, FTUX, Discord, roster, HP clause |
+| Wounded, still standing | **bloodied** (half HP or less, and still above 0) | — | using it once they have fallen | HP clause, handbook |
+| Left the ring alive | **fled** | — | leaving the roster on their last HP with no word for it | roster, fight titles |
 | Permanent departure | **dismiss**; “Part ways with a monster for good” | — | release, drop | commands and Discord |
 | Dismissal farewell | “has been laid to rest” when dead; otherwise “leaves your side” | — | — | announcements |
 | Location | **the ring** | — | arena | commands and player prose |

@@ -20,18 +20,37 @@ export function isDense(contestantCount: number): boolean {
   return contestantCount > DENSE_ABOVE;
 }
 
+/** At 0 HP or flagged dead. HP wins when a payload's `dead` bit is stale. */
+export function isFallen(contestant: Pick<RingContestantSnapshot, 'dead' | 'hp'>): boolean {
+  return contestant.dead || contestant.hp <= 0;
+}
+
+/** Left alive. A monster who also fell is fallen; that is the state the row should say. */
+export function isFled(
+  contestant: Pick<RingContestantSnapshot, 'dead' | 'hp' | 'fled'>,
+): boolean {
+  return Boolean(contestant.fled) && !isFallen(contestant);
+}
+
+/** Still in the fight: not fallen, not fled. */
+export function isStanding(
+  contestant: Pick<RingContestantSnapshot, 'dead' | 'hp' | 'fled'>,
+): boolean {
+  return !isFallen(contestant) && !isFled(contestant);
+}
+
 /**
  * Teams earn their place in a row only when they tell you something.
  *
  * In Common Cause every player joins `The Alliance`, so a team column on a player-only
  * roster repeats one word down the whole list. Two or more distinct teams standing is the
  * point at which allegiance starts mattering — below that the pips, the legend and the
- * meta-line entry all disappear. Fallen contestants are excluded: a wiped-out team is no
- * longer a side you are tracking.
+ * meta-line entry all disappear. Fallen and fled contestants are excluded: a side with
+ * nobody left in the fight is no longer a side you are tracking.
  */
 export function teamsAreRelevant(contestants: RingContestantSnapshot[]): boolean {
   const standing = new Set(
-    contestants.filter((contestant) => !contestant.dead && contestant.team).map((c) => c.team),
+    contestants.filter((contestant) => isStanding(contestant) && contestant.team).map((c) => c.team),
   );
   return standing.size >= 2;
 }
@@ -45,10 +64,29 @@ export function teamsAreRelevant(contestants: RingContestantSnapshot[]): boolean
  */
 export function teamsInPlay(contestants: RingContestantSnapshot[]): string[] {
   const seen: string[] = [];
-  for (const { team, dead } of contestants) {
-    if (team && !dead && !seen.includes(team)) seen.push(team);
+  for (const contestant of contestants) {
+    const { team } = contestant;
+    if (team && isStanding(contestant) && !seen.includes(team)) seen.push(team);
   }
   return seen;
+}
+
+/**
+ * "2 standing · 1 fallen · 1 fled". Someone who fled used to be counted as standing,
+ * because the snapshot had no `fled` bit, so the header and the row both sat still.
+ */
+export function rosterStatus(contestants: RingContestantSnapshot[]): string {
+  let fallen = 0;
+  let fled = 0;
+  for (const contestant of contestants) {
+    if (isFallen(contestant)) fallen += 1;
+    else if (isFled(contestant)) fled += 1;
+  }
+  const standing = contestants.length - fallen - fled;
+  const parts = [`${standing} standing`];
+  if (fallen > 0) parts.push(`${fallen} fallen`);
+  if (fled > 0) parts.push(`${fled} fled`);
+  return parts.join(' · ');
 }
 
 export type TurnPosition = 'acting' | null;
@@ -65,18 +103,17 @@ export type TurnPosition = 'acting' | null;
  * This deliberately does **not** predict who acts next. It used to, and the prediction
  * was wrong: the engine's queue filter is `!dead && !fled`
  * (`isActiveContestant` in `ring/index.ts`), and it further depends on the batch's card
- * index and on `emptyHanded`. `ring.state` publishes `dead` but not `fled`, so a monster
- * that has fled stays in the roster looking alive and would have been marked as up next
- * despite never acting again. Restoring the cue means publishing the real next actor from
- * the engine — a `ring.state` payload change, not something a client can infer.
+ * index and on `emptyHanded`. `ring.state` now publishes `fled`, but not an empty hand,
+ * so a client still cannot know who is up next. That cue has to come from the engine.
  */
 export function turnPositions(
   contestants: RingContestantSnapshot[],
 ): Map<RingContestantSnapshot, TurnPosition> {
   const positions = new Map<RingContestantSnapshot, TurnPosition>();
   for (const contestant of contestants) {
-    // A fallen contestant never acts, whatever a stale payload claims.
-    positions.set(contestant, contestant.acting && !contestant.dead ? 'acting' : null);
+    // A fallen or fled contestant never acts, whatever a stale payload claims. The
+    // actor flag stays on them until the next turn's publish.
+    positions.set(contestant, contestant.acting && isStanding(contestant) ? 'acting' : null);
   }
   return positions;
 }
@@ -117,9 +154,11 @@ export function describeContestant(
   contestant: RingContestantSnapshot,
   position: TurnPosition,
 ): string {
-  const health = contestant.dead
+  const health = isFallen(contestant)
     ? 'fallen'
-    : `${contestant.hp} of ${contestant.maxHp} hit points`;
+    : isFled(contestant)
+      ? 'fled'
+      : `${contestant.hp} of ${contestant.maxHp} hit points`;
   const bits = [
     contestant.name,
     contestant.isBoss ? 'boss' : null,

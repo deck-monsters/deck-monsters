@@ -5520,3 +5520,50 @@ roster rows: message heights are multiples of 28px (56px, formerly 57px; a wrapp
 wraps, and the marker centres within 1px of the portrait. These are browser layout checks;
 jsdom does not measure this geometry. `millefleur-spacing.test.ts` pins the declarations
 that layout cannot see.
+
+### 242. A monster that fled stayed on the roster looking frozen — FIXED
+
+The ring list is the fight's scoreboard. Thithilli at 0 HP reads FALLEN. Bjoranak Vigileye,
+after fleeing at 7/35, kept that HP, the bar, a turn marker if it was still their action,
+and a place in the standing count. Nothing on the row said they had left, so they looked
+stuck.
+
+**Root cause:** `ring.state` published `dead` and not `fled`. `monster.fled` lives on the
+encounter and `endEncounter()` deletes it; the only durable copy is the one
+`fightConcludes` writes onto the contestant, and the snapshot never read either. The roster
+therefore treated a fled monster as standing. The same gap let the turn marker and the
+first-fight guide keep calling them the one who is fighting, and a hit pose could sit on
+the sprite after the leave-lunge. Dropping a fled name from the guide's fighting set was
+not enough on a first fight: the step stays `waiting` (no completed battle yet), and the
+room-wide encounter poll put "is fighting" back while anyone else was still in the ring.
+
+**Fixed:** `contestantSnapshots()` publishes `fled` from `monster.fled` or the contestant's
+copy. The row says fled, dims without a strikethrough, clears the bar, and drops out of
+the standing count and the team legend. Acting is ignored for fallen and fled contestants,
+including a row whose HP is already 0 when `dead` was omitted. The sprite may lunge away,
+then idles. The guide keeps the snapshot's fled bit, including when a later inventory
+still says `inEncounter` (flee does not clear that until the fight ends), and says
+`{name} has fled. Watch The Ring.` instead of restoring the fighting line from the poll.
+
+Pinned by `ring/index.test.ts` (`contestantSnapshots`), `roster-model.test.ts`,
+`ringRoster.test.tsx`, `pixel-fight-state.test.ts`, and `guidedStart.test.tsx`.
+
+### 243. A monster at 0 HP was still called bloodied — FIXED
+
+A killing blow painted "Thithilli has 0HP, bloodied." A blow from above half health said
+"is now bloodied" on the way to 0. The same rule would have put ", bloodied" on a standing
+summary at 0 HP.
+
+**Root cause:** `bloodied` means `hp <= half`. That is true of a monster who has fallen, so
+`announceHit` set the line's `bloodied` flag, and prefixed "is now bloodied", whenever the
+new total was at or under half — including 0 and below. Millefleur appends that flag as a
+rose clause. The word is for someone still standing.
+
+**Fixed:** the flag and the "is now bloodied" / "only" wording require `hp > 0`. Millefleur
+says ", fallen" at 0 or below even if an older payload still set `bloodied`, and a standing
+summary at 0 HP says "has fallen". The handbook's Reading a Fight line now says bloodied
+is still in the fight. Discord text no longer claims a killing blow merely bloodied them;
+the death line still says who killed them.
+
+Pinned by `announcements/hit.test.ts`, `announcements/feed-lines.test.ts`, and
+`apps/web/src/__tests__/feed-lines.test.tsx`.

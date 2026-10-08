@@ -65,18 +65,22 @@ const TERMINAL_INDENT: Partial<Record<string, number>> = { outcome: 4 };
 const MILLEFLEUR_INDENT = 2;
 
 /**
- * The engine's hp sentence already ends ("*Quoloth has -4HP.*"). Appending ", bloodied"
+ * The engine's hp sentence already ends ("*Quoloth has -4HP.*"). Appending a clause
  * after that period painted "has -4HP., bloodied" (live check, 2026-10-06). The rose
  * clause goes inside the sentence, and the closing markup star stays on the name's clause
  * so the two parts don't leave an open `*`.
+ *
+ * At 0 HP or below the clause is ", fallen", not ", bloodied". `bloodied` on the line
+ * used to mean "hp <= half", which is also true of a monster who has just fallen, so a
+ * killing blow painted "has 0HP, bloodied".
  */
-function bloodiedHpParts(text: string): FeedPart[] {
+function conditionHpParts(text: string, clause: ', bloodied' | ', fallen'): FeedPart[] {
 	const match = text.match(/^(.*?)(\.)(\**)\s*$/);
-	if (!match) return [{ text, markup: true }, { text: ', bloodied', danger: true }];
+	if (!match) return [{ text, markup: true }, { text: clause, danger: true }];
 	const [, stem, dot, stars] = match;
 	return [
 		{ text: `${stem}${stars}`, markup: true },
-		{ text: ', bloodied', danger: true },
+		{ text: clause, danger: true },
 		{ text: dot },
 	];
 }
@@ -98,13 +102,20 @@ export function signed(n: number): string {
 	return n < 0 ? ` -${Math.abs(n)}` : ` +${n}`;
 }
 
-/** The rule for "bloodied" when a line does not carry it: at or under half health. */
-export const isBloodied = (hp: number, maxHp: number) => maxHp > 0 && hp * 2 <= maxHp;
+/** Still standing, and at or under half health. 0 or below has fallen. */
+export const isBloodied = (hp: number, maxHp: number) => hp > 0 && maxHp > 0 && hp * 2 <= maxHp;
 
 /** One sentence per creature: "Poirot is at 24/33 hp." plus ", bloodied" in the danger rose. */
 function standingParts(line: Extract<FeedLine, { kind: 'standing' }>): FeedPart[] | null {
 	if (line.hp === undefined || line.maxHp === undefined) return null;
 	const icon = iconBefore(line.text, line.name);
+	if (line.hp <= 0) {
+		return [
+			{ text: `${withIcon(icon, line.name)} has ` },
+			{ text: 'fallen', danger: true },
+			{ text: '.' },
+		];
+	}
 	const parts: FeedPart[] = [{ text: `${withIcon(icon, line.name)} is at ${line.hp}/${line.maxHp} hp` }];
 	if (isBloodied(line.hp, line.maxHp)) parts.push({ text: ', bloodied', danger: true });
 	parts.push({ text: '.' });
@@ -176,9 +187,17 @@ function plainBlock(line: FeedLine, key: string, style: FeedStyle): FeedBlock {
 	}
 	// The threshold line already says "is now bloodied" (hit.ts). Appending the clause
 	// again painted "is now bloodied. … has only 17HP, bloodied." (live check, 2026-10-06).
-	const alreadySaysBloodied = line.kind === 'hp' && /bloodied/i.test(line.text);
-	const parts: FeedPart[] = line.kind === 'hp' && line.bloodied && style === 'millefleur' && !alreadySaysBloodied
-		? bloodiedHpParts(line.text)
+	// A line at 0 HP or below says fallen even when an older payload still set `bloodied`
+	// (that flag used to mean "hp <= half", including the fallen).
+	const hpClause = line.kind === 'hp' && style === 'millefleur'
+		? line.hp <= 0
+			? ', fallen' as const
+			: line.bloodied && !/bloodied/i.test(line.text)
+				? ', bloodied' as const
+				: null
+		: null;
+	const parts: FeedPart[] = hpClause
+		? conditionHpParts(line.text, hpClause)
 		: [{ text: line.text, markup: true }];
 	return {
 		key,
@@ -198,8 +217,9 @@ function plainBlock(line: FeedLine, key: string, style: FeedStyle): FeedBlock {
  *   7/31 hp, bloodied." (falls back to the lines' own text when a creature has no hp).
  * - `play` + the `card` after it -> "A plays Card" (the frame stays below it).
  * - `roll` + `verdict` + `outcome` -> "A rolled 9 +1 = 10 vs 9 · hit".
- * - `hp` keeps its text and gains ", bloodied" in the danger rose when the line says so,
- *   unless the sentence already says "bloodied" (the threshold announcement).
+ * - `hp` keeps its text and gains ", bloodied" in the danger rose when the target is
+ *   still standing and wounded, unless the sentence already says "bloodied" (the
+ *   threshold announcement). At 0 HP or below the clause is ", fallen".
  */
 export function composeFeedBlocks(lines: readonly FeedLine[], style: FeedStyle): FeedBlock[] {
 	const blocks: FeedBlock[] = [];

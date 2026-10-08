@@ -206,7 +206,8 @@ Renderers prefer `lines` and fall back to `text`, because events stored before l
 none. The web does this in `FeedEventBody` (`components/FeedLines.tsx`): lines become the
 blocks in `utils/feed-lines.ts`, and a missing `lines` array renders `text` as before.
 Millefleur composes some kinds (a round divider, "A plays Card", one roll sentence, a rose
-", bloodied" inside an HP sentence). The other four themes draw one block per line in the
+", bloodied" inside an HP sentence while the target is still standing, or ", fallen" at 0 HP
+or below). The other four themes draw one block per line in the
 engine's words. `announcements/feed-lines.test.ts` runs a real fight and holds the invariant: every feed
 event carries lines, each line is clean, and the lines' text equals `text` with its layout
 removed, so the two cannot drift. Private command replies (`look at` listings, ring errors, the

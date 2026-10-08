@@ -219,7 +219,9 @@ The ring narrates every roll. What the words and numbers mean:
 - Natural 20: the die itself shows 20. The attack hits whatever the target's AC, for the most damage the dice allow.
 - Natural 1, the Curse of Loki: the die itself shows 1. The attack misses, and the target turns it back on the attacker.
 - Hit! and Miss...: whether the attack roll beat the target's defense.
-- Bloodied: a monster at half its HP or less.
+- Bloodied: still in the fight, at half HP or less.
+- Fallen: at 0 HP or below. The roster says fallen instead of a health number.
+- Fled: left the ring alive. The roster says fled. That monster will not take another turn.
 - AC, HP, DEX, STR, INT: the monster's stats, described in Combat Stats & Card Roles.
 - XP: experience. Monsters earn it from every fight, and it raises their level.
 - Beginner and Lvl 0: the same thing, a monster that has not reached level 1. The Workshop shows the number, the ring the word.

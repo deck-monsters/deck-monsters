@@ -185,6 +185,32 @@ describe('composeFeedBlocks (millefleur)', () => {
     );
     expect(blocks[0]!.parts.map((p) => p.text)).toEqual([text]);
   });
+
+  it('says fallen, not bloodied, once hp is 0 or below', () => {
+    for (const hp of [0, -4]) {
+      const blocks = composeFeedBlocks(
+        [{ kind: 'hp', text: `🐂 *Minotaur has ${hp}HP.*`, name: 'Minotaur', hp, maxHp: 31, bloodied: true }],
+        'millefleur',
+      );
+      expect(blocks[0]!.parts.map((p) => p.text), String(hp)).toEqual([
+        `🐂 *Minotaur has ${hp}HP*`,
+        ', fallen',
+        '.',
+      ]);
+      expect(blocks[0]!.parts.some((p) => p.text.includes('bloodied'))).toBe(false);
+    }
+  });
+
+  it('says a standing creature at 0 hp has fallen', () => {
+    const blocks = composeFeedBlocks(
+      [
+        { kind: 'turn', text: '🎲  round 2, turn 7', round: 2, turn: 7 },
+        { kind: 'standing', text: '🐂 Minotaur (0 hp)', name: 'Minotaur', hp: 0, maxHp: 31 },
+      ],
+      'millefleur',
+    );
+    expect(blocks[0]!.parts.map((p) => p.text).join('')).toBe('Round 2, turn 7. 🐂 Minotaur has fallen.');
+  });
 });
 
 describe('events without lines', () => {

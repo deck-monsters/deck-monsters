@@ -365,6 +365,20 @@ describe('feed lines (payload.lines)', () => {
 			expect(hp!.text).to.include('is now bloodied. Monster has only 5HP.');
 		});
 
+		it('does not call a fallen target bloodied', () => {
+			const { eb, published } = capture();
+			const monster = new Gladiator({ name: 'monster', hpVariance: 0, acVariance: 0 });
+			const assailant = new Gladiator({ name: 'assailant', hpVariance: 0, acVariance: 0 });
+			const prevHp = monster.hp;
+			monster.hp = 0;
+
+			announceHit(eb, 'Monster', monster, { assailant, card: { flavors: { hits: [['hits', 100]] } }, damage: prevHp, prevHp });
+			const hp = linesOf(published[0]!)[1];
+
+			expect(hp).to.include({ kind: 'hp', hp: 0, bloodied: false });
+			expect(hp!.text).to.not.include('bloodied');
+		});
+
 		it('keeps a healthy target out of the bloodied state', () => {
 			const { eb, published } = capture();
 			const monster = new Gladiator({ name: 'monster', hpVariance: 0, acVariance: 0 });

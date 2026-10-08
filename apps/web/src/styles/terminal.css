@@ -1042,11 +1042,25 @@
   text-decoration: line-through;
 }
 
-.roster-dead-text {
-  color: var(--color-error);
+/* Fled stays readable and is not struck through: they left alive. The dimming is what
+   stops the row reading as a monster still waiting for a turn. */
+.roster-row-fled {
+  opacity: 0.55;
+}
+
+.roster-dead-text,
+.roster-fled-text {
   text-transform: uppercase;
   font-size: 0.68rem;
   letter-spacing: 0.06em;
+}
+
+.roster-dead-text {
+  color: var(--color-error);
+}
+
+.roster-fled-text {
+  color: var(--color-fg-dim);
 }
 
 /* The bar animation is decorative — respect a reduced-motion preference. */

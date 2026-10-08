@@ -111,6 +111,12 @@ export interface RingContestantSnapshot {
 	maxHp: number;
 	ac: number;
 	dead: boolean;
+	/**
+	 * Left the fight alive. `monster.fled` is cleared when the encounter ends, so the
+	 * snapshot also reads the copy `fightConcludes` stores on the contestant. Without
+	 * this the roster kept a fled monster at its last HP, looking frozen in the fight.
+	 */
+	fled: boolean;
 	isBoss: boolean;
 	team: string | null;
 	/** Owning player's display name; null for bosses, which have no owner. */
@@ -766,7 +772,7 @@ export class Ring extends BaseClass {
 	 * `activeContestant`), so a client can highlight whose turn it is.
 	 */
 	contestantSnapshots(): RingContestantSnapshot[] {
-		return this.contestants.map(({ monster, character, userId, isBoss, team }) => ({
+		return this.contestants.map(({ monster, character, userId, isBoss, team, fled }) => ({
 			name: monster.givenName,
 			icon: monster.icon ?? '',
 			creatureType: monster.creatureType,
@@ -775,6 +781,10 @@ export class Ring extends BaseClass {
 			maxHp: monster.maxHp,
 			ac: monster.ac,
 			dead: monster.dead,
+			// `endEncounter()` deletes the encounter, which clears `monster.fled`. The
+			// contestant copy is what the final board still has, so a fled monster does
+			// not snap back to "standing" for the publish that follows the fight.
+			fled: Boolean(monster.fled || fled),
 			isBoss: Boolean(isBoss),
 			team: isRivalTeam(team) ? null : (team ?? null),
 			owner: isBoss ? null : (character?.givenName ?? null),
