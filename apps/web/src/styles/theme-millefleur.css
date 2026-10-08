@@ -775,7 +775,8 @@
 [data-theme='millefleur'] .roster-rail .roster-bar-track { height: 6px; }
 [data-theme='millefleur'] .roster-name-text { font-size: 15px; font-weight: 800; color: var(--color-fg-bright); }
 [data-theme='millefleur'] .roster-row-sub { font-size: 11px; }
-[data-theme='millefleur'] .roster-row-dead .roster-dead-text { font-size: 11px; }
+[data-theme='millefleur'] .roster-row-dead .roster-dead-text,
+[data-theme='millefleur'] .roster-row-fled .roster-fled-text { font-size: 11px; }
 /* The ▶ turn marker (terminal.css) stays beside the wash: the wash alone would carry "whose
    turn" by colour only (the roster contract: ▶ and the row tint, never colour alone). */
 /* The acting row: the mock's butter wash fading to the right, rounded. */

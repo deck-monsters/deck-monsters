@@ -134,7 +134,11 @@ export type FeedLine =
 			name: string;
 			hp: number;
 			maxHp: number;
-			/** The target is currently at or under half health (not "just crossed the line"). */
+			/**
+			 * Still standing, and at or under half health (not "just crossed the line").
+			 * False once hp is 0 or below: that monster has fallen, and "bloodied" would
+			 * read as if they were still in the fight.
+			 */
 			bloodied: boolean;
 	  }
 	| { kind: 'miss'; text: string; assailant: string; target: string; blocked: boolean }

@@ -352,6 +352,15 @@ describe('useGuidedStart fightOn in any step (44 K6)', () => {
     expect(result.current.fightOn).toBe(false);
   });
 
+  it('a monster that has fled is not reported as fighting', () => {
+    localStorage.setItem('ftuxStarted:user-1:room-1', 'true');
+    mocks.monsters = fought({});
+    const { wrapper, push } = feedWrapper();
+    const { result } = renderHook(() => useGuidedStart('room-1'), { wrapper });
+    push({ inEncounter: true, contestants: [{ name: 'Saffron', dead: false, fled: true, userId: 'user-1' }] });
+    expect(result.current.fightOn).toBe(false);
+  });
+
   it('a fallen monster is never reported as fighting', () => {
     localStorage.setItem('ftuxStarted:user-1:room-1', 'true');
     mocks.monsters = fought({ dead: true, inEncounter: true });

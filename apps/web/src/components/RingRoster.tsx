@@ -4,7 +4,10 @@ import {
   describeContestant,
   formatLevel,
   isDense,
+  isFallen,
+  isFled,
   metaParts,
+  rosterStatus,
   teamsAreRelevant,
   teamsInPlay,
   turnPositions,
@@ -20,6 +23,11 @@ export interface RingContestantSnapshot {
   maxHp: number;
   ac: number;
   dead: boolean;
+  /**
+   * Left the fight alive. Optional: a `ring.state` from a server older than this field
+   * omits it, and the row then keeps the old "still standing" reading.
+   */
+  fled?: boolean;
   isBoss: boolean;
   team: string | null;
   owner: string | null;
@@ -66,9 +74,9 @@ export function hpBand(ratio: number): 'healthy' | 'hurt' | 'critical' {
 /**
  * Turn gutter. Order of play is the row order; this marks whose turn it is now.
  *
- * It does not mark who is up next. That cue was tried and removed: the engine's queue
- * excludes fled contestants as well as fallen ones, and `ring.state` does not publish
- * `fled`, so the prediction could point at a monster that will never act again.
+ * It does not mark who is up next. That cue was tried and removed: the engine also
+ * skips a monster who is out of cards, and `ring.state` does not publish that, so a
+ * guess could point at someone who will never act again.
  */
 function TurnMarker({ position }: { position: TurnPosition }) {
   return (
@@ -78,17 +86,20 @@ function TurnMarker({ position }: { position: TurnPosition }) {
   );
 }
 
-function HealthMeter({ contestant }: { contestant: RingContestantSnapshot }) {
-  const ratio = hpRatio(contestant.hp, contestant.maxHp);
-  const band = contestant.dead ? 'critical' : hpBand(ratio);
+function HealthMeter({ contestant, departed }: { contestant: RingContestantSnapshot; departed: boolean }) {
+  // A fled monster's last HP must not stay painted on the bar. That frozen fill is
+  // what made them look like they were still in the fight.
+  const ratio = departed ? 0 : hpRatio(contestant.hp, contestant.maxHp);
+  const band = contestant.dead || departed ? 'critical' : hpBand(ratio);
   return (
     <div
       className="roster-bar-track"
-      role="meter"
-      aria-valuenow={Math.max(0, contestant.hp)}
-      aria-valuemin={0}
-      aria-valuemax={Math.max(contestant.maxHp, 0)}
-      aria-label={`${contestant.name} health`}
+      role={departed ? undefined : 'meter'}
+      aria-hidden={departed ? true : undefined}
+      aria-valuenow={departed ? undefined : Math.max(0, contestant.hp)}
+      aria-valuemin={departed ? undefined : 0}
+      aria-valuemax={departed ? undefined : Math.max(contestant.maxHp, 0)}
+      aria-label={departed ? undefined : `${contestant.name} health`}
     >
       <div
         className={`roster-bar-fill roster-bar-${band}`}
@@ -136,11 +147,14 @@ function ContestantRow({
   position: TurnPosition;
 }) {
   const isActing = position === 'acting';
+  const fallen = isFallen(contestant);
+  const fled = isFled(contestant);
   const parts = metaParts(contestant, showTeam);
 
   const classes = [
     'roster-row',
-    contestant.dead ? 'roster-row-dead' : '',
+    fallen ? 'roster-row-dead' : '',
+    fled ? 'roster-row-fled' : '',
     isMine ? 'roster-row-mine' : '',
     isActing ? 'roster-row-acting' : '',
   ].filter(Boolean).join(' ');
@@ -173,9 +187,13 @@ function ContestantRow({
 
       <div className="roster-rail">
         <span className="roster-hp">
-          {contestant.dead ? <span className="roster-dead-text">fallen</span> : `${contestant.hp}/${contestant.maxHp}`}
+          {fallen
+            ? <span className="roster-dead-text">fallen</span>
+            : fled
+              ? <span className="roster-fled-text">fled</span>
+              : `${contestant.hp}/${contestant.maxHp}`}
         </span>
-        <HealthMeter contestant={contestant} />
+        <HealthMeter contestant={contestant} departed={fled} />
       </div>
     </li>
   );
@@ -217,8 +235,6 @@ export default function RingRoster({
 }: RingRosterProps) {
   if (contestants.length === 0) return null;
 
-  const standing = contestants.filter((c) => !c.dead).length;
-  const fallen = contestants.length - standing;
   const showTeam = teamsAreRelevant(contestants);
   const dense = isDense(contestants.length);
   const positions = turnPositions(contestants);
@@ -233,7 +249,7 @@ export default function RingRoster({
         aria-expanded={!collapsed}
       >
         <span aria-hidden="true">{collapsed ? '▸' : '▾'}</span> In the ring —{' '}
-        {standing} standing{fallen > 0 ? ` · ${fallen} fallen` : ''}
+        {rosterStatus(contestants)}
       </button>
 
       {!collapsed && (

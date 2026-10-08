@@ -351,7 +351,7 @@ description and the stats, which the old fenced text had; roadmap 42 K can resto
 the line's structured fields. Spacing between lines is the
 CSS gap, not blank lines baked into `text`. Millefleur (`feedStyle` `millefleur`) replaces
 some kinds with composed sentences — a round is a divider, a play names the card, a roll
-is one dim sentence (including substantive critical outcomes), a bloodied HP line gains a rose ", bloodied" inside the sentence.
+is one dim sentence (including substantive critical outcomes), a bloodied HP line gains a rose ", bloodied" inside the sentence while the target is still standing. At 0 HP or below the clause is ", fallen". A standing summary at 0 HP says "has fallen".
 Rolls without complete numeric facts (such as Blink's combined HP/XP dice) retain their
 original roll, verdict and outcome blocks. Every other theme is `terminal`: one block per
 line, the engine's own words. `text` is

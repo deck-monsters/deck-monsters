@@ -42,11 +42,15 @@ export function announceHit(
 		icon = icons.find(i => damage >= i.floor)!.icon;
 	}
 
+	// `bloodied` is "hp <= half", which stays true after a monster has fallen. The word
+	// is for someone still standing. A killing blow used to say "is now bloodied" and
+	// the web then painted "has 0HP, bloodied".
+	const wounded = monster.hp > 0 && Boolean(monster.bloodied);
 	const bloodied =
-		monster.bloodied && prevHp > monster.bloodiedValue
+		wounded && prevHp > monster.bloodiedValue
 			? `${monster.givenName} is now bloodied. `
 			: '';
-	const only = monster.bloodied && monster.hp > 0 ? 'only ' : '';
+	const only = wounded ? 'only ' : '';
 	const combat: CombatPayload = {
 		kind: 'hit',
 		actor: toCombatActor(assailant),
@@ -85,7 +89,7 @@ export function announceHit(
 			name: monster.givenName,
 			hp: monster.hp,
 			maxHp: monster.maxHp,
-			bloodied: Boolean(monster.bloodied),
+			bloodied: wounded,
 		},
 	];
 
@@ -106,7 +110,7 @@ export function announceHit(
 			prevHp,
 			hp: monster.hp,
 			maxHp: monster.maxHp,
-			bloodied: Boolean(monster.bloodied),
+			bloodied: wounded,
 			monsterName: monster.givenName,
 			assailantName: assailant?.givenName,
 			combat,

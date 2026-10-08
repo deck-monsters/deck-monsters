@@ -68,6 +68,7 @@ describe('ring/index.ts', () => {
 			expect(snapshot!.hp).to.equal(monster.hp);
 			expect(snapshot!.ac).to.equal(monster.ac);
 			expect(snapshot!.dead).to.equal(false);
+			expect(snapshot!.fled).to.equal(false);
 			expect(snapshot!.isBoss).to.equal(false);
 			expect(snapshot!.userId).to.equal('user-1');
 			expect(snapshot!.owner).to.equal(character.givenName);
@@ -122,6 +123,29 @@ describe('ring/index.ts', () => {
 
 			game.dispose();
 		});
+		it('reports a monster that has fled, including after the encounter flag is cleared', () => {
+			// fightConcludes copies fled onto the contestant and then endEncounter()
+			// deletes monster.fled. The roster publish after that must still say fled,
+			// or the row snaps back to a frozen standing HP.
+			const game = new Game();
+			const ring = game.getRing();
+			const character = new Beastmaster({ name: 'Ada' });
+			const monster = new Basilisk({ name: 'Stonefang' });
+			character.addMonster(monster);
+			ring.addMonster({ monster, character, userId: 'user-1' });
+
+			monster.startEncounter(ring);
+			monster.fled = true;
+			expect(ring.contestantSnapshots()[0]!.fled).to.equal(true);
+
+			ring.contestants[0]!.fled = monster.fled;
+			monster.endEncounter();
+			expect(monster.fled).to.equal(false);
+			expect(ring.contestantSnapshots()[0]!.fled).to.equal(true);
+
+			game.dispose();
+		});
+
 		it('tracks damage so the roster follows the fight', () => {
 			const game = new Game();
 			const ring = game.getRing();

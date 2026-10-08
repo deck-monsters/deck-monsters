@@ -5,6 +5,7 @@ import {
   formatLevel,
   isDense,
   metaParts,
+  rosterStatus,
   teamsAreRelevant,
   teamsInPlay,
   turnPositions,
@@ -69,6 +70,17 @@ describe('teamsAreRelevant', () => {
     ])).toBe(false);
   });
 
+  it('ignores a team whose only monster has fled', () => {
+    expect(teamsAreRelevant([
+      c({ team: 'Gryffindor' }),
+      c({ name: 'Aqim', team: 'Slytherin', fled: true }),
+    ])).toBe(false);
+    expect(teamsInPlay([
+      c({ team: 'Gryffindor' }),
+      c({ name: 'Aqim', team: 'Slytherin', fled: true }),
+    ])).toEqual(['Gryffindor']);
+  });
+
   it('lists teams in roster order, without duplicates', () => {
     expect(teamsInPlay([
       c({ team: 'Slytherin' }),
@@ -101,10 +113,9 @@ describe('turnPositions', () => {
   });
 
   it('does not predict who acts next', () => {
-    // It used to, and the prediction was wrong: the engine's queue filter is
-    // `!dead && !fled`, and ring.state publishes `dead` but not `fled`, so a monster
-    // that had fled stayed in the roster looking alive and got marked up-next despite
-    // never acting again. Restoring the cue needs the engine to publish the real actor.
+    // It used to, and the prediction was wrong: the queue also skips an empty hand,
+    // which ring.state does not publish. Restoring the cue needs the engine to name
+    // the real next actor.
     const list = [c({ name: 'A', acting: true }), c({ name: 'B' }), c({ name: 'C' })];
     const marked = [...turnPositions(list).values()].filter(Boolean);
 
@@ -121,6 +132,21 @@ describe('turnPositions', () => {
     const list = [c({ name: 'A', hp: 0, dead: true, acting: true }), c({ name: 'B' })];
 
     expect([...turnPositions(list).values()].every((v) => v === null)).toBe(true);
+  });
+
+  it('never marks a fled contestant as acting even if the payload says so', () => {
+    const list = [c({ name: 'A', fled: true, acting: true }), c({ name: 'B', acting: true })];
+    const at = turnPositions(list);
+
+    expect(at.get(list[0]!)).toBeNull();
+    expect(at.get(list[1]!)).toBe('acting');
+  });
+
+  it('treats 0 HP as fallen even when the dead flag was left off', () => {
+    const list = [c({ name: 'A', hp: 0, dead: false, acting: true })];
+
+    expect(turnPositions(list).get(list[0]!)).toBeNull();
+    expect(rosterStatus(list)).toBe('0 standing · 1 fallen');
   });
 });
 
@@ -161,6 +187,21 @@ describe('describeContestant', () => {
 
   it('says fallen rather than defeated', () => {
     expect(describeContestant(c({ hp: 0, dead: true }), null)).toContain('fallen');
+    expect(describeContestant(c({ hp: -4, dead: true }), null)).not.toContain('bloodied');
+  });
+
+  it('says fled, and fallen wins when both are set', () => {
+    expect(describeContestant(c({ fled: true }), null)).toContain('fled');
+    expect(describeContestant(c({ fled: true }), null)).not.toContain('hit points');
+    expect(describeContestant(c({ hp: 0, dead: true, fled: true }), null)).toContain('fallen');
+  });
+
+  it('counts fled monsters apart from the ones still standing', () => {
+    expect(rosterStatus([
+      c(),
+      c({ name: 'Aqim', fled: true }),
+      c({ name: 'Gone', hp: 0, dead: true }),
+    ])).toBe('1 standing · 1 fallen · 1 fled');
   });
 
   it('says nothing about turn order when the contestant is not acting', () => {

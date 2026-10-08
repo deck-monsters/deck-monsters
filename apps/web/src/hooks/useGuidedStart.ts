@@ -281,12 +281,14 @@ export function useGuidedStart(roomId: string | undefined): GuidedStep & { fight
 		if (!ringFeed) return;
 		return ringFeed.subscribe((tracked) => {
 			const event = tracked.data;
-			let state: { inEncounter?: boolean; contestants?: Array<{ name?: string; dead?: boolean; userId?: string | null }> } | undefined;
+			let state: { inEncounter?: boolean; contestants?: Array<{ name?: string; dead?: boolean; fled?: boolean; userId?: string | null }> } | undefined;
 			if (event.type === 'ring.state') state = event.payload as typeof state;
 			else if (event.type === 'handshake') state = (event.payload as { ringState?: typeof state }).ringState;
 			if (!state) return;
 			const names = new Set(
-				state.inEncounter ? (state.contestants ?? []).filter((c) => !c.dead && c.name && c.userId === userId).map((c) => c.name!) : [],
+				state.inEncounter
+					? (state.contestants ?? []).filter((c) => !c.dead && !c.fled && c.name && c.userId === userId).map((c) => c.name!)
+					: [],
 			);
 			setLive({ roomId, at: Date.now(), names });
 		});
@@ -302,7 +304,8 @@ export function useGuidedStart(roomId: string | undefined): GuidedStep & { fight
 	 * card. It is now true whenever the guide's own monster is in a fight, from whichever source
 	 * is freshest: the live `ring.state` push (instant), the inventory's per-monster
 	 * `inEncounter` (no extra request), or the `waiting` poll. A fallen monster is never
-	 * "fighting", whatever the ring is doing.
+	 * "fighting", whatever the ring is doing. A fled one is not either: the live snapshot
+	 * is what knows they left, and the guide must not keep saying they are fighting.
 	 */
 	const subject = monsters?.find((m) => m.name === step.name);
 	const subjectFighting =

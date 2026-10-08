@@ -24,7 +24,10 @@ empty live list to an older query resurrects a cleared roster.
 
 Per-encounter `team` and targeting overrides come from the contestant, never the persisted
 monster. AC is read live. `acting` is ephemeral and is valid only while the encounter is
-active. Appearance text and optional generated-boss hex colour are additive sprite inputs.
+active. `fled` is true when the monster has left the fight alive. `monster.fled` is cleared
+when the encounter ends, so the snapshot also reads the copy stored on the contestant at
+fight conclusion; otherwise the last board publish would show them standing again.
+Appearance text and optional generated-boss hex colour are additive sprite inputs.
 
 ## The hard order rule
 
@@ -34,9 +37,9 @@ The fight loop consumes contestants in array order, and snapshots map that same 
 Nothing else on screen communicates who moves next. Teams are shown in place with a colour
 pip and label. Grid flow stays row-major so reading across then down preserves array order.
 
-The client marks only the authoritative `acting` contestant. It does not predict the next
-actor: `ring.state` does not carry every skip condition, such as fled or exhausted
-contestants. If an up-next cue is needed, publish it from the engine.
+The client marks only the authoritative `acting` contestant, and never a fallen or fled
+one. It does not predict the next actor: `ring.state` does not carry every skip condition,
+such as an empty hand. If an up-next cue is needed, publish it from the engine.
 
 ## Row field priority
 
@@ -44,23 +47,30 @@ Rows are designed to lose the least important information first:
 
 1. monster name;
 2. current actor (`▶` and row tint);
-3. HP/fallen state, with exact numbers and bar;
+3. HP, fallen, or fled, with exact numbers and a bar while they are still in the fight;
 4. Beastmaster, or `👑 The Editor` for a boss;
 5. relevant team and boss status;
 6. level;
 7. AC.
 
 Species remains in the accessible label and is represented visually by the icon/sprite.
-The bar and figures both stay: the bar communicates shape while the numbers communicate
-scale. Long names wrap onto a second line rather than ellipsing (a boss's full generated name is
+While a monster is still in the fight, the bar and figures both stay: the bar communicates
+shape while the numbers communicate scale. Long names wrap onto a second line rather than ellipsing (a boss's full generated name is
 what the narration uses, and an ellipsed one could not be matched to the feed at 390px); the
 boss badge and HP rail remain visible. The Ring pane header hides the event countdown and
 the summons count while a fight is on, and on a clear ring reads the summons as what is
 left (`2 summons left`, `1 summon left`, `No summons left today`); see
 `components/ringHeaderBadges.ts`.
 
-Teams render only when at least two distinct teams are still standing. Colour is never the
-only channel; labels and a legend name the teams in play.
+Teams render only when at least two distinct teams are still standing. Fallen and fled
+contestants are not standing. Colour is never the only channel; labels and a legend name
+the teams in play.
+
+The header counts standing, fallen, and fled separately (`2 standing · 1 fallen · 1 fled`).
+A fled row says `fled` in place of its HP, dims, and clears the bar. Leaving the last HP
+painted is what made a fled monster look frozen in the fight. The name is not struck
+through; that treatment is for the fallen. A row at 0 HP or below says `fallen` even if
+the `dead` flag was omitted.
 
 ## Responsive tiers
 
@@ -82,12 +92,13 @@ not.
 
 ## Acting and faint state
 
-The acting snapshot drives the turn marker, accent, and attack pose. A dead contestant is
-never rendered as acting even if a stale payload says otherwise.
+The acting snapshot drives the turn marker, accent, and attack pose. A dead or fled
+contestant is never rendered as acting even if a stale payload says otherwise.
 
 Faint is not retained as a transient animation pose. The snapshot's `dead` flag is
 authoritative and outlives a frame; this prevents a revived monster from keeping stale
-fallen art.
+fallen art. A fled monster may play the short leave-lunge, then idles. The roster label,
+not a held pose, is what says they left. A hit or attack pose must not stick on them.
 
 ## Pixel-monster preference and palette
 
@@ -158,7 +169,7 @@ construction techniques.
 - [ ] Live empty state wins over stale seeds.
 - [ ] Rows are never sorted or grouped.
 - [ ] Container tiers measure the pane, not the viewport.
-- [ ] Faint follows `dead`; acting follows the snapshot and excludes dead contestants.
+- [ ] Faint follows `dead`; fled is a label plus a short lunge, then idle. Acting follows the snapshot and excludes fallen and fled contestants.
 - [ ] Preference storage retains absent=on and `'0'`=off.
 - [ ] Known monsters and portraits remain keyed by room.
 - [ ] Replacement is identity-only, matched, and harmless when uncertain.
