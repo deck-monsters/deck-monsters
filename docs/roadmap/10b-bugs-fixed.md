@@ -5533,13 +5533,17 @@ encounter and `endEncounter()` deletes it; the only durable copy is the one
 `fightConcludes` writes onto the contestant, and the snapshot never read either. The roster
 therefore treated a fled monster as standing. The same gap let the turn marker and the
 first-fight guide keep calling them the one who is fighting, and a hit pose could sit on
-the sprite after the leave-lunge.
+the sprite after the leave-lunge. Dropping a fled name from the guide's fighting set was
+not enough on a first fight: the step stays `waiting` (no completed battle yet), and the
+room-wide encounter poll put "is fighting" back while anyone else was still in the ring.
 
 **Fixed:** `contestantSnapshots()` publishes `fled` from `monster.fled` or the contestant's
 copy. The row says fled, dims without a strikethrough, clears the bar, and drops out of
 the standing count and the team legend. Acting is ignored for fallen and fled contestants,
 including a row whose HP is already 0 when `dead` was omitted. The sprite may lunge away,
-then idles. The guide's live snapshot no longer treats a fled monster as fighting.
+then idles. The guide keeps the snapshot's fled bit, including when a later inventory
+still says `inEncounter` (flee does not clear that until the fight ends), and says
+`{name} has fled. Watch The Ring.` instead of restoring the fighting line from the poll.
 
 Pinned by `ring/index.test.ts` (`contestantSnapshots`), `roster-model.test.ts`,
 `ringRoster.test.tsx`, `pixel-fight-state.test.ts`, and `guidedStart.test.tsx`.

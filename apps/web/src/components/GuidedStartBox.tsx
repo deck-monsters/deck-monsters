@@ -17,6 +17,8 @@ export interface GuidedStartBoxProps {
 	fightComing?: boolean;
 	/** A fight is running now, so there is no countdown to wait for. */
 	fightOn?: boolean;
+	/** The guide's own monster has left this fight alive. */
+	hasFled?: boolean;
 	/** Console only: runs the chip's command. */
 	onRun?: (command: string) => void;
 }
@@ -30,8 +32,10 @@ interface Copy {
 const bossLimit: number = BOSS_SUMMON_LIMIT;
 const bosses = `${bossLimit} ${bossLimit === 1 ? 'boss' : 'bosses'}`;
 
-export function guidedCopy(surface: 'console' | 'workshop', phase: GuidedPhase, name: string, slots: number, fightComing = false, fightOn = false): Copy | null {
+export function guidedCopy(surface: 'console' | 'workshop', phase: GuidedPhase, name: string, slots: number, fightComing = false, fightOn = false, hasFled = false): Copy | null {
 	const console_ = surface === 'console';
+	// Flee wins over "is fighting": the monster left, and the fight may still be going.
+	if (hasFled && name && phase !== 'spawn' && phase !== 'fallen') return { text: `${name} has fled. Watch The Ring.` };
 	// Any step that names a monster gives way to this while that monster is fighting: the
 	// walk-fixes check saw change_card tell a fighting monster to change a card.
 	if (fightOn && name && phase !== 'spawn' && phase !== 'fallen') return { text: `${name} is fighting. Watch The Ring.` };
@@ -80,8 +84,8 @@ export function guidedCopy(surface: 'console' | 'workshop', phase: GuidedPhase, 
 	}
 }
 
-export default function GuidedStartBox({ surface, phase, name, slots, dismiss, fightComing, fightOn, onRun }: GuidedStartBoxProps) {
-	const copy = guidedCopy(surface, phase, name, slots, fightComing, fightOn);
+export default function GuidedStartBox({ surface, phase, name, slots, dismiss, fightComing, fightOn, hasFled, onRun }: GuidedStartBoxProps) {
+	const copy = guidedCopy(surface, phase, name, slots, fightComing, fightOn, hasFled);
 	if (!copy) return null;
 	return (
 		<section className="ftux-guide" aria-label="Getting started guide">

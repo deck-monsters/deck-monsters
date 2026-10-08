@@ -359,6 +359,44 @@ describe('useGuidedStart fightOn in any step (44 K6)', () => {
     const { result } = renderHook(() => useGuidedStart('room-1'), { wrapper });
     push({ inEncounter: true, contestants: [{ name: 'Saffron', dead: false, fled: true, userId: 'user-1' }] });
     expect(result.current.fightOn).toBe(false);
+    expect(result.current.hasFled).toBe(true);
+    render(<GuidedStartBox surface="console" {...result.current} onRun={() => undefined} />);
+    expect(screen.getByText('Saffron has fled. Watch The Ring.')).toBeInTheDocument();
+    expect(screen.queryByText(/is fighting/)).toBeNull();
+  });
+
+  it('waiting + a live fled snapshot does not restore fightOn from the room encounter', () => {
+    localStorage.setItem('ftuxStarted:user-1:room-1', 'true');
+    mocks.monsters = fought({ battles: { total: 0 }, inRing: true, inEncounter: false });
+    mocks.ring = { inEncounter: true, contestants: [{ name: 'Saffron' }, { name: 'Razeth' }] };
+    mocks.inventoryAt = Date.now() - 10_000;
+    const { wrapper, push } = feedWrapper();
+    const { result, rerender } = renderHook(() => useGuidedStart('room-1'), { wrapper });
+    expect(result.current.phase).toBe('waiting');
+    expect(result.current.fightOn).toBe(true);
+    push({
+      inEncounter: true,
+      contestants: [
+        { name: 'Saffron', dead: false, fled: true, userId: 'user-1' },
+        { name: 'Razeth', dead: false, fled: false, userId: null },
+      ],
+    });
+    expect(result.current.fightOn).toBe(false);
+    expect(result.current.fightComing).toBe(false);
+    expect(result.current.hasFled).toBe(true);
+    const { unmount } = render(<GuidedStartBox surface="console" {...result.current} onRun={() => undefined} />);
+    expect(screen.getByText('Saffron has fled. Watch The Ring.')).toBeInTheDocument();
+    expect(screen.queryByText(/is fighting/)).toBeNull();
+    expect(screen.queryByText(/countdown/)).toBeNull();
+    expect(screen.queryByRole('button', { name: 'summon a boss' })).toBeNull();
+    unmount();
+    // Flee leaves inEncounter true until the fight ends, so a later inventory must not undo it.
+    mocks.monsters = fought({ battles: { total: 0 }, inRing: true, inEncounter: true });
+    mocks.inventoryAt = Date.now() + 10_000;
+    rerender();
+    expect(result.current.fightOn).toBe(false);
+    expect(result.current.hasFled).toBe(true);
+    mocks.inventoryAt = 0;
   });
 
   it('a fallen monster is never reported as fighting', () => {

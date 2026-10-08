@@ -167,7 +167,13 @@ Workshop (words only, under the Train row, hidden while a Console flow is runnin
 the ring with fewer cards than slots; the old `equip_send` step suggested sending a monster
 whose deck was not full and the send was refused), `send` (full deck, none in the ring),
 `waiting` (a monster in the ring, no fight yet; says a boss can be summoned, with
-`BOSS_SUMMON_LIMIT` from the engine), `fallen`, `change_card`, `hidden`. `fallen` wins over
+`BOSS_SUMMON_LIMIT` from the engine), `fallen`, `change_card`, `hidden`. While the guide's
+own monster is in a fight the box says `{name} is fighting. Watch The Ring.` A live
+`ring.state` that marks that monster fled replaces it with `{name} has fled. Watch The Ring.`,
+including on the first fight's `waiting` step: the room is still in an encounter, and the
+waiting poll would otherwise keep saying they are fighting. Inventory cannot carry `fled`
+(`inEncounter` stays true until the fight ends), so a later inventory refresh does not
+undo that line. `fallen` wins over
 `change_card`. `change_card` ends when the deck fingerprint (each monster's cards, order
 ignored) differs from the one taken as the step began, which is how the web sees an equip,
 unequip or move however it was made (Console or Workshop); in-memory baseline, so a reload
