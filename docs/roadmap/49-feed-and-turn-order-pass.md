@@ -8,7 +8,7 @@ tags: [roadmap, combat, feed, workshop, ux]
 ---
 # 49 — Feed wording and turn order
 
-**Status:** Built on `claude/feed-and-workshop-ux-pass`, not yet merged. Started 2026-10-12 from
+**Status:** Built on `claude/feed-and-workshop-ux-pass`, not yet merged. Waiting on the live check ([49b](49b-cursor-check.md)). Started 2026-10-12 from
 four owner screenshots (a phone, Millefleur): the Ring during two boss fights, and the
 Workshop.
 
@@ -22,13 +22,13 @@ Workshop.
 | 4 | Workshop "Ready" on a 0/9 deck → "Needs cards"; filter hint says what it does (bug 247) | Done | `35e1480` |
 | 5 | Turn order: time-shift, control, upkeep, card box, card stage; lost turns skip what they skip; Random Play and Pick Pocket; held or awed fliers fall (bug 246) | Done | `f08d1c4` |
 | 6 | "Beginner" everywhere instead of "Lvl 0" in the Workshop and Console | Done | `354b5cd` |
+| 7 | First-time notes for a time-shifted turn and a level moved mid-fight; docs; notifications plan (48) checked against the code | Done | `85ff129` |
 | 8 | Self-review fixes: Delayed Hit still answers a blow on a lost turn (`onLostTurn`); turn start stops when the actor falls | Done | `3c42b7a` |
 | 9 | Random Play and Pick Pocket start the turn on the card they become, so a Heal puts out a burn; "beats out the flames" reads under the Heal's box | Done | `3a051e7` |
 | 10 | "↓ Latest" is opaque (feed text showed through it); the Ring footer says "Previous fight" while a fight is on | Done | `fa5e7e4` |
 | 11 | Review fixes: a held monster's Heal keeps the burn; lost turns share `playLostTurn`; level line says Beginner | Done | `fa5e7e4` |
-| 12 | Tipsy: from the third drink in one round, roll 1d20 + str vs 10 or take -1 dex and int for two cards (owner idea) | Done | this commit |
-| 13 | Kid mode recorded on [backlog 12](12-new-content-backlog.md#kid-mode) | Done | this commit |
-| 7 | First-time notes for a time-shifted turn and a level moved mid-fight; docs; notifications plan (48) checked against the code | Done | `85ff129` |
+| 12 | Tipsy: from the third drink in one round, roll 1d20 + str vs 10 or take -1 dex and int for two cards (owner idea) | Done | `5172d26` |
+| 13 | Kid mode recorded on [backlog 12](12-new-content-backlog.md#kid-mode) | Done | `5172d26` |
 
 ## Decisions (owner, 2026-10-12)
 
