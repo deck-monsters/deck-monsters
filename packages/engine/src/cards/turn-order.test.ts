@@ -2,6 +2,7 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 
 import { HitCard } from './hit.js';
+import { HealCard } from './heal.js';
 import { RandomCard, randomCardHelpers } from './random.js';
 import { FireBreathCard } from './fire-breath.js';
 import { TakeWingCard, isAirborne } from './take-wing.js';
@@ -134,6 +135,43 @@ describe('turn order (cards/base.ts startTurn)', () => {
 		await hit().play(dragon, foe, ring, contestants);
 
 		expect(log).to.deep.equal(['time-shift', 'settle']);
+	});
+
+	describe('a burn put out by a Heal', () => {
+		const burn = () => {
+			const breath = new FireBreathCard();
+			breath.on('narration', (_c: string, _card: any, { narration }: any) => log.push(narration));
+			breath.ignite(foe, dragon);
+		};
+		const heal = () => {
+			const card = new HealCard();
+			card.on('played', () => log.push('heal box'));
+			return card;
+		};
+
+		it('says so under the Heal box, and takes no burn damage', async () => {
+			burn();
+			dragon.hp = dragon.maxHp - 5;
+			const hp = dragon.hp;
+
+			await heal().play(dragon, dragon, ring, contestants);
+
+			expect(log.slice(0, 2)).to.deep.equal(['heal box', 'Skarn beats out the flames.']);
+			expect(dragon.hp).to.be.at.least(hp);
+		});
+
+		it('works through Random Play: the burn sees the Heal it becomes', async () => {
+			burn();
+			const random = new RandomCard();
+			random.on('played', () => log.push('random box'));
+			randomCardHelpers.draw = () => heal();
+
+			await random.play(dragon, dragon, ring, contestants);
+
+			expect(log.filter(line => !line.startsWith('The ancient scraps'))).to.deep.equal(
+				['random box', 'heal box', 'Skarn beats out the flames.'],
+			);
+		});
 	});
 
 	describe('Random Play', () => {

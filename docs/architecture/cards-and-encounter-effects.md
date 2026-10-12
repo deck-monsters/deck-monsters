@@ -46,14 +46,16 @@ Rules that follow from the table:
   ring effect that sets `onLostTurn`: Delayed Hit, which must answer a Blink drain or a hold's
   ongoing damage on the turn it happens (10b #157). Turn start also stops at the actor's
   death, so a burn that kills is not followed by a rest's heal.
-- **Random Play and Pick Pocket** run `startTurn()` themselves before their own box, then
-  play the drawn or stolen card with `shouldApplyEffects = 'card'`, which skips a second turn
-  start. Before 2026-10-12 a winded dragon's Random Play read: Random Play box, "breath
+- **Random Play and Pick Pocket** draw or steal first, run `startTurn()` on *that* card before
+  their own box, then play it with `shouldApplyEffects = 'card'`, which skips a second turn
+  start. Upkeep that depends on the card sees the card really played: a burn is put out by a
+  Heal that Random Play becomes.
+- **A line caused by the card waits for the card.** Burning, seeing a Heal, stops at upkeep
+  but leaves a one-shot card-stage effect that says "beats out the flames" under the Heal's
+  box. Before 2026-10-12 a winded dragon's Random Play read: Random Play box, "breath
   back", the drawn card — and a time-shifted thief still showed its box.
 - **A hold or awe grounds a flier** (`groundFlier` in `take-wing.ts`): it cannot stay aloft
   while held. A time-shift does not, because no time passes for it.
-- One known trade-off: a burning monster's Random Play that draws a Heal does not beat out the
-  flames, because upkeep sees the Random Play card, not the card it becomes.
 
 Wrapping is unchanged: the clone each step is handed is a per-play copy, so wrapping its
 `getAttackRoll` or `getTargets` never leaks into the deck. Card-stage effects pass through each

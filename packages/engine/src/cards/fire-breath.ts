@@ -126,9 +126,17 @@ An ancient dragon (level ${ANCIENT_DRAGON_LEVEL}+) breathes fire that cannot be 
 				target.encounterEffects = target.encounterEffects.filter((effect: any) => effect !== burning);
 			};
 
+			// Playing a Heal puts the fire out instead of taking the tick. The heal is the card, so
+			// the line waits for the card stage and reads under the Heal's box, not above it.
 			if (card.isCardClass?.(HEAL)) {
 				stopBurning();
-				this.emit('narration', { narration: `${target.givenName} beats out the flames.` });
+				const doused = ({ card: playing, phase: dousedPhase, player: dousedPlayer }: any) => {
+					if (dousedPhase !== ATTACK_PHASE || dousedPlayer !== target) return playing;
+					target.encounterEffects = target.encounterEffects.filter((effect: any) => effect !== doused);
+					this.emit('narration', { narration: `${target.givenName} beats out the flames.` });
+					return playing;
+				};
+				target.encounterEffects = [...target.encounterEffects, doused];
 				return card;
 			}
 

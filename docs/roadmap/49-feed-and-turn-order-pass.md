@@ -22,7 +22,8 @@ Workshop.
 | 4 | Workshop "Ready" on a 0/9 deck → "Needs cards"; filter hint says what it does (bug 247) | Done | `35e1480` |
 | 5 | Turn order: time-shift, control, upkeep, card box, card stage; lost turns skip what they skip; Random Play and Pick Pocket; held or awed fliers fall (bug 246) | Done | `f08d1c4` |
 | 6 | "Beginner" everywhere instead of "Lvl 0" in the Workshop and Console | Done | `354b5cd` |
-| 8 | Self-review fixes: Delayed Hit still answers a blow on a lost turn (`onLostTurn`); turn start stops when the actor falls | Done | this commit |
+| 8 | Self-review fixes: Delayed Hit still answers a blow on a lost turn (`onLostTurn`); turn start stops when the actor falls | Done | `3c42b7a` |
+| 9 | Random Play and Pick Pocket start the turn on the card they become, so a Heal puts out a burn; "beats out the flames" reads under the Heal's box | Done | this commit |
 | 7 | First-time notes for a time-shifted turn and a level moved mid-fight; docs; notifications plan (48) checked against the code | Done | `85ff129` |
 
 ## Decisions (owner, 2026-10-12)
@@ -39,8 +40,6 @@ Workshop.
 
 - The turn banner still says "plays the next card in her deck" on a turn that turns out to be
   lost; the next line says why. Not changed.
-- A burning monster's Random Play that draws a Heal does not beat out the flames (upkeep sees
-  the Random Play card). Recorded in the architecture doc's turn order section.
 - Live check on a phone of the new order (owner or Cursor), especially a Random Play by a
   winded dragon and a time-shifted flier.
 
