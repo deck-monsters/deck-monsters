@@ -880,6 +880,12 @@
 }
 /* Needs cards asks for work, not a go: the dim ink, not the success green Ready wears. */
 [data-theme='millefleur'] .workshop-status-needs-cards { color: var(--color-fg-dim); }
+/* The general tag above paints every status in Ready's green, and it comes later than the
+   pill-era colours, so those never showed: Fallen wore the same green dot as Ready (live
+   check, 2026-10-12). Restate them after the general colour. Fighting stays success. */
+[data-theme='millefleur'] .workshop-status-in-ring { color: var(--color-accent); }
+[data-theme='millefleur'] .workshop-status-fighting { color: var(--color-success); }
+[data-theme='millefleur'] .workshop-status-fallen { color: var(--color-error); }
 [data-theme='millefleur'] .workshop-status-in-ring,
 [data-theme='millefleur'] .workshop-status-fighting,
 [data-theme='millefleur'] .workshop-status-fallen { border: 0; }

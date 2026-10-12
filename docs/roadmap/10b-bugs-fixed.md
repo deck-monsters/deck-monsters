@@ -5635,3 +5635,12 @@ A level 4 boss showed "dex: 10" and, under it, "+1 dex bonus". The line printed 
 `options.dexModifier`, the type's base modifier, while rolls use `dexModifier`, which adds
 the level scaling. The block now says "Roll bonuses: +5 to hit, +5 to damage, +4 on int
 rolls" from the real getters, and "Level: Beginner" rather than "Level: beginner".
+
+### 249. Millefleur painted Fallen with Ready's green dot — FIXED
+
+The Workshop status tag's later rule sets every status to `--color-success` (Ready's
+green). It comes after the earlier in-ring / fighting / fallen colours, and only "Needs
+cards" was restated after it, so a fallen monster wore the same green dot as one ready
+for the ring. Found on the roadmap 49 live check: Chuvvo's "Fallen" computed to
+`rgb(31, 107, 87)`, the success green. The fallen and in-ring colours are restated after
+the general rule. Fighting was already success, so it is unchanged.
