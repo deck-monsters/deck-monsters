@@ -135,6 +135,8 @@ export class BaseCard<TOptions extends CardOptions = CardOptions> extends BaseIt
 			if (card.turnLost === 'timeShift') break;
 			for (const effect of [...(player.encounterEffects ?? [])]) {
 				if (effect.turnStart !== stage) continue;
+				// A burn can kill in upkeep; nothing after it (a rest's heal) may touch the fallen.
+				if (player.dead) break;
 				const modifiedCard = await effect({
 					activeContestants,
 					card,
@@ -255,7 +257,16 @@ export class BaseCard<TOptions extends CardOptions = CardOptions> extends BaseIt
 				// A lost turn plays the replacement (a hold's "misses a turn", a flee) and nothing
 				// else: no card box, no boosts spent.
 				if (lost) {
-					return startedCard.play(player, proposedTarget, ring, activeContestants, false);
+					// Ring reactions that answer whatever happened this turn still run: a Blink
+					// drain or a hold's ongoing damage is a blow, and Delayed Hit must answer it
+					// now, not after some later, unrelated card (the 10b #157 symptom). Only
+					// effects that opt in: Bad Batch, say, would be spent on a card never played.
+					let card = startedCard;
+					for (const effect of [...(ring?.encounterEffects ?? [])]) {
+						if (!effect.onLostTurn) continue;
+						card = (await effect({ activeContestants, card, phase: GLOBAL_PHASE, player, ring, proposedTarget })) || card;
+					}
+					return card.play(player, proposedTarget, ring, activeContestants, false);
 				}
 				await startedCard.announcePlay(player, ring);
 				const card = await this.applyEffects(player, proposedTarget, ring, activeContestants, startedCard);

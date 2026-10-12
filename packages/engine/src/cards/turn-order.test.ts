@@ -118,6 +118,24 @@ describe('turn order (cards/base.ts startTurn)', () => {
 		expect(isAirborne(dragon)).to.equal(true);
 	});
 
+	it('still runs ring reactions that opt in on a lost turn (Delayed Hit answers a drain)', async () => {
+		dragon.encounterEffects = [effect('time-shift', 'timeShift', true)];
+		const settle: any = ({ card }: any) => {
+			log.push('settle');
+			return card;
+		};
+		settle.onLostTurn = true;
+		const spent: any = ({ card }: any) => {
+			log.push('spent');
+			return card;
+		};
+		ring.encounterEffects = [settle, spent];
+
+		await hit().play(dragon, foe, ring, contestants);
+
+		expect(log).to.deep.equal(['time-shift', 'settle']);
+	});
+
 	describe('Random Play', () => {
 		const random = () => {
 			const card = new RandomCard();

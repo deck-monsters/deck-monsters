@@ -42,7 +42,10 @@ Rules that follow from the table:
   pinned lives). An untagged effect is card stage. Tag a new effect by what it does on its
   owner's turn, and add it to the table.
 - **A lost turn** is one where a turn-start effect replaced `card.play` on the clone (or the
-  actor died, for example burned out). The replacement plays and nothing else does.
+  actor died, for example burned out). The replacement plays and nothing else does, except a
+  ring effect that sets `onLostTurn`: Delayed Hit, which must answer a Blink drain or a hold's
+  ongoing damage on the turn it happens (10b #157). Turn start also stops at the actor's
+  death, so a burn that kills is not followed by a rest's heal.
 - **Random Play and Pick Pocket** run `startTurn()` themselves before their own box, then
   play the drawn or stolen card with `shouldApplyEffects = 'card'`, which skips a second turn
   start. Before 2026-10-12 a winded dragon's Random Play read: Random Play box, "breath

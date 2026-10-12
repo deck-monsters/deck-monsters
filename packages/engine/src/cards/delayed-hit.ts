@@ -161,6 +161,8 @@ export class DelayedHit extends HitCard {
 			return card;
 		};
 		delayedHitEffect.effectType = DELAYED_HIT_EFFECT;
+		// Settle on a lost turn too (cards/base.ts): a time-shift's drain is a blow to answer.
+		(delayedHitEffect as any).onLostTurn = true;
 		delayedHitEffect.settle = settle;
 
 		/*
