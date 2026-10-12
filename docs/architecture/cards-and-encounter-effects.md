@@ -28,7 +28,7 @@ them, and a skipped turn skips what it skips. Each step names its code.
 | 2 | Targeting | The monster's orders pick a target (silent) | `getTarget` in the ring loop |
 | 3 | **Time-shift** | Blink's effect. If the monster is still time-shifted, the turn is lost **and no time passes**: steps 4–8 are skipped, so a burn does not tick, winded does not end, and a flier stays aloft | effects tagged `turnStart = 'timeShift'` |
 | 4 | **Control** | Holds (Immobilize family, Sticketh) roll to break free; Helm of Awe rolls to meet the gaze, or flees. A failure loses the card, but time still passes, so step 5 runs | `turnStart = 'control'` |
-| 5 | **Upkeep** | Start-of-turn status: burning ticks (or is beaten out by a Heal), winded and exposed end, a Gloaming Rest resolves, an unspent ward fades | `turnStart = 'upkeep'` |
+| 5 | **Upkeep** | Start-of-turn status: burning ticks (or is beaten out by a Heal), winded and exposed end, Tipsy counts down and sobers up, a Gloaming Rest resolves, an unspent ward fades | `turnStart = 'upkeep'` |
 | 6 | Card box | "X lays down the following card" — skipped on a lost turn | `announcePlay` |
 | 7 | **Card stage** | Effects that react to the card actually played: the dive, fury, rattled, Sandstorm's confused aim, the Cloak's hide, Take Wing's dodge, Faceswap, the ancient dragon's tricks, Delayed Hit, ring effects (Bad Batch). Skipped on a lost turn, so a boost "for the next card" waits for a card | `applyEffects` |
 | 8 | The card resolves | `getTargets()`, then `effect()` per target in series (`mapSeries`) | `play(..., false)` |
@@ -377,6 +377,18 @@ new card or monster must reach. Check each one.
 - A description must read well with a player-chosen colour, including one that carries
   its own "with"; give the colour its own sentence. Verbs after a pronoun use `agree()`;
   verbs after a name never do ([voice and wording](../reference/voice-and-wording.md)).
+
+## Drinks: Tipsy
+
+Whiskey Shot and Scotch (a Whiskey Shot subclass) count drinks per monster per **round** (one
+pass through every deck) in `encounterModifiers.drinks`. From the third drink in one round,
+each drink rolls 1d20 + str bonus against 10; a miss makes the drinker Tipsy: -1 dex (to hit)
+and -1 int for its next two cards, through `setModifier`, so the stat lines and the roster show
+it. Tipsy is an upkeep effect (`TIPSY_EFFECT`), like winded: it counts held turns, and sobers up
+at the start of the third card, narrating before it restores. Another drink while Tipsy
+restarts the clock instead of stacking. Owner, 2026-10-12: per round, not per fight, so one
+Whiskey Shot in a deck never does it; the mild penalty was the owner's pick. The line carries
+`payload.mechanic: 'tipsy'` for a first-time note.
 
 ## Risky heals: Gloaming Rest
 

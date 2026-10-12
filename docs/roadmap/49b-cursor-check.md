@@ -104,6 +104,13 @@ about how it reads on a phone.
 8. **Exposed ends with a reason.** An ancient dragon's guard coming back reads
    `<name> gathers her wits, and her guard is up again.` before the ac line.
 
+9. **Tipsy.** Equip a monster with three or more Whiskey Shots (or let a boss with drinks play).
+   On the third drink in one round, a roll line reads `… vs 10 to hold his third drink this
+   round.`; on a miss, `🥃 <name> is tipsy! (-1 dex and -1 int for his next 2 cards.)` with the
+   first-time note `ⓘ Three Whiskey Shots or Scotches in one round can leave a monster tipsy: -1
+   dex and -1 int for its next two cards. Strength helps it hold its drink.` Two cards later,
+   above that turn's card box: `<name> sobers up.`
+
 ## Report
 
 List per item: pass / fail / not reached, the screenshot path, and for any fail what you saw.

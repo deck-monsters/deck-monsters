@@ -1785,6 +1785,10 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  1% chance to heal half max hp
  1% chance to poison
 
+ 3 drinks in one round may leave 
+ you tipsy: -1 dex and int for 2 
+ cards
+
  Level: 4
  Usable by: All
  Hit chance: 1% | DPT: 0
@@ -2079,6 +2083,10 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
 
  1% chance to heal half max hp
  1% chance to poison
+
+ 3 drinks in one round may leave 
+ you tipsy: -1 dex and int for 2 
+ cards
 
  Level: 2
  Usable by: All

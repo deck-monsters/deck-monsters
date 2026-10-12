@@ -13,7 +13,9 @@ describe('./cards/whiskey-shot.ts', () => {
 		expect(whiskeyShot).to.be.an.instanceof(WhiskeyShotCard);
 		expect((whiskeyShot as any).healthDice).to.equal('1d8');
 		expect((whiskeyShot as any).probability).to.equal(40);
-		expect(whiskeyShot.stats).to.equal(heal.stats);
+		// Heal's stats, plus the Tipsy rule (owner, 2026-10-12).
+		expect(whiskeyShot.stats.startsWith(heal.stats)).to.equal(true);
+		expect(whiskeyShot.stats).to.include('3 drinks in one round may leave you tipsy');
 	});
 
 	it('heals the player', () => {

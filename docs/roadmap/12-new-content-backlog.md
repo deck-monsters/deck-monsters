@@ -169,6 +169,26 @@ between players.
   card details, a prompt for the recipient, a line in Chat or the feed, and Discord parity.
 - [ ] Record each transfer in the room's history, so a dispute can be checked.
 
+## Kid mode
+
+The owner's idea (2026-10-12): a setting that puts an account in a kid-friendly mode, where the
+wording of some things changes, within reason. Not scheduled.
+
+- [ ] Decide the scope: per account (the player's own feed reads differently) or per room (an
+  owner sets it for everyone, which also changes what other players see). Per account means
+  one fight reads differently to two players in the same room, so the swap has to happen at
+  render time, not in the stored `GameEvent` text.
+- [ ] Inventory what changes. Candidates: the drinks (Whiskey Shot, Scotch, Bad Batch's
+  "whiskey" line, and the new Tipsy status, which could read "dizzy" on soda), poison and
+  Iocane, "dying breath", Prion Disease, permanent death wording, and the odd line of flavour
+  (`helpers/flavor.ts` "drunken", the Unicorn's "drunken sailor"). Chat is players' own words
+  and stays out of scope.
+- [ ] Pick a mechanism. Feed lines already carry structured `payload.lines`; a kid variant per
+  string id, or a small substitution table the web applies, are the two shapes. Discord has no
+  per-user render, so decide whether it follows the room or ignores the setting.
+- [ ] Generated docs (`CARDS.md`, the handbook) keep one wording; the in-game Help could show the
+  kid variant when the setting is on.
+
 ## World and long-term goals
 
 - [ ] Design graveyard NPCs and a memorial-compatible return for permanently dismissed
