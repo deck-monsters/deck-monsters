@@ -150,9 +150,12 @@ function LastFightRelativeAgo({ at }: { at: Date }) {
 function LastFightFooter({
   summary,
   showRelative,
+  fighting = false,
 }: {
   summary: FightSummaryLike & { fightNumber: number; endedAt: string | Date };
   showRelative: boolean;
+  /** A fight is on now, so "Last fight" would read as this one; it says "Previous". */
+  fighting?: boolean;
 }) {
   const ended = new Date(summary.endedAt);
   const title = formatEventHoverTitle(ended.getTime());
@@ -171,7 +174,7 @@ function LastFightFooter({
       <time className="event-sr-only" dateTime={ended.toISOString()}>
         {title}
       </time>
-      Last fight: {fightTitleOneLine(summary)} (#{summary.fightNumber})
+      {fighting ? 'Previous fight' : 'Last fight'}: {fightTitleOneLine(summary)} (#{summary.fightNumber})
       {showRelative ? <LastFightRelativeAgo at={ended} /> : null}
     </div>
   );
@@ -806,6 +809,7 @@ export default function RingPane({
         <LastFightFooter
           summary={lastFight[0] as FightSummaryLike & { fightNumber: number; endedAt: string }}
           showRelative={ringKeyTimestampsEnabled}
+          fighting={!!timerState.inEncounter}
         />
       )}
     </section>
