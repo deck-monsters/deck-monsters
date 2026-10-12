@@ -58,6 +58,9 @@ export function startEncounter (self: BaseCreature, ring: unknown): void {
 export function endEncounter (self: BaseCreature): import('./base.js').Encounter {
 	const { encounter = {} } = self;
 	self.inEncounter = false;
+	// For listeners on a persistent creature that only live as long as one fight (Blink's
+	// angel-falls listener): a draw or a cancelled fight ends without a death to unhook them.
+	self.emit('encounterEnd', {});
 	// Combat time is ineligible for passive recovery; begin a fresh rest period now.
 	self.resetPassiveHealingClock();
 	delete self.encounter;

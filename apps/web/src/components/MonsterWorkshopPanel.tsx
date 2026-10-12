@@ -322,7 +322,7 @@ export default function MonsterWorkshopPanel({
       )}
       <div className="workshop-monster-actions">
         {monster.dead ? (
-          <button title={reviving ? `${monster.name} is on the way back` : `Bring ${monster.name} back. A Beginner is back at once; after level 1 it takes a few minutes`} type="button" className="btn btn-primary" disabled={busy || monster.inEncounter || reviving} onClick={onRevive}>
+          <button title={reviving ? `${monster.name} is on the way back` : `Bring ${monster.name} back. A Beginner is back at once; from level 1 on it takes a few minutes`} type="button" className="btn btn-primary" disabled={busy || monster.inEncounter || reviving} onClick={onRevive}>
             {reviving ? 'Reviving…' : 'Revive'}
           </button>
         ) : !monster.inRing ? (

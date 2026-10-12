@@ -68,7 +68,8 @@ ${TIPSY_DRINKS} drinks in one round may leave you tipsy: -${TIPSY_PENALTY} dex a
 			outcome: holds ? `${drinker.givenName} holds ${drinker.pronouns.his} drink.` : 'Hic!',
 			vs: TIPSY_HOLD_DC,
 		});
-		if (!holds) this.makeTipsy(drinker);
+		// Already tipsy: any further drink restarts the clock, held or not (PR #432 review).
+		if (!holds || isTipsy(drinker)) this.makeTipsy(drinker);
 	}
 
 	makeTipsy(drinker: any): void {

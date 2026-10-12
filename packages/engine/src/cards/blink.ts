@@ -185,7 +185,7 @@ export class BlinkCard extends CurseCard {
 								(encounterEffect: any) =>
 									encounterEffect.effectType !== 'BlinkEffect'
 							);
-						blinkPlayer.off('die', onAngelFalls);
+						stopListening();
 
 						this.emit('narration', {
 							narration: `${blinkTarget.identity} opens ${blinkTarget.pronouns.his} eyes and finds ${blinkTarget.pronouns.him}self in an unfamiliar time.`,
@@ -207,8 +207,15 @@ export class BlinkCard extends CurseCard {
 			 * is the permadeath card. The victim's-turn path above stays as the fallback for a
 			 * death with no assailant, which emits no `die`.
 			 */
-			const onAngelFalls = blinkPlayer.on('die', () => {
+			// Unhook on whichever comes first: the angel falling, the shift ending on the
+			// victim's turn, or the fight ending some other way (a draw, a cancellation), so a
+			// persistent angel never collects stale listeners (PR #432 review).
+			const stopListening = (): void => {
 				blinkPlayer.off('die', onAngelFalls);
+				blinkPlayer.off('encounterEnd', onFightEnds);
+			};
+			const onAngelFalls = blinkPlayer.on('die', () => {
+				stopListening();
 				if (!blinkTarget.encounterEffects?.includes(blinkEffect)) return;
 				blinkTarget.encounterModifiers.timeShifted = false;
 				blinkTarget.encounterModifiers.blinkedTurns = 0;
@@ -219,6 +226,7 @@ export class BlinkCard extends CurseCard {
 					narration: `${this.icon} ${blinkPlayer.givenName} has fallen, and the time-shift breaks. ${blinkTarget.givenName} is back in the fight.`,
 				});
 			});
+			const onFightEnds = blinkPlayer.on('encounterEnd', stopListening);
 			blinkTarget.encounterModifiers.timeShifted = true;
 			blinkTarget.encounterEffects = [
 				...blinkTarget.encounterEffects,

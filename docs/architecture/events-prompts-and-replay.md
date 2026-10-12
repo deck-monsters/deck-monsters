@@ -37,9 +37,9 @@ payloads, but narration text remains the fallback.
 **Mechanic tags.** Four public lines announce a rule a new player may not know: a ring
 event (`payload.ringEvent.id`), an ambush and bosses turning on each other (the ring's
 `narration`), a boss arrival that says its temperament (`ring.add`), a time-shifted turn
-(Blink's `card.effect`), and an xp change that moves a level (`creature.modifier`). All but
-the ring event carry `payload.mechanic` (`ambush`, `boss-rivals`, `boss-temperament`,
-`time-shift`, `fight-level`) so the web can
+(Blink's `card.effect`), an xp change that moves a level (`creature.modifier`), and Tipsy
+(Whiskey Shot's narration). All but the ring event carry `payload.mechanic` (`ambush`,
+`boss-rivals`, `boss-temperament`, `time-shift`, `fight-level`, `tipsy`) so the web can
 show a one-time note without matching prose (`apps/web/src/lib/mechanic-notes.ts`). The
 tag is additive: persistence and replay store it like any payload field, and the Discord
 connector reads payload fields by name, so it ignores it. The engine adds no text for it.

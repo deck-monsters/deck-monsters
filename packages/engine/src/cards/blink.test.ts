@@ -66,6 +66,25 @@ describe('./cards/blink.ts', () => {
 		sinon.restore();
 	});
 
+	it('unhooks its angel-falls listener when the fight ends another way (PR #432 review)', () => {
+		const blink = new BlinkCard();
+		const angel = new WeepingAngel({ name: 'Dardariel', gender: 'female' });
+		const victim = new Basilisk({ name: 'Queen', gender: 'female' });
+		const contestants = [angel, victim].map(monster => ({ monster, character: {} }));
+		const ring = { contestants, encounterEffects: [], channelManager: { sendMessages: () => Promise.resolve() } };
+		[angel, victim].forEach(monster => monster.startEncounter(ring));
+		sinon.stub(blink, 'checkSuccess').returns({ success: true, strokeOfLuck: false, curseOfLoki: false, tie: false } as any);
+		const listening = () => (angel as any).semaphore.listenerCount('die');
+		const before = listening();
+
+		blink.effect(angel, victim, ring, contestants);
+		expect(listening()).to.equal(before + 1);
+
+		(angel as any).endEncounter();
+		expect(listening()).to.equal(before);
+		sinon.restore();
+	});
+
 	it('can only be played by WeepingAngels', () => {
 		const blink = new BlinkCard();
 

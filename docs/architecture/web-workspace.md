@@ -225,10 +225,10 @@ Adding Markdown syntax to a generator means checking the renderer handles it.
 ## First-time mechanic notes
 
 The first time a player sees a ring event, an ambush, bosses turning on each other, a
-boss temperament, a time-shifted turn, or a level moved by xp mid-fight, one dim `.mechanic-note` line (prefixed `ⓘ `) appears under that line in
+boss temperament, a time-shifted turn, a level moved by xp mid-fight, or a monster made tipsy, one dim `.mechanic-note` line (prefixed `ⓘ `) appears under that line in
 the Ring feed and the Console feed. The engine tags the lines (`payload.mechanic`, or
 `payload.ringEvent.id`); `lib/mechanic-notes.ts` holds the note text, keyed `ring-event:<id>`,
-`ambush`, `boss-rivals`, `boss-temperament`, `time-shift`, `fight-level`, and a test fails for any ring event without one.
+`ambush`, `boss-rivals`, `boss-temperament`, `time-shift`, `fight-level`, `tipsy`, and a test fails for any ring event without one.
 State is a per-player set in local storage, `mechanicsExplained:${userId}`, shared by both
 feeds. The first row to ask for a key claims it in memory for the session, because the feeds
 are virtualized and a row re-renders: without the claim, showing the note would hide it on

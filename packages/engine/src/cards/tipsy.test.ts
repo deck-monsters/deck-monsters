@@ -98,6 +98,21 @@ describe('Tipsy (cards/whiskey-shot.ts)', () => {
 		expect(drinker.intModifier).to.equal(int);
 	});
 
+	it('restarts the clock on a drink while tipsy, even one it holds (PR #432 review)', async () => {
+		await drink();
+		await drink();
+		await drink();
+		const tipsy = drinker.encounterEffects.find((e: any) => e.effectType === 'Tipsy Effect');
+		// One card left: this drink's own turn start counts it down to 0, so without the fix
+		// the very next card would sober up despite the fresh drink.
+		tipsy.cardsLeft = 1;
+		strength(100);
+
+		await drink();
+
+		expect(tipsy.cardsLeft).to.equal(TIPSY_CARDS);
+	});
+
 	it('restarts the clock on another drink rather than stacking', async () => {
 		const dex = drinker.dexModifier;
 		await drink();

@@ -56,7 +56,7 @@ make sure `pnpm docs:check` passes.
    `Your cards show only what <name> can use. Tap the name again to show all.` Tap the name
    again: the hint goes and every card is back.
 5. Desktop only: hover Revive on a fallen monster. The title reads
-   `Bring <name> back. A Beginner is back at once; after level 1 it takes a few minutes`.
+   `Bring <name> back. A Beginner is back at once; from level 1 on it takes a few minutes` (reworded after the check, PR #432 review: level 1 already waits).
 6. Console: `look at card inventory` lists a level-0 monster as `<name> [<Type>, Beginner]`.
 
 ### B. Ring
