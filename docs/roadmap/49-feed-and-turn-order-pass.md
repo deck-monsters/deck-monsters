@@ -29,8 +29,8 @@ Workshop.
 | 11 | Review fixes: a held monster's Heal keeps the burn; lost turns share `playLostTurn`; level line says Beginner | Done | `fa5e7e4` |
 | 12 | Tipsy: from the third drink in one round, roll 1d20 + str vs 10 or take -1 dex and int for two cards (owner idea) | Done | `5172d26` |
 | 13 | Kid mode recorded on [backlog 12](12-new-content-backlog.md#kid-mode) | Done | `5172d26` |
-| 14 | Blink breaks the moment the angel falls: "⏳ <angel> has fallen, and the time-shift breaks. <victim> is back in the fight." (owner decision from the live check) | Done | this commit |
-| 15 | Footer keeps "Previous fight" after a fight ends until that fight's summary arrives, polling meanwhile (bug 250, live check B2) | Done | this commit |
+| 14 | Blink breaks the moment the angel falls: "⏳ <angel> has fallen, and the time-shift breaks. <victim> is back in the fight." (owner decision from the live check) | Done | `5397647` |
+| 15 | Footer keeps "Previous fight" after a fight ends until that fight's summary arrives, polling meanwhile (bug 250, live check B2) | Done | `5397647` |
 
 ## Decisions (owner, 2026-10-12)
 
