@@ -878,6 +878,8 @@
   border-radius: 50%;
   background: radial-gradient(circle, currentColor 40%, transparent 78%);
 }
+/* Needs cards asks for work, not a go: the dim ink, not the success green Ready wears. */
+[data-theme='millefleur'] .workshop-status-needs-cards { color: var(--color-fg-dim); }
 [data-theme='millefleur'] .workshop-status-in-ring,
 [data-theme='millefleur'] .workshop-status-fighting,
 [data-theme='millefleur'] .workshop-status-fallen { border: 0; }

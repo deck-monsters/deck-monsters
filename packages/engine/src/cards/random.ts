@@ -17,7 +17,7 @@ export class RandomCard extends BaseCard {
 	static cardType = 'Random Play';
 	static probability = COMMON.probability;
 	static description =
-		'You find the illegible scraps of an ancient card in the corner. Curious to see what it does, you play it --as it crumbles to dust.';
+		'You find the illegible scraps of an ancient card in the corner. Curious to see what it does, you play it, and it crumbles to dust.';
 	static cost = ALMOST_NOTHING.cost;
 
 	constructor({ icon = '🎲' }: Partial<CardOptions> = {}) {

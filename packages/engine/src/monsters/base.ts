@@ -93,21 +93,18 @@ class BaseMonster extends BaseCreature {
 	}
 
 	get stats(): string {
-		const bonuses: string[] = [];
-
-		const dexMod = (this.options.dexModifier ?? 0) as number;
-		const strMod = (this.options.strModifier ?? 0) as number;
-		const intMod = (this.options.intModifier ?? 0) as number;
-
-		if (dexMod !== 0) {
-			bonuses.push(`${signedNumber(dexMod)} dex ${dexMod > 0 ? 'bonus' : 'penalty'}`.trim());
-		}
-		if (strMod !== 0) {
-			bonuses.push(`${signedNumber(strMod)} str ${strMod > 0 ? 'bonus' : 'penalty'}`.trim());
-		}
-		if (intMod !== 0) {
-			bonuses.push(`${signedNumber(intMod)} int ${intMod > 0 ? 'bonus' : 'penalty'}`.trim());
-		}
+		// The real roll bonuses, level included, said as what they add to. These lines used to
+		// print only the type's base modifier as "+1 dex bonus" under "dex: 10", which read as
+		// a contradiction and under-reported a levelled monster's actual bonus (owner
+		// screenshot, 2026-10-12).
+		const bonuses = [
+			[this.dexModifier, 'to hit'],
+			[this.strModifier, 'to damage'],
+			[this.intModifier, 'on int rolls'],
+		]
+			.filter(([amount]) => amount !== 0)
+			.map(([amount, what]) => `${signedNumber(amount as number).trim()} ${what}`);
+		const bonusLine = bonuses.length ? `\nRoll bonuses: ${bonuses.join(', ')}` : '';
 
 		const strategyLine = !this.targetingStrategy
 			? ''
@@ -116,8 +113,7 @@ class BaseMonster extends BaseCreature {
 		return `${super.stats}
 
 ac: ${this.ac} | hp: ${this.hp}/${this.maxHp}
-dex: ${this.dex} | str: ${this.str} | int: ${this.int}
-${bonuses.join('\n')}${strategyLine}`;
+dex: ${this.dex} | str: ${this.str} | int: ${this.int}${bonusLine}${strategyLine}`;
 	}
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any

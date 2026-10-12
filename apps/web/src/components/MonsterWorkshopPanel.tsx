@@ -152,8 +152,8 @@ export default function MonsterWorkshopPanel({
   const xpNeeded = Math.max(monster.xpNeededForLevel, 1);
   const xpPct = Math.min(100, Math.max(0, Math.round((monster.xpIntoLevel / xpNeeded) * 100)));
 
-  // One tag, in priority order, and always one: a monster at rest is "Ready" (it can be sent to
-  // the ring), so the row never shows a gap where a state should be. A monster can technically
+  // One tag, in priority order, and always one: a monster at rest is "Ready" when it can be sent
+  // to the ring and "Needs cards" when its deck is short, so the row never shows a gap where a state should be. A monster can technically
   // be flagged more than one of these at once (e.g. a boss variant mid-fight while also marked dead pending cleanup),
   // and showing all three would crowd the title row for no added information: "in the
   // ring" already implies "not benched", and either ring state already implies "not what
@@ -164,7 +164,11 @@ export default function MonsterWorkshopPanel({
       ? { key: 'fighting', label: 'fighting' }
       : monster.dead
         ? { key: 'fallen', label: 'fallen' }
-        : { key: 'ready', label: 'ready' };
+        // "Ready" beside "Deck 0/9 · needs 9 more" and a disabled Send to ring read as a
+        // contradiction (owner screenshot, 2026-10-12): ready means it can go in now.
+        : monster.cards.length < monster.cardSlots
+          ? { key: 'needs-cards', label: 'needs cards' }
+          : { key: 'ready', label: 'ready' };
 
   // Required props can still be absent in vi.mock test doubles.
   const hp = Number.isFinite(monster.hp) ? monster.hp : 0;
@@ -351,7 +355,11 @@ export default function MonsterWorkshopPanel({
         </button>
       </div>
 
-      {isFilterTarget && <p className="workshop-filter-hint">Inventory filtered for {monster.name}.</p>}
+      {isFilterTarget && (
+        <p className="workshop-filter-hint">
+          Your cards show only what {monster.name} can use. Tap the name again to show all.
+        </p>
+      )}
 
       {compatibilityHint === 'eligible' && (
         <p className="workshop-compatibility-hint eligible">Can use selected inventory card.</p>

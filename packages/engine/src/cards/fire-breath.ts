@@ -184,10 +184,12 @@ An ancient dragon (level ${ANCIENT_DRAGON_LEVEL}+) breathes fire that cannot be 
 			if (phase !== ATTACK_PHASE || effectPlayer !== player) return card;
 
 			player.encounterEffects = player.encounterEffects.filter((effect: any) => effect !== winded);
-			player.setModifier('ac', WINDED_AC_PENALTY);
+			// Say why before the ac line: the restore used to announce first, so the feed read
+			// "ac is now 9 (increased by 2)" with no reason until the line after it.
 			this.emit('narration', {
 				narration: `${player.givenName} has ${player.pronouns.his} breath back.`,
 			});
+			player.setModifier('ac', WINDED_AC_PENALTY);
 			return card;
 		};
 

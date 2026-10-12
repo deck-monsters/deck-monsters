@@ -136,7 +136,7 @@ export function setModifier (self: BaseCreature, attr: string, amount = 0, perma
 		self.encounterModifiers = modifiers as EncounterModifiers;
 	}
 
-	self.emit('modifier', { amount, attr, prevAmount, prevValue });
+	self.emit('modifier', { amount, attr, prevAmount, prevValue, permanent });
 }
 
 export function leaveCombat (self: BaseCreature, activeContestants: unknown): boolean {
