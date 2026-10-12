@@ -60,7 +60,7 @@ export class BlinkCard extends CurseCard {
 	}
 
 	override get stats(): string {
-		return `1d20 vs opponent's int. They are removed from the fight (and can not be targeted).\nOn what would have been their next turn, if you are still alive you drain ${this.energyToStealDice} hp and ${this.curseAmountDice} ${this.cursedProp}`;
+		return `1d20 vs opponent's int. They are removed from the fight (and can not be targeted).\nOn what would have been their next turn, you drain ${this.energyToStealDice} hp and ${this.curseAmountDice} ${this.cursedProp}\nIf you fall first, they are back in the fight at once`;
 	}
 
 	override effect(
@@ -140,6 +140,7 @@ export class BlinkCard extends CurseCard {
 							player: blinkPlayer,
 							target: blinkTarget,
 							ring,
+							mechanic: 'time-shift',
 						});
 
 						const hpToSteal = roll({ primaryDice: this.energyToStealDice });
@@ -184,6 +185,7 @@ export class BlinkCard extends CurseCard {
 								(encounterEffect: any) =>
 									encounterEffect.effectType !== 'BlinkEffect'
 							);
+						stopListening();
 
 						this.emit('narration', {
 							narration: `${blinkTarget.identity} opens ${blinkTarget.pronouns.his} eyes and finds ${blinkTarget.pronouns.him}self in an unfamiliar time.`,
@@ -195,6 +197,36 @@ export class BlinkCard extends CurseCard {
 			};
 
 			blinkEffect.effectType = 'BlinkEffect';
+			(blinkEffect as any).turnStart = 'timeShift';
+
+			/*
+			 * The angel falls: the shift breaks at once, and the feed says so (owner, 2026-10-12;
+			 * live check 49b). It used to wait for the victim's next turn, which then read only
+			 * "opens his eyes … in an unfamiliar time", with nothing saying the blink had been
+			 * revoked. Permadeath for the victim was the other option and was ruled out: Destroy
+			 * is the permadeath card. The victim's-turn path above stays as the fallback for a
+			 * death with no assailant, which emits no `die`.
+			 */
+			// Unhook on whichever comes first: the angel falling, the shift ending on the
+			// victim's turn, or the fight ending some other way (a draw, a cancellation), so a
+			// persistent angel never collects stale listeners (PR #432 review).
+			const stopListening = (): void => {
+				blinkPlayer.off('die', onAngelFalls);
+				blinkPlayer.off('encounterEnd', onFightEnds);
+			};
+			const onAngelFalls = blinkPlayer.on('die', () => {
+				stopListening();
+				if (!blinkTarget.encounterEffects?.includes(blinkEffect)) return;
+				blinkTarget.encounterModifiers.timeShifted = false;
+				blinkTarget.encounterModifiers.blinkedTurns = 0;
+				blinkTarget.encounterEffects = blinkTarget.encounterEffects.filter(
+					(encounterEffect: any) => encounterEffect !== blinkEffect
+				);
+				this.emit('narration', {
+					narration: `${this.icon} ${blinkPlayer.givenName} has fallen, and the time-shift breaks. ${blinkTarget.givenName} is back in the fight.`,
+				});
+			});
+			const onFightEnds = blinkPlayer.on('encounterEnd', stopListening);
 			blinkTarget.encounterModifiers.timeShifted = true;
 			blinkTarget.encounterEffects = [
 				...blinkTarget.encounterEffects,

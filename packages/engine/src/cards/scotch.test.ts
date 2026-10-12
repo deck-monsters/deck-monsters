@@ -11,7 +11,9 @@ describe('./cards/scotch.ts', () => {
 		const heal = new HealCard({ healthDice: (scotch as any).healthDice } as any);
 
 		expect((scotch as any).probability).to.equal(15);
-		expect(scotch.stats).to.equal(heal.stats);
+		// Heal's stats, plus the Tipsy rule it inherits from Whiskey Shot.
+		expect(scotch.stats.startsWith(heal.stats)).to.equal(true);
+		expect(scotch.stats).to.include('may leave you tipsy');
 	});
 
 	it('heals the player', () => {

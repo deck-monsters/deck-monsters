@@ -6,13 +6,15 @@ interface EffectOpts {
 	target: any;
 	effectResult: string;
 	narration?: string;
+	/** A first-time note key (apps/web/src/lib/mechanic-notes.ts). */
+	mechanic?: string;
 }
 
 export function announceEffect(
 	eb: RoomEventBus,
 	className: string,
 	card: any,
-	{ player, target, effectResult, narration }: EffectOpts,
+	{ player, target, effectResult, narration, mechanic }: EffectOpts,
 ): void {
 	const text = `${target.icon} ${target.givenName} is currently ${effectResult} ${player.icon} ${player.givenName}.${narration ? ` ${narration}` : ''}\n`;
 
@@ -21,6 +23,7 @@ export function announceEffect(
 		scope: 'public',
 		text,
 		payload: {
+			...(mechanic ? { mechanic } : {}),
 			lines: leadLines(text, line => ({
 				kind: 'effect',
 				text: line,

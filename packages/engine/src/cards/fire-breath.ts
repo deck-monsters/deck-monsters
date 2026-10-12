@@ -126,9 +126,18 @@ An ancient dragon (level ${ANCIENT_DRAGON_LEVEL}+) breathes fire that cannot be 
 				target.encounterEffects = target.encounterEffects.filter((effect: any) => effect !== burning);
 			};
 
-			if (card.isCardClass?.(HEAL)) {
+			// Playing a Heal puts the fire out instead of taking the tick. The heal is the card, so
+			// the line waits for the card stage and reads under the Heal's box, not above it.
+			// Not on a lost turn: a held monster holding a Heal never plays it (cards/base.ts).
+			if (card.isCardClass?.(HEAL) && !card.turnLost) {
 				stopBurning();
-				this.emit('narration', { narration: `${target.givenName} beats out the flames.` });
+				const doused = ({ card: playing, phase: dousedPhase, player: dousedPlayer }: any) => {
+					if (dousedPhase !== ATTACK_PHASE || dousedPlayer !== target) return playing;
+					target.encounterEffects = target.encounterEffects.filter((effect: any) => effect !== doused);
+					this.emit('narration', { narration: `${target.givenName} beats out the flames.` });
+					return playing;
+				};
+				target.encounterEffects = [...target.encounterEffects, doused];
 				return card;
 			}
 
@@ -155,6 +164,7 @@ An ancient dragon (level ${ANCIENT_DRAGON_LEVEL}+) breathes fire that cannot be 
 		};
 
 		burning.effectType = BURNING_EFFECT;
+		(burning as any).turnStart = 'upkeep';
 		target.encounterEffects = [
 			...target.encounterEffects.filter((effect: any) => effect.effectType !== BURNING_EFFECT),
 			burning,
@@ -184,14 +194,17 @@ An ancient dragon (level ${ANCIENT_DRAGON_LEVEL}+) breathes fire that cannot be 
 			if (phase !== ATTACK_PHASE || effectPlayer !== player) return card;
 
 			player.encounterEffects = player.encounterEffects.filter((effect: any) => effect !== winded);
-			player.setModifier('ac', WINDED_AC_PENALTY);
+			// Say why before the ac line: the restore used to announce first, so the feed read
+			// "ac is now 9 (increased by 2)" with no reason until the line after it.
 			this.emit('narration', {
 				narration: `${player.givenName} has ${player.pronouns.his} breath back.`,
 			});
+			player.setModifier('ac', WINDED_AC_PENALTY);
 			return card;
 		};
 
 		winded.effectType = WINDED_EFFECT;
+		(winded as any).turnStart = 'upkeep';
 		player.setModifier('ac', -WINDED_AC_PENALTY);
 		player.encounterEffects = [...player.encounterEffects, winded];
 		this.emit('narration', {

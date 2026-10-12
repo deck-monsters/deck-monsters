@@ -137,7 +137,7 @@ Class: ${this.class}${
 		`
 Team: ${this.team}`
 }
-Level: ${this.level || this.displayLevel} | XP: ${this.xp}`;
+Level: ${this.level || 'Beginner'} | XP: ${this.xp}`;
 	}
 
 	get rankings (): string {

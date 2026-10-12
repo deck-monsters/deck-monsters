@@ -51,7 +51,7 @@ describe('tapping an empty monster slot with nothing selected', () => {
     const fowlSlot = within(screen.getByRole('button', { name: 'Fowl' }).closest('section')!)
       .getAllByRole('button', { name: 'Empty slot' })[0]!;
     fireEvent.click(fowlSlot);
-    expect(await screen.findByText('Inventory filtered for Fowl.')).toBeTruthy();
+    expect(await screen.findByText('Your cards show only what Fowl can use. Tap the name again to show all.')).toBeTruthy();
     expect(Element.prototype.scrollIntoView).toHaveBeenCalled();
     raf.mockRestore();
   });
@@ -61,6 +61,6 @@ describe('tapping an empty monster slot with nothing selected', () => {
     const section = screen.getByRole('button', { name: 'Res' }).closest('section')!;
     fireEvent.click(within(section).getAllByRole('button', { name: 'Empty slot' })[0]!);
     fireEvent.click(within(section).getAllByRole('button', { name: 'Empty slot' })[1]!);
-    expect(await screen.findByText('Inventory filtered for Res.')).toBeTruthy();
+    expect(await screen.findByText('Your cards show only what Res can use. Tap the name again to show all.')).toBeTruthy();
   });
 });

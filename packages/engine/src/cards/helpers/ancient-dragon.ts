@@ -53,11 +53,16 @@ export function expose(dragon: any): void {
 	const exposed = ({ card, phase, player }: any) => {
 		if (phase !== ATTACK_PHASE || player !== dragon) return card;
 		dragon.encounterEffects = dragon.encounterEffects.filter((effect: any) => effect !== exposed);
+		// Name the cause before the ac line, or the restore reads as an unexplained buff.
+		dragon.emit?.('narration', {
+			narration: `${dragon.givenName} gathers ${dragon.pronouns.his} wits, and ${dragon.pronouns.his} guard is up again.`,
+		});
 		dragon.setModifier('ac', EXPOSED_AC_PENALTY);
 		return card;
 	};
 
 	exposed.effectType = EXPOSED_EFFECT;
+	(exposed as any).turnStart = 'upkeep';
 	dragon.setModifier('ac', -EXPOSED_AC_PENALTY);
 	dragon.encounterEffects = [...dragon.encounterEffects, exposed];
 }

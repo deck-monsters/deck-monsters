@@ -132,6 +132,7 @@ If nothing damages you before then, ${heal} as that card begins. Any damage inte
 		};
 
 		resting.effectType = GLOAMING_REST_EFFECT;
+		(resting as any).turnStart = 'upkeep';
 		target.encounterEffects = [...target.encounterEffects, resting];
 	}
 

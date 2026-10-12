@@ -15,17 +15,61 @@ follow [boss encounters](boss-encounters.md).
 
 ## How one card play resolves
 
-`BaseCard.play()` (`packages/engine/src/cards/base.ts`) runs in two steps.
+`BaseCard.play()` (`packages/engine/src/cards/base.ts`) runs a whole turn in a fixed order.
 
-1. **`applyEffects()` clones the card**, then passes the clone through every armed
-   effect: each active contestant's `monster.encounterEffects` (the acting monster's own
-   effects get `ATTACK_PHASE`, everyone else's get `DEFENSE_PHASE`), then
-   `ring.encounterEffects` with `GLOBAL_PHASE`. An effect may return a modified card, for
-   example one whose `getAttackRoll` or `getTargets` is wrapped. Because the card is a
-   per-play clone, wrapping its methods never leaks into the deck.
-2. **The clone plays**: it announces itself, calls `getTargets()`, and runs `effect()` for
-   each target in series (`mapSeries`), so one target's rolls and damage finish before the
-   next begins.
+### Turn order
+
+Owner's rule (2026-10-12): status lines read above the card box, unless the card caused
+them, and a skipped turn skips what it skips. Each step names its code.
+
+| # | Step | What happens | Code |
+|---|------|--------------|------|
+| 1 | Turn banner | "It's X's turn" and the monster's stat line; the roster highlights the actor | `ring/index.ts` `playerTurnBegin` |
+| 2 | Targeting | The monster's orders pick a target (silent) | `getTarget` in the ring loop |
+| 3 | **Time-shift** | Blink's effect. If the monster is still time-shifted, the turn is lost **and no time passes**: steps 4–8 are skipped, so a burn does not tick, winded does not end, and a flier stays aloft | effects tagged `turnStart = 'timeShift'` |
+| 4 | **Control** | Holds (Immobilize family, Sticketh) roll to break free; Helm of Awe rolls to meet the gaze, or flees. A failure loses the card, but time still passes, so step 5 runs | `turnStart = 'control'` |
+| 5 | **Upkeep** | Start-of-turn status: burning ticks (or is beaten out by a Heal), winded and exposed end, Tipsy counts down and sobers up, a Gloaming Rest resolves, an unspent ward fades | `turnStart = 'upkeep'` |
+| 6 | Card box | "X lays down the following card" — skipped on a lost turn | `announcePlay` |
+| 7 | **Card stage** | Effects that react to the card actually played: the dive, fury, rattled, Sandstorm's confused aim, the Cloak's hide, Take Wing's dodge, Faceswap, the ancient dragon's tricks, Delayed Hit, ring effects (Bad Batch). Skipped on a lost turn, so a boost "for the next card" waits for a card | `applyEffects` |
+| 8 | The card resolves | `getTargets()`, then `effect()` per target in series (`mapSeries`) | `play(..., false)` |
+| 9 | After the card | Fire Breath winds its breather | `FireBreathCard.play` |
+
+Rules that follow from the table:
+
+- **An effect's stage is a tag, not its position in the list.** `startTurn()` runs only the
+  actor's own tagged effects, in stage order; `applyEffects()` then skips them for the actor
+  (they still run for *other* monsters' cards, which is where a hold's advantage-against-the-
+  pinned lives). An untagged effect is card stage. Tag a new effect by what it does on its
+  owner's turn, and add it to the table.
+- **A lost turn** is one where a turn-start effect replaced `card.play` on the clone (or the
+  actor died, for example burned out). The replacement plays and nothing else does, except a
+  ring effect that sets `onLostTurn`: Delayed Hit, which must answer a Blink drain or a hold's
+  ongoing damage on the turn it happens (10b #157). Turn start also stops at the actor's
+  death, so a burn that kills is not followed by a rest's heal.
+- **Random Play and Pick Pocket** draw or steal first, run `startTurn()` on *that* card before
+  their own box, then play it with `shouldApplyEffects = 'card'`, which skips a second turn
+  start. Upkeep that depends on the card sees the card really played: a burn is put out by a
+  Heal that Random Play becomes. One level deep only: when Random Play draws Pick Pocket, or Pick
+  Pocket steals Random Play, upkeep sees the middle card, so a Heal at the end of that chain
+  does not put out a burn. A lost turn goes through `playLostTurn()` in all three, so Delayed
+  Hit still answers.
+- **Upkeep reads `card.turnLost`** (the stage that lost the turn). Burning does not count a
+  Heal on a held turn, because that Heal is never played.
+- **A line caused by the card waits for the card.** Burning, seeing a Heal, stops at upkeep
+  but leaves a one-shot card-stage effect that says "beats out the flames" under the Heal's
+  box. Before 2026-10-12 a winded dragon's Random Play read: Random Play box, "breath
+  back", the drawn card — and a time-shifted thief still showed its box.
+- **Blink breaks when the angel falls.** The time-shift listens for the angel's `die` and
+  lifts at once, with "⏳ <angel> has fallen, and the time-shift breaks. <victim> is back in
+  the fight." (owner, 2026-10-12). Delayed Hit, by contrast, is meant to fire after its owner
+  falls. Other lasting effects after a death are open on roadmap 11.
+- **A hold or awe grounds a flier** (`groundFlier` in `take-wing.ts`): it cannot stay aloft
+  while held. A time-shift does not, because no time passes for it.
+
+Wrapping is unchanged: the clone each step is handed is a per-play copy, so wrapping its
+`getAttackRoll` or `getTargets` never leaks into the deck. Card-stage effects pass through each
+active contestant's `encounterEffects` (`ATTACK_PHASE` for the actor, `DEFENSE_PHASE` for
+everyone else), then `ring.encounterEffects` with `GLOBAL_PHASE`.
 
 Wrapped plays nest in arming order. A check that runs after a play must re-check every
 armed effect, not only its own (see "Card effects that wrap a play" in the
@@ -83,7 +127,10 @@ play before it resets (10b #198).
 An effect that lasts until its monster's next card is an encounter effect that answers the
 `ATTACK_PHASE` call for that monster and removes itself: Gloaming Rest, Fire Breath's
 winded, and Take Wing's flight all work this way, so a second copy played as that next card
-is resolved after the first has already been given back and never stacks.
+is resolved after the first has already been given back and never stacks. Penalties (winded,
+exposed, a rest) are upkeep, so they end on a held turn too; boosts (the dive, fury) are card
+stage, so they wait for a card that is really played. Narrate the end of a penalty *before*
+the `setModifier` that gives it back, or the feed shows "ac is back to 9" with no reason.
 
 - **A bonus on the next attack** goes on the per-play clone the effect is handed, never on
   the card in the hand. `cards/helpers/empower-melee.ts` does it for the Dragon's dive and
@@ -334,6 +381,18 @@ new card or monster must reach. Check each one.
 - A description must read well with a player-chosen colour, including one that carries
   its own "with"; give the colour its own sentence. Verbs after a pronoun use `agree()`;
   verbs after a name never do ([voice and wording](../reference/voice-and-wording.md)).
+
+## Drinks: Tipsy
+
+Whiskey Shot and Scotch (a Whiskey Shot subclass) count drinks per monster per **round** (one
+pass through every deck) in `encounterModifiers.drinks`. From the third drink in one round,
+each drink rolls 1d20 + str bonus against 10; a miss makes the drinker Tipsy: -1 dex (to hit)
+and -1 int for its next two cards, through `setModifier`, so the stat lines and the roster show
+it. Tipsy is an upkeep effect (`TIPSY_EFFECT`), like winded: it counts held turns, and sobers up
+at the start of the third card, narrating before it restores. Another drink while Tipsy
+restarts the clock instead of stacking. Owner, 2026-10-12: per round, not per fight, so one
+Whiskey Shot in a deck never does it; the mild penalty was the owner's pick. The line carries
+`payload.mechanic: 'tipsy'` for a first-time note.
 
 ## Risky heals: Gloaming Rest
 

@@ -560,14 +560,17 @@
      the Console pane's quick actions + input dock without knowing either height. */
   bottom: 0.75rem;
   right: 1rem;
-  background: var(--color-choice-hover);
+  /* Solid: the hover tint is translucent in some themes, and at 0.9 opacity the feed line
+     under the button showed through it ("Delayed Hit" read through "↓ Latest", owner
+     screenshot 2026-10-12). The page background under the tint keeps it opaque. */
+  background: linear-gradient(var(--color-choice-hover), var(--color-choice-hover)), var(--color-bg);
   border: var(--border-width) solid var(--color-border);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.18);
   color: var(--color-fg);
   font-family: var(--font-ui);
   font-size: 0.75rem;
   padding: 0.25rem 0.6rem;
   cursor: pointer;
-  opacity: 0.9;
   z-index: 10;
 }
 

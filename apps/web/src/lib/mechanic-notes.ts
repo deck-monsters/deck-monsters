@@ -28,6 +28,12 @@ export const MECHANIC_NOTES: Readonly<Record<string, string>> = {
     'An ambush brings one boss more than usual. It is a lesser minion and starts with a third of its health.',
   'boss-rivals':
     'When bosses outnumber the challengers, they fight each other as well as your monsters.',
+  'time-shift':
+    'A time-shifted monster loses its whole turn: no card, and no time passes for it, so its burns, penalties and boosts all wait. Each turn it stays shifted, the monster that shifted it steals a little of its HP and XP.',
+  'fight-level':
+    'Level comes from XP, so XP drained or gained in a fight moves the level, and max HP and AC with it, until the fight ends.',
+  tipsy:
+    'Three Whiskey Shots or Scotches in one round can leave a monster tipsy: -1 dex and -1 int for its next two cards. Strength helps it hold its drink.',
   'boss-temperament':
     "Every boss has a temperament that decides which challenger it goes after. The line above says this one's.",
 };

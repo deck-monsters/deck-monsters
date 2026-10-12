@@ -17,53 +17,54 @@ export class RandomCard extends BaseCard {
 	static cardType = 'Random Play';
 	static probability = COMMON.probability;
 	static description =
-		'You find the illegible scraps of an ancient card in the corner. Curious to see what it does, you play it --as it crumbles to dust.';
+		'You find the illegible scraps of an ancient card in the corner. Curious to see what it does, you play it, and it crumbles to dust.';
 	static cost = ALMOST_NOTHING.cost;
 
 	constructor({ icon = '🎲' }: Partial<CardOptions> = {}) {
 		super({ icon } as Partial<CardOptions>);
 	}
 
-	override play(
+	override async play(
 		player: any,
 		proposedTarget?: any,
 		ring?: any,
-		activeContestants?: any
+		activeContestants?: any,
+		shouldApplyEffects: boolean | 'card' = true
 	): Promise<any> {
 		// Lets a boss's narration reach the room feed; see BaseCard.playedBy.
 		this.playedBy = player;
-		this.emit('played', { player });
+
+		// Draw first, then start the turn on the card it becomes: upkeep that depends on the
+		// card (a burn put out by a Heal) must see the Heal, not these scraps. The turn still
+		// starts before this box, so a time-shifted or held monster never finds the scraps,
+		// and a burn or the end of being winded reads above the box rather than between it and
+		// the card it becomes (owner screenshot, 2026-10-12).
+		// Lazy import to avoid circular dependency (random → draw → all → random)
+		const draw = randomCardHelpers.draw ?? (await import('./helpers/draw.js')).draw;
+		const randomCard = draw(this.options as any, player);
+
+		// 'card': this card was itself drawn or stolen, and the outer card ran the turn start.
+		const { card: started, lost } =
+			shouldApplyEffects === 'card'
+				? { card: randomCard, lost: false }
+				: await randomCard.startTurn(player, proposedTarget, ring, activeContestants);
+		if (lost) return this.playLostTurn(started, player, proposedTarget, ring, activeContestants);
+		// A clone, so the deck card itself never keeps the "announced" mark.
+		await this.clone().announcePlay(player, ring);
 
 		// Narrated and paced via playNestedCard: without it the drawn card's own
 		// announcement landed immediately after this one with nothing saying the two
 		// were connected, so the feed read as the same monster playing twice in a row.
 		const narration = `The ancient scraps crumble in ${player.givenName}'s hands — and reassemble into something else...`;
 
-		if (randomCardHelpers.draw) {
-			const randomCard = randomCardHelpers.draw(this.options as any, player);
-			return playNestedCard({
-				card: randomCard,
-				player,
-				proposedTarget,
-				ring,
-				activeContestants,
-				narration,
-				emit: (event, payload) => this.emit(event, payload),
-			});
-		}
-
-		// Lazy import to avoid circular dependency (random → draw → all → random)
-		return import('./helpers/draw.js').then(({ draw }) => {
-			const randomCard = draw(this.options as any, player);
-			return playNestedCard({
-				card: randomCard,
-				player,
-				proposedTarget,
-				ring,
-				activeContestants,
-				narration,
-				emit: (event, payload) => this.emit(event, payload),
-			});
+		return playNestedCard({
+			card: started,
+			player,
+			proposedTarget,
+			ring,
+			activeContestants,
+			narration,
+			emit: (event, payload) => this.emit(event, payload),
 		});
 	}
 }

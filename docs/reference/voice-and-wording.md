@@ -169,7 +169,8 @@ roses clause stays on the original temper line.
 Some legacy text is intentionally called out so it does not return: “proud owner” becomes
 “answers your call”; “Only an evil master would…” becomes “A beastmaster does not…”;
 `summon … from the ring` becomes `call … out of the ring`; and compact level displays use
-`Lvl 0`, never `L0`.
+`Lvl 3`, never `L3`, and level zero is `Beginner` everywhere (roster, Workshop, Console,
+stat block), never `Lvl 0`.
 
 ## Lexicon
 

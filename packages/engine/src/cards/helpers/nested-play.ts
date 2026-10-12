@@ -62,5 +62,7 @@ export function playNestedCard({
 				)
 			);
 
-	return paced.then(() => card.play(player, proposedTarget, ring, activeContestants));
+	// 'card': the outer card already ran this turn's start (time-shift, holds, upkeep), so the
+	// drawn card must not run it a second time. See TurnStartStage in cards/base.ts.
+	return paced.then(() => card.play(player, proposedTarget, ring, activeContestants, 'card'));
 }

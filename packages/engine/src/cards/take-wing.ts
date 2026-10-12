@@ -14,6 +14,17 @@ export const DIVE_DAMAGE_DICE = '1d6';
 export const isAirborne = (monster: any): boolean =>
 	!!monster?.encounterEffects?.some((effect: any) => effect.effectType === TAKE_WING_EFFECT);
 
+/**
+ * A monster that is held or awed cannot stay aloft (owner, 2026-10-12): it comes down at
+ * once and its dive is lost, the same as a blow that lands. Time-shift is not here: no time
+ * passes for a time-shifted flier, so it is still in the air when it comes back.
+ */
+export function groundFlier(monster: any, emit?: (event: string, payload: Record<string, unknown>) => void): void {
+	if (!isAirborne(monster)) return;
+	monster.encounterEffects = monster.encounterEffects.filter((effect: any) => effect.effectType !== TAKE_WING_EFFECT);
+	emit?.('narration', { narration: `${monster.givenName} falls out of the sky! No dive this time.` });
+}
+
 /*
  * The flight card the requester asked for (docs/archive/roadmap/30-dragon-pack.md; owner's choice
  * "take off, then dive"). The description quotes Isaiah 30:6 (1611 King James Bible).

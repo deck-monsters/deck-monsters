@@ -11,3 +11,4 @@ export const BURNING_EFFECT = 'Burning Effect';
 export const ANCIENT_DRAGON_EFFECT = 'Ancient Dragon Effect';
 export const EXPOSED_EFFECT = 'Exposed Effect';
 export const AWE_EFFECT = 'Awe Effect';
+export const TIPSY_EFFECT = 'Tipsy Effect';

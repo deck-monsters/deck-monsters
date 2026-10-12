@@ -164,7 +164,7 @@ describe('MonsterWorkshopPanel header — HP first, no slot bar (10b-bugs-fixed.
 
   it('shows the type line as "{type} · Lvl {level}"', () => {
     renderPanel({ type: 'Gladiator', level: 0 });
-    expect(screen.getByText('Gladiator · Lvl 0')).toBeTruthy();
+    expect(screen.getByText('Gladiator · Beginner')).toBeTruthy();
   });
 
   it('labels the xp meter without repeating level, now that level moved to the type line', () => {
@@ -252,9 +252,14 @@ describe('MonsterWorkshopPanel header — HP first, no slot bar (10b-bugs-fixed.
     expect(tags()).toEqual(['Fighting']);
   });
 
-  it('says Ready for a healthy, benched monster, and nothing else', () => {
-    renderPanel({ inRing: false, inEncounter: false, dead: false });
+  it('says Ready for a healthy, benched monster with a full deck, and nothing else', () => {
+    renderPanel({ inRing: false, inEncounter: false, dead: false, cardSlots: 1, cards: ['Hit'] });
     expect(tags()).toEqual(['Ready']);
+  });
+
+  it('says Needs cards, not Ready, while the deck is short of a ring entry', () => {
+    renderPanel({ inRing: false, inEncounter: false, dead: false, cardSlots: 9, cards: [] });
+    expect(tags()).toEqual(['Needs cards']);
   });
 });
 

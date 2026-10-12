@@ -125,6 +125,15 @@ Judge each item below against it.
   does not close the stat-reform proposal above.
 - [ ] **Initiative — owner: Ring.** Evaluate replacing entry-order play with a per-encounter
   initiative roll and a SPEED modifier, including tie behavior and narration.
+- [ ] **Lasting effects after a monster has fallen — owner: Cards.** The roadmap 49 live check
+  listed every effect that keeps going, or goes quiet, once its owner or its target has fallen:
+  [the table](../reference/turn-order-check-49b.md#notes-for-claude-events-after-a-monster-has-fallen).
+  Decided (owner, 2026-10-12): Delayed Hit keeps hitting after its owner falls ("with his
+  dying breath"); Blink breaks the moment the angel falls, with a line (built in 49). Open:
+  a line for each of the rest where one is wanted (a hold whose holder has fallen, a burn
+  credited to a fallen breather, Bad Batch's fallen brewer, a fury or flight that dies
+  unspent), and whether Blink's drain should still steal XP and heal the angel when its hit
+  is the killing one.
 - [ ] **Crit failures — owner: Cards.** Audit cards for natural-1 outcomes and add
   thematically appropriate consequences, including the time-shift failure case.
 - [ ] **Crit ticks — owner: Engine.** Track each monster's natural 20s (upstream #164).

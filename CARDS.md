@@ -1163,6 +1163,10 @@ Cards that give hit points back. A monster at 0 HP is out of the fight, so a hea
  1% chance to heal half max hp
  1% chance to poison
 
+ 3 drinks in one round may leave 
+ you tipsy: -1 dex and int for 2 
+ cards
+
  Level: 4
  Usable by: All
  Hit chance: 1% | DPT: 0
@@ -1189,6 +1193,10 @@ Cards that give hit points back. A monster at 0 HP is out of the fight, so a hea
 
  1% chance to heal half max hp
  1% chance to poison
+
+ 3 drinks in one round may leave 
+ you tipsy: -1 dex and int for 2 
+ cards
 
  Level: 2
  Usable by: All
@@ -1579,9 +1587,10 @@ Cards that hold, curse, poison, confuse or rob an opponent instead of simply hit
  removed from the fight (and can 
  not be targeted).
  On what would have been their 
- next turn, if you are still 
- alive you drain 1d4 hp and 4d4 
- xp
+ next turn, you drain 1d4 hp and 
+ 4d4 xp
+ If you fall first, they are back 
+ in the fight at once
 
  Level: Beginner
  Usable by: Weeping Angel
@@ -1977,7 +1986,7 @@ Cards that hold, curse, poison, confuse or rob an opponent instead of simply hit
  You find the illegible scraps of 
  an ancient card in the corner. 
  Curious to see what it does, you 
- play it --as it crumbles to 
+ play it, and it crumbles to 
  dust.
 
  Level: Beginner

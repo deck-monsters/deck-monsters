@@ -449,9 +449,10 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  removed from the fight (and can 
  not be targeted).
  On what would have been their 
- next turn, if you are still 
- alive you drain 1d4 hp and 4d4 
- xp
+ next turn, you drain 1d4 hp and 
+ 4d4 xp
+ If you fall first, they are back 
+ in the fight at once
 
  Level: Beginner
  Usable by: Weeping Angel
@@ -1698,7 +1699,7 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  You find the illegible scraps of 
  an ancient card in the corner. 
  Curious to see what it does, you 
- play it --as it crumbles to 
+ play it, and it crumbles to 
  dust.
 
  Level: Beginner
@@ -1784,6 +1785,10 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
 
  1% chance to heal half max hp
  1% chance to poison
+
+ 3 drinks in one round may leave 
+ you tipsy: -1 dex and int for 2 
+ cards
 
  Level: 4
  Usable by: All
@@ -2079,6 +2084,10 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
 
  1% chance to heal half max hp
  1% chance to poison
+
+ 3 drinks in one round may leave 
+ you tipsy: -1 dex and int for 2 
+ cards
 
  Level: 2
  Usable by: All
