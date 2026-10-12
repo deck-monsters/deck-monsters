@@ -62,6 +62,7 @@ export function expose(dragon: any): void {
 	};
 
 	exposed.effectType = EXPOSED_EFFECT;
+	(exposed as any).turnStart = 'upkeep';
 	dragon.setModifier('ac', -EXPOSED_AC_PENALTY);
 	dragon.encounterEffects = [...dragon.encounterEffects, exposed];
 }

@@ -1,4 +1,5 @@
 import { HitCard } from './hit.js';
+import { groundFlier } from './take-wing.js';
 import { chance } from '../helpers/chance.js';
 import { ATTACK_PHASE, DEFENSE_PHASE } from '../constants/phases.js';
 import { capitalize } from '../helpers/capitalize.js';
@@ -326,6 +327,7 @@ ${ongoingDamageText}`;
 			}
 			return card;
 		};
+		(ImmobilizeEffect as any).turnStart = 'control';
 		return ImmobilizeEffect;
 	}
 
@@ -407,6 +409,7 @@ ${ongoingDamageText}`;
 			immobilizeEffect.effectType = 'ImmobilizeEffect';
 			target.encounterEffects = [...target.encounterEffects, immobilizeEffect];
 			target.encounterModifiers.immobilizedTurns = 0;
+			groundFlier(target, (event, payload) => this.emit(event, payload));
 
 			if (this.doDamageOnImmobilize) {
 				return super.effect(player, target, ring, activeContestants);

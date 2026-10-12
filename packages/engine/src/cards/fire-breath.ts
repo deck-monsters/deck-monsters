@@ -155,6 +155,7 @@ An ancient dragon (level ${ANCIENT_DRAGON_LEVEL}+) breathes fire that cannot be 
 		};
 
 		burning.effectType = BURNING_EFFECT;
+		(burning as any).turnStart = 'upkeep';
 		target.encounterEffects = [
 			...target.encounterEffects.filter((effect: any) => effect.effectType !== BURNING_EFFECT),
 			burning,
@@ -194,6 +195,7 @@ An ancient dragon (level ${ANCIENT_DRAGON_LEVEL}+) breathes fire that cannot be 
 		};
 
 		winded.effectType = WINDED_EFFECT;
+		(winded as any).turnStart = 'upkeep';
 		player.setModifier('ac', -WINDED_AC_PENALTY);
 		player.encounterEffects = [...player.encounterEffects, winded];
 		this.emit('narration', {

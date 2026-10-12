@@ -195,6 +195,7 @@ export class BlinkCard extends CurseCard {
 			};
 
 			blinkEffect.effectType = 'BlinkEffect';
+			(blinkEffect as any).turnStart = 'timeShift';
 			blinkTarget.encounterModifiers.timeShifted = true;
 			blinkTarget.encounterEffects = [
 				...blinkTarget.encounterEffects,

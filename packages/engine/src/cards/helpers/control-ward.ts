@@ -76,6 +76,7 @@ const armLapseTimer = (creature: any, emit?: WardNarrator): void => {
 	};
 
 	lapse.effectType = CONTROL_WARD_LAPSE_EFFECT;
+	(lapse as any).turnStart = 'upkeep';
 	creature.encounterEffects = [...creature.encounterEffects, lapse];
 };
 

@@ -1,4 +1,5 @@
 import { BaseCard, type CardOptions } from './base.js';
+import { groundFlier } from './take-wing.js';
 import { chance } from '../helpers/chance.js';
 import { subEventDelay } from '../helpers/delay-times.js';
 import { TARGET_ALL_CONTESTANTS, getTarget } from '../helpers/targeting-strategies.js';
@@ -179,7 +180,9 @@ No damage. Does not stack.`;
 		};
 
 		awed.effectType = AWE_EFFECT;
+		(awed as any).turnStart = 'control';
 		target.encounterEffects = [...target.encounterEffects, awed];
+		groundFlier(target, (event, payload) => this.emit(event, payload));
 	}
 
 	async effect(player: any, target: any, ring?: any, activeContestants?: any): Promise<boolean> {

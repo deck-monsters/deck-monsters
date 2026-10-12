@@ -21,15 +21,24 @@ export class PickPocketCard extends BaseCard {
 		super({ icon } as Partial<CardOptions>);
 	}
 
-	override play(
+	override async play(
 		player: any,
 		proposedTarget: any,
 		ring: any,
-		activeContestants: any
+		activeContestants: any,
+		shouldApplyEffects: boolean | 'card' = true
 	): Promise<any> {
 		// Lets a boss's steal narration reach the room feed; see BaseCard.playedBy.
 		this.playedBy = player;
-		this.emit('played', { player });
+
+		// Turn start first, as Random Play does: a time-shifted or held thief steals nothing.
+		// 'card': this card was itself drawn or stolen, and the outer card ran the turn start.
+		const { card: started, lost } =
+			shouldApplyEffects === 'card'
+				? { card: this.clone(), lost: false }
+				: await this.startTurn(player, proposedTarget, ring, activeContestants);
+		if (lost) return started.play(player, proposedTarget, ring, activeContestants, false);
+		await started.announcePlay(player, ring);
 
 		const mostExperienced = (getTarget({
 			contestants: activeContestants,
