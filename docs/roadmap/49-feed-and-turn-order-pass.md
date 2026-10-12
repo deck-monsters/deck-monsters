@@ -8,7 +8,7 @@ tags: [roadmap, combat, feed, workshop, ux]
 ---
 # 49 — Feed wording and turn order
 
-**Status:** Built on `claude/feed-and-workshop-ux-pass`, not yet merged. Waiting on the live check ([49b](49b-cursor-check.md)). Started 2026-10-12 from
+**Status:** Built on `claude/feed-and-workshop-ux-pass`, not yet merged. The live check is written: [turn-order-check-49b](../reference/turn-order-check-49b.md) ([49b](49b-cursor-check.md)). Started 2026-10-12 from
 four owner screenshots (a phone, Millefleur): the Ring during two boss fights, and the
 Workshop.
 
@@ -52,7 +52,7 @@ of 200 fights. No measurable change from the turn order.
 
 - The turn banner still says "plays the next card in her deck" on a turn that turns out to be
   lost; the next line says why. Not changed.
-- Live check on a phone: [49b](49b-cursor-check.md), Cursor's checklist with the exact strings.
+- Live check, written 2026-10-12: [turn-order-check-49b](../reference/turn-order-check-49b.md). Workshop labels and the level-0 stat block passed. The footer says Previous fight during a fight, and on the win line it still named the previous fight. Fire Breath, Blink, Take Wing, and three drinks were not reached.
 
 When merged, fold this into the archive per the roadmap lifecycle; the turn order already
 lives in [cards and encounter effects](../architecture/cards-and-encounter-effects.md).

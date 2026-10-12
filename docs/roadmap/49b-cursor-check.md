@@ -8,9 +8,9 @@ tags: [roadmap, combat, feed, workshop, web, cursor]
 ---
 # 49b — Feed wording and turn order live check (Cursor)
 
-**Status:** Ready for Cursor. Claude built [roadmap 49](49-feed-and-turn-order-pass.md) on
-`claude/feed-and-workshop-ux-pass`. Cursor drives a real browser and reports. Claude reviews the
-report and writes any new player-facing text.
+**Status:** Checked 2026-10-12. The report is [turn-order-check-49b](../reference/turn-order-check-49b.md).
+Claude built [roadmap 49](49-feed-and-turn-order-pass.md) on `claude/feed-and-workshop-ux-pass`.
+Claude reviews the report and writes any new player-facing text.
 
 ## Rules
 
