@@ -1698,7 +1698,7 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  You find the illegible scraps of 
  an ancient card in the corner. 
  Curious to see what it does, you 
- play it --as it crumbles to 
+ play it, and it crumbles to 
  dust.
 
  Level: Beginner

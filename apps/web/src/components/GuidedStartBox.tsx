@@ -73,7 +73,7 @@ export function guidedCopy(surface: 'console' | 'workshop', phase: GuidedPhase, 
 				: { text: `${name} is in the ring. A fight starts when a second monster joins. Nobody else here? Type summon a boss in the Console.` };
 		case 'fallen':
 			return console_
-				? { text: `${name} has fallen. Revive ${name} to fight again.`, chip: `revive ${name}`, hint: 'Above level 0, a revival takes a few minutes.' }
+				? { text: `${name} has fallen. Revive ${name} to fight again.`, chip: `revive ${name}`, hint: 'A Beginner is back at once. From level 1 on, a revival takes a few minutes.' }
 				: { text: `${name} has fallen. Press Revive to bring ${name} back.` };
 		case 'change_card':
 			return console_

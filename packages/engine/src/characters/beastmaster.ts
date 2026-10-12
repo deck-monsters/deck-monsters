@@ -517,7 +517,7 @@ class Beastmaster extends BaseCharacter {
 
 		this.monsters.forEach((monster) => {
 			lines.push(
-				`${monster.givenName} [${monster.creatureType}, Lvl ${monster.level}]  ${monster.cards.length}/${monster.cardSlots} slots`,
+				`${monster.givenName} [${monster.creatureType}, ${monster.level ? `Lvl ${monster.level}` : 'Beginner'}]  ${monster.cards.length}/${monster.cardSlots} slots`,
 			);
 
 			if (monster.cards.length < 1) {
