@@ -122,4 +122,51 @@ No fight line was reordered. No player-facing string was reworded.
 
 ## Strings for Claude
 
-None. Phosphor's status tags are the existing small-capitals lettering (`NEEDS CARDS`, `READY`), not a new sentence.
+None from the check itself. Phosphor's status tags are the existing small-capitals lettering (`NEEDS CARDS`, `READY`), not a new sentence.
+
+The note below needs new lines. They are not drafted here.
+
+## Notes for Claude: events after a monster has fallen
+
+Owner, 2026-10-12, added after the check. A fallen monster is dropped from the turn order (`getActiveContestants` keeps only the living), so an effect that waits for *that* monster's next card never speaks. What still needs a decision is anything that keeps going because someone else is alive, or that keeps going in the same play after the killing hit.
+
+Do not solve every card. Two are decided in direction. The rest are called out so none of them is silent by accident.
+
+### Delayed Hit — leave it
+
+This is the one card that is meant to hit after its owner has fallen. The payoff already has its own line: `with his dying breath, he avenges …` (`cards/delayed-hit.ts`, the `delayingTarget.dead` branch). A living owner gets `immediately responds`. A second armed copy says it is answering the same blow. It also answers a blow on a lost turn. Keep that.
+
+### Blink — owner's lean
+
+Revoke the blink immediately, and say so. Instant permadeath is the other option that came to mind, and it feels too harsh. Destroy is already the permadeath card; Blink should not become one.
+
+What the code does now (`cards/blink.ts`):
+
+- While the victim is time-shifted they cannot be targeted. The drain waits for what would have been their next turn, and only if the angel is still alive.
+- If the angel has already fallen, that turn ends the shift with the ordinary return line, `opens his eyes and finds himself in an unfamiliar time.` Nothing says the blink was revoked, and it does not happen when the angel falls. It waits for the victim's turn.
+- If the drain's hit kills the victim, the same resolution still steals XP and heals the angel. That is an event after death, with no line of its own.
+
+### The other lasting effects
+
+Each row is current behavior. None of these has a decided after-death line except the hold, which already has one for a dead holder.
+
+| Effect | What happens once someone has fallen |
+|---|---|
+| Holds: Immobilize, Coil, Constrict, Horn Gore, Entrance, Enthrall, Mesmerize, Forked Stick, Forked Metal Rod | If the holder has fallen, the captive's next turn ends the hold and says they push the limp dead body off. Ongoing damage can be the killing hit, and that turn's card then does nothing. A fallen captive simply leaves the turn order, so the hold never speaks again. |
+| Sticketh | A self-hold on the same Immobilize path. The "limp dead body" line assumes a holder and a captive who are different monsters. A fallen unicorn never takes the turn that would free the horn. |
+| Helm of Awe | If the dragon has fallen, the captive's next turn drops the awe and they act. No line. The "pinned, so attacks have advantage" wrap also stops. |
+| Fire Breath, the burn | The tick can be the killing hit. The burn then stops and that turn's card is not played. A fallen breather is still named as the assailant on a later tick. |
+| Fire Breath, winded | "Has her breath back" runs on the breather's next turn. A fallen breather never gets it. The AC penalty ends with the fight, unannounced. |
+| Take Wing | A killing blow that lands while they are airborne says they are knocked out of the sky. If they fall with the flight still armed, there is no landing line and no dive. A hold or awe already says `falls out of the sky`. |
+| Gloaming Rest | The heal or the "rest is broken" line is the rester's next turn. A fallen rester gets neither. The AC penalty ends with the fight. |
+| Whiskey Shot, Scotch, Tipsy | A drink is not counted if the drinker is already fallen. "Sobers up" is a later turn, so a fallen drinker never gets it. The dex and int penalty ends with the fight. |
+| Exposed (an ancient dragon's trick) | "Gathers her wits" is the dragon's next turn. A fallen dragon never says it. Outwit and the soft underbelly both skip a target who has already fallen. |
+| Horn of Proof's ward | "The ward fades unspent" counts the warder's own later cards. A fallen warder never gets that line. |
+| Enchanted Faceswap | No death check. The trap stays armed. A fallen monster is not offered as a target, so it is unclear whether a card that still aims at them would swap. |
+| Cloak of Invisibility | No death check. Same question: a later search roll can still talk about finding someone who has fallen. |
+| Sandstorm | A second blast does not fire if the first one killed. The confusion itself clears on the confused monster's next turn, which a fallen monster does not get. |
+| Mood Scales, fury | Spent on the next melee hit that lands. A fallen monster plays no such card, and nothing says the fury died with them. Calming down (not bloodied) does strip a fury that is still waiting. |
+| Dissonant Voice | The rattle is spent on the rattled monster's next attack roll, with a line. A fallen monster never makes that roll. |
+| Bad Batch | The trap sits on the ring, not on a monster. The brewer can have fallen and the next Heal still poisons, and the hit is credited to them. No line that the brewer is already fallen. |
+
+A curse that lands with the killing hit (Soften, Molasses, and the other attack curses) is part of that hit, not a later event. Berserk stops the chain once the target has fallen, and the last hit's line can read `ULTIMATE`. Random Play and Pick Pocket only matter as whichever card they become.
