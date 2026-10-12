@@ -2,10 +2,12 @@ import { expect } from 'chai';
 
 import { announceModifier } from './modifier.js';
 
+let lastPayload: Record<string, unknown> = {};
 const announce = (monster: Record<string, unknown>, opts: Parameters<typeof announceModifier>[3]): string => {
-	const published: Array<{ text: string }> = [];
-	const eb = { publish: (event: { text: string }) => published.push(event) };
+	const published: Array<{ text: string; payload: Record<string, unknown> }> = [];
+	const eb = { publish: (event: { text: string; payload: Record<string, unknown> }) => published.push(event) };
 	announceModifier(eb as never, '', { pronouns: { his: 'his' }, modifiers: {}, ...monster }, opts);
+	lastPayload = published[0]!.payload;
 	return published[0]!.text;
 };
 
@@ -33,6 +35,8 @@ describe('./announcements/modifier.ts', () => {
 			{ amount: -12, attr: 'xp', prevValue: 113 },
 		);
 		expect(text).to.match(/Queen drops to level 2 for this fight\.$/);
+		// A first-time note explains why a level can move mid-fight (apps/web mechanic-notes).
+		expect(lastPayload.mechanic).to.equal('fight-level');
 	});
 
 	it('says nothing about level when the xp change keeps the level', () => {
@@ -41,5 +45,6 @@ describe('./announcements/modifier.ts', () => {
 			{ amount: 7, attr: 'xp', prevValue: 113 },
 		);
 		expect(text).to.not.include('level');
+		expect(lastPayload.mechanic).to.equal(undefined);
 	});
 });

@@ -140,6 +140,7 @@ export class BlinkCard extends CurseCard {
 							player: blinkPlayer,
 							target: blinkTarget,
 							ring,
+							mechanic: 'time-shift',
 						});
 
 						const hpToSteal = roll({ primaryDice: this.energyToStealDice });

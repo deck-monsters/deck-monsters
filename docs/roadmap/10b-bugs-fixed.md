@@ -5567,3 +5567,71 @@ the death line still says who killed them.
 
 Pinned by `announcements/hit.test.ts`, `announcements/feed-lines.test.ts`, and
 `apps/web/src/__tests__/feed-lines.test.tsx`.
+
+### 244. "Ralarth's ac is now 9 (increased by 2, total)" with no reason — FIXED
+
+Owner screenshot (2026-10-12): a winded Ralarth's next turn read "ac is now 9 (increased by
+2, total)", then "has their breath back".
+
+**Root cause:** two things. `announceModifier` appended `,${signedNumber(totalMod)} total`
+whenever the running encounter total differed from the change; at a total of zero,
+`signedNumber(0)` is empty, which left a dangling ", total". And Fire Breath's winded effect
+called `setModifier` (which announces at once) before its "breath back" narration, so the
+number came before the reason. The ancient dragon's exposed penalty ended with no narration
+at all.
+
+**Fixed:** a zero total reads "is back to 9 (increased by 2)"; `announceModifier` reads the
+permanent or encounter total as the change was made (the `modifier` event now carries
+`permanent`). Winded narrates before it restores, and exposed says "gathers her wits, and her
+guard is up again" first. The architecture doc's "Until your next card" section now says to
+narrate before restoring. Pinned by `announcements/modifier.test.ts` and
+`cards/turn-order.test.ts`.
+
+### 245. Blink dropped a monster a level with nothing in the feed — FIXED
+
+Owner screenshot: Queen Elizabeth's roster row changed from "Lvl 3 · AC 12 · 42/47" to "Lvl 2 ·
+AC 11 · 38/44" in one turn. Level comes from xp, so Blink's 4d4 xp drain (an encounter
+modifier) lowered her level, and with it max hp and ac, for the rest of the fight. That is
+the intended rule (owner); the feed only ever said the xp changed.
+
+**Fixed:** the xp modifier line adds "Queen Elizabeth drops to level 2 for this fight." (or
+"rises", for the thief) whenever the change crosses a level. Pinned by
+`announcements/modifier.test.ts`.
+
+### 246. Turn effects ran in arming order, so a skipped turn could spend a dive — FIXED
+
+Owner screenshot: "Queen Elizabeth folds her wings and dives!", then "Queen Elizabeth is
+currently time-shifted for 1 more turn by Dardariel": she dived, and landed, on a turn she
+never took. A second screenshot showed a Random Play box, then "has their breath back", then
+the card it became.
+
+**Root cause:** `applyEffects` ran every encounter effect in the order it had been armed,
+with no notion of which effects can cancel the turn. Take Wing was armed before Blink, so it
+ran first and spent the flight. Random Play and Pick Pocket override `play` and never ran the
+effects on themselves, only on the drawn card, so statuses landed between the two boxes and
+a time-shifted or held monster still showed its Random Play box.
+
+**Fixed:** effects carry a `turnStart` stage (`timeShift`, `control`, `upkeep`); untagged
+effects are card stage. `BaseCard.startTurn()` runs the actor's tagged effects in stage
+order before the card box; a time-shift skips the rest of the turn (no time passes), a hold
+or awe loses the card but still runs upkeep, and card-stage boosts never run on a lost turn.
+The card box now precedes card-stage effects, so a dive or fury reads under the card it
+boosts. Random Play and Pick Pocket run the turn start themselves. A held or awed flier now
+falls out of the sky (owner rule). The full order is the "Turn order" table in
+[cards and encounter effects](../architecture/cards-and-encounter-effects.md). Pinned by
+`cards/turn-order.test.ts`.
+
+### 247. Workshop said "Ready" for a monster that could not enter the ring — FIXED
+
+Owner screenshot: "● Ready" beside "Deck 0/9 · needs 9 more to enter the ring" and a
+disabled Send to ring. The status tag fell through to "ready" for any benched, living
+monster. Now a short deck reads "Needs cards" in the dim ink. The filter hint, which said
+only "Inventory filtered for Iassen Brightheart.", now says what it does and how to clear it.
+Pinned by `monsterWorkshopPanel.header.test.tsx` and `workshopPanel.emptySlot.test.tsx`.
+
+### 248. The stat block's "+1 dex bonus" under-reported and read as a contradiction — FIXED
+
+A level 4 boss showed "dex: 10" and, under it, "+1 dex bonus". The line printed only
+`options.dexModifier`, the type's base modifier, while rolls use `dexModifier`, which adds
+the level scaling. The block now says "Roll bonuses: +5 to hit, +5 to damage, +4 on int
+rolls" from the real getters, and "Level: Beginner" rather than "Level: beginner".

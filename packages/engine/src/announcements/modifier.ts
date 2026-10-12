@@ -43,10 +43,12 @@ export function announceModifier(
 	// Level is derived from xp, so a drained or boosted xp can move it, and with it max hp
 	// and ac. Nothing said so: a Blink took a level 3 monster to level 2 and the roster
 	// changed "Lvl 3 · AC 12" to "Lvl 2 · AC 11" with no line in the feed explaining why.
+	let mechanic: string | undefined;
 	if (attr === 'xp' && typeof prevValue === 'number') {
 		const prevLevel = getLevel(prevValue);
 		const level = monster.level as number;
 		if (level !== prevLevel) {
+			mechanic = 'fight-level';
 			text += `. ${monster.givenName} ${level < prevLevel ? 'drops' : 'rises'} to level ${level} for this fight.`;
 		}
 	}
@@ -56,6 +58,7 @@ export function announceModifier(
 		scope: 'public',
 		text,
 		payload: {
+			...(mechanic ? { mechanic } : {}),
 			lines: leadLines(text, line => ({
 				kind: 'modifier',
 				text: line,
