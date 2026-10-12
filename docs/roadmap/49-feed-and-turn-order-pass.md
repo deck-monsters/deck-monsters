@@ -41,8 +41,7 @@ Workshop.
 
 - The turn banner still says "plays the next card in her deck" on a turn that turns out to be
   lost; the next line says why. Not changed.
-- Live check on a phone of the new order (owner or Cursor), especially a Random Play by a
-  winded dragon and a time-shifted flier.
+- Live check on a phone: [49b](49b-cursor-check.md), Cursor's checklist with the exact strings.
 
 When merged, fold this into the archive per the roadmap lifecycle; the turn order already
 lives in [cards and encounter effects](../architecture/cards-and-encounter-effects.md).
