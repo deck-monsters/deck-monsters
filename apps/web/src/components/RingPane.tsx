@@ -423,7 +423,32 @@ export default function RingPane({
     if (historyError) setListReady(true);
   }, [historyError]);
 
-  const { data: lastFight } = trpc.game.recentFights.useQuery({ roomId, limit: 1 });
+  // The footer's fight. When a fight ends its summary is written a moment later (the server's
+  // summary writer), so the footer remembers which fight it was showing and keeps calling it
+  // "Previous fight", polling, until the new one arrives. Before this it flipped to "Last
+  // fight" on the win line while still naming the fight before (live check 49b, B2).
+  const [staleFightNumber, setStaleFightNumber] = useState<number | null>(null);
+  const { data: lastFight } = trpc.game.recentFights.useQuery(
+    { roomId, limit: 1 },
+    { refetchInterval: staleFightNumber !== null ? 2_000 : false },
+  );
+  const shownFightNumber = (lastFight?.[0] as { fightNumber?: number } | undefined)?.fightNumber ?? -1;
+  const wasInEncounter = useRef(false);
+  useEffect(() => {
+    if (wasInEncounter.current && !timerState.inEncounter) setStaleFightNumber(shownFightNumber);
+    wasInEncounter.current = !!timerState.inEncounter;
+    // Only the fight ending matters here; the number is read at that moment.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timerState.inEncounter]);
+  useEffect(() => {
+    if (staleFightNumber !== null && shownFightNumber !== staleFightNumber) setStaleFightNumber(null);
+  }, [shownFightNumber, staleFightNumber]);
+  // Stop polling after a minute even if no new summary comes (a cancelled fight writes none).
+  useEffect(() => {
+    if (staleFightNumber === null) return;
+    const giveUp = setTimeout(() => setStaleFightNumber(null), 60_000);
+    return () => clearTimeout(giveUp);
+  }, [staleFightNumber]);
 
   // Boss summon charges are per-user, so unlike the timers they come from this
   // membership-checked query rather than the public ring.state broadcast.
@@ -809,7 +834,7 @@ export default function RingPane({
         <LastFightFooter
           summary={lastFight[0] as FightSummaryLike & { fightNumber: number; endedAt: string }}
           showRelative={ringKeyTimestampsEnabled}
-          fighting={!!timerState.inEncounter}
+          fighting={!!timerState.inEncounter || staleFightNumber !== null}
         />
       )}
     </section>

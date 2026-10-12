@@ -19,7 +19,7 @@ describe('./cards/blink.ts', () => {
 		expect((blink as any).cursedProp).to.equal('xp');
 		expect((blink as any).hasChanceToHit).to.be.false;
 		expect(blink.stats).to.equal(
-			"1d20 vs opponent's int. They are removed from the fight (and can not be targeted).\nOn what would have been their next turn, if you are still alive you drain 1d4 hp and 4d4 xp"
+			"1d20 vs opponent's int. They are removed from the fight (and can not be targeted).\nOn what would have been their next turn, you drain 1d4 hp and 4d4 xp\nIf you fall first, they are back in the fight at once"
 		);
 	});
 
@@ -39,8 +39,31 @@ describe('./cards/blink.ts', () => {
 		expect((blink as any).cursedProp).to.equal('ac');
 		expect((blink as any).hasChanceToHit).to.be.true;
 		expect(blink.stats).to.equal(
-			"1d20 vs opponent's int. They are removed from the fight (and can not be targeted).\nOn what would have been their next turn, if you are still alive you drain 2d4 hp and 4d6 ac"
+			"1d20 vs opponent's int. They are removed from the fight (and can not be targeted).\nOn what would have been their next turn, you drain 2d4 hp and 4d6 ac\nIf you fall first, they are back in the fight at once"
 		);
+	});
+
+	it('breaks the time-shift the moment the angel falls, and says so (owner, 2026-10-12)', async () => {
+		const blink = new BlinkCard();
+		const angel = new WeepingAngel({ name: 'Dardariel', gender: 'female' });
+		const victim = new Basilisk({ name: 'Queen', gender: 'female' });
+		const killer = new Basilisk({ name: 'Bram', gender: 'male' });
+		const contestants = [angel, victim, killer].map(monster => ({ monster, character: {} }));
+		const ring = { contestants, encounterEffects: [], channelManager: { sendMessages: () => Promise.resolve() } };
+		[angel, victim, killer].forEach(monster => monster.startEncounter(ring));
+		const narrations: string[] = [];
+		blink.on('narration', (_c: string, _card: any, { narration }: any) => narrations.push(narration));
+		sinon.stub(blink, 'checkSuccess').returns({ success: true, strokeOfLuck: false, curseOfLoki: false, tie: false } as any);
+
+		blink.effect(angel, victim, ring, contestants);
+		expect((victim as any).encounterModifiers.timeShifted).to.equal(true);
+
+		await (angel as any).die(killer);
+
+		expect((victim as any).encounterModifiers.timeShifted).to.equal(false);
+		expect((victim as any).encounterEffects.some((e: any) => e.effectType === 'BlinkEffect')).to.equal(false);
+		expect(narrations).to.include('⏳ Dardariel has fallen, and the time-shift breaks. Queen is back in the fight.');
+		sinon.restore();
 	});
 
 	it('can only be played by WeepingAngels', () => {

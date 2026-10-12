@@ -5644,3 +5644,19 @@ cards" was restated after it, so a fallen monster wore the same green dot as one
 for the ring. Found on the roadmap 49 live check: Chuvvo's "Fallen" computed to
 `rgb(31, 107, 87)`, the success green. The fallen and in-ring colours are restated after
 the general rule. Fighting was already success, so it is unchanged.
+
+### 250. The Ring footer said "Last fight" while still naming the fight before — FIXED
+
+Live check 49b (B2): during a fight the footer read "Previous fight: … (#11)", correctly. On
+the win line, and for as long as the page stayed open, it flipped to "Last fight: … (#11)",
+still naming the fight before the one just won; only leaving the Ring and coming back showed
+#12.
+
+**Root cause:** `RingPane` fetched `recentFights` once and never again, and the label keyed on
+`inEncounter` alone. The fight's summary row is written by the server a moment after the
+fight ends, so even a refetch at the end would usually get the old row.
+
+**Fixed:** when a fight ends, the pane remembers which fight number it was showing, keeps
+saying "Previous fight", and polls every 2 s until a different summary arrives (giving up
+after a minute, since a cancelled fight writes none). Pinned by
+`apps/web/src/__tests__/ringPane-last-fight-footer.test.tsx`.

@@ -449,9 +449,10 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  removed from the fight (and can 
  not be targeted).
  On what would have been their 
- next turn, if you are still 
- alive you drain 1d4 hp and 4d4 
- xp
+ next turn, you drain 1d4 hp and 
+ 4d4 xp
+ If you fall first, they are back 
+ in the fight at once
 
  Level: Beginner
  Usable by: Weeping Angel

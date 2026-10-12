@@ -59,6 +59,10 @@ Rules that follow from the table:
   but leaves a one-shot card-stage effect that says "beats out the flames" under the Heal's
   box. Before 2026-10-12 a winded dragon's Random Play read: Random Play box, "breath
   back", the drawn card — and a time-shifted thief still showed its box.
+- **Blink breaks when the angel falls.** The time-shift listens for the angel's `die` and
+  lifts at once, with "⏳ <angel> has fallen, and the time-shift breaks. <victim> is back in
+  the fight." (owner, 2026-10-12). Delayed Hit, by contrast, is meant to fire after its owner
+  falls. Other lasting effects after a death are open on roadmap 11.
 - **A hold or awe grounds a flier** (`groundFlier` in `take-wing.ts`): it cannot stay aloft
   while held. A time-shift does not, because no time passes for it.
 

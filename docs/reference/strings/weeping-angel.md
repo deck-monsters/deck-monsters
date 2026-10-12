@@ -78,7 +78,8 @@ Source: `packages/engine/src/cards/blink.ts`.
 
 ```text
 1d20 vs opponent's int. They are removed from the fight (and can not be targeted).
-On what would have been their next turn, if you are still alive you drain 1d4 hp and 4d4 xp
+On what would have been their next turn, you drain 1d4 hp and 4d4 xp
+If you fall first, they are back in the fight at once
 ```
 
 **Narration and outcomes:**
@@ -99,6 +100,7 @@ On what would have been their next turn, if you are still alive you drain 1d4 hp
 | effect → potentialEngeryReason | `to steal potential energy from {him}self.` |
 | effect → potentialEngeryReason | `to steal potential energy from {identityWithHp}.` |
 | effect → narration | `{identity} opens {his} eyes and finds {him}self in an unfamiliar time.` |
+| effect → narration | `⏳ {blinkPlayer} has fallen, and the time-shift breaks. {blinkTarget} is back in the fight.` |
 
 ## Enthrall
 
