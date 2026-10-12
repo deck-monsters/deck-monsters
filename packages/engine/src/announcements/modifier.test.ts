@@ -39,6 +39,14 @@ describe('./announcements/modifier.ts', () => {
 		expect(lastPayload.mechanic).to.equal('fight-level');
 	});
 
+	it('says Beginner, not level 0, and leaves "for this fight" off a permanent change', () => {
+		const text = announce(
+			{ identity: '🐦 Queen', givenName: 'Queen', xp: 10, level: 0, encounterModifiers: {}, modifiers: { xp: -40 } },
+			{ amount: -40, attr: 'xp', prevValue: 50, permanent: true },
+		);
+		expect(text).to.match(/Queen drops to Beginner\.$/);
+	});
+
 	it('says nothing about level when the xp change keeps the level', () => {
 		const text = announce(
 			{ identity: '🐦 Queen', givenName: 'Queen', xp: 120, level: 3, encounterModifiers: { xp: 7 } },

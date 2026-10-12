@@ -49,7 +49,12 @@ Rules that follow from the table:
 - **Random Play and Pick Pocket** draw or steal first, run `startTurn()` on *that* card before
   their own box, then play it with `shouldApplyEffects = 'card'`, which skips a second turn
   start. Upkeep that depends on the card sees the card really played: a burn is put out by a
-  Heal that Random Play becomes.
+  Heal that Random Play becomes. One level deep only: when Random Play draws Pick Pocket, or Pick
+  Pocket steals Random Play, upkeep sees the middle card, so a Heal at the end of that chain
+  does not put out a burn. A lost turn goes through `playLostTurn()` in all three, so Delayed
+  Hit still answers.
+- **Upkeep reads `card.turnLost`** (the stage that lost the turn). Burning does not count a
+  Heal on a held turn, because that Heal is never played.
 - **A line caused by the card waits for the card.** Burning, seeing a Heal, stops at upkeep
   but leaves a one-shot card-stage effect that says "beats out the flames" under the Heal's
   box. Before 2026-10-12 a winded dragon's Random Play read: Random Play box, "breath

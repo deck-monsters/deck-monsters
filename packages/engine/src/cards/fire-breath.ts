@@ -128,7 +128,8 @@ An ancient dragon (level ${ANCIENT_DRAGON_LEVEL}+) breathes fire that cannot be 
 
 			// Playing a Heal puts the fire out instead of taking the tick. The heal is the card, so
 			// the line waits for the card stage and reads under the Heal's box, not above it.
-			if (card.isCardClass?.(HEAL)) {
+			// Not on a lost turn: a held monster holding a Heal never plays it (cards/base.ts).
+			if (card.isCardClass?.(HEAL) && !card.turnLost) {
 				stopBurning();
 				const doused = ({ card: playing, phase: dousedPhase, player: dousedPlayer }: any) => {
 					if (dousedPhase !== ATTACK_PHASE || dousedPlayer !== target) return playing;

@@ -146,7 +146,9 @@ export class BaseCard<TOptions extends CardOptions = CardOptions> extends BaseIt
 					proposedTarget,
 				});
 				if (modifiedCard && modifiedCard !== card) Object.assign(card, modifiedCard);
-				if (stage === 'timeShift' && isLost()) card.turnLost = 'timeShift';
+				// Name the stage that lost the turn. Upkeep reads it: a held monster holding a Heal
+				// does not get to put out a burn with a card it never plays.
+				if (!card.turnLost && isLost()) card.turnLost = stage;
 			}
 		}
 
@@ -199,6 +201,29 @@ export class BaseCard<TOptions extends CardOptions = CardOptions> extends BaseIt
 
 		this.new = card;
 		return card;
+	}
+
+	/**
+	 * A lost turn: the replacement `startTurn` left on the clone (a hold's "misses a turn", a
+	 * flee) plays, and nothing else, except ring reactions that answer whatever happened this
+	 * turn: a Blink drain or a hold's ongoing damage is a blow, and Delayed Hit must answer it
+	 * now, not after some later, unrelated card (the 10b #157 symptom). Only effects that opt
+	 * in with `onLostTurn`: Bad Batch, say, would be spent on a card never played. Random Play
+	 * and Pick Pocket call this too.
+	 */
+	async playLostTurn(
+		startedCard: any,
+		player: any,
+		proposedTarget: any,
+		ring: any,
+		activeContestants: any[]
+	): Promise<any> {
+		let card = startedCard;
+		for (const effect of [...(ring?.encounterEffects ?? [])]) {
+			if (!effect.onLostTurn) continue;
+			card = (await effect({ activeContestants, card, phase: GLOBAL_PHASE, player, ring, proposedTarget })) || card;
+		}
+		return card.play(player, proposedTarget, ring, activeContestants, false);
 	}
 
 	/**
@@ -256,18 +281,7 @@ export class BaseCard<TOptions extends CardOptions = CardOptions> extends BaseIt
 			return started.then(async ({ card: startedCard, lost }) => {
 				// A lost turn plays the replacement (a hold's "misses a turn", a flee) and nothing
 				// else: no card box, no boosts spent.
-				if (lost) {
-					// Ring reactions that answer whatever happened this turn still run: a Blink
-					// drain or a hold's ongoing damage is a blow, and Delayed Hit must answer it
-					// now, not after some later, unrelated card (the 10b #157 symptom). Only
-					// effects that opt in: Bad Batch, say, would be spent on a card never played.
-					let card = startedCard;
-					for (const effect of [...(ring?.encounterEffects ?? [])]) {
-						if (!effect.onLostTurn) continue;
-						card = (await effect({ activeContestants, card, phase: GLOBAL_PHASE, player, ring, proposedTarget })) || card;
-					}
-					return card.play(player, proposedTarget, ring, activeContestants, false);
-				}
+				if (lost) return this.playLostTurn(startedCard, player, proposedTarget, ring, activeContestants);
 				await startedCard.announcePlay(player, ring);
 				const card = await this.applyEffects(player, proposedTarget, ring, activeContestants, startedCard);
 				return card.play(player, proposedTarget, ring, activeContestants, false);

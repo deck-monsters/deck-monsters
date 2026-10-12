@@ -53,7 +53,7 @@ export class PickPocketCard extends BaseCard {
 			shouldApplyEffects === 'card'
 				? { card: stolen, lost: false }
 				: await (stolen ?? this).startTurn(player, proposedTarget, ring, activeContestants);
-		if (lost) return started.play(player, proposedTarget, ring, activeContestants, false);
+		if (lost) return this.playLostTurn(started, player, proposedTarget, ring, activeContestants);
 		// A clone, so the deck card itself never keeps the "announced" mark.
 		await this.clone().announcePlay(player, ring);
 

@@ -49,7 +49,10 @@ export function announceModifier(
 		const level = monster.level as number;
 		if (level !== prevLevel) {
 			mechanic = 'fight-level';
-			text += `. ${monster.givenName} ${level < prevLevel ? 'drops' : 'rises'} to level ${level} for this fight.`;
+			// Beginner, not "level 0", as everywhere else; and only an encounter change is for
+			// this fight (a mega boss's relic is a permanent modifier).
+			const to = level > 0 ? `level ${level}` : 'Beginner';
+			text += `. ${monster.givenName} ${level < prevLevel ? 'drops' : 'rises'} to ${to}${permanent ? '' : ' for this fight'}.`;
 		}
 	}
 
