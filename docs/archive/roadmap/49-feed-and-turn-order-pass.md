@@ -1,14 +1,14 @@
 ---
-type: Roadmap
+type: Archive
 title: Feed wording and turn order pass
 description: Owner screenshots of 2026-10-12 — unexplained ac and level changes, a fixed turn order for encounter effects, Workshop status and level labels.
-status: draft
+status: deprecated
 audience: internal
 tags: [roadmap, combat, feed, workshop, ux]
 ---
 # 49 — Feed wording and turn order
 
-**Status:** Built on `claude/feed-and-workshop-ux-pass`, not yet merged. The live check is written: [turn-order-check-49b](../reference/turn-order-check-49b.md) ([49b](49b-cursor-check.md)). Started 2026-10-12 from
+**Status:** Shipped in #432 (merged 2026-10-12). Archived. The live check is [turn-order-check-49b](../../reference/turn-order-check-49b.md) ([49b](49b-cursor-check.md)). Started 2026-10-12 from
 four owner screenshots (a phone, Millefleur): the Ring during two boss fights, and the
 Workshop.
 
@@ -28,7 +28,7 @@ Workshop.
 | 10 | "↓ Latest" is opaque (feed text showed through it); the Ring footer says "Previous fight" while a fight is on | Done | `fa5e7e4` |
 | 11 | Review fixes: a held monster's Heal keeps the burn; lost turns share `playLostTurn`; level line says Beginner | Done | `fa5e7e4` |
 | 12 | Tipsy: from the third drink in one round, roll 1d20 + str vs 10 or take -1 dex and int for two cards (owner idea) | Done | `5172d26` |
-| 13 | Kid mode recorded on [backlog 12](12-new-content-backlog.md#kid-mode) | Done | `5172d26` |
+| 13 | Kid mode recorded on [backlog 12](../../roadmap/12-new-content-backlog.md#kid-mode) | Done | `5172d26` |
 | 14 | Blink breaks the moment the angel falls: "⏳ <angel> has fallen, and the time-shift breaks. <victim> is back in the fight." (owner decision from the live check) | Done | `5397647` |
 | 15 | Footer keeps "Previous fight" after a fight ends until that fight's summary arrives, polling meanwhile (bug 250, live check B2) | Done | `5397647` |
 
@@ -54,8 +54,7 @@ of 200 fights. No measurable change from the turn order.
 
 - The turn banner still says "plays the next card in her deck" on a turn that turns out to be
   lost; the next line says why. Not changed.
-- Live check, written 2026-10-12: [turn-order-check-49b](../reference/turn-order-check-49b.md). Workshop labels and the level-0 stat block passed. B2 failed: on the win line the footer said "Last fight" while still naming the fight before; fixed as bug 250 (task 15). Fire Breath, Blink, Take Wing, and three drinks were not reached; the unit tests pin their order, and a later phone session can still look.
-- Events after a monster has fallen. Delayed Hit stays as it is. Blink is now revoked the moment the angel falls, with its own line (task 14). Every other lasting effect is open on [roadmap 11](11-balance-and-mechanics.md), with the check's [table](../reference/turn-order-check-49b.md#notes-for-claude-events-after-a-monster-has-fallen).
+- Live check, written 2026-10-12: [turn-order-check-49b](../../reference/turn-order-check-49b.md). Workshop labels and the level-0 stat block passed. B2 failed: on the win line the footer said "Last fight" while still naming the fight before; fixed as bug 250 (task 15). Fire Breath, Blink, Take Wing, and three drinks were not reached; the unit tests pin their order, and a later phone session can still look.
+- Events after a monster has fallen. Delayed Hit stays as it is. Blink is now revoked the moment the angel falls, with its own line (task 14). Every other lasting effect is open on [roadmap 11](../../roadmap/11-balance-and-mechanics.md), with the check's [table](../../reference/turn-order-check-49b.md#notes-for-claude-events-after-a-monster-has-fallen).
 
-When merged, fold this into the archive per the roadmap lifecycle; the turn order already
-lives in [cards and encounter effects](../architecture/cards-and-encounter-effects.md).
+Its decisions live in [cards and encounter effects](../../architecture/cards-and-encounter-effects.md).

@@ -9,7 +9,7 @@ tags: [feed, workshop, combat, verification]
 
 # Live check of feed wording and turn order
 
-Checked on 2026-10-12 against the local app, on branch `cursor/turn-order-check-49b`, from `claude/feed-and-workshop-ux-pass`. The checklist is [49b](../roadmap/49b-cursor-check.md).
+Checked on 2026-10-12 against the local app, on branch `cursor/turn-order-check-49b`, from `claude/feed-and-workshop-ux-pass`. The checklist is [49b](../archive/roadmap/49b-cursor-check.md).
 
 The room was Test Room A. Phone shots are 390×844. Desktop shots are 1440×900. Phosphor and Millefleur were both checked for sections A and B. The API was restarted on a fresh `@deck-monsters/engine` build before the console and fight checks, so the running server matched the branch. `mechanicsExplained:*` was cleared before the fights; no such keys were stored. The beastmaster's name is redacted to `Trainer` in the Ring shots.
 

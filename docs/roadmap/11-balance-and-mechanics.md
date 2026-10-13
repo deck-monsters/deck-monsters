@@ -125,6 +125,15 @@ Judge each item below against it.
   does not close the stat-reform proposal above.
 - [ ] **Initiative — owner: Ring.** Evaluate replacing entry-order play with a per-encounter
   initiative roll and a SPEED modifier, including tie behavior and narration.
+- [ ] **Horn Gore's to-hit by matchup — owner: Cards.** Owner question (2026-10-13, fight
+  #114: a level 3 Minotaur gored at `-3` against a Basilisk). `getAttackModifier` adds the
+  card's starting hold strength (`freedomThresholdModifier`, -4, +2 per landed horn) to the
+  type matchup, so a "strong against" target (Minotaur, Gladiator) rolls at -2 and a "weak
+  against" one (Basilisk, Jinn, Weeping Angel) at -6, while a neutral target (Dragon, Unicorn)
+  rolls at 0. The card text prints the -2 and -6, so this is shipped behavior, not a slip, but
+  "strong against" rolling worse than neutral is backwards. One reading: matchup +2 / -2 / 0
+  plus only the gained strength (+2 per landed horn). Needs a decision and a `sim:monster
+  Minotaur` before and after.
 - [ ] **Lasting effects after a monster has fallen — owner: Cards.** The roadmap 49 live check
   listed every effect that keeps going, or goes quiet, once its owner or its target has fallen:
   [the table](../reference/turn-order-check-49b.md#notes-for-claude-events-after-a-monster-has-fallen).
