@@ -18,8 +18,8 @@ tags: [roadmap, bugs, cards, balance]
 | 2 | Roadmap 10 J, first half: dispose stops the fight loop, cancels prompts, refuses saves (10b #251) | Done | `fb9228d` |
 | 3 | Three matchup tiers (weak < neutral < strong) for the whole hold family; Weeping Angels strong for Horn Gore; card text lists neutral (10b #253) | Done | `c12e8a4` |
 | 4 | Roadmap 10 K: time long sim runs, find the slow seeds. Timing added; slow seeds not yet hunted | In progress | |
-| 6 | Effects whose caster falls: grips, spells and gazes end at once with "<caster> has fallen, and …"; burns, poison, curses outlive the caster (10b #254) | Done | this commit |
-| 5 | Roadmap 10 F: the fight log draws events as the Ring feed does, no type labels or truncation (10b #252) | Done | this commit |
+| 6 | Effects whose caster falls: grips, spells and gazes end at once with "<caster> has fallen, and …"; burns, poison, curses outlive the caster (10b #254) | Done | `9a639f1` |
+| 5 | Roadmap 10 F: the fight log draws events as the Ring feed does, no type labels or truncation (10b #252) | Done | `9a639f1` |
 
 ## Balance check (task 3)
 
