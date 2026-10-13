@@ -104,8 +104,11 @@ No damage. Does not stack.`;
 	awe(target: any, dragon: any, dc: number): void {
 		const { holdFatigue, fleeOnLoki } = this.constructor as typeof HelmOfAweCard;
 		let turnsAwed = 0;
+		// Set once the awe is armed; ending the awe any way unhooks the caster-falls listeners.
+		let stopWatchingDragon = (): void => {};
 		const remove = () => {
 			target.encounterEffects = target.encounterEffects.filter((effect: any) => effect !== awed);
+			stopWatchingDragon();
 		};
 		const cower = (card: any, player: any) => {
 			this.emit('narration', {
@@ -187,7 +190,7 @@ No damage. Does not stack.`;
 		target.encounterEffects = [...target.encounterEffects, awed];
 		groundFlier(target, (event, payload) => this.emit(event, payload));
 		// The dragon falls: its gaze is gone, and the awe with it (helpers/caster-falls.ts).
-		releaseWhenCasterFalls({
+		({ stop: stopWatchingDragon } = releaseWhenCasterFalls({
 			caster: dragon,
 			holder: target,
 			effect: awed,
@@ -195,7 +198,7 @@ No damage. Does not stack.`;
 			narrate: narration => this.emit('narration', { narration }),
 			line: `${target.givenName} no longer cowers.`,
 			icon: this.icon,
-		});
+		}));
 	}
 
 	async effect(player: any, target: any, ring?: any, activeContestants?: any): Promise<boolean> {

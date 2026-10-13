@@ -2,6 +2,7 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 
 import { CoilCard } from '../coil.js';
+import { ATTACK_PHASE } from '../../constants/phases.js';
 import { MesmerizeCard } from '../mesmerize.js';
 import { HelmOfAweCard } from '../helm-of-awe.js';
 import Basilisk from '../../monsters/basilisk.js';
@@ -73,6 +74,25 @@ describe('./cards/helpers/caster-falls.ts', () => {
 
 		expect(HelmOfAweCard.isAwed(bull)).to.equal(false);
 		expect(narrations).to.include('🐲 Skarn has fallen, and Jefferson no longer cowers.');
+	});
+
+	it('unhooks from the caster as soon as the captive breaks free (PR #433 review)', async () => {
+		const snake = new Basilisk({ name: 'George', gender: 'male' });
+		const bull = new Minotaur({ name: 'Jefferson', gender: 'male' });
+		setUp(snake, bull);
+		const coil = listen(new CoilCard());
+		sinon.stub(coil, 'immobilizeCheck').returns(true);
+		const listeners = () => (snake as any).semaphore.listenerCount('die');
+		const before = listeners();
+
+		coil.immobilize(snake, bull, ring, ring.contestants);
+		expect(listeners()).to.equal(before + 1);
+		sinon.stub(coil, 'checkSuccess').returns({ success: true, strokeOfLuck: false, curseOfLoki: false, tie: false } as any);
+		const hold = bull.encounterEffects.find((e: any) => e.effectType === 'ImmobilizeEffect');
+		await hold({ card: { play: () => Promise.resolve(true) }, phase: ATTACK_PHASE, player: bull, ring });
+
+		expect(bull.encounterEffects.includes(hold)).to.equal(false);
+		expect(listeners()).to.equal(before);
 	});
 
 	it('leaves the captive alone when someone else falls, and unhooks at the fight end', async () => {

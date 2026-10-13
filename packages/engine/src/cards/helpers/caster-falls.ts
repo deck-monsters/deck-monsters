@@ -10,9 +10,10 @@
  * Delayed Hit is built to strike after its owner falls ("with his dying breath").
  *
  * `release` removes the effect and tidies its state; it runs only if the effect is still on the
- * holder. The listener unhooks on the caster's fall, on `stop()` (the effect ending some other
- * way), or when the caster's fight ends (a draw or a cancellation emits no death), so a
- * persistent monster never collects stale listeners.
+ * holder. The listener unhooks on the caster's fall, on `stop()`, or when the caster's fight
+ * ends (a draw or a cancellation emits no death). Callers must call `stop()` on every other
+ * path that ends the effect (a captive breaking free, a save, a flee): a hold-heavy monster
+ * otherwise collects a listener per catch until the fight ends (PR #433 review).
  */
 export function releaseWhenCasterFalls({
 	caster,

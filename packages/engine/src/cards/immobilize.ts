@@ -319,6 +319,8 @@ ${ongoingDamageText}`;
 						target.encounterEffects = target.encounterEffects.filter(
 							(effect: any) => effect.effectType !== 'ImmobilizeEffect'
 						);
+						// Ended normally: unhook the caster-falls listeners (PR #433 review).
+						(ImmobilizeEffect as any).stopCasterWatch?.();
 						if (strokeOfLuck && target !== player) {
 							await player.hit(2, target, this);
 						}
@@ -337,6 +339,8 @@ ${ongoingDamageText}`;
 					target.encounterEffects = target.encounterEffects.filter(
 						(effect: any) => effect.effectType !== 'ImmobilizeEffect'
 					);
+					// Ended normally: unhook the caster-falls listeners (PR #433 review).
+					(ImmobilizeEffect as any).stopCasterWatch?.();
 					// Fallback for a holder that fell with no death event (no assailant): the same
 					// line the fall itself gives (helpers/caster-falls.ts). "Pushes the limp dead
 					// body off" read wrong for a mind hold such as Mesmerize.
@@ -431,7 +435,7 @@ ${ongoingDamageText}`;
 			target.encounterModifiers.immobilizedTurns = 0;
 			// The holder falls: the grip goes slack (or the spell breaks) at once.
 			if (player !== target) {
-				releaseWhenCasterFalls({
+				(immobilizeEffect as any).stopCasterWatch = releaseWhenCasterFalls({
 					caster: player,
 					holder: target,
 					effect: immobilizeEffect,
@@ -442,7 +446,7 @@ ${ongoingDamageText}`;
 					narrate: narration => this.emit('narration', { narration }),
 					line: `${target.givenName} is no longer ${this.actions.IMMOBILIZED}.`,
 					icon: this.icon,
-				});
+				}).stop;
 			}
 			groundFlier(target, (event, payload) => this.emit(event, payload));
 
