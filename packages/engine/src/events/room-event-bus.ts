@@ -196,6 +196,16 @@ export class RoomEventBus {
 		return null;
 	}
 
+	/**
+	 * Cancel every open prompt in the room. A reset or a cross-process drop disposes the game;
+	 * without this a command waiting on a question kept waiting until its 120 s timeout
+	 * (roadmap 10 J). Each waiter gets `PROMPT_CANCELLED`, which game code sees as
+	 * `PromptCancelledError`, so the flow unwinds instead of hanging.
+	 */
+	cancelAllPrompts(): void {
+		for (const requestId of [...this.pendingPrompts.keys()]) this.cancelPrompt(requestId);
+	}
+
 	cancelAllUserPrompts(userId: string): void {
 		for (const [requestId, pending] of this.pendingPrompts) {
 			if (pending.userId === userId) {

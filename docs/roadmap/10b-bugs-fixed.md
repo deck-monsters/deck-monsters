@@ -5660,3 +5660,19 @@ fight ends, so even a refetch at the end would usually get the old row.
 saying "Previous fight", and polls every 2 s until a different summary arrives (giving up
 after a minute, since a cancelled fight writes none). Pinned by
 `apps/web/src/__tests__/ringPane-last-fight-footer.test.tsx`.
+
+### 251. A reset left the old game's fight and prompts running — FIXED
+
+Roadmap 10 J, first half. A reset (and a cross-process drop) detached the room's subscribers
+and called `game.dispose()`, which cleared the ring's fight and boss timers but not the fight
+loop itself: each turn schedules the next with its own `setTimeout` or microtask, so a fight
+in progress kept playing on the disposed game, would have run `fightConcludes` (XP, coins,
+card drops), and its state changes could schedule a save over the room that replaced it. A
+command waiting on a question waited for the full 120 s prompt timeout.
+
+**Fixed:** `Ring.dispose()` sets a flag the fight loop checks before every action; the loop
+stops there and never resolves. `Game.dispose()` cancels every open prompt
+(`RoomEventBus.cancelAllPrompts`, which game code sees as `PromptCancelledError`) and marks the
+game disposed, so `scheduleSave` refuses. Pinned by `ring/dispose-mid-fight.test.ts`. The
+second half of J (the Discord connector re-subscribing to a replaced room) stays open on
+roadmap 10; no connector is deployed.

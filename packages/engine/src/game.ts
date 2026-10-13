@@ -101,6 +101,7 @@ export class Game extends BaseClass {
 	/** Injected by the API server for DB-backed leaderboards / catch-up. */
 	analytics?: GameAnalyticsCallbacks;
 	private _eventBus: RoomEventBus;
+	private _disposed = false;
 	private _saveDebounce?: ReturnType<typeof setTimeout>;
 	/** The latest store write, so `flushState` can wait for it. */
 	private _lastSave?: Promise<boolean>;
@@ -207,6 +208,9 @@ export class Game extends BaseClass {
 	}
 
 	private scheduleSave(): void {
+		// A disposed game (reset, drop, unload) must never write: its state is stale, and a
+		// fight it was still finishing would otherwise save over the room that replaced it.
+		if (this._disposed) return;
 		if (this._saveDebounce !== undefined) {
 			clearTimeout(this._saveDebounce);
 			this._saveDebounce = undefined;
@@ -532,7 +536,10 @@ export class Game extends BaseClass {
 	}
 
 	dispose(): void {
+		this._disposed = true;
 		this.megaBoss?.dispose();
+		// Unwind any command waiting on a question rather than leaving it to time out.
+		this._eventBus.cancelAllPrompts();
 		// Cancel pending saves
 		if (this._saveDebounce !== undefined) {
 			clearTimeout(this._saveDebounce);

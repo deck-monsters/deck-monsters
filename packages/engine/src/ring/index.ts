@@ -862,7 +862,11 @@ export class Ring extends BaseClass {
 		(character as { disposeTimers?: () => void })?.disposeTimers?.();
 	}
 
+	/** Set by `dispose()`; the fight loop checks it before every action (roadmap 10 J). */
+	private disposed = false;
+
 	dispose(): void {
+		this.disposed = true;
 		clearTimeout(this.fightTimer);
 		clearTimeout(this.bossTimer);
 		for (const timer of this.bossDespawnTimers.values()) {
@@ -1096,6 +1100,11 @@ export class Ring extends BaseClass {
 			Contestant | undefined
 		> =>
 			new Promise((resolve, reject) => {
+				// A reset or a drop disposed this ring mid-fight. The turn chain runs on its own
+				// timers, which dispose() cannot clear, so stop here and never resolve: resolving
+				// would run fightConcludes (XP, coins, cards) on a game that has been replaced.
+				// The pending promise is dropped with the disposed game.
+				if (this.disposed) return;
 				endAlliance();
 				let activeContestants = getActiveContestants(currentContestants);
 				let nextCardIndex = cardIndex;

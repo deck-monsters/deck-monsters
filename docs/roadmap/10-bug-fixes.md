@@ -52,8 +52,8 @@ A reset (and now a cross-process drop) detaches the room's subscribers and calls
   old game's bus, so announcements stay silent until the connector restarts. (No connector is
   deployed today.)
 
-- [ ] Stop a running fight's timers and cancel open prompts with `PromptCancelledError` when a
-  room is torn down by a reset or a drop.
+- [x] Stop a running fight's timers and cancel open prompts with `PromptCancelledError` when a
+  room is torn down by a reset or a drop. Done in roadmap 50 (10b #251).
 - [ ] Give the connector a way to hear that a room was replaced (a `RoomManager` listener) and
   re-subscribe.
 
