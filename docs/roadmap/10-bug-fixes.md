@@ -35,14 +35,6 @@ restarts. No connector is deployed today.
 - [ ] Give the connector a way to hear that a room was replaced (a `RoomManager` listener) and
   re-subscribe.
 
-### K. Some simulation runs take far longer than expected
-
-**Owner:** Harness. Seen while fixing item I (2026-09-30): a 60-batch run of three bosses
-printed nothing for 10 minutes, and a 4-batch run took over 120 s. Not investigated; it may be
-a slow seed or a fight that never ends.
-
-- [ ] Time each fight in a long run and look at the slowest seeds' logs.
-
 ### L. Millefleur stylesheet condensation
 
 **Owner:** Web themes. Found in roadmap 46's branch review (2026-10-06). The size

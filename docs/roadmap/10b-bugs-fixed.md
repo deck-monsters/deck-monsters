@@ -5726,3 +5726,15 @@ has fallen, and …". Effects already out in the world (a burn, poison, a landed
 ringing ears, Delayed Hit) outlive their caster on purpose. The rule and the table are in
 cards-and-encounter-effects ("When the monster who played an effect falls"). Pinned by
 `cards/helpers/caster-falls.test.ts`.
+
+### 255. "Some simulation runs take far longer than expected" — NOT A BUG, now guarded
+
+Roadmap 10 K (2026-09-30): a 60-batch run of three bosses printed nothing for 10 minutes, and
+a 4-batch run took over 120 s.
+
+**Finding (roadmap 50, 2026-10-13):** `simulate()` now times every fight (`slowestFightMs` on
+`SimResult`) and warns about any fight over 2 s, naming the fight, the seed and its rounds. A
+`sim:bosses` run at `SIM_BOSSES_FIGHTS=60` played 13 rows × 8 batches × 60 = 6,240 fights in
+401 s, about 64 ms a fight, with no warning. There is no slow seed: the quiet stretch is the
+script printing a row only when all eight of its batches finish, and multi-boss rows are the
+slowest. The guard stays, so a fight stuck on a real timer is named the moment it happens.
