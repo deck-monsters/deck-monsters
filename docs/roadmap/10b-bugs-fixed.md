@@ -5676,3 +5676,17 @@ stops there and never resolves. `Game.dispose()` cancels every open prompt
 game disposed, so `scheduleSave` refuses. Pinned by `ring/dispose-mid-fight.test.ts`. The
 second half of J (the Discord connector re-subscribing to a replaced room) stays open on
 roadmap 10; no connector is deployed.
+
+### 252. The fight log printed event types and cut card boxes in half — FIXED
+
+Roadmap 10 F. The Fights tab's "Events during this fight" list rendered each event as
+`<type> — <text>`, with the raw type ("announce", "card.played") and the text truncated at
+200 characters. A card box's text opens with a newline and a code fence, so it arrived as two
+blank lines and part of a frame, under a number.
+
+**Root cause:** the list predates the structured feed lines (`payload.lines`) and still drew
+the plain `text`, a debugging view that shipped to players.
+
+**Fixed:** each event is drawn by the Ring feed's `FeedEventBody`, with the same card boxes,
+spacing and sprites, no numbers and no type labels; `ring.state` frames and empty events are
+skipped. The box is taller (up to 60% of the screen). Pinned by `surface-panels.test.tsx`.

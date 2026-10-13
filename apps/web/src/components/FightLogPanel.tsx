@@ -1,7 +1,11 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { surfaceDescription } from './surface-descriptions.js';
 import { trpc } from '../lib/trpc.js';
-import { formatEventText, truncateEventText } from '../utils/format-event-text.js';
+import { FeedEventBody } from './FeedLines.js';
+import { feedStyleFor } from '../utils/feed-lines.js';
+import { shouldRenderRingEvent } from '../utils/ring-feed-events.js';
+import { useTheme } from '../hooks/useTheme.js';
+import type { GameEvent } from '@deck-monsters/server/types';
 import { useMonsterMentions } from '../hooks/useMonsterMentions.js';
 import { rememberMonsters } from '../hooks/useKnownMonsters.js';
 import { useFightOnRing } from '../hooks/useFightOnRing.js';
@@ -14,6 +18,12 @@ function relTime(d: Date): string {
   if (s < 120) return `${s}s ago`;
   const m = Math.floor(s / 60);
   return m < 120 ? `${m} min ago` : `${Math.floor(m / 60)}h ago`;
+}
+
+/** What the play-by-play shows: what the Ring feed shows, minus the roster's state frames (the
+ * Ring consumes those separately) and anything with no words to show. */
+function isPlayByPlayEvent(event: Pick<GameEvent, 'type' | 'text'>): boolean {
+  return shouldRenderRingEvent(event) && event.type !== 'ring.state' && !!event.text?.trim();
 }
 
 export default function FightLogPanel({ roomId, headerActions }: FightLogPanelProps) {
@@ -41,6 +51,8 @@ export default function FightLogPanel({ roomId, headerActions }: FightLogPanelPr
     rememberMonsters(roomId, sightings);
   }, [roomId, fights.data]);
   const mentions = useMonsterMentions(roomId);
+  const { theme } = useTheme();
+  const feedStyle = feedStyleFor(theme);
   const detail = trpc.game.fight.useQuery(
     { roomId, fightNumber: expanded ?? 0 },
     { enabled: expanded !== null }
@@ -128,8 +140,15 @@ export default function FightLogPanel({ roomId, headerActions }: FightLogPanelPr
             instead of relying on either engine's behaviour. See 10b-bugs-fixed.md #125.
           */}
           <div className="fight-log-events">
-          <ol>{detail.data.events.map((event) => <li key={event.id}>
-            <span className="surface-muted">{event.type}</span> — {formatEventText(truncateEventText(event.text, 200), mentions)}
+          {/*
+            Drawn as the Ring feed draws it (roadmap 10 F). Each row used to lead with the raw
+            event type ("announce —", "card.played —") and cut the text at 200 characters,
+            so a card box arrived as two blank lines and half a frame. The structured lines
+            give the same boxes, spacing and sprites as the Ring; state frames are skipped
+            as the Ring skips them.
+          */}
+          <ol className="fight-log-feed">{detail.data.events.filter(isPlayByPlayEvent).map((event) => <li key={event.id} className="fight-log-event">
+            <FeedEventBody text={event.text ?? ''} payload={event.payload} style={feedStyle} mentions={mentions} />
           </li>)}</ol>
           </div>
         </div>}

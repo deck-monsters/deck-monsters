@@ -29,10 +29,13 @@ fight" list for fight #42. The card box opens with two blank lines inside its pa
 the `=` border (the leading newline of `formatCard` plus the fence), and the list's numbers
 (`2.`, `3.`) are clipped at the left edge while the card panel is indented past them.
 
-- [ ] Reproduce in the fight log (`FightLogPanel.tsx`, `.fight-log-events`) at phone width.
-- [ ] Decide one rule for a card box's leading blank lines and for the space between events,
-  and apply it to the Ring feed and the fight log alike.
-- [ ] Keep the list markers inside the box, or drop them if the log does not need numbers.
+- [x] Reproduce in the fight log (`FightLogPanel.tsx`, `.fight-log-events`) at phone width.
+  Found: each row led with the raw event type and cut its text at 200 characters (10b #252).
+- [x] Decide one rule for a card box's leading blank lines and for the space between events,
+  and apply it to the Ring feed and the fight log alike. The fight log now draws events with
+  the Ring feed's own renderer (roadmap 50); a live look at phone width is still owed.
+- [x] Keep the list markers inside the box, or drop them if the log does not need numbers.
+  Dropped: the log reads like the feed.
 
 Read [events, prompts, and replay](../architecture/events-prompts-and-replay.md) and
 [web workspace](../architecture/web-workspace.md).

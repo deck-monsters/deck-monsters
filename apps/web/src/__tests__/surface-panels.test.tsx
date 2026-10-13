@@ -154,5 +154,15 @@ describe('layout-agnostic surface panels', () => {
 			openRow();
 			expect(screen.getByText(/Rex hits\./)).toBeTruthy();
 		});
+
+		it('reads like the Ring feed: no event-type labels, state frames skipped (roadmap 10 F)', () => {
+			fightDetail.result = { data: { events: [
+				{ id: 'e1', type: 'announce', text: 'Rex hits.' },
+				{ id: 'e2', type: 'ring.state', text: '', payload: { contestants: [] } },
+			] } };
+			openRow();
+			expect(screen.queryByText(/announce/)).toBeNull();
+			expect(document.querySelectorAll('.fight-log-event')).toHaveLength(1);
+		});
 	});
 });

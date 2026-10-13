@@ -15,10 +15,10 @@ tags: [roadmap, bugs, cards, balance]
 | # | Task | Status | Commit |
 |---|------|--------|--------|
 | 1 | Archive roadmap 49; record the Horn Gore question on roadmap 11 | Done | `f363fbe` |
-| 2 | Roadmap 10 J, first half: dispose stops the fight loop, cancels prompts, refuses saves (10b #251) | Done | this commit |
+| 2 | Roadmap 10 J, first half: dispose stops the fight loop, cancels prompts, refuses saves (10b #251) | Done | `fb9228d` |
 | 3 | Horn Gore: smooth the matchup to-hit so "strong against" is not worse than neutral, and a modest buff, with `sim:monster Minotaur` before and after | Next | |
 | 4 | Roadmap 10 K: time long sim runs, find the slow seeds | Open | |
-| 5 | Roadmap 10 F: card box blank lines and list markers in the fight log | Open | |
+| 5 | Roadmap 10 F: the fight log draws events as the Ring feed does, no type labels or truncation (10b #252) | Done | this commit |
 
 ## Decisions
 
