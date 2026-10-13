@@ -5690,3 +5690,22 @@ the plain `text`, a debugging view that shipped to players.
 **Fixed:** each event is drawn by the Ring feed's `FeedEventBody`, with the same card boxes,
 spacing and sprites, no numbers and no type labels; `ring.state` frames and empty events are
 skipped. The box is taller (up to 60% of the screen). Pinned by `surface-panels.test.tsx`.
+
+### 253. Hold cards' "strong against" could roll worse than neutral — FIXED
+
+Owner question from fight #114 (2026-10-13): a level 3 Minotaur's Horn Gore rolled `-3`
+against a Basilisk.
+
+**Root cause:** the hold family's strong and weak lists were written when every monster type
+was on one of them; the Unicorn and the Dragon later fell through to an unlisted, unprinted
+neutral 0. Horn Gore added its -4 starting hold strength (`freedomThresholdModifier`) to the
+typed matchups only, so strong rolled at -2, weak at -6, neutral at 0, and neutral never got
+the +2 per landed horn. The Forked Metal Rod, which subclasses it with a +3 start, gave strong
++5, weak +1, neutral 0. The card text printed the -2 and -6, so nobody had called it a bug.
+
+**Fixed:** Horn Gore and the rod use `holdBaseline + matchup + strength gained`; every hold
+card's text lists strong, neutral and weak best to worst; `hold-matchups.test.ts` checks weak <
+neutral < strong for every card in the family and `monster-types.test.ts` keeps the neutral
+list in step with the monster registry. Weeping Angels moved to Horn Gore's strong list (a
+statue cracks under a horn). This is a small buff to Horn Gore and to the rod against neutral
+types; `sim:monster` before and after is in roadmap 50.

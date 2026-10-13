@@ -18,6 +18,12 @@ export class ForkedMetalRodCard extends HornGore {
 	static strongAgainstCreatureTypes = [GLADIATOR, BASILISK];
 	static uselessAgainstCreatureTypes = [WEEPING_ANGEL];
 	static weakAgainstCreatureTypes = [JINN, MINOTAUR];
+	/*
+	 * Horn Gore's formula with the rod's own +3: +5 strong, +3 neutral, +1 weak, plus 2 per
+	 * landed prong. Neutral used to get 0, below weak's +1 (owner, 2026-10-13: three tiers).
+	 */
+	static startingHoldStrength = STARTING_FREEDOM_THRESHOLD_MODIFIER;
+	static holdBaseline = STARTING_FREEDOM_THRESHOLD_MODIFIER;
 	static probability = VERY_RARE.probability;
 	static description = `A dangerously sharp forked metal rod fashioned for ${[GLADIATOR, BASILISK].join(' and ')}-hunting.`;
 	static level = 2;

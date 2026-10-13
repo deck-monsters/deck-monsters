@@ -5,6 +5,7 @@ import { ATTACK_PHASE, DEFENSE_PHASE } from '../constants/phases.js';
 import { capitalize } from '../helpers/capitalize.js';
 import { FREE } from '../helpers/costs.js';
 import { GLADIATOR, MINOTAUR, UNICORN, WEEPING_ANGEL } from '../constants/creature-types.js';
+import { MONSTER_TYPES } from '../constants/monster-types.js';
 import { IMPOSSIBLE } from '../helpers/probabilities.js';
 import { signedNumber } from '../helpers/signed-number.js';
 import { agree } from '../helpers/pronouns.js';
@@ -97,6 +98,21 @@ export class ImmobilizeCard extends HitCard {
 			});
 			strModifiers += `${signedNumber(sb)} ${sb < 0 ? 'dis' : ''}advantage vs ${strongAgainst}\n`;
 			strongBonus = sb;
+		}
+
+		// Neutral is a tier of its own, between weak and strong, and the card says so, listed best to worst (owner,
+		// 2026-10-13): the lists predate the Unicorn and Dragon, which fell through silently.
+		const neutralTypes = MONSTER_TYPES.filter(
+			type =>
+				!this.strongAgainstCreatureTypes.includes(type) &&
+				!this.weakAgainstCreatureTypes.includes(type) &&
+				!this.uselessAgainstCreatureTypes.includes(type),
+		);
+		if (neutralTypes.length) {
+			const nb = this.getAttackModifier({ creatureType: neutralTypes[0] });
+			strModifiers += nb
+				? `${signedNumber(nb)} ${nb < 0 ? 'dis' : ''}advantage vs ${neutralTypes.join(', ')}\n`
+				: ` no modifier vs ${neutralTypes.join(', ')}\n`;
 		}
 
 		if (

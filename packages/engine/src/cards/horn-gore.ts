@@ -22,8 +22,14 @@ export class HornGore extends ImmobilizeCard {
 	static cardType = 'Horn Gore';
 	static actions = { IMMOBILIZE: 'pin', IMMOBILIZES: 'pins', IMMOBILIZED: 'pinned' };
 	static permittedClassesAndTypes = [MINOTAUR];
-	static strongAgainstCreatureTypes = [MINOTAUR, GLADIATOR];
-	static weakAgainstCreatureTypes = [BASILISK, JINN, WEEPING_ANGEL];
+	// A Weeping Angel is a statue: exactly the thing a horn should crack (owner, 2026-10-13).
+	// A snake or a spirit is hard to gore.
+	static strongAgainstCreatureTypes = [MINOTAUR, GLADIATOR, WEEPING_ANGEL];
+	static weakAgainstCreatureTypes = [BASILISK, JINN];
+	/** Hold strength at the start of a play; each landed horn adds 2 (`increaseImmobilizeStrength`). */
+	static startingHoldStrength = STARTING_FREEDOM_THRESHOLD_MODIFIER;
+	/** Added against every type before the matchup: 0 here, +3 for the Forked Metal Rod. */
+	static holdBaseline = 0;
 	static uselessAgainstCreatureTypes: string[] = [];
 	static probability = EPIC.probability;
 	static description =
@@ -76,13 +82,26 @@ export class HornGore extends ImmobilizeCard {
 		return `${this.mechanics}\n\n${super.stats}`;
 	}
 
+	/**
+	 * The matchup (+2 against Minotaurs and Gladiators, -2 against Basilisks, Jinn and Weeping
+	 * Angels, 0 otherwise) plus the strength gained this play: +2 for each horn that has
+	 * landed. It sets both the next horn's to-hit and how hard the hold is to break.
+	 *
+	 * It used to add the raw `freedomThresholdModifier`, which starts at -4, to the typed
+	 * matchups only: "strong against" rolled at -2 and "weak against" at -6, while a neutral
+	 * target got 0 and never the per-horn gain. A level 3 Minotaur gored a Basilisk at -3
+	 * (owner, fight #114, 2026-10-13); the owner chose three clear tiers, weak < neutral <
+	 * strong, for every card in the hold family, and a small buff.
+	 */
 	override getAttackModifier(target: any): number {
-		if (this.weakAgainstCreatureTypes.includes(target.creatureType)) {
-			return -2 + this.freedomThresholdModifier;
-		} else if (this.strongAgainstCreatureTypes.includes(target.creatureType)) {
-			return 2 + this.freedomThresholdModifier;
-		}
-		return 0;
+		const { startingHoldStrength, holdBaseline } = this.constructor as typeof HornGore;
+		const gained = this.freedomThresholdModifier - startingHoldStrength;
+		const matchup = this.weakAgainstCreatureTypes.includes(target?.creatureType)
+			? -2
+			: this.strongAgainstCreatureTypes.includes(target?.creatureType)
+				? 2
+				: 0;
+		return holdBaseline + matchup + gained;
 	}
 
 	resetImmobilizeStrength(): void {

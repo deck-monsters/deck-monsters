@@ -172,6 +172,18 @@ Entrance, Enthrall, Mesmerize, Forked Stick, and Forked Metal Rod, goes through
 the held creature: at the start of that creature's turn it rolls to break free, and while
 held its card does nothing.
 
+**Three matchup tiers** (owner, 2026-10-13). Each hold card has an explicit strong list and
+weak list; every other trainable type (`MONSTER_TYPES` in `constants/monster-types.ts`) is
+neutral, and immune types are a separate "ineffective" list. The same number sets the
+card's to-hit and how hard its hold is to break, and it must order weak < neutral < strong
+for every card: `cards/hold-matchups.test.ts` checks the whole family, and the card text
+lists the tiers best to worst, neutral included. Most cards use `±freedomThresholdModifier`
+and 0. Horn Gore and the Forked Metal Rod use `holdBaseline + matchup (±2, 0) + strength
+gained` (+2 per landed horn or prong): 0 / ±2 for Horn Gore, +3 / +5 / +1 for the rod. Horn
+Gore used to add its -4 starting strength to the typed matchups only, so "strong against"
+rolled at -2 and "weak against" at -6, below a neutral 0; the rod gave weak +1 and neutral 0
+(10b #253). Weeping Angels are statues, so Horn Gore is strong against them.
+
 **Pinned monsters are easier to hit** (owner, roadmap 36). Every attack roll against a pinned
 monster has advantage, as against a restrained creature in D&D. Pinned means held by any
 `ImmobilizeEffect` or awed by Helm of Awe (`isPinned` in `cards/helpers/pinned.ts`, and

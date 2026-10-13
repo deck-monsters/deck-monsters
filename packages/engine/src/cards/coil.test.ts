@@ -18,6 +18,7 @@ describe('./cards/coil.ts', () => {
 If already immobilized, hit instead.
 ${hit.stats}
  +2 advantage vs Gladiator, Minotaur
+ no modifier vs Dragon, Unicorn, Weeping Angel
  -2 disadvantage vs Basilisk, Jinn
 
 Opponent breaks free by rolling 1d20 vs immobilizer's dex +/- advantage/disadvantage - (turns immobilized * 3)

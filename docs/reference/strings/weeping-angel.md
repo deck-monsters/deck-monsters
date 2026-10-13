@@ -116,6 +116,7 @@ Immobilize all opponents.
 If already immobilized, hit instead.
 Hit: 1d20 vs int / Damage: 1d6
  +2 advantage vs Basilisk, Gladiator
+ no modifier vs Dragon, Unicorn
  -2 disadvantage vs Minotaur, Weeping Angel
 ineffective against Jinn
 
@@ -149,6 +150,7 @@ Immobilize and hit all opponents.
 If already immobilized, hit instead.
 Hit: 1d20 vs int / Damage: 1d6
  +2 advantage vs Basilisk, Gladiator
+ no modifier vs Dragon, Unicorn
  -2 disadvantage vs Minotaur, Weeping Angel
 ineffective against Jinn
 
@@ -181,6 +183,7 @@ Immobilize everyone. You are caught too only on a natural 1 (1d20).
 If already immobilized, hit instead.
 Hit: 1d20 vs int / Damage: 1d6
  +2 advantage vs Basilisk, Gladiator
+ no modifier vs Dragon, Unicorn
  -2 disadvantage vs Minotaur, Weeping Angel
 ineffective against Jinn
 

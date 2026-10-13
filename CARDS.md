@@ -323,6 +323,8 @@ Cards that hit one opponent. Most roll a d20 against the target's AC, then roll 
  +5 advantage vs Gladiator, 
  Basilisk
  
+ +3 advantage vs Dragon, Unicorn
+ 
  +1 advantage vs Jinn, Minotaur
  ineffective against Weeping 
  Angel
@@ -369,6 +371,8 @@ Cards that hit one opponent. Most roll a d20 against the target's AC, then roll 
  
  +2 advantage vs Basilisk, 
  Gladiator
+ 
+ no modifier vs Dragon, Unicorn
  
  -2 disadvantage vs Jinn, 
  Minotaur
@@ -464,15 +468,17 @@ Cards that hit one opponent. Most roll a d20 against the target's AC, then roll 
  instead.
  Hit: 1d20 vs ac / Damage: 1d4
  
- -2 disadvantage vs Minotaur, 
- Gladiator
+ +2 advantage vs Minotaur, 
+ Gladiator, Weeping Angel
  
- -6 disadvantage vs Basilisk, 
- Jinn, Weeping Angel
+ no modifier vs Dragon, Unicorn
+ 
+ -2 disadvantage vs Basilisk, 
+ Jinn
 
  Opponent breaks free by rolling 
- 1d20 vs immobilizer's str - 
- disadvantage - (turns 
+ 1d20 vs immobilizer's str +/- 
+ advantage/disadvantage - (turns 
  immobilized * 3)
  Hits immobilizer back on stroke 
  of luck.
@@ -934,6 +940,8 @@ Cards that strike every opponent at once. Each hit is smaller, but in a crowded 
  
  +2 advantage vs Basilisk, 
  Gladiator
+ 
+ no modifier vs Dragon, Unicorn
  
  -2 disadvantage vs Minotaur, 
  Weeping Angel
@@ -1651,6 +1659,9 @@ Cards that hold, curse, poison, confuse or rob an opponent instead of simply hit
  +2 advantage vs Gladiator, 
  Minotaur
  
+ no modifier vs Dragon, Unicorn, 
+ Weeping Angel
+ 
  -2 disadvantage vs Basilisk, 
  Jinn
 
@@ -1727,6 +1738,9 @@ Cards that hold, curse, poison, confuse or rob an opponent instead of simply hit
  
  +3 advantage vs Gladiator, 
  Minotaur
+ 
+ no modifier vs Dragon, Unicorn, 
+ Weeping Angel
  
  -3 disadvantage vs Basilisk, 
  Jinn
@@ -1823,6 +1837,8 @@ Cards that hold, curse, poison, confuse or rob an opponent instead of simply hit
  +2 advantage vs Basilisk, 
  Gladiator
  
+ no modifier vs Dragon, Unicorn
+ 
  -2 disadvantage vs Minotaur, 
  Weeping Angel
  ineffective against Jinn
@@ -1903,6 +1919,8 @@ Cards that hold, curse, poison, confuse or rob an opponent instead of simply hit
  
  +2 advantage vs Basilisk, 
  Gladiator
+ 
+ no modifier vs Dragon, Unicorn
  
  -2 disadvantage vs Minotaur, 
  Weeping Angel

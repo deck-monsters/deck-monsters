@@ -20,6 +20,7 @@ Chance to immobilize: 1d20 vs str.
 If already immobilized, hit instead.
 ${hit.stats}
  +5 advantage vs Gladiator, Basilisk
+ +3 advantage vs Dragon, Unicorn
  +1 advantage vs Jinn, Minotaur
 ineffective against Weeping Angel
 

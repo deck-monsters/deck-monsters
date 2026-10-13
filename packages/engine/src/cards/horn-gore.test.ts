@@ -97,8 +97,8 @@ describe('./cards/horn-gore.ts Horn Gore', () => {
 		expect((hornGore as any).freedomSavingThrowTargetAttr).to.equal('str');
 		expect((hornGore as any).targetProp).to.equal('ac');
 		expect((hornGore as any).freedomThresholdModifier).to.equal(-4);
-		expect((hornGore as any).strongAgainstCreatureTypes).to.deep.equal([MINOTAUR, GLADIATOR]);
-		expect((hornGore as any).weakAgainstCreatureTypes).to.deep.equal([BASILISK, JINN, WEEPING_ANGEL]);
+		expect((hornGore as any).strongAgainstCreatureTypes).to.deep.equal([MINOTAUR, GLADIATOR, WEEPING_ANGEL]);
+		expect((hornGore as any).weakAgainstCreatureTypes).to.deep.equal([BASILISK, JINN]);
 		expect((hornGore as any).permittedClassesAndTypes).to.deep.equal([MINOTAUR]);
 		expect((hornGore as any).doDamageOnImmobilize).to.be.false;
 		expect((hornGore as any).damageDice).to.equal('1d4');
@@ -111,19 +111,23 @@ describe('./cards/horn-gore.ts Horn Gore', () => {
 	});
 
 	it('calculates attackModifier correctly', () => {
-		expect((hornGore as any).getAttackModifier(angel)).to.equal(-6);
-		expect((hornGore as any).getAttackModifier(basilisk)).to.equal(-6);
-		expect((hornGore as any).getAttackModifier(gladiator)).to.equal(-2);
-		expect((hornGore as any).getAttackModifier(jinn)).to.equal(-6);
-		expect((hornGore as any).getAttackModifier(minotaur)).to.equal(-2);
+		// +2 strong, -2 weak, 0 neutral before any horn lands (fight #114, 2026-10-13: "strong
+		// against" used to roll at -2 and "weak against" at -6, worse than neutral).
+		// A statue cracks under a horn: Weeping Angels moved to strong (owner, 2026-10-13).
+		expect((hornGore as any).getAttackModifier(angel)).to.equal(2);
+		expect((hornGore as any).getAttackModifier(basilisk)).to.equal(-2);
+		expect((hornGore as any).getAttackModifier(gladiator)).to.equal(2);
+		expect((hornGore as any).getAttackModifier(jinn)).to.equal(-2);
+		expect((hornGore as any).getAttackModifier(minotaur)).to.equal(2);
+		expect((hornGore as any).getAttackModifier({ creatureType: 'Dragon' })).to.equal(0);
 	});
 
 	it('calculates freedom threshold correctly', () => {
-		expect((hornGore as any).getFreedomThreshold(player, angel)).to.equal(1);
-		expect((hornGore as any).getFreedomThreshold(player, basilisk)).to.equal(1);
-		expect((hornGore as any).getFreedomThreshold(player, gladiator)).to.equal((player as any).str - 2);
-		expect((hornGore as any).getFreedomThreshold(player, jinn)).to.equal(1);
-		expect((hornGore as any).getFreedomThreshold(player, minotaur)).to.equal((player as any).str - 2);
+		expect((hornGore as any).getFreedomThreshold(player, angel)).to.equal((player as any).str + 2);
+		expect((hornGore as any).getFreedomThreshold(player, basilisk)).to.equal((player as any).str - 2);
+		expect((hornGore as any).getFreedomThreshold(player, gladiator)).to.equal((player as any).str + 2);
+		expect((hornGore as any).getFreedomThreshold(player, jinn)).to.equal((player as any).str - 2);
+		expect((hornGore as any).getFreedomThreshold(player, minotaur)).to.equal((player as any).str + 2);
 
 		angel.encounterModifiers.immobilizedTurns = 1;
 		basilisk.encounterModifiers.immobilizedTurns = 1;
@@ -131,11 +135,11 @@ describe('./cards/horn-gore.ts Horn Gore', () => {
 		gladiator.encounterModifiers.immobilizedTurns = 1;
 		jinn.encounterModifiers.immobilizedTurns = 1;
 
-		expect((hornGore as any).getFreedomThreshold(player, angel)).to.equal(1);
-		expect((hornGore as any).getFreedomThreshold(player, basilisk)).to.equal(1);
-		expect((hornGore as any).getFreedomThreshold(player, gladiator)).to.equal((player as any).str - 2 - 3);
-		expect((hornGore as any).getFreedomThreshold(player, jinn)).to.equal(1);
-		expect((hornGore as any).getFreedomThreshold(player, minotaur)).to.equal((player as any).str - 2 - 3);
+		expect((hornGore as any).getFreedomThreshold(player, angel)).to.equal((player as any).str + 2 - 3);
+		expect((hornGore as any).getFreedomThreshold(player, basilisk)).to.equal((player as any).str - 2 - 3);
+		expect((hornGore as any).getFreedomThreshold(player, gladiator)).to.equal((player as any).str + 2 - 3);
+		expect((hornGore as any).getFreedomThreshold(player, jinn)).to.equal((player as any).str - 2 - 3);
+		expect((hornGore as any).getFreedomThreshold(player, minotaur)).to.equal((player as any).str + 2 - 3);
 	});
 
 	it('hits twice and immobilizes', () => {

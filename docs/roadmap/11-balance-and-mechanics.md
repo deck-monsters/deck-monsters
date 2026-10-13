@@ -125,7 +125,8 @@ Judge each item below against it.
   does not close the stat-reform proposal above.
 - [ ] **Initiative — owner: Ring.** Evaluate replacing entry-order play with a per-encounter
   initiative roll and a SPEED modifier, including tie behavior and narration.
-- [ ] **Horn Gore's to-hit by matchup — owner: Cards.** Owner question (2026-10-13, fight
+- [x] **Horn Gore's to-hit by matchup — owner: Cards.** Done in roadmap 50: three tiers for the
+  whole hold family (10b #253). Owner question (2026-10-13, fight
   #114: a level 3 Minotaur gored at `-3` against a Basilisk). `getAttackModifier` adds the
   card's starting hold strength (`freedomThresholdModifier`, -4, +2 per landed horn) to the
   type matchup, so a "strong against" target (Minotaur, Gladiator) rolls at -2 and a "weak
