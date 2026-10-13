@@ -1,14 +1,14 @@
 ---
-type: Roadmap
+type: Archive
 title: Bugs from roadmap 10 and Horn Gore
 description: A small pass after roadmap 49 — archive 49, roadmap 10's reset cleanup (J), slow sims (K) and feed spacing (F), and Horn Gore's matchup to-hit.
-status: draft
+status: deprecated
 audience: internal
 tags: [roadmap, bugs, cards, balance]
 ---
 # 50 — Bugs from roadmap 10, and Horn Gore
 
-**Status:** Built on `claude/roadmap-49-archive-and-fixes`, ready for a PR. Started 2026-10-13.
+**Status:** Shipped in #433 (merged 2026-10-13). Archived. Started 2026-10-13.
 
 ## Tasks
 
