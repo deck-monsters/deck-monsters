@@ -5660,3 +5660,82 @@ fight ends, so even a refetch at the end would usually get the old row.
 saying "Previous fight", and polls every 2 s until a different summary arrives (giving up
 after a minute, since a cancelled fight writes none). Pinned by
 `apps/web/src/__tests__/ringPane-last-fight-footer.test.tsx`.
+
+### 251. A reset left the old game's fight and prompts running — FIXED
+
+Roadmap 10 J, first half. A reset (and a cross-process drop) detached the room's subscribers
+and called `game.dispose()`, which cleared the ring's fight and boss timers but not the fight
+loop itself: each turn schedules the next with its own `setTimeout` or microtask, so a fight
+in progress kept playing on the disposed game, would have run `fightConcludes` (XP, coins,
+card drops), and its state changes could schedule a save over the room that replaced it. A
+command waiting on a question waited for the full 120 s prompt timeout.
+
+**Fixed:** `Ring.dispose()` sets a flag the fight loop checks before every action and as each
+card resolves, so even a reset during the killing card stops the fight unresolved. `Game.dispose()`
+closes the bus's prompts (`RoomEventBus.closePrompts`: open ones resolve `PROMPT_CANCELLED`,
+which game code sees as `PromptCancelledError`, and later ones are answered the same way at
+once) and marks the game disposed, so `persistState` refuses on every path. Pinned by `ring/dispose-mid-fight.test.ts`. The
+second half of J (the Discord connector re-subscribing to a replaced room) stays open on
+roadmap 10; no connector is deployed.
+
+### 252. The fight log printed event types and cut card boxes in half — FIXED
+
+Roadmap 10 F. The Fights tab's "Events during this fight" list rendered each event as
+`<type> — <text>`, with the raw type ("announce", "card.played") and the text truncated at
+200 characters. A card box's text opens with a newline and a code fence, so it arrived as two
+blank lines and part of a frame, under a number.
+
+**Root cause:** the list predates the structured feed lines (`payload.lines`) and still drew
+the plain `text`, a debugging view that shipped to players.
+
+**Fixed:** each event is drawn by the Ring feed's `FeedEventBody`, with the same card boxes,
+spacing and sprites, no numbers and no type labels; `ring.state` frames and empty events are
+skipped. The box is taller (up to 60% of the screen). Pinned by `surface-panels.test.tsx`.
+
+### 253. Hold cards' "strong against" could roll worse than neutral — FIXED
+
+Owner question from fight #114 (2026-10-13): a level 3 Minotaur's Horn Gore rolled `-3`
+against a Basilisk.
+
+**Root cause:** the hold family's strong and weak lists were written when every monster type
+was on one of them; the Unicorn and the Dragon later fell through to an unlisted, unprinted
+neutral 0. Horn Gore added its -4 starting hold strength (`freedomThresholdModifier`) to the
+typed matchups only, so strong rolled at -2, weak at -6, neutral at 0, and neutral never got
+the +2 per landed horn. The Forked Metal Rod, which subclasses it with a +3 start, gave strong
++5, weak +1, neutral 0. The card text printed the -2 and -6, so nobody had called it a bug.
+
+**Fixed:** Horn Gore and the rod use `holdBaseline + matchup + strength gained`; every hold
+card's text lists strong, neutral and weak best to worst; `hold-matchups.test.ts` checks weak <
+neutral < strong for every card in the family and `monster-types.test.ts` keeps the neutral
+list in step with the monster registry. Weeping Angels moved to Horn Gore's strong list (a
+statue cracks under a horn). This is a small buff to Horn Gore and to the rod against neutral
+types; `sim:monster` before and after is in roadmap 50.
+
+### 254. A fallen caster's hold, spell or gaze lingered until the victim's turn — FIXED
+
+Live check 49b's after-death table (2026-10-12). When a holder fell, the hold stayed until the
+captive's next turn, which then said the captive "pushes the limp dead body … off" even for a
+mind hold such as Mesmerize. A dead dragon's awe dropped with no line at all. Blink had just
+been changed to break at once.
+
+**Root cause:** each effect only checked its caster when its victim's turn came round; nothing
+listened for the caster's fall.
+
+**Fixed:** `releaseWhenCasterFalls` (`cards/helpers/caster-falls.ts`) ends Blink, every hold on
+another monster, and Helm of Awe the moment the caster falls, with one line, "<icon> <caster>
+has fallen, and …". Effects already out in the world (a burn, poison, a landed curse, sand,
+ringing ears, Delayed Hit) outlive their caster on purpose. The rule and the table are in
+cards-and-encounter-effects ("When the monster who played an effect falls"). Pinned by
+`cards/helpers/caster-falls.test.ts`.
+
+### 255. "Some simulation runs take far longer than expected" — NOT A BUG, now guarded
+
+Roadmap 10 K (2026-09-30): a 60-batch run of three bosses printed nothing for 10 minutes, and
+a 4-batch run took over 120 s.
+
+**Finding (roadmap 50, 2026-10-13):** `simulate()` now times every fight (`slowestFightMs` on
+`SimResult`) and warns about any fight over 2 s, naming the fight, the seed and its rounds. A
+`sim:bosses` run at `SIM_BOSSES_FIGHTS=60` played 13 rows × 8 batches × 60 = 6,240 fights in
+401 s, about 64 ms a fight, with no warning. There is no slow seed: the quiet stretch is the
+script printing a row only when all eight of its batches finish, and multi-boss rows are the
+slowest. The guard stays, so a fight stuck on a real timer is named the moment it happens.

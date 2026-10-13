@@ -59,10 +59,7 @@ Rules that follow from the table:
   but leaves a one-shot card-stage effect that says "beats out the flames" under the Heal's
   box. Before 2026-10-12 a winded dragon's Random Play read: Random Play box, "breath
   back", the drawn card — and a time-shifted thief still showed its box.
-- **Blink breaks when the angel falls.** The time-shift listens for the angel's `die` and
-  lifts at once, with "⏳ <angel> has fallen, and the time-shift breaks. <victim> is back in
-  the fight." (owner, 2026-10-12). Delayed Hit, by contrast, is meant to fire after its owner
-  falls. Other lasting effects after a death are open on roadmap 11.
+- **When a caster falls**, see "When the monster who played an effect falls" below.
 - **A hold or awe grounds a flier** (`groundFlier` in `take-wing.ts`): it cannot stay aloft
   while held. A time-shift does not, because no time passes for it.
 
@@ -171,6 +168,18 @@ Entrance, Enthrall, Mesmerize, Forked Stick, and Forked Metal Rod, goes through
 `ImmobilizeCard.immobilize()` (`cards/immobilize.ts`). A hold is an `ImmobilizeEffect` on
 the held creature: at the start of that creature's turn it rolls to break free, and while
 held its card does nothing.
+
+**Three matchup tiers** (owner, 2026-10-13). Each hold card has an explicit strong list and
+weak list; every other trainable type (`MONSTER_TYPES` in `constants/monster-types.ts`) is
+neutral, and immune types are a separate "ineffective" list. The same number sets the
+card's to-hit and how hard its hold is to break, and it must order weak < neutral < strong
+for every card: `cards/hold-matchups.test.ts` checks the whole family, and the card text
+lists the tiers best to worst, neutral included. Most cards use `±freedomThresholdModifier`
+and 0. Horn Gore and the Forked Metal Rod use `holdBaseline + matchup (±2, 0) + strength
+gained` (+2 per landed horn or prong): 0 / ±2 for Horn Gore, +3 / +5 / +1 for the rod. Horn
+Gore used to add its -4 starting strength to the typed matchups only, so "strong against"
+rolled at -2 and "weak against" at -6, below a neutral 0; the rod gave weak +1 and neutral 0
+(10b #253). Weeping Angels are statues, so Horn Gore is strong against them.
 
 **Pinned monsters are easier to hit** (owner, roadmap 36). Every attack roll against a pinned
 monster has advantage, as against a restrained creature in D&D. Pinned means held by any
@@ -304,6 +313,42 @@ asked for very old dragons to be "immensely powerful but occasionally able to be
 `Dragon.startEncounter` arms all of it as one encounter effect, so fight cleanup ends it,
 and the "once per fight" record lives in that effect's closure. `look at` says the dragon is
 ancient. A new card that should respect ancient dragons reads `isAncientDragon`.
+
+## When the monster who played an effect falls
+
+Owner, 2026-10-13: decide by the game's world and by what would really happen, and make the
+outcome obvious in the feed. A fallen monster leaves the turn order, so its own effects never
+fire again. The question is the effects it left on someone else.
+
+**It ends at once, with one line**, when the effect lives on its caster: a grip, a spell, a
+gaze. `releaseWhenCasterFalls` (`cards/helpers/caster-falls.ts`) listens for the caster's
+`die`, removes the effect, and says `<icon> <caster> has fallen, and <what changed>`. The
+victim's own turn checks again as a fallback (a death with no assailant emits no `die`) and
+says the same line.
+
+| Effect | Line when its caster falls |
+|---|---|
+| Blink's time-shift | `⏳ Dardariel has fallen, and the time-shift breaks. Queen is back in the fight.` |
+| Every hold on another monster (Immobilize, Coil, Constrict, Horn Gore, Forked Stick, Forked Metal Rod, Mesmerize, Entrance, Enthrall) | `➰ George has fallen, and Jefferson is no longer coiled.` (the card's own icon and word) |
+| Helm of Awe | `🐲 Skarn has fallen, and Jefferson no longer cowers.` |
+
+**It outlives its caster on purpose** when it is already out in the world:
+
+- **Delayed Hit** is built to strike after its owner falls: "with his dying breath, he avenges…".
+- **Fire Breath's burn** keeps burning; fire does not care who lit it. The breather is still
+  credited with the damage.
+- **Bad Batch**: the poisoned bottle is still on the shelf, and the brewer is credited.
+- **A curse that has landed** (Soften, Molasses, Blink's xp drain) is part of the hit that
+  carried it, so it stays for the fight. A Blink drain whose hit is the killing blow still
+  steals the xp and heals the angel: it is one motion.
+- **Sandstorm's confusion** and **Dissonant Voice's rattle**: the sand is already in the air and
+  the ears already ring. Each is spent on the victim's next card, as before.
+
+**Effects a monster holds on itself** (Gloaming Rest, winded, exposed, Tipsy, Take Wing, Mood
+Scales' fury, the Cloak, Enchanted Faceswap, Horn of Proof's ward, Sticketh) end with it, since
+it takes no more turns; there is nothing to announce.
+
+What happens to effects when their **target** falls is a separate question, open on roadmap 11.
 
 ## Who can hold a card, and what a card is
 

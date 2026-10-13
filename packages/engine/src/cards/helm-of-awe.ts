@@ -1,5 +1,6 @@
 import { BaseCard, type CardOptions } from './base.js';
 import { groundFlier } from './take-wing.js';
+import { releaseWhenCasterFalls, casterFallenLine } from './helpers/caster-falls.js';
 import { chance } from '../helpers/chance.js';
 import { subEventDelay } from '../helpers/delay-times.js';
 import { TARGET_ALL_CONTESTANTS, getTarget } from '../helpers/targeting-strategies.js';
@@ -103,8 +104,11 @@ No damage. Does not stack.`;
 	awe(target: any, dragon: any, dc: number): void {
 		const { holdFatigue, fleeOnLoki } = this.constructor as typeof HelmOfAweCard;
 		let turnsAwed = 0;
+		// Set once the awe is armed; ending the awe any way unhooks the caster-falls listeners.
+		let stopWatchingDragon = (): void => {};
 		const remove = () => {
 			target.encounterEffects = target.encounterEffects.filter((effect: any) => effect !== awed);
+			stopWatchingDragon();
 		};
 		const cower = (card: any, player: any) => {
 			this.emit('narration', {
@@ -123,7 +127,9 @@ No damage. Does not stack.`;
 			}
 			if (phase !== ATTACK_PHASE || player !== target) return card;
 			if (dragon.dead) {
+				// Fallback for a dragon that fell with no death event; the fall itself says this.
 				remove();
+				this.emit('narration', { narration: casterFallenLine(dragon, `${target.givenName} no longer cowers.`, this.icon) });
 				return card;
 			}
 
@@ -183,6 +189,16 @@ No damage. Does not stack.`;
 		(awed as any).turnStart = 'control';
 		target.encounterEffects = [...target.encounterEffects, awed];
 		groundFlier(target, (event, payload) => this.emit(event, payload));
+		// The dragon falls: its gaze is gone, and the awe with it (helpers/caster-falls.ts).
+		({ stop: stopWatchingDragon } = releaseWhenCasterFalls({
+			caster: dragon,
+			holder: target,
+			effect: awed,
+			release: remove,
+			narrate: narration => this.emit('narration', { narration }),
+			line: `${target.givenName} no longer cowers.`,
+			icon: this.icon,
+		}));
 	}
 
 	async effect(player: any, target: any, ring?: any, activeContestants?: any): Promise<boolean> {

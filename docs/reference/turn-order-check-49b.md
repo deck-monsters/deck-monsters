@@ -9,7 +9,7 @@ tags: [feed, workshop, combat, verification]
 
 # Live check of feed wording and turn order
 
-Checked on 2026-10-12 against the local app, on branch `cursor/turn-order-check-49b`, from `claude/feed-and-workshop-ux-pass`. The checklist is [49b](../roadmap/49b-cursor-check.md).
+Checked on 2026-10-12 against the local app, on branch `cursor/turn-order-check-49b`, from `claude/feed-and-workshop-ux-pass`. The checklist is [49b](../archive/roadmap/49b-cursor-check.md).
 
 The room was Test Room A. Phone shots are 390×844. Desktop shots are 1440×900. Phosphor and Millefleur were both checked for sections A and B. The API was restarted on a fresh `@deck-monsters/engine` build before the console and fight checks, so the running server matched the branch. `mechanicsExplained:*` was cleared before the fights; no such keys were stored. The beastmaster's name is redacted to `Trainer` in the Ring shots.
 
@@ -147,6 +147,12 @@ What the code does now (`cards/blink.ts`):
 - If the drain's hit kills the victim, the same resolution still steals XP and heals the angel. That is an event after death, with no line of its own.
 
 ### The other lasting effects
+
+> **Superseded for casters, 2026-10-13.** This table records the code as it was during the
+> check. Every effect whose *caster* falls now follows the rule in
+> [cards and encounter effects](../architecture/cards-and-encounter-effects.md#when-the-monster-who-played-an-effect-falls)
+> (holds and Helm of Awe end at once with a line; the "limp dead body" line is gone). Effects
+> whose *target* falls are still open on [roadmap 11](../roadmap/11-balance-and-mechanics.md).
 
 Each row is current behavior. None of these has a decided after-death line except the hold, which already has one for a dead holder.
 

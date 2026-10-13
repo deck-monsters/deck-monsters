@@ -88,10 +88,11 @@ If either horn hits, chance to immobilize: 1d20 vs str.
 
 If already immobilized, hit instead.
 Hit: 1d20 vs ac / Damage: 1d4
- -2 disadvantage vs Minotaur, Gladiator
- -6 disadvantage vs Basilisk, Jinn, Weeping Angel
+ +2 advantage vs Minotaur, Gladiator, Weeping Angel
+ no modifier vs Dragon, Unicorn
+ -2 disadvantage vs Basilisk, Jinn
 
-Opponent breaks free by rolling 1d20 vs immobilizer's str - disadvantage - (turns immobilized * 3)
+Opponent breaks free by rolling 1d20 vs immobilizer's str +/- advantage/disadvantage - (turns immobilized * 3)
 Hits immobilizer back on stroke of luck.
 Turns immobilized resets on curse of loki.
 ```

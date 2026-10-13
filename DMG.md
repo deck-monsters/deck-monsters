@@ -615,6 +615,9 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  +2 advantage vs Gladiator, 
  Minotaur
  
+ no modifier vs Dragon, Unicorn, 
+ Weeping Angel
+ 
  -2 disadvantage vs Basilisk, 
  Jinn
 
@@ -691,6 +694,9 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  
  +3 advantage vs Gladiator, 
  Minotaur
+ 
+ no modifier vs Dragon, Unicorn, 
+ Weeping Angel
  
  -3 disadvantage vs Basilisk, 
  Jinn
@@ -840,6 +846,8 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  +2 advantage vs Basilisk, 
  Gladiator
  
+ no modifier vs Dragon, Unicorn
+ 
  -2 disadvantage vs Minotaur, 
  Weeping Angel
  ineffective against Jinn
@@ -882,6 +890,8 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  
  +2 advantage vs Basilisk, 
  Gladiator
+ 
+ no modifier vs Dragon, Unicorn
  
  -2 disadvantage vs Minotaur, 
  Weeping Angel
@@ -1105,6 +1115,8 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  +5 advantage vs Gladiator, 
  Basilisk
  
+ +3 advantage vs Dragon, Unicorn
+ 
  +1 advantage vs Jinn, Minotaur
  ineffective against Weeping 
  Angel
@@ -1151,6 +1163,8 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  
  +2 advantage vs Basilisk, 
  Gladiator
+ 
+ no modifier vs Dragon, Unicorn
  
  -2 disadvantage vs Jinn, 
  Minotaur
@@ -1340,15 +1354,17 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  instead.
  Hit: 1d20 vs ac / Damage: 1d4
  
- -2 disadvantage vs Minotaur, 
- Gladiator
+ +2 advantage vs Minotaur, 
+ Gladiator, Weeping Angel
  
- -6 disadvantage vs Basilisk, 
- Jinn, Weeping Angel
+ no modifier vs Dragon, Unicorn
+ 
+ -2 disadvantage vs Basilisk, 
+ Jinn
 
  Opponent breaks free by rolling 
- 1d20 vs immobilizer's str - 
- disadvantage - (turns 
+ 1d20 vs immobilizer's str +/- 
+ advantage/disadvantage - (turns 
  immobilized * 3)
  Hits immobilizer back on stroke 
  of luck.
@@ -1533,6 +1549,8 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  
  +2 advantage vs Basilisk, 
  Gladiator
+ 
+ no modifier vs Dragon, Unicorn
  
  -2 disadvantage vs Minotaur, 
  Weeping Angel

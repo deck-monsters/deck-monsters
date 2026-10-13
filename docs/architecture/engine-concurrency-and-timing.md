@@ -397,7 +397,13 @@ walk is ever reworked; `cards/boss-feed.test.ts` pins it with a real fight.
   `rooms.state_generation`: the reset bumps it in the tombstone update, and the other process's
   next save is refused and it drops its copy (see rooms-and-identity, bug G). It also refuses to unload a room
   whose `ring.inEncounter` is true — a fight in progress keeps the room in
-  the active cache until the next sweep.
+  the active cache until the next sweep. A reset or a drop does not wait, so `Game.dispose()`
+  ends what the old game still had running: the ring's fight loop stops at its next action,
+  or as the card in play resolves, and never resolves the fight (resolving would award XP and
+  cards on a game that has been replaced); every open prompt resolves with `PROMPT_CANCELLED`
+  and any later one is answered the same way at once; and `persistState` refuses, so no path
+  (a debounced save, the mega boss's due time, a summon refund) can write over the room that
+  replaced it. Every legitimate flush runs before dispose (10b #251).
 - **Ring events**: `Ring.rollRingEvent()` fires from inside `startFightTimer()` when the
   countdown arms, and **only when `this.ringEvent == null`**. That guard is load-bearing —
   the Gauntlet event calls `spawnBoss()`, which re-enters `startFightTimer()` via

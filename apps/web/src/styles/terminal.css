@@ -1207,7 +1207,10 @@
 }
 /* Scrolling lives on the wrapper so the list's markers are never inside a scrollport —
    WebKit clips outside-positioned markers there, Blink does not. See 10b-bugs-fixed.md #125. */
-.fight-log-events { max-height: 15rem; overflow: auto; }
+.fight-log-events { max-height: min(60vh, 32rem); overflow: auto; }
+/* The play-by-play reads like the Ring feed: no numbers or type labels, a gap between events. */
+.fight-log-detail ol.fight-log-feed { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.6rem; }
+.fight-log-event { white-space: pre-wrap; overflow-wrap: anywhere; }
 .fight-log-detail ol { padding-left: 1.5rem; }
 .leaderboard-table-region { max-width: 100%; overflow-x: auto; outline-offset: -2px; }
 .leaderboard-table-region:focus-visible { outline: 2px solid var(--color-accent); }

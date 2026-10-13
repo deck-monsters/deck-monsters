@@ -101,6 +101,7 @@ export class Game extends BaseClass {
 	/** Injected by the API server for DB-backed leaderboards / catch-up. */
 	analytics?: GameAnalyticsCallbacks;
 	private _eventBus: RoomEventBus;
+	private _disposed = false;
 	private _saveDebounce?: ReturnType<typeof setTimeout>;
 	/** The latest store write, so `flushState` can wait for it. */
 	private _lastSave?: Promise<boolean>;
@@ -207,6 +208,10 @@ export class Game extends BaseClass {
 	}
 
 	private scheduleSave(): void {
+		// A disposed game (reset, drop, unload) must never write: its state is stale, and a
+		// fight it was still finishing would otherwise save over the room that replaced it.
+		// persistState refuses too; returning here also leaves no timer behind.
+		if (this._disposed) return;
 		if (this._saveDebounce !== undefined) {
 			clearTimeout(this._saveDebounce);
 			this._saveDebounce = undefined;
@@ -226,6 +231,10 @@ export class Game extends BaseClass {
 	 * boss finalizer, `saveState`, `flushState`) relies on this.
 	 */
 	private persistState(): void {
+		// A disposed game never writes, whichever path asks: a debounced save, the mega boss's
+		// due time, or a summon refund. Every legitimate flush runs before dispose
+		// (RoomManager._detachRoomEntry), so this only stops a stale copy (10b #251, review).
+		if (this._disposed) return;
 		try {
 			this.persistStateUnsafe();
 		} catch (err) {
@@ -532,7 +541,11 @@ export class Game extends BaseClass {
 	}
 
 	dispose(): void {
+		this._disposed = true;
 		this.megaBoss?.dispose();
+		// Unwind any command waiting on a question rather than leaving it to time out, and
+		// answer any question asked after this at once.
+		this._eventBus.closePrompts();
 		// Cancel pending saves
 		if (this._saveDebounce !== undefined) {
 			clearTimeout(this._saveDebounce);

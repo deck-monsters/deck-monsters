@@ -862,7 +862,11 @@ export class Ring extends BaseClass {
 		(character as { disposeTimers?: () => void })?.disposeTimers?.();
 	}
 
+	/** Set by `dispose()`; the fight loop checks it before every action (roadmap 10 J). */
+	private disposed = false;
+
 	dispose(): void {
+		this.disposed = true;
 		clearTimeout(this.fightTimer);
 		clearTimeout(this.bossTimer);
 		for (const timer of this.bossDespawnTimers.values()) {
@@ -1096,6 +1100,11 @@ export class Ring extends BaseClass {
 			Contestant | undefined
 		> =>
 			new Promise((resolve, reject) => {
+				// A reset or a drop disposed this ring mid-fight. The turn chain runs on its own
+				// timers, which dispose() cannot clear, so stop here and never resolve: resolving
+				// would run fightConcludes (XP, coins, cards) on a game that has been replaced.
+				// The pending promise is dropped with the disposed game.
+				if (this.disposed) return;
 				endAlliance();
 				let activeContestants = getActiveContestants(currentContestants);
 				let nextCardIndex = cardIndex;
@@ -1244,6 +1253,10 @@ export class Ring extends BaseClass {
 						turnBeat(this.pacingMultiplier)
 							.then(() => card.play(player, proposedTarget, ring, getAllActiveContestants()))
 							.then(() => {
+								// Disposed while this card played (a reset mid-card): stop here too,
+								// or the fight's last card would still resolve it and run
+								// fightConcludes on the replaced game (review of roadmap 50).
+								if (this.disposed) return undefined;
 								// Push the board after every resolved card so the roster's HP/AC
 								// track the narration. One publish per card matches the feed's own
 								// card-to-card pacing (veryShortDelay below), so this adds no
@@ -1269,6 +1282,7 @@ export class Ring extends BaseClass {
 								return Promise.resolve().then(() => resolve(playerContestant));
 							})
 							.catch((ex: unknown) => {
+								if (this.disposed) return undefined;
 								// Cards can mutate HP/AC before throwing. Publish the resulting board
 								// just as the success path does so a partial failure cannot freeze the
 								// live roster while narration continues with newer values.

@@ -17,6 +17,7 @@ describe('./cards/constrict.ts', () => {
 If already immobilized, hit instead.
 ${hit.stats}
  +3 advantage vs Gladiator, Minotaur
+ no modifier vs Dragon, Unicorn, Weeping Angel
  -3 disadvantage vs Basilisk, Jinn
 
 Opponent breaks free by rolling 1d20 vs immobilizer's dex +/- advantage/disadvantage - (turns immobilized * 3)

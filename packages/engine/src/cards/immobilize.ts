@@ -1,10 +1,12 @@
 import { HitCard } from './hit.js';
+import { releaseWhenCasterFalls, casterFallenLine } from './helpers/caster-falls.js';
 import { groundFlier } from './take-wing.js';
 import { chance } from '../helpers/chance.js';
 import { ATTACK_PHASE, DEFENSE_PHASE } from '../constants/phases.js';
 import { capitalize } from '../helpers/capitalize.js';
 import { FREE } from '../helpers/costs.js';
 import { GLADIATOR, MINOTAUR, UNICORN, WEEPING_ANGEL } from '../constants/creature-types.js';
+import { MONSTER_TYPES } from '../constants/monster-types.js';
 import { IMPOSSIBLE } from '../helpers/probabilities.js';
 import { signedNumber } from '../helpers/signed-number.js';
 import { agree } from '../helpers/pronouns.js';
@@ -97,6 +99,21 @@ export class ImmobilizeCard extends HitCard {
 			});
 			strModifiers += `${signedNumber(sb)} ${sb < 0 ? 'dis' : ''}advantage vs ${strongAgainst}\n`;
 			strongBonus = sb;
+		}
+
+		// Neutral is a tier of its own, between weak and strong, and the card says so, listed best to worst (owner,
+		// 2026-10-13): the lists predate the Unicorn and Dragon, which fell through silently.
+		const neutralTypes = MONSTER_TYPES.filter(
+			type =>
+				!this.strongAgainstCreatureTypes.includes(type) &&
+				!this.weakAgainstCreatureTypes.includes(type) &&
+				!this.uselessAgainstCreatureTypes.includes(type),
+		);
+		if (neutralTypes.length) {
+			const nb = this.getAttackModifier({ creatureType: neutralTypes[0] });
+			strModifiers += nb
+				? `${signedNumber(nb)} ${nb < 0 ? 'dis' : ''}advantage vs ${neutralTypes.join(', ')}\n`
+				: ` no modifier vs ${neutralTypes.join(', ')}\n`;
 		}
 
 		if (
@@ -302,6 +319,8 @@ ${ongoingDamageText}`;
 						target.encounterEffects = target.encounterEffects.filter(
 							(effect: any) => effect.effectType !== 'ImmobilizeEffect'
 						);
+						// Ended normally: unhook the caster-falls listeners (PR #433 review).
+						(ImmobilizeEffect as any).stopCasterWatch?.();
 						if (strokeOfLuck && target !== player) {
 							await player.hit(2, target, this);
 						}
@@ -320,8 +339,13 @@ ${ongoingDamageText}`;
 					target.encounterEffects = target.encounterEffects.filter(
 						(effect: any) => effect.effectType !== 'ImmobilizeEffect'
 					);
+					// Ended normally: unhook the caster-falls listeners (PR #433 review).
+					(ImmobilizeEffect as any).stopCasterWatch?.();
+					// Fallback for a holder that fell with no death event (no assailant): the same
+					// line the fall itself gives (helpers/caster-falls.ts). "Pushes the limp dead
+					// body off" read wrong for a mind hold such as Mesmerize.
 					this.emit('narration', {
-						narration: `${target.givenName} is no longer ${this.actions.IMMOBILIZED}. ${capitalize(target.pronouns.he)} ${agree(target.pronouns, 'pushes', 'push')} the limp dead body of ${player.givenName} off of ${target.pronouns.him}self and proudly stand${target.pronouns.verbSuffix ?? 's'} prepared to fight`,
+						narration: casterFallenLine(player, `${target.givenName} is no longer ${this.actions.IMMOBILIZED}.`, this.icon),
 					});
 				}
 			}
@@ -409,6 +433,21 @@ ${ongoingDamageText}`;
 			immobilizeEffect.effectType = 'ImmobilizeEffect';
 			target.encounterEffects = [...target.encounterEffects, immobilizeEffect];
 			target.encounterModifiers.immobilizedTurns = 0;
+			// The holder falls: the grip goes slack (or the spell breaks) at once.
+			if (player !== target) {
+				(immobilizeEffect as any).stopCasterWatch = releaseWhenCasterFalls({
+					caster: player,
+					holder: target,
+					effect: immobilizeEffect,
+					release: () => {
+						target.encounterEffects = target.encounterEffects.filter((effect: any) => effect !== immobilizeEffect);
+						target.encounterModifiers.immobilizedTurns = 0;
+					},
+					narrate: narration => this.emit('narration', { narration }),
+					line: `${target.givenName} is no longer ${this.actions.IMMOBILIZED}.`,
+					icon: this.icon,
+				}).stop;
+			}
 			groundFlier(target, (event, payload) => this.emit(event, payload));
 
 			if (this.doDamageOnImmobilize) {

@@ -6,6 +6,7 @@ import { EPIC } from '../helpers/probabilities.js';
 import { EXPENSIVE } from '../helpers/costs.js';
 import { PSYCHIC } from '../constants/card-classes.js';
 import { wardAgainst, controlWardNarration } from './helpers/control-ward.js';
+import { releaseWhenCasterFalls } from './helpers/caster-falls.js';
 
 const { roll } = chance;
 
@@ -202,31 +203,27 @@ export class BlinkCard extends CurseCard {
 			/*
 			 * The angel falls: the shift breaks at once, and the feed says so (owner, 2026-10-12;
 			 * live check 49b). It used to wait for the victim's next turn, which then read only
-			 * "opens his eyes … in an unfamiliar time", with nothing saying the blink had been
-			 * revoked. Permadeath for the victim was the other option and was ruled out: Destroy
-			 * is the permadeath card. The victim's-turn path above stays as the fallback for a
-			 * death with no assailant, which emits no `die`.
+			 * "opens his eyes … in an unfamiliar time". Permadeath for the victim was ruled out:
+			 * Destroy is the permadeath card. The victim's-turn path above stays as the fallback
+			 * for a death with no assailant, which emits no `die`. helpers/caster-falls.ts has the
+			 * rule for every effect a fall ends.
 			 */
-			// Unhook on whichever comes first: the angel falling, the shift ending on the
-			// victim's turn, or the fight ending some other way (a draw, a cancellation), so a
-			// persistent angel never collects stale listeners (PR #432 review).
-			const stopListening = (): void => {
-				blinkPlayer.off('die', onAngelFalls);
-				blinkPlayer.off('encounterEnd', onFightEnds);
-			};
-			const onAngelFalls = blinkPlayer.on('die', () => {
-				stopListening();
-				if (!blinkTarget.encounterEffects?.includes(blinkEffect)) return;
-				blinkTarget.encounterModifiers.timeShifted = false;
-				blinkTarget.encounterModifiers.blinkedTurns = 0;
-				blinkTarget.encounterEffects = blinkTarget.encounterEffects.filter(
-					(encounterEffect: any) => encounterEffect !== blinkEffect
-				);
-				this.emit('narration', {
-					narration: `${this.icon} ${blinkPlayer.givenName} has fallen, and the time-shift breaks. ${blinkTarget.givenName} is back in the fight.`,
-				});
+			// A confused angel that blinked itself has nobody to release when it falls.
+			const { stop: stopListening } = blinkPlayer === blinkTarget ? { stop: () => {} } : releaseWhenCasterFalls({
+				caster: blinkPlayer,
+				holder: blinkTarget,
+				effect: blinkEffect,
+				release: () => {
+					blinkTarget.encounterModifiers.timeShifted = false;
+					blinkTarget.encounterModifiers.blinkedTurns = 0;
+					blinkTarget.encounterEffects = blinkTarget.encounterEffects.filter(
+						(encounterEffect: any) => encounterEffect !== blinkEffect
+					);
+				},
+				narrate: narration => this.emit('narration', { narration }),
+				line: `the time-shift breaks. ${blinkTarget.givenName} is back in the fight.`,
+				icon: this.icon,
 			});
-			const onFightEnds = blinkPlayer.on('encounterEnd', stopListening);
 			blinkTarget.encounterModifiers.timeShifted = true;
 			blinkTarget.encounterEffects = [
 				...blinkTarget.encounterEffects,

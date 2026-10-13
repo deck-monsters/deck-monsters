@@ -1,14 +1,14 @@
 ---
-type: Roadmap
+type: Archive
 title: Feed wording and turn order live check
 description: Roadmap 49's checklist for Cursor's live browser check — Workshop status and level labels, the Ring footer and Latest button, the stat block, and the new turn order in the fight feed — with the exact text each item must show.
-status: draft
+status: deprecated
 audience: internal
 tags: [roadmap, combat, feed, workshop, web, cursor]
 ---
 # 49b — Feed wording and turn order live check (Cursor)
 
-**Status:** Checked 2026-10-12. The report is [turn-order-check-49b](../reference/turn-order-check-49b.md).
+**Status:** Checked 2026-10-12. The report is [turn-order-check-49b](../../reference/turn-order-check-49b.md).
 Claude built [roadmap 49](49-feed-and-turn-order-pass.md) on `claude/feed-and-workshop-ux-pass`.
 Claude reviews the report and writes any new player-facing text.
 
@@ -26,9 +26,9 @@ Claude reviews the report and writes any new player-facing text.
   `pnpm run build:docs`, `pnpm docs:check`. Anything needing new words, or any change to the
   order of fight lines, goes in the report only: the order is a rule, pinned by
   `packages/engine/src/cards/turn-order.test.ts`.
-- **Read first:** `CLAUDE.md`, [local testing](../operations/local-testing.md) (running the
+- **Read first:** `CLAUDE.md`, [local testing](../../operations/local-testing.md) (running the
   app, the reusable rooms, "Staging a fight quickly"), and the "Turn order" table in
-  [cards and encounter effects](../architecture/cards-and-encounter-effects.md).
+  [cards and encounter effects](../../architecture/cards-and-encounter-effects.md).
 - **Widths:** 390 × 844 (a phone) and 1440 × 900. Screenshot every item at the width where it
   matters. Check A and B in **both** themes, Phosphor and Millefleur.
 - **Rooms:** Test Room A for an existing player. A throwaway room you create for a level-0
