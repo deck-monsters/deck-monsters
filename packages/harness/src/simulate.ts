@@ -228,6 +228,13 @@ export interface SimResult {
 	 * under-sampled.
 	 */
 	cancelledFights: number;
+	/**
+	 * The slowest single `ring.fight()` in this run, in wall-clock ms. With delays skipped a
+	 * fight takes milliseconds, so a large value means a real timer that is not skipped
+	 * (roadmap 10 K: runs that printed nothing for minutes). Fights over `SLOW_FIGHT_MS` also
+	 * log a warning naming the fight, the seed and its rounds.
+	 */
+	slowestFightMs: number;
 	/** Per fight, in order, when `trackExcitement` is set. */
 	excitement?: FightExcitement[];
 }
@@ -502,6 +509,9 @@ export function sideWinRate(res: Pick<SimResult, 'winnersByFight' | 'fights'>, l
  * Reuses one `Game` for the whole batch (fast) while registering each fight's characters
  * on `game.characters` so global listeners stay room-scoped.
  */
+/** A fight slower than this (wall clock, delays skipped) is logged; see `slowestFightMs`. */
+export const SLOW_FIGHT_MS = 2_000;
+
 export async function simulate(config: SimConfig): Promise<SimResult> {
 	const { monsters, fights, seed, roomId = 'harness-sim' } = config;
 	const subscriberRunId = ++harnessSimRunSeq;
@@ -544,6 +554,7 @@ export async function simulate(config: SimConfig): Promise<SimResult> {
 	const coinSamplesByOutcome: Partial<Record<FightOutcomeLabel, number[]>> = {};
 	const xpSamples: number[] = [];
 	let cancelledFights = 0;
+	let slowestFightMs = 0;
 
 	const game: Game = createTestGame(`${roomId}-batch`, { characters: {} });
 	const ring = game.getRing();
@@ -561,6 +572,7 @@ export async function simulate(config: SimConfig): Promise<SimResult> {
 	// outcome from `ring.fightResolved`'s `participants`, the engine's own authoritative
 	// computation, instead of trying to observe flags on an object the ring has replaced.
 	let lastParticipants: NonNullable<FightResolvedPayload['participants']> = [];
+	let lastRounds: number | undefined;
 
 	const unsubFight = game.eventBus.subscribe(`sim-fight:${subscriberRunId}:${roomId}`, {
 		deliver(ev: GameEvent) {
@@ -568,6 +580,7 @@ export async function simulate(config: SimConfig): Promise<SimResult> {
 			const p = ev.payload as FightResolvedPayload;
 			const rounds = typeof p.rounds === 'number' ? p.rounds : 0;
 			roundSum += rounds;
+			lastRounds = rounds;
 			lastParticipants = p.participants ?? [];
 			if (p.outcome === 'draw') {
 				draws += 1;
@@ -733,7 +746,15 @@ export async function simulate(config: SimConfig): Promise<SimResult> {
 			const removeHitListeners = installHitDamageCapture(ring.contestants as unknown as Contestant[], damageSums);
 
 			try {
+				const fightStarted = Date.now();
 				await ring.fight();
+				const fightMs = Date.now() - fightStarted;
+				slowestFightMs = Math.max(slowestFightMs, fightMs);
+				if (fightMs > SLOW_FIGHT_MS) {
+					console.warn(
+						`simulate: fight ${f} (seed ${seed ?? 'none'}) took ${fightMs} ms over ${lastRounds ?? '?'} rounds — a timer that delays-skipped mode does not skip?`,
+					);
+				}
 
 				// `ring.fight()` swallows an unexpected internal error rather than rejecting: its
 				// own catch (ring/index.ts) publishes `ring.fightResolved` with
@@ -835,6 +856,7 @@ export async function simulate(config: SimConfig): Promise<SimResult> {
 		coinsByOutcome,
 		xpPerMonster: summarizeSamples(xpSamples),
 		cancelledFights,
+		slowestFightMs,
 		...(config.trackExcitement ? { excitement } : {}),
 	};
 }
