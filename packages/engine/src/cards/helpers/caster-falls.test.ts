@@ -88,7 +88,7 @@ describe('./cards/helpers/caster-falls.ts', () => {
 		coil.immobilize(snake, bull, ring, ring.contestants);
 		expect(listeners()).to.equal(before + 1);
 		sinon.stub(coil, 'checkSuccess').returns({ success: true, strokeOfLuck: false, curseOfLoki: false, tie: false } as any);
-		const hold = bull.encounterEffects.find((e: any) => e.effectType === 'ImmobilizeEffect');
+		const hold: any = bull.encounterEffects.find((e: any) => e.effectType === 'ImmobilizeEffect');
 		await hold({ card: { play: () => Promise.resolve(true) }, phase: ATTACK_PHASE, player: bull, ring });
 
 		expect(bull.encounterEffects.includes(hold)).to.equal(false);
