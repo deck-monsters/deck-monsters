@@ -208,7 +208,8 @@ export class BlinkCard extends CurseCard {
 			 * for a death with no assailant, which emits no `die`. helpers/caster-falls.ts has the
 			 * rule for every effect a fall ends.
 			 */
-			const { stop: stopListening } = releaseWhenCasterFalls({
+			// A confused angel that blinked itself has nobody to release when it falls.
+			const { stop: stopListening } = blinkPlayer === blinkTarget ? { stop: () => {} } : releaseWhenCasterFalls({
 				caster: blinkPlayer,
 				holder: blinkTarget,
 				effect: blinkEffect,

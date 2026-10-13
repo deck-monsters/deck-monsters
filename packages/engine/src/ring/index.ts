@@ -1253,6 +1253,10 @@ export class Ring extends BaseClass {
 						turnBeat(this.pacingMultiplier)
 							.then(() => card.play(player, proposedTarget, ring, getAllActiveContestants()))
 							.then(() => {
+								// Disposed while this card played (a reset mid-card): stop here too,
+								// or the fight's last card would still resolve it and run
+								// fightConcludes on the replaced game (review of roadmap 50).
+								if (this.disposed) return undefined;
 								// Push the board after every resolved card so the roster's HP/AC
 								// track the narration. One publish per card matches the feed's own
 								// card-to-card pacing (veryShortDelay below), so this adds no
@@ -1278,6 +1282,7 @@ export class Ring extends BaseClass {
 								return Promise.resolve().then(() => resolve(playerContestant));
 							})
 							.catch((ex: unknown) => {
+								if (this.disposed) return undefined;
 								// Cards can mutate HP/AC before throwing. Publish the resulting board
 								// just as the success path does so a partial failure cannot freeze the
 								// live roster while narration continues with newer values.

@@ -34,6 +34,37 @@ describe('disposing a game mid-fight (roadmap 10 J)', () => {
 		expect(concluded).to.equal(false);
 	});
 
+	it('stops even when the reset lands during the fight\'s final, killing card', async () => {
+		const game = new Game();
+		const ring = game.getRing();
+		const attacker = randomContestant({ isBoss: false });
+		const target = randomContestant({ isBoss: false });
+		attacker.monster.cards = [{
+			name: 'Reset and kill',
+			play: async (_player: unknown, victim: { hp: number; dead?: boolean }) => {
+				game.dispose();
+				victim.hp = 0;
+				(victim as any).dead = true;
+				return true;
+			},
+		}];
+		target.monster.cards = [{ name: 'Wait', play: async () => true }];
+		ring.contestants = [attacker, target];
+		let concluded = false;
+		ring.on('fightConcludes', () => { concluded = true; });
+
+		void ring.fight();
+		await new Promise(resolve => setTimeout(resolve, 50));
+
+		expect(concluded).to.equal(false);
+	});
+
+	it('answers a question asked after dispose at once', async () => {
+		const game = new Game();
+		game.dispose();
+		expect(await game.eventBus.sendPrompt('user-1', 'Which?', ['A'])).to.equal(PROMPT_CANCELLED);
+	});
+
 	it('cancels every open prompt, so a waiting command unwinds', async () => {
 		const game = new Game();
 		const answer = game.eventBus.sendPrompt('user-1', 'Which monster?', ['A', 'B']);

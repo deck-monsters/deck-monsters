@@ -22,8 +22,11 @@ function relTime(d: Date): string {
 
 /** What the play-by-play shows: what the Ring feed shows, minus the roster's state frames (the
  * Ring consumes those separately) and anything with no words to show. */
-function isPlayByPlayEvent(event: Pick<GameEvent, 'type' | 'text'>): boolean {
-  return shouldRenderRingEvent(event) && event.type !== 'ring.state' && !!event.text?.trim();
+function isPlayByPlayEvent(event: Pick<GameEvent, 'type' | 'text' | 'payload'>): boolean {
+  if (!shouldRenderRingEvent(event) || event.type === 'ring.state') return false;
+  // An event drawn only from its structured lines is kept, as the Ring keeps it.
+  const lines = (event.payload as { lines?: unknown[] } | undefined)?.lines;
+  return !!event.text?.trim() || (Array.isArray(lines) && lines.length > 0);
 }
 
 export default function FightLogPanel({ roomId, headerActions }: FightLogPanelProps) {

@@ -5670,10 +5670,11 @@ in progress kept playing on the disposed game, would have run `fightConcludes` (
 card drops), and its state changes could schedule a save over the room that replaced it. A
 command waiting on a question waited for the full 120 s prompt timeout.
 
-**Fixed:** `Ring.dispose()` sets a flag the fight loop checks before every action; the loop
-stops there and never resolves. `Game.dispose()` cancels every open prompt
-(`RoomEventBus.cancelAllPrompts`, which game code sees as `PromptCancelledError`) and marks the
-game disposed, so `scheduleSave` refuses. Pinned by `ring/dispose-mid-fight.test.ts`. The
+**Fixed:** `Ring.dispose()` sets a flag the fight loop checks before every action and as each
+card resolves, so even a reset during the killing card stops the fight unresolved. `Game.dispose()`
+closes the bus's prompts (`RoomEventBus.closePrompts`: open ones resolve `PROMPT_CANCELLED`,
+which game code sees as `PromptCancelledError`, and later ones are answered the same way at
+once) and marks the game disposed, so `persistState` refuses on every path. Pinned by `ring/dispose-mid-fight.test.ts`. The
 second half of J (the Discord connector re-subscribing to a replaced room) stays open on
 roadmap 10; no connector is deployed.
 

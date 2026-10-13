@@ -8,7 +8,7 @@ tags: [roadmap, bugs, cards, balance]
 ---
 # 50 — Bugs from roadmap 10, and Horn Gore
 
-**Status:** In progress on `claude/roadmap-49-archive-and-fixes`. Started 2026-10-13.
+**Status:** Built on `claude/roadmap-49-archive-and-fixes`, ready for a PR. Started 2026-10-13.
 
 ## Tasks
 
@@ -19,6 +19,7 @@ tags: [roadmap, bugs, cards, balance]
 | 3 | Three matchup tiers (weak < neutral < strong) for the whole hold family; Weeping Angels strong for Horn Gore; card text lists neutral (10b #253) | Done | `c12e8a4` |
 | 4 | Roadmap 10 K: per-fight timing and a slow-fight warning; 6,240 boss fights showed no slow seed, only per-row output (10b #255) | Done | `1adf713`, this commit |
 | 6 | Effects whose caster falls: grips, spells and gazes end at once with "<caster> has fallen, and …"; burns, poison, curses outlive the caster (10b #254) | Done | `9a639f1` |
+| 7 | Review fixes: a reset during the final card, every save path refused after dispose, prompts answered after close, self-Blink, payload-only events in the fight log; the harness repro test ignores wall-clock timing | Done | this commit |
 | 5 | Roadmap 10 F: the fight log draws events as the Ring feed does, no type labels or truncation (10b #252) | Done | `9a639f1` |
 
 ## Balance check (task 3)

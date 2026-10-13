@@ -19,7 +19,10 @@ async function main(): Promise<void> {
 		seed: 424242,
 		roomId: 'harness-repro-cli',
 	});
-	process.stdout.write(`${JSON.stringify(result)}\n`);
+	// `slowestFightMs` is wall-clock time, the one field a seed cannot reproduce; leave it out of
+	// the comparison the reproducibility test makes (roadmap 50 added it).
+	const { slowestFightMs: _timing, ...reproducible } = result;
+	process.stdout.write(`${JSON.stringify(reproducible)}\n`);
 	process.exit(0);
 }
 
