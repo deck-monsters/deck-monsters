@@ -13,7 +13,7 @@ completed reasoning belongs in the [archive](../archive/README.md).
 
 | Area | Actionable work |
 |---|---|
-| [10 — Bug fixes](10-bug-fixes.md) | Indentation and spacing in feed messages (first example captured in the fight log); what a reset leaves behind (a running fight, open prompts, connector subscriptions); some simulation runs take far longer than expected; a later careful pass to condense duplicate Millefleur CSS (the size itself is accepted) |
+| [10 — Bug fixes](10-bug-fixes.md) | A phone look at the Fights tab's play-by-play and feed spacing (F); the Discord connector re-subscribing to a replaced room (J); slow simulation runs (K, timing added in 50); a careful pass to condense duplicate Millefleur CSS (L) |
 | [11 — Balance and mechanics](11-balance-and-mechanics.md) | The leftovers of the balance pass 36 closed (the level 1 Dragon's Faceswap watch, the level 5 Weeping Angel against the Minotaur, a group-fight card); simulation, telemetry, healing prices, crit ticks, fight threads, and combat decisions |
 | [12 — New content](12-new-content-backlog.md) | Dragon follow-ups (counter cards, flavour pass, live check); counters to the big swing cards (Sandstorm, Faceswap, Blink); concrete cards, monsters, card authoring, equipment, world, and endgame proposals; trading and gifting cards between players |
 | [Item follow-ups](item-followups.md) | Prompt transport for items that ask a question |
@@ -25,7 +25,7 @@ completed reasoning belongs in the [archive](../archive/README.md).
 | [47 — Dream Desktop](47-dream-desktop-theme.md) | Brief: a System 7 theme from the Millefleur exploration, to be developed as its own theme. Open: studies, screens, a design system |
 | [41 — Room chat](41-room-chat.md) | Shipped in #420: `msg`/`dm`, the Chat tab, retention until seen. Backlog: a Discord bridge, moderation. Notifications are [48](48-notifications.md) |
 | [48 — Notifications](48-notifications.md) | Notes, not scheduled, checked against the code 2026-10-12 (the countdown re-arms on every join, so one banner per waiting stretch; DMs need a room-agnostic chat seam). A home-screen ping when the page is closed: a DM first; a fight countdown for a player already waiting in the ring (a boss or another player completes quorum), and optionally in a smaller ring so someone not in yet can still join |
-| [50 — Bugs from roadmap 10, and Horn Gore](50-bugs-and-horn-gore.md) | In progress: reset cleanup (10 J) done; Horn Gore's matchup to-hit, slow sims (10 K), feed spacing (10 F) next |
+| [50 — Bugs from roadmap 10, and Horn Gore](50-bugs-and-horn-gore.md) | Built on `claude/roadmap-49-archive-and-fixes`: reset cleanup (10 J), the fight log (10 F), three matchup tiers for every hold card, effects that end when their caster falls. Left: slow sims (10 K) |
 | [27 — Next passes](27-next-passes.md) | The order of the next passes: command and workshop bugs, the Dragon, realistic rings with boss balance, and the mega boss (done), then later work |
 
 [`10b-bugs-fixed.md`](10b-bugs-fixed.md) remains the stable fixed-bug ledger because code

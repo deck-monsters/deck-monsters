@@ -148,6 +148,12 @@ What the code does now (`cards/blink.ts`):
 
 ### The other lasting effects
 
+> **Superseded for casters, 2026-10-13.** This table records the code as it was during the
+> check. Every effect whose *caster* falls now follows the rule in
+> [cards and encounter effects](../architecture/cards-and-encounter-effects.md#when-the-monster-who-played-an-effect-falls)
+> (holds and Helm of Awe end at once with a line; the "limp dead body" line is gone). Effects
+> whose *target* falls are still open on [roadmap 11](../roadmap/11-balance-and-mechanics.md).
+
 Each row is current behavior. None of these has a decided after-death line except the hold, which already has one for a dead holder.
 
 | Effect | What happens once someone has fallen |

@@ -17,46 +17,21 @@ fixed as #241; it leaves the four open investigations below unchanged.
 
 ### F. Indentation and spacing in feed messages
 
-**Owner:** Web feeds. The owner's report is about layout, not pixels: where text sits on the
-left (indentation) and the white space between events. The one confirmed instance, Delayed
-Hit narration that opened with a literal `\n`, is fixed (#130). A scan of Test Room A's ring
-history on 2026-09-28 found only the blank line `formatCard` puts before a frame and the
-turn banner, authored as `\n🎲  round N, turn N\n\n…` in `announcements/nextTurn.ts`
-(#97, #101).
+**Owner:** Web feeds. The fight log's part is fixed: it drew `<type> — <text>` with the text cut
+at 200 characters, so a card box arrived as blank lines and half a frame (10b #252); it now
+uses the Ring feed's renderer. Earlier instances were #97, #101 and #130.
 
-First example (owner's phone screenshots, 2026-09-28): the Fights tab's "Events during this
-fight" list for fight #42. The card box opens with two blank lines inside its panel before
-the `=` border (the leading newline of `formatCard` plus the fence), and the list's numbers
-(`2.`, `3.`) are clipped at the left edge while the card panel is indented past them.
+- [ ] Look at the Fights tab's play-by-play on a phone (390 × 844) in both themes, and at the
+  Ring feed's spacing between events, and record anything still off.
 
-- [x] Reproduce in the fight log (`FightLogPanel.tsx`, `.fight-log-events`) at phone width.
-  Found: each row led with the raw event type and cut its text at 200 characters (10b #252).
-- [x] Decide one rule for a card box's leading blank lines and for the space between events,
-  and apply it to the Ring feed and the fight log alike. The fight log now draws events with
-  the Ring feed's own renderer (roadmap 50); a live look at phone width is still owed.
-- [x] Keep the list markers inside the box, or drop them if the log does not need numbers.
-  Dropped: the log reads like the feed.
+### J. A replaced room leaves a connector subscription behind
 
-Read [events, prompts, and replay](../architecture/events-prompts-and-replay.md) and
-[web workspace](../architecture/web-workspace.md).
+**Owner:** Connector. Found by the review of item G's fix (roadmap 40, 2026-09-30). A reset or
+a cross-process drop now stops the old game's fight, cancels its prompts and refuses its saves
+(10b #251). What is left: the Discord connector caches one `GuildRoomSubscription` per guild
+and room, bound to the old game's bus, so announcements stay silent until the connector
+restarts. No connector is deployed today.
 
-### J. A reset leaves a running fight, open prompts and connector subscriptions behind
-
-**Owner:** Server and connector. Found by the review of item G's fix (roadmap 40, 2026-09-30).
-It was already true of every reset; item G's cross-process drop inherits it because it tears
-a room down the same way.
-
-A reset (and now a cross-process drop) detaches the room's subscribers and calls
-`game.dispose()`. That leaves three things behind:
-- A fight in progress keeps its timer chain; `unloadRoom` refuses to unload mid-fight for this
-  reason, but a reset does not wait.
-- A command waiting on an interactive prompt waits until the prompt times out.
-- The Discord connector caches one `GuildRoomSubscription` per guild and room, bound to the
-  old game's bus, so announcements stay silent until the connector restarts. (No connector is
-  deployed today.)
-
-- [x] Stop a running fight's timers and cancel open prompts with `PromptCancelledError` when a
-  room is torn down by a reset or a drop. Done in roadmap 50 (10b #251).
 - [ ] Give the connector a way to hear that a room was replaced (a `RoomManager` listener) and
   re-subscribe.
 
