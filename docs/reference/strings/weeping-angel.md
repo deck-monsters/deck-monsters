@@ -100,7 +100,7 @@ If you fall first, they are back in the fight at once
 | effect → potentialEngeryReason | `to steal potential energy from {him}self.` |
 | effect → potentialEngeryReason | `to steal potential energy from {identityWithHp}.` |
 | effect → narration | `{identity} opens {his} eyes and finds {him}self in an unfamiliar time.` |
-| effect → narration | `⏳ {blinkPlayer} has fallen, and the time-shift breaks. {blinkTarget} is back in the fight.` |
+| effect → line | `the time-shift breaks. {blinkTarget} is back in the fight.` |
 
 ## Enthrall
 

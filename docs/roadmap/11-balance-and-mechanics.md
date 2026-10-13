@@ -135,15 +135,15 @@ Judge each item below against it.
   "strong against" rolling worse than neutral is backwards. One reading: matchup +2 / -2 / 0
   plus only the gained strength (+2 per landed horn). Needs a decision and a `sim:monster
   Minotaur` before and after.
-- [ ] **Lasting effects after a monster has fallen — owner: Cards.** The roadmap 49 live check
-  listed every effect that keeps going, or goes quiet, once its owner or its target has fallen:
-  [the table](../reference/turn-order-check-49b.md#notes-for-claude-events-after-a-monster-has-fallen).
-  Decided (owner, 2026-10-12): Delayed Hit keeps hitting after its owner falls ("with his
-  dying breath"); Blink breaks the moment the angel falls, with a line (built in 49). Open:
-  a line for each of the rest where one is wanted (a hold whose holder has fallen, a burn
-  credited to a fallen breather, Bad Batch's fallen brewer, a fury or flight that dies
-  unspent), and whether Blink's drain should still steal XP and heal the angel when its hit
-  is the killing one.
+- [x] **Lasting effects when their caster falls — owner: Cards.** Decided and built in roadmap
+  50: grips, spells and gazes end at once with "<caster> has fallen, and …"; burns, poison,
+  landed curses, sand and ringing ears outlive the caster. The rule and the table are in
+  [cards and encounter effects](../architecture/cards-and-encounter-effects.md#when-the-monster-who-played-an-effect-falls).
+- [ ] **Lasting effects when their target falls — owner: Cards.** The other half of the live
+  check's [table](../reference/turn-order-check-49b.md#notes-for-claude-events-after-a-monster-has-fallen):
+  a burn tick or a hold's ongoing damage that is the killing hit, a held captive that falls, a
+  Faceswap or Cloak search that still names a fallen monster. Not started; owner said it is a
+  separate question.
 - [ ] **Crit failures — owner: Cards.** Audit cards for natural-1 outcomes and add
   thematically appropriate consequences, including the time-shift failure case.
 - [ ] **Crit ticks — owner: Engine.** Track each monster's natural 20s (upstream #164).

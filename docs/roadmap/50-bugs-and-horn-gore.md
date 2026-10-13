@@ -18,6 +18,7 @@ tags: [roadmap, bugs, cards, balance]
 | 2 | Roadmap 10 J, first half: dispose stops the fight loop, cancels prompts, refuses saves (10b #251) | Done | `fb9228d` |
 | 3 | Three matchup tiers (weak < neutral < strong) for the whole hold family; Weeping Angels strong for Horn Gore; card text lists neutral (10b #253) | Done | `c12e8a4` |
 | 4 | Roadmap 10 K: time long sim runs, find the slow seeds. Timing added; slow seeds not yet hunted | In progress | |
+| 6 | Effects whose caster falls: grips, spells and gazes end at once with "<caster> has fallen, and …"; burns, poison, curses outlive the caster (10b #254) | Done | this commit |
 | 5 | Roadmap 10 F: the fight log draws events as the Ring feed does, no type labels or truncation (10b #252) | Done | this commit |
 
 ## Balance check (task 3)
@@ -31,11 +32,14 @@ tags: [roadmap, bugs, cards, balance]
 
 The Minotaur moves from below par to par. The largest single change is against the Weeping
 Angel, now a strong matchup: 57% → 67% at level 5 and 53% → 68% at level 10, just over the
-sim's 35–65% flag band. Owner to decide whether that stays.
+sim's 35–65% flag band. The owner keeps it (Angels have very powerful cards).
 
 ## Decisions
 
 - Owner, 2026-10-13: smooth Horn Gore's inconsistency and consider a small buff; then, every
   hold card gets explicit strong and weak lists and three tiers, weak < neutral < strong.
-  Weeping Angels are statues, so a horn is strong against them. A level 3
+  Weeping Angels are statues, so a horn is strong against them. The Minotaur's 67-68% against
+  the Angel at levels 5 and 10 stays: Angels have very powerful cards.
+- Owner, 2026-10-13: decide effects whose caster falls from the game world and "reality",
+  and make each outcome obvious in the feed. Effects whose target falls are a separate question. A level 3
   Minotaur's AC 7 is the low end of its random variance, not a bug.

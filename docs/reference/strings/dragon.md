@@ -158,6 +158,7 @@ No damage. Does not stack.
 | Where | Template |
 |---|---|
 | awe → narration | `🐲 {target} cannot bear the dragon's gaze, and cowers behind {his} shield instead of acting.` |
+| awe → narration | `{target} no longer cowers.` |
 | awe → reason | `vs {threshold} to meet the dragon's eye.` |
 | awe → outcome | `{target} finds {his} courage and meets the dragon's eye.` |
 | awe → outcome | `{target} looks once more upon the helm of awe, and turns to run.` |
@@ -165,6 +166,7 @@ No damage. Does not stack.
 | awe → reason | `and needs 10 or higher to flee.` |
 | awe → outcome | `Rooted to the sand!` |
 | awe → narration | `🐲 The courage runs out of {target} like mead from a cracked horn, and {he} {flees/flee} the ring!` |
+| awe → line | `{target} no longer cowers.` |
 | effect → narration | `{target} is already cowering before the helm.` |
 | effect → outcome | `{target} stands {his} ground and stares back.` |
 | effect → outcome | `{target} looks upon the helm of awe, and {his} knees turn to water.` |

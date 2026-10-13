@@ -1,4 +1,5 @@
 import { HitCard } from './hit.js';
+import { releaseWhenCasterFalls, casterFallenLine } from './helpers/caster-falls.js';
 import { groundFlier } from './take-wing.js';
 import { chance } from '../helpers/chance.js';
 import { ATTACK_PHASE, DEFENSE_PHASE } from '../constants/phases.js';
@@ -336,8 +337,11 @@ ${ongoingDamageText}`;
 					target.encounterEffects = target.encounterEffects.filter(
 						(effect: any) => effect.effectType !== 'ImmobilizeEffect'
 					);
+					// Fallback for a holder that fell with no death event (no assailant): the same
+					// line the fall itself gives (helpers/caster-falls.ts). "Pushes the limp dead
+					// body off" read wrong for a mind hold such as Mesmerize.
 					this.emit('narration', {
-						narration: `${target.givenName} is no longer ${this.actions.IMMOBILIZED}. ${capitalize(target.pronouns.he)} ${agree(target.pronouns, 'pushes', 'push')} the limp dead body of ${player.givenName} off of ${target.pronouns.him}self and proudly stand${target.pronouns.verbSuffix ?? 's'} prepared to fight`,
+						narration: casterFallenLine(player, `${target.givenName} is no longer ${this.actions.IMMOBILIZED}.`, this.icon),
 					});
 				}
 			}
@@ -425,6 +429,21 @@ ${ongoingDamageText}`;
 			immobilizeEffect.effectType = 'ImmobilizeEffect';
 			target.encounterEffects = [...target.encounterEffects, immobilizeEffect];
 			target.encounterModifiers.immobilizedTurns = 0;
+			// The holder falls: the grip goes slack (or the spell breaks) at once.
+			if (player !== target) {
+				releaseWhenCasterFalls({
+					caster: player,
+					holder: target,
+					effect: immobilizeEffect,
+					release: () => {
+						target.encounterEffects = target.encounterEffects.filter((effect: any) => effect !== immobilizeEffect);
+						target.encounterModifiers.immobilizedTurns = 0;
+					},
+					narrate: narration => this.emit('narration', { narration }),
+					line: `${target.givenName} is no longer ${this.actions.IMMOBILIZED}.`,
+					icon: this.icon,
+				});
+			}
 			groundFlier(target, (event, payload) => this.emit(event, payload));
 
 			if (this.doDamageOnImmobilize) {

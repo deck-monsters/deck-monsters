@@ -59,10 +59,7 @@ Rules that follow from the table:
   but leaves a one-shot card-stage effect that says "beats out the flames" under the Heal's
   box. Before 2026-10-12 a winded dragon's Random Play read: Random Play box, "breath
   back", the drawn card — and a time-shifted thief still showed its box.
-- **Blink breaks when the angel falls.** The time-shift listens for the angel's `die` and
-  lifts at once, with "⏳ <angel> has fallen, and the time-shift breaks. <victim> is back in
-  the fight." (owner, 2026-10-12). Delayed Hit, by contrast, is meant to fire after its owner
-  falls. Other lasting effects after a death are open on roadmap 11.
+- **When a caster falls**, see "When the monster who played an effect falls" below.
 - **A hold or awe grounds a flier** (`groundFlier` in `take-wing.ts`): it cannot stay aloft
   while held. A time-shift does not, because no time passes for it.
 
@@ -316,6 +313,42 @@ asked for very old dragons to be "immensely powerful but occasionally able to be
 `Dragon.startEncounter` arms all of it as one encounter effect, so fight cleanup ends it,
 and the "once per fight" record lives in that effect's closure. `look at` says the dragon is
 ancient. A new card that should respect ancient dragons reads `isAncientDragon`.
+
+## When the monster who played an effect falls
+
+Owner, 2026-10-13: decide by the game's world and by what would really happen, and make the
+outcome obvious in the feed. A fallen monster leaves the turn order, so its own effects never
+fire again. The question is the effects it left on someone else.
+
+**It ends at once, with one line**, when the effect lives on its caster: a grip, a spell, a
+gaze. `releaseWhenCasterFalls` (`cards/helpers/caster-falls.ts`) listens for the caster's
+`die`, removes the effect, and says `<icon> <caster> has fallen, and <what changed>`. The
+victim's own turn checks again as a fallback (a death with no assailant emits no `die`) and
+says the same line.
+
+| Effect | Line when its caster falls |
+|---|---|
+| Blink's time-shift | `⏳ Dardariel has fallen, and the time-shift breaks. Queen is back in the fight.` |
+| Every hold on another monster (Immobilize, Coil, Constrict, Horn Gore, Forked Stick, Forked Metal Rod, Mesmerize, Entrance, Enthrall) | `➰ George has fallen, and Jefferson is no longer coiled.` (the card's own icon and word) |
+| Helm of Awe | `🐲 Skarn has fallen, and Jefferson no longer cowers.` |
+
+**It outlives its caster on purpose** when it is already out in the world:
+
+- **Delayed Hit** is built to strike after its owner falls: "with his dying breath, he avenges…".
+- **Fire Breath's burn** keeps burning; fire does not care who lit it. The breather is still
+  credited with the damage.
+- **Bad Batch**: the poisoned bottle is still on the shelf, and the brewer is credited.
+- **A curse that has landed** (Soften, Molasses, Blink's xp drain) is part of the hit that
+  carried it, so it stays for the fight. A Blink drain whose hit is the killing blow still
+  steals the xp and heals the angel: it is one motion.
+- **Sandstorm's confusion** and **Dissonant Voice's rattle**: the sand is already in the air and
+  the ears already ring. Each is spent on the victim's next card, as before.
+
+**Effects a monster holds on itself** (Gloaming Rest, winded, exposed, Tipsy, Take Wing, Mood
+Scales' fury, the Cloak, Enchanted Faceswap, Horn of Proof's ward, Sticketh) end with it, since
+it takes no more turns; there is nothing to announce.
+
+What happens to effects when their **target** falls is a separate question, open on roadmap 11.
 
 ## Who can hold a card, and what a card is
 

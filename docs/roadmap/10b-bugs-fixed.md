@@ -5709,3 +5709,20 @@ neutral < strong for every card in the family and `monster-types.test.ts` keeps 
 list in step with the monster registry. Weeping Angels moved to Horn Gore's strong list (a
 statue cracks under a horn). This is a small buff to Horn Gore and to the rod against neutral
 types; `sim:monster` before and after is in roadmap 50.
+
+### 254. A fallen caster's hold, spell or gaze lingered until the victim's turn — FIXED
+
+Live check 49b's after-death table (2026-10-12). When a holder fell, the hold stayed until the
+captive's next turn, which then said the captive "pushes the limp dead body … off" even for a
+mind hold such as Mesmerize. A dead dragon's awe dropped with no line at all. Blink had just
+been changed to break at once.
+
+**Root cause:** each effect only checked its caster when its victim's turn came round; nothing
+listened for the caster's fall.
+
+**Fixed:** `releaseWhenCasterFalls` (`cards/helpers/caster-falls.ts`) ends Blink, every hold on
+another monster, and Helm of Awe the moment the caster falls, with one line, "<icon> <caster>
+has fallen, and …". Effects already out in the world (a burn, poison, a landed curse, sand,
+ringing ears, Delayed Hit) outlive their caster on purpose. The rule and the table are in
+cards-and-encounter-effects ("When the monster who played an effect falls"). Pinned by
+`cards/helpers/caster-falls.test.ts`.
