@@ -226,6 +226,39 @@ ${customHit.stats}`);
 			}
 		});
 
+		it('lets a second armed copy still swing at an attacker the first copy killed (owner, 2026-10-14)', async () => {
+			// Damage keeps landing on the turn a monster falls, down into negative hp.
+			const first = new DelayedHit();
+			const second = new DelayedHit();
+			const strike = new HitCard();
+			sinon.stub(strike, 'hitCheck').returns({
+				attackRoll: strike.getAttackRoll(target),
+				success: true,
+				strokeOfLuck: false,
+				curseOfLoki: false,
+			});
+			const narrations: string[] = [];
+			const onNarration = (_klass: unknown, _card: unknown, { narration }: { narration: string }) =>
+				narrations.push(narration);
+			first.on('narration', onNarration);
+			second.on('narration', onNarration);
+			player.hp = 200;
+			target.hp = 1;
+
+			try {
+				await first.play(player, player, ring);
+				await second.play(player, player, ring);
+				await strike.play(target, player, ring);
+
+				expect(target.dead).to.equal(true);
+				expect(narrations.filter(line => line.includes('finds its moment'))).to.have.length(2);
+				expect(target.hp).to.be.below(0);
+			} finally {
+				first.off('narration', onNarration);
+				second.off('narration', onNarration);
+			}
+		});
+
 		it('names an area card it answers, since the payoff prints after every target\'s damage', async () => {
 			const armed = new DelayedHit();
 			const narrations: string[] = [];

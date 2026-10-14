@@ -18,7 +18,7 @@ tags: [roadmap, cards, balance, combat]
 | 2 | `attackStat` on every attack card: the roll and the text agree; the Kalevala rolls int (10b #256) | Done | `ae4318b` |
 | 3 | Hiding is a contest: 1d20 + finder's int vs 10 + hider's int (dex for the Vest) | Done | `ae4318b` |
 | 4 | Card texts name both sides of each roll | Done | `ae4318b` |
-| 5 | Effects whose target falls | Open | |
+| 5 | Effects whose target falls: same-turn damage stands; a fallen captive's hold is not announced (10b #257) | Done | |
 | 6 | Crit failures: an audit of natural 1s | Open | |
 
 ## Decisions (owner, 2026-10-14)
@@ -30,6 +30,9 @@ tags: [roadmap, cards, balance, combat]
   stat (5 + modifier); moving them would slow every fight.
 - The Camouflage Vest hides with dex (Claude's call while the owner left it open; one line to
   change back).
+- Damage keeps landing in the turn a monster falls, down into negative hp: Berserk's last
+  swing, every armed Delayed Hit (owner). Only effects that would speak *after* that turn
+  are silenced.
 - Not in this pass: notifications, the phone check, boss hands.
 
 ## Balance check

@@ -5752,3 +5752,17 @@ every attack card's text names its stat (`attack-stats.test.ts`). Berserk's text
 whether Berserk should roll str instead is open on roadmap 11. Hit chance with the Kalevala moves
 by 5 points per point of (int − dex) modifier: Basilisk +10, Weeping Angel +5, Dragon and Jinn 0,
 Gladiator −5, Minotaur −10, Unicorn −15; `sim:rings curves` showed no class move beyond noise.
+
+### 257. A hold on a fallen captive was announced as released when its holder fell — FIXED
+
+Found while settling roadmap 11's "effects when their target falls" (roadmap 51).
+`releaseWhenCasterFalls` listened only for the caster's death. A captive that fell first kept
+its hold in `encounterEffects` (a fallen monster's effects are never cleaned up, because it
+takes no more turns), so when the coiler fell later the helper released the hold and said
+"<captive> is no longer coiled" about a body.
+
+**Fixed:** the helper also listens for the holder's own death, unhooks, and skips both the
+release and the line if the holder has fallen (`caster-falls.test.ts`). Delayed Hit was left
+alone on purpose: the owner ruled that damage keeps landing in the turn a monster falls, so a
+second armed copy still answers an attacker the first copy killed (`delayed-hit.test.ts` pins
+it).

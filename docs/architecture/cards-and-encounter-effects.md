@@ -369,7 +369,24 @@ says the same line.
 Scales' fury, the Cloak, Enchanted Faceswap, Horn of Proof's ward, Sticketh) end with it, since
 it takes no more turns; there is nothing to announce.
 
-What happens to effects when their **target** falls is a separate question, open on roadmap 11.
+## When the monster an effect is on falls
+
+Owner, 2026-10-14 (roadmap 51). **Damage keeps landing in the turn a monster falls.** Hp can go
+below zero. The killing card finishes resolving, a Berserk chain's last swing still lands (the
+chain stops after it, and the line can read `ULTIMATE`), and every armed Delayed Hit answers the
+blow, even when an earlier copy's counter has already killed the attacker. Do not add a "skip
+the dead" guard to anything that resolves inside the play that did the killing.
+
+After that, a fallen monster is out of the fight:
+
+- **It leaves the turn order** (`getActiveContestants` keeps only the living), so anything that
+  waits for its next turn never speaks. A burn tick or a hold's ongoing damage can be the
+  killing hit at the start of its turn; that turn's card is then not played.
+- **It is never chosen as a new target**, so effects that wrap cards aimed at it (the Cloak and
+  Camouflage Vest search, Enchanted Faceswap's trap) never fire again.
+- **Its effects end with it, unannounced.** A hold on a fallen captive is not "released" when
+  its holder falls later: `releaseWhenCasterFalls` stops listening when the captive falls, so
+  the caster's death no longer says "<captive> is no longer coiled" about a body.
 
 ## Who can hold a card, and what a card is
 
