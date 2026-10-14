@@ -19,7 +19,7 @@ tags: [roadmap, cards, balance, combat]
 | 3 | Hiding is a contest: 1d20 + finder's int vs 10 + hider's int (dex for the Vest) | Done | `ae4318b` |
 | 4 | Card texts name both sides of each roll | Done | `ae4318b` |
 | 5 | Effects whose target falls: same-turn damage stands; a fallen captive's hold is not announced (10b #257) | Done | `e198a03` |
-| 6 | Crit failures: a natural 1 on your own move backfires; only a d20 crits (10b #258) | Done | |
+| 6 | Crit failures: a natural 1 on your own move backfires; only a d20 crits (10b #258) | Done | `c731231` |
 
 ## Decisions (owner, 2026-10-14)
 
