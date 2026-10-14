@@ -8,7 +8,7 @@ tags: [roadmap, cards, balance, combat]
 ---
 # 51 — Attack stats, hiding, target deaths, crit failures
 
-**Status:** In progress on `claude/int-audit-and-roadmap-51`. Started 2026-10-14.
+**Status:** In review on `claude/int-audit-and-roadmap-51`. Started 2026-10-14.
 
 ## Tasks
 
@@ -50,3 +50,10 @@ tags: [roadmap, cards, balance, combat]
 
 `sim:rings curves` (240 fights a cell) before and after tasks 2-4: no monster's average moved
 more than 3 points, inside the ±6 noise of a cell.
+
+After every task (final build, same 240 fights a cell), averaged over the six levels:
+Basilisk 55.7 → 56.8, Gladiator 51.2 → 51.5, Jinn 46.0 → 47.0, Minotaur 49.5 → 51.8,
+Weeping Angel 49.7 → 46.0, Unicorn 63.3 → 64.0, Dragon 56.3 → 54.8. Single cells moved up to
+13 points (Angel and Dragon at L15), about two standard errors; the Angel's -4 average fits a
+Blink that now backfires on 1 roll in 20. Worth a second look if live play agrees.
+
