@@ -21,8 +21,8 @@ tags: [roadmap, cards, balance, combat]
 | 5 | Effects whose target falls: same-turn damage stands; a fallen captive's hold is not announced (10b #257) | Done | `e198a03` |
 | 6 | Crit failures: a natural 1 on your own move backfires; only a d20 crits (10b #258) | Done | `c731231` |
 | 7 | Review fixes: Blink's natural 1 freezes rather than shifts; escape texts name both sides; Cloak find-roll tests | Done | `5af7ed5` |
-| 8 | Hides last three cards; a natural 20 tears the cloak off (owner) | Done | |
-| 9 | Tipsy rolls 1d6 for its kind, the Ballmer peak on a 5 (owner) | Done | |
+| 8 | Hides last three cards; a natural 20 tears the cloak off (owner) | Done | `1a249e7` |
+| 9 | Tipsy rolls 1d6 for its kind, the Ballmer peak on a 5 (owner) | Done | `1a249e7` |
 
 ## Decisions (owner, 2026-10-14)
 
