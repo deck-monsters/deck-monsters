@@ -199,7 +199,7 @@ phial, is a separate mechanic and is allowed; it is not a natural 1.
 |------|-------------|
 | Hit and every card on its attack path (curses, Kalevala, Lucky Strike, Rehit, Coil's hit …) | The target flings the blow back: the attacker takes the card's damage, rolled with the target's stats |
 | Horn Gore, Forked Metal Rod (each gore) | The target strikes the gorer's face; the gore adds no horn strength |
-| Forked Stick (the pin roll) | The target wrenches the branch away and jabs it back, for the stick's damage |
+| Forked Stick (the pin roll) | The target wrenches the branch away and jabs it back, for the stick's damage; a confused holder aiming at itself jabs itself |
 | Berserk | COMBO BREAKER: the combo's damage turns on the berserker |
 | Blink | The angel blinks first and is frozen in stone: it loses its next turn but stays a target. A confused angel that blinks itself is frozen the same way; a shift would make it untargetable, which is a gift |
 | Cloak, Camouflage Vest, Mood Scales (the searcher's roll) | The searcher trips and plays the card on itself |

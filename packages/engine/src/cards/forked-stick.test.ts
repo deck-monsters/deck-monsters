@@ -370,4 +370,26 @@ Turns immobilized resets on curse of loki.
 		expect((target as any).encounterEffects).to.have.length(0);
 		expect(narrations.join(' ')).to.contain(`${target.givenName} wrenches the branch away and jabs it back at ${player.givenName}.`);
 	});
+
+	it('jabs a confused holder that aimed it at itself on a natural 1 (PR #434 review)', async () => {
+		const forkedStick = new ForkedStickCard();
+		const player = new Minotaur({ name: 'player' });
+		const ring: any = {
+			contestants: [{ character: {}, monster: player }],
+			channelManager: { sendMessages: () => Promise.resolve() },
+		};
+		const rollStub = sinon.stub(forkedStick, 'getImmobilizeRoll').returns({
+			primaryDice: '1d20', result: 1, naturalRoll: { rolled: [1], result: 1 }, bonusResult: 0, modifier: 0,
+			curseOfLoki: true, strokeOfLuck: false,
+		});
+		const narrations: string[] = [];
+		forkedStick.on('narration', (_c: unknown, _card: unknown, { narration }: any) => narrations.push(narration));
+		const hp = (player as any).hp;
+
+		await forkedStick.play(player, player, ring, ring.contestants);
+		rollStub.restore();
+
+		expect((player as any).hp).to.be.below(hp);
+		expect(narrations.join(' ')).to.contain(`${player.givenName} fumbles the branch and jabs`);
+	});
 });

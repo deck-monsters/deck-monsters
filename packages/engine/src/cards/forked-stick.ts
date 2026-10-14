@@ -97,10 +97,14 @@ export class ForkedStickCard extends ImmobilizeCard {
 	override async immobilize(player: any, target: any, ring: any, activeContestants?: any): Promise<any> {
 		this.fumbled = false;
 		const result = await super.immobilize(player, target, ring, activeContestants);
-		if (!this.fumbled || player === target) return result;
+		if (!this.fumbled) return result;
 		this.fumbled = false;
+		// A confused holder aiming at itself (Sandstorm) still fumbles: nobody to wrench it away,
+		// so it jabs itself (Codex review on PR #434).
 		this.emit('narration', {
-			narration: `${this.icon} ${target.givenName} wrenches the branch away and jabs it back at ${player.givenName}.`,
+			narration: player === target
+				? `${this.icon} ${player.givenName} fumbles the branch and jabs ${player.pronouns.him}self.`
+				: `${this.icon} ${target.givenName} wrenches the branch away and jabs it back at ${player.givenName}.`,
 		});
 		const damageRoll = this.rollForDamage(target, player);
 		// As Hit's flung-back blow: the play's result is whether its holder still stands.
