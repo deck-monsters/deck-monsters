@@ -453,9 +453,9 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  4d4 xp
  If you fall first, they are back 
  in the fight at once
- On a natural 1 the shift folds 
- back: you lose your next turn 
- instead
+ On a natural 1 you blink first: 
+ frozen in stone, you lose your 
+ next turn
 
  Level: Beginner
  Usable by: Weeping Angel
@@ -553,13 +553,14 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
 
  You are invisible until you play 
  a card that targets another 
- player, or for the next 2 cards 
+ player, or for the next 3 cards 
  you play (whichever comes 
  first).
  1d20 + their int vs 10 + your 
  dex for an opponent to see you 
- on their turn (natural 20 
- removes your camouflage vest).
+ on their turn. On a natural 20 
+ they tear off your camouflage 
+ vest, and you are seen at once.
 
  Level: 1
  Usable by: Barbarian, Fighter
@@ -582,14 +583,15 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
 
  You are invisible until you play 
  a card that targets another 
- player, or for the next 2 cards 
+ player, or for the next 3 cards 
  you play (whichever comes 
  first).
  1d20 + their int vs 10 + your 
  int for an opponent to see you 
- on their turn (natural 20 
- removes your cloak of 
- invisibility).
+ on their turn. On a natural 20 
+ they tear off your cloak of 
+ invisibility, and you are seen 
+ at once.
 
  Level: 1
  Usable by: Bard, Cleric, Wizard
@@ -630,7 +632,8 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  Jinn
 
  Opponent breaks free by rolling 
- 1d20 vs immobilizer's dex +/- 
+ 1d20 + their dex vs 
+ immobilizer's dex +/- 
  advantage/disadvantage - (turns 
  immobilized * 3)
  Hits immobilizer back on stroke 
@@ -712,7 +715,8 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  Jinn
 
  Opponent breaks free by rolling 
- 1d20 vs immobilizer's dex +/- 
+ 1d20 + their dex vs 
+ immobilizer's dex +/- 
  advantage/disadvantage - (turns 
  immobilized * 3)
  Hits immobilizer back on stroke 
@@ -866,7 +870,8 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  ineffective against Jinn
 
  Opponent breaks free by rolling 
- 1d20 vs immobilizer's int +/- 
+ 1d20 + their int vs 
+ immobilizer's int +/- 
  advantage/disadvantage - (turns 
  immobilized * 3)
  Hits immobilizer back on stroke 
@@ -912,7 +917,8 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  ineffective against Jinn
 
  Opponent breaks free by rolling 
- 1d20 vs immobilizer's int +/- 
+ 1d20 + their int vs 
+ immobilizer's int +/- 
  advantage/disadvantage - (turns 
  immobilized * 3)
  Hits immobilizer back on stroke 
@@ -1140,9 +1146,9 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  Angel
 
  Opponent breaks free by rolling 
- 1d20 vs immobilizer's str + 
- advantage - (turns immobilized * 
- 3)
+ 1d20 + their str vs 
+ immobilizer's str + advantage - 
+ (turns immobilized * 3)
  Hits immobilizer back on stroke 
  of luck.
  Turns immobilized resets on 
@@ -1192,7 +1198,8 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  Angel
 
  Opponent breaks free by rolling 
- 1d20 vs immobilizer's str +/- 
+ 1d20 + their str vs 
+ immobilizer's str +/- 
  advantage/disadvantage - (turns 
  immobilized * 3)
  Hits immobilizer back on stroke 
@@ -1386,7 +1393,8 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  Jinn
 
  Opponent breaks free by rolling 
- 1d20 vs immobilizer's str +/- 
+ 1d20 + their str vs 
+ immobilizer's str +/- 
  advantage/disadvantage - (turns 
  immobilized * 3)
  Hits immobilizer back on stroke 
@@ -1585,7 +1593,8 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  ineffective against Jinn
 
  Opponent breaks free by rolling 
- 1d20 vs immobilizer's int +/- 
+ 1d20 + their int vs 
+ immobilizer's int +/- 
  advantage/disadvantage - (turns 
  immobilized * 3)
  Hits immobilizer back on stroke 
@@ -1649,10 +1658,11 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  scales match the rocks and sea, 
  and you are hidden until you 
  play a card that targets another 
- player, or for the next 2 cards 
+ player, or for the next 3 cards 
  you play (1d20 + their int vs 10 
  + your int for an opponent to 
- find you).
+ find you; on a natural 20 they 
+ see straight through you).
  Furious (half your hp or less): 
  your scales blaze red and you 
  cannot hide, but your next melee 
@@ -1837,8 +1847,10 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  1% chance to poison
 
  3 drinks in one round may leave 
- you tipsy: -1 dex and int for 2 
- cards
+ you tipsy for 2 cards. Roll 1d6: 
+ 1: -1 int; 2: -2 int; 3: -1 dex; 
+ 4: -2 dex; 5: +1 dex and +1 int; 
+ 6: -2 dex and -2 int
 
  Level: 4
  Usable by: All
@@ -2139,8 +2151,10 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  1% chance to poison
 
  3 drinks in one round may leave 
- you tipsy: -1 dex and int for 2 
- cards
+ you tipsy for 2 cards. Roll 1d6: 
+ 1: -1 int; 2: -2 int; 3: -1 dex; 
+ 4: -2 dex; 5: +1 dex and +1 int; 
+ 6: -2 dex and -2 int
 
  Level: 2
  Usable by: All

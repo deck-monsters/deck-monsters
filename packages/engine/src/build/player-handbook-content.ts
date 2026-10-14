@@ -158,7 +158,7 @@ Some fights bring a ring event that changes the teams for that fight only: Commo
 export const COMBAT_STATS_AND_ROLES = `
 ── Combat Stats & Card Roles ─────────
 
-DEX is melee accuracy and DEX saves. It is also the defense a card uses when that card strikes DEX, so a higher DEX makes a pin such as Forked Stick harder to land. STR is melee damage and STR checks, including pin and escape rolls that use STR. INT is curse and psychic accuracy, healing, and INT damage, and it is the defense those cards strike. AC is the defense melee cards roll against. An AC boost absorbs melee damage before that damage reaches HP. AC does not add to an attack. Every attack card names both sides of its roll: "Hit: 1d20 + dex vs ac" adds your DEX bonus and has to beat the target's AC; The Kalevala rolls "1d20 + int vs int". Finding a hidden monster is a contest: 1d20 + your INT against 10 + the hider's INT (DEX for a Camouflage Vest). HP is how much damage a monster can take. Level raises these stats and unlocks higher-level cards.
+DEX is melee accuracy and DEX saves. It is also the defense a card uses when that card strikes DEX, so a higher DEX makes a pin such as Forked Stick harder to land. STR is melee damage and STR checks, including pin and escape rolls that use STR. INT is curse and psychic accuracy, healing, and INT damage, and it is the defense those cards strike. AC is the defense melee cards roll against. An AC boost absorbs melee damage before that damage reaches HP. AC does not add to an attack. Every attack card names both sides of its roll: "Hit: 1d20 + dex vs ac" adds your DEX bonus and has to beat the target's AC; The Kalevala rolls "1d20 + int vs int". Finding a hidden monster is a contest: 1d20 + your INT against 10 + the hider's INT (DEX for a Camouflage Vest). A hide lasts the hider's next three cards, and a finder who rolls a natural 20 tears the cloak off at once. HP is how much damage a monster can take. Level raises these stats and unlocks higher-level cards.
 
 Temporary boosts and curses affect both the stat and rolls derived from it.
 
@@ -217,7 +217,7 @@ The ring narrates every roll. What the words and numbers mean:
 - +2, -1 after a roll: the bonus or penalty from the monster's stats, added to the die.
 - vs ac (10): the number the attack roll has to beat. A roll equal to it misses; ties go to the defender.
 - Natural 20: the die itself shows 20. The attack hits whatever the target's AC, for the most damage the dice allow.
-- Natural 1, the Curse of Loki: the die itself shows 1. Your own move backfires: an attack is turned back on you, a time-shift takes you out instead, and a search for a hidden monster trips you up. A natural 1 on a save or a dodge is just a failure. Only a d20 rolls a natural 1 or 20; a 1 on a damage die is just a 1.
+- Natural 1, the Curse of Loki: the die itself shows 1. Your own move backfires: an attack is turned back on you, a Weeping Angel that fails to Blink is frozen in stone for a turn, and a search for a hidden monster trips you up. A natural 1 on a save or a dodge is just a failure. Only a d20 rolls a natural 1 or 20; a 1 on a damage die is just a 1.
 - Hit! and Miss...: whether the attack roll beat the target's defense.
 - Bloodied: still in the fight, at half HP or less.
 - Fallen: at 0 HP or below. The roster says fallen instead of a health number.

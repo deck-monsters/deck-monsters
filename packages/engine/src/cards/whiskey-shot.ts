@@ -3,6 +3,7 @@ import { REASONABLE } from '../helpers/costs.js';
 import { chance } from '../helpers/chance.js';
 import { ATTACK_PHASE } from '../constants/phases.js';
 import { TIPSY_EFFECT } from '../constants/effect-types.js';
+import { capitalize } from '../helpers/capitalize.js';
 
 const { roll } = chance;
 
@@ -10,14 +11,36 @@ const { roll } = chance;
  * Tipsy (owner, 2026-10-12): from the third drink in one round, a monster rolls to hold it.
  * One round is one pass through every deck, so a single Whiskey Shot in a deck can never do
  * it; it takes a deck stacked with drinks, or Random Play and Pick Pocket bringing more.
- * The owner chose the mild version: -1 dex (to hit) and -1 int, for the drinker's next two
- * cards. Another drink while tipsy restarts the clock rather than stacking. Scotch is a
- * Whiskey Shot, so it counts too.
+ * It lasts for the drinker's next two cards. Another drink while tipsy restarts the clock
+ * rather than stacking or rerolling. Scotch is a Whiskey Shot, so it counts too.
+ *
+ * What kind of tipsy is a 1d6 on TIPSY_TABLE (owner, 2026-10-14; it was a flat -1 dex and
+ * -1 int). A table roll, not a check, so a 1 or a 6 is no crit (helpers/chance.ts).
  */
 export const TIPSY_DRINKS = 3;
 /** 1d20 + str bonus must reach this to hold the drink. */
 export const TIPSY_HOLD_DC = 10;
-export const TIPSY_PENALTY = 1;
+export interface TipsyKind {
+	dex: number;
+	int: number;
+	/** "<name> is tipsy! <how>": the line that says which way the drink went. */
+	how: string;
+}
+/** 1d6, in face order. 5 is the Ballmer peak: just drunk enough to be sharper. */
+export const TIPSY_TABLE: TipsyKind[] = [
+	{ dex: 0, int: -1, how: 'a little foggy' },
+	{ dex: 0, int: -2, how: 'thoroughly befuddled' },
+	{ dex: -1, int: 0, how: 'a little unsteady' },
+	{ dex: -2, int: 0, how: 'staggering' },
+	{ dex: 1, int: 1, how: 'at the Ballmer peak, sharper for it' },
+	{ dex: -2, int: -2, how: 'properly drunk' },
+];
+const TIPSY_DIE = `1d${TIPSY_TABLE.length}`;
+
+const signed = (n: number): string => (n > 0 ? `+${n}` : `${n}`);
+/** "-2 dex", "+1 dex and +1 int": only the stats the kind moves. */
+const tipsyEffects = ({ dex, int }: TipsyKind): string =>
+	[dex ? `${signed(dex)} dex` : '', int ? `${signed(int)} int` : ''].filter(Boolean).join(' and ');
 export const TIPSY_CARDS = 2;
 
 export const isTipsy = (monster: any): boolean =>
@@ -40,7 +63,7 @@ export class WhiskeyShotCard extends HealCard {
 	override get stats(): string {
 		return `${super.stats}
 
-${TIPSY_DRINKS} drinks in one round may leave you tipsy: -${TIPSY_PENALTY} dex and int for ${TIPSY_CARDS} cards`;
+${TIPSY_DRINKS} drinks in one round may leave you tipsy for ${TIPSY_CARDS} cards. Roll ${TIPSY_DIE}: ${TIPSY_TABLE.map((kind, i) => `${i + 1}: ${tipsyEffects(kind)}`).join('; ')}`;
 	}
 
 	override async effect(player: any, target: any, ring?: any, activeContestants?: any): Promise<any> {
@@ -72,6 +95,20 @@ ${TIPSY_DRINKS} drinks in one round may leave you tipsy: -${TIPSY_PENALTY} dex a
 		if (!holds || isTipsy(drinker)) this.makeTipsy(drinker);
 	}
 
+	/** Roll 1d6 on TIPSY_TABLE and show the roll. */
+	rollTipsyKind(drinker: any): TipsyKind {
+		const kindRoll = roll({ primaryDice: TIPSY_DIE });
+		const kind = TIPSY_TABLE[kindRoll.result - 1];
+		this.emit('rolled', {
+			reason: 'to see what kind of tipsy.',
+			card: this,
+			roll: kindRoll,
+			who: drinker,
+			outcome: `${capitalize(kind.how)}: ${tipsyEffects(kind)}.`,
+		});
+		return kind;
+	}
+
 	makeTipsy(drinker: any): void {
 		const existing = drinker.encounterEffects.find((effect: any) => effect.effectType === TIPSY_EFFECT);
 		if (existing) {
@@ -81,6 +118,8 @@ ${TIPSY_DRINKS} drinks in one round may leave you tipsy: -${TIPSY_PENALTY} dex a
 			});
 			return;
 		}
+
+		const kind = this.rollTipsyKind(drinker);
 
 		// Upkeep, like winded: it counts the drinker's turns, held ones included, and sobers up
 		// at the start of the third, before that card's box (cards/base.ts, "Turn order").
@@ -93,21 +132,23 @@ ${TIPSY_DRINKS} drinks in one round may leave you tipsy: -${TIPSY_PENALTY} dex a
 			drinker.encounterEffects = drinker.encounterEffects.filter((effect: any) => effect !== tipsy);
 			// Say why before the stat lines, as winded does.
 			this.emit('narration', { narration: `${drinker.givenName} sobers up.` });
-			drinker.setModifier('dex', TIPSY_PENALTY);
-			drinker.setModifier('int', TIPSY_PENALTY);
+			// Undo exactly what this drink did, whichever way it went.
+			if (kind.dex) drinker.setModifier('dex', -kind.dex);
+			if (kind.int) drinker.setModifier('int', -kind.int);
 			return card;
 		};
 		tipsy.effectType = TIPSY_EFFECT;
 		tipsy.turnStart = 'upkeep';
 		tipsy.cardsLeft = TIPSY_CARDS;
+		tipsy.kind = kind;
 
 		this.emit('narration', {
-			narration: `${this.icon} ${drinker.givenName} is tipsy! (-${TIPSY_PENALTY} dex and -${TIPSY_PENALTY} int for ${drinker.pronouns.his} next ${TIPSY_CARDS} cards.)`,
+			narration: `${this.icon} ${drinker.givenName} is tipsy, ${kind.how}! (${tipsyEffects(kind)} for ${drinker.pronouns.his} next ${TIPSY_CARDS} cards.)`,
 			mechanic: 'tipsy',
 		});
 		drinker.encounterEffects = [...drinker.encounterEffects, tipsy];
-		drinker.setModifier('dex', -TIPSY_PENALTY);
-		drinker.setModifier('int', -TIPSY_PENALTY);
+		if (kind.dex) drinker.setModifier('dex', kind.dex);
+		if (kind.int) drinker.setModifier('int', kind.int);
 	}
 }
 

@@ -20,6 +20,9 @@ tags: [roadmap, cards, balance, combat]
 | 4 | Card texts name both sides of each roll | Done | `ae4318b` |
 | 5 | Effects whose target falls: same-turn damage stands; a fallen captive's hold is not announced (10b #257) | Done | `e198a03` |
 | 6 | Crit failures: a natural 1 on your own move backfires; only a d20 crits (10b #258) | Done | `c731231` |
+| 7 | Review fixes: Blink's natural 1 freezes rather than shifts; escape texts name both sides; Cloak find-roll tests | Done | `5af7ed5` |
+| 8 | Hides last three cards; a natural 20 tears the cloak off (owner) | Done | |
+| 9 | Tipsy rolls 1d6 for its kind, the Ballmer peak on a 5 (owner) | Done | |
 
 ## Decisions (owner, 2026-10-14)
 
@@ -34,8 +37,13 @@ tags: [roadmap, cards, balance, combat]
   swing, every armed Delayed Hit (owner). Only effects that would speak *after* that turn
   are silenced.
 - Natural 1s and 20s are for d20s only; a card's own rare luck roll (Heal's 1-in-100 phial)
-  stays (owner). Blink's natural 1 reuses the confused angel's self-shift rather than adding
-  a new penalty (Claude's call).
+  stays (owner). Blink's natural 1 freezes the angel in stone for a turn, still targetable
+  (Claude's call; a self-shift was tried first and was a gift, since it made the angel
+  untargetable). A confused angel's self-blink freezes too.
+- Hides (Cloak, Vest, Mood Scales) last three cards, up from two; a finder's natural 20
+  tears the cloak off and the hide ends at once (owner). Blink and Take Wing are not hides.
+- Tipsy's kind is a 1d6: 1 -1 int, 2 -2 int, 3 -1 dex, 4 -2 dex, 5 the Ballmer peak
+  (+1/+1), 6 -2/-2 (owner). A further drink restarts the clock without rerolling.
 - Not in this pass: notifications, the phone check, boss hands.
 
 ## Balance check

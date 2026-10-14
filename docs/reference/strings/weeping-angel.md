@@ -80,7 +80,7 @@ Source: `packages/engine/src/cards/blink.ts`.
 1d20 + int vs opponent's int. They are removed from the fight (and can not be targeted).
 On what would have been their next turn, you drain 1d4 hp and 4d4 xp
 If you fall first, they are back in the fight at once
-On a natural 1 the shift folds back: you lose your next turn instead
+On a natural 1 you blink first: frozen in stone, you lose your next turn
 ```
 
 **Narration and outcomes:**
@@ -93,7 +93,8 @@ On a natural 1 the shift folds back: you lose your next turn instead
 | effect → timeShiftReason | `vs {blinkTarget}'s int ({int}) in an attempt to time-shift {him}.` |
 | effect → outcome | `Time shift {succeeded! / failed.} {blinkTarget} {blinked! / did not blink. The Doctor would be proud.}` |
 | effect → narration | `will not be blinked away.` |
-| effect → narration | `⏳ {blinkPlayer} blinks first. The shift folds back on {him}, and {he} slips out of time instead.` |
+| effect → narration | `⏳ {blinkPlayer} blinks first, and is frozen in stone.` |
+| freeze → narration | `⏳ {angel} is still frozen in stone, and loses this turn.` |
 | shift → effectResult | `not target-able because they are ⏳ time-shifted by` |
 | shift → effectResult | `⏳ time-shifted for {turnsLeftToBlink} more turn{s / —} by` |
 | shift → primaryDice | `{primaryDice} (hp) & {primaryDice} (xp)` |
@@ -122,7 +123,7 @@ Hit: 1d20 + int vs int / Damage: 1d6
  -2 disadvantage vs Minotaur, Weeping Angel
 ineffective against Jinn
 
-Opponent breaks free by rolling 1d20 vs immobilizer's int +/- advantage/disadvantage - (turns immobilized * 3)
+Opponent breaks free by rolling 1d20 + their int vs immobilizer's int +/- advantage/disadvantage - (turns immobilized * 3)
 Hits immobilizer back on stroke of luck.
 Turns immobilized resets on curse of loki.
 ```
@@ -156,7 +157,7 @@ Hit: 1d20 + int vs int / Damage: 1d6
  -2 disadvantage vs Minotaur, Weeping Angel
 ineffective against Jinn
 
-Opponent breaks free by rolling 1d20 vs immobilizer's int +/- advantage/disadvantage - (turns immobilized * 3)
+Opponent breaks free by rolling 1d20 + their int vs immobilizer's int +/- advantage/disadvantage - (turns immobilized * 3)
 Hits immobilizer back on stroke of luck.
 Turns immobilized resets on curse of loki.
 
@@ -189,7 +190,7 @@ Hit: 1d20 + int vs int / Damage: 1d6
  -2 disadvantage vs Minotaur, Weeping Angel
 ineffective against Jinn
 
-Opponent breaks free by rolling 1d20 vs immobilizer's int +/- advantage/disadvantage - (turns immobilized * 3)
+Opponent breaks free by rolling 1d20 + their int vs immobilizer's int +/- advantage/disadvantage - (turns immobilized * 3)
 Hits immobilizer back on stroke of luck.
 Turns immobilized resets on curse of loki.
 ```

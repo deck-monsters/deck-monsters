@@ -92,7 +92,7 @@ Hit: 1d20 + dex vs ac / Damage: 1d4
  no modifier vs Dragon, Unicorn
  -2 disadvantage vs Basilisk, Jinn
 
-Opponent breaks free by rolling 1d20 vs immobilizer's str +/- advantage/disadvantage - (turns immobilized * 3)
+Opponent breaks free by rolling 1d20 + their str vs immobilizer's str +/- advantage/disadvantage - (turns immobilized * 3)
 Hits immobilizer back on stroke of luck.
 Turns immobilized resets on curse of loki.
 ```

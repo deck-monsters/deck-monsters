@@ -181,6 +181,10 @@ raises the stat and every roll that adds it alike.
   Camouflage Vest), Fire Breath's dodge (15 + the breather's int), Helm of Awe's save
   (10 + the dragon's int), the ancient dragon's trick (20 + its int), and Tipsy's hold (10).
   At equal modifiers a hide is now found about half the time, not three times in four.
+- **A hide lasts the hider's next three cards** (`HIDDEN_CARDS`; owner, 2026-10-14, up from
+  two), or until it plays a card that targets someone else. A finder's natural 20 ends it at
+  once: the Cloak or Vest is torn off (Mood Scales: seen straight through), and the attack
+  that found it lands. Blink and Take Wing are not hides and keep their own durations.
 
 ## Natural 1s and 20s
 
@@ -197,7 +201,7 @@ phial, is a separate mechanic and is allowed; it is not a natural 1.
 | Horn Gore, Forked Metal Rod (each gore) | The target strikes the gorer's face; the gore adds no horn strength |
 | Forked Stick (the pin roll) | The target wrenches the branch away and jabs it back, for the stick's damage |
 | Berserk | COMBO BREAKER: the combo's damage turns on the berserker |
-| Blink | The shift folds back: the angel loses its own next turn, as a confused angel that blinks itself |
+| Blink | The angel blinks first and is frozen in stone: it loses its next turn but stays a target. A confused angel that blinks itself is frozen the same way; a shift would make it untargetable, which is a gift |
 | Cloak, Camouflage Vest, Mood Scales (the searcher's roll) | The searcher trips and plays the card on itself |
 | Mesmerize (the caster's own d20) | The caster sees its reflection and is held |
 | Sticketh | Its attack is only a miss, by design; the stick-fast save that follows decides |
@@ -503,12 +507,14 @@ new card or monster must reach. Check each one.
 
 Whiskey Shot and Scotch (a Whiskey Shot subclass) count drinks per monster per **round** (one
 pass through every deck) in `encounterModifiers.drinks`. From the third drink in one round,
-each drink rolls 1d20 + str bonus against 10; a miss makes the drinker Tipsy: -1 dex (to hit)
-and -1 int for its next two cards, through `setModifier`, so the stat lines and the roster show
-it. Tipsy is an upkeep effect (`TIPSY_EFFECT`), like winded: it counts held turns, and sobers up
+each drink rolls 1d20 + str bonus against 10; a miss makes the drinker Tipsy for its next two
+cards. What kind of tipsy is a 1d6 on `TIPSY_TABLE` (owner, 2026-10-14): 1 -1 int, 2 -2 int,
+3 -1 dex, 4 -2 dex, 5 the Ballmer peak (+1 dex and +1 int), 6 -2 dex and -2 int. It is a table
+roll, shown in the feed, not a check, so a 6 is no crit. The change goes through `setModifier`,
+so the stat lines and the roster show it, and sobering up reverses exactly what was rolled. Tipsy is an upkeep effect (`TIPSY_EFFECT`), like winded: it counts held turns, and sobers up
 at the start of the third card, narrating before it restores. Another drink while Tipsy
-restarts the clock instead of stacking. Owner, 2026-10-12: per round, not per fight, so one
-Whiskey Shot in a deck never does it; the mild penalty was the owner's pick. The line carries
+restarts the clock instead of stacking or rerolling. Owner, 2026-10-12: per round, not per
+fight, so one Whiskey Shot in a deck never does it. The line carries
 `payload.mechanic: 'tipsy'` for a first-time note.
 
 ## Risky heals: Gloaming Rest
