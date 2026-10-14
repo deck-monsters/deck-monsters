@@ -87,7 +87,7 @@ Attack twice (once with each horn). +2 to hit and immobilize for each successful
 If either horn hits, chance to immobilize: 1d20 vs str.
 
 If already immobilized, hit instead.
-Hit: 1d20 vs ac / Damage: 1d4
+Hit: 1d20 + dex vs ac / Damage: 1d4
  +2 advantage vs Minotaur, Gladiator, Weeping Angel
  no modifier vs Dragon, Unicorn
  -2 disadvantage vs Basilisk, Jinn
@@ -135,7 +135,7 @@ Source: `packages/engine/src/cards/horn-swipe.ts`.
 **Rules text:**
 
 ```text
-Hit: 1d20 vs str / Damage: 1d6
+Hit: 1d20 + str vs str / Damage: 1d6
 Roll twice for hit. Use the best roll. Stroke of Luck and Curse of Loki apply only to the selected roll (discarded rolls do not crit).
 ```
 

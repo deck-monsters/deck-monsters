@@ -21,7 +21,7 @@ describe('./cards/battle-focus.ts', () => {
 		expect((battleFocus as any).damageAmount).to.equal(1);
 		expect((battleFocus as any).damageDice).to.equal('1d6');
 		expect(battleFocus.stats).to.equal(
-			'Hit: 1d20 + str bonus vs ac on first hit\nthen also + int bonus (fatigued by 1 each subsequent hit) until you miss\n1d6 damage on first hit.\n1 damage per hit after that.\n\nStroke of luck increases damage per hit by 1.'
+			'Hit: 1d20 + dex vs ac on first hit\nthen also + int bonus (fatigued by 1 each subsequent hit) until you miss\n1d6 damage on first hit.\n1 damage per hit after that.\n\nStroke of luck increases damage per hit by 1.'
 		);
 	});
 

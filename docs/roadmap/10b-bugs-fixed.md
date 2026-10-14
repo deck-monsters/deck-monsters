@@ -5739,3 +5739,16 @@ a 4-batch run took over 120 s.
 401 s, about 64 ms a fight, with no warning. There is no slow seed: the quiet stretch is the
 script printing a row only when all eight of its batches finish, and multi-boss rows are the
 slowest. The guard stays, so a fight stuck on a real timer is named the moment it happens.
+
+### 256. The Kalevala rolled dex against int, and card texts hid the attack stat — FIXED
+
+Owner question (2026-10-14) about Feline Companion and int. The Kalevala inherited Hit's dex
+roll while targeting int, so its text ("Hit: 1d20 vs int") hid that dex did the work and a
+Feline Companion's int never helped it. Berserk's text promised "+ str bonus" while it rolled
+dex. A probe of every attack card found no other mismatch.
+
+**Fixed:** `HitCard.attackStat` drives both the roll and the text; the Kalevala rolls int, and
+every attack card's text names its stat (`attack-stats.test.ts`). Berserk's text now says dex;
+whether Berserk should roll str instead is open on roadmap 11. Hit chance with the Kalevala moves
+by 5 points per point of (int − dex) modifier: Basilisk +10, Weeping Angel +5, Dragon and Jinn 0,
+Gladiator −5, Minotaur −10, Unicorn −15; `sim:rings curves` showed no class move beyond noise.

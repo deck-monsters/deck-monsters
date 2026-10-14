@@ -161,6 +161,27 @@ Delayed Hit and Gloaming Rest compare against. Under `DECK_MONSTERS_SKIP_DELAYS`
 is a counter, so never compare it with `Date.now()`. Use `dealt ?? damage` when the
 question is "did this hurt".
 
+## Attack stats and contests
+
+Owner, 2026-10-14. A raw stat is `5 + its modifier` (the modifier is the type's base, the
+level, and any boost or curse in the fight), so a boost such as Feline Companion's +2 int
+raises the stat and every roll that adds it alike.
+
+- **Every attack card has an `attackStat`** (`HitCard.attackStat`, default dex). The roll adds
+  that modifier and the card text prints it: `Hit: 1d20 + dex vs ac / Damage: 1d6`. Weapons roll
+  dex against ac; curses roll int against ac; holds roll the stat they target (int for a mind
+  hold, dex for a pin), except grapples (Coil, Constrict, Horn Swipe), which roll str; The
+  Kalevala rolls int against int. `attack-stats.test.ts` checks every card's roll against its
+  text. Berserk's first hit and Sticketh's charge add their own extras on top.
+- **An attack beats the defender's raw stat** (ac, dex, int, str), about 75% at equal modifiers,
+  which keeps fights short. Do not move attacks to "10 + modifier": it costs every hit about 25
+  points.
+- **Active contests use a difficulty plus a modifier**: finding a hidden monster
+  (1d20 + the finder's int vs `HIDE_DIFFICULTY` 10 + the hider's int, or dex for the
+  Camouflage Vest), Fire Breath's dodge (15 + the breather's int), Helm of Awe's save
+  (10 + the dragon's int), the ancient dragon's trick (20 + its int), and Tipsy's hold (10).
+  At equal modifiers a hide is now found about half the time, not three times in four.
+
 ## Holds and the Horn of Proof ward
 
 Every hold one creature puts on another, including Immobilize, Horn Gore, Coil, Constrict,

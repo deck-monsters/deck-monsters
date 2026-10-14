@@ -40,7 +40,7 @@ export class MoodScalesCard extends CloakOfInvisibilityCard {
 	}
 
 	override get stats(): string {
-		return `Calm (above half your hp): your scales match the rocks and sea, and you are hidden until you play a card that targets another player, or for the next 2 cards you play (1d20 vs your int for an opponent to find you).
+		return `Calm (above half your hp): your scales match the rocks and sea, and you are hidden until you play a card that targets another player, or for the next 2 cards you play (${this.findRollText} for an opponent to find you).
 Furious (half your hp or less): your scales blaze red and you cannot hide, but your next melee hit does +${FURY_DAMAGE_DICE} damage.`;
 	}
 

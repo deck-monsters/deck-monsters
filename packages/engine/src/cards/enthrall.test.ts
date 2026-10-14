@@ -64,7 +64,7 @@ describe('./cards/enthrall.ts', () => {
 		const stats = `Immobilize all opponents.
 
 If already immobilized, hit instead.
-${hit.stats}
+${hit.stats.replace('+ dex', '+ int')}
  +2 advantage vs Basilisk, Gladiator
  no modifier vs Dragon, Unicorn
  -2 disadvantage vs Minotaur, Weeping Angel

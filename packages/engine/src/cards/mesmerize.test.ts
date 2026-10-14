@@ -63,7 +63,7 @@ describe('./cards/mesmerize.ts', () => {
 		const stats = `Immobilize everyone. You are caught too only on a natural 1 (1d20).
 
 If already immobilized, hit instead.
-${hit.stats}
+${hit.stats.replace('+ dex', '+ int')}
  +2 advantage vs Basilisk, Gladiator
  no modifier vs Dragon, Unicorn
  -2 disadvantage vs Minotaur, Weeping Angel

@@ -6,7 +6,7 @@ import { VERY_CHEAP } from '../helpers/costs.js';
 import * as STATS from '../constants/stats.js';
 import { wardAgainst, controlWardNarration } from './helpers/control-ward.js';
 
-const { roll, max } = chance;
+const { max } = chance;
 
 export interface CurseCardOptions {
 	curseAmount?: number;
@@ -93,13 +93,9 @@ export class CurseCard extends HitCard {
 		return `${target.givenName}'s ${this.cursedProp} penalties have been maxed out.\n${playerName} harrying jab takes from hp instead.`;
 	}
 
-	override getAttackRoll(player: any): any {
-		return roll({
-			primaryDice: this.attackDice,
-			modifier: player.intModifier,
-			bonusDice: player.bonusAttackDice,
-			crit: true,
-		});
+	/** A curse lands by cunning: int against the target's ac. */
+	override get attackStat(): 'dex' | 'str' | 'int' {
+		return 'int';
 	}
 
 	/**

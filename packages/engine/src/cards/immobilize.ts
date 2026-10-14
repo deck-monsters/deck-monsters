@@ -196,14 +196,15 @@ ${ongoingDamageText}`;
 		return 0;
 	}
 
+	/** A hold rolls the stat it targets (dex against ac): a mind hold uses int, a pin dex. */
+	override get attackStat(): 'dex' | 'str' | 'int' {
+		return this.targetProp === 'ac' ? 'dex' : (this.targetProp as 'dex' | 'str' | 'int');
+	}
+
 	override getAttackRoll(player: any, target?: any): any {
-		const statsBonus =
-			this.targetProp === 'ac'
-				? player.dexModifier
-				: player[`${this.targetProp}Modifier`];
 		return roll({
 			primaryDice: this.attackDice,
-			modifier: statsBonus + this.getAttackModifier(target),
+			modifier: player[`${this.attackStat}Modifier`] + this.getAttackModifier(target),
 			bonusDice: player.bonusAttackDice,
 			crit: true,
 		});

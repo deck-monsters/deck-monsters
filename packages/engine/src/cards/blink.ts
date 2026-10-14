@@ -61,7 +61,7 @@ export class BlinkCard extends CurseCard {
 	}
 
 	override get stats(): string {
-		return `1d20 vs opponent's int. They are removed from the fight (and can not be targeted).\nOn what would have been their next turn, you drain ${this.energyToStealDice} hp and ${this.curseAmountDice} ${this.cursedProp}\nIf you fall first, they are back in the fight at once`;
+		return `1d20 + int vs opponent's int. They are removed from the fight (and can not be targeted).\nOn what would have been their next turn, you drain ${this.energyToStealDice} hp and ${this.curseAmountDice} ${this.cursedProp}\nIf you fall first, they are back in the fight at once`;
 	}
 
 	override effect(

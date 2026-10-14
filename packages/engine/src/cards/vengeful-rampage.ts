@@ -22,7 +22,7 @@ export class VenegefulRampageCard extends HitCard {
 	};
 
 	override get stats(): string {
-		return `Hit: ${this.attackDice} vs ac\nDamage: ${this.damageDice} +1 per wound suffered`;
+		return `Hit: ${this.attackDice} + ${this.attackStat} vs ac\nDamage: ${this.damageDice} +1 per wound suffered`;
 	}
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any

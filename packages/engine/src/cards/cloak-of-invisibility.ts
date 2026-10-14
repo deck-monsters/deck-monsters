@@ -12,6 +12,15 @@ import { isInvisible } from '../helpers/is-invisible.js';
 
 const { roll } = chance;
 
+/**
+ * Finding a hidden monster is a contest (owner, 2026-10-14): the finder rolls 1d20 + int
+ * against 10 + the hider's hiding stat. It used to be the hider's raw stat (5 + its modifier),
+ * which a finder at equal modifiers beat three times in four, so a hide rarely lasted; at 10 it
+ * is about even. Int is how you hide by wit (Cloak, Mood Scales); the Camouflage Vest hides
+ * by dex, since blending in is physical and its Fighters and Barbarians run low on int.
+ */
+export const HIDE_DIFFICULTY = 10;
+
 export class CloakOfInvisibilityCard extends BaseCard {
 	static cardClass = [HIDE];
 	static cardType = 'Cloak of Invisibility';
@@ -21,13 +30,29 @@ export class CloakOfInvisibilityCard extends BaseCard {
 	static level = 1;
 	static cost = PRICEY.cost;
 	static notForSale = true;
+	/** The stat a hider's difficulty adds: `HIDE_DIFFICULTY` + this modifier. */
+	static hideStat: 'int' | 'dex' = 'int';
 
 	constructor({ icon = '☁️' }: Partial<CardOptions> = {}) {
 		super({ icon } as Partial<CardOptions>);
 	}
 
 	get stats(): string {
-		return `You are invisible until you play a card that targets another player, or for the next 2 cards you play (whichever comes first).\n1d20 vs your int for opponent to see you on their turn (natural 20 removes your cloak).`;
+		return `You are invisible until you play a card that targets another player, or for the next 2 cards you play (whichever comes first).\n${this.findRollText} for an opponent to see you on their turn (natural 20 removes your ${this.cardType.toLowerCase()}).`;
+	}
+
+	get hideStat(): 'int' | 'dex' {
+		return (this.constructor as typeof CloakOfInvisibilityCard).hideStat;
+	}
+
+	/** "1d20 + their int vs 10 + your int": the card says both sides of the roll. */
+	get findRollText(): string {
+		return `1d20 + their int vs ${HIDE_DIFFICULTY} + your ${this.hideStat}`;
+	}
+
+	/** What a finder has to beat to see this hider. */
+	hideDifficulty(hider: any): number {
+		return HIDE_DIFFICULTY + (hider[`${this.hideStat}Modifier`] ?? 0);
 	}
 
 	override getTargets(player: any): any[] {
@@ -113,8 +138,9 @@ export class CloakOfInvisibilityCard extends BaseCard {
 						});
 
 						const savingThrow = this.getSavingThrow(player);
+						const hideDifficulty = this.hideDifficulty(invisibilityTarget);
 						const { success, strokeOfLuck, curseOfLoki, tie } =
-							this.checkSuccess(savingThrow, invisibilityTarget.int);
+							this.checkSuccess(savingThrow, hideDifficulty);
 						let outcome: string;
 
 						if (strokeOfLuck) {
@@ -136,12 +162,12 @@ export class CloakOfInvisibilityCard extends BaseCard {
 
 						this.emit('rolled', {
 							success: success,
-							reason: `vs ${invisibilityTarget.givenName}'s int (${target.int}) to determine if ${player.pronouns.he} can find ${invisibilityTarget.pronouns.him}.`,
+							reason: `vs ${HIDE_DIFFICULTY} + ${invisibilityTarget.givenName}'s ${this.hideStat} (${hideDifficulty}) to determine if ${player.pronouns.he} can find ${invisibilityTarget.pronouns.him}.`,
 							card,
 							roll: savingThrow,
 							who: player,
 							outcome,
-							vs: target.int,
+							vs: hideDifficulty,
 						});
 
 						if (curseOfLoki) {

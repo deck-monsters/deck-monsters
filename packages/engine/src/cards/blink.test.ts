@@ -19,7 +19,7 @@ describe('./cards/blink.ts', () => {
 		expect((blink as any).cursedProp).to.equal('xp');
 		expect((blink as any).hasChanceToHit).to.be.false;
 		expect(blink.stats).to.equal(
-			"1d20 vs opponent's int. They are removed from the fight (and can not be targeted).\nOn what would have been their next turn, you drain 1d4 hp and 4d4 xp\nIf you fall first, they are back in the fight at once"
+			"1d20 + int vs opponent's int. They are removed from the fight (and can not be targeted).\nOn what would have been their next turn, you drain 1d4 hp and 4d4 xp\nIf you fall first, they are back in the fight at once"
 		);
 	});
 
@@ -39,7 +39,7 @@ describe('./cards/blink.ts', () => {
 		expect((blink as any).cursedProp).to.equal('ac');
 		expect((blink as any).hasChanceToHit).to.be.true;
 		expect(blink.stats).to.equal(
-			"1d20 vs opponent's int. They are removed from the fight (and can not be targeted).\nOn what would have been their next turn, you drain 2d4 hp and 4d6 ac\nIf you fall first, they are back in the fight at once"
+			"1d20 + int vs opponent's int. They are removed from the fight (and can not be targeted).\nOn what would have been their next turn, you drain 2d4 hp and 4d6 ac\nIf you fall first, they are back in the fight at once"
 		);
 	});
 

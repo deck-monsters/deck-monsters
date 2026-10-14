@@ -144,6 +144,9 @@ Judge each item below against it.
   a burn tick or a hold's ongoing damage that is the killing hit, a held captive that falls, a
   Faceswap or Cloak search that still names a fallen monster. Not started; owner said it is a
   separate question.
+- [ ] **Berserk's attack stat — owner: Cards.** Its text promised "+ str bonus" but it rolls
+  dex; the text now says dex (10b #256). A rage is a str thing; switching the roll to str is a
+  small balance change for Fighters and Barbarians. Owner's call.
 - [ ] **Crit failures — owner: Cards.** Audit cards for natural-1 outcomes and add
   thematically appropriate consequences, including the time-shift failure case.
 - [ ] **Crit ticks — owner: Engine.** Track each monster's natural 20s (upstream #164).

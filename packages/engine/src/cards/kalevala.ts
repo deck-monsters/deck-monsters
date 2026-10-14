@@ -37,6 +37,15 @@ export class KalevalaCard extends HitCard {
 		],
 	};
 
+	/**
+	 * A song reaches the mind: the Kalevala rolls int against int (owner, 2026-10-14). It used to
+	 * roll dex. Its reach is unchanged: it targets int rather than ac, and as an ACOUSTIC card it
+	 * is never turned aside by a cloak, a vest or a flight.
+	 */
+	override get attackStat(): 'dex' | 'str' | 'int' {
+		return 'int';
+	}
+
 	constructor({
 		damageDice,
 		icon = '🎻',

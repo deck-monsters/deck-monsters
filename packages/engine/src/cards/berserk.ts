@@ -90,7 +90,9 @@ export class BerserkCard extends HitCard {
 		if (this.bigFirstHit) {
 			damageDescription = `${this.damageDice} damage on first hit.\n${this.damageAmount} damage per hit after that.`;
 		}
-		return `Hit: ${this.attackDice} + str bonus vs ac on first hit\nthen also + int bonus (fatigued by 1 each subsequent hit) until you miss\n${damageDescription}\n\nStroke of luck increases damage per hit by 1.`;
+		// The roll adds dex (getAttackRollBonus). This text said "+ str bonus" and nothing
+		// rolled str; it now says what the roll does (owner, 2026-10-14). Str is on roadmap 11.
+		return `Hit: ${this.attackDice} + dex vs ac on first hit\nthen also + int bonus (fatigued by 1 each subsequent hit) until you miss\n${damageDescription}\n\nStroke of luck increases damage per hit by 1.`;
 	}
 
 	override getDamageRoll(): any {
@@ -98,7 +100,7 @@ export class BerserkCard extends HitCard {
 	}
 
 	getAttackRollBonus(player: any): number {
-		let modifier = player.dexModifier;
+		let modifier = player[`${this.attackStat}Modifier`];
 		if (this.iterations > 1) {
 			modifier += Math.max(player.intModifier - this.intBonusFatigue, 0);
 		}

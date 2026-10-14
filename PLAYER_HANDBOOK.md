@@ -221,7 +221,7 @@ Messages stay until everyone who has played in the room lately has had a chance 
 
 ## Combat Stats & Card Roles
 
-DEX is melee accuracy and DEX saves. It is also the defense a card uses when that card strikes DEX, so a higher DEX makes a pin such as Forked Stick harder to land. STR is melee damage and STR checks, including pin and escape rolls that use STR. INT is curse and psychic accuracy, healing, and INT damage, and it is the defense those cards strike. AC is the defense melee cards roll against. An AC boost absorbs melee damage before that damage reaches HP. AC does not add to an attack. HP is how much damage a monster can take. Level raises these stats and unlocks higher-level cards.
+DEX is melee accuracy and DEX saves. It is also the defense a card uses when that card strikes DEX, so a higher DEX makes a pin such as Forked Stick harder to land. STR is melee damage and STR checks, including pin and escape rolls that use STR. INT is curse and psychic accuracy, healing, and INT damage, and it is the defense those cards strike. AC is the defense melee cards roll against. An AC boost absorbs melee damage before that damage reaches HP. AC does not add to an attack. Every attack card names both sides of its roll: "Hit: 1d20 + dex vs ac" adds your DEX bonus and has to beat the target's AC; The Kalevala rolls "1d20 + int vs int". Finding a hidden monster is a contest: 1d20 + your INT against 10 + the hider's INT (DEX for a Camouflage Vest). HP is how much damage a monster can take. Level raises these stats and unlocks higher-level cards.
 
 Temporary boosts and curses affect both the stat and rolls derived from it.
 

@@ -9,7 +9,7 @@ describe('./cards/fists-of-virtue.ts', () => {
 		const virtue = new FistsOfVirtueCard();
 
 		expect(virtue).to.be.an.instanceof(FistsOfVirtueCard);
-		expect(virtue.stats).to.equal(`Hit: 1d20 vs ac / Damage: 1d8\nStrikes opponent with highest current hp.`);
+		expect(virtue.stats).to.equal(`Hit: 1d20 + dex vs ac / Damage: 1d8\nStrikes opponent with highest current hp.`);
 		expect(virtue.icon).to.equal('🙏');
 	});
 

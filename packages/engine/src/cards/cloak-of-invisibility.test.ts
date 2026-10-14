@@ -13,7 +13,7 @@ describe('./cards/cloak-of-invisibility.ts', () => {
 		expect(invisibility).to.be.an.instanceof(CloakOfInvisibilityCard);
 		expect(invisibility.icon).to.equal('☁️');
 		expect(invisibility.stats).to.equal(
-			'You are invisible until you play a card that targets another player, or for the next 2 cards you play (whichever comes first).\n1d20 vs your int for opponent to see you on their turn (natural 20 removes your cloak).'
+			'You are invisible until you play a card that targets another player, or for the next 2 cards you play (whichever comes first).\n1d20 + their int vs 10 + your int for an opponent to see you on their turn (natural 20 removes your cloak of invisibility).'
 		);
 	});
 
@@ -93,5 +93,26 @@ describe('./cards/cloak-of-invisibility.ts', () => {
 				expect((target as any).targeted).to.equal(1);
 				expect((player as any).encounterEffects.length).to.equal(0);
 			});
+	});
+});
+
+describe('finding a hidden monster (owner, 2026-10-14)', () => {
+	it('is 1d20 + the finder\'s int against 10 + the hider\'s int for a Cloak', async () => {
+		const { CloakOfInvisibilityCard, HIDE_DIFFICULTY } = await import('./cloak-of-invisibility.js');
+		const cloak = new CloakOfInvisibilityCard();
+		expect(HIDE_DIFFICULTY).to.equal(10);
+		expect(cloak.hideDifficulty({ intModifier: 3, dexModifier: -1 })).to.equal(13);
+	});
+
+	it('uses dex for the Camouflage Vest: blending in is physical', async () => {
+		const { CamouflageVestCard } = await import('./camouflage-vest.js');
+		const vest = new CamouflageVestCard();
+		expect(vest.hideDifficulty({ intModifier: -1, dexModifier: 2 })).to.equal(12);
+		expect(vest.stats).to.include('1d20 + their int vs 10 + your dex');
+	});
+
+	it('names both sides of the roll on Mood Scales too', async () => {
+		const { MoodScalesCard } = await import('./mood-scales.js');
+		expect(new MoodScalesCard().stats).to.include('1d20 + their int vs 10 + your int');
 	});
 });

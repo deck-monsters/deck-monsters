@@ -52,7 +52,7 @@ export class TailLashCard extends HitCard {
 
 	override get stats(): string {
 		const { tailHitPenalty, tailDamageDice } = this.constructor as typeof TailLashCard;
-		return `Hit: ${this.attackDice} vs ${this.targetProp} / Damage: ${this.damageDice}. If the hit lands and the target is still standing, the tail strikes too (1d20 + your STR modifier - ${tailHitPenalty} to hit, ${tailDamageDice} damage, no critical hits).`;
+		return `Hit: ${this.attackDice} + ${this.attackStat} vs ${this.targetProp} / Damage: ${this.damageDice}. If the hit lands and the target is still standing, the tail strikes too (1d20 + str - ${tailHitPenalty} to hit, ${tailDamageDice} damage, no critical hits).`;
 	}
 
 	protected override async onLanded(): Promise<void> {

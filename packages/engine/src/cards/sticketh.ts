@@ -11,7 +11,7 @@ const { roll } = chance;
 
 // A small bonus for the headlong charge: enough to make the horn the better swing, not so
 // much that it stops missing. Missing is the point of the card.
-const STICKETH_TO_HIT_BONUS = 1;
+export const STICKETH_TO_HIT_BONUS = 1;
 
 /*
  * The title is exactly "Sticketh" — do not normalize it to Stickith, Sticks, or Striketh.
@@ -79,7 +79,7 @@ export class StickethCard extends ImmobilizeCard {
 	}
 
 	override get stats(): string {
-		return `Charge: ${this.attackDice} +${STICKETH_TO_HIT_BONUS} vs ac / Damage: ${this.damageDice}
+		return `Charge: ${this.attackDice} + dex +${STICKETH_TO_HIT_BONUS} vs ac / Damage: ${this.damageDice}
 On a miss, roll 1d20 + str vs the target's dex to pull up in time.
 Fail, and your horn is stuck fast: at the start of each of your turns, roll 1d20 + str vs your own str - (turns stuck x 3) to pull it free. A stuck monster misses that turn.
 Natural 1 on either roll fails. Natural 20 on the charge deals max damage.`;

@@ -9,7 +9,7 @@ describe('./cards/brain-drain.ts', () => {
 		const brainDrain = new BrainDrainCard();
 		const hit = new HitCard({ damageDice: '1d4', targetProp: 'int' });
 
-		const stats = `${hit.stats}
+		const stats = `${hit.stats.replace('+ dex', '+ int')}
 Curse: xp -20
 Can reduce xp down to 40, then takes 4 from hp instead.
 The curse lands only if the hit does.`;

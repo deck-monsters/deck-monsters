@@ -77,7 +77,7 @@ Source: `packages/engine/src/cards/blink.ts`.
 **Rules text:**
 
 ```text
-1d20 vs opponent's int. They are removed from the fight (and can not be targeted).
+1d20 + int vs opponent's int. They are removed from the fight (and can not be targeted).
 On what would have been their next turn, you drain 1d4 hp and 4d4 xp
 If you fall first, they are back in the fight at once
 ```
@@ -114,7 +114,7 @@ Source: `packages/engine/src/cards/enthrall.ts`.
 Immobilize all opponents.
 
 If already immobilized, hit instead.
-Hit: 1d20 vs int / Damage: 1d6
+Hit: 1d20 + int vs int / Damage: 1d6
  +2 advantage vs Basilisk, Gladiator
  no modifier vs Dragon, Unicorn
  -2 disadvantage vs Minotaur, Weeping Angel
@@ -148,7 +148,7 @@ Source: `packages/engine/src/cards/entrance.ts`.
 Immobilize and hit all opponents.
 
 If already immobilized, hit instead.
-Hit: 1d20 vs int / Damage: 1d6
+Hit: 1d20 + int vs int / Damage: 1d6
  +2 advantage vs Basilisk, Gladiator
  no modifier vs Dragon, Unicorn
  -2 disadvantage vs Minotaur, Weeping Angel
@@ -181,7 +181,7 @@ Source: `packages/engine/src/cards/mesmerize.ts`.
 Immobilize everyone. You are caught too only on a natural 1 (1d20).
 
 If already immobilized, hit instead.
-Hit: 1d20 vs int / Damage: 1d6
+Hit: 1d20 + int vs int / Damage: 1d6
  +2 advantage vs Basilisk, Gladiator
  no modifier vs Dragon, Unicorn
  -2 disadvantage vs Minotaur, Weeping Angel

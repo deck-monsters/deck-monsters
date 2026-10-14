@@ -20,7 +20,7 @@ describe('./cards/berserk.ts', () => {
 		expect((berserk as any).bigFirstHit).to.be.false;
 		expect((berserk as any).damageAmount).to.equal(1);
 		expect(berserk.stats).to.equal(
-			'Hit: 1d20 + str bonus vs ac on first hit\nthen also + int bonus (fatigued by 1 each subsequent hit) until you miss\n1 damage per hit.\n\nStroke of luck increases damage per hit by 1.'
+			'Hit: 1d20 + dex vs ac on first hit\nthen also + int bonus (fatigued by 1 each subsequent hit) until you miss\n1 damage per hit.\n\nStroke of luck increases damage per hit by 1.'
 		);
 	});
 

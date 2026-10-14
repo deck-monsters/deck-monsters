@@ -10,7 +10,7 @@ describe('./cards/rehit.ts', () => {
 		expect(rehit).to.be.an.instanceof(Rehit);
 		expect((Rehit as any).permittedClassesAndTypes).to.deep.equal([CLERIC, FIGHTER]);
 		expect(rehit.stats).to.equal(
-			'Hit: 1d20 vs ac / Damage: 1d6\nRoll for attack, if you roll less than 10, roll again and use the second roll no matter what. Stroke of Luck and Curse of Loki apply only to the selected roll (discarded rolls do not crit).'
+			'Hit: 1d20 + dex vs ac / Damage: 1d6\nRoll for attack, if you roll less than 10, roll again and use the second roll no matter what. Stroke of Luck and Curse of Loki apply only to the selected roll (discarded rolls do not crit).'
 		);
 	});
 });

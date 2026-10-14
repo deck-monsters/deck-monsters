@@ -1,5 +1,4 @@
 import { CurseCard } from './curse.js';
-import { HitCard } from './hit.js';
 import { CLERIC } from '../constants/creature-classes.js';
 import { JINN } from '../constants/creature-types.js';
 import { chance } from '../helpers/chance.js';
@@ -27,12 +26,12 @@ export class BrainDrainCard extends CurseCard {
 	}
 
 	override get stats(): string {
-		const hit = new HitCard(this.options as any);
 		const maxMod = (STATS.MAX_PROP_MODIFICATIONS as any)[this.cursedProp] ?? 1;
 		let stats = `Curse: ${this.cursedProp} ${this.curseAmount}\nCan reduce ${this.cursedProp} down to ${maxMod}, then takes ${max(this.damageDice)} from hp instead.`;
 
 		if (this.hasChanceToHit) {
-			stats = `${hit.stats}\n${stats}\nThe curse lands only if the hit does.`;
+			// Its own hit line: a plain Hit's said dex, but a curse rolls int.
+			stats = `${this.hitLine}\n${stats}\nThe curse lands only if the hit does.`;
 		}
 
 		return stats;

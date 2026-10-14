@@ -16,7 +16,7 @@ describe('./cards/coil.ts', () => {
 		const stats = `Immobilize and hit your opponent by coiling your serpentine body around them and squeezing. If opponent is immune, hit instead.
 
 If already immobilized, hit instead.
-${hit.stats}
+${hit.stats.replace('+ dex', '+ str')}
  +2 advantage vs Gladiator, Minotaur
  no modifier vs Dragon, Unicorn, Weeping Angel
  -2 disadvantage vs Basilisk, Jinn
