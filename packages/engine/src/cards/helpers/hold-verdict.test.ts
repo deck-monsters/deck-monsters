@@ -78,7 +78,7 @@ describe('./cards/helpers/card-facts.ts', () => {
 		});
 		expect(facts.usedBy).to.deep.equal(['Basilisk']);
 		expect(facts.description).to.include('Coil around your enemies');
-		expect(facts.stats).to.include('Hit: 1d20 vs dex');
+		expect(facts.stats).to.include('Hit: 1d20 + str vs dex');
 	});
 
 	it('reports a card open to all with no used-by list, level 0 and no signature', () => {

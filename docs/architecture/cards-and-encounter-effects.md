@@ -161,6 +161,65 @@ Delayed Hit and Gloaming Rest compare against. Under `DECK_MONSTERS_SKIP_DELAYS`
 is a counter, so never compare it with `Date.now()`. Use `dealt ?? damage` when the
 question is "did this hurt".
 
+## Attack stats and contests
+
+Owner, 2026-10-14. A raw stat is `5 + its modifier` (the modifier is the type's base, the
+level, and any boost or curse in the fight), so a boost such as Feline Companion's +2 int
+raises the stat and every roll that adds it alike.
+
+- **Every attack card has an `attackStat`** (`HitCard.attackStat`, default dex). The roll adds
+  that modifier and the card text prints it: `Hit: 1d20 + dex vs ac / Damage: 1d6`. Weapons roll
+  dex against ac; curses roll int against ac; holds roll the stat they target (int for a mind
+  hold, dex for a pin), except grapples (Coil, Constrict, Horn Swipe), which roll str; The
+  Kalevala rolls int against int. `attack-stats.test.ts` checks every card's roll against its
+  text. Berserk's first hit and Sticketh's charge add their own extras on top.
+- **An attack beats the defender's raw stat** (ac, dex, int, str), about 75% at equal modifiers,
+  which keeps fights short. Do not move attacks to "10 + modifier": it costs every hit about 25
+  points.
+- **Active contests use a difficulty plus a modifier**: finding a hidden monster
+  (1d20 + the finder's int vs `HIDE_DIFFICULTY` 10 + the hider's int, or dex for the
+  Camouflage Vest), Fire Breath's dodge (15 + the breather's int), Helm of Awe's save
+  (10 + the dragon's int), the ancient dragon's trick (20 + its int), and Tipsy's hold (10).
+  At equal modifiers a hide is now found about half the time, not three times in four.
+- **A hide lasts the hider's next three cards** (`HIDDEN_CARDS`; owner, 2026-10-14, up from
+  two), or until it plays a card that targets someone else. A finder's natural 20 ends it at
+  once: the Cloak or Vest is torn off (Mood Scales: seen straight through), and the attack
+  that found it lands. Blink and Take Wing are not hides and keep their own durations.
+
+## Natural 1s and 20s
+
+Roadmap 51 (owner, 2026-10-14). **Only a d20 crits.** `chance.roll` sets `curseOfLoki` and
+`strokeOfLuck` only for a `crit` roll on `1d20`, so a damage die that rolls its top face is not a
+stroke of luck. A rare luck roll of a card's own, such as Heal's 1-in-100 poisoned or lucky
+phial, is a separate mechanic and is allowed; it is not a natural 1.
+
+**A natural 1 on your own move backfires.** It always fails (`checkSuccess`), and:
+
+| Card | A natural 1 |
+|------|-------------|
+| Hit and every card on its attack path (curses, Kalevala, Lucky Strike, Rehit, Coil's hit …) | The target flings the blow back: the attacker takes the card's damage, rolled with the target's stats |
+| Horn Gore, Forked Metal Rod (each gore) | The target strikes the gorer's face; the gore adds no horn strength |
+| Forked Stick (the pin roll) | The target wrenches the branch away and jabs it back, for the stick's damage; a confused holder aiming at itself jabs itself |
+| Berserk | COMBO BREAKER: the combo's damage turns on the berserker |
+| Blink | The angel blinks first and is frozen in stone: it loses its next turn but stays a target. A confused angel that blinks itself is frozen the same way; a shift would make it untargetable, which is a gift |
+| Cloak, Camouflage Vest, Mood Scales (the searcher's roll) | The searcher trips and plays the card on itself |
+| Mesmerize (the caster's own d20) | The caster sees its reflection and is held |
+| Sticketh | Its attack is only a miss, by design; the stick-fast save that follows decides |
+
+A miss event carries `curseOfLoki`, so the feed reads "misses … horribly" rather than "is
+blocked by".
+
+**A natural 1 on a save or a dodge is only a failure**: Fire Breath's dodge, Flee, Tsunami's
+ride and Helm of Awe's first save. The other side's success is the consequence. Horn Gore's pin
+roll after its gores is also only a failure: the gores themselves are where it backfires.
+Two saves do more because a held or awed monster is fighting its
+captor: a natural 1 on a hold's freedom roll tightens the hold (`immobilizedTurns` resets), and
+on a later Helm of Awe save a monster that is not bloodied tries to flee.
+
+**Some rolls never crit** (the donkey's card says so): the donkey's kick, Tail Lash's tail and
+the Unconquerable Horn's companion strike. Each is a second blow riding on a card whose main roll
+already can.
+
 ## Holds and the Horn of Proof ward
 
 Every hold one creature puts on another, including Immobilize, Horn Gore, Coil, Constrict,
@@ -348,7 +407,24 @@ says the same line.
 Scales' fury, the Cloak, Enchanted Faceswap, Horn of Proof's ward, Sticketh) end with it, since
 it takes no more turns; there is nothing to announce.
 
-What happens to effects when their **target** falls is a separate question, open on roadmap 11.
+## When the monster an effect is on falls
+
+Owner, 2026-10-14 (roadmap 51). **Damage keeps landing in the turn a monster falls.** Hp can go
+below zero. The killing card finishes resolving, a Berserk chain's last swing still lands (the
+chain stops after it, and the line can read `ULTIMATE`), and every armed Delayed Hit answers the
+blow, even when an earlier copy's counter has already killed the attacker. Do not add a "skip
+the dead" guard to anything that resolves inside the play that did the killing.
+
+After that, a fallen monster is out of the fight:
+
+- **It leaves the turn order** (`getActiveContestants` keeps only the living), so anything that
+  waits for its next turn never speaks. A burn tick or a hold's ongoing damage can be the
+  killing hit at the start of its turn; that turn's card is then not played.
+- **It is never chosen as a new target**, so effects that wrap cards aimed at it (the Cloak and
+  Camouflage Vest search, Enchanted Faceswap's trap) never fire again.
+- **Its effects end with it, unannounced.** A hold on a fallen captive is not "released" when
+  its holder falls later: `releaseWhenCasterFalls` stops listening when the captive falls, so
+  the caster's death no longer says "<captive> is no longer coiled" about a body.
 
 ## Who can hold a card, and what a card is
 
@@ -431,12 +507,14 @@ new card or monster must reach. Check each one.
 
 Whiskey Shot and Scotch (a Whiskey Shot subclass) count drinks per monster per **round** (one
 pass through every deck) in `encounterModifiers.drinks`. From the third drink in one round,
-each drink rolls 1d20 + str bonus against 10; a miss makes the drinker Tipsy: -1 dex (to hit)
-and -1 int for its next two cards, through `setModifier`, so the stat lines and the roster show
-it. Tipsy is an upkeep effect (`TIPSY_EFFECT`), like winded: it counts held turns, and sobers up
+each drink rolls 1d20 + str bonus against 10; a miss makes the drinker Tipsy for its next two
+cards. What kind of tipsy is a 1d6 on `TIPSY_TABLE` (owner, 2026-10-14): 1 -1 int, 2 -2 int,
+3 -1 dex, 4 -2 dex, 5 the Ballmer peak (+1 dex and +1 int), 6 -2 dex and -2 int. It is a table
+roll, shown in the feed, not a check, so a 6 is no crit. The change goes through `setModifier`,
+so the stat lines and the roster show it, and sobering up reverses exactly what was rolled. Tipsy is an upkeep effect (`TIPSY_EFFECT`), like winded: it counts held turns, and sobers up
 at the start of the third card, narrating before it restores. Another drink while Tipsy
-restarts the clock instead of stacking. Owner, 2026-10-12: per round, not per fight, so one
-Whiskey Shot in a deck never does it; the mild penalty was the owner's pick. The line carries
+restarts the clock instead of stacking or rerolling. Owner, 2026-10-12: per round, not per
+fight, so one Whiskey Shot in a deck never does it. The line carries
 `payload.mechanic: 'tipsy'` for a first-time note.
 
 ## Risky heals: Gloaming Rest

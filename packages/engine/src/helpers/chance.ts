@@ -43,7 +43,9 @@ export const chance = {
 		let strokeOfLuck = false;
 		let curseOfLoki = false;
 
-		if (crit) {
+		// Natural 1s and 20s belong to the d20 alone (owner, 2026-10-14): a 6 on a d6 damage
+		// die is not a stroke of luck, whatever the caller asked for.
+		if (crit && /^1d20$/i.test(primaryDice)) {
 			if (naturalRoll.result === chance.max(primaryDice)) {
 				strokeOfLuck = true;
 			} else if (naturalRoll.result === 1) {

@@ -9,7 +9,7 @@ describe('./cards/vengeful-rampage.ts', () => {
 
 		expect(vengefulRampage).to.be.an.instanceof(VengefulRampageCard);
 		expect((vengefulRampage as any).probability).to.equal(15);
-		expect(vengefulRampage.stats).to.equal('Hit: 1d20 vs ac\nDamage: 1d6 +1 per wound suffered');
+		expect(vengefulRampage.stats).to.equal('Hit: 1d20 + dex vs ac\nDamage: 1d6 +1 per wound suffered');
 	});
 
 	it('deals damage equal to the amount of damage already taken', () => {

@@ -1,8 +1,6 @@
 import { LuckyStrike } from './lucky-strike.js';
 import { MINOTAUR } from '../constants/creature-types.js';
-import { chance } from '../helpers/chance.js';
 
-const { roll } = chance;
 
 export class HornSwipeCard extends LuckyStrike {
 	static cardType = 'Horn Swipe';
@@ -34,13 +32,8 @@ export class HornSwipeCard extends LuckyStrike {
 		super({ targetProp, icon, ...rest });
 	}
 
-	override getAttackRoll(player: any): any {
-		return roll({
-			primaryDice: this.attackDice,
-			modifier: player.strModifier,
-			bonusDice: player.bonusAttackDice,
-			crit: true,
-		});
+	override get attackStat(): 'dex' | 'str' | 'int' {
+		return 'str';
 	}
 
 	override getAttackCommentary(

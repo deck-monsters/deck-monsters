@@ -33,7 +33,7 @@ export class Rehit extends HitCard {
 			rollWithModes(this, player, target, () =>
 				roll({
 					primaryDice: this.attackDice,
-					modifier: player.dexModifier,
+					modifier: player[`${this.attackStat}Modifier`],
 					bonusDice: player.bonusAttackDice,
 					crit: true,
 				})

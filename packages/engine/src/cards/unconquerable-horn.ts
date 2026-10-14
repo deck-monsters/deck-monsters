@@ -84,7 +84,7 @@ export class UnconquerableHornCard extends HitCard {
 
 	override get stats(): string {
 		const { companionHitBonus, companionDamageDice } = this.constructor as typeof UnconquerableHornCard;
-		return `Let the horn ring out: hit your target, and an ally in the ring strikes it too. If you have no ally, a creature of the wood answers its light: an otter, a deer, or a ram (1d20 + ${companionHitBonus} to hit, ${companionDamageDice} damage).`;
+		return `Let the horn ring out: hit your target (1d20 + ${this.attackStat} vs ${this.targetProp}), and an ally in the ring strikes it too. If you have no ally, a creature of the wood answers its light: an otter, a deer, or a ram (1d20 + ${companionHitBonus} to hit, ${companionDamageDice} damage).`;
 	}
 
 	/**

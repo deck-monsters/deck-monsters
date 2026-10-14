@@ -63,7 +63,7 @@ describe('./cards/sticketh.ts Sticketh', () => {
 	it('explains the charge and the stick-fast risk in its stats', () => {
 		const { stats } = new StickethCard();
 
-		expect(stats).to.include('Charge: 1d20 +1 vs ac / Damage: 1d10');
+		expect(stats).to.include('Charge: 1d20 + dex +1 vs ac / Damage: 1d10');
 		expect(stats).to.include('1d20 + str vs the target\'s dex');
 		expect(stats).to.include('stuck fast');
 		expect(stats).not.to.include('Opponent breaks free');

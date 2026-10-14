@@ -25,7 +25,6 @@ completed reasoning belongs in the [archive](../archive/README.md).
 | [47 — Dream Desktop](47-dream-desktop-theme.md) | Brief: a System 7 theme from the Millefleur exploration, to be developed as its own theme. Open: studies, screens, a design system |
 | [41 — Room chat](41-room-chat.md) | Shipped in #420: `msg`/`dm`, the Chat tab, retention until seen. Backlog: a Discord bridge, moderation. Notifications are [48](48-notifications.md) |
 | [48 — Notifications](48-notifications.md) | Notes, not scheduled, checked against the code 2026-10-12 (the countdown re-arms on every join, so one banner per waiting stretch; DMs need a room-agnostic chat seam). A home-screen ping when the page is closed: a DM first; a fight countdown for a player already waiting in the ring (a boss or another player completes quorum), and optionally in a smaller ring so someone not in yet can still join |
-| [50 — Bugs from roadmap 10, and Horn Gore](50-bugs-and-horn-gore.md) | Built on `claude/roadmap-49-archive-and-fixes`: reset cleanup (10 J), the fight log (10 F), three matchup tiers for every hold card, effects that end when their caster falls, slow-sim timing (10 K, not a bug). Ready for a PR |
 | [27 — Next passes](27-next-passes.md) | The order of the next passes: command and workshop bugs, the Dragon, realistic rings with boss balance, and the mega boss (done), then later work |
 
 [`10b-bugs-fixed.md`](10b-bugs-fixed.md) remains the stable fixed-bug ledger because code

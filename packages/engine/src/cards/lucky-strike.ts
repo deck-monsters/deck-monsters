@@ -43,7 +43,7 @@ export class LuckyStrike extends HitCard {
 	override getAttackRoll(player: any): any {
 		return roll({
 			primaryDice: this.attackDice,
-			modifier: player.dexModifier,
+			modifier: player[`${this.attackStat}Modifier`],
 			bonusDice: player.bonusAttackDice,
 			crit: true,
 		});

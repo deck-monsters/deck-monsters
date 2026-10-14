@@ -48,14 +48,29 @@ export class HitCard extends BaseCard<HitCardOptions> {
 		return (this.options as HitCardOptions).targetProp!;
 	}
 
+	/**
+	 * The stat whose modifier an attack adds: dex for a weapon, int for a spell or a song, str for
+	 * a grapple. The roll and the card text both read it, so they cannot disagree; the Kalevala
+	 * used to roll dex against int while its text said only "1d20 vs int" (owner, 2026-10-14).
+	 * `attack-stats.test.ts` checks every card's roll against this.
+	 */
+	get attackStat(): 'dex' | 'str' | 'int' {
+		return 'dex';
+	}
+
+	/** "Hit: 1d20 + dex vs ac / Damage: 1d6", with this card's own attack stat. */
+	get hitLine(): string {
+		return `Hit: ${this.attackDice} + ${this.attackStat} vs ${this.targetProp} / Damage: ${this.damageDice}`;
+	}
+
 	get stats(): string {
-		return `Hit: ${this.attackDice} vs ${this.targetProp} / Damage: ${this.damageDice}`;
+		return this.hitLine;
 	}
 
 	getAttackRoll(player: any, _target?: any): any {
 		return roll({
 			primaryDice: this.attackDice,
-			modifier: player.dexModifier,
+			modifier: player[`${this.attackStat}Modifier`],
 			bonusDice: player.bonusAttackDice,
 			crit: true,
 		});

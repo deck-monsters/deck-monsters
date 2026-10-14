@@ -5739,3 +5739,47 @@ a 4-batch run took over 120 s.
 401 s, about 64 ms a fight, with no warning. There is no slow seed: the quiet stretch is the
 script printing a row only when all eight of its batches finish, and multi-boss rows are the
 slowest. The guard stays, so a fight stuck on a real timer is named the moment it happens.
+
+### 256. The Kalevala rolled dex against int, and card texts hid the attack stat — FIXED
+
+Owner question (2026-10-14) about Feline Companion and int. The Kalevala inherited Hit's dex
+roll while targeting int, so its text ("Hit: 1d20 vs int") hid that dex did the work and a
+Feline Companion's int never helped it. Berserk's text promised "+ str bonus" while it rolled
+dex. A probe of every attack card found no other mismatch.
+
+**Fixed:** `HitCard.attackStat` drives both the roll and the text; the Kalevala rolls int, and
+every attack card's text names its stat (`attack-stats.test.ts`). Berserk's text now says dex;
+whether Berserk should roll str instead is open on roadmap 11. Hit chance with the Kalevala moves
+by 5 points per point of (int − dex) modifier: Basilisk +10, Weeping Angel +5, Dragon and Jinn 0,
+Gladiator −5, Minotaur −10, Unicorn −15; `sim:rings curves` showed no class move beyond noise.
+
+### 257. A hold on a fallen captive was announced as released when its holder fell — FIXED
+
+Found while settling roadmap 11's "effects when their target falls" (roadmap 51).
+`releaseWhenCasterFalls` listened only for the caster's death. A captive that fell first kept
+its hold in `encounterEffects` (a fallen monster's effects are never cleaned up, because it
+takes no more turns), so when the coiler fell later the helper released the hold and said
+"<captive> is no longer coiled" about a body.
+
+**Fixed:** the helper also listens for the holder's own death, unhooks, and skips both the
+release and the line if the holder has fallen (`caster-falls.test.ts`). Delayed Hit was left
+alone on purpose: the owner ruled that damage keeps landing in the turn a monster falls, so a
+second armed copy still answers an attacker the first copy killed (`delayed-hit.test.ts` pins
+it).
+
+### 258. Natural 1s that did nothing, and pin texts that hid their rolls — FIXED
+
+Roadmap 11's crit-failure audit (roadmap 51). Every card on Hit's attack path flung a natural 1
+back at the attacker, but two cards rolling for their own move did not: Blink's time-shift and
+the Forked Stick's pin each treated a 1 as a plain miss, and their miss events left out
+`curseOfLoki`, so the feed said "is blocked by" under a "Crit Fail!" verdict. `chance.roll`
+also honoured `crit` on any die, so a crit-flagged d6 would have read a 6 as a natural 20; no
+card did that yet. Separately, the pin texts said "1d20 vs str" when Forked Stick rolls
+1d20 + str vs dex and Horn Gore and the Rod roll 1d20 + str vs str; `attack-stats.test.ts` only
+checks attack rolls, so it missed them.
+
+**Fixed:** Blink's natural 1 freezes the angel in stone: it loses its next turn but stays a target. (The first version shifted the angel instead, as a confused angel that blinks itself was; review caught that a shift makes the angel untargetable, so the opponent lost more turns than it did. A confused angel's self-blink now freezes too.) the Forked Stick's
+is jabbed back for the stick's damage; both miss events carry the flag. Only `1d20` crits
+(`helpers/chance.test.ts`, owner: "not crit failing on every 1 of a 1d4 or 1d6"). The pin and escape texts
+name both sides ("1d20 + their str vs immobilizer's str"). A forked-stick test's spy on `getImmobilizeRoll` was never restored and leaked
+into later tests; it is now.

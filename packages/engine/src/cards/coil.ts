@@ -1,5 +1,4 @@
 import { ImmobilizeCard } from './immobilize.js';
-import { chance } from '../helpers/chance.js';
 import {
 	GLADIATOR,
 	MINOTAUR,
@@ -10,7 +9,6 @@ import { EPIC } from '../helpers/probabilities.js';
 import { EXPENSIVE } from '../helpers/costs.js';
 import { MELEE } from '../constants/card-classes.js';
 
-const { roll } = chance;
 
 export class CoilCard extends ImmobilizeCard {
 	static cardClass = [MELEE];
@@ -54,14 +52,9 @@ export class CoilCard extends ImmobilizeCard {
 		super({ freedomSavingThrowTargetAttr, icon, ...rest });
 	}
 
-	override getAttackRoll(player: any, target: any): any {
-		return roll({
-			primaryDice: this.attackDice,
-			modifier:
-				player.strModifier + this.getAttackModifier(target),
-			bonusDice: player.bonusAttackDice,
-			crit: true,
-		});
+	/** A coil is a grapple: str against the target's dex. */
+	override get attackStat(): 'dex' | 'str' | 'int' {
+		return 'str';
 	}
 
 	override get stats(): string {

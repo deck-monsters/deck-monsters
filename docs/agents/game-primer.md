@@ -153,6 +153,14 @@ printed just above it (10b #194). The full play pipeline, where
 fight-scoped card state lives, and the hold boundary are in
 [cards and encounter effects](../architecture/cards-and-encounter-effects.md).
 
+Two owner rules settle most "what should happen here" questions about rolls and deaths
+(roadmap 51). **Damage keeps landing in the turn a monster falls**: hp goes below zero, a
+Berserk chain's last swing lands, and every armed Delayed Hit answers, so do not add "skip
+the dead" guards inside a play. After that turn a fallen monster's effects end, unannounced.
+**Only a d20 crits**, and a natural 1 on your own move backfires (a Hit is flung back, a
+Blink freezes the angel), while a natural 1 on a save or dodge only fails. The tables are
+in [cards and encounter effects](../architecture/cards-and-encounter-effects.md#natural-1s-and-20s).
+
 ## Prompts
 
 Engine code asks the player questions through `channel({ question, choices })`. The server

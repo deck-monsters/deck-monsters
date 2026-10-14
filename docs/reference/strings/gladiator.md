@@ -74,7 +74,7 @@ Source: `packages/engine/src/cards/battle-focus.ts`.
 **Rules text:**
 
 ```text
-Hit: 1d20 + str bonus vs ac on first hit
+Hit: 1d20 + dex vs ac on first hit
 then also + int bonus (fatigued by 1 each subsequent hit) until you miss
 1d6 damage on first hit.
 1 damage per hit after that.

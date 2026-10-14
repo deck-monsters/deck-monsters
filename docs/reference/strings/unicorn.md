@@ -178,7 +178,7 @@ Source: `packages/engine/src/cards/sticketh.ts`.
 **Rules text:**
 
 ```text
-Charge: 1d20 +1 vs ac / Damage: 1d10
+Charge: 1d20 + dex +1 vs ac / Damage: 1d10
 On a miss, roll 1d20 + str vs the target's dex to pull up in time.
 Fail, and your horn is stuck fast: at the start of each of your turns, roll 1d20 + str vs your own str - (turns stuck x 3) to pull it free. A stuck monster misses that turn.
 Natural 1 on either roll fails. Natural 20 on the charge deals max damage.
@@ -219,7 +219,7 @@ Source: `packages/engine/src/cards/unconquerable-horn.ts`.
 **Rules text:**
 
 ```text
-Let the horn ring out: hit your target, and an ally in the ring strikes it too. If you have no ally, a creature of the wood answers its light: an otter, a deer, or a ram (1d20 + 2 to hit, 1d4 damage).
+Let the horn ring out: hit your target (1d20 + dex vs ac), and an ally in the ring strikes it too. If you have no ally, a creature of the wood answers its light: an otter, a deer, or a ram (1d20 + 2 to hit, 1d4 damage).
 ```
 
 **Narration and outcomes:**

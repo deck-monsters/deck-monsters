@@ -84,15 +84,15 @@ Source: `packages/engine/src/cards/horn-gore.ts`.
 ```text
 Attack twice (once with each horn). +2 to hit and immobilize for each successful horn hit.
 
-If either horn hits, chance to immobilize: 1d20 vs str.
+If either horn hits, chance to immobilize: 1d20 + str vs str.
 
 If already immobilized, hit instead.
-Hit: 1d20 vs ac / Damage: 1d4
+Hit: 1d20 + dex vs ac / Damage: 1d4
  +2 advantage vs Minotaur, Gladiator, Weeping Angel
  no modifier vs Dragon, Unicorn
  -2 disadvantage vs Basilisk, Jinn
 
-Opponent breaks free by rolling 1d20 vs immobilizer's str +/- advantage/disadvantage - (turns immobilized * 3)
+Opponent breaks free by rolling 1d20 + their str vs immobilizer's str +/- advantage/disadvantage - (turns immobilized * 3)
 Hits immobilizer back on stroke of luck.
 Turns immobilized resets on curse of loki.
 ```
@@ -105,7 +105,7 @@ Turns immobilized resets on curse of loki.
 | flavors → hits | `mercilessly juggles (on their mighty horns) the pitiful` |
 | flavors → hits | `chases down gleefully, stomps on, and then wantonly drives their horns through` |
 | flavors → hits | `teaches the true meaning of "horny" to` |
-| mechanics → returns | `Attack twice (once with each {spike}). +2 to hit and immobilize for each successful {spike} hit. ⏎  ⏎ If either {spike} hits, chance to immobilize: 1d20 vs {freedomSavingThrowTargetAttr}.` |
+| mechanics → returns | `Attack twice (once with each {spike}). +2 to hit and immobilize for each successful {spike} hit. ⏎  ⏎ If either {spike} hits, chance to immobilize: {attackDice} + {freedomSavingThrowTargetAttr} vs {freedomSavingThrowTargetAttr}.` |
 | getCommentary → commentary | `{player} rolled a natural 20. Automatic max damage.` |
 | getCommentary → flavors | `gouge {his} eye` |
 | getCommentary → flavors | `punch {his} soft temple` |
@@ -135,7 +135,7 @@ Source: `packages/engine/src/cards/horn-swipe.ts`.
 **Rules text:**
 
 ```text
-Hit: 1d20 vs str / Damage: 1d6
+Hit: 1d20 + str vs str / Damage: 1d6
 Roll twice for hit. Use the best roll. Stroke of Luck and Curse of Loki apply only to the selected roll (discarded rolls do not crit).
 ```
 

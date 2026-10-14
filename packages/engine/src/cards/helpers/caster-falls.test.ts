@@ -112,4 +112,22 @@ describe('./cards/helpers/caster-falls.ts', () => {
 		(snake as any).endEncounter();
 		expect(listeners()).to.equal(before);
 	});
+
+	it('says nothing when the captive falls first, then the coiler (roadmap 51)', async () => {
+		const snake = new Basilisk({ name: 'George', gender: 'male' });
+		const bull = new Minotaur({ name: 'Jefferson', gender: 'male' });
+		const killer = new Dragon({ name: 'Skarn', gender: 'female' });
+		setUp(snake, bull, killer);
+		const coil = listen(new CoilCard());
+		sinon.stub(coil, 'immobilizeCheck').returns(true);
+		const listeners = () => (snake as any).semaphore.listenerCount('die');
+		const before = listeners();
+
+		coil.immobilize(snake, bull, ring, ring.contestants);
+		await (bull as any).die(killer);
+		expect(listeners()).to.equal(before);
+
+		await (snake as any).die(killer);
+		expect(narrations.join(' ')).to.not.include('no longer coiled');
+	});
 });

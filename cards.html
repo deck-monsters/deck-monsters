@@ -103,7 +103,7 @@ If hit by melee attack, damage comes out of ac boost first.</section>
 			<h3>🥋  Battle Focus  ☆</h3>
 		</header>
 		<section>Years of training, drill after drill, kick in. An attack is not a single hit, but a series of strikes each leading to another. Time seems to disappear and for a brief moment you and your adversary become perfectly in sync as you lead in a dance of their destruction.</section>
-		<section>Hit: 1d20 + str bonus vs ac on first hit
+		<section>Hit: 1d20 + dex vs ac on first hit
 then also + int bonus (fatigued by 1 each subsequent hit) until you miss
 1d6 damage on first hit.
 1 damage per hit after that.
@@ -127,7 +127,7 @@ Stroke of luck increases damage per hit by 1.</section>
 			<h3>😤  Berserk  ○</h3>
 		</header>
 		<section>The whole world disappears into a beautiful still, silent, red. At the center of all things is the perfect face of your enemy. Destroy it.</section>
-		<section>Hit: 1d20 + str bonus vs ac on first hit
+		<section>Hit: 1d20 + dex vs ac on first hit
 then also + int bonus (fatigued by 1 each subsequent hit) until you miss
 1 damage per hit.
 
@@ -186,9 +186,10 @@ Stroke of luck increases damage per hit by 1.</section>
 			<h3>⏳  Blink  ☆</h3>
 		</header>
 		<section>Consume your victim's potential energy</section>
-		<section>1d20 vs opponent's int. They are removed from the fight (and can not be targeted).
+		<section>1d20 + int vs opponent's int. They are removed from the fight (and can not be targeted).
 On what would have been their next turn, you drain 1d4 hp and 4d4 xp
-If you fall first, they are back in the fight at once</section>
+If you fall first, they are back in the fight at once
+On a natural 1 you blink first: frozen in stone, you lose your next turn</section>
 		<section>
 			<ul><li>Level: Beginner</li>
 <li>Usable by: Weeping Angel</li>
@@ -225,7 +226,7 @@ If hit by melee attack, damage comes out of ac boost first.</section>
 			<h3>🤡  Brain Drain  ◆</h3>
 		</header>
 		<section>And we shall bury our enemies in their own confusion.</section>
-		<section>Hit: 1d20 vs int / Damage: 1d4
+		<section>Hit: 1d20 + int vs int / Damage: 1d4
 Curse: xp -20
 Can reduce xp down to 40, then takes 4 from hp instead.
 The curse lands only if the hit does.</section>
@@ -265,8 +266,8 @@ The curse lands only if the hit does.</section>
 			<h3>☁️  Camouflage Vest  ◇</h3>
 		</header>
 		<section>You don your vest and blend in, if only for a while.</section>
-		<section>You are invisible until you play a card that targets another player, or for the next 2 cards you play (whichever comes first).
-1d20 vs your int for opponent to see you on their turn (natural 20 removes your cloak).</section>
+		<section>You are invisible until you play a card that targets another player, or for the next 3 cards you play (whichever comes first).
+1d20 + their int vs 10 + your dex for an opponent to see you on their turn. On a natural 20 they tear off your camouflage vest, and you are seen at once.</section>
 		<section>
 			<ul><li>Level: 1</li>
 <li>Usable by: Barbarian, Fighter</li>
@@ -284,8 +285,8 @@ The curse lands only if the hit does.</section>
 			<h3>☁️  Cloak of Invisibility  ◇</h3>
 		</header>
 		<section>You don your cloak and disappear, if only for a while.</section>
-		<section>You are invisible until you play a card that targets another player, or for the next 2 cards you play (whichever comes first).
-1d20 vs your int for opponent to see you on their turn (natural 20 removes your cloak).</section>
+		<section>You are invisible until you play a card that targets another player, or for the next 3 cards you play (whichever comes first).
+1d20 + their int vs 10 + your int for an opponent to see you on their turn. On a natural 20 they tear off your cloak of invisibility, and you are seen at once.</section>
 		<section>
 			<ul><li>Level: 1</li>
 <li>Usable by: Bard, Cleric, Wizard</li>
@@ -306,12 +307,12 @@ The curse lands only if the hit does.</section>
 		<section>Immobilize and hit your opponent by coiling your serpentine body around them and squeezing. If opponent is immune, hit instead.
 
 If already immobilized, hit instead.
-Hit: 1d20 vs dex / Damage: 1d6
+Hit: 1d20 + str vs dex / Damage: 1d6
  +2 advantage vs Gladiator, Minotaur
  no modifier vs Dragon, Unicorn, Weeping Angel
  -2 disadvantage vs Basilisk, Jinn
 
-Opponent breaks free by rolling 1d20 vs immobilizer's dex +/- advantage/disadvantage - (turns immobilized * 3)
+Opponent breaks free by rolling 1d20 + their dex vs immobilizer's dex +/- advantage/disadvantage - (turns immobilized * 3)
 Hits immobilizer back on stroke of luck.
 Turns immobilized resets on curse of loki.
 
@@ -335,7 +336,7 @@ Turns immobilized resets on curse of loki.
 			<h3>🥊  Concussion  ◆</h3>
 		</header>
 		<section>A hard blow to the head should do the trick.</section>
-		<section>Hit: 1d20 vs ac / Damage: 1d4
+		<section>Hit: 1d20 + int vs ac / Damage: 1d4
 Curse: int -1 to -2 depending on how hard the hit is, with a maximum total curse of -(level + 1), at most -5. Afterwards penalties come out of hp instead. The curse lands only if the hit does.</section>
 		<section>
 			<ul><li>Level: 1</li>
@@ -358,12 +359,12 @@ Curse: int -1 to -2 depending on how hard the hit is, with a maximum total curse
 		<section>Immobilize and hit your opponent by coiling your serpentine body around them and squeezing. If opponent is immune, hit instead.
 
 If already immobilized, hit instead.
-Hit: 1d20 vs dex / Damage: 1d6
+Hit: 1d20 + str vs dex / Damage: 1d6
  +3 advantage vs Gladiator, Minotaur
  no modifier vs Dragon, Unicorn, Weeping Angel
  -3 disadvantage vs Basilisk, Jinn
 
-Opponent breaks free by rolling 1d20 vs immobilizer's dex +/- advantage/disadvantage - (turns immobilized * 3)
+Opponent breaks free by rolling 1d20 + their dex vs immobilizer's dex +/- advantage/disadvantage - (turns immobilized * 3)
 Hits immobilizer back on stroke of luck.
 Turns immobilized resets on curse of loki.
 
@@ -387,7 +388,7 @@ Turns immobilized resets on curse of loki.
 			<h3>😖  Soften  ◆</h3>
 		</header>
 		<section>Sweep the leg... You have a problem with that? No mercy.</section>
-		<section>Hit: 1d20 vs ac / Damage: 1d4
+		<section>Hit: 1d20 + int vs ac / Damage: 1d4
 Curse: ac -1, with a maximum total curse of -(level + 1). Afterwards penalties come out of hp instead. The curse lands only if the hit does.</section>
 		<section>
 			<ul><li>Level: 1</li>
@@ -408,7 +409,7 @@ Curse: ac -1, with a maximum total curse of -(level + 1). Afterwards penalties c
 		</header>
 		<section>Patience. Patience is key. When your opponent reveals themselves, then you strike.</section>
 		<section>Delay your turn. Use the delayed turn to immediately hit the next player who hits you.
-Hit: 1d20 vs ac / Damage: 1d6</section>
+Hit: 1d20 + dex vs ac / Damage: 1d6</section>
 		<section>
 			<ul><li>Level: Beginner</li>
 <li>Usable by: All</li>
@@ -466,13 +467,13 @@ No damage. Does not stack.</section>
 		<section>Immobilize all opponents.
 
 If already immobilized, hit instead.
-Hit: 1d20 vs int / Damage: 1d6
+Hit: 1d20 + int vs int / Damage: 1d6
  +2 advantage vs Basilisk, Gladiator
  no modifier vs Dragon, Unicorn
  -2 disadvantage vs Minotaur, Weeping Angel
 ineffective against Jinn
 
-Opponent breaks free by rolling 1d20 vs immobilizer's int +/- advantage/disadvantage - (turns immobilized * 3)
+Opponent breaks free by rolling 1d20 + their int vs immobilizer's int +/- advantage/disadvantage - (turns immobilized * 3)
 Hits immobilizer back on stroke of luck.
 Turns immobilized resets on curse of loki.
 </section>
@@ -496,13 +497,13 @@ Turns immobilized resets on curse of loki.
 		<section>Immobilize and hit all opponents.
 
 If already immobilized, hit instead.
-Hit: 1d20 vs int / Damage: 1d6
+Hit: 1d20 + int vs int / Damage: 1d6
  +2 advantage vs Basilisk, Gladiator
  no modifier vs Dragon, Unicorn
  -2 disadvantage vs Minotaur, Weeping Angel
 ineffective against Jinn
 
-Opponent breaks free by rolling 1d20 vs immobilizer's int +/- advantage/disadvantage - (turns immobilized * 3)
+Opponent breaks free by rolling 1d20 + their int vs immobilizer's int +/- advantage/disadvantage - (turns immobilized * 3)
 Hits immobilizer back on stroke of luck.
 Turns immobilized resets on curse of loki.
 
@@ -560,7 +561,7 @@ Boost: str +1</section>
 			<h3>😖  Fight or Flight  •</h3>
 		</header>
 		<section>Survival instincts are nothing to be ashamed of.</section>
-		<section>Hit: 1d20 vs ac / Damage: 1d6
+		<section>Hit: 1d20 + dex vs ac / Damage: 1d6
 Chance to flee if below a quarter health</section>
 		<section>
 			<ul><li>Level: Beginner</li>
@@ -601,7 +602,7 @@ An ancient dragon (level 10+) breathes fire that cannot be dodged and burns for 
 			<h3>🐀  Fists of Villainy  ◆</h3>
 		</header>
 		<section>You show no mercy to the weak.</section>
-		<section>Hit: 1d20 vs ac / Damage: 1d6
+		<section>Hit: 1d20 + dex vs ac / Damage: 1d6
 Strikes opponent with lowest current hp.</section>
 		<section>
 			<ul><li>Level: 1</li>
@@ -621,7 +622,7 @@ Strikes opponent with lowest current hp.</section>
 			<h3>🙏  Fists of Virtue  ○</h3>
 		</header>
 		<section>You strike at the biggest bully in the room.</section>
-		<section>Hit: 1d20 vs ac / Damage: 1d8
+		<section>Hit: 1d20 + dex vs ac / Damage: 1d8
 Strikes opponent with highest current hp.</section>
 		<section>
 			<ul><li>Level: 1</li>
@@ -660,16 +661,16 @@ Strikes opponent with highest current hp.</section>
 		<section>A dangerously sharp forked metal rod fashioned for Gladiator and Basilisk-hunting.</section>
 		<section>Attack twice (once with each prong). +2 to hit and immobilize for each successful prong hit.
 
-Chance to immobilize: 1d20 vs str.
+Chance to immobilize: 1d20 + str vs str.
 
 If already immobilized, hit instead.
-Hit: 1d20 vs ac / Damage: 1d6
+Hit: 1d20 + dex vs ac / Damage: 1d6
  +5 advantage vs Gladiator, Basilisk
  +3 advantage vs Dragon, Unicorn
  +1 advantage vs Jinn, Minotaur
 ineffective against Weeping Angel
 
-Opponent breaks free by rolling 1d20 vs immobilizer's str + advantage - (turns immobilized * 3)
+Opponent breaks free by rolling 1d20 + their str vs immobilizer's str + advantage - (turns immobilized * 3)
 Hits immobilizer back on stroke of luck.
 Turns immobilized resets on curse of loki.
 </section>
@@ -694,15 +695,15 @@ Turns immobilized resets on curse of loki.
 		<section>A simple weapon fashioned for Basilisk and Gladiator-hunting.</section>
 		<section>Attempt to immobilize your opponent by pinning them between the branches of a forked stick.
 
-Chance to immobilize: 1d20 vs str.
+Chance to immobilize: 1d20 + str vs dex. On a natural 1 they jab it back at you.
 If already immobilized, hit instead.
-Hit: 1d20 vs dex / Damage: 1d4
+Hit: 1d20 + dex vs dex / Damage: 1d4
  +2 advantage vs Basilisk, Gladiator
  no modifier vs Dragon, Unicorn
  -2 disadvantage vs Jinn, Minotaur
 ineffective against Weeping Angel
 
-Opponent breaks free by rolling 1d20 vs immobilizer's str +/- advantage/disadvantage - (turns immobilized * 3)
+Opponent breaks free by rolling 1d20 + their str vs immobilizer's str +/- advantage/disadvantage - (turns immobilized * 3)
 Hits immobilizer back on stroke of luck.
 Turns immobilized resets on curse of loki.
 </section>
@@ -785,7 +786,7 @@ No damage. Does not stack.</section>
 			<h3>👊  Hit  •</h3>
 		</header>
 		<section>A basic attack, the staple of all good monsters.</section>
-		<section>Hit: 1d20 vs ac / Damage: 1d6</section>
+		<section>Hit: 1d20 + dex vs ac / Damage: 1d6</section>
 		<section>
 			<ul><li>Level: Beginner</li>
 <li>Usable by: All</li>
@@ -804,7 +805,7 @@ No damage. Does not stack.</section>
 			<h3>🔨  Hit Harder  ○</h3>
 		</header>
 		<section>You hit just a little bit harder than the average bear...</section>
-		<section>Hit: 1d20 vs ac / Damage: 1d6
+		<section>Hit: 1d20 + dex vs ac / Damage: 1d6
 Roll for damage twice, and use the best result.</section>
 		<section>
 			<ul><li>Level: 2</li>
@@ -826,15 +827,15 @@ Roll for damage twice, and use the best result.</section>
 		<section>You think those horns are just there to look pretty? Think again...</section>
 		<section>Attack twice (once with each horn). +2 to hit and immobilize for each successful horn hit.
 
-If either horn hits, chance to immobilize: 1d20 vs str.
+If either horn hits, chance to immobilize: 1d20 + str vs str.
 
 If already immobilized, hit instead.
-Hit: 1d20 vs ac / Damage: 1d4
+Hit: 1d20 + dex vs ac / Damage: 1d4
  +2 advantage vs Minotaur, Gladiator, Weeping Angel
  no modifier vs Dragon, Unicorn
  -2 disadvantage vs Basilisk, Jinn
 
-Opponent breaks free by rolling 1d20 vs immobilizer's str +/- advantage/disadvantage - (turns immobilized * 3)
+Opponent breaks free by rolling 1d20 + their str vs immobilizer's str +/- advantage/disadvantage - (turns immobilized * 3)
 Hits immobilizer back on stroke of luck.
 Turns immobilized resets on curse of loki.
 </section>
@@ -874,7 +875,7 @@ Turns immobilized resets on curse of loki.
 			<h3>⾓  Horn Swipe  ◇</h3>
 		</header>
 		<section>Swing your horns at your opponent.</section>
-		<section>Hit: 1d20 vs str / Damage: 1d6
+		<section>Hit: 1d20 + str vs str / Damage: 1d6
 Roll twice for hit. Use the best roll. Stroke of Luck and Curse of Loki apply only to the selected roll (discarded rolls do not crit).</section>
 		<section>
 			<ul><li>Level: 2</li>
@@ -894,7 +895,7 @@ Roll twice for hit. Use the best roll. Stroke of Luck and Curse of Loki apply on
 			<h3>⚗️  Iocane  ◆</h3>
 		</header>
 		<section>They were both poisoned. I spent the last few years building up an immunity to iocane powder...</section>
-		<section>Hit: 1d20 vs ac / Damage: 2d4
+		<section>Hit: 1d20 + dex vs ac / Damage: 2d4
 - or, below 1/4 health -
 Health: 2d4
 + int bonus (diminished by 1 each use until 0, then resets)
@@ -919,7 +920,7 @@ Health: 2d4
 			<h3>🎻  The Kalevala (1d4)  ★</h3>
 		</header>
 		<section>Steadfast old Väinämöinen himself fashioned this instrument of eternal joy. Tune its pikebone pegs and it may lead you on to victory.</section>
-		<section>Hit: 1d20 vs int / Damage: 1d4</section>
+		<section>Hit: 1d20 + int vs int / Damage: 1d4</section>
 		<section>
 			<ul><li>Level: 1</li>
 <li>Usable by: All</li>
@@ -938,7 +939,7 @@ Health: 2d4
 			<h3>🚬  Lucky Strike  ◇</h3>
 		</header>
 		<section>A man in a jester's hat smiles at you from the crowd. You feel... Lucky for some reason. Or perhaps feel the unluckiness of your opponent...</section>
-		<section>Hit: 1d20 vs ac / Damage: 1d6
+		<section>Hit: 1d20 + dex vs ac / Damage: 1d6
 Roll twice for hit. Use the best roll. Stroke of Luck and Curse of Loki apply only to the selected roll (discarded rolls do not crit).</section>
 		<section>
 			<ul><li>Level: 2</li>
@@ -961,13 +962,13 @@ Roll twice for hit. Use the best roll. Stroke of Luck and Curse of Loki apply on
 		<section>Immobilize everyone. You are caught too only on a natural 1 (1d20).
 
 If already immobilized, hit instead.
-Hit: 1d20 vs int / Damage: 1d6
+Hit: 1d20 + int vs int / Damage: 1d6
  +2 advantage vs Basilisk, Gladiator
  no modifier vs Dragon, Unicorn
  -2 disadvantage vs Minotaur, Weeping Angel
 ineffective against Jinn
 
-Opponent breaks free by rolling 1d20 vs immobilizer's int +/- advantage/disadvantage - (turns immobilized * 3)
+Opponent breaks free by rolling 1d20 + their int vs immobilizer's int +/- advantage/disadvantage - (turns immobilized * 3)
 Hits immobilizer back on stroke of luck.
 Turns immobilized resets on curse of loki.
 </section>
@@ -990,7 +991,7 @@ Turns immobilized resets on curse of loki.
 			<h3>🍯  Molasses  ◆</h3>
 		</header>
 		<section>Slow down your enemies like it's 1919.</section>
-		<section>Hit: 1d20 vs ac / Damage: 1d4
+		<section>Hit: 1d20 + int vs ac / Damage: 1d4
 Curse: dex -1, with a maximum total curse of -(level + 1), at most -5. Afterwards penalties come out of hp instead. The curse lands only if the hit does.</section>
 		<section>
 			<ul><li>Level: 1</li>
@@ -1010,7 +1011,7 @@ Curse: dex -1, with a maximum total curse of -(level + 1), at most -5. Afterward
 			<h3>🦎  Mood Scales  ◇</h3>
 		</header>
 		<section>Pliny's chameleon taketh the colour of whatsoever it is next unto. A dragon's scales take the colour of its temper.</section>
-		<section>Calm (above half your hp): your scales match the rocks and sea, and you are hidden until you play a card that targets another player, or for the next 2 cards you play (1d20 vs your int for an opponent to find you).
+		<section>Calm (above half your hp): your scales match the rocks and sea, and you are hidden until you play a card that targets another player, or for the next 3 cards you play (1d20 + their int vs 10 + your int for an opponent to find you; on a natural 20 they see straight through you).
 Furious (half your hp or less): your scales blaze red and you cannot hide, but your next melee hit does +1d6 damage.</section>
 		<section>
 			<ul><li>Level: 1</li>
@@ -1045,7 +1046,7 @@ Furious (half your hp or less): your scales blaze red and you cannot hide, but y
 			<h3>⚒  Pound  ★</h3>
 		</header>
 		<section>You wield the mighty pound card and can do double the damage.</section>
-		<section>Hit: 1d20 vs ac / Damage: 2d6</section>
+		<section>Hit: 1d20 + dex vs ac / Damage: 2d6</section>
 		<section>
 			<ul><li>Level: 3</li>
 <li>Usable by: Bard, Barbarian</li>
@@ -1103,7 +1104,7 @@ Usually restores between 0-3hp to each opponent, and 1-4hp for the player.
 			<h3>🔂  Rehit  ◆</h3>
 		</header>
 		<section>At the last moment you realize your trajectory is off and quickly attempt to correct your aim.</section>
-		<section>Hit: 1d20 vs ac / Damage: 1d6
+		<section>Hit: 1d20 + dex vs ac / Damage: 1d6
 Roll for attack, if you roll less than 10, roll again and use the second roll no matter what. Stroke of Luck and Curse of Loki apply only to the selected roll (discarded rolls do not crit).</section>
 		<section>
 			<ul><li>Level: 2</li>
@@ -1148,7 +1149,7 @@ Roll for attack, if you roll less than 10, roll again and use the second roll no
 1% chance to heal half max hp
 1% chance to poison
 
-3 drinks in one round may leave you tipsy: -1 dex and int for 2 cards</section>
+3 drinks in one round may leave you tipsy for 2 cards. Roll 1d6: 1: -1 int; 2: -2 int; 3: -1 dex; 4: -2 dex; 5: +1 dex and +1 int; 6: -2 dex and -2 int</section>
 		<section>
 			<ul><li>Level: 4</li>
 <li>Usable by: All</li>
@@ -1167,7 +1168,7 @@ Roll for attack, if you roll less than 10, roll again and use the second roll no
 			<h3>🦄  Sticketh  ◇</h3>
 		</header>
 		<section>"The Unicorn in the swiftness of his course runneth against the tree, wherein his sharp horn sticketh fast." Charge anyway.</section>
-		<section>Charge: 1d20 +1 vs ac / Damage: 1d10
+		<section>Charge: 1d20 + dex +1 vs ac / Damage: 1d10
 On a miss, roll 1d20 + str vs the target's dex to pull up in time.
 Fail, and your horn is stuck fast: at the start of each of your turns, roll 1d20 + str vs your own str - (turns stuck x 3) to pull it free. A stuck monster misses that turn.
 Natural 1 on either roll fails. Natural 20 on the charge deals max damage.</section>
@@ -1188,7 +1189,7 @@ Natural 1 on either roll fails. Natural 20 on the charge deals max damage.</sect
 			<h3>🗡  Survival Knife  ◆</h3>
 		</header>
 		<section>If times get too rough, stab yourself in the thigh and press the pommel for a Stimpak injection.</section>
-		<section>Hit: 1d20 vs ac / Damage: 2d4
+		<section>Hit: 1d20 + dex vs ac / Damage: 2d4
 - or, below 1/4 health -
 Health: 2d4
 + int bonus (diminished by 1 each use until 0, then resets)
@@ -1214,7 +1215,7 @@ Health: 2d4
 			<h3>🐉  Tail Lash  ◆</h3>
 		</header>
 		<section>Tooth for the foeman, tail for the fool; the wise watch the far end of the wyrm. Topsell says a dragon's strength lies not in its teeth but in its tail, which is why the Vikings who shout at dragons stand at the front.</section>
-		<section>Hit: 1d20 vs ac / Damage: 1d6. If the hit lands and the target is still standing, the tail strikes too (1d20 + your STR modifier - 2 to hit, 1d6 damage, no critical hits).</section>
+		<section>Hit: 1d20 + dex vs ac / Damage: 1d6. If the hit lands and the target is still standing, the tail strikes too (1d20 + str - 2 to hit, 1d6 damage, no critical hits).</section>
 		<section>
 			<ul><li>Level: 1</li>
 <li>Usable by: Dragon</li>
@@ -1287,7 +1288,7 @@ You roll 1d20 + dex vs 10 to ride your own wave and take none of it.</section>
 			<h3>🍗  Turkey Thigh  ◆</h3>
 		</header>
 		<section>Beat your opponent with a huge turkey thigh. If times get tough, take a bite for a quick hp boost.</section>
-		<section>Hit: 1d20 vs ac / Damage: 2d4
+		<section>Hit: 1d20 + dex vs ac / Damage: 2d4
 - or, below 1/4 health -
 Health: 2d4
 + int bonus (diminished by 1 each use until 0, then resets)
@@ -1312,7 +1313,7 @@ Health: 2d4
 			<h3>✨  Unconquerable Horn  ◆</h3>
 		</header>
 		<section>"His horns are like the horns of unicorns: with them he shall push the people together to the ends of the earth." When the horn is lifted up it shineth, and it singeth, and all that liveth in the wood cometh to its light.</section>
-		<section>Let the horn ring out: hit your target, and an ally in the ring strikes it too. If you have no ally, a creature of the wood answers its light: an otter, a deer, or a ram (1d20 + 2 to hit, 1d4 damage).</section>
+		<section>Let the horn ring out: hit your target (1d20 + dex vs ac), and an ally in the ring strikes it too. If you have no ally, a creature of the wood answers its light: an otter, a deer, or a ram (1d20 + 2 to hit, 1d4 damage).</section>
 		<section>
 			<ul><li>Level: 1</li>
 <li>Usable by: Unicorn</li>
@@ -1330,7 +1331,7 @@ Health: 2d4
 			<h3>👊  Vengeful Rampage  ◇</h3>
 		</header>
 		<section>Your wounds only make you stronger.</section>
-		<section>Hit: 1d20 vs ac
+		<section>Hit: 1d20 + dex vs ac
 Damage: 1d6 +1 per wound suffered</section>
 		<section>
 			<ul><li>Level: 3</li>
@@ -1356,7 +1357,7 @@ Damage: 1d6 +1 per wound suffered</section>
 1% chance to heal half max hp
 1% chance to poison
 
-3 drinks in one round may leave you tipsy: -1 dex and int for 2 cards</section>
+3 drinks in one round may leave you tipsy for 2 cards. Roll 1d6: 1: -1 int; 2: -2 int; 3: -1 dex; 4: -2 dex; 5: +1 dex and +1 int; 6: -2 dex and -2 int</section>
 		<section>
 			<ul><li>Level: 2</li>
 <li>Usable by: All</li>
@@ -1375,7 +1376,7 @@ Damage: 1d6 +1 per wound suffered</section>
 			<h3>🌳  Wooden Spear  ○</h3>
 		</header>
 		<section>A simple weapon fashioned for Minotaur-hunting.</section>
-		<section>Hit: 1d20 vs ac / Damage: 1d6
+		<section>Hit: 1d20 + dex vs ac / Damage: 1d6
 +3 damage vs Minotaur</section>
 		<section>
 			<ul><li>Level: 1</li>

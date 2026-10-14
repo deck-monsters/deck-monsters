@@ -61,13 +61,13 @@ describe('./cards/entrance.ts', () => {
 		const stats = `Immobilize and hit all opponents.
 
 If already immobilized, hit instead.
-${hit.stats}
+${hit.stats.replace('+ dex', '+ int')}
  +2 advantage vs Basilisk, Gladiator
  no modifier vs Dragon, Unicorn
  -2 disadvantage vs Minotaur, Weeping Angel
 ineffective against Jinn
 
-Opponent breaks free by rolling 1d20 vs immobilizer's int +/- advantage/disadvantage - (turns immobilized * 3)
+Opponent breaks free by rolling 1d20 + their int vs immobilizer's int +/- advantage/disadvantage - (turns immobilized * 3)
 Hits immobilizer back on stroke of luck.
 Turns immobilized resets on curse of loki.
 

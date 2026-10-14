@@ -139,13 +139,18 @@ Judge each item below against it.
   50: grips, spells and gazes end at once with "<caster> has fallen, and …"; burns, poison,
   landed curses, sand and ringing ears outlive the caster. The rule and the table are in
   [cards and encounter effects](../architecture/cards-and-encounter-effects.md#when-the-monster-who-played-an-effect-falls).
-- [ ] **Lasting effects when their target falls — owner: Cards.** The other half of the live
-  check's [table](../reference/turn-order-check-49b.md#notes-for-claude-events-after-a-monster-has-fallen):
-  a burn tick or a hold's ongoing damage that is the killing hit, a held captive that falls, a
-  Faceswap or Cloak search that still names a fallen monster. Not started; owner said it is a
-  separate question.
-- [ ] **Crit failures — owner: Cards.** Audit cards for natural-1 outcomes and add
-  thematically appropriate consequences, including the time-shift failure case.
+- [x] **Lasting effects when their target falls — owner: Cards.** Decided in roadmap 51:
+  damage keeps landing in the turn a monster falls (hp below zero, Berserk's last swing, every
+  armed Delayed Hit), and after that its effects end with it, unannounced. The one bug, a hold
+  announced as released from a fallen captive, is 10b #257. The rule is in
+  [cards and encounter effects](../architecture/cards-and-encounter-effects.md#when-the-monster-an-effect-is-on-falls).
+- [ ] **Berserk's attack stat — owner: Cards.** Its text promised "+ str bonus" but it rolls
+  dex; the text now says dex (10b #256). A rage is a str thing; switching the roll to str is a
+  small balance change for Fighters and Barbarians. Owner's call.
+- [x] **Crit failures — owner: Cards.** Audited in roadmap 51: a natural 1 on your own move
+  backfires (Blink now shifts the angel, the Forked Stick is jabbed back), a natural 1 on a
+  save or dodge only fails, and only a d20 crits (10b #258). The table is in
+  [cards and encounter effects](../architecture/cards-and-encounter-effects.md#natural-1s-and-20s).
 - [ ] **Crit ticks — owner: Engine.** Track each monster's natural 20s (upstream #164).
   On level-up, show those crit ticks and roll d100 per tick; a 100 grants one bonus
   stat point of the player's choice.

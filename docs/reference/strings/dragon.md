@@ -182,7 +182,7 @@ Source: `packages/engine/src/cards/mood-scales.ts`.
 **Rules text:**
 
 ```text
-Calm (above half your hp): your scales match the rocks and sea, and you are hidden until you play a card that targets another player, or for the next 2 cards you play (1d20 vs your int for an opponent to find you).
+Calm (above half your hp): your scales match the rocks and sea, and you are hidden until you play a card that targets another player, or for the next 3 cards you play (1d20 + their int vs 10 + your int for an opponent to find you; on a natural 20 they see straight through you).
 Furious (half your hp or less): your scales blaze red and you cannot hide, but your next melee hit does +1d6 damage.
 ```
 
@@ -192,6 +192,7 @@ Furious (half your hp or less): your scales blaze red and you cannot hide, but y
 |---|---|
 | hideNarration → returns | `🦎 {target} is calm. {His} scales turn the colour of the rocks and the sea, and {he} {fades/fade} from sight.` |
 | concealNarration → returns | `{target} holds very still, and the colours deepen.` |
+| foundNarration → returns | `{finder} rolled a natural 20. {He} {sees/see} straight through {hider}'s calm, and {his} scales flush with colour again.` |
 | revealNarration → returns | `{target}'s scales flush with colour again.` |
 | enrage → narration | `{target} strikes in a fury!` |
 | effect → narration | `{target} is already furious, and glows a little redder.` |
@@ -206,7 +207,7 @@ Source: `packages/engine/src/cards/tail-lash.ts`.
 **Rules text:**
 
 ```text
-Hit: 1d20 vs ac / Damage: 1d6. If the hit lands and the target is still standing, the tail strikes too (1d20 + your STR modifier - 2 to hit, 1d6 damage, no critical hits).
+Hit: 1d20 + dex vs ac / Damage: 1d6. If the hit lands and the target is still standing, the tail strikes too (1d20 + str - 2 to hit, 1d6 damage, no critical hits).
 ```
 
 **Narration and outcomes:**

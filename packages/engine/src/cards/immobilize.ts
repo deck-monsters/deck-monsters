@@ -147,10 +147,15 @@ export class ImmobilizeCard extends HitCard {
 		return `If already immobilized, hit instead.
 ${super.stats}
 ${strModifiers}
-Opponent breaks free by rolling 1d20 vs immobilizer's ${this.freedomSavingThrowTargetAttr} ${advantageModifier} - (turns immobilized * 3)
+Opponent breaks free by rolling 1d20 + their ${this.freedomStat} vs immobilizer's ${this.freedomSavingThrowTargetAttr} ${advantageModifier} - (turns immobilized * 3)
 Hits immobilizer back on stroke of luck.
 Turns immobilized resets on curse of loki.
 ${ongoingDamageText}`;
+	}
+
+	/** The captive's own stat on its freedom roll (`getFreedomRoll`): an ac hold is escaped with dex. */
+	get freedomStat(): string {
+		return this.freedomSavingThrowTargetAttr === 'ac' ? 'dex' : this.freedomSavingThrowTargetAttr;
 	}
 
 	get freedomThresholdModifier(): number {
@@ -196,14 +201,15 @@ ${ongoingDamageText}`;
 		return 0;
 	}
 
+	/** A hold rolls the stat it targets (dex against ac): a mind hold uses int, a pin dex. */
+	override get attackStat(): 'dex' | 'str' | 'int' {
+		return this.targetProp === 'ac' ? 'dex' : (this.targetProp as 'dex' | 'str' | 'int');
+	}
+
 	override getAttackRoll(player: any, target?: any): any {
-		const statsBonus =
-			this.targetProp === 'ac'
-				? player.dexModifier
-				: player[`${this.targetProp}Modifier`];
 		return roll({
 			primaryDice: this.attackDice,
-			modifier: statsBonus + this.getAttackModifier(target),
+			modifier: player[`${this.attackStat}Modifier`] + this.getAttackModifier(target),
 			bonusDice: player.bonusAttackDice,
 			crit: true,
 		});
@@ -363,7 +369,7 @@ ${ongoingDamageText}`;
 			player === target
 				? `${player.pronouns.his} own`
 				: `${player.givenName}'s`;
-		return `1d20 vs ${playerName} ${this.freedomSavingThrowTargetAttr}(${this.getFreedomThresholdBase(player)})${thresholdBonusText} -(immobilized turns x 3)`;
+		return `1d20 + ${this.freedomStat} vs ${playerName} ${this.freedomSavingThrowTargetAttr}(${this.getFreedomThresholdBase(player)})${thresholdBonusText} -(immobilized turns x 3)`;
 	}
 
 	emitImmobilizeNarrative(player: any, target: any): void {

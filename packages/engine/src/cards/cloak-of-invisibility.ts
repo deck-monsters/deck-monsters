@@ -5,12 +5,28 @@ import { AOE, HIDE, ACOUSTIC, PSYCHIC } from '../constants/card-classes.js';
 import { ATTACK_PHASE, DEFENSE_PHASE } from '../constants/phases.js';
 import { BARD, CLERIC, WIZARD } from '../constants/creature-classes.js';
 import { capitalize } from '../helpers/capitalize.js';
+import { agree } from '../helpers/pronouns.js';
 import { INVISIBILITY_EFFECT } from '../constants/effect-types.js';
 import { PRICEY } from '../helpers/costs.js';
 import { RARE } from '../helpers/probabilities.js';
 import { isInvisible } from '../helpers/is-invisible.js';
 
 const { roll } = chance;
+
+/**
+ * Finding a hidden monster is a contest (owner, 2026-10-14): the finder rolls 1d20 + int
+ * against 10 + the hider's hiding stat. It used to be the hider's raw stat (5 + its modifier),
+ * which a finder at equal modifiers beat three times in four, so a hide rarely lasted; at 10 it
+ * is about even. Int is how you hide by wit (Cloak, Mood Scales); the Camouflage Vest hides
+ * by dex, since blending in is physical and its Fighters and Barbarians run low on int.
+ */
+export const HIDE_DIFFICULTY = 10;
+
+/**
+ * How many of its own cards a hider plays unseen (owner, 2026-10-14: three, up from two).
+ * Playing a card that targets someone else still reveals it sooner.
+ */
+export const HIDDEN_CARDS = 3;
 
 export class CloakOfInvisibilityCard extends BaseCard {
 	static cardClass = [HIDE];
@@ -21,13 +37,29 @@ export class CloakOfInvisibilityCard extends BaseCard {
 	static level = 1;
 	static cost = PRICEY.cost;
 	static notForSale = true;
+	/** The stat a hider's difficulty adds: `HIDE_DIFFICULTY` + this modifier. */
+	static hideStat: 'int' | 'dex' = 'int';
 
 	constructor({ icon = '☁️' }: Partial<CardOptions> = {}) {
 		super({ icon } as Partial<CardOptions>);
 	}
 
 	get stats(): string {
-		return `You are invisible until you play a card that targets another player, or for the next 2 cards you play (whichever comes first).\n1d20 vs your int for opponent to see you on their turn (natural 20 removes your cloak).`;
+		return `You are invisible until you play a card that targets another player, or for the next ${HIDDEN_CARDS} cards you play (whichever comes first).\n${this.findRollText} for an opponent to see you on their turn. On a natural 20 they tear off your ${this.cardType.toLowerCase()}, and you are seen at once.`;
+	}
+
+	get hideStat(): 'int' | 'dex' {
+		return (this.constructor as typeof CloakOfInvisibilityCard).hideStat;
+	}
+
+	/** "1d20 + their int vs 10 + your int": the card says both sides of the roll. */
+	get findRollText(): string {
+		return `1d20 + their int vs ${HIDE_DIFFICULTY} + your ${this.hideStat}`;
+	}
+
+	/** What a finder has to beat to see this hider. */
+	hideDifficulty(hider: any): number {
+		return HIDE_DIFFICULTY + (hider[`${this.hideStat}Modifier`] ?? 0);
 	}
 
 	override getTargets(player: any): any[] {
@@ -50,6 +82,11 @@ export class CloakOfInvisibilityCard extends BaseCard {
 
 	concealNarration(target: any): string {
 		return `${target.identity} takes a moment to improve ${target.pronouns.his} concealment.`;
+	}
+
+	/** A natural 20 finds the hider and ends the hiding at once (owner, 2026-10-14). */
+	foundNarration(finder: any, hider: any): string {
+		return `${finder.givenName} rolled a natural 20. ${capitalize(finder.pronouns.he)} ${agree(finder.pronouns, 'grabs', 'grab')} ${hider.givenName} and ${agree(finder.pronouns, 'tears', 'tear')} off ${hider.pronouns.his} ${this.cardType.toLowerCase()}. ${capitalize(hider.pronouns.he)} ${agree(hider.pronouns, 'is', 'are')} hidden no longer.`;
 	}
 
 	revealNarration(target: any): string {
@@ -113,8 +150,9 @@ export class CloakOfInvisibilityCard extends BaseCard {
 						});
 
 						const savingThrow = this.getSavingThrow(player);
+						const hideDifficulty = this.hideDifficulty(invisibilityTarget);
 						const { success, strokeOfLuck, curseOfLoki, tie } =
-							this.checkSuccess(savingThrow, invisibilityTarget.int);
+							this.checkSuccess(savingThrow, hideDifficulty);
 						let outcome: string;
 
 						if (strokeOfLuck) {
@@ -123,7 +161,7 @@ export class CloakOfInvisibilityCard extends BaseCard {
 									(encounterEffect: any) =>
 										encounterEffect.effectType !== INVISIBILITY_EFFECT
 								);
-							outcome = `${player.givenName} rolled a natural 20. ${capitalize(player.pronouns.he)} immediately realize${player.pronouns.verbSuffix ?? 's'} exactly where ${invisibilityTarget.givenName} is and strips off ${invisibilityTarget.pronouns.his} ${this.cardType.toLowerCase()}.`;
+							outcome = this.foundNarration(player, invisibilityTarget);
 						} else if (curseOfLoki) {
 							outcome = `${player.givenName} rolled a 1. While stumbling about looking for ${invisibilityTarget.givenName} ${player.pronouns.he} trip${player.pronouns.verbSuffix ?? 's'} and hit${player.pronouns.verbSuffix ?? 's'} ${player.pronouns.him}self instead.`;
 						} else if (tie) {
@@ -136,12 +174,12 @@ export class CloakOfInvisibilityCard extends BaseCard {
 
 						this.emit('rolled', {
 							success: success,
-							reason: `vs ${invisibilityTarget.givenName}'s int (${target.int}) to determine if ${player.pronouns.he} can find ${invisibilityTarget.pronouns.him}.`,
+							reason: `vs ${HIDE_DIFFICULTY} + ${invisibilityTarget.givenName}'s ${this.hideStat} (${hideDifficulty}) to determine if ${player.pronouns.he} can find ${invisibilityTarget.pronouns.him}.`,
 							card,
 							roll: savingThrow,
 							who: player,
 							outcome,
-							vs: target.int,
+							vs: hideDifficulty,
 						});
 
 						if (curseOfLoki) {
@@ -155,7 +193,7 @@ export class CloakOfInvisibilityCard extends BaseCard {
 					) {
 						if (
 							target !== invisibilityTarget ||
-							invisibilityTarget.encounterModifiers.invisibilityTurns > 2
+							invisibilityTarget.encounterModifiers.invisibilityTurns > HIDDEN_CARDS
 						) {
 							invisibilityTarget.encounterEffects =
 								invisibilityTarget.encounterEffects.filter(

@@ -47,7 +47,7 @@ describe('./cards/hit.ts', () => {
 
 	it('can be instantiated with defaults', () => {
 		expect(hit).to.be.an.instanceof(HitCard);
-		expect(hit.stats).to.equal('Hit: 1d20 vs ac / Damage: 1d6');
+		expect(hit.stats).to.equal('Hit: 1d20 + dex vs ac / Damage: 1d6');
 		expect((HitCard as any).probability).to.equal(ABUNDANT.probability + 10);
 		expect((HitCard as any).cost).to.equal(ALMOST_NOTHING.cost);
 		expect(hit.attackDice).to.equal('1d20');
@@ -66,7 +66,7 @@ describe('./cards/hit.ts', () => {
 		expect(customHit.damageDice).to.equal('2d6');
 		expect(customHit.targetProp).to.equal('int');
 		expect(customHit.icon).to.equal('😝');
-		expect(customHit.stats).to.equal('Hit: 2d20 vs int / Damage: 2d6');
+		expect(customHit.stats).to.equal('Hit: 2d20 + dex vs int / Damage: 2d6');
 	});
 
 	it('can be played', () => {

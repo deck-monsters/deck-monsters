@@ -86,12 +86,12 @@ Source: `packages/engine/src/cards/coil.ts`.
 Immobilize and hit your opponent by coiling your serpentine body around them and squeezing. If opponent is immune, hit instead.
 
 If already immobilized, hit instead.
-Hit: 1d20 vs dex / Damage: 1d6
+Hit: 1d20 + str vs dex / Damage: 1d6
  +2 advantage vs Gladiator, Minotaur
  no modifier vs Dragon, Unicorn, Weeping Angel
  -2 disadvantage vs Basilisk, Jinn
 
-Opponent breaks free by rolling 1d20 vs immobilizer's dex +/- advantage/disadvantage - (turns immobilized * 3)
+Opponent breaks free by rolling 1d20 + their dex vs immobilizer's dex +/- advantage/disadvantage - (turns immobilized * 3)
 Hits immobilizer back on stroke of luck.
 Turns immobilized resets on curse of loki.
 
@@ -123,12 +123,12 @@ Source: `packages/engine/src/cards/constrict.ts`.
 Immobilize and hit your opponent by coiling your serpentine body around them and squeezing. If opponent is immune, hit instead.
 
 If already immobilized, hit instead.
-Hit: 1d20 vs dex / Damage: 1d6
+Hit: 1d20 + str vs dex / Damage: 1d6
  +3 advantage vs Gladiator, Minotaur
  no modifier vs Dragon, Unicorn, Weeping Angel
  -3 disadvantage vs Basilisk, Jinn
 
-Opponent breaks free by rolling 1d20 vs immobilizer's dex +/- advantage/disadvantage - (turns immobilized * 3)
+Opponent breaks free by rolling 1d20 + their dex vs immobilizer's dex +/- advantage/disadvantage - (turns immobilized * 3)
 Hits immobilizer back on stroke of luck.
 Turns immobilized resets on curse of loki.
 

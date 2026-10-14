@@ -336,8 +336,8 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  sync as you lead in a dance of 
  their destruction.
 
- Hit: 1d20 + str bonus vs ac on 
- first hit
+ Hit: 1d20 + dex vs ac on first 
+ hit
  then also + int bonus (fatigued 
  by 1 each subsequent hit) until 
  you miss
@@ -370,8 +370,8 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  the perfect face of your enemy. 
  Destroy it.
 
- Hit: 1d20 + str bonus vs ac on 
- first hit
+ Hit: 1d20 + dex vs ac on first 
+ hit
  then also + int bonus (fatigued 
  by 1 each subsequent hit) until 
  you miss
@@ -445,14 +445,17 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  Consume your victim's potential 
  energy
 
- 1d20 vs opponent's int. They are 
- removed from the fight (and can 
- not be targeted).
+ 1d20 + int vs opponent's int. 
+ They are removed from the fight 
+ (and can not be targeted).
  On what would have been their 
  next turn, you drain 1d4 hp and 
  4d4 xp
  If you fall first, they are back 
  in the fight at once
+ On a natural 1 you blink first: 
+ frozen in stone, you lose your 
+ next turn
 
  Level: Beginner
  Usable by: Weeping Angel
@@ -498,7 +501,8 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  And we shall bury our enemies in 
  their own confusion.
 
- Hit: 1d20 vs int / Damage: 1d4
+ Hit: 1d20 + int vs int / Damage: 
+ 1d4
  Curse: xp -20
  Can reduce xp down to 40, then 
  takes 4 from hp instead.
@@ -549,12 +553,14 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
 
  You are invisible until you play 
  a card that targets another 
- player, or for the next 2 cards 
+ player, or for the next 3 cards 
  you play (whichever comes 
  first).
- 1d20 vs your int for opponent to 
- see you on their turn (natural 
- 20 removes your cloak).
+ 1d20 + their int vs 10 + your 
+ dex for an opponent to see you 
+ on their turn. On a natural 20 
+ they tear off your camouflage 
+ vest, and you are seen at once.
 
  Level: 1
  Usable by: Barbarian, Fighter
@@ -577,12 +583,15 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
 
  You are invisible until you play 
  a card that targets another 
- player, or for the next 2 cards 
+ player, or for the next 3 cards 
  you play (whichever comes 
  first).
- 1d20 vs your int for opponent to 
- see you on their turn (natural 
- 20 removes your cloak).
+ 1d20 + their int vs 10 + your 
+ int for an opponent to see you 
+ on their turn. On a natural 20 
+ they tear off your cloak of 
+ invisibility, and you are seen 
+ at once.
 
  Level: 1
  Usable by: Bard, Cleric, Wizard
@@ -610,7 +619,8 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
 
  If already immobilized, hit 
  instead.
- Hit: 1d20 vs dex / Damage: 1d6
+ Hit: 1d20 + str vs dex / Damage: 
+ 1d6
  
  +2 advantage vs Gladiator, 
  Minotaur
@@ -622,7 +632,8 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  Jinn
 
  Opponent breaks free by rolling 
- 1d20 vs immobilizer's dex +/- 
+ 1d20 + their dex vs 
+ immobilizer's dex +/- 
  advantage/disadvantage - (turns 
  immobilized * 3)
  Hits immobilizer back on stroke 
@@ -653,7 +664,8 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  A hard blow to the head should 
  do the trick.
 
- Hit: 1d20 vs ac / Damage: 1d4
+ Hit: 1d20 + int vs ac / Damage: 
+ 1d4
  Curse: int -1 to -2 depending on 
  how hard the hit is, with a 
  maximum total curse of -(level + 
@@ -690,7 +702,8 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
 
  If already immobilized, hit 
  instead.
- Hit: 1d20 vs dex / Damage: 1d6
+ Hit: 1d20 + str vs dex / Damage: 
+ 1d6
  
  +3 advantage vs Gladiator, 
  Minotaur
@@ -702,7 +715,8 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  Jinn
 
  Opponent breaks free by rolling 
- 1d20 vs immobilizer's dex +/- 
+ 1d20 + their dex vs 
+ immobilizer's dex +/- 
  advantage/disadvantage - (turns 
  immobilized * 3)
  Hits immobilizer back on stroke 
@@ -733,7 +747,8 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  Sweep the leg... You have a 
  problem with that? No mercy.
 
- Hit: 1d20 vs ac / Damage: 1d4
+ Hit: 1d20 + int vs ac / Damage: 
+ 1d4
  Curse: ac -1, with a maximum 
  total curse of -(level + 1). 
  Afterwards penalties come out of 
@@ -764,7 +779,8 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  Delay your turn. Use the delayed 
  turn to immediately hit the next 
  player who hits you.
- Hit: 1d20 vs ac / Damage: 1d6
+ Hit: 1d20 + dex vs ac / Damage: 
+ 1d6
 
  Level: Beginner
  Usable by: All
@@ -841,7 +857,8 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
 
  If already immobilized, hit 
  instead.
- Hit: 1d20 vs int / Damage: 1d6
+ Hit: 1d20 + int vs int / Damage: 
+ 1d6
  
  +2 advantage vs Basilisk, 
  Gladiator
@@ -853,7 +870,8 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  ineffective against Jinn
 
  Opponent breaks free by rolling 
- 1d20 vs immobilizer's int +/- 
+ 1d20 + their int vs 
+ immobilizer's int +/- 
  advantage/disadvantage - (turns 
  immobilized * 3)
  Hits immobilizer back on stroke 
@@ -886,7 +904,8 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
 
  If already immobilized, hit 
  instead.
- Hit: 1d20 vs int / Damage: 1d6
+ Hit: 1d20 + int vs int / Damage: 
+ 1d6
  
  +2 advantage vs Basilisk, 
  Gladiator
@@ -898,7 +917,8 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  ineffective against Jinn
 
  Opponent breaks free by rolling 
- 1d20 vs immobilizer's int +/- 
+ 1d20 + their int vs 
+ immobilizer's int +/- 
  advantage/disadvantage - (turns 
  immobilized * 3)
  Hits immobilizer back on stroke 
@@ -971,7 +991,8 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  Survival instincts are nothing 
  to be ashamed of.
 
- Hit: 1d20 vs ac / Damage: 1d6
+ Hit: 1d20 + dex vs ac / Damage: 
+ 1d6
  Chance to flee if below a 
  quarter health
 
@@ -1031,7 +1052,8 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
 
  You show no mercy to the weak.
 
- Hit: 1d20 vs ac / Damage: 1d6
+ Hit: 1d20 + dex vs ac / Damage: 
+ 1d6
  Strikes opponent with lowest 
  current hp.
 
@@ -1055,7 +1077,8 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  You strike at the biggest bully 
  in the room.
 
- Hit: 1d20 vs ac / Damage: 1d8
+ Hit: 1d20 + dex vs ac / Damage: 
+ 1d8
  Strikes opponent with highest 
  current hp.
 
@@ -1105,12 +1128,13 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  prong). +2 to hit and immobilize 
  for each successful prong hit.
 
- Chance to immobilize: 1d20 vs 
- str.
+ Chance to immobilize: 1d20 + str 
+ vs str.
 
  If already immobilized, hit 
  instead.
- Hit: 1d20 vs ac / Damage: 1d6
+ Hit: 1d20 + dex vs ac / Damage: 
+ 1d6
  
  +5 advantage vs Gladiator, 
  Basilisk
@@ -1122,9 +1146,9 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  Angel
 
  Opponent breaks free by rolling 
- 1d20 vs immobilizer's str + 
- advantage - (turns immobilized * 
- 3)
+ 1d20 + their str vs 
+ immobilizer's str + advantage - 
+ (turns immobilized * 3)
  Hits immobilizer back on stroke 
  of luck.
  Turns immobilized resets on 
@@ -1155,11 +1179,13 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  opponent by pinning them between 
  the branches of a forked stick.
 
- Chance to immobilize: 1d20 vs 
- str.
+ Chance to immobilize: 1d20 + str 
+ vs dex. On a natural 1 they jab 
+ it back at you.
  If already immobilized, hit 
  instead.
- Hit: 1d20 vs dex / Damage: 1d4
+ Hit: 1d20 + dex vs dex / Damage: 
+ 1d4
  
  +2 advantage vs Basilisk, 
  Gladiator
@@ -1172,7 +1198,8 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  Angel
 
  Opponent breaks free by rolling 
- 1d20 vs immobilizer's str +/- 
+ 1d20 + their str vs 
+ immobilizer's str +/- 
  advantage/disadvantage - (turns 
  immobilized * 3)
  Hits immobilizer back on stroke 
@@ -1296,7 +1323,8 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  A basic attack, the staple of 
  all good monsters.
 
- Hit: 1d20 vs ac / Damage: 1d6
+ Hit: 1d20 + dex vs ac / Damage: 
+ 1d6
 
  Level: Beginner
  Usable by: All
@@ -1318,7 +1346,8 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  You hit just a little bit harder 
  than the average bear...
 
- Hit: 1d20 vs ac / Damage: 1d6
+ Hit: 1d20 + dex vs ac / Damage: 
+ 1d6
  Roll for damage twice, and use 
  the best result.
 
@@ -1348,11 +1377,12 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  for each successful horn hit.
 
  If either horn hits, chance to 
- immobilize: 1d20 vs str.
+ immobilize: 1d20 + str vs str.
 
  If already immobilized, hit 
  instead.
- Hit: 1d20 vs ac / Damage: 1d4
+ Hit: 1d20 + dex vs ac / Damage: 
+ 1d4
  
  +2 advantage vs Minotaur, 
  Gladiator, Weeping Angel
@@ -1363,7 +1393,8 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  Jinn
 
  Opponent breaks free by rolling 
- 1d20 vs immobilizer's str +/- 
+ 1d20 + their str vs 
+ immobilizer's str +/- 
  advantage/disadvantage - (turns 
  immobilized * 3)
  Hits immobilizer back on stroke 
@@ -1425,7 +1456,8 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  Swing your horns at your 
  opponent.
 
- Hit: 1d20 vs str / Damage: 1d6
+ Hit: 1d20 + str vs str / Damage: 
+ 1d6
  Roll twice for hit. Use the best 
  roll. Stroke of Luck and Curse 
  of Loki apply only to the 
@@ -1453,7 +1485,8 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  the last few years building up 
  an immunity to iocane powder...
 
- Hit: 1d20 vs ac / Damage: 2d4
+ Hit: 1d20 + dex vs ac / Damage: 
+ 2d4
  - or, below 1/4 health -
  Health: 2d4
  + int bonus (diminished by 1 
@@ -1485,7 +1518,8 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  its pikebone pegs and it may 
  lead you on to victory.
 
- Hit: 1d20 vs int / Damage: 1d4
+ Hit: 1d20 + int vs int / Damage: 
+ 1d4
 
  Level: 1
  Usable by: All
@@ -1510,7 +1544,8 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  Or perhaps feel the unluckiness 
  of your opponent...
 
- Hit: 1d20 vs ac / Damage: 1d6
+ Hit: 1d20 + dex vs ac / Damage: 
+ 1d6
  Roll twice for hit. Use the best 
  roll. Stroke of Luck and Curse 
  of Loki apply only to the 
@@ -1545,7 +1580,8 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
 
  If already immobilized, hit 
  instead.
- Hit: 1d20 vs int / Damage: 1d6
+ Hit: 1d20 + int vs int / Damage: 
+ 1d6
  
  +2 advantage vs Basilisk, 
  Gladiator
@@ -1557,7 +1593,8 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  ineffective against Jinn
 
  Opponent breaks free by rolling 
- 1d20 vs immobilizer's int +/- 
+ 1d20 + their int vs 
+ immobilizer's int +/- 
  advantage/disadvantage - (turns 
  immobilized * 3)
  Hits immobilizer back on stroke 
@@ -1586,7 +1623,8 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  Slow down your enemies like it's 
  1919.
 
- Hit: 1d20 vs ac / Damage: 1d4
+ Hit: 1d20 + int vs ac / Damage: 
+ 1d4
  Curse: dex -1, with a maximum 
  total curse of -(level + 1), at 
  most -5. Afterwards penalties 
@@ -1620,9 +1658,11 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  scales match the rocks and sea, 
  and you are hidden until you 
  play a card that targets another 
- player, or for the next 2 cards 
- you play (1d20 vs your int for 
- an opponent to find you).
+ player, or for the next 3 cards 
+ you play (1d20 + their int vs 10 
+ + your int for an opponent to 
+ find you; on a natural 20 they 
+ see straight through you).
  Furious (half your hp or less): 
  your scales blaze red and you 
  cannot hide, but your next melee 
@@ -1666,7 +1706,8 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  You wield the mighty pound card 
  and can do double the damage.
 
- Hit: 1d20 vs ac / Damage: 2d6
+ Hit: 1d20 + dex vs ac / Damage: 
+ 2d6
 
  Level: 3
  Usable by: Bard, Barbarian
@@ -1740,7 +1781,8 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  quickly attempt to correct your 
  aim.
 
- Hit: 1d20 vs ac / Damage: 1d6
+ Hit: 1d20 + dex vs ac / Damage: 
+ 1d6
  Roll for attack, if you roll 
  less than 10, roll again and use 
  the second roll no matter what. 
@@ -1805,8 +1847,10 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  1% chance to poison
 
  3 drinks in one round may leave 
- you tipsy: -1 dex and int for 2 
- cards
+ you tipsy for 2 cards. Roll 1d6: 
+ 1: -1 int; 2: -2 int; 3: -1 dex; 
+ 4: -2 dex; 5: +1 dex and +1 int; 
+ 6: -2 dex and -2 int
 
  Level: 4
  Usable by: All
@@ -1830,8 +1874,8 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  tree, wherein his sharp horn 
  sticketh fast." Charge anyway.
 
- Charge: 1d20 +1 vs ac / Damage: 
- 1d10
+ Charge: 1d20 + dex +1 vs ac / 
+ Damage: 1d10
  On a miss, roll 1d20 + str vs 
  the target's dex to pull up in 
  time.
@@ -1866,7 +1910,8 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  the pommel for a Stimpak 
  injection.
 
- Hit: 1d20 vs ac / Damage: 2d4
+ Hit: 1d20 + dex vs ac / Damage: 
+ 2d4
  - or, below 1/4 health -
  Health: 2d4
  + int bonus (diminished by 1 
@@ -1901,12 +1946,12 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  is why the Vikings who shout at 
  dragons stand at the front.
 
- Hit: 1d20 vs ac / Damage: 1d6. 
- If the hit lands and the target 
- is still standing, the tail 
- strikes too (1d20 + your STR 
- modifier - 2 to hit, 1d6 damage, 
- no critical hits).
+ Hit: 1d20 + dex vs ac / Damage: 
+ 1d6. If the hit lands and the 
+ target is still standing, the 
+ tail strikes too (1d20 + str - 2 
+ to hit, 1d6 damage, no critical 
+ hits).
 
  Level: 1
  Usable by: Dragon
@@ -2010,7 +2055,8 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  tough, take a bite for a quick 
  hp boost.
 
- Hit: 1d20 vs ac / Damage: 2d4
+ Hit: 1d20 + dex vs ac / Damage: 
+ 2d4
  - or, below 1/4 health -
  Health: 2d4
  + int bonus (diminished by 1 
@@ -2046,12 +2092,13 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  light.
 
  Let the horn ring out: hit your 
- target, and an ally in the ring 
- strikes it too. If you have no 
- ally, a creature of the wood 
- answers its light: an otter, a 
- deer, or a ram (1d20 + 2 to hit, 
- 1d4 damage).
+ target (1d20 + dex vs ac), and 
+ an ally in the ring strikes it 
+ too. If you have no ally, a 
+ creature of the wood answers its 
+ light: an otter, a deer, or a 
+ ram (1d20 + 2 to hit, 1d4 
+ damage).
 
  Level: 1
  Usable by: Unicorn
@@ -2072,7 +2119,7 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  Your wounds only make you 
  stronger.
 
- Hit: 1d20 vs ac
+ Hit: 1d20 + dex vs ac
  Damage: 1d6 +1 per wound 
  suffered
 
@@ -2104,8 +2151,10 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  1% chance to poison
 
  3 drinks in one round may leave 
- you tipsy: -1 dex and int for 2 
- cards
+ you tipsy for 2 cards. Roll 1d6: 
+ 1: -1 int; 2: -2 int; 3: -1 dex; 
+ 4: -2 dex; 5: +1 dex and +1 int; 
+ 6: -2 dex and -2 int
 
  Level: 2
  Usable by: All
@@ -2127,7 +2176,8 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  A simple weapon fashioned for 
  Minotaur-hunting.
 
- Hit: 1d20 vs ac / Damage: 1d6
+ Hit: 1d20 + dex vs ac / Damage: 
+ 1d6
  +3 damage vs Minotaur
 
  Level: 1

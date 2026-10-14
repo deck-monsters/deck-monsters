@@ -49,9 +49,12 @@ export class ForkedStickCard extends ImmobilizeCard {
 		super({ freedomSavingThrowTargetAttr, icon, targetProp, ...rest });
 	}
 
+	/** Set by a natural 1 on the pin roll; `immobilize` turns the stick on its holder. */
+	private fumbled = false;
+
 	override immobilizeCheck(player: any, target: any): boolean {
 		const immobilizeRoll = this.getImmobilizeRoll(player, target);
-		const { success: immobilizeSuccess } = this.checkSuccess(
+		const { success: immobilizeSuccess, curseOfLoki } = this.checkSuccess(
 			immobilizeRoll,
 			target[this.targetProp]
 		);
@@ -77,14 +80,39 @@ export class ForkedStickCard extends ImmobilizeCard {
 				immobilizeRoll,
 				player,
 				target,
+				curseOfLoki,
 			});
 		}
+		this.fumbled = curseOfLoki;
 
 		return immobilizeSuccess;
 	}
 
+	/*
+	 * A natural 1 on the pin is flung back like a Hit's (roadmap 51): the target grabs the
+	 * branch and jabs it into its holder, for the stick's damage rolled with the target's
+	 * stats. Before this a natural 1 only failed the pin, so the one weapon in the Hit family
+	 * whose own roll could not backfire was the stick.
+	 */
+	override async immobilize(player: any, target: any, ring: any, activeContestants?: any): Promise<any> {
+		this.fumbled = false;
+		const result = await super.immobilize(player, target, ring, activeContestants);
+		if (!this.fumbled) return result;
+		this.fumbled = false;
+		// A confused holder aiming at itself (Sandstorm) still fumbles: nobody to wrench it away,
+		// so it jabs itself (Codex review on PR #434).
+		this.emit('narration', {
+			narration: player === target
+				? `${this.icon} ${player.givenName} fumbles the branch and jabs ${player.pronouns.him}self.`
+				: `${this.icon} ${target.givenName} wrenches the branch away and jabs it back at ${player.givenName}.`,
+		});
+		const damageRoll = this.rollForDamage(target, player);
+		// As Hit's flung-back blow: the play's result is whether its holder still stands.
+		return player.hit(damageRoll.result, target, this);
+	}
+
 	override get stats(): string {
-		return `Attempt to immobilize your opponent by ${(this.constructor as any).actions.IMMOBILIZING} them between the branches of a forked stick.\n\nChance to immobilize: 1d20 vs ${this.freedomSavingThrowTargetAttr}.\n${super.stats}`;
+		return `Attempt to immobilize your opponent by ${(this.constructor as any).actions.IMMOBILIZING} them between the branches of a forked stick.\n\nChance to immobilize: ${this.attackDice} + ${this.freedomSavingThrowTargetAttr} vs ${this.targetProp}. On a natural 1 they jab it back at you.\n${super.stats}`;
 	}
 }
 

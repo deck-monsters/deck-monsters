@@ -77,9 +77,10 @@ Source: `packages/engine/src/cards/blink.ts`.
 **Rules text:**
 
 ```text
-1d20 vs opponent's int. They are removed from the fight (and can not be targeted).
+1d20 + int vs opponent's int. They are removed from the fight (and can not be targeted).
 On what would have been their next turn, you drain 1d4 hp and 4d4 xp
 If you fall first, they are back in the fight at once
+On a natural 1 you blink first: frozen in stone, you lose your next turn
 ```
 
 **Narration and outcomes:**
@@ -92,15 +93,17 @@ If you fall first, they are back in the fight at once
 | effect → timeShiftReason | `vs {blinkTarget}'s int ({int}) in an attempt to time-shift {him}.` |
 | effect → outcome | `Time shift {succeeded! / failed.} {blinkTarget} {blinked! / did not blink. The Doctor would be proud.}` |
 | effect → narration | `will not be blinked away.` |
-| effect → effectResult | `not target-able because they are ⏳ time-shifted by` |
-| effect → effectResult | `⏳ time-shifted for {turnsLeftToBlink} more turn{s / —} by` |
-| effect → primaryDice | `{primaryDice} (hp) & {primaryDice} (xp)` |
-| effect → result | `{result} (hp) & {result} (xp)` |
-| effect → result | `{result} & {result}` |
-| effect → potentialEngeryReason | `to steal potential energy from {him}self.` |
-| effect → potentialEngeryReason | `to steal potential energy from {identityWithHp}.` |
-| effect → narration | `{identity} opens {his} eyes and finds {him}self in an unfamiliar time.` |
-| effect → line | `the time-shift breaks. {blinkTarget} is back in the fight.` |
+| effect → narration | `⏳ {blinkPlayer} blinks first, and is frozen in stone.` |
+| freeze → narration | `⏳ {angel} is still frozen in stone, and loses this turn.` |
+| shift → effectResult | `not target-able because they are ⏳ time-shifted by` |
+| shift → effectResult | `⏳ time-shifted for {turnsLeftToBlink} more turn{s / —} by` |
+| shift → primaryDice | `{primaryDice} (hp) & {primaryDice} (xp)` |
+| shift → result | `{result} (hp) & {result} (xp)` |
+| shift → result | `{result} & {result}` |
+| shift → potentialEngeryReason | `to steal potential energy from {him}self.` |
+| shift → potentialEngeryReason | `to steal potential energy from {identityWithHp}.` |
+| shift → narration | `{identity} opens {his} eyes and finds {him}self in an unfamiliar time.` |
+| shift → line | `the time-shift breaks. {blinkTarget} is back in the fight.` |
 
 ## Enthrall
 
@@ -114,13 +117,13 @@ Source: `packages/engine/src/cards/enthrall.ts`.
 Immobilize all opponents.
 
 If already immobilized, hit instead.
-Hit: 1d20 vs int / Damage: 1d6
+Hit: 1d20 + int vs int / Damage: 1d6
  +2 advantage vs Basilisk, Gladiator
  no modifier vs Dragon, Unicorn
  -2 disadvantage vs Minotaur, Weeping Angel
 ineffective against Jinn
 
-Opponent breaks free by rolling 1d20 vs immobilizer's int +/- advantage/disadvantage - (turns immobilized * 3)
+Opponent breaks free by rolling 1d20 + their int vs immobilizer's int +/- advantage/disadvantage - (turns immobilized * 3)
 Hits immobilizer back on stroke of luck.
 Turns immobilized resets on curse of loki.
 ```
@@ -148,13 +151,13 @@ Source: `packages/engine/src/cards/entrance.ts`.
 Immobilize and hit all opponents.
 
 If already immobilized, hit instead.
-Hit: 1d20 vs int / Damage: 1d6
+Hit: 1d20 + int vs int / Damage: 1d6
  +2 advantage vs Basilisk, Gladiator
  no modifier vs Dragon, Unicorn
  -2 disadvantage vs Minotaur, Weeping Angel
 ineffective against Jinn
 
-Opponent breaks free by rolling 1d20 vs immobilizer's int +/- advantage/disadvantage - (turns immobilized * 3)
+Opponent breaks free by rolling 1d20 + their int vs immobilizer's int +/- advantage/disadvantage - (turns immobilized * 3)
 Hits immobilizer back on stroke of luck.
 Turns immobilized resets on curse of loki.
 
@@ -181,13 +184,13 @@ Source: `packages/engine/src/cards/mesmerize.ts`.
 Immobilize everyone. You are caught too only on a natural 1 (1d20).
 
 If already immobilized, hit instead.
-Hit: 1d20 vs int / Damage: 1d6
+Hit: 1d20 + int vs int / Damage: 1d6
  +2 advantage vs Basilisk, Gladiator
  no modifier vs Dragon, Unicorn
  -2 disadvantage vs Minotaur, Weeping Angel
 ineffective against Jinn
 
-Opponent breaks free by rolling 1d20 vs immobilizer's int +/- advantage/disadvantage - (turns immobilized * 3)
+Opponent breaks free by rolling 1d20 + their int vs immobilizer's int +/- advantage/disadvantage - (turns immobilized * 3)
 Hits immobilizer back on stroke of luck.
 Turns immobilized resets on curse of loki.
 ```

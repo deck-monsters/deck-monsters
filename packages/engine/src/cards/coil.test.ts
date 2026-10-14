@@ -16,12 +16,12 @@ describe('./cards/coil.ts', () => {
 		const stats = `Immobilize and hit your opponent by coiling your serpentine body around them and squeezing. If opponent is immune, hit instead.
 
 If already immobilized, hit instead.
-${hit.stats}
+${hit.stats.replace('+ dex', '+ str')}
  +2 advantage vs Gladiator, Minotaur
  no modifier vs Dragon, Unicorn, Weeping Angel
  -2 disadvantage vs Basilisk, Jinn
 
-Opponent breaks free by rolling 1d20 vs immobilizer's dex +/- advantage/disadvantage - (turns immobilized * 3)
+Opponent breaks free by rolling 1d20 + their dex vs immobilizer's dex +/- advantage/disadvantage - (turns immobilized * 3)
 Hits immobilizer back on stroke of luck.
 Turns immobilized resets on curse of loki.
 

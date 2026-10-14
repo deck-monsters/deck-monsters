@@ -5,6 +5,8 @@
  * turn, which a hold then narrated as pushing off "the limp dead body" even for a mind hold,
  * and an awe dropped with no line at all.
  *
+ * If the *victim* falls first, its effects end with it and nothing is said (roadmap 51).
+ *
  * Effects that outlive their caster on purpose do not use this: a burn keeps burning (fire does
  * not care who lit it), a poisoned bottle stays poisoned, a curse already landed stays, and
  * Delayed Hit is built to strike after its owner falls ("with his dying breath").
@@ -37,14 +39,19 @@ export function releaseWhenCasterFalls({
 	const stop = (): void => {
 		caster.off('die', onFalls);
 		caster.off('encounterEnd', onFightEnds);
+		holder.off?.('die', onHolderFalls);
 	};
 	const onFalls = caster.on('die', () => {
 		stop();
-		if (!holder.encounterEffects?.includes(effect)) return;
+		// A fallen victim's effects go with it: nothing to release, nothing to say.
+		if (holder.dead || !holder.encounterEffects?.includes(effect)) return;
 		release();
 		narrate(casterFallenLine(caster, line, icon));
 	});
 	const onFightEnds = caster.on('encounterEnd', stop);
+	// The victim falls first (owner, 2026-10-14: effects on a fallen monster end with it): stop
+	// listening, or the caster's later fall would announce "<victim> is no longer coiled".
+	const onHolderFalls = holder.on?.('die', stop);
 	return { stop };
 }
 

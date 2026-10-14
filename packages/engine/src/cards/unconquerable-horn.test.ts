@@ -62,7 +62,7 @@ describe('./cards/unconquerable-horn.ts Unconquerable Horn', () => {
 		const { stats, description } = new UnconquerableHornCard();
 
 		expect(stats).to.equal(
-			'Let the horn ring out: hit your target, and an ally in the ring strikes it too. If you have no ally, a creature of the wood answers its light: an otter, a deer, or a ram (1d20 + 2 to hit, 1d4 damage).'
+			'Let the horn ring out: hit your target (1d20 + dex vs ac), and an ally in the ring strikes it too. If you have no ally, a creature of the wood answers its light: an otter, a deer, or a ram (1d20 + 2 to hit, 1d4 damage).'
 		);
 		expect(stats).not.to.match(/ward|heal/i);
 		expect(description).to.include('the horns of unicorns');

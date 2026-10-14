@@ -1,4 +1,4 @@
-import { CloakOfInvisibilityCard } from './cloak-of-invisibility.js';
+import { CloakOfInvisibilityCard, HIDDEN_CARDS } from './cloak-of-invisibility.js';
 import { subEventDelay } from '../helpers/delay-times.js';
 import { agree } from '../helpers/pronouns.js';
 import { capitalize } from '../helpers/capitalize.js';
@@ -40,7 +40,7 @@ export class MoodScalesCard extends CloakOfInvisibilityCard {
 	}
 
 	override get stats(): string {
-		return `Calm (above half your hp): your scales match the rocks and sea, and you are hidden until you play a card that targets another player, or for the next 2 cards you play (1d20 vs your int for an opponent to find you).
+		return `Calm (above half your hp): your scales match the rocks and sea, and you are hidden until you play a card that targets another player, or for the next ${HIDDEN_CARDS} cards you play (${this.findRollText} for an opponent to find you; on a natural 20 they see straight through you).
 Furious (half your hp or less): your scales blaze red and you cannot hide, but your next melee hit does +${FURY_DAMAGE_DICE} damage.`;
 	}
 
@@ -50,6 +50,10 @@ Furious (half your hp or less): your scales blaze red and you cannot hide, but y
 
 	override concealNarration(target: any): string {
 		return `${target.givenName} holds very still, and the colours deepen.`;
+	}
+
+	override foundNarration(finder: any, hider: any): string {
+		return `${finder.givenName} rolled a natural 20. ${capitalize(finder.pronouns.he)} ${agree(finder.pronouns, 'sees', 'see')} straight through ${hider.givenName}'s calm, and ${hider.pronouns.his} scales flush with colour again.`;
 	}
 
 	override revealNarration(target: any): string {

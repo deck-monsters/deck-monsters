@@ -33,7 +33,7 @@ export const MECHANIC_NOTES: Readonly<Record<string, string>> = {
   'fight-level':
     'Level comes from XP, so XP drained or gained in a fight moves the level, and max HP and AC with it, until the fight ends.',
   tipsy:
-    'Three Whiskey Shots or Scotches in one round can leave a monster tipsy: -1 dex and -1 int for its next two cards. Strength helps it hold its drink.',
+    'Three Whiskey Shots or Scotches in one round can leave a monster tipsy for its next two cards. A 1d6 says how: slower wits, unsteady feet, both, or (on a 5) just drunk enough to be sharper. Strength helps it hold its drink.',
   'boss-temperament':
     "Every boss has a temperament that decides which challenger it goes after. The line above says this one's.",
 };
