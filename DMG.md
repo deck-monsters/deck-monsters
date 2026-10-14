@@ -453,6 +453,9 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  4d4 xp
  If you fall first, they are back 
  in the fight at once
+ On a natural 1 the shift folds 
+ back: you lose your next turn 
+ instead
 
  Level: Beginner
  Usable by: Weeping Angel
@@ -1119,8 +1122,8 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  prong). +2 to hit and immobilize 
  for each successful prong hit.
 
- Chance to immobilize: 1d20 vs 
- str.
+ Chance to immobilize: 1d20 + str 
+ vs str.
 
  If already immobilized, hit 
  instead.
@@ -1170,8 +1173,9 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  opponent by pinning them between 
  the branches of a forked stick.
 
- Chance to immobilize: 1d20 vs 
- str.
+ Chance to immobilize: 1d20 + str 
+ vs dex. On a natural 1 they jab 
+ it back at you.
  If already immobilized, hit 
  instead.
  Hit: 1d20 + dex vs dex / Damage: 
@@ -1366,7 +1370,7 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  for each successful horn hit.
 
  If either horn hits, chance to 
- immobilize: 1d20 vs str.
+ immobilize: 1d20 + str vs str.
 
  If already immobilized, hit 
  instead.

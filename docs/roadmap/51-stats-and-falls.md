@@ -19,7 +19,7 @@ tags: [roadmap, cards, balance, combat]
 | 3 | Hiding is a contest: 1d20 + finder's int vs 10 + hider's int (dex for the Vest) | Done | `ae4318b` |
 | 4 | Card texts name both sides of each roll | Done | `ae4318b` |
 | 5 | Effects whose target falls: same-turn damage stands; a fallen captive's hold is not announced (10b #257) | Done | `e198a03` |
-| 6 | Crit failures: an audit of natural 1s | Open | |
+| 6 | Crit failures: a natural 1 on your own move backfires; only a d20 crits (10b #258) | Done | |
 
 ## Decisions (owner, 2026-10-14)
 
@@ -33,6 +33,9 @@ tags: [roadmap, cards, balance, combat]
 - Damage keeps landing in the turn a monster falls, down into negative hp: Berserk's last
   swing, every armed Delayed Hit (owner). Only effects that would speak *after* that turn
   are silenced.
+- Natural 1s and 20s are for d20s only; a card's own rare luck roll (Heal's 1-in-100 phial)
+  stays (owner). Blink's natural 1 reuses the confused angel's self-shift rather than adding
+  a new penalty (Claude's call).
 - Not in this pass: notifications, the phone check, boss hands.
 
 ## Balance check

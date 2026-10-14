@@ -84,7 +84,7 @@ Source: `packages/engine/src/cards/horn-gore.ts`.
 ```text
 Attack twice (once with each horn). +2 to hit and immobilize for each successful horn hit.
 
-If either horn hits, chance to immobilize: 1d20 vs str.
+If either horn hits, chance to immobilize: 1d20 + str vs str.
 
 If already immobilized, hit instead.
 Hit: 1d20 + dex vs ac / Damage: 1d4
@@ -105,7 +105,7 @@ Turns immobilized resets on curse of loki.
 | flavors → hits | `mercilessly juggles (on their mighty horns) the pitiful` |
 | flavors → hits | `chases down gleefully, stomps on, and then wantonly drives their horns through` |
 | flavors → hits | `teaches the true meaning of "horny" to` |
-| mechanics → returns | `Attack twice (once with each {spike}). +2 to hit and immobilize for each successful {spike} hit. ⏎  ⏎ If either {spike} hits, chance to immobilize: 1d20 vs {freedomSavingThrowTargetAttr}.` |
+| mechanics → returns | `Attack twice (once with each {spike}). +2 to hit and immobilize for each successful {spike} hit. ⏎  ⏎ If either {spike} hits, chance to immobilize: {attackDice} + {freedomSavingThrowTargetAttr} vs {freedomSavingThrowTargetAttr}.` |
 | getCommentary → commentary | `{player} rolled a natural 20. Automatic max damage.` |
 | getCommentary → flavors | `gouge {his} eye` |
 | getCommentary → flavors | `punch {his} soft temple` |

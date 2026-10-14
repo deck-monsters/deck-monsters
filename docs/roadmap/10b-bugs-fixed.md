@@ -5766,3 +5766,20 @@ release and the line if the holder has fallen (`caster-falls.test.ts`). Delayed 
 alone on purpose: the owner ruled that damage keeps landing in the turn a monster falls, so a
 second armed copy still answers an attacker the first copy killed (`delayed-hit.test.ts` pins
 it).
+
+### 258. Natural 1s that did nothing, and pin texts that hid their rolls — FIXED
+
+Roadmap 11's crit-failure audit (roadmap 51). Every card on Hit's attack path flung a natural 1
+back at the attacker, but two cards rolling for their own move did not: Blink's time-shift and
+the Forked Stick's pin each treated a 1 as a plain miss, and their miss events left out
+`curseOfLoki`, so the feed said "is blocked by" under a "Crit Fail!" verdict. `chance.roll`
+also honoured `crit` on any die, so a crit-flagged d6 would have read a 6 as a natural 20; no
+card did that yet. Separately, the pin texts said "1d20 vs str" when Forked Stick rolls
+1d20 + str vs dex and Horn Gore and the Rod roll 1d20 + str vs str; `attack-stats.test.ts` only
+checks attack rolls, so it missed them.
+
+**Fixed:** Blink's natural 1 shifts the angel itself (it loses its next turn); the Forked Stick's
+is jabbed back for the stick's damage; both miss events carry the flag. Only `1d20` crits
+(`helpers/chance.test.ts`, owner: "not crit failing on every 1 of a 1d4 or 1d6"). The pin texts
+name both sides. A forked-stick test's spy on `getImmobilizeRoll` was never restored and leaked
+into later tests; it is now.

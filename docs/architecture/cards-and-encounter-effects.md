@@ -182,6 +182,40 @@ raises the stat and every roll that adds it alike.
   (10 + the dragon's int), the ancient dragon's trick (20 + its int), and Tipsy's hold (10).
   At equal modifiers a hide is now found about half the time, not three times in four.
 
+## Natural 1s and 20s
+
+Roadmap 51 (owner, 2026-10-14). **Only a d20 crits.** `chance.roll` sets `curseOfLoki` and
+`strokeOfLuck` only for a `crit` roll on `1d20`, so a damage die that rolls its top face is not a
+stroke of luck. A rare luck roll of a card's own, such as Heal's 1-in-100 poisoned or lucky
+phial, is a separate mechanic and is allowed; it is not a natural 1.
+
+**A natural 1 on your own move backfires.** It always fails (`checkSuccess`), and:
+
+| Card | A natural 1 |
+|------|-------------|
+| Hit and every card on its attack path (curses, Kalevala, Lucky Strike, Rehit, Coil's hit …) | The target flings the blow back: the attacker takes the card's damage, rolled with the target's stats |
+| Horn Gore, Forked Metal Rod (each gore) | The target strikes the gorer's face; the gore adds no horn strength |
+| Forked Stick (the pin roll) | The target wrenches the branch away and jabs it back, for the stick's damage |
+| Berserk | COMBO BREAKER: the combo's damage turns on the berserker |
+| Blink | The shift folds back: the angel loses its own next turn, as a confused angel that blinks itself |
+| Cloak, Camouflage Vest, Mood Scales (the searcher's roll) | The searcher trips and plays the card on itself |
+| Mesmerize (the caster's own d20) | The caster sees its reflection and is held |
+| Sticketh | Its attack is only a miss, by design; the stick-fast save that follows decides |
+
+A miss event carries `curseOfLoki`, so the feed reads "misses … horribly" rather than "is
+blocked by".
+
+**A natural 1 on a save or a dodge is only a failure**: Fire Breath's dodge, Flee, Tsunami's
+ride and Helm of Awe's first save. The other side's success is the consequence. Horn Gore's pin
+roll after its gores is also only a failure: the gores themselves are where it backfires.
+Two saves do more because a held or awed monster is fighting its
+captor: a natural 1 on a hold's freedom roll tightens the hold (`immobilizedTurns` resets), and
+on a later Helm of Awe save a monster that is not bloodied tries to flee.
+
+**Some rolls never crit** (the donkey's card says so): the donkey's kick, Tail Lash's tail and
+the Unconquerable Horn's companion strike. Each is a second blow riding on a card whose main roll
+already can.
+
 ## Holds and the Horn of Proof ward
 
 Every hold one creature puts on another, including Immobilize, Horn Gore, Coil, Constrict,

@@ -19,7 +19,7 @@ describe('./cards/blink.ts', () => {
 		expect((blink as any).cursedProp).to.equal('xp');
 		expect((blink as any).hasChanceToHit).to.be.false;
 		expect(blink.stats).to.equal(
-			"1d20 + int vs opponent's int. They are removed from the fight (and can not be targeted).\nOn what would have been their next turn, you drain 1d4 hp and 4d4 xp\nIf you fall first, they are back in the fight at once"
+			"1d20 + int vs opponent's int. They are removed from the fight (and can not be targeted).\nOn what would have been their next turn, you drain 1d4 hp and 4d4 xp\nIf you fall first, they are back in the fight at once\nOn a natural 1 the shift folds back: you lose your next turn instead"
 		);
 	});
 
@@ -39,7 +39,7 @@ describe('./cards/blink.ts', () => {
 		expect((blink as any).cursedProp).to.equal('ac');
 		expect((blink as any).hasChanceToHit).to.be.true;
 		expect(blink.stats).to.equal(
-			"1d20 + int vs opponent's int. They are removed from the fight (and can not be targeted).\nOn what would have been their next turn, you drain 2d4 hp and 4d6 ac\nIf you fall first, they are back in the fight at once"
+			"1d20 + int vs opponent's int. They are removed from the fight (and can not be targeted).\nOn what would have been their next turn, you drain 2d4 hp and 4d6 ac\nIf you fall first, they are back in the fight at once\nOn a natural 1 the shift folds back: you lose your next turn instead"
 		);
 	});
 
@@ -250,5 +250,36 @@ describe('./cards/blink.ts', () => {
 
 				expect((card as any).played).to.equal(1);
 			});
+	});
+
+	it('folds the shift back on the angel on a natural 1 (roadmap 51)', async () => {
+		const blink = new BlinkCard();
+		const player = new WeepingAngel({ name: 'player' });
+		const target = new Basilisk({ name: 'target' });
+		const ring: any = {
+			contestants: [{ monster: player }, { monster: target }],
+			channelManager: { sendMessages: () => Promise.resolve() },
+			encounterEffects: [],
+		};
+		sinon.stub(blink, 'getAttackRoll').returns({
+			primaryDice: '1d20',
+			result: 1,
+			naturalRoll: { rolled: [1], result: 1 },
+			bonusResult: 0,
+			modifier: 0,
+			curseOfLoki: true,
+			strokeOfLuck: false,
+		});
+		const narrations: string[] = [];
+		blink.on('narration', (_c: unknown, _card: unknown, { narration }: any) => narrations.push(narration));
+		const misses: any[] = [];
+		blink.on('miss', (_c: unknown, _card: unknown, payload: any) => misses.push(payload));
+
+		await blink.play(player, target, ring, ring.contestants);
+
+		expect((player as any).encounterModifiers.timeShifted).to.equal(true);
+		expect((target as any).encounterModifiers.timeShifted).to.not.equal(true);
+		expect(misses[0].curseOfLoki).to.equal(true);
+		expect(narrations.join(' ')).to.contain(`${player.givenName} blinks first`);
 	});
 });

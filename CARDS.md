@@ -317,8 +317,8 @@ Cards that hit one opponent. Most roll a d20 against the target's AC, then roll 
  prong). +2 to hit and immobilize 
  for each successful prong hit.
 
- Chance to immobilize: 1d20 vs 
- str.
+ Chance to immobilize: 1d20 + str 
+ vs str.
 
  If already immobilized, hit 
  instead.
@@ -368,8 +368,9 @@ Cards that hit one opponent. Most roll a d20 against the target's AC, then roll 
  opponent by pinning them between 
  the branches of a forked stick.
 
- Chance to immobilize: 1d20 vs 
- str.
+ Chance to immobilize: 1d20 + str 
+ vs dex. On a natural 1 they jab 
+ it back at you.
  If already immobilized, hit 
  instead.
  Hit: 1d20 + dex vs dex / Damage: 
@@ -470,7 +471,7 @@ Cards that hit one opponent. Most roll a d20 against the target's AC, then roll 
  for each successful horn hit.
 
  If either horn hits, chance to 
- immobilize: 1d20 vs str.
+ immobilize: 1d20 + str vs str.
 
  If already immobilized, hit 
  instead.
@@ -1623,6 +1624,9 @@ Cards that hold, curse, poison, confuse or rob an opponent instead of simply hit
  4d4 xp
  If you fall first, they are back 
  in the fight at once
+ On a natural 1 the shift folds 
+ back: you lose your next turn 
+ instead
 
  Level: Beginner
  Usable by: Weeping Angel

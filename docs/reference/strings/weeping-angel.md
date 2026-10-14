@@ -80,6 +80,7 @@ Source: `packages/engine/src/cards/blink.ts`.
 1d20 + int vs opponent's int. They are removed from the fight (and can not be targeted).
 On what would have been their next turn, you drain 1d4 hp and 4d4 xp
 If you fall first, they are back in the fight at once
+On a natural 1 the shift folds back: you lose your next turn instead
 ```
 
 **Narration and outcomes:**
@@ -92,15 +93,16 @@ If you fall first, they are back in the fight at once
 | effect → timeShiftReason | `vs {blinkTarget}'s int ({int}) in an attempt to time-shift {him}.` |
 | effect → outcome | `Time shift {succeeded! / failed.} {blinkTarget} {blinked! / did not blink. The Doctor would be proud.}` |
 | effect → narration | `will not be blinked away.` |
-| effect → effectResult | `not target-able because they are ⏳ time-shifted by` |
-| effect → effectResult | `⏳ time-shifted for {turnsLeftToBlink} more turn{s / —} by` |
-| effect → primaryDice | `{primaryDice} (hp) & {primaryDice} (xp)` |
-| effect → result | `{result} (hp) & {result} (xp)` |
-| effect → result | `{result} & {result}` |
-| effect → potentialEngeryReason | `to steal potential energy from {him}self.` |
-| effect → potentialEngeryReason | `to steal potential energy from {identityWithHp}.` |
-| effect → narration | `{identity} opens {his} eyes and finds {him}self in an unfamiliar time.` |
-| effect → line | `the time-shift breaks. {blinkTarget} is back in the fight.` |
+| effect → narration | `⏳ {blinkPlayer} blinks first. The shift folds back on {him}, and {he} slips out of time instead.` |
+| shift → effectResult | `not target-able because they are ⏳ time-shifted by` |
+| shift → effectResult | `⏳ time-shifted for {turnsLeftToBlink} more turn{s / —} by` |
+| shift → primaryDice | `{primaryDice} (hp) & {primaryDice} (xp)` |
+| shift → result | `{result} (hp) & {result} (xp)` |
+| shift → result | `{result} & {result}` |
+| shift → potentialEngeryReason | `to steal potential energy from {him}self.` |
+| shift → potentialEngeryReason | `to steal potential energy from {identityWithHp}.` |
+| shift → narration | `{identity} opens {his} eyes and finds {him}self in an unfamiliar time.` |
+| shift → line | `the time-shift breaks. {blinkTarget} is back in the fight.` |
 
 ## Enthrall
 

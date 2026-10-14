@@ -217,7 +217,7 @@ The ring narrates every roll. What the words and numbers mean:
 - +2, -1 after a roll: the bonus or penalty from the monster's stats, added to the die.
 - vs ac (10): the number the attack roll has to beat. A roll equal to it misses; ties go to the defender.
 - Natural 20: the die itself shows 20. The attack hits whatever the target's AC, for the most damage the dice allow.
-- Natural 1, the Curse of Loki: the die itself shows 1. The attack misses, and the target turns it back on the attacker.
+- Natural 1, the Curse of Loki: the die itself shows 1. Your own move backfires: an attack is turned back on you, a time-shift takes you out instead, and a search for a hidden monster trips you up. A natural 1 on a save or a dodge is just a failure. Only a d20 rolls a natural 1 or 20; a 1 on a damage die is just a 1.
 - Hit! and Miss...: whether the attack roll beat the target's defense.
 - Bloodied: still in the fight, at half HP or less.
 - Fallen: at 0 HP or below. The roster says fallen instead of a health number.

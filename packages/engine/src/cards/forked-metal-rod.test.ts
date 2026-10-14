@@ -15,7 +15,7 @@ describe('./cards/forked-metal-rod.ts', () => {
 
 		const stats = `Attack twice (once with each prong). +2 to hit and immobilize for each successful prong hit.
 
-Chance to immobilize: 1d20 vs str.
+Chance to immobilize: 1d20 + str vs str.
 
 If already immobilized, hit instead.
 ${hit.stats}

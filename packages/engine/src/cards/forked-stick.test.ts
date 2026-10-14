@@ -18,7 +18,7 @@ describe('./cards/forked-stick.ts Forked Stick', () => {
 
 		const stats = `Attempt to immobilize your opponent by pinning them between the branches of a forked stick.
 
-Chance to immobilize: 1d20 vs str.
+Chance to immobilize: 1d20 + str vs dex. On a natural 1 they jab it back at you.
 If already immobilized, hit instead.
 ${hit.stats}
  +2 advantage vs Basilisk, Gladiator
@@ -269,6 +269,7 @@ Turns immobilized resets on curse of loki.
 					checkSuccessStub.restore();
 					getAttackRollImmobilizeSpy.restore();
 					getFreedomRollImmobilizeSpy.restore();
+					getImmobilizeRollImmobilizeSpy.restore();
 					getAttackRollHitSpy.restore();
 
 					expect((target as any).encounterEffects.length).to.equal(0);
@@ -337,5 +338,36 @@ Turns immobilized resets on curse of loki.
 		expect((forkedStick as any).getFreedomRoll(player, target).modifier).to.equal(
 			freedomBefore - 1
 		);
+	});
+
+	it('is jabbed back at its holder on a natural 1 (roadmap 51)', async () => {
+		const forkedStick = new ForkedStickCard();
+		const player = new Minotaur({ name: 'player' });
+		const target = new Basilisk({ name: 'target' });
+		const ring: any = {
+			contestants: [{ character: {}, monster: player }, { character: {}, monster: target }],
+			channelManager: { sendMessages: () => Promise.resolve() },
+		};
+		const rollStub = sinon.stub(forkedStick, 'getImmobilizeRoll').returns({
+			primaryDice: '1d20',
+			result: 1,
+			naturalRoll: { rolled: [1], result: 1 },
+			bonusResult: 0,
+			modifier: 0,
+			curseOfLoki: true,
+			strokeOfLuck: false,
+		});
+		const narrations: string[] = [];
+		forkedStick.on('narration', (_c: unknown, _card: unknown, { narration }: any) => narrations.push(narration));
+		const playerHp = (player as any).hp;
+		const targetHp = (target as any).hp;
+
+		await forkedStick.play(player, target, ring, ring.contestants);
+		rollStub.restore();
+
+		expect((player as any).hp).to.be.below(playerHp);
+		expect((target as any).hp).to.equal(targetHp);
+		expect((target as any).encounterEffects).to.have.length(0);
+		expect(narrations.join(' ')).to.contain(`${target.givenName} wrenches the branch away and jabs it back at ${player.givenName}.`);
 	});
 });
