@@ -1,14 +1,14 @@
 ---
-type: Roadmap
+type: Archive
 title: Attack stats, hiding, target deaths, crit failures
 description: Roadmap 51 — every attack card names and rolls its stat, the Kalevala rolls int, hiding becomes a contest against 10 + a stat, effects whose target falls, and natural-1 outcomes.
-status: draft
+status: deprecated
 audience: internal
 tags: [roadmap, cards, balance, combat]
 ---
 # 51 — Attack stats, hiding, target deaths, crit failures
 
-**Status:** In review on `claude/int-audit-and-roadmap-51`. Started 2026-10-14.
+**Status:** Shipped in #434. Archived. Started 2026-10-14. The decisions live in [cards and encounter effects](../../architecture/cards-and-encounter-effects.md) (attack stats and contests, natural 1s and 20s, when the monster an effect is on falls, Tipsy); Berserk's attack stat stays open on [roadmap 11](../../roadmap/11-balance-and-mechanics.md).
 
 ## Tasks
 
@@ -23,6 +23,7 @@ tags: [roadmap, cards, balance, combat]
 | 7 | Review fixes: Blink's natural 1 freezes rather than shifts; escape texts name both sides; Cloak find-roll tests | Done | `5af7ed5` |
 | 8 | Hides last three cards; a natural 20 tears the cloak off (owner) | Done | `1a249e7` |
 | 9 | Tipsy rolls 1d6 for its kind, the Ballmer peak on a 5 (owner) | Done | `1a249e7` |
+| 10 | Codex review: a confused holder's Forked Stick natural 1 jabs itself | Done | `f189e3e` |
 
 ## Decisions (owner, 2026-10-14)
 
