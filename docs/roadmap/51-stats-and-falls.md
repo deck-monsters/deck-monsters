@@ -15,9 +15,9 @@ tags: [roadmap, cards, balance, combat]
 | # | Task | Status | Commit |
 |---|------|--------|--------|
 | 1 | Archive roadmap 50 | Done | `1da3a28` |
-| 2 | `attackStat` on every attack card: the roll and the text agree; the Kalevala rolls int (10b #256) | Done | this commit |
-| 3 | Hiding is a contest: 1d20 + finder's int vs 10 + hider's int (dex for the Vest) | Done | this commit |
-| 4 | Card texts name both sides of each roll | Done | this commit |
+| 2 | `attackStat` on every attack card: the roll and the text agree; the Kalevala rolls int (10b #256) | Done | `ae4318b` |
+| 3 | Hiding is a contest: 1d20 + finder's int vs 10 + hider's int (dex for the Vest) | Done | `ae4318b` |
+| 4 | Card texts name both sides of each roll | Done | `ae4318b` |
 | 5 | Effects whose target falls | Open | |
 | 6 | Crit failures: an audit of natural 1s | Open | |
 
