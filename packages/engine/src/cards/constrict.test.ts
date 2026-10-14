@@ -20,7 +20,7 @@ ${hit.stats.replace('+ dex', '+ str')}
  no modifier vs Dragon, Unicorn, Weeping Angel
  -3 disadvantage vs Basilisk, Jinn
 
-Opponent breaks free by rolling 1d20 vs immobilizer's dex +/- advantage/disadvantage - (turns immobilized * 3)
+Opponent breaks free by rolling 1d20 + their dex vs immobilizer's dex +/- advantage/disadvantage - (turns immobilized * 3)
 Hits immobilizer back on stroke of luck.
 Turns immobilized resets on curse of loki.
 

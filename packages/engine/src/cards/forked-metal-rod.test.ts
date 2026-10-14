@@ -24,7 +24,7 @@ ${hit.stats}
  +1 advantage vs Jinn, Minotaur
 ineffective against Weeping Angel
 
-Opponent breaks free by rolling 1d20 vs immobilizer's str + advantage - (turns immobilized * 3)
+Opponent breaks free by rolling 1d20 + their str vs immobilizer's str + advantage - (turns immobilized * 3)
 Hits immobilizer back on stroke of luck.
 Turns immobilized resets on curse of loki.
 `;

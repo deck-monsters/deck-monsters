@@ -5778,8 +5778,8 @@ card did that yet. Separately, the pin texts said "1d20 vs str" when Forked Stic
 1d20 + str vs dex and Horn Gore and the Rod roll 1d20 + str vs str; `attack-stats.test.ts` only
 checks attack rolls, so it missed them.
 
-**Fixed:** Blink's natural 1 shifts the angel itself (it loses its next turn); the Forked Stick's
+**Fixed:** Blink's natural 1 freezes the angel in stone: it loses its next turn but stays a target. (The first version shifted the angel instead, as a confused angel that blinks itself was; review caught that a shift makes the angel untargetable, so the opponent lost more turns than it did. A confused angel's self-blink now freezes too.) the Forked Stick's
 is jabbed back for the stick's damage; both miss events carry the flag. Only `1d20` crits
-(`helpers/chance.test.ts`, owner: "not crit failing on every 1 of a 1d4 or 1d6"). The pin texts
-name both sides. A forked-stick test's spy on `getImmobilizeRoll` was never restored and leaked
+(`helpers/chance.test.ts`, owner: "not crit failing on every 1 of a 1d4 or 1d6"). The pin and escape texts
+name both sides ("1d20 + their str vs immobilizer's str"). A forked-stick test's spy on `getImmobilizeRoll` was never restored and leaked
 into later tests; it is now.

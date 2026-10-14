@@ -19,7 +19,7 @@ describe('./cards/blink.ts', () => {
 		expect((blink as any).cursedProp).to.equal('xp');
 		expect((blink as any).hasChanceToHit).to.be.false;
 		expect(blink.stats).to.equal(
-			"1d20 + int vs opponent's int. They are removed from the fight (and can not be targeted).\nOn what would have been their next turn, you drain 1d4 hp and 4d4 xp\nIf you fall first, they are back in the fight at once\nOn a natural 1 the shift folds back: you lose your next turn instead"
+			"1d20 + int vs opponent's int. They are removed from the fight (and can not be targeted).\nOn what would have been their next turn, you drain 1d4 hp and 4d4 xp\nIf you fall first, they are back in the fight at once\nOn a natural 1 you blink first: frozen in stone, you lose your next turn"
 		);
 	});
 
@@ -39,7 +39,7 @@ describe('./cards/blink.ts', () => {
 		expect((blink as any).cursedProp).to.equal('ac');
 		expect((blink as any).hasChanceToHit).to.be.true;
 		expect(blink.stats).to.equal(
-			"1d20 + int vs opponent's int. They are removed from the fight (and can not be targeted).\nOn what would have been their next turn, you drain 2d4 hp and 4d6 ac\nIf you fall first, they are back in the fight at once\nOn a natural 1 the shift folds back: you lose your next turn instead"
+			"1d20 + int vs opponent's int. They are removed from the fight (and can not be targeted).\nOn what would have been their next turn, you drain 2d4 hp and 4d6 ac\nIf you fall first, they are back in the fight at once\nOn a natural 1 you blink first: frozen in stone, you lose your next turn"
 		);
 	});
 
@@ -252,7 +252,7 @@ describe('./cards/blink.ts', () => {
 			});
 	});
 
-	it('folds the shift back on the angel on a natural 1 (roadmap 51)', async () => {
+	it('freezes the angel on a natural 1: it loses its next turn but can still be hit (roadmap 51)', async () => {
 		const blink = new BlinkCard();
 		const player = new WeepingAngel({ name: 'player' });
 		const target = new Basilisk({ name: 'target' });
@@ -277,9 +277,17 @@ describe('./cards/blink.ts', () => {
 
 		await blink.play(player, target, ring, ring.contestants);
 
-		expect((player as any).encounterModifiers.timeShifted).to.equal(true);
+		// Frozen, not shifted: a shift would make the angel untargetable, a gift.
+		expect((player as any).encounterModifiers.timeShifted).to.not.equal(true);
 		expect((target as any).encounterModifiers.timeShifted).to.not.equal(true);
+		expect((player as any).encounterEffects.map((e: any) => e.effectType)).to.deep.equal(['BlinkFrozenEffect']);
 		expect(misses[0].curseOfLoki).to.equal(true);
-		expect(narrations.join(' ')).to.contain(`${player.givenName} blinks first`);
+		expect(narrations.join(' ')).to.contain(`${player.givenName} blinks first, and is frozen in stone.`);
+
+		const strike = new TestCard();
+		const { lost } = await strike.startTurn(player, target, ring, ring.contestants);
+		expect(lost).to.equal(true);
+		expect(narrations.join(' ')).to.contain(`${player.givenName} is still frozen in stone, and loses this turn.`);
+		expect((player as any).encounterEffects).to.have.length(0);
 	});
 });

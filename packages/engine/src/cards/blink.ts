@@ -61,22 +61,16 @@ export class BlinkCard extends CurseCard {
 	}
 
 	override get stats(): string {
-		return `1d20 + int vs opponent's int. They are removed from the fight (and can not be targeted).\nOn what would have been their next turn, you drain ${this.energyToStealDice} hp and ${this.curseAmountDice} ${this.cursedProp}\nIf you fall first, they are back in the fight at once\nOn a natural 1 the shift folds back: you lose your next turn instead`;
+		return `1d20 + int vs opponent's int. They are removed from the fight (and can not be targeted).\nOn what would have been their next turn, you drain ${this.energyToStealDice} hp and ${this.curseAmountDice} ${this.cursedProp}\nIf you fall first, they are back in the fight at once\nOn a natural 1 you blink first: frozen in stone, you lose your next turn`;
 	}
 
-	/**
-	 * `backfire` is a natural 1's shift turned on the angel itself (roadmap 51): no roll, no
-	 * ward, the same self-shift a confused angel already takes.
-	 */
 	override effect(
 		blinkPlayer: any,
 		blinkTarget: any,
 		ring: any,
-		activeContestants: any,
-		backfire = false
+		activeContestants: any
 	): any {
 		blinkTarget.encounterModifiers.blinkedTurns = 0;
-		if (backfire) return this.shift(blinkPlayer, blinkTarget, ring);
 		const attackRoll = this.getAttackRoll(blinkPlayer);
 		const attackSuccess = this.checkSuccess(attackRoll, blinkTarget.int);
 
@@ -108,6 +102,9 @@ export class BlinkCard extends CurseCard {
 				return true;
 			}
 
+			// A confused angel that blinks itself is frozen, not shifted: a shift would make it
+			// untargetable, which is a gift (roadmap 51 review).
+			if (blinkPlayer === blinkTarget) return this.freeze(blinkPlayer);
 			return this.shift(blinkPlayer, blinkTarget, ring);
 		}
 
@@ -120,17 +117,38 @@ export class BlinkCard extends CurseCard {
 		});
 
 		/*
-		 * A natural 1 turns the shift back on the angel (roadmap 51: a natural 1 on your own
-		 * move backfires, as a Hit is flung back). It loses its next turn, exactly as a confused
-		 * angel that blinks itself. A confused angel already aiming at itself just misses.
+		 * A natural 1 backfires (roadmap 51: a natural 1 on your own move backfires, as a Hit is
+		 * flung back). The angel blinks first and is frozen in stone: it loses its next turn but
+		 * stays in the fight and can be hit. Shifting it instead, as first built, made it
+		 * untargetable, so the opponent lost more turns than the angel did (roadmap 51 review).
 		 */
-		if (attackSuccess.curseOfLoki && blinkPlayer !== blinkTarget) {
+		if (attackSuccess.curseOfLoki) {
 			this.emit('narration', {
-				narration: `${this.icon} ${blinkPlayer.givenName} blinks first. The shift folds back on ${blinkPlayer.pronouns.him}, and ${blinkPlayer.pronouns.he} slips out of time instead.`,
+				narration: `${this.icon} ${blinkPlayer.givenName} blinks first, and is frozen in stone.`,
 			});
-			return this.effect(blinkPlayer, blinkPlayer, ring, activeContestants, true);
+			return this.freeze(blinkPlayer);
 		}
 
+		return true;
+	}
+
+	/**
+	 * Lose the angel's next turn. A `control` stage effect, like a hold: time still passes for a
+	 * statue, so burns tick and upkeep runs, and it stays a target the whole time.
+	 */
+	private freeze(angel: any): boolean {
+		const frozenEffect = ({ card, phase }: any) => {
+			if (phase !== ATTACK_PHASE) return card;
+			angel.encounterEffects = angel.encounterEffects.filter((effect: any) => effect !== frozenEffect);
+			this.emit('narration', {
+				narration: `${this.icon} ${angel.givenName} is still frozen in stone, and loses this turn.`,
+			});
+			card.play = () => Promise.resolve(!angel.dead);
+			return card;
+		};
+		frozenEffect.effectType = 'BlinkFrozenEffect';
+		(frozenEffect as any).turnStart = 'control';
+		angel.encounterEffects = [...angel.encounterEffects, frozenEffect];
 		return true;
 	}
 

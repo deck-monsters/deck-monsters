@@ -94,7 +94,7 @@ Natural 1 on either roll fails. Natural 20 on the charge deals max damage.`;
 	override getAttackRoll(player: any, _target?: any): any {
 		return roll({
 			primaryDice: this.attackDice,
-			modifier: player.dexModifier + STICKETH_TO_HIT_BONUS,
+			modifier: player[`${this.attackStat}Modifier`] + STICKETH_TO_HIT_BONUS,
 			bonusDice: player.bonusAttackDice,
 			crit: true,
 		});

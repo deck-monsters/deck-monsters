@@ -103,8 +103,8 @@ export class ForkedStickCard extends ImmobilizeCard {
 			narration: `${this.icon} ${target.givenName} wrenches the branch away and jabs it back at ${player.givenName}.`,
 		});
 		const damageRoll = this.rollForDamage(target, player);
-		await player.hit(damageRoll.result, target, this);
-		return !target.dead;
+		// As Hit's flung-back blow: the play's result is whether its holder still stands.
+		return player.hit(damageRoll.result, target, this);
 	}
 
 	override get stats(): string {
