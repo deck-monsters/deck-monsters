@@ -719,8 +719,10 @@ export class Game extends BaseClass {
 		character.coins += coinsGained;
 
 		const reasonParts: string[] = [];
-		if (dailyCoins > 0) reasonParts.push(`Daily first-fight bonus: ${dailyCoins} coins.`);
-		if (bonusCoins > 0) reasonParts.push(`New player bonus: ${bonusCoins} coins.`);
+		// "New player bonus: 1 coins" (bug 262): the taper reaches 1 before it reaches 0.
+		const coinsText = (n: number): string => `${n} ${n === 1 ? 'coin' : 'coins'}`;
+		if (dailyCoins > 0) reasonParts.push(`Daily first-fight bonus: ${coinsText(dailyCoins)}.`);
+		if (bonusCoins > 0) reasonParts.push(`New player bonus: ${coinsText(bonusCoins)}.`);
 
 		return {
 			coinsGained,

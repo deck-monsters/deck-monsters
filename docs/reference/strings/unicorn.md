@@ -207,7 +207,7 @@ Natural 1 on either roll fails. Natural 20 on the charge deals max damage.
 | getFreedomCommentary → returns | `{target} rolled a natural 20 and wrenches the horn free.` |
 | getFreedomCommentary → returns | `{target} rolled a natural 1. The horn only sinks deeper.` |
 | getFreedomCommentary → returns | `Tie... the timber holds.` |
-| emitImmobilizeNarrative → narration | `{player}'s horn 🦄 sticks fast in the timber. At the beginning of {his} turn {he} will roll {freedomThresholdNarrative} to pull it free.` |
+| emitImmobilizeNarrative → narration | `{player}'s horn 🦄 sticks fast in the timber. At the beginning of {his} turn {he} will roll {freedomThresholdNarrative} to pull it free. {FREEDOM_FATIGUE_TEXT}` |
 | effect → narration | `{target} has an opening. Unicorns may be betray'd with trees.` |
 
 ## Unconquerable Horn

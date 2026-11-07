@@ -18,7 +18,11 @@ export function announceHeal(
 			hp: monster.hp,
 			maxHp: monster.maxHp,
 		};
-		const text = `${monster.icon} 💊 ${monster.givenName} healed ${amount} hp and has *${monster.hp} hp*.`;
+		// Heal's Curse of Loki (poison) and Bad Batch heal by a negative amount, and the feed
+		// said "healed -2 hp" (bug 260). A loss reads as a loss.
+		const text = amount < 0
+			? `${monster.icon} 🤢 ${monster.givenName} lost ${-amount} hp and has *${monster.hp} hp*.`
+			: `${monster.icon} 💊 ${monster.givenName} healed ${amount} hp and has *${monster.hp} hp*.`;
 		eb.publish({
 			type: 'announce',
 			scope: 'public',

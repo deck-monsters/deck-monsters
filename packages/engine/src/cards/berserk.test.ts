@@ -335,6 +335,21 @@ describe('./cards/berserk.ts', () => {
 			);
 		});
 
+		// Bug 262: a natural 1 on the first swing announced "Broke a 0 hit combo".
+		it('a natural 1 on the first swing is a plain fumble, not a COMBO BREAKER', async () => {
+			const { berserk, player, target, hitCheckStub, attackRoll, ring, narrations } = setUp(30);
+			hitCheckStub.onCall(0).returns({ attackRoll, success: false, strokeOfLuck: false, curseOfLoki: true });
+			const playerBefore = (player as any).hp;
+			try {
+				await berserk.play(player, target, ring, ring.contestants);
+			} finally {
+				hitCheckStub.restore();
+			}
+
+			expect((player as any).hp).to.equal(playerBefore - 1);
+			expect(narrations).to.deep.equal([]);
+		});
+
 		it('a natural 1 at a fallen target: the body strikes back, and the roll line says how', async () => {
 			const { berserk, player, target, hitCheckStub, attackRoll, ring, narrations } = setUp(2);
 			hitCheckStub.onCall(3).returns({ attackRoll, success: false, strokeOfLuck: false, curseOfLoki: true });

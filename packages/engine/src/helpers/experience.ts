@@ -46,6 +46,7 @@ export const calculateXP = (contestant: Contestant, contestants: Contestant[]): 
 	const { monster } = contestant;
 	const killed = contestant.killed || [];
 	const rounds = contestant.rounds || 1;
+	const roundsText = `${rounds} ${rounds === 1 ? 'round' : 'rounds'}`;
 	const reasonList: string[] = [];
 	let xp: number;
 
@@ -100,7 +101,15 @@ export const calculateXP = (contestant: Contestant, contestants: Contestant[]): 
 		const xpBase = contestant.fled ? BASE_XP_PER_FLEEING : BASE_XP_LAST_ONE_STANDING;
 		xp = Math.min(xpFormula(levelDifference!, xpBase), xpBase * rounds);
 
-		const forText = contestant.fled ? 'fleeing' : 'being the last one standing';
+		// "Last one standing" only when it is true: no opponent still fighting, and someone
+		// actually fell. A survivor of a flee or a round-cap draw is "surviving" (bug 261: both
+		// monsters of a 10-round draw were each called the last one standing).
+		const fell = (m: any): boolean => !!m.dead || contestants.some(k => (k.killed ?? []).includes(m));
+		const othersStanding = contestants.some(o => o.monster !== monster && !fell(o.monster) && !o.fled);
+		const someoneFell = contestants.some(o => o.monster !== monster && fell(o.monster));
+		const forText = contestant.fled
+			? 'fleeing'
+			: !othersStanding && someoneFell ? 'being the last one standing' : 'surviving';
 
 		let levelText: string;
 		if (opponents.length > 1) {
@@ -112,7 +121,7 @@ export const calculateXP = (contestant: Contestant, contestants: Contestant[]): 
 		}
 
 		reasonList.push(
-			`Gained ${xp > 0 ? xp : 'no'} XP for ${forText} as a ${monster.displayLevel} monster lasting ${rounds} rounds in a fight with ${levelText}`
+			`Gained ${xp > 0 ? xp : 'no'} XP for ${forText} as a ${monster.displayLevel} monster lasting ${roundsText} in a fight with ${levelText}`
 		);
 
 		gainedXP += xp;
@@ -152,7 +161,7 @@ export const calculateXP = (contestant: Contestant, contestants: Contestant[]): 
 	}
 
 	reasonList.push(
-		`Gained ${xp > 0 ? xp : 'no'} XP for lasting ${rounds} rounds in a fight against ${contestants.length - 1} opponent${contestants.length - 1 === 1 ? '' : 's'}`
+		`Gained ${xp > 0 ? xp : 'no'} XP for lasting ${roundsText} in a fight against ${contestants.length - 1} opponent${contestants.length - 1 === 1 ? '' : 's'}`
 	);
 	gainedXP += xp;
 

@@ -229,9 +229,13 @@ export class BerserkCard extends HitCard {
 					? ' Pride goes before a fall.'
 					: ` Pride goes before a fall: ${target.givenName} catches ${player.givenName} showing off.`;
 			}
-			this.emit('narration', {
-				narration: `COMBO BREAKER!${why} (Broke a ${hits} hit combo, ${this.initialDamage + this.cumulativeComboDamage} total damage)`,
-			});
+			// A natural 1 on the first swing broke nothing; the roll line already says what
+			// happened ("COMBO BREAKER! (Broke a 0 hit combo, 0 total damage)", bug 262).
+			if (hits > 0) {
+				this.emit('narration', {
+					narration: `COMBO BREAKER!${why} (Broke a ${hits} hit combo, ${this.initialDamage + this.cumulativeComboDamage} total damage)`,
+				});
+			}
 
 			this.resetCard();
 			return player.hit(damage, target, this);

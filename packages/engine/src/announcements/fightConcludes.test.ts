@@ -97,4 +97,30 @@ describe('./announcements/fightConcludes.ts', () => {
 
 		expect(published[0]!.text).to.include('after 1 round!');
 	});
+
+	// Bug 261: a flee was a "draw" right after the stayer was called the last one standing,
+	// and fight #137 (everyone fell) said only "a draw". The banner now says why.
+	it('says a flee with no deaths is why nobody wins', () => {
+		const { eb, published } = capture();
+		announceFightConcludes(eb as never, 'Ring', {}, {
+			deaths: 0, isDraw: true, rounds: 1, fled: ['Chef'], survivors: 1,
+		});
+		expect(published[0]!.text).to.match(/^Chef fled, so nobody wins\. The fight concluded in a draw after 1 round!/);
+	});
+
+	it('says nobody is left standing when every monster fell', () => {
+		const { eb, published } = capture();
+		announceFightConcludes(eb as never, 'Ring', {}, {
+			deaths: 4, isDraw: true, rounds: 2, fled: [], survivors: 0,
+		});
+		expect(published[0]!.text).to.match(/^Nobody is left standing\. The fight concluded in a draw after 2 rounds!/);
+	});
+
+	it('keeps a plain round-cap draw as it was', () => {
+		const { eb, published } = capture();
+		announceFightConcludes(eb as never, 'Ring', {}, {
+			deaths: 0, isDraw: true, rounds: 10, fled: [], survivors: 2,
+		});
+		expect(published[0]!.text).to.match(/^The fight concluded in a draw after 10 rounds!/);
+	});
 });

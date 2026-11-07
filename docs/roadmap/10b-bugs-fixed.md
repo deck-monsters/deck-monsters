@@ -5508,6 +5508,58 @@ text now describes the showboat.
 
 **Status**: Fixed.
 
+### 260. Poison said "healed -2 hp" — FIXED
+
+Found by a log audit of production (16 rows, 2026-04-13 to 2026-10-09). Heal's Curse of
+Loki (poison) and Bad Batch call `heal()` with a negative amount, and `announceHeal` printed
+it as is: "Iassen Brightheart healed -2 hp and has *31 hp*."
+
+**Fixed** (`announcements/heal.ts`): a negative heal reads "🤢 … lost 2 hp and has *31 hp*."
+Test: `heal.test.ts`.
+
+**Status**: Fixed.
+
+### 261. Draws that contradicted the XP lines — FIXED
+
+Found by the same audit: every one of 17 production draws had a "last one standing" XP line
+next to it. Two causes:
+- **The XP text.** `calculateXP` called any living, unfled monster "the last one standing",
+  so in a 10-round draw both survivors were, and after a flee the stayer was, right before
+  the banner said "a draw" (a flee with no deaths is a draw by design, `participantOutcome`).
+- **The banner said only "a draw".** It did not say why, including fight #137, where all
+  four monsters fell.
+
+**Fixed:** the XP reason says "being the last one standing" only when no opponent is still
+fighting and one actually fell; otherwise "surviving" (`helpers/experience.ts`; the XP
+amounts are unchanged). The banner names the reason: "Chef fled, so nobody wins." or
+"Nobody is left standing." before "The fight concluded in a draw after N rounds!"
+(`fightConcludes` now gets `fled` and `survivors` from the ring). Tests:
+`fightConcludes.test.ts`, `experience.test.ts`.
+
+**Not a bug, recorded so nobody chases it:** the audit also flagged "The Editor gained 1 XP
+and 7 coins / Daily first-fight bonus" twice in one fight. The Editor is the boss host
+(`userId: 'boss'`), each boss monster gets a throwaway character, and those lines are
+private with no recipient, so no player sees them and no real character is paid twice. The
+audit's "duplicate" countdown, fight-start and draw lines are one private copy per player.
+
+**Status**: Fixed.
+
+### 262. Text slips from the production log audit — FIXED
+
+- **"1 rounds" and "1 coins".** The XP reasons said "lasting 1 rounds" (about 268 rows), and
+  the new-player bonus could say "1 coins" as its taper reached 1. Both pluralise now
+  (`helpers/experience.ts`, `game.ts`). The "Fight concluded: … after 1 rounds" rows predate
+  that line's own fix.
+- **A raw formula in every pin.** "will roll 1d20 + str vs Estenu Braveheart's str(12) +6
+  -(immobilized turns x 3) to attempt to break free" (469 rows). The fatigue is now a
+  sentence after it: "Each turn held makes it 3 easier." (`FREEDOM_FATIGUE_TEXT` in
+  `cards/immobilize.ts`, also used by Sticketh).
+- **"COMBO BREAKER! (Broke a 0 hit combo, 0 total damage)".** A natural 1 on Berserk's first
+  swing broke no combo; it is now a plain fumble whose roll line says what happened
+  (`cards/berserk.ts`, test in `berserk.test.ts`).
+
+**Status**: Fixed.
+
 ## Closed without a fix
 
 These were open investigations the owner closed on 2026-09-28. Reopen with new evidence.

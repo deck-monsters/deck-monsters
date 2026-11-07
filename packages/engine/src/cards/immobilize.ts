@@ -15,6 +15,9 @@ import { advantageAgainstPinned } from './helpers/pinned.js';
 
 const { roll } = chance;
 
+/** How a hold weakens: `getFreedomThreshold` takes 3 off for each turn already held. */
+export const FREEDOM_FATIGUE_TEXT = 'Each turn held makes it 3 easier.';
+
 export class ImmobilizeCard extends HitCard {
 	static cardType = 'Immobilize';
 	static actions = {
@@ -361,6 +364,11 @@ ${ongoingDamageText}`;
 		return ImmobilizeEffect;
 	}
 
+	/**
+	 * The odds of breaking free, as a player reads them. The turn fatigue used to be shown as
+	 * the raw formula "-(immobilized turns x 3)" (bug 262); it is now the sentence
+	 * `FREEDOM_FATIGUE_TEXT`, which callers put after their "to break free" clause.
+	 */
 	freedomThresholdNarrative(player: any, target: any): string {
 		const thresholdBonusText = this.getAttackModifier(target)
 			? `${signedNumber(this.getAttackModifier(target))}`
@@ -369,13 +377,13 @@ ${ongoingDamageText}`;
 			player === target
 				? `${player.pronouns.his} own`
 				: `${player.givenName}'s`;
-		return `1d20 + ${this.freedomStat} vs ${playerName} ${this.freedomSavingThrowTargetAttr}(${this.getFreedomThresholdBase(player)})${thresholdBonusText} -(immobilized turns x 3)`;
+		return `1d20 + ${this.freedomStat} vs ${playerName} ${this.freedomSavingThrowTargetAttr}(${this.getFreedomThresholdBase(player)})${thresholdBonusText}`;
 	}
 
 	emitImmobilizeNarrative(player: any, target: any): void {
 		const targetName =
 			player === target ? `${player.pronouns.him}self` : target.givenName;
-		let immobilizeNarrative = `\n${player.givenName} ${this.icon} ${this.actions.IMMOBILIZES} ${targetName}.\nAt the beginning of ${target.givenName}'s turn ${target.pronouns.he} will roll ${this.freedomThresholdNarrative(player, target)} to attempt to break free.`;
+		let immobilizeNarrative = `\n${player.givenName} ${this.icon} ${this.actions.IMMOBILIZES} ${targetName}.\nAt the beginning of ${target.givenName}'s turn ${target.pronouns.he} will roll ${this.freedomThresholdNarrative(player, target)} to attempt to break free. ${FREEDOM_FATIGUE_TEXT}`;
 		if (this.ongoingDamage > 0) {
 			immobilizeNarrative += `\n${target.givenName} takes ${this.ongoingDamage} damage per turn ${target.pronouns.he} ${target.pronouns.is ?? 'is'} ${this.actions.IMMOBILIZED}\n`;
 		}
