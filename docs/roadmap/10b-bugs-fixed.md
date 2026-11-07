@@ -5501,7 +5501,7 @@ pinned by Horn Gore. Read from `room_events`:
 - A natural 1 at a fallen target still strikes back (the owner likes the body taking part,
   like Delayed Hit's dying breath), and the roll line now says how: a last twitch, a ghost,
   a brief lurch (`fromBeyond`).
-- Every swing gets a beat after its roll and after its blow.
+- Every swing gets a beat after its roll; the blow gets `hit()`'s own beat (a second one, caught in review, doubled the gap).
 
 Tests: `berserk.test.ts` ("a combo that keeps landing"), `battle-focus.test.ts`. The card
 text now describes the showboat.

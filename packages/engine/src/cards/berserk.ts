@@ -141,7 +141,7 @@ export class BerserkCard extends HitCard {
 	 * as the owner wants, and the roll line now says how (`fromBeyond` in `hit.ts`).
 	 * Totals count only damage dealt. Beating a fallen body until HUMILIATION is kept:
 	 * that is how Battle Focus destroys a monster.
-	 * Every swing takes a beat after its roll and after its blow, like a Hit.
+	 * Every swing takes a beat after its roll; the blow's beat is `hit()`'s own, like a Hit.
 	 */
 	async effectLoop(
 		iteration: number,
@@ -206,8 +206,9 @@ export class BerserkCard extends HitCard {
 				this.initialDamage = damage;
 			}
 
+			// `hit()` already pauses after its damage line (`creatures/health.ts`); a second
+			// beat here doubled the gap before the next swing (Codex review of #435).
 			await target.hit(damage, player, this);
-			await subEventDelay(ring?.pacingMultiplier);
 
 			return this.effectLoop(
 				iteration + 1,
