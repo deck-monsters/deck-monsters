@@ -5560,6 +5560,26 @@ audit's "duplicate" countdown, fight-start and draw lines are one private copy p
 
 **Status**: Fixed.
 
+### 263. Two ring pacing tests failed together under full-suite load — FIXED
+
+Seen on this branch (2026-11-07), and reproducible without its changes. "Paces the
+fight-opening banners apart" turns delay-skipping off and sets a 20 ms sub-event beat to
+measure the gaps between the four opening banners. That beat, scaled up to 2.6x by message
+length, then paced every line of a random fight of up to 10 rounds: 0.9 to 7 s per run,
+against a 10 s timeout. Under load it timed out; mocha failed it and moved on while the fight
+still ran, and its `finally` (which turns skipping back on) waited for that fight, so the next
+test ("completes near-instantly under DECK_MONSTERS_SKIP_DELAYS") ran on real delays and failed
+at 3,346 ms.
+
+**Fixed** (`ring/index.test.ts`): once the four opening banners are recorded, the test turns
+skipping back on for the rest of the fight (every delay re-reads the switch). The test now
+takes about 150 ms, and the engine suite about 15 s instead of 20. The two real-pacing tests
+also restored `DECK_MONSTERS_SKIP_DELAYS = prevSkip`, which stores the string "undefined"
+(truthy) when it was unset; they now delete it in that case, as the card feed tests already
+did.
+
+**Status**: Fixed.
+
 ## Closed without a fix
 
 These were open investigations the owner closed on 2026-09-28. Reopen with new evidence.

@@ -2361,7 +2361,8 @@ describe('ring/index.ts', () => {
 				expect(ring.inEncounter).to.equal(false);
 				expect(ring.contestants.length).to.equal(0);
 			} finally {
-				process.env.DECK_MONSTERS_SKIP_DELAYS = prevSkip;
+				if (prevSkip === undefined) delete process.env.DECK_MONSTERS_SKIP_DELAYS;
+				else process.env.DECK_MONSTERS_SKIP_DELAYS = prevSkip;
 				delete process.env.DECK_MONSTERS_VERY_SHORT_DELAY_MIDPOINT_MS;
 				delete process.env.DECK_MONSTERS_SHORT_DELAY_MIDPOINT_MS;
 				delete process.env.DECK_MONSTERS_SUB_EVENT_DELAY_MIDPOINT_MS;
@@ -2397,6 +2398,12 @@ describe('ring/index.ts', () => {
 					if (seen.has(label)) return;
 					seen.add(label);
 					opening.push({ label, timestamp });
+					// Only the opening is under test. The rest of a random fight (up to 10
+					// rounds) at this real pace took 1-7 s and, under full-suite load, passed
+					// the timeout; mocha then moved on while this fight still ran with
+					// SKIP_DELAYS unset, so the next test ran on real delays and failed too
+					// (2026-11-07). Every delay re-reads the switch, so this speeds up the rest.
+					if (label === 'playerTurnBegin') process.env.DECK_MONSTERS_SKIP_DELAYS = '1';
 				};
 
 				ring.eventBus.subscribe('opening-beat-spy', {
@@ -2431,7 +2438,8 @@ describe('ring/index.ts', () => {
 					).to.be.at.least(5);
 				}
 			} finally {
-				process.env.DECK_MONSTERS_SKIP_DELAYS = prevSkip;
+				if (prevSkip === undefined) delete process.env.DECK_MONSTERS_SKIP_DELAYS;
+				else process.env.DECK_MONSTERS_SKIP_DELAYS = prevSkip;
 				delete process.env.DECK_MONSTERS_SUB_EVENT_DELAY_MIDPOINT_MS;
 				delete process.env.DECK_MONSTERS_VERY_SHORT_DELAY_MIDPOINT_MS;
 				delete process.env.DECK_MONSTERS_SHORT_DELAY_MIDPOINT_MS;
