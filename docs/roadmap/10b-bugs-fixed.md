@@ -5472,6 +5472,37 @@ and text/lines agreement for every emitted feed event.
 
 **Status:** Fixed.
 
+### 259. A Berserk combo swung 282 times, claimed 4,927 damage, and ended in a draw — FIXED
+
+Found by the owner on a phone (fight #137, room "Crazy chic…", 2026-11-07). Estenu
+Braveheart (5 hp) stole Jefferson's Berserk with Pick Pocket while Jefferson (3 hp, AC 7) was
+pinned by Horn Gore. Read from `room_events`:
+
+- **Unbounded combo.** Berserk swings until it misses. At +8 against AC 7 only a natural 1
+  misses, and the pin gives every swing advantage (roadmap 36), so only a double 1 (1 in 400)
+  ended it. The logged rolls fit best-of-2d20, not a flat d20. Once the combo had dealt half
+  the target's max hp, HUMILIATION stopped applying damage but kept swinging: 282 swings,
+  about 560 feed lines.
+- **A false total.** The no-damage swings still added to `cumulativeComboDamage`, so the
+  summary said 4,927 when 24 landed (Jefferson ended at -21, not further). Each natural 20
+  also raised per-hit damage, to 27 by the end.
+- **A fallen target fought back.** The double 1 finally came, and dead Jefferson "flung the
+  attack back" for 27, killing Estenu: "killed by Jefferson (-21 hp)", and a draw.
+- **No pacing.** `effectLoop` awaited no `subEventDelay`, against the multi-roll rule in
+  [engine concurrency and timing](../architecture/engine-concurrency-and-timing.md): the
+  whole combo arrived in 1.5 seconds.
+
+**Fixed** (`cards/berserk.ts`, `cards/hit.ts`): the swing that would push the combo past half
+the target's max hp ends it instead (`HUMILIATION! … HITS (N total damage).`, counting only
+damage dealt); a natural 1 at a fallen target is a plain miss, for Berserk and for Hit's own
+path, with the roll line saying the attacker stumbles over the body; every swing gets a beat
+after its roll and after its blow. Swinging at a fallen body until HUMILIATION is kept, since
+it is how Battle Focus destroys a monster. Berserk's card text now names the cap.
+
+Tests: `berserk.test.ts` ("a combo that keeps landing"), `battle-focus.test.ts`.
+
+**Status**: Fixed.
+
 ## Closed without a fix
 
 These were open investigations the owner closed on 2026-09-28. Reopen with new evidence.

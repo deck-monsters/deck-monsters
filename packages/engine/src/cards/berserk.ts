@@ -3,6 +3,7 @@ import { BARBARIAN } from '../constants/creature-classes.js';
 import { chance } from '../helpers/chance.js';
 import { COMMON } from '../helpers/probabilities.js';
 import { REASONABLE } from '../helpers/costs.js';
+import { subEventDelay } from '../helpers/delay-times.js';
 
 const { roll } = chance;
 
@@ -92,7 +93,7 @@ export class BerserkCard extends HitCard {
 		}
 		// The roll adds dex (getAttackRollBonus). This text said "+ str bonus" and nothing
 		// rolled str; it now says what the roll does (owner, 2026-10-14). Str is on roadmap 11.
-		return `Hit: ${this.attackDice} + dex vs ac on first hit\nthen also + int bonus (fatigued by 1 each subsequent hit) until you miss\n${damageDescription}\n\nStroke of luck increases damage per hit by 1.`;
+		return `Hit: ${this.attackDice} + dex vs ac on first hit\nthen also + int bonus (fatigued by 1 each subsequent hit) until you miss,\nor until the combo has done half the target's max hp\n${damageDescription}\n\nStroke of luck increases damage per hit by 1.`;
 	}
 
 	override getDamageRoll(): any {
@@ -117,6 +118,23 @@ export class BerserkCard extends HitCard {
 		});
 	}
 
+	/*
+	 * The combo swings until it misses, and until it has done enough (bug 259, fight #137
+	 * in production, 2026-11-07). Three things went wrong together there:
+	 * - Once the combo had dealt half the target's max hp, HUMILIATION stopped applying
+	 *   damage but kept swinging. Against a pinned target every swing rolls with advantage,
+	 *   so only a double 1 (1 in 400) ended it: 282 swings, ~560 feed lines.
+	 * - Those no-damage swings still added to the "total damage" in the summary (4,927
+	 *   claimed, 24 dealt), and each natural 20 kept raising the per-hit damage.
+	 * - The double 1 finally came, and the target, by then long fallen, "flung the attack
+	 *   back" for 27 and killed the attacker, turning a win into a draw.
+	 * So HUMILIATION now ends the combo, the summary counts only damage dealt, and a fallen
+	 * target cannot fling anything back. Beating a fallen body is still allowed until
+	 * HUMILIATION: that is how a big first hit destroys a monster (Battle Focus).
+	 *
+	 * Every swing is paced like a Hit (a beat after the roll, another after the blow): the
+	 * loop used to await nothing, so a whole combo arrived in one burst.
+	 */
 	async effectLoop(
 		iteration: number,
 		player: any,
@@ -132,6 +150,7 @@ export class BerserkCard extends HitCard {
 			player,
 			target
 		);
+		await subEventDelay(ring?.pacingMultiplier);
 
 		if (strokeOfLuck) {
 			this.increaseDamage();
@@ -144,21 +163,21 @@ export class BerserkCard extends HitCard {
 				damage = this.rollForDamage(player, target, strokeOfLuck).result;
 			}
 
+			if (
+				iteration !== 1 &&
+				this.cumulativeComboDamage + damage > Math.floor(target.maxHp / 2)
+			) {
+				return this.endCombo(iteration - 1, target, ring, 'HUMILIATION! ');
+			}
+
 			if (iteration !== 1) {
 				this.cumulativeComboDamage += damage;
 			} else {
 				this.initialDamage = damage;
 			}
 
-			if (
-				this.cumulativeComboDamage <= Math.floor(target.maxHp / 2)
-			) {
-				await target.hit(damage, player, this);
-			} else {
-				this.emit('narration', {
-					narration: `HUMILIATION! ${iteration} hits`,
-				});
-			}
+			await target.hit(damage, player, this);
+			await subEventDelay(ring?.pacingMultiplier);
 
 			return this.effectLoop(
 				iteration + 1,
@@ -167,7 +186,7 @@ export class BerserkCard extends HitCard {
 				ring,
 				activeContestants
 			);
-		} else if (curseOfLoki) {
+		} else if (curseOfLoki && !target.dead) {
 			let damage = this.damageAmount;
 			if (iteration === 1 && this.bigFirstHit) {
 				damage = this.rollForDamage(target, player).result;
@@ -188,11 +207,16 @@ export class BerserkCard extends HitCard {
 			target,
 		});
 
-		if (iteration > 1) {
-			const comboText = iteration > 3 ? 'COMBO! ' : '';
-			const ultraText = iteration > 5 ? 'ULTRA ' : '';
+		return this.endCombo(iteration - 1, target, ring);
+	}
+
+	/** The combo's closing line, then a clean card for the next play. */
+	async endCombo(hits: number, target: any, ring: any, prefix = ''): Promise<boolean> {
+		if (hits > 0 || prefix) {
+			const comboText = hits > 2 ? 'COMBO! ' : '';
+			const ultraText = hits > 4 ? 'ULTRA ' : '';
 			this.emit('narration', {
-				narration: `${target.dead ? 'ULTIMATE ' : ultraText}${comboText}${iteration - 1} HIT${iteration - 1 > 1 ? 'S' : ''} (${this.initialDamage + this.cumulativeComboDamage} total damage).`,
+				narration: `${prefix}${target.dead ? 'ULTIMATE ' : ultraText}${comboText}${hits} HIT${hits > 1 ? 'S' : ''} (${this.initialDamage + this.cumulativeComboDamage} total damage).`,
 			});
 		}
 

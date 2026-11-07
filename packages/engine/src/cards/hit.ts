@@ -91,6 +91,9 @@ export class HitCard extends BaseCard<HitCardOptions> {
 
 		if (strokeOfLuck) {
 			commentary = `${player.givenName} rolled a natural 20. Automatic max damage.`;
+		} else if (curseOfLoki && target.dead) {
+			// A fallen monster cannot fling anything back (bug 259): a fumble at a body is a miss.
+			commentary = `${player.givenName} rolled a 1 and stumbles over ${target.givenName}'s body.`;
 		} else if (curseOfLoki) {
 			commentary = `${player.givenName} rolled a 1. Unfortunately, while trying to attack, ${target.givenName} flings ${player.pronouns.his} attack back against ${player.pronouns.him}.`;
 		} else if (tie) {
@@ -167,7 +170,7 @@ export class HitCard extends BaseCard<HitCardOptions> {
 			const damageRoll = this.rollForDamage(player, target, strokeOfLuck);
 			await subEventDelay(ring?.pacingMultiplier);
 			return target.hit(damageRoll.result, player, this);
-		} else if (curseOfLoki) {
+		} else if (curseOfLoki && !target.dead) {
 			const damageRoll = this.rollForDamage(target, player);
 			await subEventDelay(ring?.pacingMultiplier);
 			return player.hit(damageRoll.result, target, this);

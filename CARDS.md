@@ -151,7 +151,9 @@ Cards that hit one opponent. Most roll a d20 against the target's AC, then roll 
  hit
  then also + int bonus (fatigued 
  by 1 each subsequent hit) until 
- you miss
+ you miss,
+ or until the combo has done half 
+ the target's max hp
  1d6 damage on first hit.
  1 damage per hit after that.
 
@@ -185,7 +187,9 @@ Cards that hit one opponent. Most roll a d20 against the target's AC, then roll 
  hit
  then also + int bonus (fatigued 
  by 1 each subsequent hit) until 
- you miss
+ you miss,
+ or until the combo has done half 
+ the target's max hp
  1 damage per hit.
 
  Stroke of luck increases damage 
