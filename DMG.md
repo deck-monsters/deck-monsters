@@ -340,9 +340,11 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  hit
  then also + int bonus (fatigued 
  by 1 each subsequent hit) until 
- you miss,
- or until the combo has done half 
- the target's max hp
+ you miss.
+ Once the combo has done half the 
+ target's max hp, it shows off 
+ for up to 3 more swings: no 
+ damage, but a 1 still backfires.
  1d6 damage on first hit.
  1 damage per hit after that.
 
@@ -376,9 +378,11 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  hit
  then also + int bonus (fatigued 
  by 1 each subsequent hit) until 
- you miss,
- or until the combo has done half 
- the target's max hp
+ you miss.
+ Once the combo has done half the 
+ target's max hp, it shows off 
+ for up to 3 more swings: no 
+ damage, but a 1 still backfires.
  1 damage per hit.
 
  Stroke of luck increases damage 

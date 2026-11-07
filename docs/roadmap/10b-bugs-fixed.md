@@ -5492,14 +5492,19 @@ pinned by Horn Gore. Read from `room_events`:
   [engine concurrency and timing](../architecture/engine-concurrency-and-timing.md): the
   whole combo arrived in 1.5 seconds.
 
-**Fixed** (`cards/berserk.ts`, `cards/hit.ts`): the swing that would push the combo past half
-the target's max hp ends it instead (`HUMILIATION! … HITS (N total damage).`, counting only
-damage dealt); a natural 1 at a fallen target is a plain miss, for Berserk and for Hit's own
-path, with the roll line saying the attacker stumbles over the body; every swing gets a beat
-after its roll and after its blow. Swinging at a fallen body until HUMILIATION is kept, since
-it is how Battle Focus destroys a monster. Berserk's card text now names the cap.
+**Fixed** (`cards/berserk.ts`, `cards/hit.ts`), with the owner's steer on the feel:
+- HUMILIATION now says what it means (no more damage) and starts at most three
+  "showing off" swings. Each says "No damage, all style." A natural 1 among them still
+  breaks the combo ("Pride goes before a fall"), so the swagger keeps its risk.
+- The closing total counts only damage dealt. A natural 20 says what it does for Berserk
+  (+1 per hit, or nothing while showing off), not "Automatic max damage".
+- A natural 1 at a fallen target still strikes back (the owner likes the body taking part,
+  like Delayed Hit's dying breath), and the roll line now says how: a last twitch, a ghost,
+  a brief lurch (`fromBeyond`).
+- Every swing gets a beat after its roll and after its blow.
 
-Tests: `berserk.test.ts` ("a combo that keeps landing"), `battle-focus.test.ts`.
+Tests: `berserk.test.ts` ("a combo that keeps landing"), `battle-focus.test.ts`. The card
+text now describes the showboat.
 
 **Status**: Fixed.
 

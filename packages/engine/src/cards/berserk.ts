@@ -7,6 +7,11 @@ import { subEventDelay } from '../helpers/delay-times.js';
 
 const { roll } = chance;
 
+/** Swings after HUMILIATION before the berserker takes a bow (bug 259). */
+const MAX_SHOWBOATS = 3;
+/** What a showboat swing does instead of damage; `{player} {flourish} {target}.` */
+const SHOWBOATS = ['flicks the ear of', 'pats the head of', 'flexes over'];
+
 export class BerserkCard extends HitCard {
 	static cardType = 'Berserk';
 	static permittedClassesAndTypes = [BARBARIAN];
@@ -42,6 +47,8 @@ export class BerserkCard extends HitCard {
 	iterations = 0;
 	damageAmount = 0;
 	intBonusFatigue = 0;
+	/** Swings after HUMILIATION: no damage, and a natural 1 still costs the attacker. */
+	showboats = 0;
 
 	constructor({
 		bigFirstHit,
@@ -66,6 +73,7 @@ export class BerserkCard extends HitCard {
 		this.cumulativeComboDamage = 0;
 		this.initialDamage = 0;
 		this.iterations = 0;
+		this.showboats = 0;
 		this.resetDamage();
 		this.resetFatigue();
 	}
@@ -93,7 +101,7 @@ export class BerserkCard extends HitCard {
 		}
 		// The roll adds dex (getAttackRollBonus). This text said "+ str bonus" and nothing
 		// rolled str; it now says what the roll does (owner, 2026-10-14). Str is on roadmap 11.
-		return `Hit: ${this.attackDice} + dex vs ac on first hit\nthen also + int bonus (fatigued by 1 each subsequent hit) until you miss,\nor until the combo has done half the target's max hp\n${damageDescription}\n\nStroke of luck increases damage per hit by 1.`;
+		return `Hit: ${this.attackDice} + dex vs ac on first hit\nthen also + int bonus (fatigued by 1 each subsequent hit) until you miss.\nOnce the combo has done half the target's max hp, it shows off for up to 3 more swings: no damage, but a 1 still backfires.\n${damageDescription}\n\nStroke of luck increases damage per hit by 1.`;
 	}
 
 	override getDamageRoll(): any {
@@ -119,21 +127,21 @@ export class BerserkCard extends HitCard {
 	}
 
 	/*
-	 * The combo swings until it misses, and until it has done enough (bug 259, fight #137
-	 * in production, 2026-11-07). Three things went wrong together there:
-	 * - Once the combo had dealt half the target's max hp, HUMILIATION stopped applying
-	 *   damage but kept swinging. Against a pinned target every swing rolls with advantage,
-	 *   so only a double 1 (1 in 400) ended it: 282 swings, ~560 feed lines.
-	 * - Those no-damage swings still added to the "total damage" in the summary (4,927
-	 *   claimed, 24 dealt), and each natural 20 kept raising the per-hit damage.
-	 * - The double 1 finally came, and the target, by then long fallen, "flung the attack
-	 *   back" for 27 and killed the attacker, turning a win into a draw.
-	 * So HUMILIATION now ends the combo, the summary counts only damage dealt, and a fallen
-	 * target cannot fling anything back. Beating a fallen body is still allowed until
-	 * HUMILIATION: that is how a big first hit destroys a monster (Battle Focus).
+	 * Bug 259 (fight #137 in production, 2026-11-07). A stolen Berserk at a pinned, 3-hp
+	 * target swung 282 times: once the combo had dealt half the target's max hp, HUMILIATION
+	 * stopped the damage but not the swinging, and a pin gives every swing advantage, so only
+	 * a double 1 (1 in 400) ended it. Those empty swings still counted toward the "total
+	 * damage" (4,927 claimed, 24 dealt), and the double 1 had the long-fallen target fling
+	 * the blow back and kill the attacker. The loop also awaited no pacing, so all ~560 lines
+	 * arrived in 1.5 seconds.
 	 *
-	 * Every swing is paced like a Hit (a beat after the roll, another after the blow): the
-	 * loop used to await nothing, so a whole combo arrived in one burst.
+	 * Now HUMILIATION starts a short showboat: at most MAX_SHOWBOATS swings that do no
+	 * damage, each saying so, where a natural 1 still breaks the combo (the owner likes that
+	 * risk: pride goes before a fall). A natural 1 at a fallen target still strikes back,
+	 * as the owner wants, and the roll line now says how (`fromBeyond` in `hit.ts`).
+	 * Totals count only damage dealt. Beating a fallen body until HUMILIATION is kept:
+	 * that is how Battle Focus destroys a monster.
+	 * Every swing takes a beat after its roll and after its blow, like a Hit.
 	 */
 	async effectLoop(
 		iteration: number,
@@ -152,9 +160,26 @@ export class BerserkCard extends HitCard {
 		);
 		await subEventDelay(ring?.pacingMultiplier);
 
-		if (strokeOfLuck) {
+		if (strokeOfLuck && !this.showboats) {
 			this.increaseDamage();
 			this.resetFatigue();
+		}
+
+		// Swings before this one that did no damage: the HUMILIATION swing and any showboats.
+		const hits = iteration - 1 - this.showboats;
+
+		if (success && this.showboats) {
+			const flourish = SHOWBOATS[(this.showboats - 1) % SHOWBOATS.length];
+			this.showboats += 1;
+			this.emit('narration', {
+				narration: `${player.givenName} ${flourish} ${target.givenName}. No damage, all style.`,
+			});
+			await subEventDelay(ring?.pacingMultiplier);
+			if (this.showboats > MAX_SHOWBOATS) {
+				this.emit('narration', { narration: `${player.givenName} takes a bow.` });
+				return this.endCombo(hits, target, ring, 'HUMILIATION! ');
+			}
+			return this.effectLoop(iteration + 1, player, target, ring, activeContestants);
 		}
 
 		if (success) {
@@ -167,7 +192,12 @@ export class BerserkCard extends HitCard {
 				iteration !== 1 &&
 				this.cumulativeComboDamage + damage > Math.floor(target.maxHp / 2)
 			) {
-				return this.endCombo(iteration - 1, target, ring, 'HUMILIATION! ');
+				this.showboats = 1;
+				this.emit('narration', {
+					narration: `HUMILIATION! ${target.givenName} has taken all one combo can dish out. ${player.givenName} keeps swinging just to show off: no more damage, but a natural 1 still backfires.`,
+				});
+				await subEventDelay(ring?.pacingMultiplier);
+				return this.effectLoop(iteration + 1, player, target, ring, activeContestants);
 			}
 
 			if (iteration !== 1) {
@@ -186,14 +216,21 @@ export class BerserkCard extends HitCard {
 				ring,
 				activeContestants
 			);
-		} else if (curseOfLoki && !target.dead) {
+		} else if (curseOfLoki) {
+			// At a fallen target the roll line says how the body struck back (`fromBeyond`).
 			let damage = this.damageAmount;
 			if (iteration === 1 && this.bigFirstHit) {
 				damage = this.rollForDamage(target, player).result;
 			}
 
+			let why = '';
+			if (this.showboats) {
+				why = target.dead
+					? ' Pride goes before a fall.'
+					: ` Pride goes before a fall: ${target.givenName} catches ${player.givenName} showing off.`;
+			}
 			this.emit('narration', {
-				narration: `COMBO BREAKER!  (Broke a ${iteration - 1} hit combo, ${this.initialDamage + this.cumulativeComboDamage} total damage)`,
+				narration: `COMBO BREAKER!${why} (Broke a ${hits} hit combo, ${this.initialDamage + this.cumulativeComboDamage} total damage)`,
 			});
 
 			this.resetCard();
@@ -207,7 +244,7 @@ export class BerserkCard extends HitCard {
 			target,
 		});
 
-		return this.endCombo(iteration - 1, target, ring);
+		return this.endCombo(hits, target, ring, this.showboats ? 'HUMILIATION! ' : '');
 	}
 
 	/** The combo's closing line, then a clean card for the next play. */
@@ -224,6 +261,19 @@ export class BerserkCard extends HitCard {
 		return ring.channelManager
 			.sendMessages()
 			.then(() => !target.dead);
+	}
+
+	// Hit's "Automatic max damage" was never true here: a combo's natural 20 adds 1 to each
+	// hit, and only Battle Focus's opener rolls its damage (at max).
+	override naturalTwentyCommentary(player: any): string {
+		const name = player.givenName;
+		if (this.showboats) return `${name} rolled a natural 20. Pure style, still no damage.`;
+		if (this.iterations === 1 && this.bigFirstHit) return `${name} rolled a natural 20. Automatic max damage.`;
+		return `${name} rolled a natural 20. Every hit from here on does 1 more damage.`;
+	}
+
+	override get successOutcome(): string {
+		return this.showboats ? 'Showing off!' : 'Hit!';
 	}
 
 	override async effect(

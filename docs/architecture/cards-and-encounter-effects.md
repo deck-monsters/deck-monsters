@@ -201,7 +201,7 @@ phial, is a separate mechanic and is allowed; it is not a natural 1.
 | Horn Gore, Forked Metal Rod (each gore) | The target strikes the gorer's face; the gore adds no horn strength |
 | Forked Stick (the pin roll) | The target wrenches the branch away and jabs it back, for the stick's damage; a confused holder aiming at itself jabs itself |
 | Berserk | COMBO BREAKER: the combo's damage turns on the berserker |
-| Any of the above, at a fallen target | Only a miss. A body cannot fling anything back (bug 259) |
+| Any of the above, at a fallen target | The body still strikes back, and the roll line says how: a last twitch, a ghost, a brief lurch (`fromBeyond` in `hit.ts`, bug 259). The fallen monster gets the kill |
 | Blink | The angel blinks first and is frozen in stone: it loses its next turn but stays a target. A confused angel that blinks itself is frozen the same way; a shift would make it untargetable, which is a gift |
 | Cloak, Camouflage Vest, Mood Scales (the searcher's roll) | The searcher trips and plays the card on itself |
 | Mesmerize (the caster's own d20) | The caster sees its reflection and is held |
@@ -210,12 +210,14 @@ phial, is a separate mechanic and is allowed; it is not a natural 1.
 A miss event carries `curseOfLoki`, so the feed reads "misses … horribly" rather than "is
 blocked by".
 
-**Berserk and Battle Focus combos end at HUMILIATION** (bug 259). The combo swings until a
-miss, a natural 1, or the swing that would take the combo's damage (after the opener) past
-half the target's max hp; that swing deals nothing and closes the combo with
-`HUMILIATION! … HITS (N total damage).` The total counts only damage dealt. Swinging on at a
-fallen body is allowed until then, which is how Battle Focus's big opener destroys a monster
-(hp below minus half its max). Without the cap a combo is unbounded: against a pinned target
+**Berserk and Battle Focus combos show off after HUMILIATION** (bug 259). The combo swings
+until a miss or a natural 1. The swing that would take the combo's damage (after the opener)
+past half the target's max hp deals nothing and announces HUMILIATION; the berserker then
+shows off for at most three more swings, each saying "No damage, all style." A natural 1 in
+that stretch still breaks the combo ("Pride goes before a fall"). The closing total counts
+only damage dealt, and a natural 20 while showing off adds nothing. Swinging at a fallen body
+until HUMILIATION is allowed: it is how Battle Focus's big opener destroys a monster (hp below
+minus half its max). Without the three-swing cap a combo is unbounded: against a pinned target
 (advantage on every swing) only a double 1 stops it, and fight #137 swung 282 times.
 
 **A natural 1 on a save or a dodge is only a failure**: Fire Breath's dodge, Flee, Tsunami's

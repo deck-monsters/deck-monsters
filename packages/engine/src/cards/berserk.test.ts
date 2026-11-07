@@ -2,6 +2,7 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 
 import { BerserkCard } from './berserk.js';
+import { fromBeyond } from './hit.js';
 import Gladiator from '../monsters/gladiator.js';
 import Minotaur from '../monsters/minotaur.js';
 import { BARBARIAN } from '../constants/creature-classes.js';
@@ -14,7 +15,7 @@ describe('./cards/berserk.ts', () => {
 		expect((berserk as any).bigFirstHit).to.be.false;
 		expect((berserk as any).damageAmount).to.equal(1);
 		expect(berserk.stats).to.equal(
-			'Hit: 1d20 + dex vs ac on first hit\nthen also + int bonus (fatigued by 1 each subsequent hit) until you miss,\nor until the combo has done half the target\'s max hp\n1 damage per hit.\n\nStroke of luck increases damage per hit by 1.'
+			'Hit: 1d20 + dex vs ac on first hit\nthen also + int bonus (fatigued by 1 each subsequent hit) until you miss.\nOnce the combo has done half the target\'s max hp, it shows off for up to 3 more swings: no damage, but a 1 still backfires.\n1 damage per hit.\n\nStroke of luck increases damage per hit by 1.'
 		);
 	});
 
@@ -264,7 +265,7 @@ describe('./cards/berserk.ts', () => {
 			expect(hitCheckStub.callCount).to.equal(5);
 			expect(hitEffectSpy.callCount).to.equal(0);
 			expect(hitSpy.callCount).to.equal(5);
-			expect(narrations).to.deep.equal(['COMBO BREAKER!  (Broke a 4 hit combo, 4 total damage)']);
+			expect(narrations).to.deep.equal(['COMBO BREAKER! (Broke a 4 hit combo, 4 total damage)']);
 			expect((player as any).hp).to.equal(playerBeforeHp - 1);
 			expect((target as any).hp).to.equal(before - 4);
 		});
@@ -292,7 +293,7 @@ describe('./cards/berserk.ts', () => {
 			return { berserk, player, target, hitCheckStub, attackRoll, ring, narrations };
 		};
 
-		it('ends at HUMILIATION and reports only the damage dealt', async () => {
+		it('shows off for three swings after HUMILIATION and reports only the damage dealt', async () => {
 			const { berserk, player, target, hitCheckStub, ring, narrations } = setUp(3);
 			const half = Math.floor((target as any).maxHp / 2);
 			try {
@@ -301,17 +302,24 @@ describe('./cards/berserk.ts', () => {
 				hitCheckStub.restore();
 			}
 
-			// The opener, then `half` combo hits; the swing after that ends it.
-			expect(hitCheckStub.callCount).to.equal(half + 2);
+			// The opener, `half` combo hits, the HUMILIATION swing, then three showboats.
+			expect(hitCheckStub.callCount).to.equal(half + 5);
 			expect((target as any).hp).to.equal(3 - 1 - half);
 			expect(narrations).to.deep.equal([
+				'HUMILIATION! Target has taken all one combo can dish out. Player keeps swinging just to show off: no more damage, but a natural 1 still backfires.',
+				'Player flicks the ear of Target. No damage, all style.',
+				'Player pats the head of Target. No damage, all style.',
+				'Player flexes over Target. No damage, all style.',
+				'Player takes a bow.',
 				`HUMILIATION! ULTIMATE COMBO! ${half + 1} HITS (${half + 1} total damage).`,
 			]);
 		});
 
-		it('a fallen target cannot fling a fumble back', async () => {
-			const { berserk, player, target, hitCheckStub, attackRoll, ring, narrations } = setUp(2);
-			hitCheckStub.onCall(3).returns({ attackRoll, success: false, strokeOfLuck: false, curseOfLoki: true });
+		it('a natural 1 while showing off at a living target still backfires', async () => {
+			const { berserk, player, target, hitCheckStub, attackRoll, ring, narrations } = setUp(100);
+			const half = Math.floor((target as any).maxHp / 2);
+			// Opener, `half` hits, the HUMILIATION swing, one showboat, then a natural 1.
+			hitCheckStub.onCall(half + 3).returns({ attackRoll, success: false, strokeOfLuck: false, curseOfLoki: true });
 			const playerBefore = (player as any).hp;
 			try {
 				await berserk.play(player, target, ring, ring.contestants);
@@ -319,9 +327,29 @@ describe('./cards/berserk.ts', () => {
 				hitCheckStub.restore();
 			}
 
+			expect((target as any).dead).to.be.false;
+			expect((player as any).hp).to.equal(playerBefore - 1);
+			expect(narrations[0]).to.match(/no more damage, but a natural 1 still backfires\.$/);
+			expect(narrations.at(-1)).to.equal(
+				`COMBO BREAKER! Pride goes before a fall: Target catches Player showing off. (Broke a ${half + 1} hit combo, ${half + 1} total damage)`
+			);
+		});
+
+		it('a natural 1 at a fallen target: the body strikes back, and the roll line says how', async () => {
+			const { berserk, player, target, hitCheckStub, attackRoll, ring, narrations } = setUp(2);
+			hitCheckStub.onCall(3).returns({ attackRoll, success: false, strokeOfLuck: false, curseOfLoki: true });
+			const playerHit = sinon.spy(player, 'hit');
+			try {
+				await berserk.play(player, target, ring, ring.contestants);
+			} finally {
+				hitCheckStub.restore();
+			}
+
 			expect((target as any).dead).to.be.true;
-			expect((player as any).hp).to.equal(playerBefore);
-			expect(narrations).to.deep.equal(['ULTIMATE COMBO! 3 HITS (3 total damage).']);
+			expect(playerHit.callCount).to.equal(1);
+			expect(playerHit.firstCall.args[1]).to.equal(target);
+			expect(narrations).to.deep.equal(['COMBO BREAKER! (Broke a 3 hit combo, 3 total damage)']);
+			expect(fromBeyond(player, target)).to.match(/^Player rolled a 1/);
 		});
 	});
 });
