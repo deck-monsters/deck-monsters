@@ -100,7 +100,7 @@ other. **The rule for any card that resolves more than one roll or hit per `effe
 call: await each one fully (do not fire a second async call before the first settles),
 and make sure a beat separates their announcements on every outcome path, not just the
 successful one** — a stub that replaces the outcome-check but skips the delay call
-reintroduces this exact bug. See `docs/roadmap/10b-bugs-fixed.md` (two-roll-blocks-in-one-tick).
+reintroduces this exact bug. See `docs/roadmap/10b-bugs-fixed.md` (two-roll-blocks-in-one-tick). Berserk's combo loop broke the same rule until bug 259: it awaited nothing between swings, so a whole combo landed in one burst (282 swings in 1.5 seconds in production). Each swing now takes a beat after its roll, and the blow gets the beat `hit()` already awaits after its damage line; adding a second one there doubles the gap before the next swing.
 
 **The fight's opening banners are paced the same way.** `Ring.fight()` used to publish four
 banners back to back with no pacing at all: the `ring.fight` bookkeeping line, the "Let the

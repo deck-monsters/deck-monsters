@@ -13,6 +13,23 @@ export interface HitCardOptions extends CardOptions {
 	targetProp?: string;
 }
 
+/**
+ * The roll line for a natural 1 at a fallen target: the body strikes back one last time
+ * (bug 259). One is picked at random so a long fight does not repeat itself.
+ */
+export function fromBeyond(player: any, target: any): string {
+	const p = player.givenName;
+	const t = target.givenName;
+	const his = player.pronouns?.his ?? 'their';
+	const lines = [
+		`${p} rolled a 1, and ${t}'s body gives one last twitch, straight into ${his} attack.`,
+		`${p} rolled a 1. ${t}'s ghost rises just long enough to throw the blow back.`,
+		`${p} rolled a 1. ${t} lurches up for one last swing, then drops again.`,
+		`${p} rolled a 1. With a breath ${t} no longer has, ${t} flings the blow back.`,
+	];
+	return lines[Math.floor(Math.random() * lines.length)];
+}
+
 export class HitCard extends BaseCard<HitCardOptions> {
 	static cardClass = [MELEE];
 	static cardType = 'Hit';
@@ -76,6 +93,16 @@ export class HitCard extends BaseCard<HitCardOptions> {
 		});
 	}
 
+	/** The roll line's verdict on a plain hit. Berserk's no-damage showboat swings say so. */
+	get successOutcome(): string {
+		return 'Hit!';
+	}
+
+	/** The roll line's note on a natural 20. */
+	naturalTwentyCommentary(player: any): string {
+		return `${player.givenName} rolled a natural 20. Automatic max damage.`;
+	}
+
 	hitCheck(player: any, target: any): {
 		attackRoll: any;
 		success: boolean;
@@ -90,7 +117,12 @@ export class HitCard extends BaseCard<HitCardOptions> {
 		let commentary: string | undefined;
 
 		if (strokeOfLuck) {
-			commentary = `${player.givenName} rolled a natural 20. Automatic max damage.`;
+			commentary = this.naturalTwentyCommentary(player);
+		} else if (curseOfLoki && target.dead) {
+			// Bug 259: a long-fallen target "flung the attack back" and killed its attacker,
+			// and the feed made it read as a mistake. The owner wants the body to take part,
+			// so it still strikes back, and the line says how a fallen monster managed it.
+			commentary = fromBeyond(player, target);
 		} else if (curseOfLoki) {
 			commentary = `${player.givenName} rolled a 1. Unfortunately, while trying to attack, ${target.givenName} flings ${player.pronouns.his} attack back against ${player.pronouns.him}.`;
 		} else if (tie) {
@@ -110,7 +142,7 @@ export class HitCard extends BaseCard<HitCardOptions> {
 			card: this,
 			roll: attackRoll,
 			who: player,
-			outcome: success ? commentary || 'Hit!' : commentary || 'Miss...',
+			outcome: success ? commentary || this.successOutcome : commentary || 'Miss...',
 			vs: target[this.targetProp],
 		});
 

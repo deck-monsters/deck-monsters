@@ -1666,6 +1666,10 @@ export class Ring extends BaseClass {
 			// survivors on both sides announce "with N dead" while every other record
 			// classed it a draw (#74).
 			isDraw: fightOutcome === 'draw',
+			// Why a draw is a draw, so the banner does not contradict the XP lines (bug 261):
+			// a flee left a survivor credited with "last one standing", then "a draw".
+			fled: contestants.filter(c => c.fled).map(c => c.monster.givenName as string),
+			survivors: living.length,
 			lastContestant,
 			rounds,
 		});

@@ -1,4 +1,4 @@
-import { ImmobilizeCard } from './immobilize.js';
+import { ImmobilizeCard, FREEDOM_FATIGUE_TEXT } from './immobilize.js';
 import { chance } from '../helpers/chance.js';
 import { subEventDelay } from '../helpers/delay-times.js';
 import { UNICORN } from '../constants/creature-types.js';
@@ -209,7 +209,7 @@ Natural 1 on either roll fails. Natural 20 on the charge deals max damage.`;
 
 	override emitImmobilizeNarrative(player: any, _target: any): void {
 		this.emit('narration', {
-			narration: `\n${player.givenName}'s horn ${this.icon} ${this.actions.IMMOBILIZES} in the timber. At the beginning of ${player.pronouns.his} turn ${player.pronouns.he} will roll ${this.freedomThresholdNarrative(player, player)} to pull it free.`,
+			narration: `\n${player.givenName}'s horn ${this.icon} ${this.actions.IMMOBILIZES} in the timber. At the beginning of ${player.pronouns.his} turn ${player.pronouns.he} will roll ${this.freedomThresholdNarrative(player, player)} to pull it free. ${FREEDOM_FATIGUE_TEXT}`,
 		});
 	}
 

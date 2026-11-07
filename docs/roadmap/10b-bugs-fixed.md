@@ -5472,6 +5472,114 @@ and text/lines agreement for every emitted feed event.
 
 **Status:** Fixed.
 
+### 259. A Berserk combo swung 282 times, claimed 4,927 damage, and ended in a draw — FIXED
+
+Found by the owner on a phone (fight #137, room "Crazy chic…", 2026-11-07). Estenu
+Braveheart (5 hp) stole Jefferson's Berserk with Pick Pocket while Jefferson (3 hp, AC 7) was
+pinned by Horn Gore. Read from `room_events`:
+
+- **Unbounded combo.** Berserk swings until it misses. At +8 against AC 7 only a natural 1
+  misses, and the pin gives every swing advantage (roadmap 36), so only a double 1 (1 in 400)
+  ended it. The logged rolls fit best-of-2d20, not a flat d20. Once the combo had dealt half
+  the target's max hp, HUMILIATION stopped applying damage but kept swinging: 282 swings,
+  about 560 feed lines.
+- **A false total.** The no-damage swings still added to `cumulativeComboDamage`, so the
+  summary said 4,927 when 24 landed (Jefferson ended at -21, not further). Each natural 20
+  also raised per-hit damage, to 27 by the end.
+- **A fallen target fought back.** The double 1 finally came, and dead Jefferson "flung the
+  attack back" for 27, killing Estenu: "killed by Jefferson (-21 hp)", and a draw.
+- **No pacing.** `effectLoop` awaited no `subEventDelay`, against the multi-roll rule in
+  [engine concurrency and timing](../architecture/engine-concurrency-and-timing.md): the
+  whole combo arrived in 1.5 seconds.
+
+**Fixed** (`cards/berserk.ts`, `cards/hit.ts`), with the owner's steer on the feel:
+- HUMILIATION now says what it means (no more damage) and starts at most three
+  "showing off" swings. Each says "No damage, all style." A natural 1 among them still
+  breaks the combo ("Pride goes before a fall"), so the swagger keeps its risk.
+- The closing total counts only damage dealt. A natural 20 says what it does for Berserk
+  (+1 per hit, or nothing while showing off), not "Automatic max damage".
+- A natural 1 at a fallen target still strikes back (the owner likes the body taking part,
+  like Delayed Hit's dying breath), and the roll line now says how: a last twitch, a ghost,
+  a brief lurch (`fromBeyond`).
+- Every swing gets a beat after its roll; the blow gets `hit()`'s own beat (a second one, caught in review, doubled the gap).
+
+Tests: `berserk.test.ts` ("a combo that keeps landing"), `battle-focus.test.ts`. The card
+text now describes the showboat.
+
+**Status**: Fixed.
+
+### 260. Poison said "healed -2 hp" — FIXED
+
+Found by a log audit of production (16 rows, 2026-04-13 to 2026-10-09). Heal's Curse of
+Loki (poison) and Bad Batch call `heal()` with a negative amount, and `announceHeal` printed
+it as is: "Iassen Brightheart healed -2 hp and has *31 hp*."
+
+**Fixed** (`announcements/heal.ts`): a negative heal reads "🤢 … lost 2 hp and has *31 hp*."
+Test: `heal.test.ts`.
+
+**Status**: Fixed.
+
+### 261. Draws that contradicted the XP lines — FIXED
+
+Found by the same audit: every one of 17 production draws had a "last one standing" XP line
+next to it. Two causes:
+- **The XP text.** `calculateXP` called any living, unfled monster "the last one standing",
+  so in a 10-round draw both survivors were, and after a flee the stayer was, right before
+  the banner said "a draw" (a flee with no deaths is a draw by design, `participantOutcome`).
+- **The banner said only "a draw".** It did not say why, including fight #137, where all
+  four monsters fell.
+
+**Fixed:** the XP reason says "being the last one standing" only when no opponent is still
+fighting and one actually fell; otherwise "surviving" (`helpers/experience.ts`; the XP
+amounts are unchanged). The banner names the reason: "Chef fled, so nobody wins." or
+"Nobody is left standing." before "The fight concluded in a draw after N rounds!"
+(`fightConcludes` now gets `fled` and `survivors` from the ring). Tests:
+`fightConcludes.test.ts`, `experience.test.ts`.
+
+**Not a bug, recorded so nobody chases it:** the audit also flagged "The Editor gained 1 XP
+and 7 coins / Daily first-fight bonus" twice in one fight. The Editor is the boss host
+(`userId: 'boss'`), each boss monster gets a throwaway character, and those lines are
+private with no recipient, so no player sees them and no real character is paid twice. The
+audit's "duplicate" countdown, fight-start and draw lines are one private copy per player.
+
+**Status**: Fixed.
+
+### 262. Text slips from the production log audit — FIXED
+
+- **"1 rounds" and "1 coins".** The XP reasons said "lasting 1 rounds" (about 268 rows), and
+  the new-player bonus could say "1 coins" as its taper reached 1. Both pluralise now
+  (`helpers/experience.ts`, `game.ts`). The "Fight concluded: … after 1 rounds" rows predate
+  that line's own fix.
+- **A raw formula in every pin.** "will roll 1d20 + str vs Estenu Braveheart's str(12) +6
+  -(immobilized turns x 3) to attempt to break free" (469 rows). The fatigue is now a
+  sentence after it: "Each turn held makes it 3 easier." (`FREEDOM_FATIGUE_TEXT` in
+  `cards/immobilize.ts`, also used by Sticketh).
+- **"COMBO BREAKER! (Broke a 0 hit combo, 0 total damage)".** A natural 1 on Berserk's first
+  swing broke no combo; it is now a plain fumble whose roll line says what happened
+  (`cards/berserk.ts`, test in `berserk.test.ts`).
+
+**Status**: Fixed.
+
+### 263. Two ring pacing tests failed together under full-suite load — FIXED
+
+Seen on this branch (2026-11-07), and reproducible without its changes. "Paces the
+fight-opening banners apart" turns delay-skipping off and sets a 20 ms sub-event beat to
+measure the gaps between the four opening banners. That beat, scaled up to 2.6x by message
+length, then paced every line of a random fight of up to 10 rounds: 0.9 to 7 s per run,
+against a 10 s timeout. Under load it timed out; mocha failed it and moved on while the fight
+still ran, and its `finally` (which turns skipping back on) waited for that fight, so the next
+test ("completes near-instantly under DECK_MONSTERS_SKIP_DELAYS") ran on real delays and failed
+at 3,346 ms.
+
+**Fixed** (`ring/index.test.ts`): once the four opening banners are recorded, the test turns
+skipping back on for the rest of the fight (every delay re-reads the switch). The test now
+takes about 150 ms, and the engine suite about 15 s instead of 20. The two real-pacing tests
+also restored `DECK_MONSTERS_SKIP_DELAYS = prevSkip`, which stores the string "undefined"
+(truthy) when it was unset; they now delete it in that case, as the card feed tests already
+did.
+
+**Status**: Fixed.
+
 ## Closed without a fix
 
 These were open investigations the owner closed on 2026-09-28. Reopen with new evidence.

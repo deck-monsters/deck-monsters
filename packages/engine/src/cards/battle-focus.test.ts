@@ -6,11 +6,17 @@ import Gladiator from '../monsters/gladiator.js';
 import Minotaur from '../monsters/minotaur.js';
 import { GLADIATOR } from '../constants/creature-types.js';
 
-const ultimateComboNarration: string[] = [];
-for (let i = 18; i < 101; i++) {
-	ultimateComboNarration.push(`HUMILIATION! ${i} hits`);
-}
-ultimateComboNarration.push('ULTIMATE COMBO! 100 HITS (109 total damage).');
+// HUMILIATION ends the combo (bug 259): the 10-damage opener plus 16 one-point hits, the
+// most the Minotaur's combo allows (half its max hp), then the next swing
+// starts three no-damage showboats.
+const ultimateComboNarration = [
+	'HUMILIATION! Target has taken all one combo can dish out. Player keeps swinging just to show off: no more damage, but a natural 1 still backfires.',
+	'Player flicks the ear of Target. No damage, all style.',
+	'Player pats the head of Target. No damage, all style.',
+	'Player flexes over Target. No damage, all style.',
+	'Player takes a bow.',
+	'HUMILIATION! ULTIMATE COMBO! 17 HITS (26 total damage).',
+];
 
 describe('./cards/battle-focus.ts', () => {
 	it('can be instantiated with defaults', () => {
@@ -21,7 +27,7 @@ describe('./cards/battle-focus.ts', () => {
 		expect((battleFocus as any).damageAmount).to.equal(1);
 		expect((battleFocus as any).damageDice).to.equal('1d6');
 		expect(battleFocus.stats).to.equal(
-			'Hit: 1d20 + dex vs ac on first hit\nthen also + int bonus (fatigued by 1 each subsequent hit) until you miss\n1d6 damage on first hit.\n1 damage per hit after that.\n\nStroke of luck increases damage per hit by 1.'
+			'Hit: 1d20 + dex vs ac on first hit\nthen also + int bonus (fatigued by 1 each subsequent hit) until you miss.\nOnce the combo has done half the target\'s max hp, it shows off for up to 3 more swings: no damage, but a 1 still backfires.\n1d6 damage on first hit.\n1 damage per hit after that.\n\nStroke of luck increases damage per hit by 1.'
 		);
 	});
 
@@ -141,8 +147,8 @@ describe('./cards/battle-focus.ts', () => {
 			getDamageRollStub.restore();
 
 			expect(berserkEffectSpy.callCount).to.equal(1);
-			expect(berserkEffectLoopSpy.callCount).to.equal(101);
-			expect(hitCheckStub.callCount).to.equal(101);
+			expect(berserkEffectLoopSpy.callCount).to.equal(21);
+			expect(hitCheckStub.callCount).to.equal(21);
 			expect(hitEffectSpy.callCount).to.equal(0);
 			expect(hitSpy.callCount).to.equal(17);
 			expect(narrations).to.deep.equal(ultimateComboNarration);
