@@ -60,3 +60,6 @@ dist/
 
 # superpowers scratch ledger (docs/superpowers/ plans are committed; this is not)
 .superpowers/
+
+# E2E
+apps/web/e2e/.results/
