@@ -1,8 +1,9 @@
-import React, { useEffect, useRef, useState, useCallback, useMemo, type ReactNode } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState, useCallback, useMemo, type ReactNode } from 'react';
 import { Virtuoso } from 'react-virtuoso';
 import type { VirtuosoHandle } from 'react-virtuoso';
 
 import { trpc } from '../lib/trpc.js';
+import { feedTimings } from '../lib/feed-timings.js';
 import { useAuth } from '../lib/auth-context.js';
 import { useGuidedStart } from '../hooks/useGuidedStart.js';
 import GuidedStartBox from './GuidedStartBox.js';
@@ -249,7 +250,23 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
   const seenRef = useRef(new Set<string>());
   const historyApplied = useRef(false);
   const reconnectNoticeShownRef = useRef(false);
-  const autoScroll = useFeedAutoScroll(virtuosoRef);
+  const autoScroll = useFeedAutoScroll(virtuosoRef, 'console');
+  // Timing instrumentation only (lib/feed-timings.ts); nothing here affects rendering.
+  const firstRenderMarkedRef = useRef(false);
+  if (!firstRenderMarkedRef.current) {
+    firstRenderMarkedRef.current = true;
+    feedTimings.mark('console.pane.first_render');
+  }
+  const firstRowsRecordedRef = useRef(false);
+  useLayoutEffect(() => {
+    if (firstRowsRecordedRef.current || feedEvents.length === 0) return;
+    firstRowsRecordedRef.current = true;
+    feedTimings.since('console.pane.first_render', 'console.time_to_first_rows');
+  }, [feedEvents.length]);
+  // The Console's Virtuoso is mounted unconditionally, so it mounts once per pane mount.
+  useLayoutEffect(() => {
+    feedTimings.count('console.list.mount');
+  }, []);
   // Register command-insert function so external callers (CommandReference, etc.) can populate the input
   useEffect(() => {
     // The unregister matters: without it a dead console's setter stays registered and
@@ -530,7 +547,10 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
       return;
     }
 
-    if (seenRef.current.has(tracked.id)) return;
+    if (seenRef.current.has(tracked.id)) {
+      feedTimings.count('console.events.duplicate_dropped');
+      return;
+    }
     seenRef.current.add(tracked.id);
 
     // Only process events targeted to this user, plus the handful of public fight
@@ -542,6 +562,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
       event.scope === 'public' ? classifyHighlight(event, damageHistoryRef.current) : null;
 
     if (fightHighlight) {
+      feedTimings.count('console.events.appended');
       addConsoleEvent({
         id: event.id,
         type: 'highlight',
@@ -562,6 +583,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
 
     const payload = event.payload as Record<string, unknown>;
     if (event.type === 'system' && payload.consoleInput) {
+      feedTimings.count('console.events.appended');
       addConsoleEvent({
         id: event.id,
         type: 'input',
@@ -571,6 +593,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
     }
 
     if (event.type === 'system.gap') {
+      feedTimings.count('console.events.appended');
       addConsoleEvent({
         id: event.id,
         type: 'system',
@@ -580,6 +603,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
     }
 
     if (event.type === 'announce' || event.type === 'system') {
+      feedTimings.count('console.events.appended');
       addConsoleEvent({
         id: event.id,
         type: event.type === 'system' ? 'system' : 'announce',
@@ -623,6 +647,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
         arrivedAt: Date.now(),
       };
       supersedePrompt(promptPayload.requestId);
+      feedTimings.count('console.events.appended');
       setConsoleEvents(prev => [
         ...retireOtherPrompts(prev, promptPayload.requestId),
         { id: event.id, type: 'prompt', text: promptPayload.question, promptData },
@@ -643,6 +668,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
         setActivePromptId(null);
         setInputLocked(false);
       }
+      feedTimings.count('console.events.appended');
       addConsoleEvent({
         id: event.id,
         type: 'tombstone',
@@ -708,6 +734,12 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
       seenRef.current.add(ev.id);
       const consoleEv = mapConsoleHistoryEvent(ev as any);
       if (consoleEv) historyConsoleEvents.push(consoleEv);
+    }
+
+    feedTimings.event('console.history.applied', { rows: historyConsoleEvents.length });
+    if (historyConsoleEvents.length === 0 && !firstRowsRecordedRef.current) {
+      firstRowsRecordedRef.current = true;
+      feedTimings.since('console.pane.first_render', 'console.time_to_first_rows');
     }
 
     if (historyConsoleEvents.length > 0) {

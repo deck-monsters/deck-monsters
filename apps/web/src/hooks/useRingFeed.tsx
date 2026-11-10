@@ -10,6 +10,7 @@ import {
 } from 'react';
 import type { GameEvent, ChatMessage } from '@deck-monsters/server/types';
 import { trpc } from '../lib/trpc.js';
+import { feedTimings } from '../lib/feed-timings.js';
 import { shouldAdvanceEventCursor } from '../utils/ring-feed-cursor.js';
 import { useHandshake } from './useHandshake.js';
 
@@ -98,6 +99,17 @@ export function useRingFeed(roomId: string): RingFeedApi {
   roomIdRef.current = roomId;
   const heartbeatTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Timing instrumentation only (lib/feed-timings.ts). Per-room: reset with the cursor below.
+  const timingStartedRef = useRef(false);
+  const firstHandshakeRecordedRef = useRef(false);
+  const awaitingReconnectRef = useRef(false);
+  const lastFrameAtRef = useRef<number | null>(null);
+  const timingNow = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
+  if (!timingStartedRef.current) {
+    timingStartedRef.current = true;
+    feedTimings.mark('conn.hook.first_render');
+  }
+
   // Reset shared cursor / connection flags when navigating to another room.
   // Adjust state during render so the subscription input never briefly carries
   // the previous room's cursor.
@@ -112,6 +124,10 @@ export function useRingFeed(roomId: string): RingFeedApi {
     listenersRef.current.clear();
     chatListenersRef.current.clear();
     pendingEventsRef.current = [];
+    feedTimings.mark('conn.hook.first_render');
+    firstHandshakeRecordedRef.current = false;
+    awaitingReconnectRef.current = false;
+    lastFrameAtRef.current = null;
     // The previous room's watchdog must die with it. RingFeedProvider is not re-keyed
     // per room, so a timer left armed here fires later against the *new* room and drops
     // a healthy connection into "reconnecting…", which only a real handshake clears.
@@ -127,6 +143,12 @@ export function useRingFeed(roomId: string): RingFeedApi {
    * state and the same resume cursor.
    */
   const handleConnectionLost = useCallback(() => {
+    if (lastFrameAtRef.current !== null) {
+      feedTimings.duration('conn.gap_before_lost', timingNow() - lastFrameAtRef.current);
+    }
+    // Keep the first loss's time if several fire before a handshake lands.
+    if (!awaitingReconnectRef.current) feedTimings.mark('conn.lost');
+    awaitingReconnectRef.current = true;
     setConnected(false);
     setReconnecting(true);
     setSubLastEventId(latestTrackedEventIdRef.current);
@@ -136,7 +158,10 @@ export function useRingFeed(roomId: string): RingFeedApi {
   /** Restart the watchdog. Called for every inbound frame, heartbeats included. */
   const noteFrameReceived = useCallback(() => {
     if (heartbeatTimerRef.current !== null) clearTimeout(heartbeatTimerRef.current);
-    heartbeatTimerRef.current = setTimeout(handleConnectionLost, HEARTBEAT_TIMEOUT_MS);
+    heartbeatTimerRef.current = setTimeout(() => {
+      feedTimings.count('conn.lost.watchdog');
+      handleConnectionLost();
+    }, HEARTBEAT_TIMEOUT_MS);
   }, [handleConnectionLost]);
 
   /*
@@ -156,6 +181,7 @@ export function useRingFeed(roomId: string): RingFeedApi {
     function onVisibilityChange() {
       if (document.visibilityState !== 'visible') return;
       if (heartbeatTimerRef.current === null) return;
+      feedTimings.count('conn.visibility.reset');
       noteFrameReceived();
     }
 
@@ -228,6 +254,8 @@ export function useRingFeed(roomId: string): RingFeedApi {
     { roomId, lastEventId: subLastEventId, resumeAttempt },
     {
       onData(frame: TrackedRingFeedEvent | ChatFrame) {
+        feedTimings.count('conn.frame');
+        lastFrameAtRef.current = timingNow();
         // Chat frames are untracked and carry no `data`. Handle them first and return, so
         // nothing below (the room guard, the cursor, pane fan-out) ever sees one.
         if (isChatFrame(frame)) {
@@ -260,6 +288,15 @@ export function useRingFeed(roomId: string): RingFeedApi {
         setReconnecting((wasReconnecting) => (wasReconnecting ? false : wasReconnecting));
 
         if (event.type === 'handshake') {
+          feedTimings.count('conn.handshake');
+          if (!firstHandshakeRecordedRef.current) {
+            firstHandshakeRecordedRef.current = true;
+            feedTimings.since('conn.hook.first_render', 'conn.time_to_first_handshake');
+          }
+          if (awaitingReconnectRef.current) {
+            awaitingReconnectRef.current = false;
+            feedTimings.since('conn.lost', 'conn.reconnect');
+          }
           handleHandshakeRef.current(event);
           // Fan out so RingPane can seed timer state from the handshake payload.
           fanOut(tracked);
@@ -268,7 +305,10 @@ export function useRingFeed(roomId: string): RingFeedApi {
         }
 
         // Keep-alive — never advances the shared cursor.
-        if (event.type === 'heartbeat') return;
+        if (event.type === 'heartbeat') {
+          feedTimings.count('conn.heartbeat');
+          return;
+        }
 
         // Defense in depth: drop events from another room (handshake/heartbeat
         // may omit roomId — only filter when it is a non-empty string).
@@ -277,6 +317,7 @@ export function useRingFeed(roomId: string): RingFeedApi {
           && event.roomId !== ''
           && event.roomId !== roomIdRef.current
         ) {
+          feedTimings.count('conn.cross_room_dropped');
           return;
         }
 
@@ -284,6 +325,7 @@ export function useRingFeed(roomId: string): RingFeedApi {
         fanOut(tracked);
       },
       onError() {
+        feedTimings.count('conn.lost.error');
         handleConnectionLost();
       },
     },

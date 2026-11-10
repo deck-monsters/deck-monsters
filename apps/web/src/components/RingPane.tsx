@@ -19,6 +19,7 @@ import { useRingFeedListener, type TrackedRingFeedEvent } from '../hooks/useRing
 import { useRingKeyTimestamps } from '../hooks/useRingKeyTimestamps.js';
 import { usePixelMonsters } from '../hooks/usePixelMonsters.js';
 import { AT_BOTTOM_THRESHOLD_PX, useFeedAutoScroll } from '../hooks/useFeedAutoScroll.js';
+import { feedTimings } from '../lib/feed-timings.js';
 import { themeAssetsReady, loadThemeAssets, subscribeThemeAssets, useTheme } from '../hooks/useTheme.js';
 import { useTimeAgo } from '../hooks/useTimeAgo.js';
 import { FeedEventBody } from './FeedLines.js';
@@ -393,10 +394,35 @@ export default function RingPane({
     });
   }, []);
   const virtuosoRef = useRef<VirtuosoHandle>(null);
-  const autoScroll = useFeedAutoScroll(virtuosoRef);
+  const autoScroll = useFeedAutoScroll(virtuosoRef, 'ring');
   followRef.current = autoScroll.shouldFollowRef;
   const seenRef = useRef(new Set<string>());
   const historyApplied = useRef(false);
+  // Timing instrumentation only (lib/feed-timings.ts); nothing here affects rendering.
+  const firstRenderMarkedRef = useRef(false);
+  if (!firstRenderMarkedRef.current) {
+    firstRenderMarkedRef.current = true;
+    feedTimings.mark('ring.pane.first_render');
+  }
+  const firstRowsRecordedRef = useRef(false);
+  const lastMountedKeyRef = useRef<string | null>(null);
+  const listVisible = listReady && widthMeasured;
+  useLayoutEffect(() => {
+    if (!listVisible) {
+      lastMountedKeyRef.current = null;
+      return;
+    }
+    if (lastMountedKeyRef.current !== null && lastMountedKeyRef.current !== metricsKey) {
+      feedTimings.count('ring.list.remount.metrics');
+    }
+    lastMountedKeyRef.current = metricsKey;
+    feedTimings.count('ring.list.mount');
+  }, [listVisible, metricsKey]);
+  useLayoutEffect(() => {
+    if (firstRowsRecordedRef.current || !listVisible || events.length === 0) return;
+    firstRowsRecordedRef.current = true;
+    feedTimings.since('ring.pane.first_render', 'ring.time_to_first_rows');
+  }, [listVisible, events.length]);
   // True once the first handshake has landed, so a later handshake is a *re*connect.
   const hasConnectedRef = useRef(false);
   // True once any live ring.state (handshake or push) has been applied to timerState.
@@ -510,7 +536,10 @@ export default function RingPane({
     // Only show public events in the Ring pane
     if (event.scope !== 'public') return;
 
-    if (seenRef.current.has(tracked.id)) return;
+    if (seenRef.current.has(tracked.id)) {
+      feedTimings.count('ring.events.duplicate_dropped');
+      return;
+    }
     seenRef.current.add(tracked.id);
 
     // Ring membership changed — a summon may have been spent, so refresh the charges.
@@ -523,6 +552,7 @@ export default function RingPane({
     const pendingAt = pendingReconnectAtRef.current;
     if (pendingAt !== null && event.timestamp >= pendingAt) flushReconnectMarker();
 
+    feedTimings.count('ring.events.appended');
     setEvents(prev => [...prev, event]);
   }, [refetchRingState, flushReconnectMarker]);
 
@@ -581,6 +611,11 @@ export default function RingPane({
     setListReady(true);
 
     const visibleHistory = dedupedHistory.filter(shouldRenderRingEvent);
+    feedTimings.event('ring.history.applied', { rows: visibleHistory.length });
+    if (visibleHistory.length === 0 && !firstRowsRecordedRef.current) {
+      firstRowsRecordedRef.current = true;
+      feedTimings.since('ring.pane.first_render', 'ring.time_to_first_rows');
+    }
 
     // Merge history with any live events that arrived before history loaded.
     // Live events take priority over history events with the same ID.
