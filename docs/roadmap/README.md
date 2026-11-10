@@ -13,6 +13,7 @@ completed reasoning belongs in the [archive](../archive/README.md).
 
 | Area | Actionable work |
 |---|---|
+| [52 — Feed stability, proof systems, and the next passes](52-stability-and-next-work.md) | Proposed 2026-11-10, waiting on the owner's order and six decisions. A: roadmap cleanup. B: a feed lab and real-browser tests for scrolling and reconnecting, with a baseline. C: decide the feed and connection architecture on those measurements. D: build it. E: the next features (preset loading across monsters, Lullaby and Mirror Shield, small fixes) |
 | [10 — Bug fixes](10-bug-fixes.md) | A phone look at the Fights tab's play-by-play and feed spacing (F); the Discord connector re-subscribing to a replaced room (J); a careful pass to condense duplicate Millefleur CSS (L) |
 | [11 — Balance and mechanics](11-balance-and-mechanics.md) | The leftovers of the balance pass 36 closed (the level 1 Dragon's Faceswap watch, the level 5 Weeping Angel against the Minotaur, a group-fight card); simulation, telemetry, healing prices, crit ticks, fight threads, and combat decisions |
 | [12 — New content](12-new-content-backlog.md) | Dragon follow-ups (counter cards, flavour pass, live check); counters to the big swing cards (Sandstorm, Faceswap, Blink); concrete cards, monsters, card authoring, equipment, world, and endgame proposals; trading and gifting cards between players |
