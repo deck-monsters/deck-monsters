@@ -1,7 +1,7 @@
 ---
 type: Roadmap
 title: New Content Backlog
-description: Concrete card, monster, and world proposals, including the Dragon research brief.
+description: Concrete card, monster, and world proposals, including the Dragon follow-ups.
 status: draft
 audience: internal
 tags: [content, cards, backlog]
@@ -94,8 +94,9 @@ and follow the checklist in [cards and encounter effects](../architecture/cards-
   the archive checks recorded, are in
   [28 — Unicorn voice punch-up](../archive/roadmap/28-unicorn-voice-punch-up.md). Shipped
   with the owner's picks (September 2026).
-- [ ] **Dragon.** A second requested monster, researched and built the way the Unicorn was.
-  Research comes first; see the [Dragon research brief](#dragon-research-brief) below.
+- [x] **Dragon.** Shipped in PR #402, researched and built the way the Unicorn was
+  ([research](../archive/roadmap/29-dragon-research.md), [pack](../archive/roadmap/30-dragon-pack.md)).
+  What is left is under [Dragon follow-ups](#dragon-follow-ups).
 - [ ] A qilin/kirin creature deserves its own sourced design rather than a cosmetic Unicorn
   variant (a rule carried over from the Unicorn brief).
 - [ ] Add the Time Lord monster and its time-manipulation deck.

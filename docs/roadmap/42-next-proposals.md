@@ -259,8 +259,8 @@ Smaller items, each worth a line in some pass:
    `observability.md` should cover chat like everything else.
 5. **The long room name** wraps to three lines on a phone (already in roadmap 39's known
    gaps). This is a small header fix.
-6. **Open bug items J and K** (`10-bug-fixes.md`): what a reset leaves behind, and slow
-   simulation runs. J matters more now that chat and notes keep more per-room state.
+6. **Open bug item J** (`10-bug-fixes.md`): the connector subscription a reset leaves behind.
+   The reset itself is fixed (10b #251), and the slow simulation runs are closed (10b #255).
 7. **Roadmap 22's decisions** are still waiting on the owner.
 
 ## F. Cursor: a first-time player's walk

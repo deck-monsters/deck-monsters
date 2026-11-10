@@ -8,10 +8,10 @@ tags: [bugs, roadmap, open]
 ---
 # Bug Fixes and Code Quality
 
-**Status:** Active — four open items (F, J, K, L). Fixed work and its root causes live only in
+**Status:** Active — three open items (F, J, L). K (emoji card-box borders) is 10b #197. Fixed work and its root causes live only in
 [`10b-bugs-fixed.md`](10b-bugs-fixed.md).
 The Millefleur spacing cleanup (Chat grid, shop wallet, selected name and turn markers) is
-fixed as #241; it leaves the four open investigations below unchanged.
+fixed as #241; it leaves the open investigations below unchanged.
 
 ## Open items
 
@@ -41,8 +41,8 @@ restarts. No connector is deployed today.
 decision below is from the owner the same day.
 
 **Root cause:** successive surface/mock-fidelity passes appended overrides to the lazy
-stylesheet without rechecking the original source-size budget. The final source is
-80,553 bytes, against roadmap 46 §8's 12 KB unminified limit; the roadmap's 10.6 KB claim
+stylesheet without rechecking the original source-size budget. The source was
+80,553 bytes on 2026-10-06 (82,243 on 2026-11-10), against roadmap 46 §8's 12 KB unminified limit; the roadmap's 10.6 KB claim
 was from task 2. Duplicate-looking rules are often load-bearing, so a sweep that deletes
 them can change a screen without a test noticing.
 
