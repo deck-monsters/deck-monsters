@@ -11,7 +11,7 @@ tags: [web, theme, css, accessibility, architecture]
 A theme is a set of CSS custom properties on `<html>`, plus, for a theme that needs more than
 colours, a stylesheet of rules scoped to `[data-theme='<id>']`. There are five themes: four
 dark terminals (`phosphor`, `amber`, `ember`, `street-fighter`) and one light, painted theme
-(`millefleur`, [roadmap 46](../roadmap/46-unicorn-theme.md), designed in the
+(`millefleur`, [roadmap 46](../archive/roadmap/46-unicorn-theme.md), designed in the
 [Millefleur design system](../reference/millefleur/design-system.md)).
 
 ## Where a theme lives

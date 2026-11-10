@@ -1,14 +1,21 @@
 ---
-type: Roadmap
+type: Archive
 title: A unicorn theme for the web app
 description: The plan to build Millefleur, the watercolour unicorn theme whose design is final, on the web theme system.
-status: draft
+status: deprecated
 audience: internal
 tags: [roadmap, web, theme, design, unicorn, accessibility]
 ---
 # 46: a unicorn theme (Millefleur)
 
-**Status:** Millefleur is built and live-checked on
+**Status:** Shipped and archived (owner, 2026-11-10: "shipped, and more or less complete").
+The theme is on `main`; its contract is [web themes](../../architecture/web-themes.md) and the
+[design system](../../reference/millefleur/design-system.md). Two leftovers have homes: painted
+Workshop portraits in [22](../../roadmap/22-small-leftovers.md#web-and-display), and the stylesheet
+condensation in [10, item L](../../roadmap/10-bug-fixes.md#l-millefleur-stylesheet-condensation). The rest of
+this page is the build record, kept as written, including handoff notes that no longer apply.
+
+**Status at handoff (2026-10-06):** Millefleur is built and live-checked on
 `claude/unicorn-monster-cards-cigpmw`. The branch review fixed feed-fidelity
 findings. Task 9's narration was looked at in the Ring: the reviewed drafts read
 cleanly after the call and the house arrival, on a phone and on a desktop. This
@@ -17,10 +24,10 @@ the starting theme, and the stylesheet size is accepted. What remains is recorde
 below for the closing pass. One PR for the whole theme, opened only when the owner
 asks.
 
-- **The design:** [Millefleur design system](../reference/millefleur/design-system.md), with
-  [the brief and artist statement](../reference/millefleur/README.md), [the final
-  screens](../reference/millefleur/samples/) and [process and learnings](../reference/millefleur/process.md).
-- **The history:** [iteration archive](../archive/studies/millefleur-theme/README.md): four
+- **The design:** [Millefleur design system](../../reference/millefleur/design-system.md), with
+  [the brief and artist statement](../../reference/millefleur/README.md), [the final
+  screens](../../reference/millefleur/samples/) and [process and learnings](../../reference/millefleur/process.md).
+- **The history:** [iteration archive](../studies/millefleur-theme/README.md): four
   rounds, the paint and tab studies, the other directions, and the first written proposal
   (inspirations, licensing research, palettes), which this page used to hold.
 
@@ -38,10 +45,10 @@ From the owner's reviews of rendered screens, 2026-10-05 to 2026-10-06:
   No animated foil.
 - **The other directions:** Holo Folder's soft rainbow became the holo fade. Gloaming (a dark
   sibling) is not planned; the owner did not favour it. Dream Desktop becomes its own theme,
-  [roadmap 47](47-dream-desktop-theme.md).
+  [roadmap 47](../../roadmap/47-dream-desktop-theme.md).
 - **Starting theme:** Phosphor. Millefleur is a light theme a player turns on. The app does
   not follow the phone's light or dark setting (`prefers-color-scheme`). Recorded 2026-10-06.
-  The [brief](../reference/millefleur/README.md) already said this: a choice in its own right,
+  The [brief](../../reference/millefleur/README.md) already said this: a choice in its own right,
   not a light mode.
 - **Still open:** painted portraits for the Workshop (a separate art pass). Not part of
   finishing this branch.
@@ -72,15 +79,15 @@ To finish the branch:
    watercolour assets are already a lazy chunk (`LAZY_THEMES` in `useTheme.ts`,
    started from `main.tsx` only when `data-theme` is already `millefleur`). Do not
    add a second loader. A later pass may streamline duplicate rules. That pass is
-   [10, item L](10-bug-fixes.md#l-millefleur-stylesheet-condensation) and has to be
+   [10, item L](../../roadmap/10-bug-fixes.md#l-millefleur-stylesheet-condensation) and has to be
    checked screen by screen, because rules that look repeated are often load-bearing.
 3. Production caching is `apps/web/serve.json`, wired by `pnpm start`
    (`serve dist -s -c ../serve.json`). Hashed files under `assets/` are cached for a
    year as immutable. `index.html`, including the SPA fallback, is revalidated.
    Before that file, `serve` sent ETags and no `Cache-Control`. The header contract
-   is in the [deployment guide](../operations/deployment.md#2b-service-web-static-spa).
+   is in the [deployment guide](../../operations/deployment.md#2b-service-web-static-spa).
 4. Workshop portraits stay open, on this page. The light-theme question above is
-   closed. Dream Desktop is [roadmap 47](47-dream-desktop-theme.md).
+   closed. Dream Desktop is [roadmap 47](../../roadmap/47-dream-desktop-theme.md).
 5. When the owner asks, open the one pull request for this branch. Do not archive
    this page while the Workshop portraits are still only recorded here. The CSS
    condensation checkbox already has a home on item L.
@@ -111,7 +118,7 @@ The facts below were checked against the code on 2026-10-05.
   advance). Card frames in the feed are ASCII rules (`=====`, `-----`) inside a fence. A
   proportional feed font would break both: frames would go ragged, and wrong row guesses
   would make the viewport jump (bugs #196 and #159 in
-  [10b](10b-bugs-fixed.md)). **So the feed must stay monospace, at a 0.6 em advance.**
+  [10b](../../roadmap/10b-bugs-fixed.md)). **So the feed must stay monospace, at a 0.6 em advance.**
 - **`prefers-contrast: more` assumes a dark theme.** `base.css` sets `--color-bg: #000`,
   `--color-fg: #fff` and three more tokens on `:root`. It loads after the theme files with
   equal specificity, so it wins. Under a light theme it leaves `--color-input-bg` white
@@ -184,7 +191,7 @@ PR changes no pixels in the four existing themes.
 | `--wash-lilac`, `--wash-seafoam`, `--wash-blush`, `--wash-butter`, `--wash-sky` | `transparent` | the tints in the design system |
 | `color-scheme` (property, not token) | `dark` | `light` |
 
-Every colour value for Millefleur is in the [design system](../reference/millefleur/design-system.md#colour)
+Every colour value for Millefleur is in the [design system](../../reference/millefleur/design-system.md#colour)
 with its contrast ratios. The extended test in task 1 keeps them there.
 
 ### 3. Fonts
@@ -202,7 +209,7 @@ does not grow the shared stylesheet either.
 
 Decided in the design rounds: two faces only. Fraunces (display), a title-bar face (Pixelify Sans
 or ChicagoFLF) and Recursive Mono Casual were all tried or proposed and dropped as clutter; the
-System 7 nod lives in shapes, not type. The archived [first proposal](../archive/studies/millefleur-theme/first-proposal.md)
+System 7 nod lives in shapes, not type. The archived [first proposal](../studies/millefleur-theme/first-proposal.md)
 keeps their licence research.
 
 **Budget:** Nunito ×4 ≈ 65 KB, fetched only under Millefleur. Preload Nunito 400 when the
@@ -229,7 +236,7 @@ font loading cannot move the feed.
 
 ### 5. Textures and motion
 
-- **Watercolour:** the [paint recipe](../reference/millefleur/tools/paint.svg) (two wash
+- **Watercolour:** the [paint recipe](../../reference/millefleur/tools/paint.svg) (two wash
   filters, glazed with multiply) is for authoring, not runtime. Bake each composition once to a
   WebP at 2× (one per surface family: Workshop, Ring, Chat, sheets) and use it as the
   surface's background. **Never run these filters live** or apply `filter: url(#…)` to the feed
@@ -245,14 +252,14 @@ font loading cannot move the feed.
 
 ### 6. Pixel monsters in a soft theme
 
-Keep them pixelated. [Pixel art](../reference/pixel-art.md) forbids smoothing, and a
+Keep them pixelated. [Pixel art](../../reference/pixel-art.md) forbids smoothing, and a
 pixel sprite is the theme's own Kare nod. Give them the **halo** (design system) instead of a
 CRT treatment:
 
 - The portrait sits in the halo: a blurred ring of the holo gradient around a pearl disc. A
   soft drop shadow (`drop-shadow(0 2px 3px rgb(110 85 150 / .35))`) on `.roster-sprite` and
   `.inline-sprite` lifts the sprite off the paper. Check at 1×, 2× and 3×, as
-  [the roster doc](../architecture/ring-roster-and-pixel-monsters.md) asks of every theme.
+  [the roster doc](../../architecture/ring-roster-and-pixel-monsters.md) asks of every theme.
 - The hit flash in `--color-sprite-flash` (pink) with the outline kept dark, so a struck
   monster blinks rather than disappears.
 - Check the palest bodies on paper: the Unicorn (`#f7f5ff`), the Weeping Angel
@@ -262,7 +269,7 @@ CRT treatment:
 
 ### 7. Accessibility and checks
 
-- **Contrast:** every text pair in the [design system](../reference/millefleur/design-system.md#colour)
+- **Contrast:** every text pair in the [design system](../../reference/millefleur/design-system.md#colour)
   is ≥ 4.5:1 on paper, page and the rose tab. The extended test (task 1) enforces this for all
   themes.
 - **Non-text:** fields and secondary buttons use `--color-border-strong` (`#8f7cbc`, 3.6:1).
@@ -274,7 +281,7 @@ CRT treatment:
   roles carry their word beside the dot; HP stages differ in luminance.
 - **Focus:** a 2 px `--mf-rose` ring (6.7:1) with a 2 px offset.
 - **Live checks:** 390 × 844 and 1440 × 900 in a real browser (jsdom lays nothing out; bug
-  210), compared side by side with the [samples](../reference/millefleur/samples/). Screens: Ring mid-fight with a boss, Console with a prompt open, Workshop with three
+  210), compared side by side with the [samples](../../reference/millefleur/samples/). Screens: Ring mid-fight with a boss, Console with a prompt open, Workshop with three
   monsters (carousel), the card detail sheet, the level-up sheet, the Train wizard, Chat,
   Help, Leaderboard, Account. Throttle to Fast 3G once and scroll the Ring's history to
   catch font-swap jumps. Record frame timings while a fight scrolls on a mid-range phone
@@ -293,7 +300,7 @@ CRT treatment:
 The owner revised the CSS line on 2026-10-06. The shipped source is 80,553 bytes, and
 that is not a reason to hold the theme. The chunk is lazy, and production caches the
 hashed files (the handoff above). Condensing duplicate rules is a later careful pass
-([10, item L](10-bug-fixes.md#l-millefleur-stylesheet-condensation)).
+([10, item L](../../roadmap/10-bug-fixes.md#l-millefleur-stylesheet-condensation)).
 
 ### 9. Task table
 
@@ -408,7 +415,7 @@ renderer (task 8), and new flavour (task 9). Discord keeps the text it has today
   limit is not met. Recorded task-6 checks do not include Fast-3G or fight-scroll frame
   timings. The owner accepted that on 2026-10-06: the size is not a ship gate, and those
   timings are not required to close the theme. A careful condensation pass remains in
-  [10, item L](10-bug-fixes.md#l-millefleur-stylesheet-condensation). The completed 46b
+  [10, item L](../../roadmap/10-bug-fixes.md#l-millefleur-stylesheet-condensation). The completed 46b
   checklist is not being repeated.
 - **Deviation from §4:** the pre-paint script cannot name the lazy chunk (its file name is
   hashed), so instead of a `modulepreload` the chunk's import starts at the top of `main.tsx`,
@@ -525,7 +532,7 @@ used. Sampling without a Ring takes the first line and does not advance a pool. 
 Minotaur roses clause stays on the original temper line only. The sheep bone and
 pilfered goblet connect to the Dragon's appetite and hoard; the other lines connect
 to species lore and running jokes. Generated species/pronoun examples live in the
-[strings inventories](../reference/strings/README.md), regenerated from the same source.
+[strings inventories](../../reference/strings/README.md), regenerated from the same source.
 The Ring look is recorded below. The stylesheet size was later accepted; see the handoff
 at the top. Do not archive this roadmap while the Workshop portraits are only recorded here.
 
@@ -612,5 +619,5 @@ This fight ended before a round rolled over, so a round beat was not on screen.
 Those beats were already checked at the earlier flavour checkpoint and were not
 part of the draft fold. The stylesheet size was later accepted. Condensing duplicate
 rules remains a careful pass in
-[10, item L](10-bug-fixes.md#l-millefleur-stylesheet-condensation). Do not archive this
+[10, item L](../../roadmap/10-bug-fixes.md#l-millefleur-stylesheet-condensation). Do not archive this
 roadmap while the Workshop portraits are only recorded here.

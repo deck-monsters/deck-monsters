@@ -8,8 +8,8 @@ tags: [roadmap, planning, web, testing, feeds, reconnect]
 ---
 # 52 — Feed stability, proof systems, and the next passes
 
-**Status:** Proposed (2026-11-10). Nothing is built. Five passes, each its own PR. The order
-and six decisions below are the owner's to confirm before Pass B starts.
+**Status:** Accepted by the owner (2026-11-10). Pass A is done. Pass B is next. Five passes;
+the decisions below are settled.
 
 ## Why
 
@@ -96,42 +96,44 @@ were this (#145, #152).
 not catch pacing, scroll, or narration problems; most of the bugs in the archive were found by
 playing." This plan's main bet is that this can be changed.
 
-## Decisions for the owner
+## Decisions
 
-1. **Order.** Recommended: A (cleanup), then B and C (proof, then the architecture decision),
-   then D, with the features (E) after. E1 touches only the Workshop and could run beside B if
-   the usage budget allows.
-2. **A cap on the live feed.** The simplest feed design keeps only the newest rows on screen
-   (a figure to measure, around 800 to 1,000) and leaves older fights to the Fights tab. Is
-   that acceptable if it makes scrolling reliable?
-3. **A lab page in production.** A hidden route that plays a recorded fight would make a
-   real-iPhone check a five-minute job. Allowed, or local and preview builds only?
-4. **Client timings.** Keep them in the browser (a debug overlay), or also report them to the
-   server's metrics?
-5. **Millefleur's status.** [46](46-unicorn-theme.md) says the theme waits on a branch for one
-   PR "when the owner asks", but its commits are on `main` (#429 and others). Is the theme
-   considered shipped, with only the Workshop portraits and the CSS pass left?
-6. **A blocking browser job in CI.** Recommended once Pass B's suite is green: a feed or
-   connection change cannot merge while an invariant fails.
+The owner (2026-11-10) took the recommendation on each, and answered the fifth:
+
+1. **Order.** A, then B and C, then D, then the features (E). E1 touches only the Workshop and
+   may run beside B if the usage budget allows.
+2. **A cap on the live feed is acceptable** if it makes scrolling reliable: the newest rows on
+   screen (a figure Pass C measures, around 800 to 1,000), older fights in the Fights tab.
+3. **A lab page may be reachable in production** by a hidden route, so a real-iPhone check is
+   a five-minute job.
+4. **Client timings stay in the browser** (a debug overlay) for now. Reporting them to the
+   server is a later choice, once the numbers show which are worth keeping.
+5. **Millefleur is shipped,** "and more or less complete". [46](../archive/roadmap/46-unicorn-theme.md)
+   is archived. The owner does not recall what the painted Workshop portraits were to be, so
+   that is a question in [22](22-small-leftovers.md), not a task.
+6. **The browser suite blocks a merge** once it is green.
+7. **Subagents** (owner): use them where they save the orchestrator's context: the cheapest
+   tier for gathering facts, the middle tier for checks and bounded writing, a larger model
+   only sparingly, because handing a plan to a new agent has a cost of its own.
 
 ## Pass A — roadmap cleanup
 
-Docs only, one PR, one task. Every item was checked against the code on 2026-11-10. Follow the
+**Done (2026-11-10).** Docs only. Every item was checked against the code on 2026-11-10. Follow the
 [docs skill](../../.cursor/skills/maintaining-repository-docs/SKILL.md) and run
 `pnpm docs:check`.
 
 | # | File | Change | Status |
 |---|---|---|---|
-| A1 | [10](10-bug-fixes.md) | The header says four open items (F, J, K, L). K was fixed as 10b #197; say three. Item L's size is stale (80,553 bytes written, 82,243 today): drop the figure or date it | Planned |
-| A2 | [42](42-next-proposals.md) | E6 names "open bug items J and K": K is fixed, and its "slow simulation runs" is 10b #255 | Planned |
-| A3 | [27](27-next-passes.md) | "Later" lists room state as `jsonb` as ready to pick up; it shipped (#417, #418) and 37 is archived. Pass B's note says tasks 1 and 4 are open in 11; both shipped in Pass C. Then archive 27: every pass in it is done, and this plan and [22](22-small-leftovers.md) hold what is left | Planned |
-| A4 | [12](12-new-content-backlog.md) | The Dragon item is unchecked and links to `#dragon-research-brief`, which is not in the file; the Dragon shipped in #402. Check it and point at archived 29 | Planned |
-| A5 | [41](41-room-chat.md) | The table says M3 is "Planned, after M1"; it shipped (`aa7e9f5`, `0d2e90e`). M4's commit reads "(this commit)" | Planned |
-| A6 | [34](34-balance-methodology.md) | Eight task rows give "this commit" for a SHA; fill them from `git log` | Planned |
-| A7 | [11](11-balance-and-mechanics.md) | Horn Gore is checked and done (10b #253) but still carries the old question and "needs a decision"; trim it to the outcome | Planned |
-| A8 | [46](46-unicorn-theme.md), [roadmap index](README.md) | Reword per decision 5 | Waits on the owner |
-| A9 | [39](39-in-game-help.md), [42](42-next-proposals.md), [22](22-small-leftovers.md) | One home each for items listed twice: the long room name (39 and 42 E5), preset loading and prompt transport (22 and 27), the owner-decision list (22 and 27) | Planned |
-| A10 | `scripts/check-docs.mjs` | The checker passed with A4's broken anchor in place. Teach it to check in-page `#anchor` links, with a test | Planned |
+| A1 | [10](10-bug-fixes.md) | The header says four open items (F, J, K, L). K was fixed as 10b #197; say three. Item L's size is stale (80,553 bytes written, 82,243 today): drop the figure or date it | Done |
+| A2 | [42](42-next-proposals.md) | E6 names "open bug items J and K": K is fixed, and its "slow simulation runs" is 10b #255 | Done |
+| A3 | [27](../archive/roadmap/27-next-passes.md) | "Later" lists room state as `jsonb` as ready to pick up; it shipped (#417, #418) and 37 is archived. Pass B's note says tasks 1 and 4 are open in 11; both shipped in Pass C. Then archive 27: every pass in it is done, and this plan and [22](22-small-leftovers.md) hold what is left | Done; 27 archived |
+| A4 | [12](12-new-content-backlog.md) | The Dragon item is unchecked and links to `#dragon-research-brief`, which is not in the file; the Dragon shipped in #402. Check it and point at archived 29 | Done |
+| A5 | [41](41-room-chat.md) | The table says M3 is "Planned, after M1"; it shipped (`aa7e9f5`, `0d2e90e`). M4's commit reads "(this commit)" | Done |
+| A6 | [34](34-balance-methodology.md) | Eight task rows give "this commit" for a SHA; fill them from `git log` | Done |
+| A7 | [11](11-balance-and-mechanics.md) | Horn Gore is checked and done (10b #253) but still carries the old question and "needs a decision"; trim it to the outcome | Done |
+| A8 | [46](../archive/roadmap/46-unicorn-theme.md), [roadmap index](README.md) | Reword per decision 5 | Done: shipped per the owner; 46 and 46b archived, the portraits question moved to 22 |
+| A9 | [39](39-in-game-help.md), [42](42-next-proposals.md), [22](22-small-leftovers.md) | One home each for items listed twice: the long room name (39 and 42 E5), preset loading and prompt transport (22 and 27), the owner-decision list (22 and 27) | Done: archiving 27 removed the second copies; 42 E5 already points at 39 |
+| A10 | `scripts/check-docs.mjs` | The checker passed with A4's broken anchor in place. Teach it to check in-page `#anchor` links, with a test | Done: the checker skipped every link starting with `#`; it now checks them, and accepts `<a id>` anchors |
 
 ## Pass B — proof first
 

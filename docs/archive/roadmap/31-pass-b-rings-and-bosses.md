@@ -10,7 +10,7 @@ tags: [archive, harness, balance, bosses]
 
 **Status:** Closed (September 2026). Shipped in PR #403, from branch
 `claude/pass-b-harness-and-bosses`, which also carries #404 (docs recording two feed bugs). Pass B
-from [27](../../roadmap/27-next-passes.md), widened by the owner to include the computer
+from [27](27-next-passes.md), widened by the owner to include the computer
 bosses. Its lasting rules are in [boss encounters](../../architecture/boss-encounters.md) and
 the [simulation harness](../../reference/simulation-harness.md). Open work moved to active
 homes: the rest of the harness work and the class-curve findings to

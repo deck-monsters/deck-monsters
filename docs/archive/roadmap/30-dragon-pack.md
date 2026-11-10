@@ -21,7 +21,7 @@ deferred) are tracked in
 
 | # | Slice | Status | Commit |
 |---|---|---|---|
-| 0 | Harness roster from `allMonsters`, a test that fails when a monster is missing, and `sim:unicorn` generalized into `sim:monster <type>` (Pass B task 0 in [27](../../roadmap/27-next-passes.md)) | Done | 208885b |
+| 0 | Harness roster from `allMonsters`, a test that fails when a monster is missing, and `sim:unicorn` generalized into `sim:monster <type>` (Pass B task 0 in [27](27-next-passes.md)) | Done | 208885b |
 | 1 | Monster shell: `Dragon` type, Wizard class, stats, appearance, `look at` profile, lore, names, spawn, web sprite, spawn-catalog test | Done | f27094a |
 | 2 | The two cards the requester asked for: Fire Breath and Take Wing; Fire Breath joins the starting deck | Done | d58caa4 |
 | 3 | Mood Scales and Tsunami | Done | 27c4e14 |
