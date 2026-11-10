@@ -13,6 +13,9 @@ import FightLogView from './views/FightLogView.js';
 import ChatView from './views/ChatView.js';
 import WorkshopView from './views/WorkshopView.js';
 const HelpView = lazy(() => import('./views/HelpView.js'));
+// The feed lab (src/lab) is a test harness with its own fake transport: a separate chunk, and
+// outside RequireAuth on purpose (it has no server and no sign-in).
+const LabRoute = lazy(() => import('./lab/LabRoute.js'));
 import { trpc } from './lib/trpc.js';
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
@@ -150,6 +153,9 @@ export default function App() {
     <Routes>
       <Route path="/login" element={<LoginView />} />
       <Route path="/reset-password" element={<ResetPasswordView />} />
+
+      {/* One route for /lab and /lab/:fixture, so switching fixture keeps the lab mounted. */}
+      <Route path="/lab/:fixture?" element={<Suspense fallback={<LoadingScreen />}><LabRoute /></Suspense>} />
 
       <Route
         path="/rooms"
