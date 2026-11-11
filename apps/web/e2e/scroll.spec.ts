@@ -10,6 +10,7 @@ import {
   expectPinned,
   firstFullyVisible,
   gesture,
+  scrollerLocator,
   gestureAndSettle,
   idle,
   installScrollLib,
@@ -481,6 +482,45 @@ for (const theme of THEME_IDS) {
       expect(after.jump, '↓ Latest disappeared').toBe(false);
       measure('j.gapSettled', after.gap);
       await nextArrivalFollowed(page, pane, 'j.next');
+    });
+
+    // The owner's iPhone, on the plain list: `↓ Latest` landed near the end, not at it. A
+    // momentum scroll keeps writing positions after the jump. No test browser has momentum, so
+    // this writes those positions in script, with no input event, as a momentum frame would.
+    test(`${pane} › returning › ↓ Latest holds the end against a momentum scroll [${theme}]`, async ({ page }) => {
+      test.skip(process.env['E2E_FEED'] !== 'plain', 'the plain list only: the virtual list has no hold');
+      await setup(page, pane, theme);
+      await toBottom(page, pane, 'm');
+      await scrollUpBy(page, pane, far);
+      expect((await snap(page, pane)).jump).toBe(true);
+      await jumpButton(page, pane).click();
+      await scrollerLocator(page, pane).evaluate(async (el) => {
+        for (let i = 0; i < 6; i++) {
+          el.scrollTop -= 40;
+          await new Promise<void>((r) => requestAnimationFrame(() => r()));
+        }
+      });
+      await idle(page, pane, 400, 4_000);
+      const after = await snap(page, pane);
+      measure('m.gapEnd', after.gap);
+      expect(after.gap, 'gap to the bottom after the momentum frames').toBeLessThanOrEqual(1.5);
+      expect(after.jump, '↓ Latest disappeared').toBe(false);
+      await nextArrivalFollowed(page, pane, 'm.next');
+    });
+
+    test(`${pane} › returning › a reader's scroll right after ↓ Latest still wins [${theme}]`, async ({ page }) => {
+      test.skip(process.env['E2E_FEED'] !== 'plain', 'the plain list only: the virtual list has no hold');
+      await setup(page, pane, theme);
+      await toBottom(page, pane, 'n');
+      await scrollUpBy(page, pane, far);
+      await jumpButton(page, pane).click();
+      // Inside the 500 ms hold: a real gesture must end it.
+      await gesture(page, pane, 300);
+      await idle(page, pane, 400, 4_000);
+      const after = await snap(page, pane);
+      measure('n.gap', after.gap);
+      expect(after.gap, 'the reader moved up and stayed there').toBeGreaterThan(100);
+      expect(after.jump, '↓ Latest is back').toBe(true);
     });
 
     testCore(theme, `${pane} › returning › scrolling back down by gestures resumes following [${theme}]`, async ({ page }) => {

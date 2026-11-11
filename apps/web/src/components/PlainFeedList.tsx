@@ -49,6 +49,8 @@ export const DEFAULT_FEED_CAP = 1000;
 /** Rows drawn on the first paint, and added above per idle slice after it. */
 const FIRST_PAINT_ROWS = 24;
 const BACKFILL_ROWS = 40;
+/** How long a jump to the end is held against a momentum scroll (see `holdEnd`). */
+const JUMP_HOLD_MS = 500;
 /** While reading back nothing is trimmed, up to this many times the cap. */
 const UNPINNED_CAP_FACTOR = 3;
 
@@ -110,6 +112,9 @@ function PlainFeedListInner<T>(
   // reflow, not by the reader (see the rules above).
   const lastSizeRef = useRef({ content: 0, viewport: 0 });
   const startRef = useRef(0);
+  // Until this time (ms, performance.now) a jump to the end is being held: see `scrollToBottom`.
+  const jumpUntilRef = useRef(0);
+  const jumpFrameRef = useRef(0);
   const anchorRef = useRef<{ el: HTMLElement; offset: number } | null>(null);
   const onPinnedChangeRef = useRef(onPinnedChange);
   onPinnedChangeRef.current = onPinnedChange;
@@ -190,6 +195,12 @@ function PlainFeedListInner<T>(
       el.scrollHeight !== lastSizeRef.current.content || el.clientHeight !== lastSizeRef.current.viewport;
     lastTopRef.current = top;
     lastSizeRef.current = { content: el.scrollHeight, viewport: el.clientHeight };
+    if (performance.now() < jumpUntilRef.current) {
+      // A jump to the end is being held and the reader has not touched the feed since
+      // (a touch, wheel or key ends the hold). Whatever moved the feed, it was not them.
+      if (gap > 0) toEnd();
+      return;
+    }
     if (reflowed) {
       // Not the reader. Do what the resize observer would: it may not have run yet.
       if (pinnedRef.current) toEnd();
@@ -245,6 +256,48 @@ function PlainFeedListInner<T>(
     return () => observer.disconnect();
   }, [toEnd, restoreAnchor, data.length === 0]);
 
+  /*
+   * Go to the end and stay there for a moment.
+   *
+   * One `scrollTop = scrollHeight` is not enough on a phone. The owner's iPhone, on
+   * `?feed=plain`, landed near the end but not at it. An iOS momentum scroll keeps running
+   * after the assignment and writes its own next position over ours; the scroll event that
+   * follows has a lower `scrollTop` and unchanged sizes, which is exactly what the reader
+   * moving up looks like, so the list unpinned short of the end. No test browser reproduces
+   * momentum (the WebKit phone project scrolls in script), so this is defended in three ways:
+   * stop the momentum (a scroller that briefly cannot scroll drops it), re-assert the end on
+   * each frame for a short hold, and during the hold do not read a scroll event as the reader.
+   * A touch, wheel or key ends the hold at once: the reader always wins.
+   */
+  const releaseHold = useCallback(() => {
+    jumpUntilRef.current = 0;
+    if (jumpFrameRef.current) cancelAnimationFrame(jumpFrameRef.current);
+    jumpFrameRef.current = 0;
+  }, []);
+
+  const holdEnd = useCallback(() => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    releaseHold();
+    jumpUntilRef.current = performance.now() + JUMP_HOLD_MS;
+    const overflowY = el.style.overflowY;
+    el.style.overflowY = 'hidden';
+    toEnd();
+    const step = () => {
+      jumpFrameRef.current = 0;
+      el.style.overflowY = overflowY;
+      if (!pinnedRef.current || performance.now() >= jumpUntilRef.current) {
+        jumpUntilRef.current = 0;
+        return;
+      }
+      if (el.scrollHeight - el.scrollTop - el.clientHeight > 0) toEnd();
+      jumpFrameRef.current = requestAnimationFrame(step);
+    };
+    jumpFrameRef.current = requestAnimationFrame(step);
+  }, [releaseHold, toEnd]);
+
+  useEffect(() => releaseHold, [releaseHold]);
+
   useImperativeHandle(
     ref,
     () => ({
@@ -253,11 +306,11 @@ function PlainFeedListInner<T>(
         // Instant. A smooth scroll aims at a pixel that moves when a row arrives mid-flight,
         // which is how `↓ Latest` came to stop short (baseline S2).
         setPinned(true);
-        toEnd();
+        holdEnd();
       },
       isPinned: () => pinnedRef.current,
     }),
-    [pane, setPinned, toEnd],
+    [pane, setPinned, holdEnd],
   );
 
   useLayoutEffect(() => {
@@ -288,6 +341,10 @@ function PlainFeedListInner<T>(
       aria-label={ariaLabel}
       tabIndex={0}
       onScroll={onScroll}
+      onTouchStart={releaseHold}
+      onWheel={releaseHold}
+      onKeyDown={releaseHold}
+      onPointerDown={releaseHold}
     >
       {rows.length > 0 ? (
         <ol ref={listRef} className="event-feed-list">
