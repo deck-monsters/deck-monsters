@@ -15,6 +15,7 @@ export type CardRefusalReason =
 	| 'deck_full'
 	| 'max_copies'
 	| 'not_in_inventory'
+	| 'held_elsewhere'
 	| 'fighting';
 
 /**
@@ -26,6 +27,7 @@ export const CARD_REFUSAL_REASON_TEXT: Record<CardRefusalReason, string> = {
 	deck_full: 'every card slot is taken',
 	max_copies: "that's already the most copies one monster can hold",
 	not_in_inventory: 'no copy of it is left in your inventory',
+	held_elsewhere: 'another of your monsters is holding it', // DRAFT(39)
 	fighting: 'cards are locked until the fight ends',
 };
 
@@ -161,12 +163,9 @@ export function presetTakenMessage(params: { taken: PresetTake[]; donors: Preset
 	const parts = groupByDonor(taken).map(
 		({ monsterName, cardNames }) => `Took ${cardList(cardNames)} from ${monsterName}.`,
 	);
+	// A donor that gave a card up is always below a full hand, so the line always says so.
 	for (const { monsterName, cardCount, cardSlots } of donors) {
-		parts.push(
-			cardCount >= cardSlots
-				? `${monsterName} still holds ${cardCount} of ${cardSlots} cards.`
-				: `${monsterName} now holds ${cardCount} of ${cardSlots} cards. Fill the rest before the ring.`,
-		);
+		parts.push(`${monsterName} now holds ${cardCount} of ${cardSlots} cards. Fill the rest before the ring.`);
 	}
 	return parts.join(' ');
 }

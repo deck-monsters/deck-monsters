@@ -129,7 +129,7 @@ describe('loading a preset that needs a card another monster holds', () => {
     hookMock.unequippedDeck = [];
     hookMock.loadPreset.mockResolvedValue({
       ...LOADED, equippedCount: 0, requestedCount: 1, skippedCards: ['Blast'],
-      skipped: [{ cardName: 'Blast', reason: 'not_in_inventory' }], cardCount: 0,
+      skipped: [{ cardName: 'Blast', reason: 'held_elsewhere' }], cardCount: 0,
     });
     render(<WorkshopPanel roomId="room-1" />);
     pickPreset(stonefangSection(), 'raid');
@@ -137,6 +137,16 @@ describe('loading a preset that needs a card another monster holds', () => {
     expect(within(stonefangSection()).queryByRole('group')).toBeNull();
     await waitFor(() => expect(hookMock.loadPreset).toHaveBeenCalledTimes(1));
     expect(await screen.findByText(/Brass is in the ring or fighting, so Blast could not be taken\./)).toBeTruthy();
+    // The card is not gone from the player's inventory, so the line must not say it is.
+    expect(document.body.textContent).not.toContain('no copy of it is left in your inventory');
+  });
+
+  it('turns a refused (stale) yes into a plain line: the reason, that nothing changed, and what to do', async () => {
+    hookMock.loadPreset.mockRejectedValue(new Error('Brass is not holding Blast.'));
+    render(<WorkshopPanel roomId="room-1" />);
+    pickPreset(stonefangSection(), 'raid');
+    fireEvent.click(within(stonefangSection()).getByRole('button', { name: 'Yes, take them' }));
+    expect(await screen.findByText(/Brass is not holding Blast\. Nothing was changed\. Load the preset again/)).toBeTruthy();
   });
 });
 

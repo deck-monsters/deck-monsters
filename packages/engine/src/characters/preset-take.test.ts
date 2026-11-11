@@ -28,6 +28,14 @@ describe('characters/beastmaster loadPreset taking cards from other monsters', (
 	});
 	const cardNames = (monster: { cards: any[] }) => monster.cards.map(card => card.cardType);
 	const quiet = () => sinon.stub().resolves(undefined);
+	// Every card the player owns, counted by name across the deck and every hand. Loading a
+	// preset only moves cards, so this must be the same before and after, whatever happened.
+	const census = (beastmaster: Beastmaster) => {
+		const counts: Record<string, number> = {};
+		[...(beastmaster.deck as any[]), ...beastmaster.monsters.flatMap((monster: any) => monster.cards)]
+			.forEach((card) => { counts[card.cardType] = (counts[card.cardType] ?? 0) + 1; });
+		return counts;
+	};
 
 	// Stonefang's preset wants Hit x2 and Blast. The deck has one Hit; Brass holds a Hit and a Blast.
 	function setup() {
@@ -45,6 +53,7 @@ describe('characters/beastmaster loadPreset taking cards from other monsters', (
 
 	it('without a list behaves as before: deck only, the other monster keeps its cards', async () => {
 		const { beastmaster, stonefang, brass } = setup();
+		const owned = census(beastmaster);
 		const brassBefore = [...brass.cards];
 
 		const result = await beastmaster.loadPreset({ channel: quiet(), presetName: 'raid', monsterName: 'Stonefang' });
@@ -55,10 +64,12 @@ describe('characters/beastmaster loadPreset taking cards from other monsters', (
 		expect(brass.cards).to.deep.equal(brassBefore);
 		// The old Heal went back to the deck.
 		expect((beastmaster.deck as any[]).map(card => card.cardType)).to.deep.equal(['Heal']);
+		expect(census(beastmaster)).to.deep.equal(owned);
 	});
 
 	it('takes only what the deck cannot cover, and says what the donor is left with', async () => {
 		const { beastmaster, stonefang, brass, hit, brassHit, brassBlast } = setup();
+		const owned = census(beastmaster);
 		const channel = quiet();
 
 		const result = await beastmaster.loadPreset({
@@ -81,11 +92,13 @@ describe('characters/beastmaster loadPreset taking cards from other monsters', (
 		const message = channel.firstCall.args[0].announce as string;
 		expect(message).to.include('Took Hit and Blast from Brass.');
 		expect(message).to.include('Brass now holds 7 of 9 cards. Fill the rest before the ring.');
+		expect(census(beastmaster)).to.deep.equal(owned);
 	});
 
 	it('does not touch another monster when the deck already has the card', async () => {
 		const { beastmaster, stonefang, brass } = setup();
 		beastmaster.deck = [makeCard('Hit'), makeCard('Hit'), makeCard('Blast')] as any;
+		const owned = census(beastmaster);
 		const brassBefore = [...brass.cards];
 
 		const result = await beastmaster.loadPreset({
@@ -98,10 +111,12 @@ describe('characters/beastmaster loadPreset taking cards from other monsters', (
 		expect(cardNames(stonefang)).to.deep.equal(['Hit', 'Hit', 'Blast']);
 		expect(result.taken).to.deep.equal([]);
 		expect(brass.cards).to.deep.equal(brassBefore);
+		expect(census(beastmaster)).to.deep.equal(owned);
 	});
 
 	it('refuses a donor that is fighting, changing nothing', async () => {
 		const { beastmaster, stonefang, brass } = setup();
+		const owned = census(beastmaster);
 		brass.inEncounter = true;
 		const deckBefore = [...(beastmaster.deck as any[])];
 		const handBefore = [...stonefang.cards];
@@ -116,10 +131,12 @@ describe('characters/beastmaster loadPreset taking cards from other monsters', (
 		expect(beastmaster.deck).to.deep.equal(deckBefore);
 		expect(stonefang.cards).to.deep.equal(handBefore);
 		expect(brass.cards).to.deep.equal(brassBefore);
+		expect(census(beastmaster)).to.deep.equal(owned);
 	});
 
 	it('refuses a donor waiting in the ring, changing nothing', async () => {
 		const { beastmaster, stonefang, brass } = setup();
+		const owned = census(beastmaster);
 		const ring = { contestants: [{ monster: brass }] };
 		const handBefore = [...stonefang.cards];
 		const brassBefore = [...brass.cards];
@@ -134,10 +151,12 @@ describe('characters/beastmaster loadPreset taking cards from other monsters', (
 		expect(brass.cards).to.deep.equal(brassBefore);
 		// And it is never offered.
 		expect(beastmaster.suggestPresetTakes({ presetName: 'raid', monsterName: 'Stonefang', ring })).to.deep.equal([]);
+		expect(census(beastmaster)).to.deep.equal(owned);
 	});
 
 	it('is atomic: a stale list (the donor no longer holds the card) leaves every hand and the deck as they were', async () => {
 		const { beastmaster, stonefang, brass } = setup();
+		const owned = census(beastmaster);
 		const deckBefore = [...(beastmaster.deck as any[])];
 		const handBefore = [...stonefang.cards];
 		const brassBefore = [...brass.cards];
@@ -155,6 +174,107 @@ describe('characters/beastmaster loadPreset taking cards from other monsters', (
 		expect(beastmaster.deck).to.deep.equal(deckBefore);
 		expect(stonefang.cards).to.deep.equal(handBefore);
 		expect(brass.cards).to.deep.equal(brassBefore);
+		expect(census(beastmaster)).to.deep.equal(owned);
+	});
+
+	it('a card held only by a ring or fighting monster is skipped as held elsewhere, never as "left in your inventory"', async () => {
+		const { beastmaster, stonefang, brass } = setup();
+		brass.inEncounter = true;
+		const owned = census(beastmaster);
+		const channel = quiet();
+
+		const result = await beastmaster.loadPreset({ channel, presetName: 'raid', monsterName: 'Stonefang' });
+
+		expect(result.skipped).to.deep.equal([{ cardName: 'Hit', reason: 'held_elsewhere' }, { cardName: 'Blast', reason: 'held_elsewhere' }]);
+		const message = channel.firstCall.args[0].announce as string;
+		expect(message).not.to.include('no copy of it is left in your inventory');
+		expect(message).to.include('another of your monsters is holding it');
+		expect(cardNames(stonefang)).to.deep.equal(['Hit']);
+		expect(census(beastmaster)).to.deep.equal(owned);
+	});
+
+	it('says cannot_hold, not "not in your inventory", for a donor card this monster cannot use', async () => {
+		const { beastmaster, stonefang } = setup();
+		(stonefang as any).canHoldCard = (card: any) => card.cardType !== 'Blast';
+		const result = await beastmaster.loadPreset({ channel: quiet(), presetName: 'raid', monsterName: 'Stonefang' });
+		expect(result.skipped).to.deep.include({ cardName: 'Blast', reason: 'cannot_hold' });
+	});
+
+	it('refuses the loading monster as its own donor, changing nothing', async () => {
+		const { beastmaster, stonefang } = setup();
+		const owned = census(beastmaster);
+		const handBefore = [...stonefang.cards];
+		let error: unknown;
+		await beastmaster.loadPreset({
+			channel: quiet(), presetName: 'raid', monsterName: 'Stonefang', takeFrom: [{ monsterName: 'Stonefang', cardName: 'Heal' }],
+		}).catch((err) => { error = err; });
+		expect((error as Error).message).to.equal('Stonefang is the monster you are loading.');
+		expect(stonefang.cards).to.deep.equal(handBefore);
+		expect(census(beastmaster)).to.deep.equal(owned);
+	});
+
+	it('merges the same donor listed twice, and checks the summed count against what the donor holds', async () => {
+		const { beastmaster, stonefang, brass } = setup();
+		const owned = census(beastmaster);
+		let error: unknown;
+		// Brass holds one Hit, so two entries for one Hit each are two Hits: refused whole.
+		await beastmaster.loadPreset({
+			channel: quiet(), presetName: 'raid', monsterName: 'Stonefang',
+			takeFrom: [{ monsterName: 'Brass', cardName: 'Hit' }, { monsterName: 'brass', cardName: 'hit' }],
+		}).catch((err) => { error = err; });
+		expect((error as Error).message).to.equal('Brass is not holding 2 Hit.');
+		expect(brass.cards).to.have.length(9);
+		expect(census(beastmaster)).to.deep.equal(owned);
+
+		// Two Hits on Brass: the same two entries now merge and both are taken (the deck has none).
+		brass.cards.push(makeCard('Hit'));
+		beastmaster.deck = [makeCard('Heal')] as any;
+		const owned2 = census(beastmaster);
+		const result = await beastmaster.loadPreset({
+			channel: quiet(), presetName: 'raid', monsterName: 'Stonefang',
+			takeFrom: [{ monsterName: 'Brass', cardName: 'Hit' }, { monsterName: 'Brass', cardName: 'Hit' }],
+		});
+		expect(result.taken.map(take => take.cardName)).to.deep.equal(['Hit', 'Hit']);
+		expect(cardNames(stonefang)).to.deep.equal(['Hit', 'Hit']);
+		expect(census(beastmaster)).to.deep.equal(owned2);
+	});
+
+	it('leaves a requested take the preset does not need on the donor', async () => {
+		const { beastmaster, stonefang, brass } = setup();
+		const owned = census(beastmaster);
+		const result = await beastmaster.loadPreset({
+			channel: quiet(), presetName: 'raid', monsterName: 'Stonefang',
+			takeFrom: [{ monsterName: 'Brass', cardName: 'Heal', count: 3 }, { monsterName: 'Brass', cardName: 'Blast' }],
+		});
+		expect(result.taken).to.deep.equal([{ cardName: 'Blast', fromMonsterName: 'Brass' }]);
+		expect(brass.cards.filter(card => card.cardType === 'Heal')).to.have.length(7);
+		expect(cardNames(stonefang)).to.deep.equal(['Hit', 'Blast']);
+		expect(census(beastmaster)).to.deep.equal(owned);
+	});
+
+	it('restores every hand and the deck if the commit itself throws (a listener on a change event)', async () => {
+		const { beastmaster, stonefang, brass } = setup();
+		const owned = census(beastmaster);
+		const handBefore = [...stonefang.cards];
+		const brassBefore = [...brass.cards];
+		const deckBefore = [...(beastmaster.deck as any[])];
+		// Throw on the donor's write: the target's hand has already been replaced by then.
+		let writes = 0;
+		let held = [...brass.cards];
+		Object.defineProperty(brass, 'cards', {
+			get: () => held,
+			set: (value) => { writes += 1; if (writes === 1) throw new Error('listener failed'); held = value; },
+			configurable: true,
+		});
+		let error: unknown;
+		await beastmaster.loadPreset({
+			channel: quiet(), presetName: 'raid', monsterName: 'Stonefang', takeFrom: [{ monsterName: 'Brass', cardName: 'Blast' }],
+		}).catch((err) => { error = err; });
+		expect((error as Error).message).to.equal('listener failed');
+		expect(stonefang.cards).to.deep.equal(handBefore);
+		expect(brass.cards).to.deep.equal(brassBefore);
+		expect(beastmaster.deck).to.deep.equal(deckBefore);
+		expect(census(beastmaster)).to.deep.equal(owned);
 	});
 
 	it('refuses an unknown donor', async () => {
@@ -290,12 +410,12 @@ describe('characters/beastmaster loadPreset taking cards from other monsters', (
 				.to.equal('Blast is on Brass. Take it from Brass for Stonefang?');
 		});
 
-		it('says nothing when nothing was taken, and a full donor hand is not called short', () => {
+		it('says nothing when nothing was taken', () => {
 			expect(presetTakenMessage({ taken: [], donors: [] })).to.equal('');
 			expect(presetTakenMessage({
 				taken: [{ cardName: 'Hit', fromMonsterName: 'Brass' }],
 				donors: [{ monsterName: 'Brass', cardCount: 9, cardSlots: 9 }],
-			})).to.equal('Took Hit from Brass. Brass still holds 9 of 9 cards.');
+			})).to.equal('Took Hit from Brass. Brass now holds 9 of 9 cards. Fill the rest before the ring.');
 		});
 	});
 });

@@ -1482,6 +1482,48 @@ describe('trpc/router first-run character creation from the workshop', () => {
 		}
 	});
 
+	it('loadPreset cannot take from a monster that is not the caller\'s, even in the same room', async () => {
+		// Real characters: the trust boundary is that donors are looked up only among the
+		// caller's own monsters, which a stubbed character cannot show.
+		const game = new Game({}, () => undefined);
+		try {
+			const roomManager = {
+				assertMember: async () => undefined,
+				getGame: async () => game,
+				getDisplayName: async () => 'Ada Lovelace',
+				getEventBus: async () => ({ publish: () => undefined, getPendingPromptForUser: () => null }),
+				runSerializedEngineWork: async (_roomId: string, fn: () => Promise<unknown>) => fn(),
+			} as unknown as Parameters<typeof createRouter>[0];
+			const spawn = (userId: string, name: string) =>
+				createRouter(roomManager).createCaller({ userId, serviceTokenValid: false }).game.spawnMonster({
+					roomId: ROOM_ID, type: 2, gender: 'female', name, color: 'violet smoke', character: { ...CHARACTER_BLOCK, name: userId === USER_ID ? 'Ada' : 'Rex' },
+				});
+			await spawn(USER_ID, 'Saffron');
+			await spawn(OTHER_USER_ID, 'Rival');
+
+			const mine = (game.characters[USER_ID] as { monsters: Array<{ cards: unknown[]; setOptions: (o: object) => void }> }).monsters[0]!;
+			const theirs = (game.characters[OTHER_USER_ID] as { monsters: Array<{ cards: unknown[] }> }).monsters[0]!;
+			mine.setOptions({ presets: { raid: ['Hit'] } });
+			const rivalHand = [{ cardType: 'Hit', name: 'Hit' }];
+			theirs.cards = rivalHand;
+			const myHand = [...mine.cards];
+
+			const err = await createRouter(roomManager)
+				.createCaller({ userId: USER_ID, serviceTokenValid: false })
+				.game.loadPreset({
+					roomId: ROOM_ID, monsterName: 'Saffron', presetName: 'raid',
+					takeFrom: [{ monsterName: 'Rival', cardName: 'Hit' }],
+				})
+				.catch((e: unknown) => e);
+
+			expect((err as Error).message).to.equal('I can find no monster named Rival.');
+			expect(theirs.cards).to.deep.equal(rivalHand);
+			expect(mine.cards).to.deep.equal(myHand);
+		} finally {
+			game.dispose();
+		}
+	});
+
 	it('re-reads the character inside the room lane for two first-run train requests', async () => {
 		const game = new Game({}, () => undefined);
 		let lane: Promise<unknown> = Promise.resolve();

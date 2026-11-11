@@ -55,7 +55,7 @@ export const beastmasterReady = loadHelpers().catch((err) => {
 export const DEFAULT_MONSTER_SLOTS = 10;
 
 /** Why `equipCards` left a card out. The web maps each code to the sentence a player reads. */
-export type EquipSkipReason = 'cannot_hold' | 'deck_full' | 'max_copies' | 'not_in_inventory';
+export type EquipSkipReason = 'cannot_hold' | 'deck_full' | 'max_copies' | 'not_in_inventory' | 'held_elsewhere';
 export interface EquipSkip { cardName: string; reason: EquipSkipReason }
 export interface EquipCardsResult {
 	equipped: number;
@@ -1158,7 +1158,17 @@ class Beastmaster extends BaseCharacter {
 				return;
 			}
 
-			skip(requestedCard, pool.some(card => isSameCardName(card, requestedCard)) ? 'cannot_hold' : 'not_in_inventory');
+			// Why nothing could be placed. A card the monster's class cannot hold is `cannot_hold`
+			// wherever the copy sits; a copy on another of the player's monsters that was not
+			// taken (declined, or that monster is in the ring or fighting) is `held_elsewhere`,
+			// not "no copy left in your inventory", which would be false.
+			const copies = [
+				...pool,
+				...this.monsters.filter(other => other !== monster).flatMap(other => hands.get(other) ?? other.cards),
+			].filter(card => isSameCardName(card as CardInstance, requestedCard)) as CardInstance[];
+			if (copies.length === 0) skip(requestedCard, 'not_in_inventory');
+			else if (!copies.some(card => monster.canHoldCard(card))) skip(requestedCard, 'cannot_hold');
+			else skip(requestedCard, 'held_elsewhere');
 		});
 
 		return { previous, nextCards, skippedCards, skipped, hands, takes };
@@ -1273,11 +1283,27 @@ class Beastmaster extends BaseCharacter {
 				const plan = this.planPresetLoad({ monster, requestedCards, allowance, ring });
 
 				// Commit. Nothing below can refuse, so the change lands whole.
-				monster.cards = plan.nextCards;
-				plan.hands.forEach((hand, donor) => {
-					if (plan.takes.some(take => take.donor === donor)) donor.cards = hand;
-				});
-				this.reconcileDeckAfterEquip(monster, plan.previous);
+				// `cards` is a setter over `setOptions`, which emits events synchronously, so a listener
+				// that threw would leave a half-moved hand. Nothing in the engine does today (the one
+				// `stateChange` listener only schedules a save); this snapshot keeps the one-change
+				// promise if one ever does.
+				const snapshot = {
+					hand: plan.previous,
+					deck: [...this.deck] as CardInstance[],
+					donors: plan.takes.map(({ donor }) => ({ donor, cards: [...donor.cards] as CardInstance[] })),
+				};
+				try {
+					monster.cards = plan.nextCards;
+					plan.hands.forEach((hand, donor) => {
+						if (plan.takes.some(take => take.donor === donor)) donor.cards = hand;
+					});
+					this.reconcileDeckAfterEquip(monster, plan.previous);
+				} catch (err) {
+					monster.cards = snapshot.hand;
+					snapshot.donors.forEach(({ donor, cards }) => { donor.cards = cards; });
+					this.deck = snapshot.deck;
+					throw err;
+				}
 
 				const taken: PresetTake[] = plan.takes.map(({ donor, card }) => ({
 					cardName: getCardName(card),

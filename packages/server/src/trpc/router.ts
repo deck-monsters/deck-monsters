@@ -2282,8 +2282,8 @@ export function createRouter(roomManager: RoomManager, chat: ChatService = new C
 					takeFrom: z
 						.array(
 							z.object({
-								monsterName: z.string().min(1),
-								cardName: z.string().min(1),
+								monsterName: z.string().min(1).max(64),
+								cardName: z.string().min(1).max(64),
 								count: z.number().int().min(1).max(MAX_CARD_COPIES_IN_HAND).optional(),
 							}),
 						)

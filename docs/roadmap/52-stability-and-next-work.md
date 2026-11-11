@@ -9,7 +9,7 @@ tags: [roadmap, planning, web, testing, feeds, reconnect]
 # 52 — Feed stability, proof systems, and the next passes
 
 **Status:** Accepted by the owner (2026-11-10). Pass A is done. Passes B and C are done (B3b moved to D4). Pass D is under way: the connection is rebuilt, and
-the plain feed list waits behind `?feed=plain` for WebKit and a phone check. The decisions below are settled.
+the plain feed list is green on WebKit and waits behind `?feed=plain` for the owner's phone check. Pass E has started: E1 (preset loading) is done. The decisions below are settled.
 
 ## Why
 
@@ -266,7 +266,7 @@ Each is its own PR and its own plan when it starts. The source file keeps the de
 
 | # | Work | Source | Size | Notes |
 |---|---|---|---|---|
-| E1 | Loading a preset can take cards from your other monsters | [22, Workshop](22-small-leftovers.md#workshop) | One or two tasks | Owner-requested and fully specified. Workshop and engine only, so it does not touch the feed |
+| E1 | Loading a preset can take cards from your other monsters | [22, Workshop](22-small-leftovers.md#workshop) | **Done** (f42edd4 and its fix round) | Built, independently reviewed (no blockers), fix round in. Leftovers are in 22 |
 | E2 | Counter cards: Lullaby and Mirror Shield | [12, Dragon follow-ups](12-new-content-backlog.md#dragon-follow-ups) | One content PR | The owner's pick for the next content PR. Neither exists in the code. Needs `sim:monster` evidence |
 | E3 | Small fixes: `help <word>` matching inside other words, chat metrics, the long room name on a phone | [42 E](42-next-proposals.md#e-seen-in-recent-sessions) | A line or two each | E3's first item was not re-checked against the code; check before briefing |
 | E4 | Balance Layer 1 (task 5), with 8a beside it | [34](34-balance-methodology.md) | Its own PR B and C | Measurement only. Runs under 34's plan, not this one |

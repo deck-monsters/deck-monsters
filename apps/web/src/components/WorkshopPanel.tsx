@@ -643,7 +643,10 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
         ].filter(Boolean).join(' ') + lockedNote,
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not load preset');
+      const reason = err instanceof Error ? err.message : 'Could not load preset';
+      // A refused take means the hands changed after the question was asked (another tab, or a
+      // monster entered the ring). The engine changed nothing, so say that and what to do.
+      setError(takeFrom ? `${reason.replace(/\.?$/, '.')} Nothing was changed. Load the preset again to see what is available now.` : reason); // DRAFT(39)
     }
   }
 
