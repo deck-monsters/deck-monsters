@@ -13,7 +13,8 @@ import { getItemKey } from '../items/helpers/counts.js';
 import { matchesCardLookupName } from '../cards/helpers/matches-lookup-name.js';
 import { reviveAnnouncement } from './helpers/revive-message.js';
 import { eachSeries } from '../helpers/promise.js';
-import { equipResultMessage } from './helpers/equip-message.js';
+import { equipResultMessage, presetTakenMessage } from './helpers/equip-message.js';
+import type { PresetDonorLeft, PresetTake } from './helpers/equip-message.js';
 import { MAX_PRESETS } from '../constants/card-management.js';
 import { announceAndThrow } from '../helpers/announce-and-throw.js';
 import type { ChannelFn, ChannelWithManager, CardInstance, ItemInstance } from '../creatures/base.js';
@@ -54,7 +55,7 @@ export const beastmasterReady = loadHelpers().catch((err) => {
 export const DEFAULT_MONSTER_SLOTS = 10;
 
 /** Why `equipCards` left a card out. The web maps each code to the sentence a player reads. */
-export type EquipSkipReason = 'cannot_hold' | 'deck_full' | 'max_copies' | 'not_in_inventory';
+export type EquipSkipReason = 'cannot_hold' | 'deck_full' | 'max_copies' | 'not_in_inventory' | 'held_elsewhere';
 export interface EquipSkip { cardName: string; reason: EquipSkipReason }
 export interface EquipCardsResult {
 	equipped: number;
@@ -66,6 +67,20 @@ export interface EquipCardsResult {
 	monsterName: string;
 }
 
+/**
+ * Cards `loadPreset` may take off another of the player's monsters, named explicitly by the
+ * caller (the Workshop asks the player first). `count` defaults to 1.
+ */
+export interface PresetTakeRequest { monsterName: string; cardName: string; count?: number }
+export interface LoadPresetResult extends EquipCardsResult {
+	presetName: string;
+	/** Cards taken off other monsters, in the order they were placed. Empty when none. */
+	taken: PresetTake[];
+	/** What each monster that gave cards up holds now. Empty when none gave any. */
+	donors: PresetDonorLeft[];
+}
+/** The slice of the ring `loadPreset` reads: who is a contestant right now. */
+type RingLike = { contestants?: Array<{ monster?: unknown }> };
 
 const normalize = (value: string): string => value.trim().toLowerCase();
 const getCardName = (card: CardInstance): string =>
@@ -1035,15 +1050,184 @@ class Beastmaster extends BaseCharacter {
 			});
 	}
 
+	/**
+	 * Why a monster's cards cannot be taken for a preset, or undefined when they can. The same
+	 * rule `moveCard` enforces (a fight locks both hands), plus the ring: a monster waiting in
+	 * the ring has a full hand by rule, and taking from it would leave a contestant that could
+	 * not have been sent in. The engine cannot see the ring on its own, so the caller passes it.
+	 */
+	private presetDonorRefusal(donor: BaseMonster, target: BaseMonster, ring?: RingLike): string | undefined {
+		if (donor === target) return `${donor.givenName} is the monster you are loading.`;
+		const inRing = Boolean(ring?.contestants?.some(contestant => contestant?.monster === donor));
+		if (donor.inEncounter || inRing) {
+			return `You cannot take cards from ${donor.givenName} while they are in the ring or fighting!`;
+		}
+		return undefined;
+	}
+
+	/**
+	 * Works out a preset load on copies, touching nothing, so a refusal anywhere leaves both
+	 * hands and the deck exactly as they were (the Workshop promises one atomic change).
+	 *
+	 * Per requested card, in order: the unequipped pool first (the monster's own old cards
+	 * count as unequipped, since loading replaces its hand), then, only if the pool has none
+	 * left, a copy off another monster that `claim` allows. Taking only what is still needed
+	 * is why the pool comes first: a card sitting in the deck costs another monster nothing.
+	 * The copy limit and the slot count apply before any copy is looked for, as they always
+	 * did.
+	 */
+	private planPresetLoad({
+		monster,
+		requestedCards,
+		allowance,
+		autoDonors,
+		ring,
+	}: {
+		monster: BaseMonster;
+		requestedCards: string[];
+		/** Explicit permission to take: donor, card, copies left to take. */
+		allowance?: Array<{ donor: BaseMonster; cardName: string; remaining: number }>;
+		/** Plan mode: take from any eligible monster instead of an explicit list. */
+		autoDonors?: boolean;
+		ring?: RingLike;
+	}) {
+		const previous = [...monster.cards] as CardInstance[];
+		const pool = [...this.deck, ...previous.filter(card => !this.deck.includes(card))] as CardInstance[];
+		const nextCards: CardInstance[] = [];
+		const skippedCards: string[] = [];
+		const skipped: EquipSkip[] = [];
+		const hands = new Map<BaseMonster, CardInstance[]>();
+		const takes: Array<{ donor: BaseMonster; card: CardInstance }> = [];
+		const handOf = (donor: BaseMonster) => {
+			let hand = hands.get(donor);
+			if (!hand) {
+				hand = [...donor.cards] as CardInstance[];
+				hands.set(donor, hand);
+			}
+			return hand;
+		};
+		const skip = (cardName: string, reason: EquipSkipReason) => {
+			skippedCards.push(cardName);
+			skipped.push({ cardName, reason });
+		};
+		const claim = (requestedCard: string): { donor: BaseMonster; card: CardInstance } | undefined => {
+			const candidates = autoDonors
+				? this.monsters
+					.filter(donor => !this.presetDonorRefusal(donor, monster, ring))
+					.map(donor => ({ donor, cardName: requestedCard, remaining: 1 }))
+				: (allowance ?? []).filter(entry => entry.remaining > 0);
+			for (const entry of candidates) {
+				const hand = handOf(entry.donor);
+				const index = hand.findIndex(card =>
+					isSameCardName(card, requestedCard) && isSameCardName(card, entry.cardName) && monster.canHoldCard(card),
+				);
+				if (index < 0) continue;
+				entry.remaining -= 1;
+				return { donor: entry.donor, card: hand.splice(index, 1)[0]! };
+			}
+			return undefined;
+		};
+
+		requestedCards.forEach((requestedCard) => {
+			if (nextCards.length >= monster.cardSlots) {
+				skip(requestedCard, 'deck_full');
+				return;
+			}
+
+			const requestedKey = normalize(String(requestedCard));
+			const selectedCount = nextCards.filter(
+				card => normalize(getItemKey(card)) === requestedKey,
+			).length;
+			if (selectedCount >= MAX_CARD_COPIES_IN_HAND) {
+				skip(requestedCard, 'max_copies');
+				return;
+			}
+
+			const poolIndex = pool.findIndex(card =>
+				isSameCardName(card, requestedCard) && monster.canHoldCard(card),
+			);
+			if (poolIndex >= 0) {
+				nextCards.push(pool.splice(poolIndex, 1)[0]!);
+				return;
+			}
+
+			const claimed = claim(requestedCard);
+			if (claimed) {
+				nextCards.push(claimed.card);
+				takes.push(claimed);
+				return;
+			}
+
+			// Why nothing could be placed. A card the monster's class cannot hold is `cannot_hold`
+			// wherever the copy sits; a copy on another of the player's monsters that was not
+			// taken (declined, or that monster is in the ring or fighting) is `held_elsewhere`,
+			// not "no copy left in your inventory", which would be false.
+			const copies = [
+				...pool,
+				...this.monsters.filter(other => other !== monster).flatMap(other => hands.get(other) ?? other.cards),
+			].filter(card => isSameCardName(card as CardInstance, requestedCard)) as CardInstance[];
+			if (copies.length === 0) skip(requestedCard, 'not_in_inventory');
+			else if (!copies.some(card => monster.canHoldCard(card))) skip(requestedCard, 'cannot_hold');
+			else skip(requestedCard, 'held_elsewhere');
+		});
+
+		return { previous, nextCards, skippedCards, skipped, hands, takes };
+	}
+
+	/**
+	 * Cards a preset needs that only the player's other monsters hold, so a caller can ask
+	 * "Take Blast from Brass for Stonefang?" before `loadPreset` is told to do it. Reads only.
+	 * Empty when the deck covers the preset, or when the only holders are in the ring or
+	 * fighting (those are never offered).
+	 */
+	suggestPresetTakes({
+		presetName,
+		monsterName,
+		ring,
+	}: {
+		presetName: string;
+		monsterName: string;
+		ring?: RingLike;
+	}): PresetTake[] {
+		const monster = this.findMonsterByName(monsterName);
+		if (!monster || monster.inEncounter) return [];
+		const presets = this.getMonsterPresets(monster);
+		const presetKey = this.resolvePresetKey(presets, presetName.trim());
+		const requestedCards = presetKey === undefined ? undefined : presets[presetKey];
+		if (!requestedCards) return [];
+		const plan = this.planPresetLoad({ monster, requestedCards, autoDonors: true, ring });
+		return plan.takes.map(({ donor, card }) => ({
+			cardName: getCardName(card),
+			fromMonsterName: donor.givenName,
+		}));
+	}
+
+	/**
+	 * Loads a saved preset onto a monster. By default only the unequipped deck is drawn on,
+	 * and a card another monster holds is "Skipped". With `takeFrom`, the caller names cards
+	 * to take off the player's other monsters (it has asked the player first: the Workshop
+	 * confirms in the UI, because a workshop mutation must stay prompt-free, and the console
+	 * command asks with an ordinary prompt before calling this).
+	 *
+	 * Moving cards and loading the preset are ONE change. Everything is checked and planned on
+	 * copies first (`planPresetLoad`); a donor that is gone, in the ring, fighting, or no
+	 * longer holding the named card throws before anything is touched, so a refusal leaves
+	 * every hand and the deck as they were. The deck is then settled by
+	 * `reconcileDeckAfterEquip`, the one place that accounting lives (10b #91).
+	 */
 	loadPreset({
 		presetName,
 		monsterName,
 		channel,
+		takeFrom,
+		ring,
 	}: {
 		presetName: string;
 		monsterName?: string;
 		channel: ChannelFn;
-	}): Promise<EquipCardsResult & { presetName: string }> {
+		takeFrom?: PresetTakeRequest[];
+		ring?: RingLike;
+	}): Promise<LoadPresetResult> {
 		const trimmedName = presetName.trim();
 		if (!trimmedName) {
 			return announceAndThrow(channel, 'Preset name is required.');
@@ -1075,60 +1259,80 @@ class Beastmaster extends BaseCharacter {
 					);
 				}
 
-				const oldCards = [...monster.cards];
-				oldCards.forEach(card => this.addCard(card));
+				// Validate every named donor before planning, so nothing is half-done.
+				const allowance: Array<{ donor: BaseMonster; cardName: string; remaining: number }> = [];
+				for (const request of takeFrom ?? []) {
+					const donor = this.findMonsterByName(request.monsterName);
+					if (!donor) {
+						return announceAndThrow(channel, `I can find no monster named ${request.monsterName}.`);
+					}
+					const refusal = this.presetDonorRefusal(donor, monster, ring);
+					if (refusal) return announceAndThrow(channel, refusal);
+					const count = Math.max(Math.floor(Number(request.count ?? 1)) || 1, 1);
+					const entry = allowance.find(item => item.donor === donor && normalize(item.cardName) === normalize(request.cardName));
+					if (entry) entry.remaining += count;
+					else allowance.push({ donor, cardName: request.cardName, remaining: count });
+				}
+				for (const { donor, cardName, remaining } of allowance) {
+					const held = donor.cards.filter(card => isSameCardName(card as CardInstance, cardName)).length;
+					if (held < remaining) {
+						return announceAndThrow(channel, `${donor.givenName} is not holding ${remaining === 1 ? cardName : `${remaining} ${cardName}`}.`);
+					}
+				}
 
-				let deck = [...this.deck];
-				const nextCards: CardInstance[] = [];
-				const skippedCards: string[] = [];
-				const skipped: EquipSkip[] = [];
-				const skip = (cardName: string, reason: EquipSkipReason) => {
-					skippedCards.push(cardName);
-					skipped.push({ cardName, reason });
+				const plan = this.planPresetLoad({ monster, requestedCards, allowance, ring });
+
+				// Commit. Nothing below can refuse, so the change lands whole.
+				// `cards` is a setter over `setOptions`, which emits events synchronously, so a listener
+				// that threw would leave a half-moved hand. Nothing in the engine does today (the one
+				// `stateChange` listener only schedules a save); this snapshot keeps the one-change
+				// promise if one ever does.
+				const snapshot = {
+					hand: plan.previous,
+					deck: [...this.deck] as CardInstance[],
+					donors: plan.takes.map(({ donor }) => ({ donor, cards: [...donor.cards] as CardInstance[] })),
 				};
+				try {
+					monster.cards = plan.nextCards;
+					plan.hands.forEach((hand, donor) => {
+						if (plan.takes.some(take => take.donor === donor)) donor.cards = hand;
+					});
+					this.reconcileDeckAfterEquip(monster, plan.previous);
+				} catch (err) {
+					monster.cards = snapshot.hand;
+					snapshot.donors.forEach(({ donor, cards }) => { donor.cards = cards; });
+					this.deck = snapshot.deck;
+					throw err;
+				}
 
-				requestedCards.forEach((requestedCard) => {
-					if (nextCards.length >= monster.cardSlots) {
-						skip(requestedCard, 'deck_full');
-						return;
-					}
-
-					const requestedKey = normalize(String(requestedCard));
-					const selectedCount = nextCards.filter(
-						card => normalize(getItemKey(card)) === requestedKey,
-					).length;
-					if (selectedCount >= MAX_CARD_COPIES_IN_HAND) {
-						skip(requestedCard, 'max_copies');
-						return;
-					}
-
-					const cardIndex = deck.findIndex(card =>
-						isSameCardName(card, requestedCard) && monster.canHoldCard(card),
-					);
-					if (cardIndex < 0) {
-						skip(requestedCard, deck.some(card => isSameCardName(card, requestedCard)) ? 'cannot_hold' : 'not_in_inventory');
-						return;
-					}
-
-					nextCards.push(deck.splice(cardIndex, 1)[0]);
+				const taken: PresetTake[] = plan.takes.map(({ donor, card }) => ({
+					cardName: getCardName(card),
+					fromMonsterName: donor.givenName,
+				}));
+				const donors: PresetDonorLeft[] = [];
+				plan.takes.forEach(({ donor }) => {
+					if (donors.some(left => left.monsterName === donor.givenName)) return;
+					donors.push({ monsterName: donor.givenName, cardCount: donor.cards.length, cardSlots: donor.cardSlots });
 				});
 
-				this.deck = deck;
-				monster.cards = nextCards;
-
-				const summary = {
-					equipped: nextCards.length,
+				const summary: LoadPresetResult = {
+					equipped: plan.nextCards.length,
 					requested: requestedCards.length,
-					skippedCards,
-					skipped,
+					skippedCards: plan.skippedCards,
+					skipped: plan.skipped,
 					cardCount: monster.cards.length,
 					cardSlots: monster.cardSlots,
 					presetName: trimmedName,
 					monsterName: monster.givenName,
+					taken,
+					donors,
 				};
 
 				return Promise.resolve(channel({
-					announce: equipResultMessage({ monsterName: monster.givenName, cardNames: requestedCards, result: summary }),
+					announce: [
+						equipResultMessage({ monsterName: monster.givenName, cardNames: requestedCards, result: summary }),
+						presetTakenMessage({ taken, donors }),
+					].filter(Boolean).join(' '),
 				})).then(() => summary);
 			});
 	}

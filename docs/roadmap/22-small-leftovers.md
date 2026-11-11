@@ -48,32 +48,17 @@ execution queue.
 
 ## Workshop
 
-- [ ] **Owner: Workshop.** Loading a preset should be able to take a card another monster
-  is holding, after a confirmation, so a monster can be equipped on the fly (owner request,
-  September 2026). Today `Beastmaster.loadPreset` only draws from the unequipped deck, and a
-  card held by another of your monsters is listed as "Skipped". Notes for the design:
-  - **Confirm first, and name what moves.** "Hit ×2 and Blast are on Brass. Take them from
-    Brass for Stonefang?" A decline keeps today's behaviour: load what the deck has and skip
-    the rest.
-  - **The confirmation lives in the client, not an engine prompt.** Workshop mutations are
-    awaited and must stay prompt-free on the per-room workshop lane
-    ([engine concurrency and timing](../architecture/engine-concurrency-and-timing.md)).
-    So the Workshop works out what is missing (it already has every monster's cards and the
-    preset), asks in the UI, then calls `loadPreset` with an explicit list of cards to take
-    and from whom. The console command (`load preset … on …`) can use an ordinary prompt,
-    and must follow rule 4 of the
-    [prompt/answer contract](../reference/prompt-answer-contract.md).
-  - **Take only what is needed, deck first.** Use unequipped copies before touching another
-    monster's hand, and never take from a monster that is in the ring or fighting (the same
-    rule `moveCard` and equip already enforce).
-  - **Say what the donor is left with.** A monster that gives up cards drops below a full
-    hand and cannot enter the ring until it is refilled, so the result should say so
-    ("Brass now holds 7 of 9 cards").
-  - **One atomic change.** Moving cards between monsters and loading the preset happen in
-    the same mutation, so a failure leaves both hands as they were. Reuse the move path's
-    deck accounting (`reconcileDeckAfterEquip`, 10b #91) rather than a new one.
-  - **Tests**: a preset that needs a card only another monster holds, with confirm and
-    decline; a donor in the ring is refused; the copy limit still applies; the console path.
+Loading a preset can now take cards from your other monsters, after a confirmation
+([Workshop and items](../architecture/workshop-and-items.md); roadmap 52, E1). What it left:
+
+- [ ] **Live check.** The flow is covered by engine, server and jsdom tests and a rendered
+  screenshot of the confirmation at 390 px. Nobody has done it against a running server on
+  a phone. Do it at the next local test session.
+- [ ] **`moveCard` allows a donor that is waiting in the ring.** It checks only
+  `inEncounter`. The preset path refuses a donor in the ring or fighting, as its spec asked.
+  Decide which rule is right and make the two agree.
+- [ ] **Wording.** The new lines are marked `DRAFT(39)` in the code and wait for the owner's
+  wording pass under [39](39-in-game-help.md).
 
 ## Items and monster identity
 

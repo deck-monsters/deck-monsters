@@ -1,4 +1,32 @@
 import type { registerHandler } from './index.js';
+import { presetTakeQuestion } from '../characters/helpers/equip-message.js';
+import { resolveChoiceIndex } from '../helpers/choices.js';
+
+const TAKE_CHOICES = ['Yes', 'No'];
+
+/**
+ * Asks whether to take cards off the player's other monsters, and returns true for yes. An
+ * ordinary engine prompt is right here (the Console flow is interactive); the web Workshop
+ * cannot use one and asks in the UI instead, see docs/architecture/workshop-and-items.md.
+ *
+ * Rule 4 of the prompt/answer contract: a console line is the open prompt's answer, so a
+ * command typed mid-prompt ("send Brass to the ring") must not be read as yes OR as no.
+ * Declining still loads the preset, so reading junk as "no" would quietly change the hand
+ * the player never asked to change. Unrecognised answers ask again, and a cancel aborts the
+ * flow (`PROMPT_CANCELLED` passes straight through the channel). The re-ask has no cap: it
+ * cannot strand a player, and every prompt times out on the bus.
+ */
+async function confirmTakes(channel: (message: Record<string, unknown>) => unknown, question: string): Promise<boolean> {
+	for (;;) {
+		// eslint-disable-next-line no-await-in-loop
+		const answer = await channel({ question, choices: TAKE_CHOICES });
+		const index = resolveChoiceIndex(answer, TAKE_CHOICES);
+		if (index === 0) return true;
+		if (index === 1) return false;
+		// eslint-disable-next-line no-await-in-loop
+		await channel({ announce: 'Please answer Yes or No.' }); // DRAFT(39)
+	}
+}
 
 // The preset-name capture is greedy so the LAST separator splits the command.
 // With a lazy capture, `save preset tank for bosses for Stonefang` parsed as
@@ -37,13 +65,26 @@ function loadPresetAction({ channel, character, game, isDM, results }: any): Pro
 	}
 
 	return Promise.resolve()
-		.then(() =>
-			character.loadPreset({
+		.then(async () => {
+			const presetName = cleanPresetName(results[1]);
+			// Resolve the monster first (it asks which one when none is named) so the
+			// confirmation can name it.
+			const monster = await character.chooseMonster({
 				channel,
-				presetName: cleanPresetName(results[1]),
 				monsterName: cleanMonsterName(results[2]),
-			}),
-		)
+				action: 'load a preset for',
+			});
+			const takes = character.suggestPresetTakes({
+				presetName,
+				monsterName: monster.givenName,
+				ring: game.ring,
+			}) as Array<{ cardName: string; fromMonsterName: string }>;
+			const takeFrom = takes.length > 0
+				&& await confirmTakes(channel, presetTakeQuestion({ monsterName: monster.givenName, takes }))
+				? takes.map(({ cardName, fromMonsterName }) => ({ monsterName: fromMonsterName, cardName }))
+				: undefined;
+			return character.loadPreset({ channel, presetName, monsterName: monster.givenName, takeFrom, ring: game.ring });
+		})
 		.catch((err: unknown) => game.log(err));
 }
 

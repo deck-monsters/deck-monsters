@@ -14,7 +14,9 @@ import TrainWizard, { toTrainFailure, type TrainFailure, type TrainWizardInput }
 import { useGuidedStart } from '../hooks/useGuidedStart.js';
 import { useDeckWorkshop } from '../hooks/useDeckWorkshop.js';
 import { RingFeedContext, type TrackedRingFeedEvent } from '../hooks/useRingFeed.js';
-import { cardRefusalReason, cardRefusalSentence, equipResultMessage } from '../lib/cardRefusal.js';
+import { cardRefusalReason, cardRefusalSentence, equipResultMessage, presetTakenMessage } from '../lib/cardRefusal.js';
+import { planPresetTakes } from '../lib/presetTakes.js';
+import type { PresetTakeFrom } from './PresetControl.js';
 import { groupSelectionByCardName, isSameSource, toggleWorkshopSelection } from '../utils/workshop-selection.js';
 
 export type SelectionState = {
@@ -605,15 +607,46 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
     }
   }
 
-  async function handleLoadPreset(monsterName: string, presetName: string) {
+  // Which preset cards only the player's other monsters hold. The client works this out (it has
+  // every hand and the deck) because a workshop mutation cannot prompt: the question is asked in
+  // the UI, then `loadPreset` gets an explicit list. See workshop-and-items.md.
+  const planPresetLoad = useCallback(
+    (monsterName: string, presetName: string) => {
+      const monster = monsters.find((entry) => entry.name === monsterName);
+      return planPresetTakes({
+        monster: monster ?? { name: monsterName, cards: [], cardSlots: 0, inRing: false, inEncounter: false },
+        presetCards: monster?.presets[presetName] ?? [],
+        monsters,
+        unequippedDeck,
+        canHold: isCardCompatibleWithMonster,
+      });
+    },
+    [isCardCompatibleWithMonster, monsters, unequippedDeck],
+  );
+
+  async function handleLoadPreset(monsterName: string, presetName: string, takeFrom?: PresetTakeFrom) {
     if (!roomId) return;
     try {
       setError(null);
-      const result = await loadPreset({ monsterName, presetName });
+      const result = await loadPreset({ monsterName, presetName, ...(takeFrom ? { takeFrom } : {}) });
       const requested = monsters.find((monster) => monster.name === monsterName)?.presets[presetName] ?? [];
-      setMessage(equipResultMessage({ monsterName, cardNames: requested, result }));
+      // A card left on a monster in the ring or fighting is skipped for that reason alone, so say
+      // so; otherwise "no copy is left in your inventory" would be a lie about a card they own.
+      const locked = planPresetLoad(monsterName, presetName).locked;
+      const lockedNote = locked.length > 0
+        ? ` ${[...new Set(locked.map((entry) => entry.fromMonsterName))].join(' and ')} ${locked.length === 1 ? 'is' : 'are'} in the ring or fighting, so ${locked.map((entry) => entry.cardName).join(', ')} could not be taken.` // DRAFT(39)
+        : '';
+      setMessage(
+        [
+          equipResultMessage({ monsterName, cardNames: requested, result }),
+          presetTakenMessage({ taken: result.taken ?? [], donors: result.donors ?? [] }),
+        ].filter(Boolean).join(' ') + lockedNote,
+      );
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not load preset');
+      const reason = err instanceof Error ? err.message : 'Could not load preset';
+      // A refused take means the hands changed after the question was asked (another tab, or a
+      // monster entered the ring). The engine changed nothing, so say that and what to do.
+      setError(takeFrom ? `${reason.replace(/\.?$/, '.')} Nothing was changed. Load the preset again to see what is available now.` : reason); // DRAFT(39)
     }
   }
 
@@ -859,9 +892,10 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
             onSavePreset={(presetName) => {
               void handleSavePreset(monster.name, presetName);
             }}
-            onLoadPreset={(presetName) => {
-              void handleLoadPreset(monster.name, presetName);
+            onLoadPreset={(presetName, takeFrom) => {
+              void handleLoadPreset(monster.name, presetName, takeFrom);
             }}
+            planPresetLoad={(presetName) => planPresetLoad(monster.name, presetName)}
             onDeletePreset={(presetName) => {
               void handleDeletePreset(monster.name, presetName);
             }}

@@ -15,6 +15,7 @@ export type CardRefusalReason =
 	| 'deck_full'
 	| 'max_copies'
 	| 'not_in_inventory'
+	| 'held_elsewhere'
 	| 'fighting';
 
 /**
@@ -26,6 +27,7 @@ export const CARD_REFUSAL_REASON_TEXT: Record<CardRefusalReason, string> = {
 	deck_full: 'every card slot is taken',
 	max_copies: "that's already the most copies one monster can hold",
 	not_in_inventory: 'no copy of it is left in your inventory',
+	held_elsewhere: 'another of your monsters is holding it', // DRAFT(39)
 	fighting: 'cards are locked until the fight ends',
 };
 
@@ -96,6 +98,74 @@ export function equipResultMessage(params: {
 		if (seen.has(key)) continue;
 		seen.add(key);
 		parts.push(cardRefusalSentence(cardName, monsterName, reason));
+	}
+	return parts.join(' ');
+}
+
+/** One card a preset load takes off another of the player's monsters. */
+export interface PresetTake {
+	cardName: string;
+	fromMonsterName: string;
+}
+
+/** What a monster that gave cards up holds afterwards. */
+export interface PresetDonorLeft {
+	monsterName: string;
+	cardCount: number;
+	cardSlots: number;
+}
+
+/** `Hit ×2 and Blast`: one entry per card name with a count, in first-seen order. */
+function cardList(cardNames: string[]): string {
+	const counts = new Map<string, number>();
+	for (const name of cardNames) counts.set(name, (counts.get(name) ?? 0) + 1);
+	const parts = [...counts].map(([name, count]) => (count > 1 ? `${name} ×${count}` : name));
+	if (parts.length <= 1) return parts[0] ?? '';
+	return `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}`;
+}
+
+/** Group takes by the monster they come off, in first-seen order. */
+function groupByDonor(takes: PresetTake[]): Array<{ monsterName: string; cardNames: string[] }> {
+	const groups: Array<{ monsterName: string; cardNames: string[] }> = [];
+	for (const { cardName, fromMonsterName } of takes) {
+		const group = groups.find((entry) => entry.monsterName === fromMonsterName);
+		if (group) group.cardNames.push(cardName);
+		else groups.push({ monsterName: fromMonsterName, cardNames: [cardName] });
+	}
+	return groups;
+}
+
+/**
+ * The question asked before a preset load takes cards off the player's other monsters. One
+ * home for the Workshop's confirmation and the Console prompt, so the two say the same thing.
+ * // DRAFT(39): wording beyond the owner's example line is the orchestrator's to settle.
+ */
+export function presetTakeQuestion(params: { monsterName: string; takes: PresetTake[] }): string {
+	const { monsterName, takes } = params;
+	const groups = groupByDonor(takes);
+	const where = groups
+		.map(({ monsterName: donor, cardNames }) => `${cardList(cardNames)} ${cardNames.length === 1 ? 'is' : 'are'} on ${donor}`)
+		.join(' and ');
+	const pronoun = takes.length === 1 ? 'it' : 'them';
+	const from = groups.length === 1 ? ` from ${groups[0]!.monsterName}` : '';
+	return `${where}. Take ${pronoun}${from} for ${monsterName}?`;
+}
+
+/**
+ * What a preset load took and what each donor is left with. A monster below a full hand
+ * cannot enter the ring (`sendMonsterToTheRing` refuses it), so the line says so in the same
+ * words the equip line uses. Empty when nothing was taken.
+ * // DRAFT(39): "Took ..." is new wording; the donor line reuses the equip wording.
+ */
+export function presetTakenMessage(params: { taken: PresetTake[]; donors: PresetDonorLeft[] }): string {
+	const { taken, donors } = params;
+	if (taken.length === 0) return '';
+	const parts = groupByDonor(taken).map(
+		({ monsterName, cardNames }) => `Took ${cardList(cardNames)} from ${monsterName}.`,
+	);
+	// A donor that gave a card up is always below a full hand, so the line always says so.
+	for (const { monsterName, cardCount, cardSlots } of donors) {
+		parts.push(`${monsterName} now holds ${cardCount} of ${cardSlots} cards. Fill the rest before the ring.`);
 	}
 	return parts.join(' ');
 }

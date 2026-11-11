@@ -5642,6 +5642,24 @@ earlier session was still loading.
 **Fixed:** no refetch on focus or reconnect (`useGuidedStart` shared the Console's query and
 needed the same options); the Console shows "Loading your console…" until history answers.
 
+### 269. `↓ Latest` on the plain list stopped short on an iPhone — FIXED
+
+Reported by the owner from production on `?feed=plain` (2026-11-11): the button took the
+Ring near the bottom, not to it. The jump was one `scrollTop = scrollHeight`. On iOS a
+momentum scroll that is still running writes its own next position over that; the scroll
+event that follows has a lower `scrollTop` and unchanged sizes, which is what the reader
+moving up looks like, so the list unpinned short of the end. No test browser has momentum
+(the WebKit phone project scrolls in script), which is how 142 green WebKit tests missed it.
+
+**Fixed** (`PlainFeedList.tsx`, `holdEnd`): the jump stops the momentum (the scroller cannot
+scroll for one frame), re-asserts the end on each frame for 500 ms, and during that hold a
+scroll event is not read as the reader. A touch, wheel, key or pointer press ends the hold,
+so the reader still wins. `e2e/scroll.spec.ts` writes momentum-like positions in script after
+the click: 240 px short before the fix, at the end after; a second test proves a real gesture
+inside the hold still moves the feed. **Not proven on a real iPhone yet**: the cause is
+inferred from the symptom and from how iOS scrolling behaves, and only the owner's phone can
+confirm it.
+
 ## Closed without a fix
 
 These were open investigations the owner closed on 2026-09-28. Reopen with new evidence.

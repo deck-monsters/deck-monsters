@@ -6,5 +6,7 @@ export {
   cardRefusalSentence,
   equipResultMessage,
   isCardRefusalReason,
+  presetTakenMessage,
+  presetTakeQuestion,
   type CardRefusalReason,
 } from '@deck-monsters/engine';

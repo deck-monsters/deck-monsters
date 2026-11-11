@@ -8,6 +8,7 @@ const log = createLogger('router');
 
 import type { GameEvent, EventType, EventScope } from '@deck-monsters/engine';
 import {
+	MAX_CARD_COPIES_IN_HAND,
 	PRONOUN_CHOICES,
 	PRONOUN_KEYS,
 	PROMPT_CANCELLED,
@@ -509,7 +510,13 @@ const summarizeInventory = ({
 		};
 	});
 
-	const cardCompatibility = deck.reduce<Record<string, string[]>>((all, card) => {
+	// Cards the monsters hold count too: the Workshop's preset load offers to take a card off
+	// another monster, and must know whether the monster being loaded can hold it before it asks.
+	const heldCards = monsterEntries.flatMap((entry) => {
+		const held = (entry.monster as { cards?: unknown } | null)?.cards;
+		return Array.isArray(held) ? held : [];
+	});
+	const cardCompatibility = [...deck, ...heldCards].reduce<Record<string, string[]>>((all, card) => {
 		const cardName = getDisplayName(card);
 		if (!all[cardName]) {
 			all[cardName] = [];
@@ -632,6 +639,9 @@ function releasePromptFreeMutation(flowKey: string, token: string): void {
 		activePromptFreeMutations.delete(flowKey);
 	}
 }
+
+// A preset holds at most a monster's card slots, so a list naming this many donors/cards is already absurd.
+const MAX_PRESET_TAKE_ENTRIES = 36;
 
 const sortBySchema = z.enum(['xp', 'wins', 'winRate', 'coins']);
 
@@ -2263,6 +2273,22 @@ export function createRouter(roomManager: RoomManager, chat: ChatService = new C
 					roomId: z.string().uuid(),
 					monsterName: z.string().min(1),
 					presetName: z.string().min(1).max(32),
+					/**
+					 * Cards to take off the caller's OTHER monsters, named by the Workshop after the
+					 * player confirmed. Absent means today's behaviour: the unequipped deck only.
+					 * The confirmation lives in the client because this mutation is awaited on the
+					 * workshop lane and must stay prompt-free (engine-concurrency-and-timing.md).
+					 */
+					takeFrom: z
+						.array(
+							z.object({
+								monsterName: z.string().min(1).max(64),
+								cardName: z.string().min(1).max(64),
+								count: z.number().int().min(1).max(MAX_CARD_COPIES_IN_HAND).optional(),
+							}),
+						)
+						.max(MAX_PRESET_TAKE_ENTRIES)
+						.optional(),
 				}),
 			)
 			.mutation(async ({ input, ctx }) => {
@@ -2282,6 +2308,9 @@ export function createRouter(roomManager: RoomManager, chat: ChatService = new C
 						channel,
 						monsterName: input.monsterName,
 						presetName: input.presetName,
+						takeFrom: input.takeFrom,
+						// So the engine can refuse a donor waiting in the ring, not only one fighting.
+						ring: game.ring,
 					}),
 				) as {
 					equipped: number;
@@ -2291,6 +2320,8 @@ export function createRouter(roomManager: RoomManager, chat: ChatService = new C
 					cardCount?: number;
 					cardSlots?: number;
 					monsterName?: string;
+					taken?: Array<{ cardName: string; fromMonsterName: string }>;
+					donors?: Array<{ monsterName: string; cardCount: number; cardSlots: number }>;
 				};
 				eventBus.publish({
 					type: 'card.presetLoaded' as EventType,
@@ -2312,6 +2343,22 @@ export function createRouter(roomManager: RoomManager, chat: ChatService = new C
 						}),
 					},
 				});
+				// A monster that gave cards up changed too: tell this player's other tabs.
+				for (const donor of result.donors ?? []) {
+					eventBus.publish({
+						type: 'card.equipped' as EventType,
+						scope: 'private',
+						targetUserId: ctx.userId,
+						text: '',
+						payload: {
+							monsterName: donor.monsterName,
+							cards: getMonsterCardsByName({
+								character: character as Record<string, unknown>,
+								monsterName: donor.monsterName,
+							}),
+						},
+					});
+				}
 				return {
 					equippedCount: result.equipped,
 					requestedCount: result.requested,
@@ -2319,6 +2366,8 @@ export function createRouter(roomManager: RoomManager, chat: ChatService = new C
 					skipped: result.skipped ?? result.skippedCards.map((cardName) => ({ cardName, reason: 'cannot_hold' })),
 					cardCount: result.cardCount ?? null,
 					cardSlots: result.cardSlots ?? null,
+					taken: result.taken ?? [],
+					donors: result.donors ?? [],
 				};
 			}),
 

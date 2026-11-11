@@ -21,8 +21,12 @@ export {
 	cardRefusalSentence,
 	equipResultMessage,
 	isCardRefusalReason,
+	presetTakenMessage,
+	presetTakeQuestion,
 } from './characters/helpers/equip-message.js';
-export type { CardRefusalReason } from './characters/helpers/equip-message.js';
+export type { CardRefusalReason, PresetDonorLeft, PresetTake } from './characters/helpers/equip-message.js';
+// Pure constant: the Workshop's preset plan stops at the same copy limit the engine enforces.
+export { MAX_CARD_COPIES_IN_HAND } from './constants/card-management.js';
 // Browser-safe: strings and pure functions only (the card classes and name lists are Node-only,
 // so card facts and the per-level list stay in index.ts and reach the web through the server).
 export { CARD_ROLES, CARD_ROLE_LABELS, roleOf } from './cards/helpers/roles.js';

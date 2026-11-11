@@ -33,6 +33,10 @@ describe('commands/card-management', () => {
 			moveCard: sinon.stub().resolves(undefined),
 			savePreset: sinon.stub().resolves(undefined),
 			loadPreset: sinon.stub().resolves(undefined),
+			// The load command resolves the monster first so the confirmation can name it.
+			chooseMonster: sinon.stub().callsFake(({ monsterName }: { monsterName?: string }) =>
+				Promise.resolve({ givenName: monsterName ?? 'Stonefang' })),
+			suggestPresetTakes: sinon.stub().returns([]),
 			deletePreset: sinon.stub().resolves(undefined),
 			getPresets: sinon.stub().returns({ aggro: ['hit'] }),
 			lookAtInventory: sinon.stub().resolves(undefined),

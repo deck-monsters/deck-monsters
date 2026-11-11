@@ -1001,6 +1001,38 @@ button {
   gap: 0.35rem;
 }
 
+/*
+  The question a preset load asks before taking cards off another monster. Inline, in the
+  preset block, so on a phone it sits right under the Load button that raised it. The answers
+  wrap and are 44px tall for a thumb (the same minimum the Train row uses).
+*/
+.workshop-preset-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.5rem;
+  border: var(--border-width) solid var(--color-accent);
+  background: var(--color-bg);
+}
+
+.workshop-preset-confirm-text {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--color-fg);
+  overflow-wrap: anywhere;
+}
+
+.workshop-preset-confirm-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.workshop-preset-confirm-actions .btn {
+  min-height: 44px;
+  flex: 1 1 auto;
+}
+
 .workshop-select,
 .workshop-input {
   flex: 1;

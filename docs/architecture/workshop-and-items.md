@@ -241,6 +241,41 @@ means unknown, not full. `loadPreset` checks copies before class, so its reason 
 from the hint's when a card fails both. Monster-to-monster moves already carry the engine's
 reason text and are unchanged.
 
+## Loading a preset can take cards off other monsters
+
+By default `Beastmaster.loadPreset` draws only on the unequipped deck, and a card another of
+the player's monsters holds is skipped. With `takeFrom` (`[{ monsterName, cardName, count? }]`)
+it also takes those cards, as **one atomic change** with the load: `planPresetLoad` works out
+the whole result on copies, every named donor is validated first, and only then do the hands
+change, with the deck settled by `reconcileDeckAfterEquip` (10b #91), so a refusal leaves
+every hand and the deck as they were. Per requested card the order is slots, copy limit, the
+unequipped deck (the loading monster's own old hand counts), and only then a donor, so cards
+are taken only when still needed. A donor that is fighting (`inEncounter`) or waiting in the
+ring (`ring` is passed in by the router and the console command, since the character cannot
+see it), a missing donor, or a donor no longer holding the named card are refused before
+anything moves. The result adds `taken` and `donors` (what each donor holds now);
+`presetTakenMessage` words it and reuses the equip line's "Fill the rest before the ring",
+because a monster below a full hand cannot be sent in (`sendMonsterToTheRing`).
+
+**The confirmation lives in the client.** A workshop mutation is awaited on the per-room
+lane and must stay prompt-free ([engine concurrency](engine-concurrency-and-timing.md)), so
+the tRPC `loadPreset` takes the explicit `takeFrom` and its channel still refuses prompts.
+The Workshop already has every monster's hand, the deck and the preset, so
+`apps/web/src/lib/presetTakes.ts` (`planPresetTakes`, mirroring the engine's order) works out
+what is missing; `PresetControl` shows an inline question ("Hit ×2 and Blast are on Brass.
+Take them from Brass for Stonefang?") with Yes, No and Cancel. No loads what the deck has,
+as before. Cards held only by a monster in the ring or fighting are never offered, and the
+result line says that is why they were left. The engine is the authority: a stale list is
+refused, not trusted. `myInventory.cardCompatibility` now lists cards monsters hold as well
+as deck cards, so the client knows whether the loading monster can hold a card before asking.
+
+The console command (`load preset … on …`, also what the Discord slash command sends) uses
+`suggestPresetTakes` (a read-only plan that takes from any eligible monster) and an ordinary
+Yes/No prompt. An answer that is neither (a command typed mid-prompt) asks again rather than
+being read as no, which would still change the hand
+([prompt contract](../reference/prompt-answer-contract.md), rule 4). Discord gets its buttons
+from the same prompt.
+
 Before a character exists, the Workshop leaves `game.shop` off: it answers `NOT_FOUND`
 without a character, and polling it made a first-run room look broken (10b #188). The
 query turns on when `myInventory` reports `hasCharacter`. The "Applying changes…" banner

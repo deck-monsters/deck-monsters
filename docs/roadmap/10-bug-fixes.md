@@ -91,6 +91,46 @@ that decision.
   the durable replay is empty after `evicted`. Rare. Root cause: `ringFeed` treats "evicted
   and nothing visible" as loss without checking whether anything visible existed.
 
+### O. A deploy while someone is playing loses the ring
+
+**Owner:** Server lifecycle. Seen in production on 2026-11-11, when #436 was merged during a
+session (Railway logs, room `d6d69a2e`).
+
+What happened, by the server log (UTC):
+
+- 14:55:28 the old process puts Queen Elizabeth in the ring. 14:55:39 it summons a boss.
+- 14:55:38 the new process is already listening. 14:55:42 a request reaches it and it loads
+  the room from the database.
+- 14:55:44 the old process gets `SIGTERM` and flushes the room, two seconds after the new one
+  read it.
+
+The player saw their monster and a boss enter, then no countdown, no roster and no fight.
+Later bosses came and left with nobody to fight, so the new process did not have the
+player's monster in its ring.
+
+Root causes, two of them:
+
+1. **The two processes overlap and nothing hands the room over.** The new one reads the
+   room while the old one still owns newer state; the old one's shutdown flush then lands in
+   a row nobody reads again, and the new one's next save overwrites it. Anything done in the
+   overlap is lost: here a ring entry and a summon. The unload and reset guards
+   (`pendingFlush`, the tombstone) hold within one process only
+   ([rooms and identity](../architecture/rooms-and-identity.md)).
+2. **A boss never survives a restart, and nothing says so.** `Game` saves only non-boss
+   contestants ([boss encounters](../architecture/boss-encounters.md)). A player who summoned
+   one is left waiting with no line in the feed, and may have spent a summon.
+
+- [ ] Decide the handover. Options: (a) remove the overlap in Railway so the old process
+  stops before the new one takes traffic, a few seconds of downtime per deploy; (b) save at
+  once, not on the debounce, when a monster enters or leaves the ring, which narrows the
+  window but does not close it; (c) a per-room owner lease in the database so a new process
+  waits for the old one's flush. (a) is the cheapest and closes it; check what the web
+  client shows for those seconds first.
+- [ ] After a restart with monsters still in the ring, say what happened in the Ring feed
+  ("The ring was rebuilt. Bosses left; your monster is still waiting."), and give back a
+  summon whose boss was lost that way.
+- [ ] Check whether the lost summon was charged in this case.
+
 ## Historical detail
 
 The removed September incident diary was resolved work and duplicated

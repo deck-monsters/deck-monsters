@@ -102,6 +102,9 @@ jobs:
     # feed-stability-baseline.md); this becomes a required check once they are fixed
     # (roadmap 52, decision 6). Until then read the summary, not the tick.
     continue-on-error: true
+    # Both passes take about 35 minutes. One run sat for 1 h 45 m in the browser install
+    # while the runner could not resolve the apt mirror, then ran a pass with no browser.
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -110,18 +113,22 @@ jobs:
           node-version-file: '.nvmrc'
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile=false
-      - run: pnpm --filter @deck-monsters/web exec playwright install --with-deps chromium webkit
+      - id: browsers
+        timeout-minutes: 15
+        run: pnpm --filter @deck-monsters/web exec playwright install --with-deps chromium webkit
       - run: pnpm --filter @deck-monsters/web run test:e2e
         env:
           E2E_WEBKIT: '1'
       # The plain feed list (`?feed=plain`) on WebKit: the gate for making it the default
       # (roadmap 52, D2). Chromium is run locally; WebKit only runs here. Each run clears
       # `.results`, so the first run's report is moved out of the way.
-      - if: always()
+      # `!cancelled()` so this pass still runs when the first one has failing tests; the
+      # install check so it does not run 150 tests against a browser that is not there.
+      - if: ${{ !cancelled() && steps.browsers.outcome == 'success' }}
         run: |
           mkdir -p apps/web/e2e/.results-default
           cp apps/web/e2e/.results/report.json apps/web/e2e/.results-default/report.json || true
-      - if: always()
+      - if: ${{ !cancelled() && steps.browsers.outcome == 'success' }}
         run: pnpm --filter @deck-monsters/web run test:e2e --project=webkit-phone --project=webkit-desktop
         env:
           E2E_WEBKIT: '1'

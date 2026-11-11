@@ -9,7 +9,7 @@ tags: [roadmap, planning, web, testing, feeds, reconnect]
 # 52 — Feed stability, proof systems, and the next passes
 
 **Status:** Accepted by the owner (2026-11-10). Pass A is done. Passes B and C are done (B3b moved to D4). Pass D is under way: the connection is rebuilt, and
-the plain feed list waits behind `?feed=plain` for WebKit and a phone check. The decisions below are settled.
+the plain feed list is green on WebKit and waits behind `?feed=plain` for the owner's phone check. Pass E has started: E1 (preset loading) is done. The decisions below are settled.
 
 ## Why
 
@@ -255,7 +255,7 @@ the default.
 | # | Task | Status | Commit |
 |---|---|---|---|
 | D1 | **The connection.** One subscription per page load; an 8 s heartbeat and a 20 s watchdog; a test of the connection when the page becomes visible or comes online; the banner when offline; backoff on failed resubscribes; dividers only for outages a reader lived through; no history refetch on focus; a loading line in the Console; tRPC's socket keep-alive | Done. Reviewed; fix round in (stale cached history, chat and the cursor, transport reconnects, pong wait). Connection suite 44 of 44 on both lists | 6fd862d, 68b8c0b |
-| D2 | **The plain list as the default.** Needs WebKit green in CI and the owner's phone check with `?feed=plain`. Narrow the Console's row re-render first | WebKit is green: CI run on d9e31ab, plain list on WebKit phone and desktop, 142 passed, 0 failed (the virtual list failed 23 across the four projects, all scroll). Waiting on the owner's phone check | |
+| D2 | **The plain list as the default.** Needs WebKit green in CI and the owner's phone check with `?feed=plain`. Narrow the Console's row re-render first | WebKit is green: CI run on d9e31ab, plain list on WebKit phone and desktop, 142 passed, 0 failed (the virtual list failed 23 across the four projects, all scroll). The owner's phone check (2026-11-11) found `↓ Latest` stopping short; fixed as 10b #269, to be checked on the phone again | |
 | D3 | **Delete the virtual list:** `react-virtuoso`, `utils/feed-row-height.ts` and its probe, `useFeedAutoScroll`, the metrics remount, and the ten tests that stub the list. Rewrite the feed sections of [web workspace](../architecture/web-workspace.md) | After D2 | |
 | D4 | **B3b:** the connection faults against the real server and tRPC's WebSocket client through a proxy (CI has Postgres). The review of D1 named what only this can test: the socket keep-alive after a freeze, and both reconnect paths firing at once | Planned | |
 | D5 | **Push, not poll:** the feed on the Fights and Leaders pages; events for the shop, the in-fight item list and summon charges; slimmer feed frames (some are 12 to 75 KB) | Planned | |
@@ -266,7 +266,7 @@ Each is its own PR and its own plan when it starts. The source file keeps the de
 
 | # | Work | Source | Size | Notes |
 |---|---|---|---|---|
-| E1 | Loading a preset can take cards from your other monsters | [22, Workshop](22-small-leftovers.md#workshop) | One or two tasks | Owner-requested and fully specified. Workshop and engine only, so it does not touch the feed |
+| E1 | Loading a preset can take cards from your other monsters | [22, Workshop](22-small-leftovers.md#workshop) | **Done** (f42edd4 and its fix round) | Built, independently reviewed (no blockers), fix round in. Leftovers are in 22 |
 | E2 | Counter cards: Lullaby and Mirror Shield | [12, Dragon follow-ups](12-new-content-backlog.md#dragon-follow-ups) | One content PR | The owner's pick for the next content PR. Neither exists in the code. Needs `sim:monster` evidence |
 | E3 | Small fixes: `help <word>` matching inside other words, chat metrics, the long room name on a phone | [42 E](42-next-proposals.md#e-seen-in-recent-sessions) | A line or two each | E3's first item was not re-checked against the code; check before briefing |
 | E4 | Balance Layer 1 (task 5), with 8a beside it | [34](34-balance-methodology.md) | Its own PR B and C | Measurement only. Runs under 34's plan, not this one |
