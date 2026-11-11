@@ -178,19 +178,62 @@ question for each spike is the same: does it remove a class of bug, or only move
 
 | # | Spike | The question | Status |
 |---|---|---|---|
-| C1 | **A plain list with a cap.** No virtual list: the newest N rows in the DOM, native scrolling, following done by one rule (if pinned, scroll to the end after the list changes size). No height guesses, no probe row, no remount on a theme change, no wait for a width | Does it pass every invariant in both engines? How large can N be on a mid-range phone before invariant 7 fails? This also answers 22's "profile long-running rooms" item | Planned |
-| C2 | **One feed store for the room.** History, live events, deduplication, markers and the cursor in one store outside React; the Ring and the Console read from it | Does it remove the duplicated merge code, and can the merge be tested as plain functions over the recorded fixtures? | Planned |
-| C3 | **The connection as a state machine.** Named states (connecting, live, suspect, reconnecting, offline) fed by socket events, frames, the watchdog, `online`, `offline`, `visibilitychange` and `pageshow`. On becoming visible it probes with a short timeout, not a fresh 50 seconds. Check what tRPC's own `keepAlive` and tracked-event resume can replace | How much do B3's times to notice and to resume drop, with no event lost or doubled? | Planned |
-| C4 | **Push or poll, per value.** For each polling query, decide whether a feed event should drive it | A table: each value, how it arrives today, its worst delay, and the proposed source | Planned |
+| C1 | **A plain list with a cap.** No virtual list: the newest N rows in the DOM, native scrolling, following done by one rule (if pinned, scroll to the end after the list changes size). No height guesses, no probe row, no remount on a theme change, no wait for a width | Does it pass every invariant in both engines? How large can N be on a mid-range phone before invariant 7 fails? This also answers 22's "profile long-running rooms" item | Done: see the result below |
+| C2 | **One feed store for the room.** History, live events, deduplication, markers and the cursor in one store outside React; the Ring and the Console read from it | Does it remove the duplicated merge code, and can the merge be tested as plain functions over the recorded fixtures? | Decided: deferred |
+| C3 | **The connection as a state machine.** Named states (connecting, live, suspect, reconnecting, offline) fed by socket events, frames, the watchdog, `online`, `offline`, `visibilitychange` and `pageshow`. On becoming visible it probes with a short timeout, not a fresh 50 seconds. Check what tRPC's own `keepAlive` and tracked-event resume can replace | How much do B3's times to notice and to resume drop, with no event lost or doubled? | Decided: fix in place, in Pass D |
+| C4 | **Push or poll, per value.** For each polling query, decide whether a feed event should drive it | A table: each value, how it arrives today, its worst delay, and the proposed source | Done: the table is in the baseline |
 
-The alternatives to weigh in the record: keep Virtuoso and only add the proof (the baseline
-itself); C1; or another virtual list (TanStack Virtual), considered only if C1 fails on
-performance, because it has the same unknown-height problem.
+### C1 result: the plain list (2026-11-11)
 
-**The orchestrator's expectation, to be tested and not assumed:** C1 passes, because at 500
-history rows plus one session the list is small, and most of the scroll machinery exists to
-manage heights that a plain list never has to guess. If the numbers say otherwise, the proof
-harness still stands and Virtuoso stays with tighter tests.
+Built as `components/PlainFeedList.tsx`, behind a per-browser switch: add `?feed=plain` to any
+room or lab URL (`?feed=virtuoso` goes back). The browser suite runs against it with
+`E2E_FEED=plain`. Chromium, both sizes, phosphor and Millefleur:
+
+| | Virtual list (today) | Plain list |
+|---|---|---|
+| Scroll tests failing, of 98 that run | 13 or 14 | 0 |
+| Opening: frames drawn away from the bottom | 1 to 4, with the oldest rows on screen | 0 |
+| `↓ Latest` | 8 to 10 px short, button still showing after 8 s | At the bottom in about 60 ms |
+| Behind while following (20 events, 8× play, roster growing) | Up to 544, 1,171 and 1,760 px, for up to 0.45 s | 0 px in every sample |
+| Theme switch while reading back | Lands on the first event | The row stays on screen |
+| Touch walk up through a fight | Up to 7 of 34 drags jump about 20 px | No jump |
+| Console, scroll up two lines | Pulled back down (desktop) | Stays |
+| 936-event session at 20× | 6 to 12 rows in the DOM, longest frame 17 ms | 681 rows, longest frame 50 ms, none over 100 ms |
+| Connection suite | 1 test fails (C5) | The same 1 |
+
+How it follows, in full: while pinned, scroll to the end whenever the content or the viewport
+changes size; the reader unpins only by moving up while no size has changed; reaching the end
+pins again. One thing the first cut got wrong and the suite caught: a theme switch shrinks the
+content, the browser lowers `scrollTop`, and that scroll event arrives a frame later looking
+like the reader moving up. A reflow changes a size and a reader does not, and that is now the
+test.
+
+What it removes once it is the only list: `utils/feed-row-height.ts` and its probe row, the
+remount on a theme change, the wait for a measured width, `useFeedAutoScroll`'s intent window
+and settle timer, and ten test files that stub the virtual list.
+
+**Not yet known.** WebKit and a real iPhone (CI runs WebKit once there is a PR; the device
+check is the owner's, with `?feed=plain` on a real room). A slow phone: the 50 ms frame is on
+an unthrottled desktop CPU. The Console re-renders every row when the pane renders, which is
+fine at a few hundred rows and should be narrowed before it is the default.
+
+### Decision (orchestrator, 2026-11-11; the owner delegated these)
+
+- **Feed list: the plain list.** It removes the class of bug, not one instance. It stays behind
+  the switch until WebKit passes in CI and the owner has tried it on a phone; then it becomes
+  the default and the virtual list and its guesses are deleted (Pass D).
+- **The other virtual list (TanStack Virtual): not pursued.** It has the same unknown-height
+  problem, and C1 did not fail on performance.
+- **C2, one feed store: deferred, not needed for stability.** The baseline found nothing lost,
+  doubled or reordered in any scenario, so the duplicated merge code is a tidiness cost, not a
+  bug source. Revisit after the virtual list is gone, when the panes are smaller.
+- **C3, the connection: fix in place, not a rewrite.** The failures are a slow detector and a
+  double subscribe, both inside `useRingFeed`. Built as Pass D's first task with the
+  connection suite as its test.
+- **C4, push or poll:** the table is in the
+  [baseline](../reference/feed-stability-baseline.md#read-from-the-code-not-measured). Stop the
+  history refetch now (Pass D). Give the Fights and Leaders pages the feed, and replace the
+  shop, item and charge polls, as one later task.
 
 ## Pass D — build what C decides
 
