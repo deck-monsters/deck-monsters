@@ -495,9 +495,10 @@ for (const theme of THEME_IDS) {
       expect((await snap(page, pane)).jump).toBe(true);
       await jumpButton(page, pane).click();
       await scrollerLocator(page, pane).evaluate(async (el) => {
-        for (let i = 0; i < 6; i++) {
+        // 1.2 s of overwrites, longer than any fixed hold that would feel instant.
+        for (let i = 0; i < 12; i++) {
           el.scrollTop -= 40;
-          await new Promise<void>((r) => requestAnimationFrame(() => r()));
+          await new Promise<void>((r) => setTimeout(r, 100));
         }
       });
       await idle(page, pane, 400, 4_000);
@@ -514,7 +515,7 @@ for (const theme of THEME_IDS) {
       await toBottom(page, pane, 'n');
       await scrollUpBy(page, pane, far);
       await jumpButton(page, pane).click();
-      // Inside the 500 ms hold: a real gesture must end it.
+      // Inside the hold: a real gesture must end it.
       await gesture(page, pane, 300);
       await idle(page, pane, 400, 4_000);
       const after = await snap(page, pane);

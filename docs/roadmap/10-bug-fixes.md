@@ -76,6 +76,12 @@ that decision.
 - [ ] Following lags by hundreds of pixels for up to 0.45 s while events arrive, worst when
   the roster grows. It ends pinned, so no test fails; the numbers are in the baseline.
 
+- [ ] **Plain list, flaky:** "console › history walk › 120 px steps through 2000 px
+  [phosphor]" on `chromium-phone` with `E2E_FEED=plain` fails about once in ten to fifteen
+  runs: one touch drag moves the tracked row 8 px more or less than the finger. Seen on main
+  (1 of 14) and after the `↓ Latest` hold (1 of 6), so the hold did not cause it. Not yet
+  known whether it is the test's touch drag flinging or the list's row anchoring.
+
 ### N. Connection: what the lab cannot test
 
 **Owner:** Web feeds and transport. C1 to C7 and the history refetch are fixed
