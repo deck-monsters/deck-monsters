@@ -92,6 +92,11 @@ export const PROTOCOL_VERSION = 1;
 const REPLAY_CAP = 500;
 const FRESH_REPLAY = 100;
 const RING_HISTORY_CAP = 500;
+/**
+ * Types the server never persists (`EPHEMERAL_TYPES` in `server/src/event-persister.ts`), so real
+ * history never holds them. Serving `ring.state` from history drew roster frames as feed rows.
+ */
+const EPHEMERAL_TYPES = new Set(['ring.state', 'handshake', 'system.gap', 'quick_actions']);
 const CONSOLE_HISTORY_CAP = 200;
 
 /** Leading epoch of an id, or null. Same rule as `utils/ring-feed-cursor.ts`. */
@@ -150,7 +155,12 @@ export class LabTransport {
   private historyCalls = { ring: 0, console: 0 };
   private readonly fixtureIds: Set<string>;
 
-  constructor(fixture: LabFixture, opts: { historyCount?: number } & TransportOptions = {}) {
+  constructor(
+    fixture: LabFixture,
+    opts: { historyCount?: number; latencyMs?: number } & TransportOptions = {}
+  ) {
+    // Set before anything is served, so a cold page load can be measured on a slow link.
+    if (opts.latencyMs !== undefined) this.latencyMs = Math.max(0, opts.latencyMs);
     this.fixture = fixture;
     this.heartbeatMs = opts.heartbeatMs ?? 20_000;
     this.failDelayMs = opts.failDelayMs ?? 50;
@@ -272,7 +282,7 @@ export class LabTransport {
   /** `game.ringHistory`: public events published so far, oldest first, newest 500. */
   ringHistory(): GameEvent[] {
     this.historyCalls.ring += 1;
-    const events = this.log.filter((e) => e.data.scope === 'public');
+    const events = this.log.filter((e) => e.data.scope === 'public' && !EPHEMERAL_TYPES.has(e.data.type));
     return this.recordHistory(events.slice(-RING_HISTORY_CAP));
   }
 
@@ -280,7 +290,10 @@ export class LabTransport {
   consoleHistory(): GameEvent[] {
     this.historyCalls.console += 1;
     const events = this.log.filter(
-      (e) => e.data.scope === 'private' && e.data.targetUserId === this.fixture.viewerUserId
+      (e) =>
+        e.data.scope === 'private' &&
+        e.data.targetUserId === this.fixture.viewerUserId &&
+        !EPHEMERAL_TYPES.has(e.data.type)
     );
     return this.recordHistory(events.slice(-CONSOLE_HISTORY_CAP));
   }
@@ -419,7 +432,21 @@ export class LabTransport {
     if (input.lastEventId) {
       const index = this.log.findIndex((e) => e.id === input.lastEventId);
       if (index >= 0) {
-        replay(this.log.slice(index + 1, index + 1 + REPLAY_CAP));
+        const missed = this.log.slice(index + 1);
+        replay(missed.slice(0, REPLAY_CAP));
+        if (missed.length > REPLAY_CAP) {
+          // The server says so when a replay hits its cap (`replay_limit` in `ringFeed`);
+          // without this the lab presented a truncated stream as complete.
+          this.entry('gap', { lastEventId: input.lastEventId });
+          this.send(
+            sub,
+            this.synthEvent('system.gap', {
+              text: '── Some events were missed while you were away. ──',
+              payload: { reason: 'replay_limit' },
+            }),
+            'live'
+          );
+        }
       } else {
         // Cursor the server's buffer does not hold. By time, like the DB fallback, when it
         // lies inside the published range; otherwise nothing matches and the server says so.

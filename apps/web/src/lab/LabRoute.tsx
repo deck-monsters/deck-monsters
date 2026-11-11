@@ -34,7 +34,7 @@ import {
 
 export interface FeedLabApi {
   fixtures(): string[];
-  open(name: string, opts?: { historyCount?: number }): Promise<void>;
+  open(name: string, opts?: { historyCount?: number; latencyMs?: number }): Promise<void>;
   /** Resolves when the lab opened from the URL has mounted. */
   ready(): Promise<void>;
   play(opts?: { speed?: number }): void;
@@ -301,6 +301,7 @@ export default function LabRoute() {
       runRef.current?.transport.dispose();
       const transportInstance = new LabTransport(fixture, {
         ...(opts?.historyCount !== undefined ? { historyCount: opts.historyCount } : {}),
+        ...(opts?.latencyMs !== undefined ? { latencyMs: opts.latencyMs } : {}),
       });
       const queryClient = new QueryClient({ defaultOptions: { queries: { retry: 1 } } });
       const client = trpc.createClient({ links: [createLabLink(transportInstance)] });
@@ -374,10 +375,11 @@ export default function LabRoute() {
     const theme = params.get('theme');
     if (theme && THEMES.some((t) => t.id === theme)) api.setTheme(theme);
     const history = params.get('history');
-    const opening = api.open(
-      name,
-      history !== null && Number.isFinite(Number(history)) ? { historyCount: Number(history) } : undefined
-    );
+    const latency = params.get('latency');
+    const opening = api.open(name, {
+      ...(history !== null && Number.isFinite(Number(history)) ? { historyCount: Number(history) } : {}),
+      ...(latency !== null && Number.isFinite(Number(latency)) ? { latencyMs: Number(latency) } : {}),
+    });
     readyRef.current = opening;
     void opening
       .then(() => {
