@@ -1,8 +1,8 @@
 ---
-type: Roadmap
+type: Archive
 title: Millefleur live check
 description: Cursor's live browser check of the Millefleur feed renderer and the screens in roadmap 46.
-status: draft
+status: deprecated
 audience: internal
 tags: [roadmap, theme, millefleur, web]
 ---
@@ -30,7 +30,7 @@ theme. This check did not boot `main` beside them. Task 3d's backports have sinc
 been reviewed; the level badge stays withheld. The level-up sheet opened from the XP bar at 4/28; a real level-up was not
 reached. Task 9 has since been looked at in the Ring (see roadmap 46). The owner
 accepted the stylesheet size on 2026-10-06; condensing it is a later careful pass
-in [10, item L](10-bug-fixes.md#l-millefleur-stylesheet-condensation), not a reason
+in [10, item L](../../roadmap/10-bug-fixes.md#l-millefleur-stylesheet-condensation), not a reason
 to hold this theme.
 
 Shots below live in `docs/roadmap/46b-shots/`. Widths are CSS pixels. Phosphor is the
@@ -50,7 +50,7 @@ Fresh fights on the rebuilt engine. Older stored events were not the sample.
 | Theme switch while following the bottom does not flash the start of history | pass | phosphor to amber, Ring, 390×844. The tail stayed the end of the fight | [scroll-switch-bottom.png](46b-shots/scroll-switch-bottom.png) |
 | Bloodied clause inside the sentence | pass, after bug 235 | Millefleur, Ring, 390×940. "Quoloth has -4HP, bloodied." | [bloodied-fixed.png](46b-shots/bloodied-fixed.png) |
 | Threshold line does not say bloodied twice | pass, after bug 236 | Millefleur, Ring, 390×844. "is now bloodied. Quoloth has only 17HP." A later line still reads "has only 16HP, bloodied." | [bloodied-once.png](46b-shots/bloodied-once.png) |
-| Composed Ring beside the mock | pass on structure | Millefleur, Ring, 390×940, next to [samples/ring.jpg](../reference/millefleur/samples/ring.jpg). Divider, "plays", card frame, standing line with rose "bloodied" | [ring-940-composed.png](46b-shots/ring-940-composed.png) |
+| Composed Ring beside the mock | pass on structure | Millefleur, Ring, 390×940, next to [samples/ring.jpg](../../reference/millefleur/samples/ring.jpg). Divider, "plays", card frame, standing line with rose "bloodied" | [ring-940-composed.png](46b-shots/ring-940-composed.png) |
 | Recorded dark-theme appearances | pass on appearance, with the feed-frame note above | phosphor, amber, ember, street-fighter, Ring, 390 and 1440. Green, amber, red, and yellow-on-navy. Engine sentences, not Millefleur's composed ones | [ring-phosphor-390.png](46b-shots/ring-phosphor-390.png), [ring-amber-390.png](46b-shots/ring-amber-390.png), [ring-ember-390.png](46b-shots/ring-ember-390.png), [ring-street-fighter-390.png](46b-shots/ring-street-fighter-390.png), [ring-phosphor-1440.png](46b-shots/ring-phosphor-1440.png) |
 
 ## Task 6 — screens

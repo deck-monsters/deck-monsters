@@ -9,8 +9,8 @@ tags: [design, theme, millefleur, tokens, accessibility]
 # Millefleur design system
 
 The design is final as of 2026-10-06. The theme is built on the branch recorded in
-[roadmap 46](../../roadmap/46-unicorn-theme.md); the live check is
-[46b](../../roadmap/46b-cursor-check.md). Entrance narration is in the engine and has
+[roadmap 46](../../archive/roadmap/46-unicorn-theme.md); the live check is
+[46b](../../archive/roadmap/46b-cursor-check.md). Entrance narration is in the engine and has
 been looked at in the Ring. This page is the visual reference the theme is built
 toward. Read [the brief](README.md) first for what the theme is for;
 [process](process.md) explains how it got here.
@@ -281,7 +281,7 @@ moves, so nothing else changes.
 
 ## In the app
 
-Built in pass 46a of [roadmap 46](../../roadmap/46-unicorn-theme.md) as
+Built in pass 46a of [roadmap 46](../../archive/roadmap/46-unicorn-theme.md) as
 `apps/web/src/styles/theme-millefleur.css`, a lazily loaded chunk with the Nunito faces. Where
 the real app differs from the samples above, this is what was built and why:
 
@@ -321,6 +321,6 @@ the real app differs from the samples above, this is what was built and why:
 
 - [The brief and artist statement](README.md)
 - [Process and learnings](process.md)
-- [Roadmap 46: building it](../../roadmap/46-unicorn-theme.md)
+- [Roadmap 46: building it](../../archive/roadmap/46-unicorn-theme.md)
 - [Iteration archive](../../archive/studies/millefleur-theme/README.md)
 - [Pixel art](../pixel-art.md) for the monster sprites, which stay pixel art in this theme

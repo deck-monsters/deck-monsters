@@ -2583,6 +2583,22 @@ export function createRouter(roomManager: RoomManager, chat: ChatService = new C
 					}
 				}
 
+					// A private keep-alive frame. Tracked, with the same `${epochMs}-…` id scheme as
+					// real events, so a client that echoes it back as its cursor still resolves by time.
+					const makeHeartbeatFrame = () => {
+						const hbId = `${Date.now()}-heartbeat`;
+						return tracked(hbId, {
+							id: hbId,
+							roomId: input.roomId,
+							timestamp: Date.now(),
+							type: 'heartbeat' as EventType,
+							scope: 'private' as EventScope,
+							targetUserId: ctx.userId,
+							text: '',
+							payload: {},
+						});
+					};
+
 					// Stream live events until the client disconnects.
 					while (!signal?.aborted) {
 						while (queue.length > 0) {
@@ -2600,14 +2616,38 @@ export function createRouter(roomManager: RoomManager, chat: ChatService = new C
 							yield tracked(event.id, event);
 						}
 
+						let yieldedChat = false;
 						while (chatQueue.length > 0) {
 							const message = chatQueue.shift()!;
+							yieldedChat = true;
 							yield { type: 'chat' as const, id: `chat-${message.id}`, payload: message };
 						}
+						/*
+						 * tRPC's WebSocket client overwrites the resume cursor it keeps for this
+						 * subscription (`request.message.params.lastEventId`) on EVERY data result,
+						 * and an untracked chat frame has no id, so chat left the cursor empty.
+						 * If the socket then died with chat as the last frame, the client's own
+						 * reconnect re-sent the subscription with no cursor and the replay fell
+						 * back to the last 100 bus events. A tracked heartbeat after the chat puts
+						 * a real `${epochMs}-…` id back. Skipped while game events are still
+						 * queued: those are tracked and about to set the cursor themselves, and a
+						 * heartbeat stamped after them would otherwise sit past events not yet
+						 * delivered. A heartbeat id is a valid cursor: it is not in the bus
+						 * buffer, so `getEventsSince` compares it by its leading epoch, and the
+						 * durable replay compares `event_id` strings the same way.
+						 */
+						if (yieldedChat && queue.length === 0 && !signal?.aborted) {
+							yield makeHeartbeatFrame();
+						}
 
-						// Wait for an event or 20 s, whichever comes first.
-						// The 20-second timeout sends a keep-alive heartbeat frame that
-						// prevents load-balancer idle timeouts (typically 30–60 s).
+						// Wait for an event or 8 s, whichever comes first.
+						// The 8-second timeout sends a keep-alive heartbeat frame that
+						// prevents load-balancer idle timeouts (typically 30–60 s) and gives
+						// the client something to watch: it declares the connection dead after
+						// 2.5 intervals (20 s, `HEARTBEAT_TIMEOUT_MS` in the web app's
+						// `utils/ring-feed-connection.ts`). It was 20 s, which left a silent
+						// stall unnoticed for 31–49 s (feed-stability-baseline C1). Keep the
+						// two in step: the client's timeout must stay a multiple of this.
 						let heartbeatTimer: ReturnType<typeof setTimeout> | null = null;
 						await new Promise<void>((res) => {
 							let settled = false;
@@ -2627,30 +2667,20 @@ export function createRouter(roomManager: RoomManager, chat: ChatService = new C
 
 							onAbort = () => finish();
 							// An event or chat message that landed since the drains above must not
-							// wait out the 20 s heartbeat.
+							// wait out the heartbeat interval.
 							if (queue.length > 0 || chatQueue.length > 0) {
 								finish();
 								return;
 							}
 							resolve = finish;
-							heartbeatTimer = setTimeout(finish, 20_000);
+							heartbeatTimer = setTimeout(finish, 8_000);
 							signal?.addEventListener('abort', onAbort, { once: true });
 						});
 
-						// If the queue is still empty after the wait it was a 20-s timeout —
+						// If the queue is still empty after the wait it was the heartbeat timeout —
 						// yield a private heartbeat frame so the TCP/WS connection stays alive.
 						if (queue.length === 0 && chatQueue.length === 0 && !signal?.aborted) {
-							const hbId = `${Date.now()}-heartbeat`;
-							yield tracked(hbId, {
-								id: hbId,
-								roomId: input.roomId,
-								timestamp: Date.now(),
-								type: 'heartbeat' as EventType,
-								scope: 'private' as EventScope,
-								targetUserId: ctx.userId,
-								text: '',
-								payload: {},
-							});
+							yield makeHeartbeatFrame();
 						}
 					}
 				} finally {

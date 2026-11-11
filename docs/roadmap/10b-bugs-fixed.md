@@ -5580,6 +5580,68 @@ did.
 
 **Status**: Fixed.
 
+### 264. A dead feed connection went unnoticed for up to 49 seconds — FIXED
+
+Measured by the browser suite ([baseline](../reference/feed-stability-baseline.md), C1 and
+C2). The server sent a heartbeat every 20 seconds and the client's watchdog waited 50, so a
+socket that died silently showed nothing for 31 to 49 seconds. Becoming visible made it
+worse: the handler restarted the 50-second watchdog (so that a suspended timer would not
+fire falsely, #127) without asking whether the connection had survived, so a phone unlocked
+onto a dead connection waited a further 50 seconds.
+
+**Fixed** (`useRingFeed.tsx`, `utils/ring-feed-connection.ts`, `trpc/router.ts`): an 8 s
+heartbeat and a 20 s watchdog; on visible, `pageshow`, or `online` the client waits 2 s for a
+frame and resubscribes if none comes. tRPC's socket keep-alive is on as well (8 s ping, 10 s
+pong wait). Stall is now noticed in 13 to 19 s and a return to a dead connection in 2 s
+(`e2e/connection.spec.ts` scenarios 1 to 4).
+
+### 265. Every page load subscribed twice and drew a false "reconnected" line — FIXED
+
+Baseline C4 and C5. The panes seeded the cursor from history with `setSubLastEventId`, which
+is part of the subscription's input, so tRPC tore the subscription down and opened it again.
+The second handshake looked like a reconnect: a "reconnected" divider about 2.5 s after load
+with no "connection lost" before it, and two round trips on a slow link.
+
+**Fixed:** `seedCursor` writes a ref only; the input's cursor changes when the connection is
+declared lost or the room changes. Dividers now need an outage of over a second that the
+reader saw open (`utils/feed-markers.ts`). Review found what the old code had been hiding:
+see #267.
+
+### 266. Offline was ignored and failed resubscribes retried with no pause — FIXED
+
+Baseline C3 and C6. Nothing listened for the browser's `offline` and `online` events, and
+`onError` resubscribed immediately, so a refused connection made 101 attempts in the time the
+test watched.
+
+**Fixed:** `offline` shows the reconnecting state at once; `online` runs the 2 s check. Failed
+resubscribes back off 0, 0.5, 1, 2, 4, 8 s with jitter (5 attempts in the same test).
+
+### 267. Returning to the room could silently lose events — FIXED before release
+
+Found in review of #265, never shipped. react-query keeps a query result for 5 minutes after
+its observers unmount. With the history queries set to never go stale, coming back from the
+Workshop applied the cached snapshot; with #265 the first subscribe then had no cursor, so
+the server replayed only its last 100 events, and anything between the snapshot's tail and
+those 100 was lost with no gap line. The old double subscribe had covered this by accident.
+
+**Fixed:** `refetchOnMount: 'always'`, and the panes and `useGuidedStart` apply only a result
+with `isFetchedAfterMount` (`ringPane-stale-history.test.tsx`,
+`consolePane-empty-state.test.tsx`, `guidedStart.test.tsx`). Two neighbours from the same
+review: a chat frame, which has no id, wiped the cursor tRPC's client keeps for its own
+socket resume, so the server now follows chat with a tracked heartbeat (`chat.test.ts`); and
+a reconnect the transport made by itself showed no reconnecting state, so the hook now reads
+the subscription's status.
+
+### 268. History refetched on every focus; the Console's empty hint showed while loading — FIXED
+
+Baseline C7 and "read from the code". The history queries used react-query's defaults, so
+each window focus downloaded the room's history and threw it away (`historyApplied` was
+already set). On a slow link the Console said "type a command to start" while a player's
+earlier session was still loading.
+
+**Fixed:** no refetch on focus or reconnect (`useGuidedStart` shared the Console's query and
+needed the same options); the Console shows "Loading your console…" until history answers.
+
 ## Closed without a fix
 
 These were open investigations the owner closed on 2026-09-28. Reopen with new evidence.

@@ -1637,3 +1637,21 @@ a.app-shell-room-name {
   font-size: 0.78rem;
   color: var(--color-fg-bright);
 }
+
+/* Developer-only feed timing overlay (?feedTimings=1); see lib/feed-timings.ts. */
+.feed-timings-overlay {
+  position: fixed;
+  right: 4px;
+  bottom: 4px;
+  z-index: 9999;
+  max-width: 60vw;
+  max-height: 50vh;
+  overflow: hidden;
+  padding: 4px 6px;
+  font-family: monospace;
+  font-size: 10px;
+  line-height: 1.3;
+  color: #0f0;
+  background: rgba(0, 0, 0, 0.75);
+  pointer-events: none;
+}

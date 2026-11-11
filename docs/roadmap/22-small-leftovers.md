@@ -33,6 +33,11 @@ execution queue.
 - [ ] **Owner: Ring roster.** Use real-device evidence to decide whether only the acting
   sprite should move and whether the eight-contestant density threshold remains legible.
   Read [ring roster and pixel monsters](../architecture/ring-roster-and-pixel-monsters.md).
+- [ ] **Owner: Web themes.** Decide whether Millefleur's Workshop wants painted portraits (a
+  separate art pass, left open by archived
+  [46](../archive/roadmap/46-unicorn-theme.md)). The Workshop already shows each monster's pixel
+  portrait in a halo, and the owner (2026-11-10) counts the theme as shipped and does not
+  recall asking for more. Read [web themes](../architecture/web-themes.md).
 - [ ] **Owner: Web prompts.** Show which step a multi-step flow is on (spawn, equip, shop),
   for example "Step 2 of 4 — Choose a name". Prompt timeout, cancel, and first-run
   character creation already exist. Read

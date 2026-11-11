@@ -19,6 +19,7 @@ import { useRingFeedListener, type TrackedRingFeedEvent } from '../hooks/useRing
 import { useRingKeyTimestamps } from '../hooks/useRingKeyTimestamps.js';
 import { usePixelMonsters } from '../hooks/usePixelMonsters.js';
 import { AT_BOTTOM_THRESHOLD_PX, useFeedAutoScroll } from '../hooks/useFeedAutoScroll.js';
+import { feedTimings } from '../lib/feed-timings.js';
 import { themeAssetsReady, loadThemeAssets, subscribeThemeAssets, useTheme } from '../hooks/useTheme.js';
 import { useTimeAgo } from '../hooks/useTimeAgo.js';
 import { FeedEventBody } from './FeedLines.js';
@@ -42,6 +43,8 @@ import {
 } from '../utils/event-time.js';
 import { shouldRenderRingEvent } from '../utils/ring-feed-events.js';
 import {
+	LOSS_MARKER_DELAY_MS,
+	closeOutageMarkers,
 	createFeedMarker,
 	feedMarkerKind,
 	isFeedMarker,
@@ -49,6 +52,7 @@ import {
 } from '../utils/feed-markers.js';
 import RingRoster, { type RingContestantSnapshot } from './RingRoster.js';
 import FeedList from './FeedList.js';
+import PlainFeedList, { feedImpl, type PlainFeedHandle } from './PlainFeedList.js';
 import RingItemsPanel from './RingItemsPanel.js';
 import { SUMMONS_BADGE_TITLE, headerBadgesVisible, summonsLeftLabel } from './ringHeaderBadges.js';
 
@@ -369,14 +373,29 @@ export default function RingPane({
     const pendingAt = pendingReconnectAtRef.current;
     if (pendingAt === null) return;
     pendingReconnectAtRef.current = null;
+    const outage = outageRef.current;
+    outageRef.current = null;
+    if (outage === null) return;
+    // `closeOutageMarkers` decides which dividers this outage earns: "reconnected" only after
+    // a "connection lost" that is really in the feed (baseline C5), and neither for a blip
+    // that was over within a second with nothing missed. `lossMarkerDrawn` is read inside the
+    // updater so it sees a live "connection lost" queued just before this one.
     setEvents(prev =>
-      shouldAppendMarker(prev) ? [...prev, createFeedMarker('reconnected', pendingAt)] : prev
+      closeOutageMarkers(prev, {
+        anchorId: outage.anchorId,
+        lossMarkerDrawn: outage.lossMarkerDrawn,
+        outageMs: pendingAt - outage.lostAt,
+        missed: outage.missed,
+        lostAt: outage.lostAt,
+        reconnectedAt: pendingAt,
+      })
     );
   }, []);
 
   useEffect(
     () => () => {
       if (reconnectMarkerTimerRef.current !== null) clearTimeout(reconnectMarkerTimerRef.current);
+      if (lossMarkerTimerRef.current !== null) clearTimeout(lossMarkerTimerRef.current);
     },
     []
   );
@@ -393,10 +412,36 @@ export default function RingPane({
     });
   }, []);
   const virtuosoRef = useRef<VirtuosoHandle>(null);
-  const autoScroll = useFeedAutoScroll(virtuosoRef);
+  const plainRef = useRef<PlainFeedHandle>(null);
+  const autoScroll = useFeedAutoScroll(virtuosoRef, 'ring');
   followRef.current = autoScroll.shouldFollowRef;
   const seenRef = useRef(new Set<string>());
   const historyApplied = useRef(false);
+  // Timing instrumentation only (lib/feed-timings.ts); nothing here affects rendering.
+  const firstRenderMarkedRef = useRef(false);
+  if (!firstRenderMarkedRef.current) {
+    firstRenderMarkedRef.current = true;
+    feedTimings.mark('ring.pane.first_render');
+  }
+  const firstRowsRecordedRef = useRef(false);
+  const lastMountedKeyRef = useRef<string | null>(null);
+  const listVisible = listReady && widthMeasured;
+  useLayoutEffect(() => {
+    if (!listVisible) {
+      lastMountedKeyRef.current = null;
+      return;
+    }
+    if (lastMountedKeyRef.current !== null && lastMountedKeyRef.current !== metricsKey) {
+      feedTimings.count('ring.list.remount.metrics');
+    }
+    lastMountedKeyRef.current = metricsKey;
+    feedTimings.count('ring.list.mount');
+  }, [listVisible, metricsKey]);
+  useLayoutEffect(() => {
+    if (firstRowsRecordedRef.current || !listVisible || events.length === 0) return;
+    firstRowsRecordedRef.current = true;
+    feedTimings.since('ring.pane.first_render', 'ring.time_to_first_rows');
+  }, [listVisible, events.length]);
   // True once the first handshake has landed, so a later handshake is a *re*connect.
   const hasConnectedRef = useRef(false);
   // True once any live ring.state (handshake or push) has been applied to timerState.
@@ -412,9 +457,37 @@ export default function RingPane({
   // until the first genuinely-new event lands closes the bracket in the right place.
   const pendingReconnectAtRef = useRef<number | null>(null);
   const reconnectMarkerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // The outage in progress, from the moment the connection is declared lost until the
+  // "reconnected" bracket closes. `anchorId` is the feed's last row at the loss, which is
+  // where "connection lost" belongs if it has to be drawn after the fact; `missed` counts
+  // replayed catch-up events (see `closeOutageMarkers`).
+  const outageRef = useRef<{
+    anchorId: string | null;
+    lostAt: number;
+    lossMarkerDrawn: boolean;
+    missed: number;
+  } | null>(null);
+  const lossMarkerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const eventsRef = useRef<GameEvent[]>([]);
 
   // Fetch persistent ring history from DB on mount
-  const { data: history, isError: historyError } = trpc.game.ringHistory.useQuery({ roomId });
+  // The result is applied once and every later one is ignored (`historyApplied`), and one
+  // payload is large (a recorded fight-end event is about 75 KB). React-query's defaults
+  // refetch on window focus and on the browser coming back online, so a phone returning to
+  // the tab downloaded the room's whole history for nothing (baseline "History is fetched
+  // again on every focus"). Fetch once.
+  //
+  // But every MOUNT fetches (`refetchOnMount: 'always'`) and the pane applies only a result
+  // fetched after this mount (`isFetchedAfterMount`), never one from react-query's cache, which
+  // outlives the pane by 5 minutes. The feed's first subscribe has no cursor and the server
+  // replays only its last 100 events, so a stale snapshot applied on a quick return from
+  // another route (the Workshop) silently lost everything between its tail and those 100.
+  const { data: history, isError: historyError, isFetchedAfterMount } = trpc.game.ringHistory.useQuery(
+    { roomId },
+    { staleTime: Infinity, refetchOnMount: 'always', refetchOnWindowFocus: false, refetchOnReconnect: false }
+  );
+  // `!== false`: only a result cached from before this mount is refused (test mocks omit the flag).
+  const historyFresh = isFetchedAfterMount !== false;
 
   // A failed history load must still open the list, or live events would sit in state
   // behind the waiting placeholder. An empty successful load is handled in the effect
@@ -476,7 +549,11 @@ export default function RingPane({
         setTimerState(hs.ringState as TimerState);
       }
       if (hs.yourUserId) setMyUserId(hs.yourUserId);
-      if (hasConnectedRef.current) {
+      // A handshake closes an outage only if one was opened (the connection was declared
+      // lost). A handshake with no loss before it is the transport resuming a socket on its
+      // own, or a second subscription; drawing "reconnected" for it left a divider with no
+      // "connection lost" above it (baseline C4/C5).
+      if (hasConnectedRef.current && outageRef.current !== null) {
         pendingReconnectAtRef.current = Date.now();
         if (reconnectMarkerTimerRef.current !== null) {
           clearTimeout(reconnectMarkerTimerRef.current);
@@ -510,7 +587,10 @@ export default function RingPane({
     // Only show public events in the Ring pane
     if (event.scope !== 'public') return;
 
-    if (seenRef.current.has(tracked.id)) return;
+    if (seenRef.current.has(tracked.id)) {
+      feedTimings.count('ring.events.duplicate_dropped');
+      return;
+    }
     seenRef.current.add(tracked.id);
 
     // Ring membership changed — a summon may have been spent, so refresh the charges.
@@ -521,19 +601,62 @@ export default function RingPane({
     // Replayed catch-up events are older than the reconnect, so they sort above the
     // marker; the first event that actually postdates it closes the bracket early.
     const pendingAt = pendingReconnectAtRef.current;
+    if (outageRef.current !== null && (pendingAt === null || event.timestamp < pendingAt)) {
+      outageRef.current.missed += 1;
+    }
     if (pendingAt !== null && event.timestamp >= pendingAt) flushReconnectMarker();
 
+    feedTimings.count('ring.events.appended');
     setEvents(prev => [...prev, event]);
   }, [refetchRingState, flushReconnectMarker]);
 
   const { connected, reconnecting, seedCursor } = useRingFeedListener(onLiveEvent);
 
-  // Draw the divider the moment the connection drops, so the reader can see where the
-  // feed stopped being live rather than discovering a hole in it later.
+  eventsRef.current = events;
+
+  /*
+   * Draw "connection lost" once the loss has lasted `LOSS_MARKER_DELAY_MS`, at the feed's tail
+   * where it went quiet. Drawing it the instant the flag flipped meant a blip the reader never
+   * saw still left two dividers behind. A shorter outage that did miss events gets its divider
+   * put back after the fact (`closeOutageMarkers`), so the replayed events still land between
+   * the two.
+   */
+  const drawLossMarker = useCallback(() => {
+    lossMarkerTimerRef.current = null;
+    const outage = outageRef.current;
+    if (outage === null || outage.lossMarkerDrawn) return;
+    setEvents(prev => {
+      if (!shouldAppendMarker(prev, 'disconnected')) return prev;
+      outage.lossMarkerDrawn = true;
+      return [...prev, createFeedMarker('disconnected')];
+    });
+  }, []);
+
   useEffect(() => {
-    if (!reconnecting) return;
-    setEvents(prev => (shouldAppendMarker(prev) ? [...prev, createFeedMarker('disconnected')] : prev));
-  }, [reconnecting]);
+    // Before the first handshake there is nothing to have lost.
+    if (!reconnecting || !hasConnectedRef.current) return;
+    const now = Date.now();
+    let outage = outageRef.current;
+    if (outage === null) {
+      const tail = eventsRef.current[eventsRef.current.length - 1];
+      outage = { anchorId: tail?.id ?? null, lostAt: now, lossMarkerDrawn: false, missed: 0 };
+      outageRef.current = outage;
+    } else {
+      // Dropped again before the last outage's "reconnected" was drawn: still one outage, so
+      // one pair of dividers, not one per drop.
+      pendingReconnectAtRef.current = null;
+      if (reconnectMarkerTimerRef.current !== null) {
+        clearTimeout(reconnectMarkerTimerRef.current);
+        reconnectMarkerTimerRef.current = null;
+      }
+    }
+    if (!outage.lossMarkerDrawn && lossMarkerTimerRef.current === null) {
+      lossMarkerTimerRef.current = setTimeout(
+        drawLossMarker,
+        Math.max(0, LOSS_MARKER_DELAY_MS - (now - outage.lostAt))
+      );
+    }
+  }, [reconnecting, drawLossMarker]);
 
   /*
    * Close the divider whenever the connection is proven alive again, not only when a
@@ -553,6 +676,12 @@ export default function RingPane({
     wasReconnectingRef.current = reconnecting;
     if (reconnecting || !wasReconnecting) return;
 
+    // Recovered before the live "connection lost" was due: it is never drawn live.
+    if (lossMarkerTimerRef.current !== null) {
+      clearTimeout(lossMarkerTimerRef.current);
+      lossMarkerTimerRef.current = null;
+    }
+    if (outageRef.current === null) return;
     pendingReconnectAtRef.current ??= Date.now();
     if (reconnectMarkerTimerRef.current !== null) clearTimeout(reconnectMarkerTimerRef.current);
     reconnectMarkerTimerRef.current = setTimeout(flushReconnectMarker, RECONNECT_MARKER_GRACE_MS);
@@ -561,7 +690,7 @@ export default function RingPane({
   // Apply DB history once — pre-populate seenRef and seed the shared subscription
   // lastEventId so the live subscription skips already-delivered events.
   useEffect(() => {
-    if (!history || historyApplied.current) return;
+    if (!history || !historyFresh || historyApplied.current) return;
     historyApplied.current = true;
 
     // Deduplicate history by event ID (handles legacy duplicate rows in DB)
@@ -581,6 +710,11 @@ export default function RingPane({
     setListReady(true);
 
     const visibleHistory = dedupedHistory.filter(shouldRenderRingEvent);
+    feedTimings.event('ring.history.applied', { rows: visibleHistory.length });
+    if (visibleHistory.length === 0 && !firstRowsRecordedRef.current) {
+      firstRowsRecordedRef.current = true;
+      feedTimings.since('ring.pane.first_render', 'ring.time_to_first_rows');
+    }
 
     // Merge history with any live events that arrived before history loaded.
     // Live events take priority over history events with the same ID.
@@ -615,19 +749,20 @@ export default function RingPane({
         virtuosoRef.current?.scrollToIndex({ index: 'LAST', behavior: 'auto' });
       });
     }
-  }, [history, seedCursor, autoScroll]);
+  }, [history, historyFresh, seedCursor, autoScroll]);
 
   // Scroll to bottom when this pane becomes active (tab switch)
   useEffect(() => {
     if (isActive) {
-      autoScroll.snapToBottom();
+      if (plainRef.current) plainRef.current.scrollToBottom();
+      else autoScroll.snapToBottom();
       setIsAtBottom(true);
     }
   }, [isActive, autoScroll]);
 
   // Virtuoso reports arrival at the bottom itself; see `jumpToBottom` for why the pane no
   // longer claims it up front.
-  const scrollToBottom = autoScroll.jumpToBottom;
+  const scrollToBottom = () => (plainRef.current ? plainRef.current.scrollToBottom() : autoScroll.jumpToBottom());
 
   // Compute the timer badge inline — tick state re-renders every second to keep it current
   let timerBadge: string | null = null;
@@ -682,6 +817,61 @@ export default function RingPane({
     />
   );
 
+  // One row, for either list (Virtuoso today, PlainFeedList behind `feedImpl()`).
+  const renderRow = (_: number, event: GameEvent) => {
+          if (isFeedMarker(event)) {
+            return (
+              <li className={`feed-marker feed-marker-${feedMarkerKind(event) ?? 'joined'}`}>
+                <span>{event.text}</span>
+              </li>
+            );
+          }
+          const keyMeta = getKeyRingEventMeta(event);
+          const iso = eventTimestampIso(event.timestamp);
+          const hoverTitle = formatEventHoverTitle(event.timestamp);
+          const showKeyColumn = ringKeyTimestampsEnabled && keyMeta;
+          // Wait for the handshake's user id: the explained set is per player, and a note
+          // claimed under no id would be written to a key no later session reads.
+          const mechanicNote = myUserId
+            ? mechanicNoteFor(
+                myUserId,
+                'ring',
+                event.id,
+                event.payload,
+                newestMechanicRows.get(mechanicKeyOf(event.payload) ?? '') === event.id,
+              )
+            : undefined;
+          return (
+            <li
+              className={`event ${eventClass(event.type)}`}
+              data-event-at={iso}
+              data-event-type={event.type}
+              data-boss-arrival={isBossArrival(event) ? '' : undefined}
+              title={hoverTitle}
+            >
+              <time className="event-sr-only" dateTime={iso}>
+                {hoverTitle}
+              </time>
+              {showKeyColumn ? (
+                <div className="event-row-inner">
+                  <div className="event-text"><FeedEventBody text={event.text ?? ''} payload={event.payload} style={feedStyle} mentions={mentions} /></div>
+                  <KeyRingTimeBadge at={new Date(event.timestamp)} label={keyMeta.label} />
+                </div>
+              ) : (
+                <div className="event-text"><FeedEventBody text={event.text ?? ''} payload={event.payload} style={feedStyle} mentions={mentions} /></div>
+              )}
+              {mechanicNote && <div className="mechanic-note">ⓘ {mechanicNote}</div>}
+            </li>
+          );
+        };
+  const plain = feedImpl() === 'plain';
+  // What a row's output depends on beside its event; PlainFeedList re-renders rows when it changes.
+  const rowVersion = useMemo(
+    () => ({}),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [feedStyle, mentions, ringKeyTimestampsEnabled, myUserId],
+  );
+
   return (
     <section
       className={`terminal-pane${isActive ? ' active' : ''}`}
@@ -733,7 +923,32 @@ export default function RingPane({
       {/* Gesture listeners sit on the wrapper because Virtuoso owns the scroller element;
           wheel/touch/pointer/key events bubble up from it. */}
       <div className="pane-feed-area" ref={feedAreaRef} {...autoScroll.gestureHandlers}>
-      {listReady && widthMeasured ? (
+      {plain ? (
+        listReady ? (
+          <PlainFeedList
+            ref={plainRef}
+            data={events}
+            rowKey={(event) => event.id}
+            renderRow={renderRow}
+            rowFlag={(event) => newestMechanicRows.get(mechanicKeyOf(event.payload) ?? '') === event.id}
+            rowVersion={rowVersion}
+            pane="ring"
+            ariaLabel="Ring events"
+            onPinnedChange={setIsAtBottom}
+            empty={
+              <ol className="event-feed-list">
+                <li className="event event-system event-feed-empty">
+                  <p>No fight yet. A fight starts when two monsters are in the ring: send one of yours, or summon a boss.</p>
+                </li>
+              </ol>
+            }
+          />
+        ) : (
+          <div className="event-feed" role="log" aria-live="polite" aria-label="Ring events">
+            <p className="event event-system event-feed-empty">Waiting for fight events…</p>
+          </div>
+        )
+      ) : listReady && widthMeasured ? (
       <Virtuoso
         key={metricsKey}
         {...(resumeAt ? { initialTopMostItemIndex: resumeAt } : {})}
@@ -765,52 +980,7 @@ export default function RingPane({
             </li>
           ),
         }}
-        itemContent={(_, event) => {
-          if (isFeedMarker(event)) {
-            return (
-              <li className={`feed-marker feed-marker-${feedMarkerKind(event) ?? 'joined'}`}>
-                <span>{event.text}</span>
-              </li>
-            );
-          }
-          const keyMeta = getKeyRingEventMeta(event);
-          const iso = eventTimestampIso(event.timestamp);
-          const hoverTitle = formatEventHoverTitle(event.timestamp);
-          const showKeyColumn = ringKeyTimestampsEnabled && keyMeta;
-          // Wait for the handshake's user id: the explained set is per player, and a note
-          // claimed under no id would be written to a key no later session reads.
-          const mechanicNote = myUserId
-            ? mechanicNoteFor(
-                myUserId,
-                'ring',
-                event.id,
-                event.payload,
-                newestMechanicRows.get(mechanicKeyOf(event.payload) ?? '') === event.id,
-              )
-            : undefined;
-          return (
-            <li
-              className={`event ${eventClass(event.type)}`}
-              data-event-at={iso}
-              data-event-type={event.type}
-              data-boss-arrival={isBossArrival(event) ? '' : undefined}
-              title={hoverTitle}
-            >
-              <time className="event-sr-only" dateTime={iso}>
-                {hoverTitle}
-              </time>
-              {showKeyColumn ? (
-                <div className="event-row-inner">
-                  <div className="event-text"><FeedEventBody text={event.text ?? ''} payload={event.payload} style={feedStyle} mentions={mentions} /></div>
-                  <KeyRingTimeBadge at={new Date(event.timestamp)} label={keyMeta.label} />
-                </div>
-              ) : (
-                <div className="event-text"><FeedEventBody text={event.text ?? ''} payload={event.payload} style={feedStyle} mentions={mentions} /></div>
-              )}
-              {mechanicNote && <div className="mechanic-note">ⓘ {mechanicNote}</div>}
-            </li>
-          );
-        }}
+        itemContent={renderRow}
         atBottomStateChange={(atBottom) => setIsAtBottom(autoScroll.onAtBottomChange(atBottom))}
       />
       ) : (

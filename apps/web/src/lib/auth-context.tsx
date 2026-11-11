@@ -3,7 +3,7 @@ import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from './supabase.js';
 import { reconnectWsClient, setTRPCToken } from './trpc.js';
 
-interface AuthContextValue {
+export interface AuthContextValue {
   session: Session | null;
   user: User | null;
   loading: boolean;
@@ -19,7 +19,7 @@ interface AuthContextValue {
   signOut: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextValue | null>(null);
+export const AuthContext = createContext<AuthContextValue | null>(null);
 
 function urlHasRecoveryType(): boolean {
   if (typeof window === 'undefined') return false;

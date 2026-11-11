@@ -122,6 +122,7 @@ current contract.
 | [`docs/reference/pixel-art.md`](docs/reference/pixel-art.md) | Sprite, canvas, or CSS pixel-art work |
 | [`docs/reference/millefleur/design-system.md`](docs/reference/millefleur/design-system.md) | Theme or visual design work, the Millefleur theme, or any mockup (render and look before showing: see its process notes) |
 | [`docs/reference/player-agency.md`](docs/reference/player-agency.md) | Player agency, bounded items, or live-combat-control proposals |
+| [`docs/reference/feed-lab.md`](docs/reference/feed-lab.md) | A feed, scrolling, the `ringFeed` connection, a theme's feed type, or anything under `apps/web/e2e` or `apps/web/src/lab`: prove it in a real browser |
 | [`docs/reference/simulation-harness.md`](docs/reference/simulation-harness.md) | A `sim:*` script, a `SimResult` field, or any balance claim that needs simulation evidence |
 | [`ITEMS.md`](ITEMS.md) | Player-facing item use, inventory, targeting scrolls, and shop rules |
 

@@ -54,7 +54,7 @@ lovely.
 
 Elsewhere:
 
-- [Roadmap 46](../../roadmap/46-unicorn-theme.md) is the plan to build it.
+- [Roadmap 46](../../archive/roadmap/46-unicorn-theme.md) is the plan to build it.
 - [The iteration archive](../../archive/studies/millefleur-theme/README.md) has every earlier
   round, the studies, the other directions and the first written proposal.
 - [Roadmap 47](../../roadmap/47-dream-desktop-theme.md) develops Dream Desktop, a System 7

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, type RefObject } from 'react';
 import type { VirtuosoHandle } from 'react-virtuoso';
+import { feedTimings } from '../lib/feed-timings.js';
 
 /**
  * How recently the reader must have scrolled for a "not at bottom" report from Virtuoso
@@ -52,7 +53,7 @@ export const REPIN_SETTLE_MS = 250;
  * Spread `gestureHandlers` onto the element wrapping the Virtuoso scroller (Virtuoso owns
  * the scroller itself; the events bubble) and pass `setScroller` as Virtuoso's `scrollerRef`.
  */
-export function useFeedAutoScroll(virtuosoRef?: RefObject<VirtuosoHandle | null>) {
+export function useFeedAutoScroll(virtuosoRef?: RefObject<VirtuosoHandle | null>, pane = 'feed') {
   const shouldFollowRef = useRef(true);
   // Virtuoso's scroller element, via its `scrollerRef` prop. The re-pin scrolls this to its
   // own `scrollHeight` rather than calling `scrollToIndex('LAST')`: that computes the target
@@ -101,9 +102,10 @@ export function useFeedAutoScroll(virtuosoRef?: RefObject<VirtuosoHandle | null>
 
   /** Instant scroll to the true bottom — tab activation, history load. */
   const snapToBottom = useCallback(() => {
+    feedTimings.count(`${pane}.scroll.snap`);
     scrollToEnd('auto');
     resetToBottom();
-  }, [scrollToEnd, resetToBottom]);
+  }, [scrollToEnd, resetToBottom, pane]);
 
   /**
    * The `↓ Latest` button. Smooth, and it does NOT claim "at bottom" for the caller:
@@ -113,17 +115,20 @@ export function useFeedAutoScroll(virtuosoRef?: RefObject<VirtuosoHandle | null>
    * transition either, so the button never came back.
    */
   const jumpToBottom = useCallback(() => {
+    feedTimings.count(`${pane}.scroll.jump`);
     scrollToEnd('smooth');
     resetToBottom();
-  }, [scrollToEnd, resetToBottom]);
+  }, [scrollToEnd, resetToBottom, pane]);
 
   const onAtBottomChange = useCallback(
     (atBottom: boolean): boolean => {
       if (atBottom) {
+        if (!shouldFollowRef.current) feedTimings.count(`${pane}.scroll.follow`);
         shouldFollowRef.current = true;
         return true;
       }
       if (gestureIsRecent()) {
+        if (shouldFollowRef.current) feedTimings.count(`${pane}.scroll.unfollow`);
         shouldFollowRef.current = false;
         return false;
       }
@@ -132,21 +137,29 @@ export function useFeedAutoScroll(virtuosoRef?: RefObject<VirtuosoHandle | null>
       // the first place. Following stays on, so report "at bottom" and keep the jump
       // button hidden rather than flashing it for the frame before the snap lands.
       const snap = () => scrollToEnd('auto');
+      const scroller = scrollerRef.current;
+      feedTimings.event(`${pane}.scroll.repin`, {
+        gapPx: scroller ? scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight : 0,
+      });
       snap();
       if (settleTimerRef.current !== null) clearTimeout(settleTimerRef.current);
       settleTimerRef.current = setTimeout(() => {
         settleTimerRef.current = null;
         // The reader may have started scrolling up in the meantime; leave them alone.
-        if (shouldFollowRef.current && !gestureIsRecent()) snap();
+        if (shouldFollowRef.current && !gestureIsRecent()) {
+          feedTimings.count(`${pane}.scroll.repin.settle`);
+          snap();
+        }
       }, REPIN_SETTLE_MS);
       return true;
     },
-    [scrollToEnd]
+    [scrollToEnd, pane]
   );
 
   const noteUserScrollGesture = useCallback(() => {
+    feedTimings.count(`${pane}.scroll.gesture`);
     userScrollGestureAtRef.current = Date.now();
-  }, []);
+  }, [pane]);
 
   const gestureHandlers = useMemo(
     () => ({

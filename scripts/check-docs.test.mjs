@@ -165,6 +165,67 @@ test('preserves inline code content in linked heading slugs', async () => {
   assert.deepEqual(await checkMarkdownLinks(root), [])
 })
 
+test('validates same-file and cross-file anchors', async () => {
+  const root = await fixture({
+    'docs/a.md': [
+      '# Top',
+      '[ok](#top)',
+      '[bad](#nope)',
+      '[cross ok](./b.md#section-one)',
+      '[cross bad](./b.md#section-two)',
+      '[non-markdown](./code.ts#L10)',
+      '<a id="explicit"></a>',
+      '[explicit](#explicit)',
+    ].join('\n'),
+    'docs/b.md': '## Section one',
+    'docs/code.ts': '',
+  })
+
+  assert.deepEqual(await checkMarkdownLinks(root), [
+    'docs/a.md: broken relative link #nope',
+    'docs/a.md: broken relative link ./b.md#section-two',
+  ])
+})
+
+test('suffixes duplicate headings and slugs inline code, punctuation, and numbers', async () => {
+  const root = await fixture({
+    'docs/a.md': [
+      '# Repeat',
+      '# Repeat',
+      '## 2b. Service: `web` (static_SPA) & more',
+      '## 9. Task table',
+      '[first](#repeat)',
+      '[second](#repeat-1)',
+      '[third](#repeat-2)',
+      '[punct](#2b-service-web-static_spa--more)',
+      '[number](#9-task-table)',
+    ].join('\n'),
+  })
+
+  assert.deepEqual(await checkMarkdownLinks(root), [
+    'docs/a.md: broken relative link #repeat-2',
+  ])
+})
+
+test('ignores headings and anchors inside code fences', async () => {
+  const root = await fixture({
+    'docs/a.md': [
+      '```md',
+      '# Hidden heading',
+      '<a id="hidden-anchor"></a>',
+      '[inside](#nowhere)',
+      '```',
+      '[heading](#hidden-heading)',
+      '[anchor](#hidden-anchor)',
+    ].join('\n'),
+  })
+
+  assert.deepEqual(await checkMarkdownLinks(root), [
+    'docs/a.md: broken relative link #hidden-heading',
+    'docs/a.md: broken relative link #hidden-anchor',
+  ])
+})
+
 const validArchitecture = `---
 type: Architecture
 title: Rooms and identity

@@ -1,13 +1,16 @@
 import { usePaintSurface } from '../hooks/usePaintSurface.js';
-import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
+import { Suspense, lazy, useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
 import { Link } from 'react-router-dom';
 import PaneDivider from './PaneDivider.js';
 import PaneSelector from './PaneSelector.js';
 import CatchUpBanner from './CatchUpBanner.js';
 import { RingFeedProvider } from '../hooks/useRingFeed.js';
 import { ChatProvider, useChat } from '../hooks/useChat.js';
+import { isFeedTimingsEnabled } from '../lib/feed-timings.js';
 import { unreadBadgeText } from '../utils/chat-rows.js';
 import { useCommandInsert } from '../lib/command-insert-context.js';
+// Developer tool behind a flag; lazy so it adds nothing to the main bundle.
+const FeedTimingsOverlay = lazy(() => import('./FeedTimingsOverlay.js'));
 import { DEFAULT_SLOTS, SURFACES, isSurfaceId, type SurfaceId } from './surfaces.js';
 
 interface TerminalProps {
@@ -412,6 +415,7 @@ export default function Terminal({ roomId }: TerminalProps) {
         {isSideBySide && <PaneDivider onResize={handleResize} containerRef={containerRef} />}
       </ChatProvider>
       </RingFeedProvider>
+      {isFeedTimingsEnabled() && <Suspense fallback={null}><FeedTimingsOverlay /></Suspense>}
     </div>
   );
 }

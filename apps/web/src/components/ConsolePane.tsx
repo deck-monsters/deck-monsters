@@ -1,8 +1,9 @@
-import React, { useEffect, useRef, useState, useCallback, useMemo, type ReactNode } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState, useCallback, useMemo, type ReactNode } from 'react';
 import { Virtuoso } from 'react-virtuoso';
 import type { VirtuosoHandle } from 'react-virtuoso';
 
 import { trpc } from '../lib/trpc.js';
+import { feedTimings } from '../lib/feed-timings.js';
 import { useAuth } from '../lib/auth-context.js';
 import { useGuidedStart } from '../hooks/useGuidedStart.js';
 import GuidedStartBox from './GuidedStartBox.js';
@@ -34,8 +35,10 @@ import {
   type FightHighlight,
 } from '../utils/fight-highlights.js';
 import FeedList from './FeedList.js';
+import PlainFeedList, { feedImpl, type PlainFeedHandle } from './PlainFeedList.js';
 import { mechanicKeyOf, mechanicNoteFor, mechanicPayloadOf, newestEventIdByKey } from '../lib/mechanic-notes.js';
 import { mapConsoleHistoryEvent } from '../utils/console-history-event-map.js';
+import { LOSS_MARKER_DELAY_MS } from '../utils/feed-markers.js';
 import { AT_BOTTOM_THRESHOLD_PX, useFeedAutoScroll } from '../hooks/useFeedAutoScroll.js';
 
 interface ActivePrompt {
@@ -147,6 +150,12 @@ function retireOtherPrompts(events: ConsoleEvent[], keepId: string): ConsoleEven
  * "not visible" signal; IntersectionObserver refines that for a mounted-but-scrolled
  * row. Where IntersectionObserver is unavailable, mounted counts as visible.
  */
+/** The Console's empty state: neutral while history is in flight, the hint once it is known to be empty. */
+function EmptyConsoleLine({ resolved }: { resolved: boolean }) {
+  if (!resolved) return <p>Loading your console…</p>;
+  return <p>Type a command below to start. Try: <em>look at monsters</em></p>;
+}
+
 function PromptVisibilitySentinel({ onVisibilityChange }: { onVisibilityChange: (visible: boolean) => void }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -245,11 +254,28 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
   // left the input locked. They read `activePromptIdRef`, which `setActivePromptId` writes
   // synchronously (the only writer).
   const virtuosoRef = useRef<VirtuosoHandle>(null);
+  const plainRef = useRef<PlainFeedHandle>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const seenRef = useRef(new Set<string>());
   const historyApplied = useRef(false);
   const reconnectNoticeShownRef = useRef(false);
-  const autoScroll = useFeedAutoScroll(virtuosoRef);
+  const autoScroll = useFeedAutoScroll(virtuosoRef, 'console');
+  // Timing instrumentation only (lib/feed-timings.ts); nothing here affects rendering.
+  const firstRenderMarkedRef = useRef(false);
+  if (!firstRenderMarkedRef.current) {
+    firstRenderMarkedRef.current = true;
+    feedTimings.mark('console.pane.first_render');
+  }
+  const firstRowsRecordedRef = useRef(false);
+  useLayoutEffect(() => {
+    if (firstRowsRecordedRef.current || feedEvents.length === 0) return;
+    firstRowsRecordedRef.current = true;
+    feedTimings.since('console.pane.first_render', 'console.time_to_first_rows');
+  }, [feedEvents.length]);
+  // The Console's Virtuoso is mounted unconditionally, so it mounts once per pane mount.
+  useLayoutEffect(() => {
+    feedTimings.count('console.list.mount');
+  }, []);
   // Register command-insert function so external callers (CommandReference, etc.) can populate the input
   useEffect(() => {
     // The unregister matters: without it a dead console's setter stays registered and
@@ -269,7 +295,26 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
   }, [registerInsertFn]);
 
   // Fetch persistent console history from DB on mount
-  const { data: history } = trpc.game.consoleHistory.useQuery({ roomId });
+  // Applied once; every later result is ignored (`historyApplied`). React-query's defaults
+  // would refetch the whole payload on every window focus and on coming back online for
+  // nothing (baseline "History is fetched again on every focus"), so fetch once.
+  // (`useGuidedStart` reads the same query on its own; that one is left to its owner.)
+  //
+  // But every MOUNT fetches (`refetchOnMount: 'always'`) and the pane applies only a result
+  // fetched after this mount (`isFetchedAfterMount`), never one from react-query's cache, which
+  // outlives the pane by 5 minutes. The feed's first subscribe has no cursor and the server
+  // replays only its last 100 events, so a stale snapshot applied on a quick return from
+  // another route (the Workshop) silently lost everything between its tail and those 100.
+  const { data: history, isError: historyError, isFetchedAfterMount } = trpc.game.consoleHistory.useQuery(
+    { roomId },
+    { staleTime: Infinity, refetchOnMount: 'always', refetchOnWindowFocus: false, refetchOnReconnect: false }
+  );
+  // `!== false`: only a result cached from before this mount is refused (test mocks omit the flag).
+  const historyFresh = isFetchedAfterMount !== false;
+  // The empty-state hint is only true once history has said the console really is empty.
+  // Before that it told a player on a slow link to "type a command to start" while their
+  // earlier session was still loading (baseline C7).
+  const historyResolved = (history !== undefined && historyFresh) || historyError;
   // Monster sprites in place of their emoji, as in the Ring feed (roadmap 24).
   const mentions = useMonsterMentions(roomId);
   const feedStyle = feedStyleFor(useTheme().theme);
@@ -295,14 +340,15 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
   // Scroll to bottom when this pane becomes active (tab switch)
   useEffect(() => {
     if (isActive) {
-      autoScroll.snapToBottom();
+      if (plainRef.current) plainRef.current.scrollToBottom();
+      else autoScroll.snapToBottom();
       setIsAtBottom(true);
     }
   }, [isActive, autoScroll]);
 
   // Virtuoso reports arrival at the bottom itself; see `jumpToBottom` for why the pane no
   // longer claims it up front.
-  const scrollToBottom = autoScroll.jumpToBottom;
+  const scrollToBottom = () => (plainRef.current ? plainRef.current.scrollToBottom() : autoScroll.jumpToBottom());
 
   const { data: myMonsters, refetch: refetchMyMonsters } = trpc.game.myMonsters.useQuery(
     { roomId },
@@ -530,7 +576,10 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
       return;
     }
 
-    if (seenRef.current.has(tracked.id)) return;
+    if (seenRef.current.has(tracked.id)) {
+      feedTimings.count('console.events.duplicate_dropped');
+      return;
+    }
     seenRef.current.add(tracked.id);
 
     // Only process events targeted to this user, plus the handful of public fight
@@ -542,6 +591,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
       event.scope === 'public' ? classifyHighlight(event, damageHistoryRef.current) : null;
 
     if (fightHighlight) {
+      feedTimings.count('console.events.appended');
       addConsoleEvent({
         id: event.id,
         type: 'highlight',
@@ -562,6 +612,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
 
     const payload = event.payload as Record<string, unknown>;
     if (event.type === 'system' && payload.consoleInput) {
+      feedTimings.count('console.events.appended');
       addConsoleEvent({
         id: event.id,
         type: 'input',
@@ -571,6 +622,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
     }
 
     if (event.type === 'system.gap') {
+      feedTimings.count('console.events.appended');
       addConsoleEvent({
         id: event.id,
         type: 'system',
@@ -580,6 +632,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
     }
 
     if (event.type === 'announce' || event.type === 'system') {
+      feedTimings.count('console.events.appended');
       addConsoleEvent({
         id: event.id,
         type: event.type === 'system' ? 'system' : 'announce',
@@ -623,6 +676,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
         arrivedAt: Date.now(),
       };
       supersedePrompt(promptPayload.requestId);
+      feedTimings.count('console.events.appended');
       setConsoleEvents(prev => [
         ...retireOtherPrompts(prev, promptPayload.requestId),
         { id: event.id, type: 'prompt', text: promptPayload.question, promptData },
@@ -643,6 +697,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
         setActivePromptId(null);
         setInputLocked(false);
       }
+      feedTimings.count('console.events.appended');
       addConsoleEvent({
         id: event.id,
         type: 'tombstone',
@@ -674,23 +729,31 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
 
   const { reconnecting, seedCursor } = useRingFeedListener(onLiveEvent);
 
+  /*
+   * The "-- reconnecting --" row waits as long as the Ring's "connection lost" divider does
+   * (`LOSS_MARKER_DELAY_MS`): a blip that is over inside a second left a permanent row in the
+   * transcript for something the player never saw. The header word still shows at once.
+   */
   useEffect(() => {
     if (!reconnecting) {
       reconnectNoticeShownRef.current = false;
       return;
     }
     if (reconnectNoticeShownRef.current) return;
-    reconnectNoticeShownRef.current = true;
-    addConsoleEvent({
-      id: `sys-${Date.now()}`,
-      type: 'system',
-      text: '-- reconnecting --',
-    });
+    const timer = setTimeout(() => {
+      reconnectNoticeShownRef.current = true;
+      addConsoleEvent({
+        id: `sys-${Date.now()}`,
+        type: 'system',
+        text: '-- reconnecting --',
+      });
+    }, LOSS_MARKER_DELAY_MS);
+    return () => clearTimeout(timer);
   }, [reconnecting]);
 
   // Apply DB history once — pre-populate seenRef and seed shared subscription lastEventId.
   useEffect(() => {
-    if (!history || historyApplied.current) return;
+    if (!history || !historyFresh || historyApplied.current) return;
     historyApplied.current = true;
 
     // Deduplicate history by event ID (handles legacy duplicate rows in DB)
@@ -708,6 +771,12 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
       seenRef.current.add(ev.id);
       const consoleEv = mapConsoleHistoryEvent(ev as any);
       if (consoleEv) historyConsoleEvents.push(consoleEv);
+    }
+
+    feedTimings.event('console.history.applied', { rows: historyConsoleEvents.length });
+    if (historyConsoleEvents.length === 0 && !firstRowsRecordedRef.current) {
+      firstRowsRecordedRef.current = true;
+      feedTimings.since('console.pane.first_render', 'console.time_to_first_rows');
     }
 
     if (historyConsoleEvents.length > 0) {
@@ -740,10 +809,11 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
 
     // Jump to bottom after history loads (instant, no animation)
     requestAnimationFrame(() => {
+      plainRef.current?.scrollToBottom();
       virtuosoRef.current?.scrollToIndex({ index: 'LAST', behavior: 'auto' });
       autoScroll.resetToBottom();
     });
-  }, [history, autoScroll, seedCursor]);
+  }, [history, historyFresh, autoScroll, seedCursor]);
 
   async function handleCancelPrompt(requestId: string) {
     resolvedPromptIdsRef.current.add(requestId);
@@ -1018,76 +1088,8 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
     ? 'Sending…'
     : 'Type a command…';
 
-  return (
-    <section
-      className={`terminal-pane${isActive ? ' active' : ''}`}
-      aria-label="Your Console — private messages and commands"
-      style={{ position: 'relative' }}
-    >
-      <header className="pane-header">
-        <span>Console</span>
-        {reconnecting && <span style={{ color: 'var(--color-accent)' }}>reconnecting…</span>}
-        {activePromptId && (
-          <button
-            onClick={() => void handleCancelFlow()}
-            style={{
-              marginLeft: 'auto',
-              padding: '0.1rem 0.5rem',
-              fontSize: '0.75rem',
-              background: 'transparent',
-              border: '1px solid var(--color-border)',
-              color: 'var(--color-fg-dim)',
-              cursor: 'pointer',
-              fontFamily: 'var(--font-ui)',
-            }}
-            title="Cancel current action"
-          >
-            Cancel action
-          </button>
-        )}
-        {headerActions && <span className="pane-header-actions">{headerActions}</span>}
-      </header>
-
-      {/* Gesture listeners sit on the wrapper because Virtuoso owns the scroller element;
-          wheel/touch/pointer/key events bubble up from it (see useFeedAutoScroll). */}
-      <div className="pane-feed-area" {...autoScroll.gestureHandlers}>
-      <Virtuoso
-        ref={virtuosoRef}
-        scrollerRef={autoScroll.setScroller}
-        className="event-feed"
-        role="log"
-        aria-live="polite"
-        aria-label="Console messages"
-        tabIndex={0}
-        data={feedEvents}
-        atBottomThreshold={AT_BOTTOM_THRESHOLD_PX}
-        /*
-         * Virtuoso's own follow-output, matching RingPane. This used to be `false` with the
-         * scroll driven imperatively instead: every append ran
-         * `scrollToIndex({ index: 'LAST', behavior: 'smooth' })` inside a rAF. An imperative
-         * smooth scroll is not cancel-aware — it keeps animating while the reader drags
-         * against it, and during a fight the next event schedules another before the last
-         * has landed, so the view is pulled back down over and over. That reads as a console
-         * that will not scroll up at all, which is how it was reported. The ring pane, which
-         * has always used `followOutput`, was never affected — Virtuoso stops following the
-         * moment the reader leaves the bottom.
-         *
-         * `shouldFollowRef` tracks "is at bottom" and is forced true by `enable()` so a
-         * command you just sent still scrolls into view. Same contract as before: follow new
-         * output only when already at the bottom. See 10b-bugs-fixed.md #129.
-         */
-        followOutput={(atBottom) =>
-          autoScroll.shouldFollowRef.current || atBottom ? 'smooth' : false
-        }
-        components={{
-          List: FeedList,
-          EmptyPlaceholder: () => (
-            <li className="event event-system event-feed-empty">
-              <p>Type a command below to start. Try: <em>look at monsters</em></p>
-            </li>
-          ),
-        }}
-        itemContent={(_, ev) => {
+  // One row, for either list (Virtuoso today, PlainFeedList behind `feedImpl()`).
+  const renderRow = (_: number, ev: (typeof feedEvents)[number]) => {
           if (ev.type === 'prompt' && ev.promptData) {
             return (
               <li className="event">
@@ -1145,9 +1147,104 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
               {noteLine}
             </li>
           );
+        };
+  const plain = feedImpl() === 'plain';
+
+  return (
+    <section
+      className={`terminal-pane${isActive ? ' active' : ''}`}
+      aria-label="Your Console — private messages and commands"
+      style={{ position: 'relative' }}
+    >
+      <header className="pane-header">
+        <span>Console</span>
+        {reconnecting && <span style={{ color: 'var(--color-accent)' }}>reconnecting…</span>}
+        {activePromptId && (
+          <button
+            onClick={() => void handleCancelFlow()}
+            style={{
+              marginLeft: 'auto',
+              padding: '0.1rem 0.5rem',
+              fontSize: '0.75rem',
+              background: 'transparent',
+              border: '1px solid var(--color-border)',
+              color: 'var(--color-fg-dim)',
+              cursor: 'pointer',
+              fontFamily: 'var(--font-ui)',
+            }}
+            title="Cancel current action"
+          >
+            Cancel action
+          </button>
+        )}
+        {headerActions && <span className="pane-header-actions">{headerActions}</span>}
+      </header>
+
+      {/* Gesture listeners sit on the wrapper because Virtuoso owns the scroller element;
+          wheel/touch/pointer/key events bubble up from it (see useFeedAutoScroll). */}
+      <div className="pane-feed-area" {...autoScroll.gestureHandlers}>
+      {plain ? (
+        <PlainFeedList
+          ref={plainRef}
+          data={feedEvents}
+          rowKey={(ev, index) => ev.id ?? String(index)}
+          renderRow={renderRow}
+          // A Console row reads the pane's prompt and note state; until that is narrowed (Pass
+          // D), every row re-renders with the pane. The Console holds a few hundred rows.
+          rowVersion={{}}
+          cap={500}
+          pane="console"
+          ariaLabel="Console messages"
+          onPinnedChange={setIsAtBottom}
+          empty={
+            <ol className="event-feed-list">
+              <li className="event event-system event-feed-empty">
+                <EmptyConsoleLine resolved={historyResolved} />
+              </li>
+            </ol>
+          }
+        />
+      ) : (
+      <Virtuoso
+        ref={virtuosoRef}
+        scrollerRef={autoScroll.setScroller}
+        className="event-feed"
+        role="log"
+        aria-live="polite"
+        aria-label="Console messages"
+        tabIndex={0}
+        data={feedEvents}
+        atBottomThreshold={AT_BOTTOM_THRESHOLD_PX}
+        /*
+         * Virtuoso's own follow-output, matching RingPane. This used to be `false` with the
+         * scroll driven imperatively instead: every append ran
+         * `scrollToIndex({ index: 'LAST', behavior: 'smooth' })` inside a rAF. An imperative
+         * smooth scroll is not cancel-aware — it keeps animating while the reader drags
+         * against it, and during a fight the next event schedules another before the last
+         * has landed, so the view is pulled back down over and over. That reads as a console
+         * that will not scroll up at all, which is how it was reported. The ring pane, which
+         * has always used `followOutput`, was never affected — Virtuoso stops following the
+         * moment the reader leaves the bottom.
+         *
+         * `shouldFollowRef` tracks "is at bottom" and is forced true by `enable()` so a
+         * command you just sent still scrolls into view. Same contract as before: follow new
+         * output only when already at the bottom. See 10b-bugs-fixed.md #129.
+         */
+        followOutput={(atBottom) =>
+          autoScroll.shouldFollowRef.current || atBottom ? 'smooth' : false
+        }
+        components={{
+          List: FeedList,
+          EmptyPlaceholder: () => (
+            <li className="event event-system event-feed-empty">
+              <EmptyConsoleLine resolved={historyResolved} />
+            </li>
+          ),
         }}
+        itemContent={renderRow}
         atBottomStateChange={(atBottom) => setIsAtBottom(autoScroll.onAtBottomChange(atBottom))}
       />
+      )}
 
       {!isAtBottom && (
         <button

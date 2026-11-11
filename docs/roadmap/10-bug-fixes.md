@@ -8,10 +8,11 @@ tags: [bugs, roadmap, open]
 ---
 # Bug Fixes and Code Quality
 
-**Status:** Active — four open items (F, J, K, L). Fixed work and its root causes live only in
+**Status:** Active — five open items (F, J, L, M, N). M and N are the failures the browser
+suite measured, each with a failing test. K (emoji card-box borders) is 10b #197. Fixed work and its root causes live only in
 [`10b-bugs-fixed.md`](10b-bugs-fixed.md).
 The Millefleur spacing cleanup (Chat grid, shop wallet, selected name and turn markers) is
-fixed as #241; it leaves the four open investigations below unchanged.
+fixed as #241; it leaves the open investigations below unchanged.
 
 ## Open items
 
@@ -41,8 +42,8 @@ restarts. No connector is deployed today.
 decision below is from the owner the same day.
 
 **Root cause:** successive surface/mock-fidelity passes appended overrides to the lazy
-stylesheet without rechecking the original source-size budget. The final source is
-80,553 bytes, against roadmap 46 §8's 12 KB unminified limit; the roadmap's 10.6 KB claim
+stylesheet without rechecking the original source-size budget. The source was
+80,553 bytes on 2026-10-06 (82,243 on 2026-11-10), against roadmap 46 §8's 12 KB unminified limit; the roadmap's 10.6 KB claim
 was from task 2. Duplicate-looking rules are often load-bearing, so a sweep that deletes
 them can change a screen without a test noticing.
 
@@ -56,6 +57,39 @@ required to ship this theme.
 - [ ] Condense duplicate rules in `theme-millefleur.css` in a careful pass, checked
   screen by screen at 390 and 1440 on Millefleur and on phosphor. Do not treat the old
   12 KB figure as the target, and do not restyle the dark themes.
+
+### M. Scrolling failures the browser suite measures
+
+**Owner:** Web feeds. Found by the first run of the browser suite (2026-11-11). Numbers and
+the tests are in the [feed stability baseline](../reference/feed-stability-baseline.md); each
+item is a failing test in `apps/web/e2e/scroll.spec.ts`. Roadmap 52's Pass C decides whether
+these are fixed one by one or by replacing the virtual list, so do not patch one alone before
+that decision.
+
+- [ ] S1. Opening a room draws the oldest rows first, then jumps to the bottom.
+- [ ] S2. `↓ Latest` on the Ring stops 8 to 10 px short and stays on screen.
+- [ ] S3. Switching from phosphor to Millefleur while reading back lands on the first event.
+- [ ] S4. Rotating a phone on Millefleur while reading back loses the row (flaky).
+- [ ] S5. On the desktop Console, scrolling up two lines is pulled back down by the next event.
+- [ ] S6. Touch-scrolling up through a fight jumps about 20 px on some drags.
+- [ ] S7. After a resize the Ring can sit 19 px short of the bottom (flaky).
+- [ ] Following lags by hundreds of pixels for up to 0.45 s while events arrive, worst when
+  the roster grows. It ends pinned, so no test fails; the numbers are in the baseline.
+
+### N. Connection: what the lab cannot test
+
+**Owner:** Web feeds and transport. C1 to C7 and the history refetch are fixed
+([10b #264 to #268](10b-bugs-fixed.md#264-a-dead-feed-connection-went-unnoticed-for-up-to-49-seconds--fixed)).
+
+- [ ] Run the connection faults against the real server and tRPC's WebSocket client through
+  a proxy (roadmap 52, D4). The lab replaces both, so the socket keep-alive after a phone
+  freeze, and the app's and the transport's reconnects firing together, are read from code
+  only.
+- [ ] Some feed frames are 12 to 75 KB (roadmap 52, D5).
+- [ ] A heartbeat id used as a resume cursor can draw a spurious `system.gap` line: the id
+  falls inside the buffered window and every later event is one this player cannot see, so
+  the durable replay is empty after `evicted`. Rare. Root cause: `ringFeed` treats "evicted
+  and nothing visible" as loss without checking whether anything visible existed.
 
 ## Historical detail
 

@@ -39,6 +39,7 @@
     "sim:split-report": "node dist/scripts/sim-split-report.js",
     "sim:search-report": "node dist/scripts/sim-search-report.js",
     "sim:formula": "node dist/scripts/sim-formula.js",
+    "sim:record-feed": "node dist/scripts/record-feed-fixture.js",
     "sim:unicorn": "node dist/scripts/sim-monster.js Unicorn"
   },
   "dependencies": {

@@ -126,15 +126,8 @@ Judge each item below against it.
 - [ ] **Initiative — owner: Ring.** Evaluate replacing entry-order play with a per-encounter
   initiative roll and a SPEED modifier, including tie behavior and narration.
 - [x] **Horn Gore's to-hit by matchup — owner: Cards.** Done in roadmap 50: three tiers for the
-  whole hold family (10b #253). Owner question (2026-10-13, fight
-  #114: a level 3 Minotaur gored at `-3` against a Basilisk). `getAttackModifier` adds the
-  card's starting hold strength (`freedomThresholdModifier`, -4, +2 per landed horn) to the
-  type matchup, so a "strong against" target (Minotaur, Gladiator) rolls at -2 and a "weak
-  against" one (Basilisk, Jinn, Weeping Angel) at -6, while a neutral target (Dragon, Unicorn)
-  rolls at 0. The card text prints the -2 and -6, so this is shipped behavior, not a slip, but
-  "strong against" rolling worse than neutral is backwards. One reading: matchup +2 / -2 / 0
-  plus only the gained strength (+2 per landed horn). Needs a decision and a `sim:monster
-  Minotaur` before and after.
+  whole hold family (10b #253). "Strong against" no longer rolls worse than neutral, and
+  every hold card's text lists strong, neutral and weak from best to worst.
 - [x] **Lasting effects when their caster falls — owner: Cards.** Decided and built in roadmap
   50: grips, spells and gazes end at once with "<caster> has fallen, and …"; burns, poison,
   landed curses, sand and ringing ears outlive the caster. The rule and the table are in

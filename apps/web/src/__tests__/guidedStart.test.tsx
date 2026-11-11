@@ -6,6 +6,8 @@ const mocks = vi.hoisted(() => ({
   monsters: [] as Array<Record<string, unknown>> | undefined,
   history: [] as Array<{ type: string }> | undefined,
   historyError: false,
+  historyFresh: true,
+  historyOptions: undefined as unknown,
   inventoryAt: 0,
   ring: { inEncounter: false, contestants: [] as unknown[] },
 }));
@@ -16,7 +18,12 @@ vi.mock('../lib/trpc.js', () => ({
     game: {
       myInventory: { useQuery: () => ({ data: mocks.monsters ? { monsters: mocks.monsters } : undefined, dataUpdatedAt: mocks.inventoryAt }) },
       ringState: { useQuery: () => ({ data: mocks.ring }) },
-      consoleHistory: { useQuery: () => ({ data: mocks.historyError ? undefined : mocks.history, isError: mocks.historyError }) },
+      consoleHistory: {
+        useQuery: (_input: unknown, options: unknown) => {
+          mocks.historyOptions = options;
+          return { data: mocks.historyError ? undefined : mocks.history, isError: mocks.historyError, isFetchedAfterMount: mocks.historyFresh };
+        },
+      },
     },
   },
 }));
@@ -105,6 +112,7 @@ describe('useGuidedStart', () => {
     mocks.history = [];
     mocks.monsters = [];
     mocks.historyError = false;
+    mocks.historyFresh = true;
     mocks.ring = { inEncounter: false, contestants: [] };
   });
 
@@ -189,6 +197,20 @@ describe('useGuidedStart', () => {
     localStorage.setItem(key, 'true');
     mocks.monsters = [{ name: 'Saffron', cards: [], cardSlots: 3 }];
     expect(run('room-z').result.current.phase).toBe('hidden');
+  });
+
+  it('does not latch its decision on a history result cached from before this mount', () => {
+    // A veteran returning within react-query's 5-minute cache: the cached snapshot may predate
+    // the outcome events, so the guide waits for the refetch like ConsolePane does.
+    mocks.monsters = [{ name: 'Saffron', cards: [], cardSlots: 3 }];
+    mocks.historyFresh = false;
+    const { result, rerender } = run();
+    expect(result.current.phase).toBe('hidden');
+    expect(localStorage.getItem('ftuxComplete:user-1:room-1')).toBeNull();
+    mocks.historyFresh = true;
+    rerender();
+    expect(result.current.phase).toBe('equip');
+    expect(mocks.historyOptions).toMatchObject({ refetchOnMount: 'always', refetchOnWindowFocus: false, refetchOnReconnect: false });
   });
 
   it('stays hidden when the console history query fails', () => {

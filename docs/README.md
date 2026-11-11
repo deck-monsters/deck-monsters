@@ -71,13 +71,15 @@ Generated and authored player references remain at the repository root:
 | Whether roadmap 43's walk fixes match production | [Live check of the walk fixes](reference/walk-fixes-check.md) |
 | Whether roadmap 44's card guides and training wizard match production | [Live check of the guides and wizard](reference/guides-wizard-check.md) |
 | Whether roadmap 49's Workshop labels, Ring footer, and turn order match the shipped text | [Live check of feed wording and turn order](reference/turn-order-check-49b.md) |
-| Whether roadmap 46's Millefleur feed and screens match the mocks | [Millefleur live check](roadmap/46b-cursor-check.md) |
+| Whether roadmap 46's Millefleur feed and screens match the mocks | [Millefleur live check](archive/roadmap/46b-cursor-check.md) |
 | Reviewing monster flavour strings or signature-card narration (generated inventories) | [Monster and card strings](reference/strings/README.md) |
 | `channel({ question, choices })` call site or connector answer encoding | [Prompt/answer contract](reference/prompt-answer-contract.md) |
 | Sprite maps, Canvas/CSS pixel art, scaling, palettes, animation construction | [Pixel art](reference/pixel-art.md) |
 | The Millefleur theme: tokens, texture, components, final screens, and how it was designed | [Millefleur design system](reference/millefleur/design-system.md) ([brief](reference/millefleur/README.md), [process](reference/millefleur/process.md)) |
 | Player agency, bounded live items, motivation evidence, or combat-control proposals | [Player agency](reference/player-agency.md) |
 | Seeded fight simulations, `SimResult` fields, or a `sim:*` script | [Simulation harness](reference/simulation-harness.md) |
+| Running the room UI with no server, the browser tests for scrolling and reconnecting, client timings | [Feed lab and browser tests](reference/feed-lab.md) |
+| What scrolling, opening and reconnecting measured before roadmap 52's fixes | [Feed stability baseline](reference/feed-stability-baseline.md) |
 | Balance measurements that informed a decision (class curves, catalogues, matrices) | [Balance reports](reference/balance-reports/README.md) |
 
 ### Agent work
@@ -93,6 +95,8 @@ Generated and authored player references remain at the repository root:
 
 - Start planning work at [`roadmap/README.md`](roadmap/README.md). Active roadmap files
   contain actionable work and current status, not shipped implementation diaries.
+- The order of the next work, and the plan to prove the feeds and the connection in a real
+  browser, is [roadmap 52](roadmap/52-stability-and-next-work.md).
 - A home-screen ping when the page is closed (a DM, and the few countdown cases) is
   [roadmap 48](roadmap/48-notifications.md). Nothing there is built.
 - The Dragon shipped in September 2026; its follow-ups are in

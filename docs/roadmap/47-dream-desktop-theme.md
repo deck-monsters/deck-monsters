@@ -9,7 +9,7 @@ tags: [roadmap, web, theme, design]
 # 47: Dream Desktop, a System 7 theme
 
 **Status:** a brief, not a design. It came out of the Millefleur exploration
-([roadmap 46](46-unicorn-theme.md)) as direction C. The owner called it "cool" and wants it
+([roadmap 46](../archive/roadmap/46-unicorn-theme.md)) as direction C. The owner called it "cool" and wants it
 developed as a completely separate theme, rather than folded into Millefleur. Millefleur borrowed
 a few of its shapes (folder tabs, a pinstriped title bar, the close box, the default ring); this
 theme is where those shapes get to be themselves.

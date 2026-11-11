@@ -134,36 +134,63 @@ async function markdownFiles(root, directory = root) {
   return files
 }
 
-function headingSlug(heading) {
+// Reduce heading source to the text GitHub renders before slugging it: images and links keep
+// their label, emphasis markers disappear, and inline HTML tags are dropped. Inline code was
+// already unwrapped by markdownProse({ preserveInlineCode: true }). Underscores survive in a
+// slug, so only `_emphasis_` wrapped around whole words is removed.
+function renderedHeadingText(heading) {
   return heading
+    .replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/<[^>]*>/g, '')
+    .replace(/(\*\*|__|\*|~~)(?=\S)(.+?)(?<=\S)\1/g, '$2')
+    .replace(/(^|[\s(])_(?=\S)(.+?)(?<=\S)_(?=$|[\s).,;:!?])/g, '$1$2')
+}
+
+function headingSlug(heading) {
+  return renderedHeadingText(heading)
     .trim()
     .toLowerCase()
-    .replace(/<[^>]*>/g, '')
-    .replace(/[^\p{L}\p{N}\s-]/gu, '')
+    .replace(/[^\p{L}\p{N}\s_-]/gu, '')
     .replace(/\s/g, '-')
 }
 
-async function hasHeading(path, fragment) {
-  const markdown = markdownProse(await readFile(path, 'utf8'), { preserveInlineCode: true })
+// Every fragment a link into this file may use: GitHub heading slugs (duplicates get -1, -2, ...)
+// plus explicit <a id> / <a name> anchors. Headings and anchors inside code are ignored, matching
+// how the checker treats links.
+function collectAnchors(rawMarkdown) {
+  const markdown = markdownProse(rawMarkdown, { preserveInlineCode: true })
+  const anchors = new Set()
   const usedSlugs = new Map()
 
-  for (const [, rawHeading] of markdown.matchAll(/^#{1,6}\s+(.+?)\s*#*\s*$/gm)) {
+  for (const [, rawHeading] of markdown.matchAll(/^ {0,3}#{1,6}[ \t]+(.+?)[ \t]*#*[ \t]*$/gm)) {
     const baseSlug = headingSlug(rawHeading)
     const occurrence = usedSlugs.get(baseSlug) ?? 0
     usedSlugs.set(baseSlug, occurrence + 1)
-    const slug = occurrence === 0 ? baseSlug : `${baseSlug}-${occurrence}`
-    if (slug === fragment.toLowerCase()) return true
+    anchors.add(occurrence === 0 ? baseSlug : `${baseSlug}-${occurrence}`)
   }
 
-  return false
+  for (const [, , name] of markdown.matchAll(/<a\s[^>]*?\b(?:id|name)\s*=\s*(["'])(.*?)\1/gi)) {
+    anchors.add(name.toLowerCase())
+  }
+
+  return anchors
+}
+
+function decodeFragment(fragment) {
+  try {
+    return decodeURIComponent(fragment).toLowerCase()
+  } catch {
+    return fragment.toLowerCase()
+  }
 }
 
 function isIgnoredLink(target) {
-  return /^(?:https?:|mailto:|#)/i.test(target)
+  return /^(?:https?:|mailto:)/i.test(target)
 }
 
 export async function checkMarkdownLinks(root) {
   const findings = []
+  const anchorCache = new Map()
 
   for (const sourcePath of await markdownFiles(root)) {
     const markdown = markdownProse(await readFile(sourcePath, 'utf8'))
@@ -172,8 +199,10 @@ export async function checkMarkdownLinks(root) {
     for (const target of findMarkdownLinks(markdown)) {
       if (isIgnoredLink(target)) continue
 
-      const [targetPath, fragment] = target.split('#', 2)
-      const resolvedTarget = resolve(dirname(sourcePath), targetPath || '.')
+      const hashIndex = target.indexOf('#')
+      const targetPath = hashIndex === -1 ? target : target.slice(0, hashIndex)
+      const fragment = hashIndex === -1 ? '' : target.slice(hashIndex + 1)
+      const resolvedTarget = targetPath ? resolve(dirname(sourcePath), targetPath) : sourcePath
       let targetStats
 
       try {
@@ -183,7 +212,13 @@ export async function checkMarkdownLinks(root) {
         continue
       }
 
-      if (fragment && targetStats.isFile() && !(await hasHeading(resolvedTarget, fragment))) {
+      // Only Markdown targets have headings to check; `file.ts#L10` and the like are not ours.
+      if (!fragment || !targetStats.isFile() || extname(resolvedTarget) !== '.md') continue
+
+      if (!anchorCache.has(resolvedTarget)) {
+        anchorCache.set(resolvedTarget, collectAnchors(await readFile(resolvedTarget, 'utf8')))
+      }
+      if (!anchorCache.get(resolvedTarget).has(decodeFragment(fragment))) {
         findings.push(`${source}: broken relative link ${target}`)
       }
     }
