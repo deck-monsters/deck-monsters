@@ -8,8 +8,8 @@ tags: [roadmap, planning, web, testing, feeds, reconnect]
 ---
 # 52 — Feed stability, proof systems, and the next passes
 
-**Status:** Accepted by the owner (2026-11-10). Pass A is done. Pass B is done except B3b (the
-connection faults against a real server). Pass C is next. The decisions below are settled.
+**Status:** Accepted by the owner (2026-11-10). Pass A is done. Passes B and C are done (B3b moved to D4). Pass D is under way: the connection is rebuilt, and
+the plain feed list waits behind `?feed=plain` for WebKit and a phone check. The decisions below are settled.
 
 ## Why
 
@@ -212,10 +212,25 @@ What it removes once it is the only list: `utils/feed-row-height.ts` and its pro
 remount on a theme change, the wait for a measured width, `useFeedAutoScroll`'s intent window
 and settle timer, and ten test files that stub the virtual list.
 
+**The cost, measured.** Chromium at 390 × 844 with the CPU throttled, a 500-row Ring:
+
+| | Virtual list | Plain list |
+|---|---|---|
+| Tap on the Ring tab to rows at the bottom, 4× slower CPU | 0.29 to 0.34 s | 0.43 to 0.58 s |
+| The same, 6× slower | 0.35 to 0.48 s | 0.64 to 0.75 s |
+| Longest frame while playing at 8×, 4× slower | 83 ms | 50 to 100 ms |
+| The same, 6× slower | 83 ms, 9 frames over 50 ms | 67 to 150 ms, 11 to 43 over 50 ms |
+
+The plain list is slower to open, by 0.15 to 0.3 s on a slow phone, and about level while a
+fight plays. Drawing all 500 rows at once was about twice as slow to open, so the first paint
+is the newest 24 rows and older rows are added above in idle slices; the frames over 50 ms at
+6× are those slices, in the first second after opening. That is the trade: a slightly slower
+open for a feed that is always where it should be.
+
 **Not yet known.** WebKit and a real iPhone (CI runs WebKit once there is a PR; the device
-check is the owner's, with `?feed=plain` on a real room). A slow phone: the 50 ms frame is on
-an unthrottled desktop CPU. The Console re-renders every row when the pane renders, which is
-fine at a few hundred rows and should be narrowed before it is the default.
+check is the owner's, with `?feed=plain` on a real room). The Console re-renders every row
+when the pane renders, which is fine at a few hundred rows and should be narrowed before it is
+the default.
 
 ### Decision (orchestrator, 2026-11-11; the owner delegated these)
 
@@ -237,15 +252,13 @@ fine at a few hundred rows and should be narrowed before it is the default.
 
 ## Pass D — build what C decides
 
-Sketched. It gets its task table when C's record is accepted. The expected shape:
-
-- The chosen feed list behind a setting, shipped dark, switched on after the suite passes on
-  both engines and the device check passes; then the old path and its guesses are deleted.
-- The feed store and the connection state machine, each landed behind the same suite.
-- The polling changes from C4.
-- [Web workspace](../architecture/web-workspace.md) and
-  [events, prompts, and replay](../architecture/events-prompts-and-replay.md) rewritten to the
-  new contracts, and the bugs B5 filed moved to the ledger.
+| # | Task | Status | Commit |
+|---|---|---|---|
+| D1 | **The connection.** One subscription per page load; an 8 s heartbeat and a 20 s watchdog; a test of the connection when the page becomes visible or comes online; the banner when offline; backoff on failed resubscribes; dividers only for outages a reader lived through; no history refetch on focus; a loading line in the Console; tRPC's socket keep-alive | Built; review fix round in progress | 6fd862d |
+| D2 | **The plain list as the default.** Needs WebKit green in CI and the owner's phone check with `?feed=plain`. Narrow the Console's row re-render first | Waiting on CI and the owner | |
+| D3 | **Delete the virtual list:** `react-virtuoso`, `utils/feed-row-height.ts` and its probe, `useFeedAutoScroll`, the metrics remount, and the ten tests that stub the list. Rewrite the feed sections of [web workspace](../architecture/web-workspace.md) | After D2 | |
+| D4 | **B3b:** the connection faults against the real server and tRPC's WebSocket client through a proxy (CI has Postgres). The review of D1 named what only this can test: the socket keep-alive after a freeze, and both reconnect paths firing at once | Planned | |
+| D5 | **Push, not poll:** the feed on the Fights and Leaders pages; events for the shop, the in-fight item list and summon charges; slimmer feed frames (some are 12 to 75 KB) | Planned | |
 
 ## Pass E — the next features
 
