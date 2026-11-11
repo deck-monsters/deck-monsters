@@ -379,7 +379,12 @@ export function useDeckWorkshop(roomId?: string) {
       if (!roomId) throw new Error('Room not selected');
       return savePresetMutation.mutateAsync({ roomId, ...input });
     },
-    loadPreset: (input: { monsterName: string; presetName: string }) => {
+    loadPreset: (input: {
+      monsterName: string;
+      presetName: string;
+      /** Cards to take off the player's other monsters; set only after the player agreed. */
+      takeFrom?: Array<{ monsterName: string; cardName: string; count?: number }>;
+    }) => {
       if (!roomId) throw new Error('Room not selected');
       return loadPresetMutation.mutateAsync({ roomId, ...input });
     },

@@ -99,8 +99,10 @@ export {
 	cardRefusalSentence,
 	equipResultMessage,
 	isCardRefusalReason,
+	presetTakenMessage,
+	presetTakeQuestion,
 } from './characters/helpers/equip-message.js';
-export type { CardRefusalReason } from './characters/helpers/equip-message.js';
+export type { CardRefusalReason, PresetDonorLeft, PresetTake } from './characters/helpers/equip-message.js';
 export { allMonsters } from './monsters/index.js';
 export { MONSTER_TYPE_SUMMARIES, monsterTypeSummary } from './monsters/helpers/type-summaries.js';
 /** Roadmap 36's pinned-advantage rule and its harness switch. */

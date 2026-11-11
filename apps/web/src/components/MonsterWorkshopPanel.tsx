@@ -2,7 +2,8 @@ import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { usePixelMonsters } from '../hooks/usePixelMonsters.js';
 import { formatRelativeFromNow } from '../utils/format-relative.js';
 import CardSlot, { type WorkshopCardLocation } from './CardSlot.js';
-import PresetControl from './PresetControl.js';
+import PresetControl, { type PresetTakeFrom } from './PresetControl.js';
+import type { PresetLoadPlan } from '../lib/presetTakes.js';
 import LevelUpSheet, { type LevelUpGainsView } from './LevelUpSheet.js';
 // Reusing the ring roster's own hp math/bands rather than re-deriving them here — the two
 // bars must never drift apart on what counts as "hurt" vs "critical". Only the pure
@@ -73,7 +74,9 @@ type MonsterPanelProps = {
    */
   anotherMonsterInRing?: boolean;
   onSavePreset: (presetName: string) => void;
-  onLoadPreset: (presetName: string) => void;
+  onLoadPreset: (presetName: string, takeFrom?: PresetTakeFrom) => void;
+  /** Cards a preset needs that only other monsters hold; see `PresetControl.planLoad`. */
+  planPresetLoad?: (presetName: string) => PresetLoadPlan;
   onDeletePreset: (presetName: string) => void;
   isFilterActive?: boolean;
   isFilterTarget?: boolean;
@@ -134,6 +137,7 @@ export default function MonsterWorkshopPanel({
   anotherMonsterInRing = false,
   onSavePreset,
   onLoadPreset,
+  planPresetLoad,
   onDeletePreset,
   isFilterActive = false,
   isFilterTarget = false,
@@ -426,6 +430,7 @@ export default function MonsterWorkshopPanel({
         presets={monster.presets ?? {}}
         monsterName={monster.name}
         onLoad={onLoadPreset}
+        planLoad={planPresetLoad}
         onSave={onSavePreset}
         onDelete={onDeletePreset}
         disabled={busy || locked}

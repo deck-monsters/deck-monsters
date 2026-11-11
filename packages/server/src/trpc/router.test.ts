@@ -146,8 +146,11 @@ describe('trpc/router card management procedures', () => {
 		});
 		expect(result.monsters[0]!.battles).to.deep.equal({ wins: 3, losses: 1, total: 4 });
 		expect(result.unequippedDeck).to.deep.equal(['Blink']);
+		// Cards a monster holds are listed too (here Stonefang's Hit), so the Workshop can tell
+		// whether a preset load may take a card off another monster before it asks.
 		expect(result.cardCompatibility).to.deep.equal({
 			Blink: ['Mirebell'],
+			Hit: ['Stonefang'],
 		});
 		expect(result.items.character).to.deep.equal([
 			{
@@ -1002,7 +1005,74 @@ describe('trpc/router card management procedures', () => {
 			skipped: [{ cardName: 'Heal', reason: 'cannot_hold' }],
 			cardCount: null,
 			cardSlots: null,
+			taken: [],
+			donors: [],
 		});
+	});
+
+	it('passes an explicit take list and the ring to loadPreset, tells the donor\'s tabs, and stays on the workshop lane', async () => {
+		let received: Record<string, unknown> | undefined;
+		const published: Array<{ type?: string; payload?: Record<string, unknown> }> = [];
+		let lane = 0;
+		const ring = { contestants: [] };
+		const loadPreset = async (input: Record<string, unknown>) => {
+			received = input;
+			return {
+				equipped: 3,
+				requested: 3,
+				skippedCards: [],
+				skipped: [],
+				cardCount: 3,
+				cardSlots: 9,
+				presetName: 'raid',
+				monsterName: 'Stonefang',
+				taken: [{ cardName: 'Blast', fromMonsterName: 'Brass' }],
+				donors: [{ monsterName: 'Brass', cardCount: 8, cardSlots: 9 }],
+			};
+		};
+		const roomManager = {
+			assertMember: async () => undefined,
+			getGame: async () => ({ ring, characters: { [USER_ID]: { loadPreset } } }),
+			getEventBus: async () => ({ publish: (event: { type?: string; payload?: Record<string, unknown> }) => { published.push(event); } }),
+			runSerializedEngineWork: async (_roomId: string, fn: () => Promise<unknown>) => { lane += 1; return fn(); },
+		} as unknown as Parameters<typeof createRouter>[0];
+
+		const caller = createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false });
+		const result = await caller.game.loadPreset({
+			roomId: ROOM_ID,
+			monsterName: 'Stonefang',
+			presetName: 'raid',
+			takeFrom: [{ monsterName: 'Brass', cardName: 'Blast' }],
+		});
+
+		expect(lane).to.equal(1);
+		expect(received?.takeFrom).to.deep.equal([{ monsterName: 'Brass', cardName: 'Blast' }]);
+		expect(received?.ring).to.equal(ring);
+		// The engine channel is the silent one: it throws on a prompt, so this stays prompt-free.
+		const channel = received?.channel as (m: Record<string, unknown>) => Promise<unknown>;
+		const refused = await channel({ question: 'Take it?' }).catch((err: unknown) => err);
+		expect(refused).to.be.instanceOf(TRPCError);
+		expect(result.taken).to.deep.equal([{ cardName: 'Blast', fromMonsterName: 'Brass' }]);
+		expect(result.donors).to.deep.equal([{ monsterName: 'Brass', cardCount: 8, cardSlots: 9 }]);
+		// One equipped event for the target, one for the donor.
+		expect(published.filter((event) => event.type === 'card.equipped').map((event) => event.payload?.monsterName))
+			.to.deep.equal(['Stonefang', 'Brass']);
+	});
+
+	it('refuses an empty-named donor in the take list before reaching the engine', async () => {
+		let called = false;
+		const roomManager = {
+			assertMember: async () => undefined,
+			getGame: async () => ({ characters: { [USER_ID]: { loadPreset: async () => { called = true; } } } }),
+			getEventBus: async () => ({ publish: () => undefined }),
+			runSerializedEngineWork: async (_roomId: string, fn: () => Promise<unknown>) => fn(),
+		} as unknown as Parameters<typeof createRouter>[0];
+		const caller = createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false });
+		const err = await caller.game.loadPreset({
+			roomId: ROOM_ID, monsterName: 'Stonefang', presetName: 'raid', takeFrom: [{ monsterName: '', cardName: 'Blast' }],
+		}).catch((e: unknown) => e);
+		expect(err).to.be.instanceOf(TRPCError);
+		expect(called).to.equal(false);
 	});
 
 	it('routes game.equipCards through character.equipCards and returns summary', async () => {
