@@ -198,7 +198,14 @@ export function useGuidedStart(roomId: string | undefined): GuidedStep & { fight
 	useSyncExternalStore(subscribe, () => version, () => version);
 
 	const inventory = trpc.game.myInventory.useQuery({ roomId: roomId ?? '' }, { enabled: !!roomId, staleTime: 30_000 });
-	const history = trpc.game.consoleHistory.useQuery({ roomId: roomId ?? '' }, { enabled: !!roomId });
+	// Same options as ConsolePane's read of this query: it is one shared query, so a default
+	// here refetched the Console's history on every focus and reconnect whatever the pane asked
+	// for (baseline, "History is fetched again on every focus"). The guide latches its decision
+	// on the first load and never needs a second copy.
+	const history = trpc.game.consoleHistory.useQuery(
+		{ roomId: roomId ?? '' },
+		{ enabled: !!roomId, staleTime: Infinity, refetchOnWindowFocus: false, refetchOnReconnect: false },
+	);
 
 	const monsters = useMemo<GuidedMonster[] | undefined>(() => {
 		const rows = inventory.data?.monsters as InventoryMonster[] | undefined;

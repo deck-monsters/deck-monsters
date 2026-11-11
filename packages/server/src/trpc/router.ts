@@ -2605,9 +2605,14 @@ export function createRouter(roomManager: RoomManager, chat: ChatService = new C
 							yield { type: 'chat' as const, id: `chat-${message.id}`, payload: message };
 						}
 
-						// Wait for an event or 20 s, whichever comes first.
-						// The 20-second timeout sends a keep-alive heartbeat frame that
-						// prevents load-balancer idle timeouts (typically 30–60 s).
+						// Wait for an event or 8 s, whichever comes first.
+						// The 8-second timeout sends a keep-alive heartbeat frame that
+						// prevents load-balancer idle timeouts (typically 30–60 s) and gives
+						// the client something to watch: it declares the connection dead after
+						// 2.5 intervals (20 s, `HEARTBEAT_TIMEOUT_MS` in the web app's
+						// `utils/ring-feed-connection.ts`). It was 20 s, which left a silent
+						// stall unnoticed for 31–49 s (feed-stability-baseline C1). Keep the
+						// two in step: the client's timeout must stay a multiple of this.
 						let heartbeatTimer: ReturnType<typeof setTimeout> | null = null;
 						await new Promise<void>((res) => {
 							let settled = false;
@@ -2627,17 +2632,17 @@ export function createRouter(roomManager: RoomManager, chat: ChatService = new C
 
 							onAbort = () => finish();
 							// An event or chat message that landed since the drains above must not
-							// wait out the 20 s heartbeat.
+							// wait out the heartbeat interval.
 							if (queue.length > 0 || chatQueue.length > 0) {
 								finish();
 								return;
 							}
 							resolve = finish;
-							heartbeatTimer = setTimeout(finish, 20_000);
+							heartbeatTimer = setTimeout(finish, 8_000);
 							signal?.addEventListener('abort', onAbort, { once: true });
 						});
 
-						// If the queue is still empty after the wait it was a 20-s timeout —
+						// If the queue is still empty after the wait it was the heartbeat timeout —
 						// yield a private heartbeat frame so the TCP/WS connection stays alive.
 						if (queue.length === 0 && chatQueue.length === 0 && !signal?.aborted) {
 							const hbId = `${Date.now()}-heartbeat`;

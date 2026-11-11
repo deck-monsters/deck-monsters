@@ -8,7 +8,7 @@ import { lab, openLab, showSurface, measure, type FixtureName, type OpenOptions 
  * them is allowed to make a scenario easier. Everything here lives in the e2e folder: the lab
  * (`src/lab`) and the app are untouched.
  *
- * Time. The 50 s watchdog (useRingFeed.tsx HEARTBEAT_TIMEOUT_MS) and the lab's 20 s heartbeat
+ * Time. The 20 s watchdog (HEARTBEAT_TIMEOUT_MS in utils/ring-feed-connection.ts) and the lab's 8 s heartbeat
  * are in-page `setTimeout`/`setInterval`, so Playwright's clock (`page.clock`) drives both.
  * The clock is installed BEFORE navigation and left to flow naturally (never paused), so React,
  * Virtuoso's rAF and `performance.now` (which the timings module reads) all stay consistent.

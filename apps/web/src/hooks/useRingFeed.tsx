@@ -12,6 +12,12 @@ import type { GameEvent, ChatMessage } from '@deck-monsters/server/types';
 import { trpc } from '../lib/trpc.js';
 import { feedTimings } from '../lib/feed-timings.js';
 import { shouldAdvanceEventCursor } from '../utils/ring-feed-cursor.js';
+import {
+  HEARTBEAT_TIMEOUT_MS,
+  RESUME_GRACE_MS,
+  decideAfterResume,
+  reconnectDelayMs,
+} from '../utils/ring-feed-connection.js';
 import { useHandshake } from './useHandshake.js';
 
 export type TrackedRingFeedEvent = { id: string; data: GameEvent };
@@ -53,16 +59,14 @@ export type RingFeedApi = {
 };
 
 /**
- * How long to wait for *any* frame before treating the connection as dead.
- *
- * The server sends a keep-alive `heartbeat` every 20s (`trpc/router.ts`). Nothing used
- * to watch for those stopping, so `connected` only flipped when the transport itself
- * raised an error — and a connection that dies silently (a backgrounded phone, a network
- * that blackholes rather than resets) left the app showing no "reconnecting…" banner
- * while quietly missing events. 2.5x the interval tolerates a late frame without
- * declaring a healthy connection dead.
+ * Re-exported for the tests. The values and their reasoning live in
+ * `utils/ring-feed-connection.ts`: the server heartbeats every 8 s and a silent connection
+ * is declared dead after 20 s (2.5x), down from 20 s and 50 s (baseline C1). Nothing used
+ * to watch for heartbeats stopping, so a connection that died silently (a backgrounded
+ * phone, a network that blackholes rather than resets) left the app showing no
+ * "reconnecting…" banner while quietly missing events. See 10b-bugs-fixed.md #108.
  */
-export const HEARTBEAT_TIMEOUT_MS = 50_000;
+export { HEARTBEAT_TIMEOUT_MS };
 
 export const RingFeedContext = createContext<RingFeedApi | null>(null);
 
@@ -98,6 +102,17 @@ export function useRingFeed(roomId: string): RingFeedApi {
   const roomIdRef = useRef(roomId);
   roomIdRef.current = roomId;
   const heartbeatTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Resubscribe backoff (baseline C6): the pending retry, and how many have failed since the
+  // last handshake.
+  const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const failuresRef = useRef(0);
+  // `handleConnectionLost` and `armWatchdog` call each other; this breaks the cycle.
+  const armWatchdogRef = useRef<(ms: number) => void>(() => undefined);
+  // The resume check's grace timer, and the wall-clock facts it decides from. Wall clock
+  // (`Date.now`), not `performance.now`: some browsers stop the latter while the device sleeps.
+  const resumeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastFrameWallRef = useRef<number | null>(null);
+  const offlineSinceFrameRef = useRef(false);
 
   // Timing instrumentation only (lib/feed-timings.ts). Per-room: reset with the cursor below.
   const timingStartedRef = useRef(false);
@@ -128,19 +143,38 @@ export function useRingFeed(roomId: string): RingFeedApi {
     firstHandshakeRecordedRef.current = false;
     awaitingReconnectRef.current = false;
     lastFrameAtRef.current = null;
-    // The previous room's watchdog must die with it. RingFeedProvider is not re-keyed
+    lastFrameWallRef.current = null;
+    offlineSinceFrameRef.current = false;
+    failuresRef.current = 0;
+    // The previous room's timers must die with it. RingFeedProvider is not re-keyed
     // per room, so a timer left armed here fires later against the *new* room and drops
-    // a healthy connection into "reconnecting…", which only a real handshake clears.
+    // a healthy connection into "reconnecting…", which only a real handshake clears. The
+    // same goes for a pending backoff retry (it would resubscribe the new room with the old
+    // room's cursor) and a resume check.
+    for (const timerRef of [heartbeatTimerRef, retryTimerRef, resumeTimerRef]) {
+      if (timerRef.current !== null) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+    }
+  }
+
+  const clearWatchdog = useCallback(() => {
     if (heartbeatTimerRef.current !== null) {
       clearTimeout(heartbeatTimerRef.current);
       heartbeatTimerRef.current = null;
     }
-  }
+  }, []);
 
   /**
    * Mark the subscription dead and re-subscribe from the last event we saw. Shared by
-   * the transport's own `onError` and the heartbeat watchdog so both produce identical
-   * state and the same resume cursor.
+   * the transport's own `onError`, the heartbeat watchdog and the resume check so all
+   * produce identical state and the same resume cursor.
+   *
+   * The resubscribe is paced (baseline C6): the first retry is immediate, later ones back
+   * off (`reconnectDelayMs`). It used to be immediate every time, so a server that was down
+   * for 5 s saw 101 subscribe attempts. `reconnecting` stays true while a retry waits, and
+   * a second loss signal while one is already waiting adds nothing.
    */
   const handleConnectionLost = useCallback(() => {
     if (lastFrameAtRef.current !== null) {
@@ -151,47 +185,137 @@ export function useRingFeed(roomId: string): RingFeedApi {
     awaitingReconnectRef.current = true;
     setConnected(false);
     setReconnecting(true);
-    setSubLastEventId(latestTrackedEventIdRef.current);
-    setResumeAttempt((attempt) => attempt + 1);
-  }, []);
+    // The old subscription is dead; its watchdog must not fire into the retry. The retry
+    // arms a fresh one when it resubscribes.
+    clearWatchdog();
+    if (retryTimerRef.current !== null) return;
+
+    const resubscribe = () => {
+      retryTimerRef.current = null;
+      // The cursor is read when the retry runs, not when the loss was noticed, so a frame
+      // that landed in between is not replayed.
+      setSubLastEventId(latestTrackedEventIdRef.current);
+      setResumeAttempt((attempt) => attempt + 1);
+      // A resubscribe that never delivers a handshake (a dead socket under the new
+      // subscription) must still be noticed, or `reconnecting` would last forever.
+      armWatchdogRef.current(HEARTBEAT_TIMEOUT_MS);
+    };
+    const delay = reconnectDelayMs(failuresRef.current);
+    failuresRef.current += 1;
+    feedTimings.count('conn.resubscribe');
+    if (delay === 0) resubscribe();
+    else retryTimerRef.current = setTimeout(resubscribe, delay);
+  }, [clearWatchdog]);
+
+  /** (Re)start the watchdog: `ms` from now with no frame means the connection is dead. */
+  const armWatchdog = useCallback(
+    (ms: number) => {
+      clearWatchdog();
+      heartbeatTimerRef.current = setTimeout(() => {
+        heartbeatTimerRef.current = null;
+        /*
+         * A hidden page's timers are throttled or frozen, and one that comes due while
+         * suspended fires the moment the page wakes, before the frames that queued up in the
+         * meantime are dispatched. Silence while hidden proves nothing (bug 127), so do not
+         * act on it: the resume check below tests the connection when the page is shown.
+         */
+        if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
+          feedTimings.count('conn.watchdog.deferred_hidden');
+          return;
+        }
+        feedTimings.count('conn.lost.watchdog');
+        handleConnectionLost();
+      }, ms);
+    },
+    [clearWatchdog, handleConnectionLost]
+  );
+  armWatchdogRef.current = armWatchdog;
 
   /** Restart the watchdog. Called for every inbound frame, heartbeats included. */
   const noteFrameReceived = useCallback(() => {
-    if (heartbeatTimerRef.current !== null) clearTimeout(heartbeatTimerRef.current);
-    heartbeatTimerRef.current = setTimeout(() => {
-      feedTimings.count('conn.lost.watchdog');
-      handleConnectionLost();
-    }, HEARTBEAT_TIMEOUT_MS);
-  }, [handleConnectionLost]);
+    lastFrameWallRef.current = Date.now();
+    offlineSinceFrameRef.current = false;
+    armWatchdog(HEARTBEAT_TIMEOUT_MS);
+  }, [armWatchdog]);
 
   /*
-   * A phone that locks, or a tab switched away from, has its timers throttled or frozen —
-   * and a `setTimeout` that came due while suspended fires the moment the page is shown
-   * again. The watchdog then reports a dead connection purely because time passed with the
-   * page in the background, which is not evidence of anything: no frames can arrive while
-   * the page is suspended whether the socket is healthy or not.
+   * Test the connection at the moments a test is cheap: the page becoming visible, the page
+   * being restored (`pageshow`), and the network coming back (`online`).
    *
-   * So on becoming visible, give the connection a fresh full interval to prove itself
-   * instead of acting on a timer that expired in the background. A genuinely dead
-   * connection still trips it one interval later. See 10b-bugs-fixed.md #127.
+   * History. A phone that locks, or a tab switched away from, has its timers throttled or
+   * frozen, and a `setTimeout` that came due while suspended fires the moment the page is
+   * shown, ahead of the frames queued meanwhile. The watchdog then reported a dead connection
+   * purely because time passed in the background (#127). The first fix re-armed a fresh full
+   * timeout on becoming visible, which is safe but means a phone unlocked with a *dead*
+   * socket waited a further full timeout (baseline C2), and `online`/`offline` were ignored
+   * entirely (C3).
+   *
+   * Now: on a resume, disarm the watchdog (an overdue timer must not beat the queued frames),
+   * give the queue `RESUME_GRACE_MS` to deliver, and then decide (`decideAfterResume`): a
+   * frame since the resume is proof of life; otherwise a last frame older than a heartbeat
+   * interval plus a margin is a connection that missed a heartbeat, and we resubscribe at
+   * once instead of waiting out the timeout. A healthy page frozen for minutes whose queued
+   * frames were discarded can reach the second branch with nothing wrong: the cost is one
+   * resubscribe that replays from the cursor (the panes dedupe by id) and, when it recovers
+   * in under a second and nothing was missed, no divider in the feed.
+   *
+   * `offline` shows the banner at once but does not tear the subscription down: the socket
+   * may well outlive a blip, and a frame clears the banner (#128).
    */
   useEffect(() => {
-    if (typeof document === 'undefined') return;
+    if (typeof document === 'undefined' || typeof window === 'undefined') return;
 
-    function onVisibilityChange() {
-      if (document.visibilityState !== 'visible') return;
-      if (heartbeatTimerRef.current === null) return;
-      feedTimings.count('conn.visibility.reset');
-      noteFrameReceived();
+    function runResumeCheck(resumedAt: number) {
+      resumeTimerRef.current = null;
+      const decision = decideAfterResume({
+        now: Date.now(),
+        lastFrameAt: lastFrameWallRef.current,
+        resumedAt,
+        offlineSinceLastFrame: offlineSinceFrameRef.current,
+      });
+      if (decision.action === 'lost') {
+        feedTimings.count('conn.lost.resume');
+        handleConnectionLost();
+      } else if (decision.action === 'watch') {
+        armWatchdog(decision.remainingMs);
+      }
     }
 
-    document.addEventListener('visibilitychange', onVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', onVisibilityChange);
-  }, [noteFrameReceived]);
+    function onResume() {
+      if (document.visibilityState === 'hidden') return;
+      feedTimings.count('conn.visibility.reset');
+      if (lastFrameWallRef.current === null) return;
+      clearWatchdog();
+      if (resumeTimerRef.current !== null) clearTimeout(resumeTimerRef.current);
+      const resumedAt = Date.now();
+      resumeTimerRef.current = setTimeout(() => runResumeCheck(resumedAt), RESUME_GRACE_MS);
+    }
+
+    function onOffline() {
+      feedTimings.count('conn.offline');
+      offlineSinceFrameRef.current = true;
+      if (lastFrameWallRef.current === null) return;
+      setConnected(false);
+      setReconnecting(true);
+    }
+
+    document.addEventListener('visibilitychange', onResume);
+    window.addEventListener('pageshow', onResume);
+    window.addEventListener('online', onResume);
+    window.addEventListener('offline', onOffline);
+    return () => {
+      document.removeEventListener('visibilitychange', onResume);
+      window.removeEventListener('pageshow', onResume);
+      window.removeEventListener('online', onResume);
+      window.removeEventListener('offline', onOffline);
+    };
+  }, [armWatchdog, clearWatchdog, handleConnectionLost]);
 
   useEffect(
     () => () => {
-      if (heartbeatTimerRef.current !== null) clearTimeout(heartbeatTimerRef.current);
+      for (const timerRef of [heartbeatTimerRef, retryTimerRef, resumeTimerRef]) {
+        if (timerRef.current !== null) clearTimeout(timerRef.current);
+      }
     },
     []
   );
@@ -242,13 +366,26 @@ export function useRingFeed(roomId: string): RingFeedApi {
     for (const listener of chatListenersRef.current) listener(item);
   }, []);
 
-  const seedCursor = useCallback((eventId: string) => {
-    if (!advanceTrackedCursor(eventId)) return;
-    setSubLastEventId((prev) => {
-      if (!shouldAdvanceEventCursor(eventId, prev)) return prev;
-      return eventId;
-    });
-  }, [advanceTrackedCursor]);
+  /*
+   * Advances the ref only, never the subscription input (baseline C4).
+   *
+   * This used to also write the history tail into the `lastEventId` state, which is part of
+   * the subscription's input. Changing the input re-subscribes, so every page load opened the
+   * feed twice: the second handshake read as a reconnect (a false "reconnected" divider
+   * about 2.5 s after load) and on a slow link the first handshake took two round trips.
+   * Nothing is lost by not doing it: a first subscribe with no cursor makes the server replay
+   * its last 100 events, and the panes drop anything they already hold by id. The input's
+   * cursor changes only when the connection is declared lost (`handleConnectionLost`) or
+   * the room changes. The transport's own socket-level resume needs nothing from here: tRPC's
+   * wsClient keeps the id of the last tracked frame it received on the request and re-sends
+   * it when the socket reconnects (`wsLink` `request.message.params.lastEventId`).
+   */
+  const seedCursor = useCallback(
+    (eventId: string) => {
+      advanceTrackedCursor(eventId);
+    },
+    [advanceTrackedCursor]
+  );
 
   trpc.game.ringFeed.useSubscription(
     { roomId, lastEventId: subLastEventId, resumeAttempt },
@@ -256,6 +393,11 @@ export function useRingFeed(roomId: string): RingFeedApi {
       onData(frame: TrackedRingFeedEvent | ChatFrame) {
         feedTimings.count('conn.frame');
         lastFrameAtRef.current = timingNow();
+        // A frame is proof of life, so a resubscribe still waiting out its backoff is moot.
+        if (retryTimerRef.current !== null) {
+          clearTimeout(retryTimerRef.current);
+          retryTimerRef.current = null;
+        }
         // Chat frames are untracked and carry no `data`. Handle them first and return, so
         // nothing below (the room guard, the cursor, pane fan-out) ever sees one.
         if (isChatFrame(frame)) {
@@ -289,6 +431,7 @@ export function useRingFeed(roomId: string): RingFeedApi {
 
         if (event.type === 'handshake') {
           feedTimings.count('conn.handshake');
+          failuresRef.current = 0;
           if (!firstHandshakeRecordedRef.current) {
             firstHandshakeRecordedRef.current = true;
             feedTimings.since('conn.hook.first_render', 'conn.time_to_first_handshake');

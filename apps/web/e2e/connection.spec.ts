@@ -9,6 +9,7 @@ import {
   eventRowsBetween,
   flush,
   installProbe,
+  loadFixture,
   note,
   openClocked,
   probeLog,
@@ -31,20 +32,25 @@ import {
  * socket, the real network, the server's replay (bus buffer, `room_events` paging, caps) and
  * the proxy are all absent. A later real-server suite owns those.
  *
- * Time: scenarios with the 50 s watchdog use Playwright's clock (see connection-helpers.ts),
+ * Time: scenarios with the 20 s watchdog use Playwright's clock (see connection-helpers.ts),
  * so they take seconds, not minutes. The first-load and slow-link scenarios (7, 8) use real
  * time because the quantity measured is real latency.
  *
  * Every number is recorded with `measure()` / an annotation. The hard expectations are
  * correctness (nothing lost, nothing doubled, no false "reconnecting") and the app's own
- * documented contract (50 s watchdog); they are `expect.soft` so one failure never hides the
+ * documented contract (20 s watchdog, 8 s heartbeat, 2 s resume grace); they are `expect.soft` so one failure never hides the
  * remaining numbers. A slow-but-in-contract behaviour is a finding in the report, not a failure.
  */
 
 const FIXTURE = 'duel';
 const HISTORY = 60;
-const WATCHDOG_MS = 50_000;
-const HEARTBEAT_MS = 20_000;
+// useRingFeed's HEARTBEAT_TIMEOUT_MS / the server's (and the lab's) heartbeat interval.
+const WATCHDOG_MS = 20_000;
+const HEARTBEAT_MS = 8_000;
+// Notice a silent stall within the watchdog plus a second's slack; recover from a resume within
+// the resume grace (2 s) plus a second's slack.
+const NOTICE_BUDGET_MS = WATCHDOG_MS + 1_000;
+const RESUME_BUDGET_MS = 3_000;
 const MARKER_GRACE_MS = 2_500; // RingPane RECONNECT_MARKER_GRACE_MS
 
 type Kinds = ProbeEntry['kind'];
@@ -98,15 +104,17 @@ function lostAfter(snap: { marks: Record<string, number> }, from: number): numbe
 
 /**
  * Advance until the watchdog trips: coarse steps while it cannot have, fine ones near the
- * earliest it could (the best phase trips ~31 s after the fault). The trip time itself comes from
+ * earliest it could (the best phase trips ~13 s after the fault). The trip time itself comes from
  * the app's own `conn.lost` mark, so the stepping only decides how long the test waits.
  */
-async function waitForTrip(page: Page, maxMs = 90_000, coarseMs = 28_000): Promise<{ met: boolean }> {
-  await advance(page, coarseMs, { stepMs: 2_000, until: (s) => (s.counters['conn.lost.watchdog'] ?? 0) >= 1 });
-  return advance(page, maxMs - coarseMs, { stepMs: 250, until: (s) => (s.counters['conn.lost.watchdog'] ?? 0) >= 1 });
+async function waitForTrip(page: Page, maxMs = 60_000, coarseMs = 8_000): Promise<{ met: boolean }> {
+  await advance(page, coarseMs, { stepMs: 2_000, until: lostByTimer });
+  return advance(page, maxMs - coarseMs, { stepMs: 250, until: lostByTimer });
 }
 
-const watchdogTripped = (s: { counters: Record<string, number> }) => (s.counters['conn.lost.watchdog'] ?? 0) >= 1;
+/** The app declared the connection lost by its watchdog or by the resume check (not by a transport error). */
+const lostByTimer = (s: { counters: Record<string, number> }) =>
+  (s.counters['conn.lost.watchdog'] ?? 0) + (s.counters['conn.lost.resume'] ?? 0) >= 1;
 
 /**
  * Let the load settle (the first-load "reconnected" divider's grace period passes) and put a live
@@ -132,6 +140,21 @@ function expectNoLossNoDup(a: Audit): void {
   expect.soft(a.lost, 'events published but not rendered').toBe(0);
   expect.soft(a.duplicated, 'rows rendered more than once').toBe(0);
   expect.soft(a.order, 'rendered order matches publish order').toBe('ok');
+  expectNoLoneReconnected(a);
+}
+
+/** A "reconnected" divider must never appear without a "connection lost" divider right before its bracket (baseline C4/C5). */
+function expectNoLoneReconnected(a: Audit): void {
+  let lossOpen = false;
+  let lone = 0;
+  for (const m of a.markers) {
+    if (m.text === 'connection lost') lossOpen = true;
+    else if (m.text === 'reconnected') {
+      if (!lossOpen) lone += 1;
+      lossOpen = false;
+    }
+  }
+  expect.soft(lone, 'a "reconnected" divider with no "connection lost" before it').toBe(0);
 }
 
 test.describe('connection scenarios', () => {
@@ -166,7 +189,17 @@ test.describe('connection scenarios', () => {
 
     const a = await settleThenAudit(page, FIXTURE, 'drop');
     expectNoLossNoDup(a);
-    expect.soft(a.markers.map((m) => m.text), 'dividers after a clean drop').toEqual(['you joined here', 'connection lost', 'reconnected']);
+    // A drop that recovers inside a second with nothing missed leaves no dividers (the banner
+    // and header word still showed); if the replay did carry events, both dividers bracket
+    // them. Never one without the other.
+    const dividers = a.markers.map((m) => m.text);
+    note(`dividers after a clean drop: ${JSON.stringify(dividers)}`);
+    measure('drop.dividers', dividers.length - 1, ' beyond "you joined here"');
+    expect.soft(
+      dividers,
+      'dividers after a clean drop: none, or the matching pair'
+    ).toEqual(expect.arrayContaining(['you joined here']));
+    expect.soft(dividers.filter((d) => d === 'connection lost').length).toBe(dividers.filter((d) => d === 'reconnected').length);
   });
 
   // ─────────────────────────────────────────────────────────────────────────────────────
@@ -182,7 +215,7 @@ test.describe('connection scenarios', () => {
     await advance(page, 1_000, { stepMs: 50 });
     await lab(page, 'push', 20);
     const publishedAt = await clockNow(page);
-    await advance(page, 7_000, { stepMs: 50 });
+    await advance(page, 11_000, { stepMs: 50 });
 
     const log = await probeLog(page);
     const conn = (await lab<Array<{ kind: string; at: number }>>(page, 'connectionLog')).slice(logBefore);
@@ -202,8 +235,14 @@ test.describe('connection scenarios', () => {
     note(
       `attempt gaps (ms, first 8): ${gaps.slice(0, 8).join(',')}; saw: ${describeAdmissions(log, faultAt)}; events pushed at +${Math.round(publishedAt - faultAt)}ms`
     );
-    // No backoff would be 50 ms apart (the lab's fail delay); a backoff would grow.
-    note(`backoff? ${gaps.length > 3 && gaps[gaps.length - 1]! > gaps[0]! * 2 ? 'grows' : 'none (constant)'}`);
+    // No backoff would be 50 ms apart (the lab's fail delay); a backoff grows.
+    note(`backoff? ${gaps.length > 3 && gaps[gaps.length - 1]! > gaps[0]! * 2 ? 'grows' : gaps.length <= 3 ? 'few attempts' : 'none (constant)'}`);
+    // Baseline C6: 101 attempts in this outage before the backoff. 0, ~0.5, ~1.5, ~3.5 s are the
+    // four that land inside the 5 s outage, plus the one that gets through.
+    expect.soft(attempts.length, 'subscribe attempts during a 5 s outage').toBeLessThanOrEqual(8);
+    expect.soft(restoredAt, 'the link was restored at all').not.toBeNull();
+    // Recovery is at most one backoff step (4 s, plus jitter) after the link returns.
+    expect.soft(restoredAt === null ? Infinity : restoredAt - faultAt - 5_000, 'recovered within one backoff step of the link returning').toBeLessThanOrEqual(5_000);
 
     const a = await settleThenAudit(page, FIXTURE, 'outage');
     expectNoLossNoDup(a);
@@ -212,7 +251,7 @@ test.describe('connection scenarios', () => {
   // ─────────────────────────────────────────────────────────────────────────────────────
   for (const phase of [
     { id: '3a', title: 'stall just after a heartbeat (worst phase)', stallAfterHeartbeatMs: 1_000 },
-    { id: '3b', title: 'stall just before the next heartbeat (best phase)', stallAfterHeartbeatMs: 19_000 },
+    { id: '3b', title: 'stall just before the next heartbeat (best phase)', stallAfterHeartbeatMs: 7_000 },
   ]) {
     test(`${phase.id}. silent stall, 15 events published, nothing else (${phase.title})`, async ({ page }) => {
       await openClocked(page, FIXTURE, { history: HISTORY });
@@ -242,6 +281,7 @@ test.describe('connection scenarios', () => {
       measure('stall.conn.gap_before_lost', mid.durations['conn.gap_before_lost'] ?? -1, 'ms');
       measure('stall.watchdogCount', mid.counters['conn.lost.watchdog'] ?? 0, '');
       measure('stall.visibilityResets', mid.counters['conn.visibility.reset'] ?? 0, '');
+      measure('stall.resumeTrips', mid.counters['conn.lost.resume'] ?? 0, '');
       measure('stall.lastFrameToStall', WATCHDOG_MS - notice.ms, 'ms');
       const rowsDuringSilence = log.filter((e) => e.t >= faultAt && e.t < faultAt + notice.ms - 1 && e.kind === 'row').length;
       measure('stall.rowsShownWhileSilent', rowsDuringSilence, '');
@@ -268,7 +308,7 @@ test.describe('connection scenarios', () => {
         `markers=${JSON.stringify(a.markers)}; events between 'connection lost' and 'reconnected'=${between} (published during stall: ${publishedDuring}); the loss was noticed ${Math.round(notice.ms / 1000)}s after the fault`
       );
       expect.soft(between, 'events published during the silence sit between the dividers').toBe(publishedDuring);
-      expect.soft(notice.ms, 'noticed within the documented watchdog').toBeLessThanOrEqual(WATCHDOG_MS + 1_000);
+      expect.soft(notice.ms, 'noticed within the documented watchdog (21 s)').toBeLessThanOrEqual(NOTICE_BUDGET_MS);
       expect.soft(notice.ms, 'noticed at all').toBeGreaterThan(0);
       expect.soft(r.met, 'the app noticed at all').toBe(true);
     });
@@ -287,42 +327,52 @@ test.describe('connection scenarios', () => {
     measure('quietStall.notice', notice, 'ms');
     const a = await settleThenAudit(page, FIXTURE, 'quietStall');
     const dividers = a.markers.map((m) => m.text);
-    note(`dividers: ${JSON.stringify(dividers)} (the 'connection lost' divider is skipped when the tail is already a divider)`);
+    note(`dividers: ${JSON.stringify(dividers)} (the tail was a divider when the loss came)`);
     measure('quietStall.lostDividerDrawn', dividers.includes('connection lost') ? 1 : 0, '');
     expectNoLossNoDup(a);
     expect.soft(dividers, 'a loss that is later followed by "reconnected" has a matching "connection lost"').toContain('connection lost');
   });
 
   // ─────────────────────────────────────────────────────────────────────────────────────
-  test('4a. silent stall, page hidden 30 s, then visible', async ({ page }) => {
-    await openClocked(page, FIXTURE, { history: HISTORY });
-    await installProbe(page);
-    await liveTail(page);
-    await lab(page, 'stall');
-    await advance(page, 1_000, { stepMs: 500 });
-    await setVisibility(page, 'hidden');
-    await advance(page, 30_000, { stepMs: 1_000 });
-    await lab(page, 'push', 10);
-    const midLog = await probeLog(page);
-    const visibleAt = await clockNow(page);
-    await setVisibility(page, 'visible');
-    const r = await waitForTrip(page);
-    const snap = await snapshot(page);
-    const notice = { ms: lostAfter(snap, visibleAt) ?? -1 };
-    await advance(page, 3_000, { stepMs: 50 });
-    const log2 = await probeLog(page);
-    measure('hidden30.admittedWhileHidden', firstAdmission(midLog, 0) ? 1 : 0, '');
-    measure('hidden30.lostMarkedWhileHidden', snap.marks['conn.lost'] !== undefined && snap.marks['conn.lost'] < visibleAt ? 1 : 0, '');
-    measure('hidden30.visibleToNotice', notice.ms, 'ms');
-    measure('hidden30.visibleToFirstRow', firstRowAfter(log2, visibleAt) ?? -1, 'ms');
-    measure('hidden30.visibilityResets', snap.counters['conn.visibility.reset'] ?? 0, '');
-    measure('hidden30.gap_before_lost', snap.durations['conn.gap_before_lost'] ?? -1, 'ms');
-    note(`saw after visible: ${describeAdmissions(log2, visibleAt)}`);
-    const a = await settleThenAudit(page, FIXTURE, 'hidden30');
-    expectNoLossNoDup(a);
-    expect.soft(r.met).toBe(true);
-    expect.soft(notice.ms).toBeLessThanOrEqual(WATCHDOG_MS + 1_000);
-  });
+  for (const hiddenMs of [10_000, 30_000]) {
+    test(`4a. silent stall, page hidden ${hiddenMs / 1000} s, then visible`, async ({ page }) => {
+      await openClocked(page, FIXTURE, { history: HISTORY });
+      await installProbe(page);
+      await liveTail(page);
+      await lab(page, 'stall');
+      await advance(page, 1_000, { stepMs: 500 });
+      await setVisibility(page, 'hidden');
+      await advance(page, hiddenMs, { stepMs: 1_000 });
+      await lab(page, 'push', 10);
+      const midLog = await probeLog(page);
+      const visibleAt = await clockNow(page);
+      await setVisibility(page, 'visible');
+      const r = await waitForTrip(page);
+      const snap = await snapshot(page);
+      const lostMark = snap.marks['conn.lost'];
+      const notice = { ms: lostAfter(snap, visibleAt) ?? -1 };
+      await advance(page, 3_000, { stepMs: 50 });
+      const log2 = await probeLog(page);
+      const p = `hidden${hiddenMs / 1000}`;
+      measure(`${p}.admittedWhileHidden`, firstAdmission(midLog, 0) ? 1 : 0, '');
+      measure(`${p}.lostMarkedWhileHidden`, lostMark !== undefined && lostMark < visibleAt ? 1 : 0, '');
+      measure(`${p}.visibleToNotice`, notice.ms, 'ms');
+      measure(`${p}.visibleToFirstRow`, firstRowAfter(log2, visibleAt) ?? -1, 'ms');
+      measure(`${p}.visibilityResets`, snap.counters['conn.visibility.reset'] ?? 0, '');
+      measure(`${p}.resumeTrips`, snap.counters['conn.lost.resume'] ?? 0, '');
+      measure(`${p}.gap_before_lost`, snap.durations['conn.gap_before_lost'] ?? -1, 'ms');
+      note(`saw after visible: ${describeAdmissions(log2, visibleAt)}`);
+      const a = await settleThenAudit(page, FIXTURE, p);
+      expectNoLossNoDup(a);
+      expect.soft(r.met).toBe(true);
+      // Dead and hidden: the loss is found by the watchdog while the page is visible, or by the
+      // resume check within its grace of the page being shown. Never a further full timeout (C2).
+      expect.soft(lostMark === undefined ? Infinity : lostMark - visibleAt, 'recovered within 3 s of becoming visible').toBeLessThanOrEqual(RESUME_BUDGET_MS);
+      if (hiddenMs === 10_000) {
+        expect.soft(snap.counters['conn.lost.resume'] ?? 0, 'found by the resume check, not by a timer').toBe(1);
+      }
+    });
+  }
 
   test('4b. silent stall, page hidden 5 minutes (timers keep running, throttled), then visible', async ({ page }) => {
     await openClocked(page, FIXTURE, { history: HISTORY });
@@ -407,10 +457,12 @@ test.describe('connection scenarios', () => {
     const log = await probeLog(page);
     const snap = await snapshot(page);
     measure('healthy5m.watchdog', snap.counters['conn.lost.watchdog'] ?? 0, '');
+    measure('healthy5m.resumeTrips', snap.counters['conn.lost.resume'] ?? 0, '');
     measure('healthy5m.resubscribes', (await lab<Array<{ kind: string }>>(page, 'connectionLog')).filter((c) => c.kind === 'subscribe').length, '');
     measure('healthy5m.heartbeats', snap.counters['conn.heartbeat'] ?? 0, '');
     note(`over ${Math.round(((await clockNow(page)) - hiddenAt) / 1000)}s; saw: ${describeAdmissions(log, hiddenAt)}`);
     expect.soft(snap.counters['conn.lost.watchdog'] ?? 0, 'no watchdog trip on a healthy connection').toBe(0);
+    expect.soft(snap.counters['conn.lost.resume'] ?? 0, 'no resume-check trip on a healthy connection').toBe(0);
     expect.soft(log.filter((e) => e.kind === 'banner+').length, 'no reconnecting banner').toBe(0);
     const a = await settleThenAudit(page, FIXTURE, 'healthy5m');
     expectNoLossNoDup(a);
@@ -431,12 +483,15 @@ test.describe('connection scenarios', () => {
     const log = await probeLog(page);
     const snap = await snapshot(page);
     measure('healthyFrozen.watchdog', snap.counters['conn.lost.watchdog'] ?? 0, '');
+    measure('healthyFrozen.resumeTrips', snap.counters['conn.lost.resume'] ?? 0, '');
     measure('healthyFrozen.resubscribes', (await lab<Array<{ kind: string }>>(page, 'connectionLog')).filter((c) => c.kind === 'subscribe').length, '');
     note(`saw (jump excluded): ${describeAdmissions(log, hiddenAt)}`);
     const a = await settleThenAudit(page, FIXTURE, 'healthyFrozen');
     expectNoLossNoDup(a);
     // Pages that are frozen with a healthy socket and then thawed should not announce a loss.
     expect.soft(snap.counters['conn.lost.watchdog'] ?? 0, 'no false watchdog trip after a thaw').toBe(0);
+    expect.soft(snap.counters['conn.lost.resume'] ?? 0, 'no false resume-check trip after a thaw').toBe(0);
+    expect.soft(a.markers.map((m) => m.text), 'no dividers after a healthy thaw').not.toContain('connection lost');
   });
 
   // ─────────────────────────────────────────────────────────────────────────────────────
@@ -451,7 +506,19 @@ test.describe('connection scenarios', () => {
     });
     await lab(page, 'stall');
     await lab(page, 'push', 8);
-    const historyBefore = (await lab<Array<{ via: string }>>(page, 'deliveries')).filter((d) => d.via === 'history').length;
+    // History deliveries split by who asked: a public event came from `game.ringHistory`, a
+    // private one from `game.consoleHistory`.
+    const historyDeliveries = async () => {
+      const fixture = loadFixture(FIXTURE);
+      const scopeOf = new Map(fixture.events.map((e) => [e.id, e.data.scope]));
+      const all = (await lab<Array<{ id: string; via: string }>>(page, 'deliveries')).filter((d) => d.via === 'history');
+      return {
+        ring: all.filter((d) => scopeOf.get(d.id) === 'public').length,
+        console: all.filter((d) => scopeOf.get(d.id) !== 'public').length,
+        total: all.length,
+      };
+    };
+    const historyBefore = await historyDeliveries();
     const subsBefore = (await lab<Array<{ kind: string }>>(page, 'connectionLog')).filter((c) => c.kind === 'subscribe').length;
     const faultAt = await clockNow(page);
 
@@ -465,15 +532,29 @@ test.describe('connection scenarios', () => {
     const afterOnline = await probeLog(page);
     const subsMid = (await lab<Array<{ kind: string }>>(page, 'connectionLog')).filter((c) => c.kind === 'subscribe').length;
     const net = await page.evaluate(() => (window as unknown as { __net: Array<{ type: string }> }).__net.map((n) => n.type));
-    const historyMid = (await lab<Array<{ via: string }>>(page, 'deliveries')).filter((d) => d.via === 'history').length;
+    const historyMid = await historyDeliveries();
+    const lostMark = (await snapshot(page)).marks['conn.lost'];
 
     measure('offline.browserEventsSeen', net.length, '');
     measure('offline.admittedWithin5sOfOffline', firstAdmission(afterOffline, offlineAt) ? 1 : 0, '');
     measure('offline.admittedWithin5sOfOnline', firstAdmission(afterOnline, onlineAt) ? 1 : 0, '');
     measure('offline.resubscribesOnEvents', subsMid - subsBefore, '');
-    measure('offline.historyRefetchedOnOnline', historyMid - historyBefore, ' deliveries');
+    measure('offline.historyRefetchedOnOnline', historyMid.total - historyBefore.total, ' deliveries');
+    measure('offline.ringHistoryRefetchedOnOnline', historyMid.ring - historyBefore.ring, ' deliveries');
+    measure('offline.consoleHistoryRefetchedOnOnline', historyMid.console - historyBefore.console, ' deliveries');
+    measure('offline.onlineToResubscribe', lostMark === undefined ? -1 : lostMark - onlineAt, 'ms');
+    expect.soft(firstAdmission(afterOffline, offlineAt), 'the banner shows within 5 s of going offline').not.toBeNull();
+    expect.soft(lostMark === undefined ? Infinity : lostMark - onlineAt, '`online` with a stalled transport recovers within 3 s').toBeLessThanOrEqual(RESUME_BUDGET_MS);
+    expect.soft(subsMid - subsBefore, 'resubscribed after `online`').toBeGreaterThanOrEqual(1);
+    // The pane ignores every history result after the first, so none is fetched again (baseline "History is fetched again on every focus").
+    expect.soft(historyMid.ring - historyBefore.ring, 'the Ring pane does not refetch its history on `online`').toBe(0);
+    // `useGuidedStart` (hooks/useGuidedStart.ts:201) reads the same query with react-query's
+    // defaults, and any observer asking for a refetch refetches the shared query, whatever the
+    // Console pane asked for. Its options need the same three flags (it ignores later results).
+    expect.soft(historyMid.console - historyBefore.console, 'nobody refetches the Console history on `online`').toBe(0);
 
-    // Then the watchdog is still the only thing that notices.
+    // The browser's `offline` shows the banner at once (the transport is not torn down), and
+    // `online` tests the connection: no frame inside the grace means resubscribe.
     const r = await waitForTrip(page);
     const log = await probeLog(page);
     measure('offline.faultToNotice', lostAfter(await snapshot(page), faultAt) ?? -1, 'ms');
@@ -524,7 +605,7 @@ test.describe('connection scenarios', () => {
     await openLab(page, FIXTURE, { history: HISTORY });
     await reopenWithLatency(page, FIXTURE, 3_000, HISTORY);
     await showSurface(page, 'The Ring');
-    const samples: Array<{ at: number; ringWaiting: boolean; ringRows: number; consolePlaceholder: boolean; consoleRows: number; headerConnecting: boolean }> = [];
+    const samples: Array<{ at: number; ringWaiting: boolean; ringRows: number; consolePlaceholder: boolean; consoleLoading: boolean; consoleRows: number; headerConnecting: boolean }> = [];
     const start = Date.now();
     let shot = false;
     for (;;) {
@@ -536,6 +617,7 @@ test.describe('connection scenarios', () => {
           ringWaiting: /Waiting for fight events/.test(ring?.textContent ?? ''),
           ringRows: ring?.querySelectorAll('li[data-event-at]').length ?? 0,
           consolePlaceholder: /Type a command below to start/.test(con?.textContent ?? ''),
+          consoleLoading: /Loading your console…/.test(con?.textContent ?? ''),
           consoleRows: con?.querySelectorAll('li.event:not(.event-feed-empty)').length ?? 0,
           headerConnecting: /connecting…/.test(ring?.querySelector('.pane-header')?.textContent ?? ''),
         };
@@ -557,6 +639,8 @@ test.describe('connection scenarios', () => {
     measure('slow3000.conn.time_to_first_handshake', snap.durations['conn.time_to_first_handshake'] ?? -1, 'ms');
     const waiting = samples.filter((x) => x.ringWaiting);
     const consoleEmpty = samples.filter((x) => x.consolePlaceholder);
+    const consoleLoading = samples.filter((x) => x.consoleLoading);
+    measure('slow3000.consoleLoadingLineShownFor', consoleLoading.length ? consoleLoading[consoleLoading.length - 1]!.at - consoleLoading[0]!.at : 0, 'ms');
     const connecting = samples.filter((x) => x.headerConnecting);
     measure('slow3000.ringWaitingLineShownFor', waiting.length ? waiting[waiting.length - 1]!.at - waiting[0]!.at : 0, 'ms');
     measure('slow3000.consoleEmptyHintShownFor', consoleEmpty.length ? consoleEmpty[consoleEmpty.length - 1]!.at - consoleEmpty[0]!.at : 0, 'ms');
@@ -565,6 +649,14 @@ test.describe('connection scenarios', () => {
       `Ring: "Waiting for fight events…" line ${waiting.length ? 'shown' : 'NOT shown'}; Console: empty-state hint "Type a command below to start" ${consoleEmpty.length ? 'shown while its history was still loading' : 'not shown'}; header "connecting…" ${connecting.length ? 'shown' : 'not shown'}; first Ring row at ${firstRow?.at ?? 'never'}ms wall`
     );
     expect.soft(firstRow, 'rows appear after the link answers').toBeDefined();
+    // Baseline C7: where the Console is on screen, it says it is loading, and the "type a
+    // command" hint never shows before that line has gone (history is in flight for 3 s).
+    const firstEmpty = samples.findIndex((x) => x.consolePlaceholder);
+    const firstLoading = samples.findIndex((x) => x.consoleLoading);
+    if (firstLoading !== -1 || firstEmpty !== -1) {
+      expect.soft(firstLoading, 'the Console shows "Loading your console…" while history is in flight').not.toBe(-1);
+      expect.soft(firstEmpty === -1 || firstEmpty > firstLoading, 'the empty-state hint does not show before history has loaded').toBe(true);
+    }
   });
 
   // ─────────────────────────────────────────────────────────────────────────────────────
@@ -595,6 +687,11 @@ test.describe('connection scenarios', () => {
       measure(`load${latency}.conn.time_to_first_handshake`, beforeTab.durations['conn.time_to_first_handshake'] ?? -1, 'ms');
       measure(`load${latency}.console.time_to_first_rows`, beforeTab.durations['console.time_to_first_rows'] ?? -1, 'ms');
       measure(`load${latency}.handshakes`, handshakes, '');
+      const subscribes = (await lab<Array<{ kind: string }>>(page, 'connectionLog')).filter((c) => c.kind === 'subscribe').length;
+      measure(`load${latency}.subscribes`, subscribes, '');
+      // Baseline C4: seeding the cursor from history used to re-subscribe (2 handshakes).
+      expect.soft(subscribes, 'one subscription per page load').toBe(1);
+      expect.soft(handshakes, 'one handshake per page load').toBe(1);
       measure(`load${latency}.ring.time_to_first_rows.beforeTabShown`, ringBeforeTab ?? -1, 'ms');
 
       // Showing the Ring: on a phone this is where the user first sees it.
@@ -613,13 +710,16 @@ test.describe('connection scenarios', () => {
           `subscribe/handshake count at load: ${handshakes}; subs=${JSON.stringify((await lab<Array<{ kind: string }>>(page, 'connectionLog')).map((c) => c.kind))}`
       );
       if (latency <= 150) {
-        // A room in use: a few events land just after the page opens. Nothing has dropped, yet
-        // the second handshake (the cursor-seed resubscribe) arms the "reconnected" divider.
+        // A room in use: a few events land just after the page opens. Nothing has dropped, so
+        // no divider may say anything did.
         await lab(page, 'push', 3);
         await page.waitForTimeout(3_300);
         const a = await audit(page, FIXTURE);
         const dividers = a.markers.map((m) => m.text);
         measure(`load${latency}.reconnectedDividerWithoutALoss`, dividers.includes('reconnected') && !dividers.includes('connection lost') ? 1 : 0, '');
+        expect.soft(dividers, 'no "reconnected" or "connection lost" after a clean load').not.toContain('reconnected');
+        expect.soft(dividers).not.toContain('connection lost');
+        expect.soft((await snapshot(page)).counters['conn.handshake'] ?? 0, 'still one handshake after the live events').toBe(1);
         note(`dividers after a clean load with live events: ${JSON.stringify(dividers)}`);
       }
     });

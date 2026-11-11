@@ -38,6 +38,7 @@ import FeedList from './FeedList.js';
 import PlainFeedList, { feedImpl, type PlainFeedHandle } from './PlainFeedList.js';
 import { mechanicKeyOf, mechanicNoteFor, mechanicPayloadOf, newestEventIdByKey } from '../lib/mechanic-notes.js';
 import { mapConsoleHistoryEvent } from '../utils/console-history-event-map.js';
+import { LOSS_MARKER_DELAY_MS } from '../utils/feed-markers.js';
 import { AT_BOTTOM_THRESHOLD_PX, useFeedAutoScroll } from '../hooks/useFeedAutoScroll.js';
 
 interface ActivePrompt {
@@ -149,6 +150,12 @@ function retireOtherPrompts(events: ConsoleEvent[], keepId: string): ConsoleEven
  * "not visible" signal; IntersectionObserver refines that for a mounted-but-scrolled
  * row. Where IntersectionObserver is unavailable, mounted counts as visible.
  */
+/** The Console's empty state: neutral while history is in flight, the hint once it is known to be empty. */
+function EmptyConsoleLine({ resolved }: { resolved: boolean }) {
+  if (!resolved) return <p>Loading your console…</p>;
+  return <p>Type a command below to start. Try: <em>look at monsters</em></p>;
+}
+
 function PromptVisibilitySentinel({ onVisibilityChange }: { onVisibilityChange: (visible: boolean) => void }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -288,7 +295,18 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
   }, [registerInsertFn]);
 
   // Fetch persistent console history from DB on mount
-  const { data: history } = trpc.game.consoleHistory.useQuery({ roomId });
+  // Applied once; every later result is ignored (`historyApplied`). React-query's defaults
+  // would refetch the whole payload on every window focus and on coming back online for
+  // nothing (baseline "History is fetched again on every focus"), so fetch once.
+  // (`useGuidedStart` reads the same query on its own; that one is left to its owner.)
+  const { data: history, isError: historyError } = trpc.game.consoleHistory.useQuery(
+    { roomId },
+    { staleTime: Infinity, refetchOnWindowFocus: false, refetchOnReconnect: false }
+  );
+  // The empty-state hint is only true once history has said the console really is empty.
+  // Before that it told a player on a slow link to "type a command to start" while their
+  // earlier session was still loading (baseline C7).
+  const historyResolved = history !== undefined || historyError;
   // Monster sprites in place of their emoji, as in the Ring feed (roadmap 24).
   const mentions = useMonsterMentions(roomId);
   const feedStyle = feedStyleFor(useTheme().theme);
@@ -703,18 +721,26 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
 
   const { reconnecting, seedCursor } = useRingFeedListener(onLiveEvent);
 
+  /*
+   * The "-- reconnecting --" row waits as long as the Ring's "connection lost" divider does
+   * (`LOSS_MARKER_DELAY_MS`): a blip that is over inside a second left a permanent row in the
+   * transcript for something the player never saw. The header word still shows at once.
+   */
   useEffect(() => {
     if (!reconnecting) {
       reconnectNoticeShownRef.current = false;
       return;
     }
     if (reconnectNoticeShownRef.current) return;
-    reconnectNoticeShownRef.current = true;
-    addConsoleEvent({
-      id: `sys-${Date.now()}`,
-      type: 'system',
-      text: '-- reconnecting --',
-    });
+    const timer = setTimeout(() => {
+      reconnectNoticeShownRef.current = true;
+      addConsoleEvent({
+        id: `sys-${Date.now()}`,
+        type: 'system',
+        text: '-- reconnecting --',
+      });
+    }, LOSS_MARKER_DELAY_MS);
+    return () => clearTimeout(timer);
   }, [reconnecting]);
 
   // Apply DB history once — pre-populate seenRef and seed shared subscription lastEventId.
@@ -1165,7 +1191,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
           empty={
             <ol className="event-feed-list">
               <li className="event event-system event-feed-empty">
-                <p>Type a command below to start. Try: <em>look at monsters</em></p>
+                <EmptyConsoleLine resolved={historyResolved} />
               </li>
             </ol>
           }
@@ -1203,7 +1229,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
           List: FeedList,
           EmptyPlaceholder: () => (
             <li className="event event-system event-feed-empty">
-              <p>Type a command below to start. Try: <em>look at monsters</em></p>
+              <EmptyConsoleLine resolved={historyResolved} />
             </li>
           ),
         }}

@@ -2,6 +2,7 @@ import { act, render, renderHook, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ReactNode } from 'react';
 import type { GameEvent } from '@deck-monsters/server/types';
+import { HEARTBEAT_INTERVAL_MS, RESUME_GRACE_MS } from '../utils/ring-feed-connection.js';
 import {
   HEARTBEAT_TIMEOUT_MS,
   RingFeedContext,
@@ -257,6 +258,11 @@ describe('useRingFeed', () => {
     expect(latestCall().input.lastEventId).toBeUndefined();
 
     act(() => {
+      // The resumed subscription's handshake: what resets the backoff between losses.
+      latestCall().onData?.({
+        id: '4-handshake',
+        data: makeEvent({ id: '4-handshake', type: 'handshake', scope: 'private' }),
+      });
       latestCall().onData?.({
         id: '3-live',
         data: makeEvent({ id: '3-live', type: 'announce', text: 'hello' }),
@@ -321,40 +327,47 @@ describe('useRingFeed', () => {
     expect(listener.mock.calls[0]?.[0].id).toBe('13-b');
   });
 
-  it('advances shared cursor monotonically across history seeds and live events', () => {
+  it('advances the shared cursor monotonically, and only a loss puts it in the subscription input', () => {
     const { result, rerender } = renderHook(() => useRingFeed('room-a'));
+    const lose = () => {
+      act(() => {
+        // A handshake first, so the backoff is back at its immediate first retry.
+        latestCall().onData?.({
+          id: `${Date.now()}-handshake`,
+          data: makeEvent({ id: `${Date.now()}-handshake`, type: 'handshake', scope: 'private' }),
+        });
+        latestCall().onError?.();
+      });
+      rerender();
+    };
 
-    // older → newer history tails
+    // History seeds advance the ref and nothing else: the input must not change, or every
+    // page load subscribes twice (baseline C4).
+    const before = subscriptionCalls.length;
     act(() => {
       result.current.seedCursor('100-ring-hist');
-    });
-    rerender();
-    expect(latestCall().input.lastEventId).toBe('100-ring-hist');
-
-    act(() => {
       result.current.seedCursor('200-console-hist');
     });
     rerender();
-    expect(latestCall().input.lastEventId).toBe('200-console-hist');
+    expect(latestCall().input.lastEventId).toBeUndefined();
+    expect(new Set(subscriptionCalls.slice(before).map((c) => JSON.stringify(c.input))).size).toBe(1);
 
-    // newer → older must not move backwards
+    // older history cannot move the cursor backwards
     act(() => {
       result.current.seedCursor('150-older-hist');
     });
-    rerender();
+    lose();
     expect(latestCall().input.lastEventId).toBe('200-console-hist');
 
-    // live newer than history advances the tracked cursor (subscription input
-    // still only changes on error / seed); older history cannot overwrite it
+    // live newer than history advances the tracked cursor; older history cannot overwrite it
     act(() => {
       latestCall().onData?.({
         id: '300-live',
         data: makeEvent({ id: '300-live', type: 'announce' }),
       });
       result.current.seedCursor('250-stale-hist');
-      latestCall().onError?.();
     });
-    rerender();
+    lose();
     expect(latestCall().input.lastEventId).toBe('300-live');
 
     // live older than current cursor does not rewind
@@ -363,10 +376,21 @@ describe('useRingFeed', () => {
         id: '280-old-live',
         data: makeEvent({ id: '280-old-live', type: 'announce' }),
       });
-      latestCall().onError?.();
     });
-    rerender();
+    lose();
     expect(latestCall().input.lastEventId).toBe('300-live');
+  });
+
+  it('subscribes once per page load even when history seeds the cursor (baseline C4)', () => {
+    const { result } = renderHook(() => useRingFeed('room-a'));
+    act(() => {
+      latestCall().onData?.({ id: '1-handshake', data: makeEvent({ id: '1-handshake', type: 'handshake', scope: 'private' }) });
+    });
+    act(() => {
+      result.current.seedCursor('500-history-tail');
+    });
+    expect(new Set(subscriptionCalls.map((c) => JSON.stringify(c.input))).size).toBe(1);
+    expect(latestCall().input).toEqual({ roomId: 'room-a', lastEventId: undefined, resumeAttempt: 0 });
   });
 });
 
@@ -552,9 +576,10 @@ describe('useRingFeed: recovering from a watchdog trip', () => {
 
 /**
  * A locked phone has its timers frozen, and a `setTimeout` that came due while suspended
- * fires the instant the page is shown again — so the watchdog reported a dead connection
- * purely because time passed in the background. No frames can arrive while the page is
- * suspended whether the socket is healthy or not, so that is not evidence of anything.
+ * fires the instant the page is shown again, ahead of the frames queued meanwhile, so the
+ * watchdog reported a dead connection purely because time passed in the background (#127).
+ * The first fix gave a fresh full timeout, which made a dead socket wait again (baseline C2):
+ * now the page being shown is the moment the connection is tested.
  */
 describe('useRingFeed: returning from the background', () => {
   function wrapper({ children }: { children: ReactNode }) {
@@ -566,25 +591,45 @@ describe('useRingFeed: returning from the background', () => {
     document.dispatchEvent(new Event('visibilitychange'));
   }
 
-  it('gives the connection a fresh interval instead of tripping on a stale timer', () => {
+  const hs = (id: string) => ({ id, data: makeEvent({ id, type: 'handshake', scope: 'private' }) });
+
+  it('does not trip on a watchdog that came due while the page was hidden', () => {
     vi.useFakeTimers();
     try {
       const { result } = renderHook(() => useRingFeedContextForTest(), { wrapper });
+      act(() => latestCall().onData?.(hs('h1')));
 
-      act(() => {
-        latestCall().onData?.({ id: 'h1', data: makeEvent({ id: 'h1', type: 'handshake' }) });
-      });
-
-      // Most of the interval passes with the page hidden, then it comes back.
       act(() => {
         setVisibility('hidden');
-        vi.advanceTimersByTime(HEARTBEAT_TIMEOUT_MS - 1_000);
-        setVisibility('visible');
+        vi.advanceTimersByTime(HEARTBEAT_TIMEOUT_MS + 5_000);
       });
 
-      // The old timer would have fired 1s later; the fresh one has the full interval.
+      // Silence while hidden is not evidence: nothing happened.
+      expect(result.current.reconnecting).toBe(false);
+      expect(result.current.connected).toBe(true);
+    } finally {
+      setVisibility('visible');
+      vi.useRealTimers();
+    }
+  });
+
+  it('a frame that was queued while frozen, delivered inside the grace, proves the connection alive', () => {
+    vi.useFakeTimers();
+    try {
+      const { result } = renderHook(() => useRingFeedContextForTest(), { wrapper });
+      act(() => latestCall().onData?.(hs('h1')));
+
       act(() => {
-        vi.advanceTimersByTime(5_000);
+        setVisibility('hidden');
+        vi.advanceTimersByTime(5 * 60_000);
+        setVisibility('visible');
+      });
+      act(() => {
+        vi.advanceTimersByTime(RESUME_GRACE_MS - 500);
+        latestCall().onData?.({ id: 'hb', data: makeEvent({ id: 'hb', type: 'heartbeat' }) });
+      });
+      act(() => {
+        vi.advanceTimersByTime(RESUME_GRACE_MS * 3);
       });
 
       expect(result.current.reconnecting).toBe(false);
@@ -595,28 +640,276 @@ describe('useRingFeed: returning from the background', () => {
     }
   });
 
-  it('still reports a genuinely dead connection one interval later', () => {
-    // The grace is one interval, not immunity.
+  it('a dead connection is resubscribed shortly after the page is shown, not a full timeout later (baseline C2)', () => {
     vi.useFakeTimers();
     try {
       const { result } = renderHook(() => useRingFeedContextForTest(), { wrapper });
-
-      act(() => {
-        latestCall().onData?.({ id: 'h1', data: makeEvent({ id: 'h1', type: 'handshake' }) });
-      });
+      act(() => latestCall().onData?.(hs('h1')));
+      const before = subscriptionCalls.length;
 
       act(() => {
         setVisibility('hidden');
-        vi.advanceTimersByTime(HEARTBEAT_TIMEOUT_MS - 1_000);
+        vi.advanceTimersByTime(HEARTBEAT_INTERVAL_MS + 4_000);
         setVisibility('visible');
       });
+      // Still inside the grace: no verdict yet.
       act(() => {
-        vi.advanceTimersByTime(HEARTBEAT_TIMEOUT_MS + 1_000);
+        vi.advanceTimersByTime(RESUME_GRACE_MS - 100);
+      });
+      expect(result.current.reconnecting).toBe(false);
+      act(() => {
+        vi.advanceTimersByTime(200);
       });
 
       expect(result.current.reconnecting).toBe(true);
+      expect(subscriptionCalls.length).toBeGreaterThan(before);
+      expect(latestCall().input.resumeAttempt).toBe(1);
     } finally {
       setVisibility('visible');
+      vi.useRealTimers();
+    }
+  });
+
+  it('a recent last frame only re-arms the watchdog for what remains of the timeout', () => {
+    vi.useFakeTimers();
+    try {
+      const { result } = renderHook(() => useRingFeedContextForTest(), { wrapper });
+      act(() => latestCall().onData?.(hs('h1')));
+
+      act(() => {
+        setVisibility('hidden');
+        vi.advanceTimersByTime(3_000);
+        setVisibility('visible');
+        vi.advanceTimersByTime(RESUME_GRACE_MS + 100);
+      });
+      expect(result.current.reconnecting).toBe(false);
+
+      // 5.1 s have passed since the last frame; the watchdog still trips at 20 s, not 25.1 s.
+      act(() => {
+        vi.advanceTimersByTime(HEARTBEAT_TIMEOUT_MS - 3_000 - RESUME_GRACE_MS - 100 + 200);
+      });
+      expect(result.current.reconnecting).toBe(true);
+    } finally {
+      setVisibility('visible');
+      vi.useRealTimers();
+    }
+  });
+
+  it('pageshow runs the same check', () => {
+    vi.useFakeTimers();
+    try {
+      const { result } = renderHook(() => useRingFeedContextForTest(), { wrapper });
+      act(() => latestCall().onData?.(hs('h1')));
+      act(() => {
+        vi.advanceTimersByTime(HEARTBEAT_INTERVAL_MS + 4_000);
+        window.dispatchEvent(new Event('pageshow'));
+        vi.advanceTimersByTime(RESUME_GRACE_MS + 100);
+      });
+      expect(result.current.reconnecting).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
+
+describe('useRingFeed: offline and online (baseline C3)', () => {
+  function wrapper({ children }: { children: ReactNode }) {
+    return <RingFeedProvider roomId="room-a">{children}</RingFeedProvider>;
+  }
+  const hs = (id: string) => ({ id, data: makeEvent({ id, type: 'handshake', scope: 'private' }) });
+
+  it('offline shows reconnecting at once and leaves the subscription alone', () => {
+    vi.useFakeTimers();
+    try {
+      const { result } = renderHook(() => useRingFeedContextForTest(), { wrapper });
+      act(() => latestCall().onData?.(hs('h1')));
+      const inputBefore = { ...latestCall().input };
+
+      act(() => {
+        window.dispatchEvent(new Event('offline'));
+      });
+
+      expect(result.current.reconnecting).toBe(true);
+      expect(result.current.connected).toBe(false);
+      expect(latestCall().input).toEqual(inputBefore);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('online with no frame inside the grace resubscribes, however short the outage was', () => {
+    vi.useFakeTimers();
+    try {
+      const { result } = renderHook(() => useRingFeedContextForTest(), { wrapper });
+      act(() => latestCall().onData?.(hs('h1')));
+      act(() => {
+        vi.advanceTimersByTime(1_000);
+        window.dispatchEvent(new Event('offline'));
+        vi.advanceTimersByTime(1_000);
+        window.dispatchEvent(new Event('online'));
+      });
+      expect(latestCall().input.resumeAttempt).toBe(0);
+
+      act(() => {
+        vi.advanceTimersByTime(RESUME_GRACE_MS + 100);
+      });
+      expect(latestCall().input.resumeAttempt).toBe(1);
+      expect(result.current.reconnecting).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('online with a frame inside the grace clears the banner and resubscribes nothing', () => {
+    vi.useFakeTimers();
+    try {
+      const { result } = renderHook(() => useRingFeedContextForTest(), { wrapper });
+      act(() => latestCall().onData?.(hs('h1')));
+      act(() => {
+        window.dispatchEvent(new Event('offline'));
+        window.dispatchEvent(new Event('online'));
+        vi.advanceTimersByTime(500);
+        latestCall().onData?.({ id: 'hb', data: makeEvent({ id: 'hb', type: 'heartbeat' }) });
+        vi.advanceTimersByTime(RESUME_GRACE_MS * 2);
+      });
+      expect(result.current.reconnecting).toBe(false);
+      expect(latestCall().input.resumeAttempt).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
+
+describe('useRingFeed: resubscribe backoff (baseline C6)', () => {
+  function wrapper({ children }: { children: ReactNode }) {
+    return <RingFeedProvider roomId="room-a">{children}</RingFeedProvider>;
+  }
+  const hs = (id: string) => ({ id, data: makeEvent({ id, type: 'handshake', scope: 'private' }) });
+  const attempt = () => latestCall().input.resumeAttempt ?? 0;
+
+  it('retries at once, then waits longer each time a resubscribe fails, and resets on a handshake', () => {
+    vi.useFakeTimers();
+    vi.spyOn(Math, 'random').mockReturnValue(0.5); // no jitter
+    try {
+      const { result } = renderHook(() => useRingFeedContextForTest(), { wrapper });
+      act(() => latestCall().onData?.(hs('h1')));
+
+      act(() => latestCall().onError?.());
+      expect(attempt()).toBe(1); // first retry: immediate
+      expect(result.current.reconnecting).toBe(true);
+
+      for (const wait of [500, 1_000, 2_000, 4_000, 8_000, 8_000]) {
+        const n = attempt();
+        act(() => latestCall().onError?.());
+        expect(attempt()).toBe(n); // not yet
+        act(() => {
+          vi.advanceTimersByTime(wait - 1);
+        });
+        expect(attempt()).toBe(n);
+        act(() => {
+          vi.advanceTimersByTime(1);
+        });
+        expect(attempt()).toBe(n + 1);
+        expect(result.current.reconnecting).toBe(true); // stays true while waiting
+      }
+
+      // A handshake resets the schedule.
+      act(() => latestCall().onData?.(hs('h2')));
+      expect(result.current.reconnecting).toBe(false);
+      const n = attempt();
+      act(() => latestCall().onError?.());
+      expect(attempt()).toBe(n + 1);
+    } finally {
+      vi.restoreAllMocks();
+      vi.useRealTimers();
+    }
+  });
+
+  it('a second loss signal while a retry is waiting adds nothing', () => {
+    vi.useFakeTimers();
+    vi.spyOn(Math, 'random').mockReturnValue(0.5);
+    try {
+      renderHook(() => useRingFeedContextForTest(), { wrapper });
+      act(() => latestCall().onData?.(hs('h1')));
+      act(() => latestCall().onError?.());
+      const n = attempt();
+      act(() => latestCall().onError?.());
+      act(() => latestCall().onError?.());
+      act(() => {
+        vi.advanceTimersByTime(500);
+      });
+      expect(attempt()).toBe(n + 1);
+      act(() => {
+        vi.advanceTimersByTime(60_000);
+      });
+      // Only the resubscribe's own watchdog can add more, not the duplicate signals.
+      expect(attempt()).toBeLessThanOrEqual(n + 3);
+    } finally {
+      vi.restoreAllMocks();
+      vi.useRealTimers();
+    }
+  });
+
+  it('resubscribes with the newest cursor, read when the retry runs', () => {
+    vi.useFakeTimers();
+    vi.spyOn(Math, 'random').mockReturnValue(0.5);
+    try {
+      renderHook(() => useRingFeedContextForTest(), { wrapper });
+      act(() => latestCall().onData?.(hs('h1')));
+      act(() => latestCall().onError?.());
+      act(() => latestCall().onError?.()); // second failure: waits 500 ms
+      act(() => {
+        latestCall().onData?.({ id: '777-late', data: makeEvent({ id: '777-late', type: 'announce' }) });
+      });
+      // The late frame proves life and cancels the retry.
+      act(() => {
+        vi.advanceTimersByTime(5_000);
+      });
+      expect(latestCall().input.resumeAttempt).toBe(1);
+    } finally {
+      vi.restoreAllMocks();
+      vi.useRealTimers();
+    }
+  });
+
+  it('a room change cancels a pending retry', () => {
+    vi.useFakeTimers();
+    vi.spyOn(Math, 'random').mockReturnValue(0.5);
+    try {
+      const { rerender } = renderHook(
+        ({ roomId }: { roomId: string }) => useRingFeed(roomId),
+        { initialProps: { roomId: 'room-a' } }
+      );
+      act(() => latestCall().onError?.());
+      act(() => latestCall().onError?.()); // waits 500 ms
+      act(() => {
+        rerender({ roomId: 'room-b' });
+      });
+      act(() => {
+        vi.advanceTimersByTime(1_000);
+      });
+      expect(latestCall().input).toEqual({ roomId: 'room-b', lastEventId: undefined, resumeAttempt: 0 });
+    } finally {
+      vi.restoreAllMocks();
+      vi.useRealTimers();
+    }
+  });
+
+  it('unmounting cancels a pending retry', () => {
+    vi.useFakeTimers();
+    vi.spyOn(Math, 'random').mockReturnValue(0.5);
+    try {
+      const { unmount } = renderHook(() => useRingFeed('room-a'));
+      act(() => latestCall().onError?.());
+      act(() => latestCall().onError?.());
+      const calls = subscriptionCalls.length;
+      unmount();
+      act(() => {
+        vi.advanceTimersByTime(10_000);
+      });
+      expect(subscriptionCalls.length).toBe(calls);
+    } finally {
+      vi.restoreAllMocks();
       vi.useRealTimers();
     }
   });

@@ -6,7 +6,7 @@
  * What it imitates (packages/server/src/trpc/router.ts, `ringFeed`):
  *  - a subscription opens with a `handshake` frame, then replays what the client missed
  *    (after `lastEventId`, or the newest 100 visible events when there is no cursor), then
- *    goes live, with a `heartbeat` every 20 s;
+ *    goes live, with a `heartbeat` every 8 s;
  *  - a cursor the server cannot match yields a `system.gap` frame;
  *  - a dead connection loses its frames; only a fresh subscription recovers them.
  *
@@ -81,7 +81,7 @@ export interface SubscribeInput {
 }
 
 export interface TransportOptions {
-  /** Heartbeat period. The server's is 20 s. */
+  /** Heartbeat period. The server's is 8 s. */
   heartbeatMs?: number;
   /** How long a subscribe attempt made while the connection is "down" takes to fail. */
   failDelayMs?: number;
@@ -162,7 +162,7 @@ export class LabTransport {
     // Set before anything is served, so a cold page load can be measured on a slow link.
     if (opts.latencyMs !== undefined) this.latencyMs = Math.max(0, opts.latencyMs);
     this.fixture = fixture;
-    this.heartbeatMs = opts.heartbeatMs ?? 20_000;
+    this.heartbeatMs = opts.heartbeatMs ?? 8_000;
     this.failDelayMs = opts.failDelayMs ?? 50;
     this.fixtureIds = new Set(fixture.events.map((e) => e.id));
     const total = fixture.events.length;

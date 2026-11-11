@@ -252,14 +252,14 @@ describe('subscribe and replay', () => {
     expect(texts).toEqual(['event 0', 'event 1', 'event 3', 'event 4', 'event 5']);
   });
 
-  it('sends a heartbeat every 20 s and not while stalled', () => {
+  it('sends a heartbeat every 8 s and not while stalled', () => {
     const t = new LabTransport(fixture(2), { historyCount: 0 });
     const s = sink();
     t.subscribe({}, s);
     expect(s.types()).toEqual(['handshake']);
-    vi.advanceTimersByTime(20_000);
+    vi.advanceTimersByTime(8_000);
     expect(s.types()).toEqual(['handshake', 'heartbeat']);
-    vi.advanceTimersByTime(40_000);
+    vi.advanceTimersByTime(16_000);
     expect(s.types().filter((x) => x === 'heartbeat')).toHaveLength(3);
     t.stall();
     vi.advanceTimersByTime(60_000);
@@ -425,7 +425,7 @@ describe('deliveredIds', () => {
     const s = sink();
     t.subscribe({}, s); // handshake + replay of the 3 history events
     t.push(2);
-    vi.advanceTimersByTime(20_000); // heartbeat
+    vi.advanceTimersByTime(8_000); // heartbeat
     const ids = fixture(6).events.map((e) => e.id);
     expect(t.deliveredIds()).toEqual([...ids.slice(0, 3), ...ids.slice(0, 3), ...ids.slice(3, 5)]);
     expect(t.deliveries().map((d) => d.via)).toEqual([
