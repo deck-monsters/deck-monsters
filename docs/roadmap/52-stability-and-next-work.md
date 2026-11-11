@@ -8,8 +8,8 @@ tags: [roadmap, planning, web, testing, feeds, reconnect]
 ---
 # 52 — Feed stability, proof systems, and the next passes
 
-**Status:** Accepted by the owner (2026-11-10). Pass A is done. Pass B is next. Five passes;
-the decisions below are settled.
+**Status:** Accepted by the owner (2026-11-10). Pass A is done. Pass B is done except B3b (the
+connection faults against a real server). Pass C is next. The decisions below are settled.
 
 ## Why
 
@@ -25,8 +25,9 @@ picked candidates for the next feature work. This plan covers all three.
 
 ## What the review found
 
-Read from the code and the fixed-bug ledger on 2026-11-10. Nothing here was measured in a
-browser. Each point is a hypothesis for Pass B to confirm or refute, not a verdict.
+Read from the code and the fixed-bug ledger on 2026-11-10, before anything was measured.
+Pass B then measured it: the [baseline](../reference/feed-stability-baseline.md) confirms the
+scroll and connection points below and adds several this review missed.
 
 ### The feeds follow the bottom by guessing
 
@@ -92,9 +93,10 @@ were this (#145, #152).
 - The client records no timings. There is no number for how long a reconnect takes or how
   often the feed re-pins.
 
-[Working in this repo](../agents/working-in-this-repo.md) already says it: "Automated tests do
-not catch pacing, scroll, or narration problems; most of the bugs in the archive were found by
-playing." This plan's main bet is that this can be changed.
+[Working in this repo](../agents/working-in-this-repo.md) said it at the time: "Automated tests
+do not catch pacing, scroll, or narration problems; most of the bugs in the archive were found
+by playing." This plan's main bet is that this can be changed. Pass B did: see the
+[baseline](../reference/feed-stability-baseline.md).
 
 ## Decisions
 
@@ -143,10 +145,10 @@ in this pass. Where B5 finds a bug, it is recorded, not fixed here.
 | # | Task | Area | Acceptance | Can run beside | Status | Commit |
 |---|---|---|---|---|---|---|
 | B1 | **The feed lab.** A dev route that mounts the real Ring and Console panes on a scripted transport: recorded `room_events` fixtures (a quiet room, a long two-monster fight, an eight-monster brawl with card frames, a boss arrival), played at real or fast pace, with a `window` hook to push a burst, pause, drop the connection, and switch theme | `apps/web` (a lab route, a fake tRPC link, fixtures) | The lab plays each fixture in all five themes with no server running; no lab code is in the production bundle unless decision 3 allows it | B3 | Done: `/lab` (a lazy chunk, no server, no sign-in) runs the real `Terminal` on a fake tRPC link; `window.__feedLab` plays, bursts, drops, stalls and delays; five fixtures recorded from real engine fights by `sim:record-feed` | 0090d05, and this commit\'s lab |
-| B2 | **Scroll invariants in a real browser.** A Playwright suite over the lab: Chromium and WebKit, 390 × 844 and 1440 × 900, phosphor and Millefleur. The invariants are listed below | `apps/web/e2e`, root scripts | Every invariant is a named test that reports the measured pixels; the suite runs with one command | — (after B1) | Planned | |
-| B3 | **Connection scenarios.** The real server and Postgres behind a proxy the test controls: a clean drop, a silent stall (no close), a slow link, a server restart, a page frozen and resumed, and offline then online. For each, record the time to notice, the time to the first frame after resume, and whether any event was lost or doubled | `apps/web/e2e`, a small proxy script | A table of timings per scenario; lost and doubled events are counted by id against `room_events` | B1 | Planned | |
+| B2 | **Scroll invariants in a real browser.** A Playwright suite over the lab: Chromium and WebKit, 390 × 844 and 1440 × 900, phosphor and Millefleur. The invariants are listed below | `apps/web/e2e`, root scripts | Every invariant is a named test that reports the measured pixels; the suite runs with one command | — (after B1) | Done: 106 scroll tests over both panes, both sizes, phosphor and Millefleur, plus a soak behind `E2E_SOAK=1`. WebKit runs only in CI | a22255d, 4d2ee56 |
+| B3 | **Connection scenarios.** The real server and Postgres behind a proxy the test controls: a clean drop, a silent stall (no close), a slow link, a server restart, a page frozen and resumed, and offline then online. For each, record the time to notice, the time to the first frame after resume, and whether any event was lost or doubled | `apps/web/e2e`, a small proxy script | A table of timings per scenario; lost and doubled events are counted by id against `room_events` | B1 | Part done: 20 scenarios per project over the lab\'s transport on a fake clock. **Still open (B3b):** the same faults against the real server and tRPC\'s WebSocket client through a proxy, which the lab cannot show | 2d9615a |
 | B4 | **Client timings.** One small module that counts and times what the reader feels: time to the first feed row, each reconnect phase, re-pins, corrections to `scrollTop`, list remounts. The lab reads them; a debug overlay shows them; decision 4 says whether they leave the browser | `apps/web/src/lib`, [observability](../operations/observability.md) | B2 and B3 assert on these counters rather than on screenshots | B1 | Done: `lib/feed-timings.ts`, `window.__feedTimings`, and an overlay behind `?feedTimings=1` | 1663438 |
-| B5 | **Baseline and CI.** Run B2 and B3 against `main`. Write the results up, file each failing invariant in [10](10-bug-fixes.md), and add the suite to CI: reporting only at first, blocking per decision 6 | docs, `.github/workflows/ci.yml` | A baseline report under `docs/reference/`; CI shows the suite's result on every PR | — (after B2, B3) | Planned | |
+| B5 | **Baseline and CI.** Run B2 and B3 against `main`. Write the results up, file each failing invariant in [10](10-bug-fixes.md), and add the suite to CI: reporting only at first, blocking per decision 6 | docs, `.github/workflows/ci.yml` | A baseline report under `docs/reference/`; CI shows the suite's result on every PR | — (after B2, B3) | Done: [baseline](../reference/feed-stability-baseline.md) (125 passed, 15 failed), failures filed as [10 M and N](10-bug-fixes.md), the lab documented in [feed lab](../reference/feed-lab.md), and a reporting-only CI job | this commit |
 
 **Scroll invariants (B2).** Each has a pixel tolerance, set when the baseline is taken:
 

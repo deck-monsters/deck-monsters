@@ -59,14 +59,21 @@ through its `dist/` output, so a fresh checkout fails with `ERR_MODULE_NOT_FOUND
 The suites mock their external dependencies — no database, Discord, or Supabase needs to be
 running. A complete run is the one whose runner prints its final summary.
 
+After a change to a feed, to scrolling, to the `ringFeed` connection, or to a theme's feed
+type, also run the browser suite: `pnpm --filter @deck-monsters/web run test:e2e`
+([feed lab and browser tests](../reference/feed-lab.md)). It is not part of the turbo
+`pnpm test`. Until the [baseline](../reference/feed-stability-baseline.md)'s failures are
+fixed it is not green: compare against the baseline, and never loosen a test to pass it.
+
 After any Markdown edit, also run `pnpm docs:check` (links, lifecycle placement, and OKF
 frontmatter). CI runs it, and runs `pnpm test:docs` for the checker's own tests; neither is
 part of the turbo `pnpm test`.
 
 ## Live verification
 
-Automated tests do not catch pacing, scroll, or narration problems; most of the bugs in the
-archive were found by playing. [Local testing](../operations/local-testing.md) owns the
+The unit tests do not catch pacing, scroll, or narration problems; most of the bugs in the
+archive were found by playing. Scrolling and reconnecting now have a real-browser suite over
+the [feed lab](../reference/feed-lab.md); use it first, and add a scenario for what it misses. [Local testing](../operations/local-testing.md) owns the
 setup and reusable-room state; [Cloud development](../operations/cloud-development.md)
 owns the two Cursor Cloud env paths. Specifics worth knowing before you start:
 

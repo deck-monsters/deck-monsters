@@ -78,6 +78,8 @@ Generated and authored player references remain at the repository root:
 | The Millefleur theme: tokens, texture, components, final screens, and how it was designed | [Millefleur design system](reference/millefleur/design-system.md) ([brief](reference/millefleur/README.md), [process](reference/millefleur/process.md)) |
 | Player agency, bounded live items, motivation evidence, or combat-control proposals | [Player agency](reference/player-agency.md) |
 | Seeded fight simulations, `SimResult` fields, or a `sim:*` script | [Simulation harness](reference/simulation-harness.md) |
+| Running the room UI with no server, the browser tests for scrolling and reconnecting, client timings | [Feed lab and browser tests](reference/feed-lab.md) |
+| What scrolling, opening and reconnecting measured before roadmap 52's fixes | [Feed stability baseline](reference/feed-stability-baseline.md) |
 | Balance measurements that informed a decision (class curves, catalogues, matrices) | [Balance reports](reference/balance-reports/README.md) |
 
 ### Agent work
