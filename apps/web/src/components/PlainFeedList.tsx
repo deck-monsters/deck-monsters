@@ -49,8 +49,9 @@ export const DEFAULT_FEED_CAP = 1000;
 /** Rows drawn on the first paint, and added above per idle slice after it. */
 const FIRST_PAINT_ROWS = 24;
 const BACKFILL_ROWS = 40;
-/** How long a jump to the end is held against a momentum scroll (see `holdEnd`). */
-const JUMP_HOLD_MS = 500;
+/** A jump to the end is held until the feed is quiet this long, at most the limit (`holdEnd`). */
+const JUMP_QUIET_MS = 400;
+const JUMP_LIMIT_MS = 4_000;
 /** While reading back nothing is trimmed, up to this many times the cap. */
 const UNPINNED_CAP_FACTOR = 3;
 
@@ -115,6 +116,15 @@ function PlainFeedListInner<T>(
   // Until this time (ms, performance.now) a jump to the end is being held: see `scrollToBottom`.
   const jumpUntilRef = useRef(0);
   const jumpFrameRef = useRef(0);
+  const jumpLimitRef = useRef(0);
+  /*
+   * The hold lasts until the feed has been quiet for JUMP_QUIET_MS, up to JUMP_LIMIT_MS. It was
+   * a fixed 500 ms at first, and WebKit in CI showed why that is wrong: on a slow device the
+   * overwrites outlasted it and the list ended 40 to 160 px short. Each overwrite renews it.
+   */
+  const extendHold = useCallback(() => {
+    jumpUntilRef.current = Math.min(performance.now() + JUMP_QUIET_MS, jumpLimitRef.current);
+  }, []);
   const anchorRef = useRef<{ el: HTMLElement; offset: number } | null>(null);
   const onPinnedChangeRef = useRef(onPinnedChange);
   onPinnedChangeRef.current = onPinnedChange;
@@ -198,7 +208,10 @@ function PlainFeedListInner<T>(
     if (performance.now() < jumpUntilRef.current) {
       // A jump to the end is being held and the reader has not touched the feed since
       // (a touch, wheel or key ends the hold). Whatever moved the feed, it was not them.
-      if (gap > 0) toEnd();
+      if (gap > 0) {
+        toEnd();
+        extendHold();
+      }
       return;
     }
     if (reflowed) {
@@ -223,7 +236,7 @@ function PlainFeedListInner<T>(
       return;
     }
     recordAnchor();
-  }, [recordAnchor, restoreAnchor, setPinned, toEnd]);
+  }, [extendHold, recordAnchor, restoreAnchor, setPinned, toEnd]);
 
   // New rows, before paint. Also the first paint: the list is at the end from frame one.
   useLayoutEffect(() => {
@@ -266,7 +279,7 @@ function PlainFeedListInner<T>(
    * moving up looks like, so the list unpinned short of the end. No test browser reproduces
    * momentum (the WebKit phone project scrolls in script), so this is defended in three ways:
    * stop the momentum (a scroller that briefly cannot scroll drops it), re-assert the end on
-   * each frame for a short hold, and during the hold do not read a scroll event as the reader.
+   * each frame until the feed has been quiet, and during the hold do not read a scroll event as the reader.
    * A touch, wheel or key ends the hold at once: the reader always wins.
    */
   const releaseHold = useCallback(() => {
@@ -279,7 +292,8 @@ function PlainFeedListInner<T>(
     const el = scrollerRef.current;
     if (!el) return;
     releaseHold();
-    jumpUntilRef.current = performance.now() + JUMP_HOLD_MS;
+    jumpLimitRef.current = performance.now() + JUMP_LIMIT_MS;
+    extendHold();
     const overflowY = el.style.overflowY;
     el.style.overflowY = 'hidden';
     toEnd();
@@ -290,11 +304,14 @@ function PlainFeedListInner<T>(
         jumpUntilRef.current = 0;
         return;
       }
-      if (el.scrollHeight - el.scrollTop - el.clientHeight > 0) toEnd();
+      if (el.scrollHeight - el.scrollTop - el.clientHeight > 0) {
+        toEnd();
+        extendHold();
+      }
       jumpFrameRef.current = requestAnimationFrame(step);
     };
     jumpFrameRef.current = requestAnimationFrame(step);
-  }, [releaseHold, toEnd]);
+  }, [extendHold, releaseHold, toEnd]);
 
   useEffect(() => releaseHold, [releaseHold]);
 

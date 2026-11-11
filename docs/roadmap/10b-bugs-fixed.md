@@ -5652,7 +5652,7 @@ moving up looks like, so the list unpinned short of the end. No test browser has
 (the WebKit phone project scrolls in script), which is how 142 green WebKit tests missed it.
 
 **Fixed** (`PlainFeedList.tsx`, `holdEnd`): the jump stops the momentum (the scroller cannot
-scroll for one frame), re-asserts the end on each frame for 500 ms, and during that hold a
+scroll for one frame), re-asserts the end on each frame until the feed has been quiet for 400 ms (4 s at most; a fixed 500 ms was too short on WebKit in CI), and during that hold a
 scroll event is not read as the reader. A touch, wheel, key or pointer press ends the hold,
 so the reader still wins. `e2e/scroll.spec.ts` writes momentum-like positions in script after
 the click: 240 px short before the fix, at the end after; a second test proves a real gesture
