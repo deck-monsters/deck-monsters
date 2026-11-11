@@ -1,5 +1,5 @@
 import { expect, test, type CDPSession, type Locator, type Page } from '@playwright/test';
-import { lab, measure, openLab, showSurface, type FixtureName } from './lab.js';
+import { lab, measure, openLab, showSurface, wheelBy, type FixtureName } from './lab.js';
 
 /**
  * Shared machinery for the scroll invariants (scroll.spec.ts, scroll-soak.spec.ts).
@@ -362,8 +362,8 @@ async function cdp(page: Page): Promise<CDPSession> {
  * Desktop: a real mouse wheel. Phone on Chromium: a real touch drag through the browser's input
  * pipeline (`Input.synthesizeScrollGesture`, touch source, fling suppressed), which fires
  * touchstart/touchmove and is what the app's `onTouchMove` intent note listens for. Phone on any
- * other engine has no equivalent public API in Playwright: the fallback is a wheel scroll plus a
- * dispatched `touchmove`, so the app's intent window is armed but the scroll path is the wheel's.
+ * other engine has no equivalent public API in Playwright, and mobile WebKit refuses the wheel:
+ * see `wheelBy` in `lab.ts` for the fallback and what it does not prove.
  */
 export async function gesture(page: Page, pane: Pane, px: number): Promise<void> {
   const box = await scrollerLocator(page, pane).boundingBox();
@@ -379,11 +379,7 @@ export async function gesture(page: Page, pane: Pane, px: number): Promise<void>
     await touchDrag(page, x, y, px);
     return;
   }
-  await page.mouse.move(x, y);
-  await page.mouse.wheel(0, -px);
-  await scrollerLocator(page, pane).evaluate((el) => {
-    el.dispatchEvent(new Event('touchmove', { bubbles: true }));
-  });
+  await wheelBy(page, scrollerLocator(page, pane), -px);
 }
 
 /**

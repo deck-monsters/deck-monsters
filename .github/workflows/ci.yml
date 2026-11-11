@@ -114,9 +114,25 @@ jobs:
       - run: pnpm --filter @deck-monsters/web run test:e2e
         env:
           E2E_WEBKIT: '1'
+      # The plain feed list (`?feed=plain`) on WebKit: the gate for making it the default
+      # (roadmap 52, D2). Chromium is run locally; WebKit only runs here. Each run clears
+      # `.results`, so the first run's report is moved out of the way.
+      - if: always()
+        run: |
+          mkdir -p apps/web/e2e/.results-default
+          cp apps/web/e2e/.results/report.json apps/web/e2e/.results-default/report.json || true
+      - if: always()
+        run: pnpm --filter @deck-monsters/web run test:e2e --project=webkit-phone --project=webkit-desktop
+        env:
+          E2E_WEBKIT: '1'
+          E2E_FEED: plain
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: e2e-results
-          path: apps/web/e2e/.results/
+          path: |
+            apps/web/e2e/.results/
+            apps/web/e2e/.results-default/
+          # `.results` is a dot directory; without this the upload finds nothing.
+          include-hidden-files: true
           retention-days: 14

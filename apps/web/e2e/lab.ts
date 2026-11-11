@@ -99,3 +99,27 @@ export function measure(name: string, value: number, unit = 'px'): void {
   // Annotations land in the JSON report, where the baseline table is built from them.
   test.info().annotations.push({ type: 'measure', description: `${name}=${Math.round(value * 10) / 10}${unit}` });
 }
+
+/**
+ * A wheel scroll of `dy` px (positive = down) on `scroller`.
+ *
+ * Playwright throws "Mouse wheel is not supported in mobile WebKit", and has no touch-drag API
+ * for that engine either. The first WebKit run in CI lost 47 phone tests to that before any app
+ * code ran. So on a touch project in WebKit the scroll is set in script, after a dispatched
+ * touchstart and touchmove so the app sees a reader's hand and not a programmatic scroll. That is
+ * a weaker gesture than Chromium's real touch drag: it proves layout and follow rules on
+ * WebKit, not its momentum scrolling. A real iPhone is still the check for that.
+ */
+export async function wheelBy(page: Page, scroller: Locator, dy: number): Promise<void> {
+  const mobileWebKit = !!test.info().project.use.hasTouch && page.context().browser()?.browserType().name() === 'webkit';
+  if (!mobileWebKit) {
+    await page.mouse.wheel(0, dy);
+    return;
+  }
+  await scroller.first().evaluate((el, d) => {
+    el.dispatchEvent(new Event('touchstart', { bubbles: true }));
+    el.dispatchEvent(new Event('touchmove', { bubbles: true }));
+    el.scrollTop += d;
+    el.dispatchEvent(new Event('touchend', { bubbles: true }));
+  }, dy);
+}

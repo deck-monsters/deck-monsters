@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
-import { lab, openLab, showSurface, measure, type FixtureName, type OpenOptions } from './lab.js';
+import { lab, openLab, showSurface, measure, ringScroller, wheelBy, type FixtureName, type OpenOptions } from './lab.js';
 
 /*
  * Helpers for the connection scenarios (connection.spec.ts). These MEASURE the app; none of
@@ -373,7 +373,7 @@ export async function readWholeFeed(page: Page): Promise<FeedRow[]> {
     });
   // Up to the top.
   for (let i = 0; i < 80; i++) {
-    await page.mouse.wheel(0, -3000);
+    await wheelBy(page, ringScroller(page), -3000);
     const m = await read();
     if (m.top <= 0) break;
   }
@@ -382,7 +382,7 @@ export async function readWholeFeed(page: Page): Promise<FeedRow[]> {
     const m = await read();
     for (const r of m.found) rows.set(r.index, r);
     if (m.top + m.client >= m.height - 2) break;
-    await page.mouse.wheel(0, Math.max(60, Math.floor(m.client * 0.5)));
+    await wheelBy(page, ringScroller(page), Math.max(60, Math.floor(m.client * 0.5)));
   }
   return [...rows.values()].sort((x, y) => x.index - y.index);
 }
