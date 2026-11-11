@@ -90,3 +90,33 @@ jobs:
           DATABASE_URL: ${{ env.TEST_DATABASE_URL }}
       - run: pnpm run test
       - run: pnpm --filter @deck-monsters/web run test
+
+  e2e:
+    name: Browser (feed lab)
+    runs-on: ubuntu-latest
+    # Real-browser tests over the feed lab (apps/web/e2e, roadmap 52): scrolling and
+    # reconnecting in Chromium and WebKit, with no server. jsdom has no layout, so the unit
+    # tests cannot see these.
+    #
+    # Reporting only for now. The baseline has known failures (docs/reference/
+    # feed-stability-baseline.md); this becomes a required check once they are fixed
+    # (roadmap 52, decision 6). Until then read the summary, not the tick.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile=false
+      - run: pnpm --filter @deck-monsters/web exec playwright install --with-deps chromium webkit
+      - run: pnpm --filter @deck-monsters/web run test:e2e
+        env:
+          E2E_WEBKIT: '1'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-results
+          path: apps/web/e2e/.results/
+          retention-days: 14
