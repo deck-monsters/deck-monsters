@@ -225,7 +225,7 @@ for (const theme of THEME_IDS) {
       let maxHeaderShift = 0;
       const rosterH = () =>
         page.evaluate(() => {
-          const sc = document.querySelector<HTMLElement>('.event-feed[aria-label="Ring events"][data-virtuoso-scroller]');
+          const sc = document.querySelector<HTMLElement>('.event-feed[aria-label="Ring events"][tabindex]');
           return sc ? sc.clientHeight : 0;
         });
       const h0 = await rosterH();
@@ -609,7 +609,7 @@ function installOpenSampler(): void {
   w.__open = { frames: [] as any[], stop: false, firstRaf: 0 };
   const loop = (t: number) => {
     if (!w.__open.firstRaf) w.__open.firstRaf = t;
-    const el = document.querySelector<HTMLElement>('.event-feed[aria-label="Ring events"][data-virtuoso-scroller]');
+    const el = document.querySelector<HTMLElement>('.event-feed[aria-label="Ring events"][tabindex]');
     if (el && el.getClientRects().length > 0 && el.clientHeight > 0) {
       const box = el.getBoundingClientRect();
       const idx: number[] = [];
@@ -637,7 +637,7 @@ function installOpenSampler(): void {
   // DOM states at microtask checkpoints. Not all are painted, but a state that exists here and
   // shows the oldest row proves the list passed through it, which a rAF sampler can miss.
   const record = (src: string) => {
-    const el = document.querySelector<HTMLElement>('.event-feed[aria-label="Ring events"][data-virtuoso-scroller]');
+    const el = document.querySelector<HTMLElement>('.event-feed[aria-label="Ring events"][tabindex]');
     if (!el || el.getClientRects().length === 0 || el.clientHeight <= 0) return;
     const box = el.getBoundingClientRect();
     let first = -1;

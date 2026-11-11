@@ -64,7 +64,7 @@ function installLib(): void {
 
   const scrollerOf = (pane: string): HTMLElement | null => {
     const all = document.querySelectorAll<HTMLElement>(
-      `.event-feed[aria-label="${LABEL[pane]}"][data-virtuoso-scroller]`,
+      `.event-feed[aria-label="${LABEL[pane]}"][tabindex]`,
     );
     for (const el of Array.from(all)) if (el.getClientRects().length > 0 && el.clientHeight > 0) return el;
     return null;
@@ -262,7 +262,7 @@ export function isTouchProject(): boolean {
 
 export function scrollerLocator(page: Page, pane: Pane): Locator {
   const label = pane === 'ring' ? 'Ring events' : 'Console messages';
-  return page.locator(`.event-feed[aria-label="${label}"][data-virtuoso-scroller]`).locator('visible=true');
+  return page.locator(`.event-feed[aria-label="${label}"][tabindex]`).locator('visible=true');
 }
 
 /** Wait for a lazy theme's chunk to have been fetched, then for layout to go quiet. */

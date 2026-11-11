@@ -1359,3 +1359,9 @@
 @media (pointer: coarse) {
   .chat-input, .chat-composer-to select { font-size: 16px; }
 }
+
+/* The plain feed list (PlainFeedList.tsx) keeps the reader's row in place itself, because iOS
+   Safari has no scroll anchoring; the browser's own must not correct a second time. */
+.event-feed-plain {
+  overflow-anchor: none;
+}

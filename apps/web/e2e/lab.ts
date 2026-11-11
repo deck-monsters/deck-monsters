@@ -18,6 +18,9 @@ export interface OpenOptions {
 /** Open the lab on a fixture with the control strip hidden, and wait until it has mounted. */
 export async function openLab(page: Page, fixture: FixtureName, opts: OpenOptions = {}): Promise<void> {
   const params = new URLSearchParams({ controls: '0' });
+  // `E2E_FEED=plain` runs the whole suite against the plain feed list (roadmap 52, spike C1).
+  const feed = process.env['E2E_FEED'];
+  if (feed === 'plain' || feed === 'virtuoso') params.set('feed', feed);
   if (opts.history !== undefined) params.set('history', String(opts.history));
   if (opts.theme) params.set('theme', opts.theme);
   await page.goto(`/lab/${fixture}?${params.toString()}`);

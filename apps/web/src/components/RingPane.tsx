@@ -50,6 +50,7 @@ import {
 } from '../utils/feed-markers.js';
 import RingRoster, { type RingContestantSnapshot } from './RingRoster.js';
 import FeedList from './FeedList.js';
+import PlainFeedList, { feedImpl, type PlainFeedHandle } from './PlainFeedList.js';
 import RingItemsPanel from './RingItemsPanel.js';
 import { SUMMONS_BADGE_TITLE, headerBadgesVisible, summonsLeftLabel } from './ringHeaderBadges.js';
 
@@ -394,6 +395,7 @@ export default function RingPane({
     });
   }, []);
   const virtuosoRef = useRef<VirtuosoHandle>(null);
+  const plainRef = useRef<PlainFeedHandle>(null);
   const autoScroll = useFeedAutoScroll(virtuosoRef, 'ring');
   followRef.current = autoScroll.shouldFollowRef;
   const seenRef = useRef(new Set<string>());
@@ -655,14 +657,15 @@ export default function RingPane({
   // Scroll to bottom when this pane becomes active (tab switch)
   useEffect(() => {
     if (isActive) {
-      autoScroll.snapToBottom();
+      if (plainRef.current) plainRef.current.scrollToBottom();
+      else autoScroll.snapToBottom();
       setIsAtBottom(true);
     }
   }, [isActive, autoScroll]);
 
   // Virtuoso reports arrival at the bottom itself; see `jumpToBottom` for why the pane no
   // longer claims it up front.
-  const scrollToBottom = autoScroll.jumpToBottom;
+  const scrollToBottom = () => (plainRef.current ? plainRef.current.scrollToBottom() : autoScroll.jumpToBottom());
 
   // Compute the timer badge inline — tick state re-renders every second to keep it current
   let timerBadge: string | null = null;
@@ -717,6 +720,61 @@ export default function RingPane({
     />
   );
 
+  // One row, for either list (Virtuoso today, PlainFeedList behind `feedImpl()`).
+  const renderRow = (_: number, event: GameEvent) => {
+          if (isFeedMarker(event)) {
+            return (
+              <li className={`feed-marker feed-marker-${feedMarkerKind(event) ?? 'joined'}`}>
+                <span>{event.text}</span>
+              </li>
+            );
+          }
+          const keyMeta = getKeyRingEventMeta(event);
+          const iso = eventTimestampIso(event.timestamp);
+          const hoverTitle = formatEventHoverTitle(event.timestamp);
+          const showKeyColumn = ringKeyTimestampsEnabled && keyMeta;
+          // Wait for the handshake's user id: the explained set is per player, and a note
+          // claimed under no id would be written to a key no later session reads.
+          const mechanicNote = myUserId
+            ? mechanicNoteFor(
+                myUserId,
+                'ring',
+                event.id,
+                event.payload,
+                newestMechanicRows.get(mechanicKeyOf(event.payload) ?? '') === event.id,
+              )
+            : undefined;
+          return (
+            <li
+              className={`event ${eventClass(event.type)}`}
+              data-event-at={iso}
+              data-event-type={event.type}
+              data-boss-arrival={isBossArrival(event) ? '' : undefined}
+              title={hoverTitle}
+            >
+              <time className="event-sr-only" dateTime={iso}>
+                {hoverTitle}
+              </time>
+              {showKeyColumn ? (
+                <div className="event-row-inner">
+                  <div className="event-text"><FeedEventBody text={event.text ?? ''} payload={event.payload} style={feedStyle} mentions={mentions} /></div>
+                  <KeyRingTimeBadge at={new Date(event.timestamp)} label={keyMeta.label} />
+                </div>
+              ) : (
+                <div className="event-text"><FeedEventBody text={event.text ?? ''} payload={event.payload} style={feedStyle} mentions={mentions} /></div>
+              )}
+              {mechanicNote && <div className="mechanic-note">ⓘ {mechanicNote}</div>}
+            </li>
+          );
+        };
+  const plain = feedImpl() === 'plain';
+  // What a row's output depends on beside its event; PlainFeedList re-renders rows when it changes.
+  const rowVersion = useMemo(
+    () => ({}),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [feedStyle, mentions, ringKeyTimestampsEnabled, myUserId],
+  );
+
   return (
     <section
       className={`terminal-pane${isActive ? ' active' : ''}`}
@@ -768,7 +826,32 @@ export default function RingPane({
       {/* Gesture listeners sit on the wrapper because Virtuoso owns the scroller element;
           wheel/touch/pointer/key events bubble up from it. */}
       <div className="pane-feed-area" ref={feedAreaRef} {...autoScroll.gestureHandlers}>
-      {listReady && widthMeasured ? (
+      {plain ? (
+        listReady ? (
+          <PlainFeedList
+            ref={plainRef}
+            data={events}
+            rowKey={(event) => event.id}
+            renderRow={renderRow}
+            rowFlag={(event) => newestMechanicRows.get(mechanicKeyOf(event.payload) ?? '') === event.id}
+            rowVersion={rowVersion}
+            pane="ring"
+            ariaLabel="Ring events"
+            onPinnedChange={setIsAtBottom}
+            empty={
+              <ol className="event-feed-list">
+                <li className="event event-system event-feed-empty">
+                  <p>No fight yet. A fight starts when two monsters are in the ring: send one of yours, or summon a boss.</p>
+                </li>
+              </ol>
+            }
+          />
+        ) : (
+          <div className="event-feed" role="log" aria-live="polite" aria-label="Ring events">
+            <p className="event event-system event-feed-empty">Waiting for fight events…</p>
+          </div>
+        )
+      ) : listReady && widthMeasured ? (
       <Virtuoso
         key={metricsKey}
         {...(resumeAt ? { initialTopMostItemIndex: resumeAt } : {})}
@@ -800,52 +883,7 @@ export default function RingPane({
             </li>
           ),
         }}
-        itemContent={(_, event) => {
-          if (isFeedMarker(event)) {
-            return (
-              <li className={`feed-marker feed-marker-${feedMarkerKind(event) ?? 'joined'}`}>
-                <span>{event.text}</span>
-              </li>
-            );
-          }
-          const keyMeta = getKeyRingEventMeta(event);
-          const iso = eventTimestampIso(event.timestamp);
-          const hoverTitle = formatEventHoverTitle(event.timestamp);
-          const showKeyColumn = ringKeyTimestampsEnabled && keyMeta;
-          // Wait for the handshake's user id: the explained set is per player, and a note
-          // claimed under no id would be written to a key no later session reads.
-          const mechanicNote = myUserId
-            ? mechanicNoteFor(
-                myUserId,
-                'ring',
-                event.id,
-                event.payload,
-                newestMechanicRows.get(mechanicKeyOf(event.payload) ?? '') === event.id,
-              )
-            : undefined;
-          return (
-            <li
-              className={`event ${eventClass(event.type)}`}
-              data-event-at={iso}
-              data-event-type={event.type}
-              data-boss-arrival={isBossArrival(event) ? '' : undefined}
-              title={hoverTitle}
-            >
-              <time className="event-sr-only" dateTime={iso}>
-                {hoverTitle}
-              </time>
-              {showKeyColumn ? (
-                <div className="event-row-inner">
-                  <div className="event-text"><FeedEventBody text={event.text ?? ''} payload={event.payload} style={feedStyle} mentions={mentions} /></div>
-                  <KeyRingTimeBadge at={new Date(event.timestamp)} label={keyMeta.label} />
-                </div>
-              ) : (
-                <div className="event-text"><FeedEventBody text={event.text ?? ''} payload={event.payload} style={feedStyle} mentions={mentions} /></div>
-              )}
-              {mechanicNote && <div className="mechanic-note">ⓘ {mechanicNote}</div>}
-            </li>
-          );
-        }}
+        itemContent={renderRow}
         atBottomStateChange={(atBottom) => setIsAtBottom(autoScroll.onAtBottomChange(atBottom))}
       />
       ) : (
