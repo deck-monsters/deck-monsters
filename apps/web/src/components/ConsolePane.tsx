@@ -35,6 +35,7 @@ import {
   type FightHighlight,
 } from '../utils/fight-highlights.js';
 import FeedList from './FeedList.js';
+import PlainFeedList, { feedImpl, type PlainFeedHandle } from './PlainFeedList.js';
 import { mechanicKeyOf, mechanicNoteFor, mechanicPayloadOf, newestEventIdByKey } from '../lib/mechanic-notes.js';
 import { mapConsoleHistoryEvent } from '../utils/console-history-event-map.js';
 import { AT_BOTTOM_THRESHOLD_PX, useFeedAutoScroll } from '../hooks/useFeedAutoScroll.js';
@@ -246,6 +247,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
   // left the input locked. They read `activePromptIdRef`, which `setActivePromptId` writes
   // synchronously (the only writer).
   const virtuosoRef = useRef<VirtuosoHandle>(null);
+  const plainRef = useRef<PlainFeedHandle>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const seenRef = useRef(new Set<string>());
   const historyApplied = useRef(false);
@@ -312,14 +314,15 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
   // Scroll to bottom when this pane becomes active (tab switch)
   useEffect(() => {
     if (isActive) {
-      autoScroll.snapToBottom();
+      if (plainRef.current) plainRef.current.scrollToBottom();
+      else autoScroll.snapToBottom();
       setIsAtBottom(true);
     }
   }, [isActive, autoScroll]);
 
   // Virtuoso reports arrival at the bottom itself; see `jumpToBottom` for why the pane no
   // longer claims it up front.
-  const scrollToBottom = autoScroll.jumpToBottom;
+  const scrollToBottom = () => (plainRef.current ? plainRef.current.scrollToBottom() : autoScroll.jumpToBottom());
 
   const { data: myMonsters, refetch: refetchMyMonsters } = trpc.game.myMonsters.useQuery(
     { roomId },
@@ -772,6 +775,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
 
     // Jump to bottom after history loads (instant, no animation)
     requestAnimationFrame(() => {
+      plainRef.current?.scrollToBottom();
       virtuosoRef.current?.scrollToIndex({ index: 'LAST', behavior: 'auto' });
       autoScroll.resetToBottom();
     });
@@ -1050,76 +1054,8 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
     ? 'Sending…'
     : 'Type a command…';
 
-  return (
-    <section
-      className={`terminal-pane${isActive ? ' active' : ''}`}
-      aria-label="Your Console — private messages and commands"
-      style={{ position: 'relative' }}
-    >
-      <header className="pane-header">
-        <span>Console</span>
-        {reconnecting && <span style={{ color: 'var(--color-accent)' }}>reconnecting…</span>}
-        {activePromptId && (
-          <button
-            onClick={() => void handleCancelFlow()}
-            style={{
-              marginLeft: 'auto',
-              padding: '0.1rem 0.5rem',
-              fontSize: '0.75rem',
-              background: 'transparent',
-              border: '1px solid var(--color-border)',
-              color: 'var(--color-fg-dim)',
-              cursor: 'pointer',
-              fontFamily: 'var(--font-ui)',
-            }}
-            title="Cancel current action"
-          >
-            Cancel action
-          </button>
-        )}
-        {headerActions && <span className="pane-header-actions">{headerActions}</span>}
-      </header>
-
-      {/* Gesture listeners sit on the wrapper because Virtuoso owns the scroller element;
-          wheel/touch/pointer/key events bubble up from it (see useFeedAutoScroll). */}
-      <div className="pane-feed-area" {...autoScroll.gestureHandlers}>
-      <Virtuoso
-        ref={virtuosoRef}
-        scrollerRef={autoScroll.setScroller}
-        className="event-feed"
-        role="log"
-        aria-live="polite"
-        aria-label="Console messages"
-        tabIndex={0}
-        data={feedEvents}
-        atBottomThreshold={AT_BOTTOM_THRESHOLD_PX}
-        /*
-         * Virtuoso's own follow-output, matching RingPane. This used to be `false` with the
-         * scroll driven imperatively instead: every append ran
-         * `scrollToIndex({ index: 'LAST', behavior: 'smooth' })` inside a rAF. An imperative
-         * smooth scroll is not cancel-aware — it keeps animating while the reader drags
-         * against it, and during a fight the next event schedules another before the last
-         * has landed, so the view is pulled back down over and over. That reads as a console
-         * that will not scroll up at all, which is how it was reported. The ring pane, which
-         * has always used `followOutput`, was never affected — Virtuoso stops following the
-         * moment the reader leaves the bottom.
-         *
-         * `shouldFollowRef` tracks "is at bottom" and is forced true by `enable()` so a
-         * command you just sent still scrolls into view. Same contract as before: follow new
-         * output only when already at the bottom. See 10b-bugs-fixed.md #129.
-         */
-        followOutput={(atBottom) =>
-          autoScroll.shouldFollowRef.current || atBottom ? 'smooth' : false
-        }
-        components={{
-          List: FeedList,
-          EmptyPlaceholder: () => (
-            <li className="event event-system event-feed-empty">
-              <p>Type a command below to start. Try: <em>look at monsters</em></p>
-            </li>
-          ),
-        }}
-        itemContent={(_, ev) => {
+  // One row, for either list (Virtuoso today, PlainFeedList behind `feedImpl()`).
+  const renderRow = (_: number, ev: (typeof feedEvents)[number]) => {
           if (ev.type === 'prompt' && ev.promptData) {
             return (
               <li className="event">
@@ -1177,9 +1113,104 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
               {noteLine}
             </li>
           );
+        };
+  const plain = feedImpl() === 'plain';
+
+  return (
+    <section
+      className={`terminal-pane${isActive ? ' active' : ''}`}
+      aria-label="Your Console — private messages and commands"
+      style={{ position: 'relative' }}
+    >
+      <header className="pane-header">
+        <span>Console</span>
+        {reconnecting && <span style={{ color: 'var(--color-accent)' }}>reconnecting…</span>}
+        {activePromptId && (
+          <button
+            onClick={() => void handleCancelFlow()}
+            style={{
+              marginLeft: 'auto',
+              padding: '0.1rem 0.5rem',
+              fontSize: '0.75rem',
+              background: 'transparent',
+              border: '1px solid var(--color-border)',
+              color: 'var(--color-fg-dim)',
+              cursor: 'pointer',
+              fontFamily: 'var(--font-ui)',
+            }}
+            title="Cancel current action"
+          >
+            Cancel action
+          </button>
+        )}
+        {headerActions && <span className="pane-header-actions">{headerActions}</span>}
+      </header>
+
+      {/* Gesture listeners sit on the wrapper because Virtuoso owns the scroller element;
+          wheel/touch/pointer/key events bubble up from it (see useFeedAutoScroll). */}
+      <div className="pane-feed-area" {...autoScroll.gestureHandlers}>
+      {plain ? (
+        <PlainFeedList
+          ref={plainRef}
+          data={feedEvents}
+          rowKey={(ev, index) => ev.id ?? String(index)}
+          renderRow={renderRow}
+          // A Console row reads the pane's prompt and note state; until that is narrowed (Pass
+          // D), every row re-renders with the pane. The Console holds a few hundred rows.
+          rowVersion={{}}
+          cap={500}
+          pane="console"
+          ariaLabel="Console messages"
+          onPinnedChange={setIsAtBottom}
+          empty={
+            <ol className="event-feed-list">
+              <li className="event event-system event-feed-empty">
+                <p>Type a command below to start. Try: <em>look at monsters</em></p>
+              </li>
+            </ol>
+          }
+        />
+      ) : (
+      <Virtuoso
+        ref={virtuosoRef}
+        scrollerRef={autoScroll.setScroller}
+        className="event-feed"
+        role="log"
+        aria-live="polite"
+        aria-label="Console messages"
+        tabIndex={0}
+        data={feedEvents}
+        atBottomThreshold={AT_BOTTOM_THRESHOLD_PX}
+        /*
+         * Virtuoso's own follow-output, matching RingPane. This used to be `false` with the
+         * scroll driven imperatively instead: every append ran
+         * `scrollToIndex({ index: 'LAST', behavior: 'smooth' })` inside a rAF. An imperative
+         * smooth scroll is not cancel-aware — it keeps animating while the reader drags
+         * against it, and during a fight the next event schedules another before the last
+         * has landed, so the view is pulled back down over and over. That reads as a console
+         * that will not scroll up at all, which is how it was reported. The ring pane, which
+         * has always used `followOutput`, was never affected — Virtuoso stops following the
+         * moment the reader leaves the bottom.
+         *
+         * `shouldFollowRef` tracks "is at bottom" and is forced true by `enable()` so a
+         * command you just sent still scrolls into view. Same contract as before: follow new
+         * output only when already at the bottom. See 10b-bugs-fixed.md #129.
+         */
+        followOutput={(atBottom) =>
+          autoScroll.shouldFollowRef.current || atBottom ? 'smooth' : false
+        }
+        components={{
+          List: FeedList,
+          EmptyPlaceholder: () => (
+            <li className="event event-system event-feed-empty">
+              <p>Type a command below to start. Try: <em>look at monsters</em></p>
+            </li>
+          ),
         }}
+        itemContent={renderRow}
         atBottomStateChange={(atBottom) => setIsAtBottom(autoScroll.onAtBottomChange(atBottom))}
       />
+      )}
 
       {!isAtBottom && (
         <button
