@@ -139,6 +139,28 @@ describe('trpc ringFeed chat frames', () => {
 		await it.return?.(undefined);
 	});
 
+	it('follows chat with a tracked heartbeat, so the client\'s stored resume cursor is a real id again', async () => {
+		// tRPC's wsClient overwrites its cursor with every data result's id; chat has none.
+		const { chat, as } = build();
+		const it = (await as(ADA).game.ringFeed({ roomId: ROOM_ID })) as AsyncGenerator<unknown>;
+		expect(asFrame((await it.next()).value).value.type).to.equal('handshake');
+		const pending = it.next();
+		await new Promise((resolve) => setImmediate(resolve));
+		await chat.send({ roomId: ROOM_ID, senderUserId: BEN, text: 'one' });
+		await chat.send({ roomId: ROOM_ID, senderUserId: BEN, text: 'two' });
+		const first = asFrame((await pending).value);
+		expect(first.tracked).to.equal(false);
+		expect(first.value.type).to.equal('chat');
+		// Both queued messages first, then exactly one heartbeat.
+		const second = asFrame((await it.next()).value);
+		expect(second.tracked).to.equal(false);
+		const hb = asFrame((await it.next()).value);
+		expect(hb.tracked).to.equal(true);
+		expect(hb.value.type).to.equal('heartbeat');
+		expect(hb.value.id).to.match(/^\d+-heartbeat$/);
+		await it.return?.(undefined);
+	});
+
 	it('releases the chat subscription when the client leaves during the handshake', async () => {
 		const { chat, as } = build();
 		const it = (await as(ADA).game.ringFeed({ roomId: ROOM_ID })) as AsyncGenerator<unknown>;

@@ -202,9 +202,12 @@ export function useGuidedStart(roomId: string | undefined): GuidedStep & { fight
 	// here refetched the Console's history on every focus and reconnect whatever the pane asked
 	// for (baseline, "History is fetched again on every focus"). The guide latches its decision
 	// on the first load and never needs a second copy.
+	// `refetchOnMount: 'always'` plus the `isFetchedAfterMount` gate below: react-query keeps a
+	// result for 5 minutes after its observers unmount, and with `staleTime: Infinity` a return
+	// to the room within that time would latch the decision on a stale snapshot (see ConsolePane).
 	const history = trpc.game.consoleHistory.useQuery(
 		{ roomId: roomId ?? '' },
-		{ enabled: !!roomId, staleTime: Infinity, refetchOnWindowFocus: false, refetchOnReconnect: false },
+		{ enabled: !!roomId, staleTime: Infinity, refetchOnMount: 'always', refetchOnWindowFocus: false, refetchOnReconnect: false },
 	);
 
 	const monsters = useMemo<GuidedMonster[] | undefined>(() => {
@@ -222,7 +225,8 @@ export function useGuidedStart(roomId: string | undefined): GuidedStep & { fight
 	}, [inventory.data]);
 	// A failed history query leaves the guide hidden: without it a veteran could not be told
 	// from a new player, and showing the guide to a veteran is worse than not showing it.
-	const historyReady = history.data !== undefined;
+	// `!== false`: only a result cached from before this mount is refused (mocks omit the flag).
+	const historyReady = history.data !== undefined && history.isFetchedAfterMount !== false;
 	const hasOutcomeHistory = useMemo(
 		() => (history.data ?? []).some((ev) => OUTCOME_EVENT_TYPES.has(ev.type)),
 		[history.data],

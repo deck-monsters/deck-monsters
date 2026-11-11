@@ -106,6 +106,8 @@ export function useRingFeed(roomId: string): RingFeedApi {
   // last handshake.
   const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const failuresRef = useRef(0);
+  // The subscription status has been 'pending' since it last read 'connecting' (see the status effect).
+  const statusLiveRef = useRef(false);
   // `handleConnectionLost` and `armWatchdog` call each other; this breaks the cycle.
   const armWatchdogRef = useRef<(ms: number) => void>(() => undefined);
   // The resume check's grace timer, and the wall-clock facts it decides from. Wall clock
@@ -146,6 +148,7 @@ export function useRingFeed(roomId: string): RingFeedApi {
     lastFrameWallRef.current = null;
     offlineSinceFrameRef.current = false;
     failuresRef.current = 0;
+    statusLiveRef.current = false;
     // The previous room's timers must die with it. RingFeedProvider is not re-keyed
     // per room, so a timer left armed here fires later against the *new* room and drops
     // a healthy connection into "reconnecting…", which only a real handshake clears. The
@@ -373,12 +376,15 @@ export function useRingFeed(roomId: string): RingFeedApi {
    * the subscription's input. Changing the input re-subscribes, so every page load opened the
    * feed twice: the second handshake read as a reconnect (a false "reconnected" divider
    * about 2.5 s after load) and on a slow link the first handshake took two round trips.
-   * Nothing is lost by not doing it: a first subscribe with no cursor makes the server replay
-   * its last 100 events, and the panes drop anything they already hold by id. The input's
-   * cursor changes only when the connection is declared lost (`handleConnectionLost`) or
-   * the room changes. The transport's own socket-level resume needs nothing from here: tRPC's
-   * wsClient keeps the id of the last tracked frame it received on the request and re-sends
-   * it when the socket reconnects (`wsLink` `request.message.params.lastEventId`).
+   * Nothing is lost by not doing it, given two things. (1) A first subscribe with no cursor
+   * makes the server replay its last 100 events, and the panes drop anything they already hold
+   * by id; the panes apply only history fetched after they mounted, so a return to the room
+   * never pairs a stale snapshot with that 100-event window. (2) The input's cursor changes only
+   * when the connection is declared lost (`handleConnectionLost`) or the room changes. The
+   * transport's own socket-level resume does NOT read this: tRPC's wsClient keeps the id of the
+   * last data result on the request (`request.message.params.lastEventId`) and re-sends it when
+   * the socket reconnects. That is overwritten by EVERY data result, and an untracked chat frame
+   * has no id, so the server follows chat with a tracked heartbeat to keep it a real id.
    */
   const seedCursor = useCallback(
     (eventId: string) => {
@@ -387,7 +393,7 @@ export function useRingFeed(roomId: string): RingFeedApi {
     [advanceTrackedCursor]
   );
 
-  trpc.game.ringFeed.useSubscription(
+  const subscription = trpc.game.ringFeed.useSubscription(
     { roomId, lastEventId: subLastEventId, resumeAttempt },
     {
       onData(frame: TrackedRingFeedEvent | ChatFrame) {
@@ -473,6 +479,36 @@ export function useRingFeed(roomId: string): RingFeedApi {
       },
     },
   );
+
+  /*
+   * tRPC's wsClient recovers a dead socket by itself (keepAlive closes it, then it reconnects and
+   * re-sends the subscription), without erroring the subscription: the hook's `status` goes back
+   * to 'connecting' and the handshake and replay arrive, usually before our own 20 s watchdog.
+   * With nothing reading that, `reconnecting` was never set, no outage opened, and the replayed
+   * catch-up landed with no "connection lost" / "reconnected" around it. Treat it like `offline`:
+   * show the state, tear nothing down; the next frame clears it (#128).
+   *
+   * Only after a frame has been seen on this subscription (the initial connect is also
+   * 'connecting'), and not while our own loss path is already running (its resubscribe resets
+   * the status to 'connecting' too).
+   */
+  const subscriptionStatus = (subscription as { status?: string } | undefined)?.status;
+  useEffect(() => {
+    if (subscriptionStatus === 'pending') {
+      statusLiveRef.current = true;
+      return;
+    }
+    if (subscriptionStatus !== 'connecting') return;
+    // Only a 'connecting' that follows a 'pending' is a reconnect. The status read at the first
+    // commit is the initial 'connecting', even when the transport already delivered a frame
+    // synchronously (the lab does), and a room change or our own resubscribe resets it too.
+    const wasLive = statusLiveRef.current;
+    statusLiveRef.current = false;
+    if (!wasLive || lastFrameWallRef.current === null || awaitingReconnectRef.current) return;
+    feedTimings.count('conn.transport_reconnecting');
+    setConnected(false);
+    setReconnecting(true);
+  }, [subscriptionStatus]);
 
   return { connected, reconnecting, subscribe, seedCursor, subscribeChat };
 }

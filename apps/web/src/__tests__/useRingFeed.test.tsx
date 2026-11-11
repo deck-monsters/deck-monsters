@@ -13,6 +13,7 @@ import {
   type TrackedRingFeedEvent,
 } from '../hooks/useRingFeed.js';
 import { useContext } from 'react';
+import { feedTimings } from '../lib/feed-timings.js';
 
 /** Reads the provider's live api object, including the connection flags. */
 function useRingFeedContextForTest(): RingFeedApi {
@@ -31,6 +32,9 @@ const subscriptionCalls: Array<{
 
 /** When set, the mock pushes this event via queueMicrotask on first subscribe (after layout). */
 let earlyDeliverOnSubscribe: TrackedEvent | null = null;
+
+/** The `status` the mocked `useSubscription` reports, like @trpc/react-query's. */
+let subscriptionStatus: 'connecting' | 'pending' | 'error' = 'pending';
 
 const handleHandshakeEvent = vi.fn();
 
@@ -63,6 +67,7 @@ vi.mock('../lib/trpc.js', () => ({
             const onData = opts.onData;
             queueMicrotask(() => onData(early));
           }
+          return { status: subscriptionStatus };
         },
       },
     },
@@ -104,6 +109,7 @@ describe('useRingFeed', () => {
     subscriptionCalls.length = 0;
     handleHandshakeEvent.mockReset();
     earlyDeliverOnSubscribe = null;
+    subscriptionStatus = 'pending';
   });
 
   it('opens exactly one ringFeed subscription and fans out each event once', () => {
@@ -1046,5 +1052,63 @@ describe('useRingFeed: a frame is proof the connection is alive', () => {
       act(() => sendChat(chatMessage(1)));
       expect(result.current.connected).toBe(true);
     });
+  });
+});
+
+/**
+ * tRPC's wsClient reconnects a dead socket by itself and does not error the subscription: the
+ * hook's `status` goes back to 'connecting'. That must show as reconnecting (and so bracket the
+ * replay with dividers) without resubscribing.
+ */
+describe('useRingFeed: the transport reconnecting on its own', () => {
+  function wrapper({ children }: { children: ReactNode }) {
+    return <RingFeedProvider roomId="room-a">{children}</RingFeedProvider>;
+  }
+  const hs = (id: string) => ({ id, data: makeEvent({ id, type: 'handshake', scope: 'private' }) });
+
+  it('does not trip on the initial connect', () => {
+    subscriptionStatus = 'connecting';
+    const { result } = renderHook(() => useRingFeedContextForTest(), { wrapper });
+    expect(result.current.reconnecting).toBe(false);
+  });
+
+  it('does not trip when a frame lands before the first commit reports its still-initial status', () => {
+    // The lab (and any transport that delivers synchronously) has a frame in before the effect
+    // reads the render-time 'connecting'.
+    subscriptionStatus = 'connecting';
+    earlyDeliverOnSubscribe = { id: '1-handshake', data: makeEvent({ id: '1-handshake', type: 'handshake', scope: 'private' }) };
+    const { result } = renderHook(() => useRingFeedContextForTest(), { wrapper });
+    expect(result.current.reconnecting).toBe(false);
+  });
+
+  it('shows reconnecting when status returns to connecting after a frame, leaves the subscription alone, and clears on the next frame', () => {
+    subscriptionStatus = 'connecting';
+    const { result, rerender } = renderHook(() => useRingFeedContextForTest(), { wrapper });
+    act(() => latestCall().onData?.(hs('h1')));
+    subscriptionStatus = 'pending';
+    rerender();
+    expect(result.current.reconnecting).toBe(false);
+    const inputBefore = { ...latestCall().input };
+
+    subscriptionStatus = 'connecting';
+    rerender();
+    expect(result.current.reconnecting).toBe(true);
+    expect(result.current.connected).toBe(false);
+    expect(latestCall().input).toEqual(inputBefore);
+
+    act(() => latestCall().onData?.(hs('h2')));
+    expect(result.current.reconnecting).toBe(false);
+    expect(result.current.connected).toBe(true);
+  });
+
+  it('does not count again while the app\'s own loss path is already running', () => {
+    feedTimings.reset();
+    subscriptionStatus = 'pending';
+    const { rerender } = renderHook(() => useRingFeedContextForTest(), { wrapper });
+    act(() => latestCall().onData?.(hs('h1')));
+    act(() => latestCall().onError?.()); // our own path: resubscribes, status resets to connecting
+    subscriptionStatus = 'connecting';
+    rerender();
+    expect(feedTimings.snapshot().counters['conn.transport_reconnecting'] ?? 0).toBe(0);
   });
 });

@@ -69,14 +69,17 @@ function getWsClient() {
        *
        * What this adds over the feed's own heartbeat watchdog (`useRingFeed`): it is the only
        * thing that can notice a dead socket on a connection whose subscription is not due a
-       * frame. The feed lab replaces this client with a scripted transport, so NO browser
+       * frame. The 10 s pong wait is deliberately generous: wsClient clears its pong timer only
+       * on a PONG, and a phone frozen with a PING outstanding runs the overdue timer on thaw
+       * before the queued PONG is dispatched, closing a healthy socket (the bug 127 race, one
+       * layer down). The feed lab replaces this client with a scripted transport, so NO browser
        * test exercises it; it is covered by the server-side contract above and by reading
        * `@trpc/client`'s wsLink, not by the Playwright suite.
        */
       keepAlive: {
         enabled: true,
         intervalMs: 8_000,
-        pongTimeoutMs: 4_000,
+        pongTimeoutMs: 10_000,
       },
     });
   }

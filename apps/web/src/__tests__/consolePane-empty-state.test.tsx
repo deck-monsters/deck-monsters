@@ -20,6 +20,8 @@ const mocks = vi.hoisted(() => ({
   history: undefined as unknown[] | undefined,
   historyError: false,
   historyOptions: undefined as unknown,
+  fresh: true,
+  seeded: [] as string[],
 }));
 
 vi.mock('react-virtuoso', () => {
@@ -65,7 +67,7 @@ vi.mock('../lib/trpc.js', () => ({
       consoleHistory: {
         useQuery: (_input: unknown, options: unknown) => {
           mocks.historyOptions = options;
-          return { data: mocks.history, isError: mocks.historyError };
+          return { data: mocks.history, isError: mocks.historyError, isFetchedAfterMount: mocks.fresh };
         },
       },
       pendingPrompt: { useQuery: () => ({ data: null, dataUpdatedAt: 0, refetch: vi.fn() }) },
@@ -93,7 +95,7 @@ function TestFeed({ children, reconnecting = false }: { children: ReactNode; rec
   const value: RingFeedApi = {
     connected: !reconnecting,
     reconnecting,
-    seedCursor: () => undefined,
+    seedCursor: (id) => { mocks.seeded.push(id); },
     subscribeChat: () => () => undefined,
     subscribe: (listener) => {
       listeners.add(listener);
@@ -117,6 +119,8 @@ beforeEach(() => {
   mocks.history = undefined;
   mocks.historyError = false;
   mocks.historyOptions = undefined;
+  mocks.fresh = true;
+  mocks.seeded = [];
 });
 
 afterEach(() => {
@@ -143,10 +147,25 @@ describe('ConsolePane empty state (baseline C7)', () => {
     expect(screen.getByText(/Type a command below to start/)).toBeTruthy();
   });
 
-  it('fetches history once: no refetch on focus or reconnect, never stale', () => {
+  it('does not trust a result cached from before this mount: still loading until the refetch resolves', () => {
+    // A quick return from another route: react-query hands over its 5-minute cache. Applying it
+    // would lose every event between its tail and the feed's 100-event first replay.
+    mocks.history = [{ id: '1-old', type: 'announce' }];
+    mocks.fresh = false;
+    const view = render(pane());
+    expect(screen.getByText('Loading your console…')).toBeTruthy();
+    expect(mocks.seeded).toEqual([]); // the stale tail was not applied
+    mocks.history = [{ id: '1-old', type: 'announce' }, { id: '2-new', type: 'announce' }];
+    mocks.fresh = true;
+    view.rerender(pane());
+    expect(mocks.seeded).toEqual(['2-new']); // the refetched result was
+  });
+
+  it('fetches on every mount, never on focus or reconnect', () => {
     render(pane());
     expect(mocks.historyOptions).toEqual({
       staleTime: Infinity,
+      refetchOnMount: 'always',
       refetchOnWindowFocus: false,
       refetchOnReconnect: false,
     });

@@ -299,14 +299,22 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
   // would refetch the whole payload on every window focus and on coming back online for
   // nothing (baseline "History is fetched again on every focus"), so fetch once.
   // (`useGuidedStart` reads the same query on its own; that one is left to its owner.)
-  const { data: history, isError: historyError } = trpc.game.consoleHistory.useQuery(
+  //
+  // But every MOUNT fetches (`refetchOnMount: 'always'`) and the pane applies only a result
+  // fetched after this mount (`isFetchedAfterMount`), never one from react-query's cache, which
+  // outlives the pane by 5 minutes. The feed's first subscribe has no cursor and the server
+  // replays only its last 100 events, so a stale snapshot applied on a quick return from
+  // another route (the Workshop) silently lost everything between its tail and those 100.
+  const { data: history, isError: historyError, isFetchedAfterMount } = trpc.game.consoleHistory.useQuery(
     { roomId },
-    { staleTime: Infinity, refetchOnWindowFocus: false, refetchOnReconnect: false }
+    { staleTime: Infinity, refetchOnMount: 'always', refetchOnWindowFocus: false, refetchOnReconnect: false }
   );
+  // `!== false`: only a result cached from before this mount is refused (test mocks omit the flag).
+  const historyFresh = isFetchedAfterMount !== false;
   // The empty-state hint is only true once history has said the console really is empty.
   // Before that it told a player on a slow link to "type a command to start" while their
   // earlier session was still loading (baseline C7).
-  const historyResolved = history !== undefined || historyError;
+  const historyResolved = (history !== undefined && historyFresh) || historyError;
   // Monster sprites in place of their emoji, as in the Ring feed (roadmap 24).
   const mentions = useMonsterMentions(roomId);
   const feedStyle = feedStyleFor(useTheme().theme);
@@ -745,7 +753,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
 
   // Apply DB history once — pre-populate seenRef and seed shared subscription lastEventId.
   useEffect(() => {
-    if (!history || historyApplied.current) return;
+    if (!history || !historyFresh || historyApplied.current) return;
     historyApplied.current = true;
 
     // Deduplicate history by event ID (handles legacy duplicate rows in DB)
@@ -805,7 +813,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
       virtuosoRef.current?.scrollToIndex({ index: 'LAST', behavior: 'auto' });
       autoScroll.resetToBottom();
     });
-  }, [history, autoScroll, seedCursor]);
+  }, [history, historyFresh, autoScroll, seedCursor]);
 
   async function handleCancelPrompt(requestId: string) {
     resolvedPromptIdsRef.current.add(requestId);

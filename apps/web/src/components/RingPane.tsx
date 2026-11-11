@@ -476,10 +476,18 @@ export default function RingPane({
   // refetch on window focus and on the browser coming back online, so a phone returning to
   // the tab downloaded the room's whole history for nothing (baseline "History is fetched
   // again on every focus"). Fetch once.
-  const { data: history, isError: historyError } = trpc.game.ringHistory.useQuery(
+  //
+  // But every MOUNT fetches (`refetchOnMount: 'always'`) and the pane applies only a result
+  // fetched after this mount (`isFetchedAfterMount`), never one from react-query's cache, which
+  // outlives the pane by 5 minutes. The feed's first subscribe has no cursor and the server
+  // replays only its last 100 events, so a stale snapshot applied on a quick return from
+  // another route (the Workshop) silently lost everything between its tail and those 100.
+  const { data: history, isError: historyError, isFetchedAfterMount } = trpc.game.ringHistory.useQuery(
     { roomId },
-    { staleTime: Infinity, refetchOnWindowFocus: false, refetchOnReconnect: false }
+    { staleTime: Infinity, refetchOnMount: 'always', refetchOnWindowFocus: false, refetchOnReconnect: false }
   );
+  // `!== false`: only a result cached from before this mount is refused (test mocks omit the flag).
+  const historyFresh = isFetchedAfterMount !== false;
 
   // A failed history load must still open the list, or live events would sit in state
   // behind the waiting placeholder. An empty successful load is handled in the effect
@@ -682,7 +690,7 @@ export default function RingPane({
   // Apply DB history once — pre-populate seenRef and seed the shared subscription
   // lastEventId so the live subscription skips already-delivered events.
   useEffect(() => {
-    if (!history || historyApplied.current) return;
+    if (!history || !historyFresh || historyApplied.current) return;
     historyApplied.current = true;
 
     // Deduplicate history by event ID (handles legacy duplicate rows in DB)
@@ -741,7 +749,7 @@ export default function RingPane({
         virtuosoRef.current?.scrollToIndex({ index: 'LAST', behavior: 'auto' });
       });
     }
-  }, [history, seedCursor, autoScroll]);
+  }, [history, historyFresh, seedCursor, autoScroll]);
 
   // Scroll to bottom when this pane becomes active (tab switch)
   useEffect(() => {
