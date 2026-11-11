@@ -67,10 +67,11 @@ Evidence: `connectionLog()`, `deliveries()` and `deliveredIds()` (what reached t
 how), and `timings()`.
 
 The transport mirrors `ringFeed` in `packages/server/src/trpc/router.ts`: a handshake, replay
-after `lastEventId`, a heartbeat every 20 seconds, `system.gap` when a cursor is unknown or a
+after `lastEventId`, a heartbeat every 8 seconds, `system.gap` when a cursor is unknown or a
 replay hits its cap, and history without the types the server never persists. **It stands in
 for tRPC's WebSocket client and for the server.** It does not exercise the real client's
-reconnect and backoff, a real network, or the server's replay from Postgres.
+reconnect and backoff, its socket keep-alive, a real network, or the server's replay from
+Postgres. Roadmap 52 task D4 is the suite that will.
 
 ## Client timings
 

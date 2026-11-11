@@ -76,21 +76,20 @@ that decision.
 - [ ] Following lags by hundreds of pixels for up to 0.45 s while events arrive, worst when
   the roster grows. It ends pinned, so no test fails; the numbers are in the baseline.
 
-### N. Connection failures the browser suite measures
+### N. Connection: what the lab cannot test
 
-**Owner:** Web feeds and transport. Same source; tests in `apps/web/e2e/connection.spec.ts`.
-Only C5 fails a test today. The others are measured and slow, and get an expectation when the
-connection work in roadmap 52 sets the target.
+**Owner:** Web feeds and transport. C1 to C7 and the history refetch are fixed
+([10b #264 to #268](10b-bugs-fixed.md#264-a-dead-feed-connection-went-unnoticed-for-up-to-49-seconds--fixed)).
 
-- [ ] C1. A silently dead connection shows nothing for 31 to 49 seconds.
-- [ ] C2. Becoming visible with a dead connection waits a further 50 seconds.
-- [ ] C3. The browser's `offline` and `online` events are ignored.
-- [ ] C4. Every page load subscribes twice and draws a "reconnected" line with no loss.
-- [ ] C5. A quiet room shows "reconnected" with no "connection lost" before it.
-- [ ] C6. A failed resubscribe retries at once with no backoff.
-- [ ] C7. On a slow link the Console shows its empty hint while history is loading.
-- [ ] History is refetched on every window focus and discarded; some feed frames are 12 to
-  75 KB. Both read from the code (baseline, "Read from the code").
+- [ ] Run the connection faults against the real server and tRPC's WebSocket client through
+  a proxy (roadmap 52, D4). The lab replaces both, so the socket keep-alive after a phone
+  freeze, and the app's and the transport's reconnects firing together, are read from code
+  only.
+- [ ] Some feed frames are 12 to 75 KB (roadmap 52, D5).
+- [ ] A heartbeat id used as a resume cursor can draw a spurious `system.gap` line: the id
+  falls inside the buffered window and every later event is one this player cannot see, so
+  the durable replay is empty after `evicted`. Rare. Root cause: `ringFeed` treats "evicted
+  and nothing visible" as loss without checking whether anything visible existed.
 
 ## Historical detail
 

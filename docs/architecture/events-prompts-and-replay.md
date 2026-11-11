@@ -26,7 +26,7 @@ sets `includePrivate`. Subscriber failures do not crash the engine.
 
 The web server exposes one `game.ringFeed` subscription per terminal and room. It validates
 membership, emits a handshake, replays missed events, then streams live events and
-20-second heartbeats. `useRingFeed` owns the room cursor and fans one subscription out to
+8-second heartbeats. `useRingFeed` owns the room cursor and fans one subscription out to
 the Ring, Console, Workshop, and other mounted surfaces.
 
 The Discord connector resolves a guild user's validated room through `GuildRoomManager`,
@@ -150,9 +150,44 @@ after `evicted` means replay data was lost and does produce a gap. The live subs
 attached before replay starts; events that arrive during the query are buffered and
 deduplicated by id before live delivery.
 
-The client treats any inbound frame as proof the connection is alive. A 50-second
-watchdog resubscribes from the last cursor when frames stop, and is reset when a background
-tab becomes visible so browser timer suspension is not mistaken for a dead connection.
+### How the web client notices and recovers a lost connection
+
+The client treats any inbound frame as proof the connection is alive. The rules, in
+`useRingFeed` and `utils/ring-feed-connection.ts`, each proved by
+`apps/web/e2e/connection.spec.ts` (see the [feed lab](../reference/feed-lab.md)):
+
+- **Heartbeat and watchdog.** The server sends a heartbeat every 8 seconds. A 20-second
+  watchdog (two missed heartbeats and slack) declares the connection lost and resubscribes
+  from the last cursor. It was 20 and 50 seconds; a dead connection then showed nothing for
+  up to 49 seconds.
+- **Coming back.** When the page becomes visible, is restored from the back/forward cache,
+  or the browser reports `online`, the client waits 2 seconds for a frame. A frame means the
+  connection survived. No frame means it is lost, and the client resubscribes at once. It
+  does not restart the watchdog and wait, which cost a further 50 seconds after unlocking a
+  phone. Browser timer suspension is still not mistaken for a dead connection, because the
+  decision is made from the wall clock after the grace, not from an overdue timer.
+- **Offline.** The browser's `offline` event shows the reconnecting state at once. Nothing is
+  torn down; a frame clears it.
+- **Backoff.** Failed resubscribes wait 0, 0.5, 1, 2, 4, then 8 seconds, with jitter. A
+  handshake resets the count.
+- **One subscribe per page load.** The panes' history seeds the cursor in a ref only. It no
+  longer changes the subscription's input, which opened the feed twice on every load and drew
+  a false "reconnected" line. The first subscribe has no cursor, so the server replays its
+  last 100 events and the panes drop what they already hold.
+- **History is fetched on every mount and never from cache.** `ringHistory` and
+  `consoleHistory` use `refetchOnMount: 'always'` and the panes apply only a result fetched
+  after they mounted. A cached snapshot plus a cursorless subscribe would silently lose
+  everything between the snapshot's tail and the last 100 events. They do not refetch on
+  window focus or on coming online.
+- **Dividers.** "connection lost" appears only when an outage lasts over a second, and
+  "reconnected" only closes an outage the reader saw open.
+- **The transport's own reconnect.** tRPC's WebSocket client pings every 8 seconds, closes a
+  socket whose pong is 10 seconds late, reconnects, and re-sends the subscription with the id
+  of the last data result it received. Two things follow. The hook reads the subscription's
+  status and shows the reconnecting state when the transport does this by itself. And the
+  server follows chat frames, which carry no id, with a tracked heartbeat, so that stored id
+  is always a real cursor. A heartbeat id is a valid cursor: replay compares ids by their
+  leading epoch.
 
 ## Initial history and catch-up are different
 
