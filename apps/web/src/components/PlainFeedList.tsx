@@ -6,6 +6,7 @@ import {
   useImperativeHandle,
   useLayoutEffect,
   useRef,
+  useState,
   type ReactNode,
 } from 'react';
 import { feedTimings } from '../lib/feed-timings.js';
@@ -36,12 +37,18 @@ import { feedTimings } from '../lib/feed-timings.js';
  *    left to CSS scroll anchoring, because iOS Safari has none.
  *  - Reaching the end again pins.
  *  - Rows are trimmed to `cap` only while pinned, when the reader cannot see the top go.
+ *  - The first paint draws only the newest `FIRST_PAINT_ROWS`; older rows are added above in
+ *    idle time. Drawing 500 rows at once took 1.5 to 2.1 s on a phone-speed CPU (4 to 6 times
+ *    throttled Chromium) against 1.1 s for the virtual list; the reader only sees the end.
  */
 
 /** Pixels from the end that still count as at the end. Absorbs fractional layout. */
 export const PIN_THRESHOLD_PX = 8;
 /** Rows kept in the DOM while following. */
 export const DEFAULT_FEED_CAP = 1000;
+/** Rows drawn on the first paint, and added above per idle slice after it. */
+const FIRST_PAINT_ROWS = 24;
+const BACKFILL_ROWS = 40;
 /** While reading back nothing is trimmed, up to this many times the cap. */
 const UNPINNED_CAP_FACTOR = 3;
 
@@ -112,7 +119,20 @@ function PlainFeedListInner<T>(
   const pinnedStart = Math.max(0, data.length - cap);
   if (pinnedRef.current) startRef.current = pinnedStart;
   else startRef.current = Math.max(Math.min(startRef.current, pinnedStart), data.length - cap * UNPINNED_CAP_FACTOR, 0);
-  const start = startRef.current;
+  // Backfill: `shown` is how many rows up from the end may be drawn yet.
+  const [shown, setShown] = useState(FIRST_PAINT_ROWS);
+  const start = Math.max(startRef.current, data.length - shown);
+  const backfilling = start > startRef.current;
+  useEffect(() => {
+    if (!backfilling) return;
+    const idle = (window as unknown as { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number })
+      .requestIdleCallback;
+    const cancelIdle = (window as unknown as { cancelIdleCallback?: (id: number) => void }).cancelIdleCallback;
+    const grow = () => setShown((n) => n + BACKFILL_ROWS);
+    // Safari has no requestIdleCallback; a short timeout after paint does the same job.
+    const id = idle ? idle(grow, { timeout: 200 }) : window.setTimeout(grow, 32);
+    return () => (idle && cancelIdle ? cancelIdle(id) : window.clearTimeout(id));
+  }, [backfilling, shown]);
 
   const setPinned = useCallback(
     (pinned: boolean) => {
@@ -200,10 +220,12 @@ function PlainFeedListInner<T>(
       toEnd();
       return;
     }
-    // Reading back: nothing moves, but the content is now taller, and that is not a reflow.
+    // Reading back: rows added above (backfill) must not move the row being read; rows added
+    // below move nothing. Either way the content is taller, and that is not a reflow.
+    restoreAnchor();
     const el = scrollerRef.current;
     if (el) lastSizeRef.current = { content: el.scrollHeight, viewport: el.clientHeight };
-  }, [data.length, start, toEnd]);
+  }, [data.length, start, toEnd, restoreAnchor]);
 
   // Anything else that changes a size: fonts, a theme, the pane's width, the roster above the
   // feed, a pane shown after `display: none`.
