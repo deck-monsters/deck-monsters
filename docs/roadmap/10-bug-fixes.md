@@ -76,6 +76,12 @@ are fixed: the plain list is the default
   runs: one touch drag moves the tracked row 8 px more or less than the finger. Seen on main
   (1 of 14) and after the `↓ Latest` hold (1 of 6), so the hold did not cause it. Not yet
   known whether it is the test's touch drag flinging or the list's row anchoring.
+- [ ] **Plain list, flaky on WebKit:** "ring › history walk › 120 px steps through 4000 px
+  while playing at 4x [phosphor]" on `webkit-phone` moved the tracked row 120 px, exactly one
+  gesture (CI on #439; it passed on #438). A guess to check first, not a finding: a reader's
+  scroll that lands in the same frame as a new row reads as a reflow, so
+  `PlainFeedList.onScroll` puts the row back and the gesture is undone. If so it would show on
+  a real phone as an occasional jump back while a fight is running.
 
 ### N. Connection: what the real-transport suite found and left
 
