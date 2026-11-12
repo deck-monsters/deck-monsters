@@ -107,6 +107,10 @@ durable replay and its cap all hold. Left:
 **Owner:** Server lifecycle. Seen in production on 2026-11-11, when #436 was merged during a
 session (Railway logs, room `d6d69a2e`).
 
+**Deferred by the owner (2026-11-12):** "confusing but rare", and with few players it does
+not matter yet. Take it up when the player count grows, or before anything makes deploys
+more frequent. Until then, avoid merging while someone has monsters in the ring.
+
 What happened, by the server log (UTC):
 
 - 14:55:28 the old process puts Queen Elizabeth in the ring. 14:55:39 it summons a boss.

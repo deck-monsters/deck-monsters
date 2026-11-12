@@ -133,7 +133,7 @@ function unequipCardAction({ channel, character, game, isDM, results }: any): Pr
 		});
 
 		return character
-			.unequipCard({ channel, cardName, count, monsterName })
+			.unequipCard({ channel, cardName, count, monsterName, ring: game.ring })
 			.catch((err: unknown) => game.log(err));
 	});
 }
@@ -148,7 +148,7 @@ function unequipAllAction({ channel, character, game, isDM, results }: any): Pro
 		const { monsterName } = cleanArgs({ monsterName: results[1] });
 
 		return character
-			.unequipAll({ channel, monsterName })
+			.unequipAll({ channel, monsterName, ring: game.ring })
 			.catch((err: unknown) => game.log(err));
 	});
 }
@@ -168,7 +168,7 @@ function moveCardAction({ channel, character, game, isDM, results }: any): Promi
 		});
 
 		return character
-			.moveCard({ channel, cardName, count, fromMonsterName, toMonsterName })
+			.moveCard({ channel, cardName, count, fromMonsterName, toMonsterName, ring: game.ring })
 			.catch((err: unknown) => game.log(err));
 	});
 }

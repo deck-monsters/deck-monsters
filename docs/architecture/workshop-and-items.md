@@ -397,3 +397,13 @@ state changes between render and mutation.
       through the shared `sell-pricing.ts` helper, not a re-derived formula.
 - [ ] Cache invalidation carries the same `roomId` as the mutation.
 - [ ] Player rule changes update [`ITEMS.md`](../../ITEMS.md).
+
+## A monster waiting in the ring keeps its hand
+
+The owner's rule (2026-11-12): once a monster is in the ring, waiting or fighting, its cards
+stay on it until it leaves. `Beastmaster.moveCard`, `unequipCard`, `unequipAll` and the preset
+path's donors all refuse it, given the room's ring (`ring: game.ring` from every caller; old
+callers that pass no ring still refuse a fight). The Workshop greys out **Unequip all** and
+says why; its slots stay live, so cards can still go in or be reordered, and a drag out gets
+the engine's sentence. Before this only a fight was checked, so a monster could be stripped
+while it waited and then fight short-handed.

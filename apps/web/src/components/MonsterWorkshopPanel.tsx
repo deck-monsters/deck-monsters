@@ -150,6 +150,10 @@ export default function MonsterWorkshopPanel({
   // The XP bar that opened the level-up details, or null while they are closed.
   const [levelSheetOpener, setLevelSheetOpener] = useState<HTMLElement | null>(null);
   const locked = monster.inEncounter;
+  // A monster waiting in the ring keeps its hand (owner, 2026-11-12): the engine refuses moving,
+  // unequipping and clearing its cards. Its slots stay live (cards can still go in, and be
+  // reordered); only taking cards out is refused, and the line below says so first.
+  const waitingInRing = monster.inRing && !monster.inEncounter;
   const slots = useMemo(() => {
     const total = Math.max(monster.cardSlots, 1);
     return Array.from({ length: total }, (_, idx) => monster.cards[idx] ?? null);
@@ -351,10 +355,12 @@ export default function MonsterWorkshopPanel({
         <button
           type="button"
           className="btn"
-          disabled={busy || locked || monster.cards.length < 1}
+          disabled={busy || locked || waitingInRing || monster.cards.length < 1}
           // No aria-label: the visible words are the accessible name, so voice control's
           // "click Unequip all" works (WCAG 2.5.3); the title adds the detail.
-          title={`Move all of ${monster.name}'s cards back to your cards`}
+          title={waitingInRing
+            ? `${monster.name} is waiting in the ring, so its cards stay on it until it leaves`
+            : `Move all of ${monster.name}'s cards back to your cards`}
           onClick={() => onUnequipAll()}
         >
           Unequip all
@@ -372,6 +378,12 @@ export default function MonsterWorkshopPanel({
       )}
       {compatibilityHint === 'ineligible' && (
         <p className="workshop-compatibility-hint ineligible">{refusalSentence ?? 'Cannot use selected inventory card.'}</p>
+      )}
+
+      {waitingInRing && (
+        <p className="workshop-warning">
+          {monster.name} is waiting in the ring, so its cards stay on it until it leaves.
+        </p>
       )}
 
       {locked && (
