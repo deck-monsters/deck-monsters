@@ -41,6 +41,7 @@
     "zod": "^3.25.71"
   },
   "devDependencies": {
+    "@trpc/client": "^11.4.3",
     "@types/chai": "^5.0.0",
     "@types/chai-as-promised": "^8.0.2",
     "@types/mocha": "^10.0.0",

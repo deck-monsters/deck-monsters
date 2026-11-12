@@ -1702,6 +1702,7 @@ export function createRouter(roomManager: RoomManager, chat: ChatService = new C
 				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId, publish: false });
 				const result = await runSerializedMutation(input.roomId, ctx.userId, () =>
 					character.unequipCard({
+						ring: game.ring,
 						channel,
 						cardName: input.cardName,
 						monsterName: input.monsterName,
@@ -1763,6 +1764,7 @@ export function createRouter(roomManager: RoomManager, chat: ChatService = new C
 				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId, publish: false });
 				const result = await runSerializedMutation(input.roomId, ctx.userId, () =>
 					character.unequipAll({
+						ring: game.ring,
 						channel,
 						monsterName: input.monsterName,
 					}),
@@ -1910,6 +1912,7 @@ export function createRouter(roomManager: RoomManager, chat: ChatService = new C
 				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId, publish: false });
 				const result = await runSerializedMutation(input.roomId, ctx.userId, () =>
 					character.moveCard({
+						ring: game.ring,
 						channel,
 						cardName: input.cardName,
 						fromMonsterName: input.fromMonsterName,
@@ -2008,6 +2011,7 @@ export function createRouter(roomManager: RoomManager, chat: ChatService = new C
 					for (const { cardName, count } of input.cards) {
 						try {
 							const result = (await character.unequipCard({
+						ring: game.ring,
 								channel,
 								cardName,
 								monsterName: input.monsterName,
@@ -2106,6 +2110,7 @@ export function createRouter(roomManager: RoomManager, chat: ChatService = new C
 						for (const { cardName, count } of input.cards) {
 							try {
 								const result = (await character.moveCard({
+						ring: game.ring,
 									channel,
 									cardName,
 									fromMonsterName: input.fromMonsterName,

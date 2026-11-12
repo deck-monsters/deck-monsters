@@ -284,6 +284,7 @@ describe('MonsterWorkshopPanel drag/drop lock behavior', () => {
       <MonsterWorkshopPanel
         monster={{
           ...baseMonster,
+          inRing: false,
           cards: ['Hit'],
         }}
         showSelectionHint={false}
@@ -302,5 +303,30 @@ describe('MonsterWorkshopPanel drag/drop lock behavior', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Unequip all' }));
     expect(onUnequipAll).toHaveBeenCalledTimes(1);
+  });
+
+  it('refuses Unequip all for a monster waiting in the ring, and says why', () => {
+    const onUnequipAll = vi.fn();
+    render(
+      <MonsterWorkshopPanel
+        monster={{ ...baseMonster, inRing: true, cards: ['Hit'] }}
+        showSelectionHint={false}
+        selectedCards={[]}
+        onDropCard={() => undefined}
+        onTapSlot={() => undefined}
+        onSelectCard={() => undefined}
+        onUnequipAll={onUnequipAll}
+        onSavePreset={() => undefined}
+        onLoadPreset={() => undefined}
+        onDeletePreset={() => undefined}
+        onRevive={() => undefined}
+        onSendToRing={() => undefined}
+      />,
+    );
+    const button = screen.getByRole('button', { name: 'Unequip all' });
+    expect(button).toBeDisabled();
+    fireEvent.click(button);
+    expect(onUnequipAll).not.toHaveBeenCalled();
+    expect(screen.getByText(/waiting in the ring, so its cards stay on it until it leaves/)).toBeInTheDocument();
   });
 });

@@ -637,11 +637,13 @@ class Beastmaster extends BaseCharacter {
 		monsterName,
 		count = 1,
 		channel,
+		ring,
 	}: {
 		cardName: string;
 		monsterName?: string;
 		count?: number;
 		channel: ChannelFn;
+		ring?: RingLike;
 	}): Promise<{ removedCount: number; monsterName: string }> {
 		const removeCount = Math.max(Number(count) || 1, 1);
 
@@ -659,6 +661,12 @@ class Beastmaster extends BaseCharacter {
 					return announceAndThrow(
 						channel,
 						`You cannot unequip cards from ${monster.givenName} while they are fighting!`,
+					);
+				}
+				if (this.isWaitingInRing(monster, ring)) {
+					return announceAndThrow(
+						channel,
+						`${monster.givenName} is waiting in the ring, so their cards stay put until they leave it.`,
 					);
 				}
 
@@ -695,9 +703,11 @@ class Beastmaster extends BaseCharacter {
 	unequipAll({
 		monsterName,
 		channel,
+		ring,
 	}: {
 		monsterName?: string;
 		channel: ChannelFn;
+		ring?: RingLike;
 	}): Promise<{ removedCount: number; monsterName: string }> {
 		return Promise.resolve()
 			.then(() =>
@@ -713,6 +723,12 @@ class Beastmaster extends BaseCharacter {
 					return announceAndThrow(
 						channel,
 						`You cannot clear ${monster.givenName}'s deck while they are fighting!`,
+					);
+				}
+				if (this.isWaitingInRing(monster, ring)) {
+					return announceAndThrow(
+						channel,
+						`${monster.givenName} is waiting in the ring, so their cards stay put until they leave it.`,
 					);
 				}
 
@@ -742,12 +758,14 @@ class Beastmaster extends BaseCharacter {
 		toMonsterName,
 		count = 1,
 		channel,
+		ring,
 	}: {
 		cardName: string;
 		fromMonsterName: string;
 		toMonsterName: string;
 		count?: number;
 		channel: ChannelFn;
+		ring?: RingLike;
 	}): Promise<{ movedCount: number; fromMonsterName: string; toMonsterName: string; blockedBy?: string }> {
 		const moveCount = Math.max(Number(count) || 1, 1);
 		const fromMonster = this.findMonsterByName(fromMonsterName);
@@ -764,6 +782,12 @@ class Beastmaster extends BaseCharacter {
 		}
 		if (fromMonster.inEncounter || toMonster.inEncounter) {
 			return announceAndThrow(channel, 'Cards cannot be moved while a monster is in a fight.');
+		}
+		if (this.isWaitingInRing(fromMonster, ring)) {
+			return announceAndThrow(
+				channel,
+				`${fromMonster.givenName} is waiting in the ring, so their cards stay put until they leave it.`,
+			);
 		}
 
 		const sourceCards = [...fromMonster.cards];
@@ -887,16 +911,18 @@ class Beastmaster extends BaseCharacter {
 		fromMonsterName,
 		toMonsterName,
 		channel,
+		ring,
 	}: {
 		cardNames: string[];
 		fromMonsterName: string;
 		toMonsterName: string;
 		channel: ChannelFn;
+		ring?: RingLike;
 	}): Promise<{ movedCards: string[] }> {
 		const movedCards: string[] = [];
 
 		return eachSeries(cardNames, (cardName: string) =>
-			this.moveCard({ cardName, fromMonsterName, toMonsterName, channel })
+			this.moveCard({ cardName, fromMonsterName, toMonsterName, channel, ring })
 				.then(() => {
 					movedCards.push(cardName);
 				})
@@ -1056,10 +1082,20 @@ class Beastmaster extends BaseCharacter {
 	 * the ring has a full hand by rule, and taking from it would leave a contestant that could
 	 * not have been sent in. The engine cannot see the ring on its own, so the caller passes it.
 	 */
+	/**
+	 * A monster waiting in the ring keeps its hand. The owner's rule (2026-11-12): its cards
+	 * cannot be moved off it, unequipped or cleared until it leaves the ring, the same as the
+	 * preset path already refused. Before this, `moveCard` and `unequipCard` checked only
+	 * `inEncounter`, so a monster could be stripped while it waited for a fight.
+	 * `ring` is optional for old callers; without it only the fight is checked.
+	 */
+	private isWaitingInRing(monster: BaseMonster, ring?: RingLike): boolean {
+		return Boolean(ring?.contestants?.some(contestant => contestant?.monster === monster));
+	}
+
 	private presetDonorRefusal(donor: BaseMonster, target: BaseMonster, ring?: RingLike): string | undefined {
 		if (donor === target) return `${donor.givenName} is the monster you are loading.`;
-		const inRing = Boolean(ring?.contestants?.some(contestant => contestant?.monster === donor));
-		if (donor.inEncounter || inRing) {
+		if (donor.inEncounter || this.isWaitingInRing(donor, ring)) {
 			return `You cannot take cards from ${donor.givenName} while they are in the ring or fighting!`;
 		}
 		return undefined;

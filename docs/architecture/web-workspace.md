@@ -310,6 +310,14 @@ selects the one visible slot. Returning to the workspace restores the persisted 
 
 ## Ring feed row heights
 
+**Since roadmap 52 D2 the feeds use `PlainFeedList` by default**: every row is in the page
+(capped at 1000, the Console at 500), following is one rule (pinned means go to the end on
+any size change), and a reader unpins only by moving up while nothing changed size. Its
+header comment holds the rules and the reasons, and `apps/web/e2e/scroll.spec.ts` proves them
+in a browser ([feed lab](../reference/feed-lab.md)). What follows in this section describes
+the old virtual list, which is kept behind `?feed=virtuoso` until D3 deletes it and this
+text is rewritten.
+
 The Ring event list is a Virtuoso window. It mounts when ring history has been applied,
 because Virtuoso reads `heightEstimates` only while its size tree is empty and the empty
 placeholder fills that tree. An event with `payload.lines` is several blocks (one per

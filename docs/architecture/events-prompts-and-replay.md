@@ -187,7 +187,12 @@ The client treats any inbound frame as proof the connection is alive. The rules,
   status and shows the reconnecting state when the transport does this by itself. And the
   server follows chat frames, which carry no id, with a tracked heartbeat, so that stored id
   is always a real cursor. A heartbeat id is a valid cursor: replay compares ids by their
-  leading epoch.
+  leading epoch. This is proved against the real server and client in
+  `packages/server/src/trpc/ring-feed-transport.pg.test.ts` (see the
+  [feed lab](../reference/feed-lab.md#the-real-transport-suite)), including the keep-alive:
+  the server answers `PING`, and a silent black hole is noticed (`close()` 18 s after the
+  last frame), though with Node's WebSocket the `close` event, and so the transport's
+  reconnect, waits for the network to answer; the 20-second feed watchdog is the safety net.
 
 ## Initial history and catch-up are different
 

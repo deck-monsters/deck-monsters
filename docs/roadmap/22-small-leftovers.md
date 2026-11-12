@@ -54,9 +54,6 @@ Loading a preset can now take cards from your other monsters, after a confirmati
 - [ ] **Live check.** The flow is covered by engine, server and jsdom tests and a rendered
   screenshot of the confirmation at 390 px. Nobody has done it against a running server on
   a phone. Do it at the next local test session.
-- [ ] **`moveCard` allows a donor that is waiting in the ring.** It checks only
-  `inEncounter`. The preset path refuses a donor in the ring or fighting, as its spec asked.
-  Decide which rule is right and make the two agree.
 - [ ] **Wording.** The new lines are marked `DRAFT(39)` in the code and wait for the owner's
   wording pass under [39](39-in-game-help.md).
 

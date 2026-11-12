@@ -5660,6 +5660,43 @@ inside the hold still moves the feed. **Not proven on a real iPhone yet**: the c
 inferred from the symptom and from how iOS scrolling behaves, and only the owner's phone can
 confirm it.
 
+### 270. A false "Some events were missed" line after a reconnect — FIXED
+
+Predicted in review of #267 and reproduced by the real-transport suite (roadmap 52, D4). A web
+client mostly reconnects from a feed heartbeat's id, because tRPC's client keeps the id of the
+last frame it received. The bus never logged that id, so `RoomEventBus.getEventsSince`
+answered `evicted` for any unknown id inside the retained window. `ringFeed` then asked
+durable storage, and when the only later events were ones this player may not see (another
+player's private output) the replay was empty and "evicted and empty" was read as loss.
+
+**Fixed** (`events/room-event-bus.ts`): the buffer only drops from its old end, so an unknown
+id strictly inside the window has lost nothing; it is resolved by time from the buffer. An id
+in the oldest retained millisecond stays `evicted`, because a burst can evict a real event
+from that same millisecond (the first version of this fix missed that and an existing test
+caught it). Tests: `room-event-bus.test.ts`, and `ring-feed-transport.pg.test.ts` over the
+real server and client.
+
+### 271. The feed scroll failures S1 to S7 — FIXED
+
+Measured by the first run of the browser suite
+([baseline](../reference/feed-stability-baseline.md)): a flash of the oldest rows on opening
+(S1), `↓ Latest` stopping 8 to 10 px short (S2), losing the row being read on a theme switch
+(S3) and on rotation (S4), the Console pulling a reader back down (S5), touch scrolling
+jumping about 20 px (S6), and the Ring sitting 19 px short after a resize (S7).
+
+One root cause under all seven: `react-virtuoso` needs the height of rows it has not drawn,
+feed rows run from one line to a card frame, and the heights were guessed
+(`utils/feed-row-height.ts`). Every wrong guess moved the content under the reader, and
+`useFeedAutoScroll` then had to tell that movement from the reader's own with timers and
+thresholds. Each earlier fix tuned one of those and exposed another.
+
+**Fixed** by replacing the list, not by an eighth tuning (roadmap 52, C1 and D2):
+`PlainFeedList` draws every row (capped), so the browser knows every height, following is
+one rule (pinned means go to the end on any size change), and a reader unpins only by moving
+up while nothing changed size. It passes the whole scroll suite in Chromium and WebKit and
+the owner's check on an iPhone. `?feed=virtuoso` is the way back until D3 deletes the old
+list.
+
 ## Closed without a fix
 
 These were open investigations the owner closed on 2026-09-28. Reopen with new evidence.

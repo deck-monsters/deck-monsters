@@ -18,7 +18,8 @@ export interface OpenOptions {
 /** Open the lab on a fixture with the control strip hidden, and wait until it has mounted. */
 export async function openLab(page: Page, fixture: FixtureName, opts: OpenOptions = {}): Promise<void> {
   const params = new URLSearchParams({ controls: '0' });
-  // `E2E_FEED=plain` runs the whole suite against the plain feed list (roadmap 52, spike C1).
+  // The plain list is the app's default. `E2E_FEED=virtuoso` runs the suite against the old
+  // virtual list while it still exists (roadmap 52, D3 deletes it).
   const feed = process.env['E2E_FEED'];
   if (feed === 'plain' || feed === 'virtuoso') params.set('feed', feed);
   if (opts.history !== undefined) params.set('history', String(opts.history));

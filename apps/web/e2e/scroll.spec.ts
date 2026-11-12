@@ -488,7 +488,7 @@ for (const theme of THEME_IDS) {
     // momentum scroll keeps writing positions after the jump. No test browser has momentum, so
     // this writes those positions in script, with no input event, as a momentum frame would.
     test(`${pane} › returning › ↓ Latest holds the end against a momentum scroll [${theme}]`, async ({ page }) => {
-      test.skip(process.env['E2E_FEED'] !== 'plain', 'the plain list only: the virtual list has no hold');
+      test.skip(process.env['E2E_FEED'] === 'virtuoso', 'the plain list only: the virtual list has no hold');
       await setup(page, pane, theme);
       await toBottom(page, pane, 'm');
       await scrollUpBy(page, pane, far);
@@ -510,7 +510,7 @@ for (const theme of THEME_IDS) {
     });
 
     test(`${pane} › returning › a reader's scroll right after ↓ Latest still wins [${theme}]`, async ({ page }) => {
-      test.skip(process.env['E2E_FEED'] !== 'plain', 'the plain list only: the virtual list has no hold');
+      test.skip(process.env['E2E_FEED'] === 'virtuoso', 'the plain list only: the virtual list has no hold');
       await setup(page, pane, theme);
       await toBottom(page, pane, 'n');
       await scrollUpBy(page, pane, far);

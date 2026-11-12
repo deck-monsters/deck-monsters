@@ -98,11 +98,11 @@ jobs:
     # reconnecting in Chromium and WebKit, with no server. jsdom has no layout, so the unit
     # tests cannot see these.
     #
-    # Reporting only for now. The baseline has known failures (docs/reference/
-    # feed-stability-baseline.md); this becomes a required check once they are fixed
-    # (roadmap 52, decision 6). Until then read the summary, not the tick.
+    # Reporting only for now. The plain feed list, the default since roadmap 52 D2, passes
+    # all of it, but one test is flaky about one run in ten (docs/roadmap/10-bug-fixes.md,
+    # item M). This becomes a required check when that is fixed (roadmap 52, decision 6).
     continue-on-error: true
-    # Both passes take about 35 minutes. One run sat for 1 h 45 m in the browser install
+    # The suite takes about 25 minutes. One run sat for 1 h 45 m in the browser install
     # while the runner could not resolve the apt mirror, then ran a pass with no browser.
     timeout-minutes: 60
     steps:
@@ -119,27 +119,11 @@ jobs:
       - run: pnpm --filter @deck-monsters/web run test:e2e
         env:
           E2E_WEBKIT: '1'
-      # The plain feed list (`?feed=plain`) on WebKit: the gate for making it the default
-      # (roadmap 52, D2). Chromium is run locally; WebKit only runs here. Each run clears
-      # `.results`, so the first run's report is moved out of the way.
-      # `!cancelled()` so this pass still runs when the first one has failing tests; the
-      # install check so it does not run 150 tests against a browser that is not there.
-      - if: ${{ !cancelled() && steps.browsers.outcome == 'success' }}
-        run: |
-          mkdir -p apps/web/e2e/.results-default
-          cp apps/web/e2e/.results/report.json apps/web/e2e/.results-default/report.json || true
-      - if: ${{ !cancelled() && steps.browsers.outcome == 'success' }}
-        run: pnpm --filter @deck-monsters/web run test:e2e --project=webkit-phone --project=webkit-desktop
-        env:
-          E2E_WEBKIT: '1'
-          E2E_FEED: plain
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: e2e-results
-          path: |
-            apps/web/e2e/.results/
-            apps/web/e2e/.results-default/
+          path: apps/web/e2e/.results/
           # `.results` is a dot directory; without this the upload finds nothing.
           include-hidden-files: true
           retention-days: 14
