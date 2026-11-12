@@ -8,6 +8,8 @@ import {
 } from '@trpc/client';
 import type { AppRouter } from '@deck-monsters/server/types';
 
+import { ringFeedWsClientOptions } from './ws-client-options';
+
 export type { AppRouter };
 
 export const trpc = createTRPCReact<AppRouter>();
@@ -46,42 +48,15 @@ function getWsUrl(): string {
 
 function getWsClient() {
   if (!wsClient) {
-    wsClient = createWSClient({
-      url: () => {
+    wsClient = createWSClient(
+      // Options live in ./ws-client-options (shared with the server's real-transport suite).
+      ringFeedWsClientOptions(() => {
         const base = getWsUrl() + '/trpc';
         // Include the JWT as a query param — the only way to authenticate a
         // WebSocket upgrade request (Authorization headers aren't settable).
         return _token ? `${base}?token=${encodeURIComponent(_token)}` : base;
-      },
-      // Only open the WebSocket when there are active subscriptions.
-      // This guarantees the connection happens after RequireAuth has set the
-      // token, so the very first upgrade request always carries the JWT.
-      lazy: {
-        enabled: true,
-        closeMs: 30_000,
-      },
-      /*
-       * Socket-level ping (baseline C1): the client sends "PING" when nothing has arrived for
-       * `intervalMs` and closes the socket if no "PONG" comes back within `pongTimeoutMs`,
-       * after which wsClient reconnects (its own backoff: 0 ms, then 2 s, 4 s, 8 s ... capped
-       * at 30 s) and re-sends the subscription from the last tracked event id. The server
-       * answers PING by default (tRPC's ws handler, `dangerouslyDisablePong` is off).
-       *
-       * What this adds over the feed's own heartbeat watchdog (`useRingFeed`): it is the only
-       * thing that can notice a dead socket on a connection whose subscription is not due a
-       * frame. The 10 s pong wait is deliberately generous: wsClient clears its pong timer only
-       * on a PONG, and a phone frozen with a PING outstanding runs the overdue timer on thaw
-       * before the queued PONG is dispatched, closing a healthy socket (the bug 127 race, one
-       * layer down). The feed lab replaces this client with a scripted transport, so NO browser
-       * test exercises it; it is covered by the server-side contract above and by reading
-       * `@trpc/client`'s wsLink, not by the Playwright suite.
-       */
-      keepAlive: {
-        enabled: true,
-        intervalMs: 8_000,
-        pongTimeoutMs: 10_000,
-      },
-    });
+      })
+    );
   }
   return wsClient;
 }

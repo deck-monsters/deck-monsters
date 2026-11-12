@@ -5660,6 +5660,22 @@ inside the hold still moves the feed. **Not proven on a real iPhone yet**: the c
 inferred from the symptom and from how iOS scrolling behaves, and only the owner's phone can
 confirm it.
 
+### 270. A false "Some events were missed" line after a reconnect — FIXED
+
+Predicted in review of #267 and reproduced by the real-transport suite (roadmap 52, D4). A web
+client mostly reconnects from a feed heartbeat's id, because tRPC's client keeps the id of the
+last frame it received. The bus never logged that id, so `RoomEventBus.getEventsSince`
+answered `evicted` for any unknown id inside the retained window. `ringFeed` then asked
+durable storage, and when the only later events were ones this player may not see (another
+player's private output) the replay was empty and "evicted and empty" was read as loss.
+
+**Fixed** (`events/room-event-bus.ts`): the buffer only drops from its old end, so an unknown
+id strictly inside the window has lost nothing; it is resolved by time from the buffer. An id
+in the oldest retained millisecond stays `evicted`, because a burst can evict a real event
+from that same millisecond (the first version of this fix missed that and an existing test
+caught it). Tests: `room-event-bus.test.ts`, and `ring-feed-transport.pg.test.ts` over the
+real server and client.
+
 ## Closed without a fix
 
 These were open investigations the owner closed on 2026-09-28. Reopen with new evidence.

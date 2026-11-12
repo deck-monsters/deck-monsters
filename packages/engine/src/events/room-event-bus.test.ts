@@ -280,4 +280,34 @@ describe('RoomEventBus getEventsSince', () => {
 		expect(bus.getEventsSince('9999999999999-zzzzzzzz').status).to.equal('ahead');
 		expect(bus.getEventsSince('1-aaaaaaaa').status).to.equal('evicted');
 	});
+
+	// 10b #270: a web client reconnects from a feed heartbeat's id most of the time. The bus
+	// never logged that id, and answering 'evicted' made the feed say events were missed.
+	it('resolves an id it never logged, inside the retained window, by time', () => {
+		const bus = new RoomEventBus(ROOM_ID);
+		const ts = (id: string) => Number(id.slice(0, id.indexOf('-')));
+		const a = bus.publish({ type: 'announce', scope: 'public', text: 'a', payload: {} });
+		const b = bus.publish({ type: 'announce', scope: 'public', text: 'b', payload: {} });
+		// Force distinct, ordered timestamps whatever the clock did.
+		const log = (bus as unknown as { eventLog: Array<{ id: string }> }).eventLog;
+		log[0]!.id = `1000-${a.id.slice(a.id.indexOf('-') + 1)}`;
+		log[1]!.id = `3000-${b.id.slice(b.id.indexOf('-') + 1)}`;
+
+		const between = bus.getEventsSince('2000-heartbeat');
+		expect(between.status).to.equal('found');
+		expect(between.truncated).to.equal(false);
+		expect(between.events.map(e => ts(e.id))).to.deep.equal([3000]);
+
+		// The cursor's own millisecond is sent again: a repeat is dropped by id downstream, a
+		// skipped event is lost.
+		const same = bus.getEventsSince('3000-heartbeat');
+		expect(same.status).to.equal('found');
+		expect(same.events.map(e => ts(e.id))).to.deep.equal([3000]);
+
+		// The oldest retained millisecond: could be a real event evicted in a burst. Evicted.
+		expect(bus.getEventsSince('1000-heartbeat').status).to.equal('evicted');
+
+		// Before the window: still evicted, and the caller must ask durable storage.
+		expect(bus.getEventsSince('500-heartbeat').status).to.equal('evicted');
+	});
 });

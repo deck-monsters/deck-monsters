@@ -128,8 +128,36 @@ export class RoomEventBus {
 		if (cursorTs < parseTs(oldest.id)) {
 			return { events: [], truncated: true, upToDate: false, status: 'evicted' };
 		}
-		// Missing id whose timestamp falls inside the retained window — treat as eviction.
-		return { events: [], truncated: true, upToDate: false, status: 'evicted' };
+		/*
+		 * A missing id whose timestamp falls inside the retained window. The buffer drops from
+		 * the old end only, so nothing after that time has been evicted: the id is one the bus
+		 * never logged (a feed heartbeat, handshake or gap frame, or an ephemeral event), and
+		 * every event after it is still here. Resolve it by time.
+		 *
+		 * This used to answer 'evicted'. The feed then asked durable storage, and when the only
+		 * later events were ones this player may not see (another player's private output) the
+		 * replay came back empty and the feed said "Some events were missed" with nothing
+		 * missed. A web client reconnects from a heartbeat id most of the time, so in a busy
+		 * room that false line was common (10b #270).
+		 *
+		 * `>=`, not `>`: an event logged in the cursor's own millisecond may or may not have
+		 * been delivered before it. Sending it twice is harmless (the feed and the panes drop
+		 * a repeated id); not sending it loses it.
+		 *
+		 * Only strictly after the oldest retained event's millisecond. An id from that same
+		 * millisecond may be a real event that was evicted (a burst logs many events in one
+		 * millisecond), and events between it and the oldest retained one would be skipped in
+		 * silence; that case stays 'evicted' and goes to durable storage.
+		 */
+		if (cursorTs === parseTs(oldest.id)) {
+			return { events: [], truncated: true, upToDate: false, status: 'evicted' };
+		}
+		return {
+			events: this.eventLog.filter(e => parseTs(e.id) >= cursorTs),
+			truncated: false,
+			upToDate: false,
+			status: 'found',
+		};
 	}
 
 	getRecentEvents(count: number): GameEvent[] {

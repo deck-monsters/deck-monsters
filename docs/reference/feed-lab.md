@@ -71,7 +71,81 @@ after `lastEventId`, a heartbeat every 8 seconds, `system.gap` when a cursor is 
 replay hits its cap, and history without the types the server never persists. **It stands in
 for tRPC's WebSocket client and for the server.** It does not exercise the real client's
 reconnect and backoff, its socket keep-alive, a real network, or the server's replay from
-Postgres. Roadmap 52 task D4 is the suite that will.
+Postgres. [The real-transport suite](#the-real-transport-suite) does.
+
+## The real-transport suite
+
+`packages/server/src/trpc/ring-feed-transport.pg.test.ts` (roadmap 52, D4) is the other half:
+no browser and no React, but the real wire. It starts Fastify with tRPC's `useWSS` on an
+ephemeral port, with the real router, a real `RoomManager` and `ChatService` on Postgres, real
+room and member rows, and the server's own JWT check (a test key installed through
+`_setJWKSOverride`, so the token still passes signature, issuer, audience and expiry checks).
+The client is tRPC's real `createWSClient` and `wsLink`, built from
+`apps/web/src/lib/ws-client-options.ts` (the same function `lib/trpc.ts` builds the app's
+client from, so a change to the keep-alive numbers changes this suite) over Node's WebSocket.
+Between them sits a TCP proxy (`src/shared/feed-transport-harness.ts`) that can reset every
+connection, refuse new ones, or black-hole traffic without closing anything, and that reads
+the WebSocket frames to see the client's `PING` and the cursor in each subscription it sends.
+
+It covers what the lab cannot: the server answering `PING`; a healthy idle connection staying
+open for 40 s with the app's settings; socket death recovered by the transport (reconnect,
+the cursor re-sent, exactly the outage's events replayed, in order); a black hole; chat as the
+last frame not wiping the cursor; the first subscribe, the Postgres replay for a cursor older
+than the 200-event buffer, and `system.gap` at the 2000-row cap; a heartbeat id as a cursor;
+and the app's resubscribe (what `useRingFeed` does: new input, `lastEventId`, `resumeAttempt`)
+racing the transport's own reconnect, with the panes' id dedupe applied.
+
+What it does not cover:
+
+- **`useRingFeed` itself.** The hook's changes of input are replayed at client level, with the
+  app's own `reconnectDelayMs` and `HEARTBEAT_TIMEOUT_MS` imported; the React state around
+  them is not run. The lab and Playwright still own that.
+- **A browser's WebSocket.** The client uses Node's. Its behaviour when the keep-alive closes
+  a black-holed socket differs from a browser's (see below), so the black hole is measured, not
+  proved, for browsers.
+- **A real network, a load balancer, or TLS.** The proxy is on the loopback interface.
+- `index.ts`'s server assembly is mirrored in `startRealServer`, not imported. Keep them in
+  step.
+
+```bash
+# Needs Postgres with the Supabase stubs and every migration, as CI sets it up
+# (psql -f packages/server/scripts/ci-supabase-stubs.sql; node packages/server/dist/migrate-cli.js).
+export TEST_DATABASE_URL=postgres://postgres:postgres@localhost:5432/deck_monsters_test
+pnpm --filter @deck-monsters/server exec mocha --grep "real tRPC WebSocket client"
+```
+
+Without `TEST_DATABASE_URL` the suite is skipped, like the other `*.pg.test.ts` files; CI's
+`Tests` job sets it. The suite takes about 80 seconds: 40 s of that is the idle soak (five
+heartbeats) and 20 s the black hole. Each run prints `[timing]` and `[observed]` lines.
+
+### What it measured (Node 22, loopback, 2026-11)
+
+| Fault | Result |
+|---|---|
+| Idle, healthy, 40 s | One TCP connection, no state change; heartbeats 8 s apart; every `PING` the client sent got a `PONG` |
+| Socket reset, one refused retry | New handshake after about 2.06 s (the first retry is immediate and refused; the next waits wsClient's 2 s). The re-sent subscription carried the last frame's id; the replay was exactly the outage's events, once each, in order |
+| Black hole after a frame | The keep-alive calls `close()` 18.0 s after the last frame (PING at 8 s, pong timeout 10 s) |
+| ... what happens next | With Node's WebSocket the socket then sits in `CLOSING` with no `close` event while the peer says nothing, so wsClient does not reconnect until the network answers. After it did, the second handshake and the full replay took about 55 ms |
+| Chat as the last frame | The tracked heartbeat that follows it is the resume cursor; replay started after it |
+| Cursor older than the buffer | Replayed from Postgres, in order, no gap; `dm_ring_feed_replay_from_db_total` rose by one |
+| 2100 events after the cursor | 2000 replayed, then one `system.gap` with reason `replay_limit` |
+| App resubscribe racing the transport | No event lost, none duplicated, no extra copies even before the dedupe; one live server subscription afterwards (`dm_ws_connections_active` is 1) |
+| ... when the resubscribe lands inside wsClient's 2 s backoff | The new subscription opens the socket; when the backoff ends wsClient closes it and reopens, and each close triggers another reconnect: about 16 connections in 110 ms, then it settles. Nothing lost. Harmless for one client; a herd of clients after a deploy would each do it |
+
+Two things the suite showed that are worth knowing:
+
+- **The keep-alive detects a black hole but does not finish the job on its own in Node.** What
+  a browser does after `close()` on a socket whose peer is silent is its own timeout
+  (not measured here). The app's 20 s feed watchdog is therefore the safety net, which is why
+  both exist.
+- **tRPC sends the cursor in two places.** A new subscription carries it in the input
+  (`lastEventId`). After the first data frame the client keeps `params.lastEventId` up to date
+  and puts it on every re-send, and the server lets that override the input's. On the
+  transport's own reconnect the cursor is therefore the last frame's id (a heartbeat is fine),
+  not the hook's last real event.
+
+The heartbeat-cursor tests include the case that used to draw a false "Some events were
+missed" line (10b #270): only events the player may not see follow the heartbeat.
 
 ## Client timings
 

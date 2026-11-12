@@ -82,20 +82,24 @@ that decision.
   (1 of 14) and after the `↓ Latest` hold (1 of 6), so the hold did not cause it. Not yet
   known whether it is the test's touch drag flinging or the list's row anchoring.
 
-### N. Connection: what the lab cannot test
+### N. Connection: what the real-transport suite found and left
 
-**Owner:** Web feeds and transport. C1 to C7 and the history refetch are fixed
-([10b #264 to #268](10b-bugs-fixed.md#264-a-dead-feed-connection-went-unnoticed-for-up-to-49-seconds--fixed)).
+**Owner:** Web feeds and transport. The suite (`ring-feed-transport.pg.test.ts`,
+[feed lab](../reference/feed-lab.md)) runs the real server and tRPC's real WebSocket client
+through a fault proxy. Keep-alive, the transport's own reconnect, chat and the cursor, the
+durable replay and its cap all hold. Left:
 
-- [ ] Run the connection faults against the real server and tRPC's WebSocket client through
-  a proxy (roadmap 52, D4). The lab replaces both, so the socket keep-alive after a phone
-  freeze, and the app's and the transport's reconnects firing together, are read from code
-  only.
+- [ ] **A burst of connections when both reconnect paths fire.** When the hook resubscribes
+  inside the client's 2 s backoff, the client opened about 16 sockets in about 110 ms before
+  settling. Nothing was lost. After a deploy every connected client would do it at once.
+  Root cause not yet traced: each close appears to start another reconnect.
+- [ ] **A silent network in a browser.** In Node, after the keep-alive calls `close()` on a
+  silent peer the socket stays closing and the client does not reconnect until the network
+  answers. Not measured in a browser; the hook's 20 s watchdog is the safety net there.
+- [ ] **The React hook itself is not in the suite**, only what it does at the client level.
+- [ ] `startRealServer` in the test harness mirrors the server assembly in `index.ts`; share
+  it so the two cannot drift.
 - [ ] Some feed frames are 12 to 75 KB (roadmap 52, D5).
-- [ ] A heartbeat id used as a resume cursor can draw a spurious `system.gap` line: the id
-  falls inside the buffered window and every later event is one this player cannot see, so
-  the durable replay is empty after `evicted`. Rare. Root cause: `ringFeed` treats "evicted
-  and nothing visible" as loss without checking whether anything visible existed.
 
 ### O. A deploy while someone is playing loses the ring
 
