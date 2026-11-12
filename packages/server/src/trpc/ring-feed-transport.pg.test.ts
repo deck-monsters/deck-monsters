@@ -262,6 +262,11 @@ suite('ringFeed over the real server and the real tRPC WebSocket client', functi
 			expect(client.stateLog.slice(statesAtStart), 'no state change after the handshake').to.deep.equal([]);
 			expect(handshakes()).to.have.length(1);
 			// Every PING the client sent (it sends one whenever 8 s pass with no frame) was answered.
+			// A PING can be in flight at the moment the fifth heartbeat lands (CI failed once on
+			// 3 PONGs for 4 PINGs), so give its PONG a moment; the connection stayed open, which
+			// is the real proof, and a PING with no PONG at all still fails here.
+			// (Polled: `client.waitFor` wakes only on feed frames, and a PONG is not one.)
+			for (let waited = 0; proxy.count('PONG') < proxy.count('PING') && waited < 3_000; waited += 50) await sleep(50);
 			expect(proxy.count('PONG')).to.equal(proxy.count('PING'));
 			console.log(`      [observed] PINGs sent: ${proxy.count('PING')}, PONGs answered: ${proxy.count('PONG')}`);
 			// Heartbeats come about every 8 s.
