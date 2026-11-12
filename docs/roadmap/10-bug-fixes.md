@@ -58,26 +58,21 @@ required to ship this theme.
   screen by screen at 390 and 1440 on Millefleur and on phosphor. Do not treat the old
   12 KB figure as the target, and do not restyle the dark themes.
 
-### M. Scrolling failures the browser suite measures
+### M. Feed scrolling: what is left
 
-**Owner:** Web feeds. Found by the first run of the browser suite (2026-11-11). Numbers and
-the tests are in the [feed stability baseline](../reference/feed-stability-baseline.md); each
-item is a failing test in `apps/web/e2e/scroll.spec.ts`. Roadmap 52's Pass C decides whether
-these are fixed one by one or by replacing the virtual list, so do not patch one alone before
-that decision.
+**Owner:** Web feeds. The seven scroll failures the browser suite first measured (S1 to S7)
+are fixed: the plain list is the default
+([10b #271](10b-bugs-fixed.md#271-the-feed-scroll-failures-s1-to-s7--fixed)).
 
-- [ ] S1. Opening a room draws the oldest rows first, then jumps to the bottom.
-- [ ] S2. `↓ Latest` on the Ring stops 8 to 10 px short and stays on screen.
-- [ ] S3. Switching from phosphor to Millefleur while reading back lands on the first event.
-- [ ] S4. Rotating a phone on Millefleur while reading back loses the row (flaky).
-- [ ] S5. On the desktop Console, scrolling up two lines is pulled back down by the next event.
-- [ ] S6. Touch-scrolling up through a fight jumps about 20 px on some drags.
-- [ ] S7. After a resize the Ring can sit 19 px short of the bottom (flaky).
-- [ ] Following lags by hundreds of pixels for up to 0.45 s while events arrive, worst when
-  the roster grows. It ends pinned, so no test fails; the numbers are in the baseline.
-
+- [ ] **New text arrives as one block after another, not smoothly** (owner, 2026-11-12,
+  after the iPhone check: "a bit on the choppy side", not a regression, track for later).
+  A row appears whole and the list jumps to the end in the same frame. Ideas to try in the
+  lab, each measured before it ships: ease the scroll to the end over about 150 ms when
+  pinned (it must not bring back `↓ Latest` stopping short, 10b #269, so a new row
+  mid-ease retargets); fade or slide a new row in; reveal a long card frame line by line.
+  The baseline's "following lags" numbers are the measure to keep honest.
 - [ ] **Plain list, flaky:** "console › history walk › 120 px steps through 2000 px
-  [phosphor]" on `chromium-phone` with `E2E_FEED=plain` fails about once in ten to fifteen
+  [phosphor]" on `chromium-phone` fails about once in ten to fifteen
   runs: one touch drag moves the tracked row 8 px more or less than the finger. Seen on main
   (1 of 14) and after the `↓ Latest` hold (1 of 6), so the hold did not cause it. Not yet
   known whether it is the test's touch drag flinging or the list's row anchoring.

@@ -4,6 +4,19 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { RingFeedContext, type RingFeedApi, type TrackedRingFeedEvent } from '../hooks/useRingFeed.js';
 import { useTheme } from '../hooks/useTheme.js';
 import RingPane from '../components/RingPane.js';
+import { resetFeedImplCache } from '../components/PlainFeedList.js';
+// These tests are about the old virtual list (`react-virtuoso`), which is no longer the
+// default (roadmap 52, D2). They stay pinned to it until D3 deletes it and them; the plain
+// list's scrolling is proved in a real browser (apps/web/e2e/scroll.spec.ts).
+beforeEach(() => {
+  window.localStorage.setItem('dm:feedImpl', 'virtuoso');
+  resetFeedImplCache();
+});
+afterEach(() => {
+  window.localStorage.removeItem('dm:feedImpl');
+  resetFeedImplCache();
+});
+
 
 const listeners = new Set<(tracked: TrackedRingFeedEvent) => void>();
 interface Mount {
@@ -97,6 +110,9 @@ describe('RingPane feed metrics follow the theme', () => {
     listeners.clear();
     mounts.length = 0;
     localStorage.clear();
+    // After the clear: stay on the old list (see the note at the top of this file).
+    window.localStorage.setItem('dm:feedImpl', 'virtuoso');
+    resetFeedImplCache();
     document.documentElement.removeAttribute('data-theme');
   });
   afterEach(() => {

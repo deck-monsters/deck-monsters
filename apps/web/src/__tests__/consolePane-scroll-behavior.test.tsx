@@ -144,6 +144,19 @@ vi.mock('../utils/console-history-event-map.js', () => ({
 }));
 
 import ConsolePane from '../components/ConsolePane.js';
+import { resetFeedImplCache } from '../components/PlainFeedList.js';
+// These tests are about the old virtual list (`react-virtuoso`), which is no longer the
+// default (roadmap 52, D2). They stay pinned to it until D3 deletes it and them; the plain
+// list's scrolling is proved in a real browser (apps/web/e2e/scroll.spec.ts).
+beforeEach(() => {
+  window.localStorage.setItem('dm:feedImpl', 'virtuoso');
+  resetFeedImplCache();
+});
+afterEach(() => {
+  window.localStorage.removeItem('dm:feedImpl');
+  resetFeedImplCache();
+});
+
 
 function TestFeed({ children }: { children: ReactNode }) {
   const value: RingFeedApi = {

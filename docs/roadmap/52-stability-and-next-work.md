@@ -9,7 +9,7 @@ tags: [roadmap, planning, web, testing, feeds, reconnect]
 # 52 — Feed stability, proof systems, and the next passes
 
 **Status:** Accepted by the owner (2026-11-10). Pass A is done. Passes B and C are done (B3b moved to D4). Pass D is under way: the connection is rebuilt, and
-the plain feed list is green on WebKit and waits behind `?feed=plain` for the owner's phone check. Pass E has started: E1 (preset loading) is done. The decisions below are settled.
+the plain feed list is the default (D2) and the real-transport suite is in (D4). Next: D3, delete the virtual list. Pass E has started: E1 (preset loading) is done. The decisions below are settled.
 
 ## Why
 
@@ -255,7 +255,7 @@ the default.
 | # | Task | Status | Commit |
 |---|---|---|---|
 | D1 | **The connection.** One subscription per page load; an 8 s heartbeat and a 20 s watchdog; a test of the connection when the page becomes visible or comes online; the banner when offline; backoff on failed resubscribes; dividers only for outages a reader lived through; no history refetch on focus; a loading line in the Console; tRPC's socket keep-alive | Done. Reviewed; fix round in (stale cached history, chat and the cursor, transport reconnects, pong wait). Connection suite 44 of 44 on both lists | 6fd862d, 68b8c0b |
-| D2 | **The plain list as the default.** Needs WebKit green in CI and the owner's phone check with `?feed=plain`. Narrow the Console's row re-render first | WebKit is green: CI run on d9e31ab, plain list on WebKit phone and desktop, 142 passed, 0 failed (the virtual list failed 23 across the four projects, all scroll). The owner's phone check (2026-11-11) found `↓ Latest` stopping short; fixed as 10b #269, to be checked on the phone again | |
+| D2 | **The plain list as the default.** `?feed=virtuoso` is the way back until D3 | **Done.** WebKit green in CI (158 passed), and the owner's iPhone check passed on 2026-11-12 ("very solid"). The Console's whole-list re-render is left for D3 | |
 | D3 | **Delete the virtual list:** `react-virtuoso`, `utils/feed-row-height.ts` and its probe, `useFeedAutoScroll`, the metrics remount, and the ten tests that stub the list. Rewrite the feed sections of [web workspace](../architecture/web-workspace.md) | After D2 | |
 | D4 | **B3b:** the connection faults against the real server and tRPC's WebSocket client through a proxy (CI has Postgres). The review of D1 named what only this can test: the socket keep-alive after a freeze, and both reconnect paths firing at once | **Done.** 13 tests over the real server and client, about 80 s, in the `Tests` job. Found and fixed 10b #270; what it left is 10 N | |
 | D5 | **Push, not poll:** the feed on the Fights and Leaders pages; events for the shop, the in-fight item list and summon charges; slimmer feed frames (some are 12 to 75 KB) | Planned | |

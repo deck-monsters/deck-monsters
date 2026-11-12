@@ -13,7 +13,7 @@ import { feedTimings } from '../lib/feed-timings.js';
 
 /**
  * A feed as a plain list: every row in the window is in the DOM, the browser scrolls it, and
- * following the bottom is one rule. Roadmap 52's spike C1, behind `feedImpl()`.
+ * following the bottom is one rule. Roadmap 52's spike C1; the default since D2 (`feedImpl()`).
  *
  * Why not a virtual list. A virtual list does not know a row's height until it has drawn it,
  * and feed rows run from one line to a card frame. `react-virtuoso` therefore needs a height
@@ -297,7 +297,19 @@ function PlainFeedListInner<T>(
     const overflowY = el.style.overflowY;
     el.style.overflowY = 'hidden';
     toEnd();
+    // A frame callback that runs inside `requestAnimationFrame` itself (unit tests stub it
+    // that way) would recurse until the stack ran out. Such a call is not a frame: stop.
+    let scheduling = false;
+    const nextFrame = () => {
+      scheduling = true;
+      jumpFrameRef.current = requestAnimationFrame(step);
+      scheduling = false;
+    };
     const step = () => {
+      if (scheduling) {
+        el.style.overflowY = overflowY;
+        return;
+      }
       jumpFrameRef.current = 0;
       el.style.overflowY = overflowY;
       if (!pinnedRef.current || performance.now() >= jumpUntilRef.current) {
@@ -308,9 +320,9 @@ function PlainFeedListInner<T>(
         toEnd();
         extendHold();
       }
-      jumpFrameRef.current = requestAnimationFrame(step);
+      nextFrame();
     };
-    jumpFrameRef.current = requestAnimationFrame(step);
+    nextFrame();
   }, [extendHold, releaseHold, toEnd]);
 
   useEffect(() => releaseHold, [releaseHold]);
@@ -381,9 +393,10 @@ const PlainFeedList = forwardRef(PlainFeedListInner) as <T>(
 export default PlainFeedList;
 
 /**
- * Which list the feeds use. `virtuoso` is today's; `plain` is the spike. Chosen per browser,
- * so the lab and a real room can be compared side by side: `?feed=plain` (or `virtuoso`) sets
- * it and it sticks in localStorage.
+ * Which list the feeds use. `plain` is the default since roadmap 52 D2: it passed the scroll
+ * suite in Chromium and WebKit and the owner's check on an iPhone. `virtuoso` is the old
+ * virtual list, kept one release as a way back: `?feed=virtuoso` (or `plain`) sets the choice
+ * for this browser and it sticks in localStorage. D3 deletes it.
  */
 export type FeedImpl = 'virtuoso' | 'plain';
 const FEED_IMPL_KEY = 'dm:feedImpl';
@@ -391,11 +404,11 @@ let cachedImpl: FeedImpl | null = null;
 
 export function feedImpl(): FeedImpl {
   if (cachedImpl) return cachedImpl;
-  let impl: FeedImpl = 'virtuoso';
+  let impl: FeedImpl = 'plain';
   try {
     const fromUrl = new URLSearchParams(window.location.search).get('feed');
     if (fromUrl === 'plain' || fromUrl === 'virtuoso') window.localStorage.setItem(FEED_IMPL_KEY, fromUrl);
-    if (window.localStorage.getItem(FEED_IMPL_KEY) === 'plain') impl = 'plain';
+    if (window.localStorage.getItem(FEED_IMPL_KEY) === 'virtuoso') impl = 'virtuoso';
   } catch {
     // Blocked storage: the default list.
   }
