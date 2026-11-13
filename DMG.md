@@ -1598,7 +1598,10 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  3 easier. A natural 20 wakes 
  them hard: you take 2.
  Does nothing to a Weeping Angel, 
- or to anyone already asleep.
+ or to anyone already asleep. On 
+ a natural 1 you doze off 
+ instead: you lose your next 
+ card, and wake the same way.
 
  Level: 1
  Usable by: Bard, Unicorn

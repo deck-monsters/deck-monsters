@@ -94,6 +94,7 @@ describe('./cards/mirror-shield.ts Mirror Shield', () => {
 		expect(bystander.hp, 'everyone else is hit in full').to.equal(bystanderHp - 8);
 		expect(isMirrorShielded(holder)).to.equal(false);
 		expect(narrations.join('\n')).to.include("Tor's shield catches Nola's Blast and turns it back!");
+		expect(narrations.join('\n')).to.include('Tor takes 4 damage; Nola takes 4 damage.');
 	});
 
 	it('rounds an odd Blast: the holder takes the floor, the caster the rest', async () => {
@@ -252,6 +253,46 @@ describe('./cards/mirror-shield.ts Mirror Shield', () => {
 		expect(caster.killedBy).to.equal(holder);
 		expect(holder.hp).to.equal(holderHp - 4);
 		expect(bystander.hp, 'the blast ended with its caster').to.equal(bystanderHp);
+	});
+
+	it('turns back each holder\'s own share of one area attack, and spares nobody else', async () => {
+		const third = new Gladiator({ name: 'Ulf', gender: 'male', xp: 300 });
+		third.startEncounter(ring);
+		third.hp = third.maxHp;
+		const group = [caster, holder, third, bystander].map(monster => ({ monster, character: {} }));
+		await raise(holder);
+		await raise(third);
+		const [casterHp, holderHp, thirdHp, bystanderHp] = [caster.hp, holder.hp, third.hp, bystander.hp];
+
+		await listen(blastOf(8)).play(caster, holder, ring, group);
+
+		expect(holder.hp).to.equal(holderHp - 4);
+		expect(third.hp).to.equal(thirdHp - 4);
+		expect(caster.hp, 'half from each reflection').to.equal(casterHp - 8);
+		expect(bystander.hp).to.equal(bystanderHp - 8);
+		expect(isMirrorShielded(holder)).to.equal(false);
+		expect(isMirrorShielded(third)).to.equal(false);
+	});
+
+	it('turns back a Sandstorm once even when the holder is already lost in an earlier storm', async () => {
+		const jinn = new Jinn({ name: 'Zed', gender: 'male', xp: 300 });
+		jinn.startEncounter(ring);
+		jinn.hp = jinn.maxHp;
+		const group = [jinn, holder].map(monster => ({ monster, character: {} }));
+		// Already confused by a first storm: unshielded, this would be two full blasts.
+		const lost = (({ card }: any) => card) as any;
+		lost.effectType = SANDSTORM_EFFECT;
+		holder.encounterEffects = [...holder.encounterEffects, lost];
+		await raise();
+		const storm = new SandstormCard();
+		const full = storm.areaDamage(jinn);
+		const [jinnHp, holderHp] = [jinn.hp, holder.hp];
+
+		await storm.play(jinn, holder, ring, group);
+
+		expect(holder.hp, 'one reflection, not the "already lost" double blast').to.equal(holderHp - splitReflectedDamage(full).holder);
+		expect(jinn.hp).to.equal(jinnHp - splitReflectedDamage(full).caster);
+		expect(isMirrorShielded(holder)).to.equal(false);
 	});
 
 	it('does not stack: a second shield finds the first still raised and does nothing', async () => {

@@ -107,7 +107,7 @@ export class MirrorShieldCard extends BaseCard {
 
 				this.emit('narration', {
 					// DRAFT(39)
-					narration: `${this.icon} ${holder.givenName}'s shield catches ${attacker.givenName}'s ${card.cardType} and turns it back! ${holder.givenName} takes ${back}; ${attacker.givenName} takes ${forth}.`,
+					narration: `${this.icon} ${holder.givenName}'s shield catches ${attacker.givenName}'s ${card.cardType} and turns it back! ${holder.givenName} takes ${back} damage; ${attacker.givenName} takes ${forth} damage.`,
 				});
 				await subEventDelay(ring?.pacingMultiplier);
 

@@ -120,7 +120,9 @@ Open work:
   never meets one:
   - **Lullaby** (Bard and Unicorn, beside Dissonant Voice): 1d20 + INT vs the target's
     INT; on a success the target dozes and loses its next card, through `immobilize()`, so
-    the Horn of Proof ward applies. +4 against a Dragon.
+    the Horn of Proof ward applies. +4 against a Dragon (owner, 2026-11-13: on both the lull
+    roll and the dragon's wake roll). A natural 1 on the lull roll backfires: the singer
+    nods off and loses their next card (owner, 2026-11-13, the 10b #258 rule).
   - **Mirror Shield** (Fighter and Bard): the next area attack aimed at you (Fire Breath,
     Blast, Sandstorm, Tsunami) turns back: you take half, and half hits its caster. Spent
     on use.
@@ -135,8 +137,10 @@ Open work:
     (71.9% to 71.5% over fifteen cells). Lullaby is fine in a Jinn hand (72.5% to 73.2%
     over eighteen cells, in place of Bad Batch; +4.5 points against the Dragon against about 0
     elsewhere) but **cost a Unicorn hand 7 points** (63.4% to 56.2% over eighteen cells, in place
-    of a Hit): a no-damage hold is a poor trade for the Unicorn's few attacks. Decide whether the
-    Unicorn should hold it at all, or cost less, before it ships. Re-measure after a cost or
+    of a Hit): a no-damage hold is a poor trade for the Unicorn's few attacks. The owner decided on
+    2026-11-13 that it stays on Unicorns as specced; the number stays on watch. The natural 1
+    backfire added after that measurement makes the card a little worse for its singer, so
+    re-measure. Re-measure after a cost or
     class change. `sim:monster` alone cannot show either card: it draws random decks, where a
     rare card barely appears.
   - [ ] **Live check** of both announcements in a real fight (a Dragon against a Bard with

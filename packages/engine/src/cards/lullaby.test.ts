@@ -122,7 +122,61 @@ describe('./cards/lullaby.ts Lullaby', () => {
 		card.on('rolled', (_c: string, _card: any, { outcome }: any) => outcomes.push(outcome));
 		await sing(foe, card);
 		expect(isHeld(foe), 'a natural 1 fails whatever the int').to.equal(false);
-		expect(outcomes).to.include('Zed yawns in the middle of the verse.');
+		expect(outcomes).to.include('Zed yawns in the middle of the verse and nods off.');
+	});
+
+	it('a natural 1 backfires: the singer nods off and loses their next card, the target is untouched', async () => {
+		rolls(1);
+		const hp = foe.hp;
+		const card = new LullabyCard();
+		const outcomes: string[] = [];
+		const misses: any[] = [];
+		card.on('rolled', (_c: string, _card: any, { outcome }: any) => outcomes.push(outcome));
+		card.on('miss', (_c: string, _card: any, event: any) => misses.push(event));
+
+		await sing(foe, card);
+
+		expect(isHeld(singer)).to.equal(true);
+		expect(isHeld(foe)).to.equal(false);
+		expect(foe.hp).to.equal(hp);
+		expect(misses[0].curseOfLoki).to.equal(true);
+		expect(outcomes).to.include('Zed yawns in the middle of the verse and nods off.');
+		expect(narrations.join('\n')).to.include('Zed 🎶 dozes off.');
+
+		// The singer's own next card is lost, as any held monster's is.
+		sinon.stub(LullabyCard.prototype, 'checkSuccess').returns({ success: false, strokeOfLuck: false, curseOfLoki: false, tie: false });
+		const hit = new HitCard();
+		const playSpy = sinon.spy();
+		(hit as any).play = playSpy;
+		let next: any = hit;
+		for (const effect of singer.encounterEffects) next = await effect({ card: next, phase: ATTACK_PHASE, player: singer, ring });
+		expect(await next.play()).to.equal(true);
+		expect(playSpy.called).to.equal(false);
+	});
+
+	it('a sleeper wakes in sleep wording, not "freed"', async () => {
+		const card = new LullabyCard();
+		const outcomes: string[] = [];
+		const reasons: string[] = [];
+		card.on('rolled', (_c: string, _card: any, { outcome, reason }: any) => {
+			outcomes.push(outcome);
+			reasons.push(reason);
+		});
+		(card as any).dozeOff(singer, ring);
+		const check = sinon.stub(card, 'checkSuccess');
+		const wake = (result: any) => {
+			check.returns({ success: false, strokeOfLuck: false, curseOfLoki: false, tie: false, ...result });
+			return singer.encounterEffects[0]({ card: new HitCard(), phase: ATTACK_PHASE, player: singer, ring });
+		};
+
+		await wake({});
+		expect(isHeld(singer)).to.equal(true);
+		await wake({ success: true });
+
+		expect(isHeld(singer)).to.equal(false);
+		expect(outcomes).to.deep.equal(['Zed sleeps on and will miss a turn.', 'Zed stirs and wakes.']);
+		expect(reasons[0]).to.match(/or higher to wake\.$/);
+		expect(outcomes.join(' ')).to.not.match(/free/);
 	});
 
 	it('adds 4 to the roll against a Dragon, and nothing against anyone else', () => {
@@ -188,6 +242,21 @@ describe('./cards/lullaby.ts Lullaby', () => {
 		expect(foe.encounterEffects).to.have.length(effects);
 		expect(foe.hp).to.equal(hp);
 		expect(narrations.join('\n')).to.include('Tor is already out cold');
+	});
+
+	it('does not call a monster held by something else out cold', async () => {
+		rolls(15);
+		const hold = (() => {}) as any;
+		hold.effectType = 'ImmobilizeEffect';
+		foe.encounterEffects = [...foe.encounterEffects, hold];
+		const hp = foe.hp;
+
+		await sing();
+
+		expect(narrations.join('\n')).to.include('Tor is already held, and Zed\'s song changes nothing.');
+		expect(narrations.join('\n')).to.not.include('out cold');
+		expect(foe.hp).to.equal(hp);
+		expect(foe.encounterEffects.filter((e: any) => e.effectType === 'ImmobilizeEffect')).to.have.length(1);
 	});
 
 	it('does nothing to a Weeping Angel, which is stone', async () => {
