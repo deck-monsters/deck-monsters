@@ -8,7 +8,6 @@ import {
   feedBlocksOf,
   isBossArrivalEvent,
 } from '../utils/feed-lines.js';
-import { DEFAULT_FEED_METRICS, estimateFeedBlocksHeight, estimateFeedRowHeight } from '../utils/feed-row-height.js';
 
 const roll = (over: Partial<Extract<FeedLine, { kind: 'roll' }>> = {}): FeedLine => ({
   kind: 'roll',
@@ -142,18 +141,13 @@ describe('composeFeedBlocks (millefleur)', () => {
     expect(composeFeedBlocks(lines, 'millefleur').map((block) => block.kind)).toEqual(['roll', 'verdict', 'outcome']);
   });
 
-  it('books and draws all special-roll outcomes through the shared block composition', () => {
+  it('draws all special-roll outcomes through the shared block composition', () => {
     const outcome = 'Hit! Max damage! The attack is reflected back at Poirot, who takes the full damage.';
     const lines: FeedLine[] = [roll({ result: 'nat20' }), { kind: 'outcome', text: outcome }];
     const blocks = composeFeedBlocks(lines, 'millefleur');
     const { container } = render(<FeedEventBody text="" payload={{ lines }} style="millefleur" />);
     expect(container.querySelector('.feed-line-roll-result')!.textContent).toBe(blocks[0]!.parts[0]!.text);
     expect(blocks[0]!.parts[0]!.text).toContain(outcome);
-    const columns = 30;
-    const rows = Math.ceil(blocks[0]!.parts[0]!.text.length / (columns - blocks[0]!.indent));
-    const height = DEFAULT_FEED_METRICS.rowChromePx + rows * DEFAULT_FEED_METRICS.linePx;
-    expect(estimateFeedBlocksHeight(blocks, columns, DEFAULT_FEED_METRICS)).toBe(height);
-    expect(estimateFeedRowHeight('', columns, DEFAULT_FEED_METRICS, blocks)).toBe(height);
   });
 
   it('states a damage roll with its reason and no verdict', () => {
@@ -225,12 +219,6 @@ describe('events without lines', () => {
     expect(container.querySelector('.event-card-block')!.textContent).toBe('\nA | B\n');
     expect(container.querySelector('strong')!.textContent).toBe('bold');
   });
-
-  it('books the old estimate for text-only events', () => {
-    expect(estimateFeedRowHeight('one line', 48, DEFAULT_FEED_METRICS, null)).toBe(
-      estimateFeedRowHeight('one line', 48, DEFAULT_FEED_METRICS),
-    );
-  });
 });
 
 describe('boss arrival', () => {
@@ -265,36 +253,4 @@ describe('FeedEventBody renders the blocks', () => {
     });
     expect(container.querySelector('.feed-line-narration strong')!.textContent).toBe('roars');
   });
-
-  it.each(['terminal', 'millefleur'] as const)(
-    'books a lines row from what is drawn: the estimate equals a re-count of the DOM (%s)',
-    (style) => {
-      const metrics = { ...DEFAULT_FEED_METRICS, lineGapPx: 2, dividerChromePx: 10 };
-      const columns = 40;
-      const { container } = render(<FeedEventBody text="" payload={{ lines }} style={style} />);
-      const drawn = Array.from(container.querySelectorAll<HTMLElement>('.feed-lines > .feed-line'));
-      // The jsdom stand-in for layout: a block is as tall as its drawn text wraps, plus the
-      // chrome the theme's CSS gives that kind of block.
-      let height = metrics.rowChromePx + metrics.lineGapPx * (drawn.length - 1);
-      for (const el of drawn) {
-        const indent = Number(el.style.getPropertyValue('--feed-indent') || 0);
-        if (el.classList.contains('feed-divider')) {
-          height += metrics.linePx + metrics.dividerChromePx;
-          continue;
-        }
-        const isCard = el.classList.contains('event-card-block');
-        const content = isCard
-          ? Array.from(el.children).map((c) => c.textContent).join('\n')
-          : el.textContent ?? '';
-        const wrap = isCard ? columns : columns - indent;
-        const rows = content.split('\n').reduce((n, l) => n + Math.ceil(Math.max(l.length, 1) / wrap), 0);
-        height += rows * metrics.linePx + (isCard ? metrics.cardChromePx : 0);
-      }
-      const blocks = composeFeedBlocks(lines, style);
-      // Sprites are off here, so the DOM text is the blocks' text (markup removed adds a few
-      // characters to the estimate, never subtracts); the heights must agree to the line.
-      expect(estimateFeedBlocksHeight(blocks, columns, metrics)).toBeCloseTo(height, 5);
-      expect(estimateFeedRowHeight('', columns, metrics, blocks)).toBeCloseTo(height, 5);
-    },
-  );
 });

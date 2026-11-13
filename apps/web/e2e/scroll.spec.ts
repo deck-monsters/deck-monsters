@@ -431,8 +431,8 @@ for (const theme of THEME_IDS) {
         expect(w.reverseMax, 'scrollTop moved the opposite way between gestures (px)').toBeLessThanOrEqual(REVERSE_PX);
         expect(w.nonMonotonic, 'steps where scrollTop increased').toBe(0);
         expect(w.largestJump, 'tracked row moved by a different amount than the gesture (px)').toBeLessThanOrEqual(ROW_DRIFT_PX);
-        // largestJumpVsScrollTop is reported, not asserted: Virtuoso legitimately moves scrollTop
-        // to compensate for a measured height ABOVE the reader, which keeps the row where it is.
+        // largestJumpVsScrollTop is reported, not asserted: the list legitimately moves scrollTop
+        // to keep the reader's row where it is when content above it changes height.
       });
     }
   }
@@ -484,11 +484,10 @@ for (const theme of THEME_IDS) {
       await nextArrivalFollowed(page, pane, 'j.next');
     });
 
-    // The owner's iPhone, on the plain list: `↓ Latest` landed near the end, not at it. A
+    // The owner's iPhone, on iOS: `↓ Latest` landed near the end, not at it. A
     // momentum scroll keeps writing positions after the jump. No test browser has momentum, so
     // this writes those positions in script, with no input event, as a momentum frame would.
     test(`${pane} › returning › ↓ Latest holds the end against a momentum scroll [${theme}]`, async ({ page }) => {
-      test.skip(process.env['E2E_FEED'] === 'virtuoso', 'the plain list only: the virtual list has no hold');
       await setup(page, pane, theme);
       await toBottom(page, pane, 'm');
       await scrollUpBy(page, pane, far);
@@ -510,7 +509,6 @@ for (const theme of THEME_IDS) {
     });
 
     test(`${pane} › returning › a reader's scroll right after ↓ Latest still wins [${theme}]`, async ({ page }) => {
-      test.skip(process.env['E2E_FEED'] === 'virtuoso', 'the plain list only: the virtual list has no hold');
       await setup(page, pane, theme);
       await toBottom(page, pane, 'n');
       await scrollUpBy(page, pane, far);

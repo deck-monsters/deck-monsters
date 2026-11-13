@@ -1,6 +1,6 @@
 /**
  * The feed lab (`/lab`, `/lab/:fixture`): the REAL room UI (AppShell + Terminal, so the real
- * Ring and Console panes, Virtuoso, and feed hooks) running with no server, fed by a scripted
+ * Ring and Console panes, the feed list, and feed hooks) running with no server, fed by a scripted
  * `LabTransport` that replays a recorded fixture. A Playwright suite drives it through
  * `window.__feedLab`; a human on a phone can drive it with the control strip and URL
  * parameters (`?play=1&speed=4&history=120&theme=millefleur&controls=0`).
@@ -113,7 +113,7 @@ async function whenMounted(run: Run, isCurrent: () => boolean): Promise<void> {
     }
     await new Promise((r) => setTimeout(r, 16));
   }
-  // Let React commit the history and Virtuoso lay it out.
+  // Let React commit the history and the feed lay it out.
   await nextFrame();
   await nextFrame();
   await new Promise((r) => setTimeout(r, 100));

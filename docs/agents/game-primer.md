@@ -216,26 +216,10 @@ Timer re-arming and an authoritative empty roster are in
 
 ## The web feeds
 
-The Ring pane and Console pane are both `react-virtuoso` lists
-(`apps/web/src/components/RingPane.tsx`, `ConsolePane.tsx`), sharing one follow policy in
-[`apps/web/src/hooks/useFeedAutoScroll.ts`](../../apps/web/src/hooks/useFeedAutoScroll.ts).
-Three rules from #159 that are easy to undo by accident:
-
-- Re-pin by scrolling the scroller element to its own `scrollHeight`, **not** with
-  `scrollToIndex('LAST')` — that targets Virtuoso's size-tree estimate, which can still hold
-  a freshly appended row's estimated height and land tens of pixels short.
-- Repeat the snap once after `REPIN_SETTLE_MS` (250ms), because the first one runs before a
-  tall row has been measured.
-- `AT_BOTTOM_THRESHOLD_PX` must stay under one feed line (currently 8px). A larger tolerance
-  disables Virtuoso's own snap-back, so a follow scroll that ends short is never corrected
-  and the `↓ Latest` button never appears.
-
-"Not at bottom" counts as the reader leaving only if a real scroll gesture landed within
-`USER_SCROLL_INTENT_WINDOW_MS` (1.5s); otherwise the bottom moved on its own and the feed
-re-pins. The hook's return value is memoised because consumers put it in effect dependency
-arrays (#132).
-
-Scrolling up into earlier fights no longer jumps: the Ring list gives Virtuoso a height
-guess per row on its first mount, so a tall card box is not booked as a narration line
-(#196). How and why is in [web workspace](../architecture/web-workspace.md#ring-feed-row-heights);
-do not point the #159 re-pin at that guess.
+The Ring pane and Console pane both draw their events with `PlainFeedList`
+(`apps/web/src/components/PlainFeedList.tsx`): a plain scrolling list with every row in the
+page. It follows the bottom while the reader has not moved up, stops following when they
+scroll up, and `↓ Latest` takes them back. The rules and why are in
+[web workspace: Feed lists](../architecture/web-workspace.md#feed-lists); a scroll change
+must be proved in a real browser ([feed lab](../reference/feed-lab.md)), because jsdom has
+no layout.

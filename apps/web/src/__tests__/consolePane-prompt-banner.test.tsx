@@ -7,7 +7,6 @@ import {
   type TrackedRingFeedEvent,
 } from '../hooks/useRingFeed.js';
 
-const scrollToIndexMock = vi.fn();
 let restoreRaf: (() => void) | null = null;
 const listeners = new Set<(tracked: TrackedRingFeedEvent) => void>();
 type PendingPromptSnapshot = {
@@ -30,10 +29,6 @@ function pushEvent(tracked: TrackedRingFeedEvent) {
   for (const listener of listeners) listener(tracked);
 }
 
-// Lets one test (the "not mounted" case) opt the mocked Virtuoso out of rendering
-// rows, mirroring the existing scroll-behavior test file which never mounts rows.
-let renderRows = true;
-
 // Captured by the fake IntersectionObserver constructor below so tests can drive it.
 let intersectionCallback: ((entries: Array<{ isIntersecting: boolean }>) => void) | null = null;
 
@@ -42,38 +37,6 @@ function setPromptIntersecting(isIntersecting: boolean) {
     intersectionCallback?.([{ isIntersecting }]);
   });
 }
-
-vi.mock('react-virtuoso', () => {
-  const React = require('react');
-
-  const Virtuoso = React.forwardRef((props: any, ref: any) => {
-    React.useImperativeHandle(ref, () => ({
-      scrollToIndex: scrollToIndexMock,
-    }));
-
-    latestFollowOutput = props.followOutput;
-
-    return (
-      <div>
-        <div data-testid="event-count">{props.data?.length ?? 0}</div>
-        {renderRows
-          && props.data?.map((ev: any, i: number) => (
-            <React.Fragment key={ev.id ?? i}>{props.itemContent(i, ev)}</React.Fragment>
-          ))}
-        <button type="button" onClick={() => props.atBottomStateChange?.(false)}>
-          Mark not at bottom
-        </button>
-        <button type="button" onClick={() => props.atBottomStateChange?.(true)}>
-          Mark at bottom
-        </button>
-      </div>
-    );
-  });
-
-  return { Virtuoso };
-});
-
-let latestFollowOutput: ((atBottom: boolean) => unknown) | undefined;
 
 vi.mock('../lib/auth-context.js', () => ({
   useAuth: () => ({ user: { id: 'user-1' } }),
@@ -200,9 +163,7 @@ describe('ConsolePane prompt waiting banner', () => {
   beforeEach(() => {
     localStorage.clear();
     resetGuidedStartForTests();
-    renderRows = true;
     intersectionCallback = null;
-    scrollToIndexMock.mockReset();
     listeners.clear();
     trpcMocks.pendingPromptQuery.data = null;
     trpcMocks.pendingPromptQuery.dataUpdatedAt = 0;
@@ -263,9 +224,9 @@ describe('ConsolePane prompt waiting banner', () => {
     expect(screen.queryByText(/Command suggestions are paused/)).toBeNull();
   });
 
-  it('treats a prompt row that Virtuoso has not mounted as out of view', () => {
-    renderRows = false;
-
+  // The row is in the DOM (every row is), but nothing has reported its choices on screen yet,
+  // so the player may not see the question: the banner explains it until they do.
+  it('treats a prompt row that has not reported itself visible as out of view', () => {
     render(
       <TestFeed>
         <ConsolePane roomId={roomId} isActive />

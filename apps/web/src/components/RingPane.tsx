@@ -10,28 +10,17 @@ import {
   type ComponentType,
   type ReactNode,
 } from 'react';
-import { Virtuoso } from 'react-virtuoso';
-import type { VirtuosoHandle } from 'react-virtuoso';
 import type { GameEvent } from '@deck-monsters/server/types';
 import { trpc } from '../lib/trpc.js';
 import { mechanicKeyOf, mechanicNoteFor, newestEventIdByKey } from '../lib/mechanic-notes.js';
 import { useRingFeedListener, type TrackedRingFeedEvent } from '../hooks/useRingFeed.js';
 import { useRingKeyTimestamps } from '../hooks/useRingKeyTimestamps.js';
 import { usePixelMonsters } from '../hooks/usePixelMonsters.js';
-import { AT_BOTTOM_THRESHOLD_PX, useFeedAutoScroll } from '../hooks/useFeedAutoScroll.js';
 import { feedTimings } from '../lib/feed-timings.js';
-import { themeAssetsReady, loadThemeAssets, subscribeThemeAssets, useTheme } from '../hooks/useTheme.js';
+import { useTheme } from '../hooks/useTheme.js';
 import { useTimeAgo } from '../hooks/useTimeAgo.js';
 import { FeedEventBody } from './FeedLines.js';
-import { feedBlocksOf, feedLinesOf, feedStyleFor, isBossArrivalEvent } from '../utils/feed-lines.js';
-import {
-  estimateFeedRowHeight,
-  FEED_WRAP_COLUMNS_FALLBACK,
-  feedWrapColumns,
-  readFeedMetrics,
-  DEFAULT_FEED_METRICS,
-  type FeedMetrics,
-} from '../utils/feed-row-height.js';
+import { feedLinesOf, feedStyleFor, isBossArrivalEvent } from '../utils/feed-lines.js';
 import { rememberMonsters } from '../hooks/useKnownMonsters.js';
 import { loadInlineSprites } from '../hooks/useInlineSprites.js';
 import { useMonsterMentions } from '../hooks/useMonsterMentions.js';
@@ -51,8 +40,7 @@ import {
 	shouldAppendMarker,
 } from '../utils/feed-markers.js';
 import RingRoster, { type RingContestantSnapshot } from './RingRoster.js';
-import FeedList from './FeedList.js';
-import PlainFeedList, { feedImpl, type PlainFeedHandle } from './PlainFeedList.js';
+import PlainFeedList, { type PlainFeedHandle } from './PlainFeedList.js';
 import RingItemsPanel from './RingItemsPanel.js';
 import { SUMMONS_BADGE_TITLE, headerBadgesVisible, summonsLeftLabel } from './ringHeaderBadges.js';
 
@@ -185,14 +173,6 @@ function LastFightFooter({
 }
 
 
-/** How long a not-yet-landed theme chunk may hold the feed unmounted. */
-const THEME_ASSET_WAIT_MS = 3000;
-type ResumeAt = { index: number | 'LAST'; align: 'start' | 'end' };
-
-function sameMetrics(a: FeedMetrics, b: FeedMetrics): boolean {
-  return (Object.keys(b) as (keyof FeedMetrics)[]).every((key) => a[key] === b[key]);
-}
-
 export default function RingPane({
   roomId,
   isActive,
@@ -208,142 +188,11 @@ export default function RingPane({
   // Only the newest tagged row per mechanic may claim its note: the list mounts at index 0
   // and snaps to LAST a frame later, so older rows render transiently (see mechanicNoteFor).
   const newestMechanicRows = useMemo(() => newestEventIdByKey(events), [events]);
-  // Virtuoso applies `heightEstimates` only while its size tree is empty, and the empty
-  // placeholder is enough to fill that tree. Mounting the list before history arrives
-  // therefore drops the guesses, and scrolling up measures card boxes against a narration
-  // line (10b #196). The list mounts once history has been copied into `events`.
+  // The list mounts once history has been copied into `events`, so its first paint is the
+  // newest rows and not the empty placeholder followed by a jump.
   const [listReady, setListReady] = useState(false);
-  // The column count has to be known on that first mount: a later `heightEstimates`
-  // array is ignored. This layout measurement runs before the history effect. A pane
-  // hidden with `display: none` (the other slot under 1024px) measures 0, so the list
-  // waits for a real width: mounting on the 48-column fallback booked narration on a
-  // wider pane at up to twice its height, and measuring it moved scroll-back again (a
-  // Codex review of PR #406). ResizeObserver reports the width once the pane is shown.
-  //
-  // The feed's type is a theme token (`--feed-font-size`, `--feed-line-height`), so the
-  // estimate's line height, glyph advance and chrome are read from the live CSS
-  // (`readFeedMetrics`). Virtuoso ignores new estimates once its size tree has anything in
-  // it, so the list is keyed on the metrics: it remounts when they change and only then (a
-  // dark-to-dark theme switch changes nothing and must not flash the list). A remount
-  // starts where the reader was (`resumeAt`): at the newest row if they were following,
-  // otherwise at the row they were reading; without it Virtuoso starts at the oldest event.
-  // A lazy theme's stylesheet may not be in the page yet (a slow or hung chunk), and fonts
-  // load late: both re-read the metrics when they land.
   const { theme } = useTheme();
-  const feedAreaRef = useRef<HTMLDivElement>(null);
-  const [wrapColumns, setWrapColumns] = useState(FEED_WRAP_COLUMNS_FALLBACK);
-  const [feedMetrics, setFeedMetrics] = useState<FeedMetrics>(() => ({ ...DEFAULT_FEED_METRICS }));
-  const [widthMeasured, setWidthMeasured] = useState(false);
-  const [resumeAt, setResumeAt] = useState<ResumeAt | undefined>(undefined);
-  const appliedMetricsRef = useRef<FeedMetrics>(feedMetrics);
-  const metricsCacheRef = useRef(new Map<string, FeedMetrics>());
-  const lastTopIndexRef = useRef(0);
-  const listMountedRef = useRef(false);
-  // `useFeedAutoScroll` is declared below (it needs the Virtuoso ref); it fills this in.
-  const followRef = useRef<{ current: boolean } | null>(null);
-  useLayoutEffect(() => {
-    listMountedRef.current = listReady && widthMeasured;
-  });
-  useLayoutEffect(() => {
-    const area = feedAreaRef.current;
-    if (!area) return;
-    let cancelled = false;
-    let started = false;
-    let observer: ResizeObserver | undefined;
-    let frame = 0;
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    let current: FeedMetrics | undefined;
-    const fonts = typeof document !== 'undefined' ? document.fonts : undefined;
-    const cacheKey = () => `${theme}|${fonts?.status ?? 'none'}`;
-    // Reads the CSS once per theme (and font state), not per ResizeObserver tick: a divider
-    // drag fires every frame, and each read mounts and lays out a probe. Width changes only
-    // need the column count recomputed from the cached advance.
-    const metricsFor = (force: boolean): FeedMetrics => {
-      if (!force && current) return current;
-      const ready = themeAssetsReady(theme);
-      const cached = !force && ready ? metricsCacheRef.current.get(cacheKey()) : undefined;
-      current = cached ?? readFeedMetrics(area);
-      if (ready) metricsCacheRef.current.set(cacheKey(), current);
-      return current;
-    };
-    const applyMetrics = (metrics: FeedMetrics) => {
-      if (sameMetrics(appliedMetricsRef.current, metrics)) return;
-      appliedMetricsRef.current = metrics;
-      if (listMountedRef.current) {
-        setResumeAt(
-          (followRef.current?.current ?? true)
-            ? { index: 'LAST', align: 'end' }
-            : { index: lastTopIndexRef.current, align: 'start' },
-        );
-      }
-      setFeedMetrics(metrics);
-    };
-    const measure = (observed?: number, force = false) => {
-      if (cancelled) return;
-      const scroller = area.querySelector('.event-feed:not([aria-hidden])');
-      const width =
-        scroller instanceof HTMLElement && scroller.clientWidth > 0
-          ? scroller.clientWidth
-          : area.clientWidth > 0
-            ? area.clientWidth
-            : (observed ?? 0);
-      if (width <= 0) return;
-      const metrics = metricsFor(force);
-      applyMetrics(metrics);
-      const columns = feedWrapColumns(width - metrics.gutterPx, metrics);
-      setWrapColumns((prev) => (prev === columns ? prev : columns));
-      setWidthMeasured(true);
-    };
-    const remeasure = () => {
-      if (started) measure(undefined, true);
-    };
-    const start = () => {
-      if (started || cancelled) return;
-      started = true;
-      measure();
-      // Without ResizeObserver there is no later report to wait for; keep the fallback.
-      if (typeof ResizeObserver === 'undefined') {
-        applyMetrics(metricsFor(false));
-        setWidthMeasured(true);
-        return;
-      }
-      observer = new ResizeObserver((entries) => measure(entries[0]?.contentRect.width));
-      observer.observe(area);
-    };
-    const unsubscribeAssets = subscribeThemeAssets((landed) => {
-      if (landed === theme) frame = requestAnimationFrame(remeasure);
-    });
-    const onFonts = () => remeasure();
-    fonts?.addEventListener?.('loadingdone', onFonts);
-    void fonts?.ready?.then(onFonts);
-    if (themeAssetsReady(theme)) {
-      start();
-    } else {
-      // A hung chunk must not leave the feed unmounted: after a few seconds measure what CSS
-      // is there and mount. `subscribeThemeAssets` re-reads when the chunk does land.
-      timer = setTimeout(start, THEME_ASSET_WAIT_MS);
-      void loadThemeAssets(theme).then(() => {
-        if (!cancelled) frame = requestAnimationFrame(start);
-      });
-    }
-    return () => {
-      cancelled = true;
-      cancelAnimationFrame(frame);
-      if (timer) clearTimeout(timer);
-      unsubscribeAssets();
-      fonts?.removeEventListener?.('loadingdone', onFonts);
-      observer?.disconnect();
-    };
-  }, [theme]);
   const feedStyle = feedStyleFor(theme);
-  const metricsKey = `${feedStyle}|${feedMetrics.linePx}|${feedMetrics.charPx}|${feedMetrics.rowChromePx}|${feedMetrics.cardChromePx}|${feedMetrics.lineGapPx}|${feedMetrics.dividerChromePx}`;
-  const heightEstimates = useMemo(
-    () =>
-      events.map((event) =>
-        estimateFeedRowHeight(event.text, wrapColumns, feedMetrics, feedBlocksOf(event.payload, feedStyle)),
-      ),
-    [events, wrapColumns, feedMetrics, feedStyle],
-  );
   const [isAtBottom, setIsAtBottom] = useState(true);
   // Timer state is pushed from the server via ring.state events and the handshake payload.
   // No HTTP polling needed.
@@ -411,10 +260,7 @@ export default function RingPane({
       return next;
     });
   }, []);
-  const virtuosoRef = useRef<VirtuosoHandle>(null);
   const plainRef = useRef<PlainFeedHandle>(null);
-  const autoScroll = useFeedAutoScroll(virtuosoRef, 'ring');
-  followRef.current = autoScroll.shouldFollowRef;
   const seenRef = useRef(new Set<string>());
   const historyApplied = useRef(false);
   // Timing instrumentation only (lib/feed-timings.ts); nothing here affects rendering.
@@ -424,24 +270,11 @@ export default function RingPane({
     feedTimings.mark('ring.pane.first_render');
   }
   const firstRowsRecordedRef = useRef(false);
-  const lastMountedKeyRef = useRef<string | null>(null);
-  const listVisible = listReady && widthMeasured;
   useLayoutEffect(() => {
-    if (!listVisible) {
-      lastMountedKeyRef.current = null;
-      return;
-    }
-    if (lastMountedKeyRef.current !== null && lastMountedKeyRef.current !== metricsKey) {
-      feedTimings.count('ring.list.remount.metrics');
-    }
-    lastMountedKeyRef.current = metricsKey;
-    feedTimings.count('ring.list.mount');
-  }, [listVisible, metricsKey]);
-  useLayoutEffect(() => {
-    if (firstRowsRecordedRef.current || !listVisible || events.length === 0) return;
+    if (firstRowsRecordedRef.current || !listReady || events.length === 0) return;
     firstRowsRecordedRef.current = true;
     feedTimings.since('ring.pane.first_render', 'ring.time_to_first_rows');
-  }, [listVisible, events.length]);
+  }, [listReady, events.length]);
   // True once the first handshake has landed, so a later handshake is a *re*connect.
   const hasConnectedRef = useRef(false);
   // True once any live ring.state (handshake or push) has been applied to timerState.
@@ -742,27 +575,17 @@ export default function RingPane({
     if (dedupedHistory.length > 0) {
       seedCursor(dedupedHistory[dedupedHistory.length - 1]!.id);
     }
-
-    if (autoScroll.shouldFollowRef.current) {
-      // Jump to bottom after history loads only when auto-follow is enabled.
-      requestAnimationFrame(() => {
-        virtuosoRef.current?.scrollToIndex({ index: 'LAST', behavior: 'auto' });
-      });
-    }
-  }, [history, historyFresh, seedCursor, autoScroll]);
+  }, [history, historyFresh, seedCursor]);
 
   // Scroll to bottom when this pane becomes active (tab switch)
   useEffect(() => {
     if (isActive) {
-      if (plainRef.current) plainRef.current.scrollToBottom();
-      else autoScroll.snapToBottom();
+      plainRef.current?.scrollToBottom();
       setIsAtBottom(true);
     }
-  }, [isActive, autoScroll]);
+  }, [isActive]);
 
-  // Virtuoso reports arrival at the bottom itself; see `jumpToBottom` for why the pane no
-  // longer claims it up front.
-  const scrollToBottom = () => (plainRef.current ? plainRef.current.scrollToBottom() : autoScroll.jumpToBottom());
+  const scrollToBottom = () => plainRef.current?.scrollToBottom();
 
   // Compute the timer badge inline — tick state re-renders every second to keep it current
   let timerBadge: string | null = null;
@@ -817,7 +640,7 @@ export default function RingPane({
     />
   );
 
-  // One row, for either list (Virtuoso today, PlainFeedList behind `feedImpl()`).
+  // One row of the feed.
   const renderRow = (_: number, event: GameEvent) => {
           if (isFeedMarker(event)) {
             return (
@@ -864,7 +687,6 @@ export default function RingPane({
             </li>
           );
         };
-  const plain = feedImpl() === 'plain';
   // What a row's output depends on beside its event; PlainFeedList re-renders rows when it changes.
   const rowVersion = useMemo(
     () => ({}),
@@ -920,69 +742,26 @@ export default function RingPane({
       {myFightingMonster && <RingItemsPanel roomId={roomId} monsterName={myFightingMonster.name} />}
 
 
-      {/* Gesture listeners sit on the wrapper because Virtuoso owns the scroller element;
-          wheel/touch/pointer/key events bubble up from it. */}
-      <div className="pane-feed-area" ref={feedAreaRef} {...autoScroll.gestureHandlers}>
-      {plain ? (
-        listReady ? (
-          <PlainFeedList
-            ref={plainRef}
-            data={events}
-            rowKey={(event) => event.id}
-            renderRow={renderRow}
-            rowFlag={(event) => newestMechanicRows.get(mechanicKeyOf(event.payload) ?? '') === event.id}
-            rowVersion={rowVersion}
-            pane="ring"
-            ariaLabel="Ring events"
-            onPinnedChange={setIsAtBottom}
-            empty={
-              <ol className="event-feed-list">
-                <li className="event event-system event-feed-empty">
-                  <p>No fight yet. A fight starts when two monsters are in the ring: send one of yours, or summon a boss.</p>
-                </li>
-              </ol>
-            }
-          />
-        ) : (
-          <div className="event-feed" role="log" aria-live="polite" aria-label="Ring events">
-            <p className="event event-system event-feed-empty">Waiting for fight events…</p>
-          </div>
-        )
-      ) : listReady && widthMeasured ? (
-      <Virtuoso
-        key={metricsKey}
-        {...(resumeAt ? { initialTopMostItemIndex: resumeAt } : {})}
-        rangeChanged={(range) => {
-          lastTopIndexRef.current = range.startIndex;
-        }}
-        ref={virtuosoRef}
-        scrollerRef={autoScroll.setScroller}
-        className="event-feed"
-        role="log"
-        aria-live="polite"
-        aria-label="Ring events"
-        tabIndex={0}
-        data={events}
-        // Per-row guess so a card box is not booked as a narration line until it mounts.
-        // Virtuoso's size-tree anchor otherwise shoves scrollTop back toward newer events
-        // while the reader is scrolling up into history (10b #196). The #159 re-pin still
-        // uses the DOM scrollHeight, not this guess.
-        heightEstimates={heightEstimates}
-        atBottomThreshold={AT_BOTTOM_THRESHOLD_PX}
-        followOutput={(atBottom) =>
-          autoScroll.shouldFollowRef.current || atBottom ? 'smooth' : false
-        }
-        components={{
-          List: FeedList,
-          EmptyPlaceholder: () => (
-            <li className="event event-system event-feed-empty">
-              <p>No fight yet. A fight starts when two monsters are in the ring: send one of yours, or summon a boss.</p>
-            </li>
-          ),
-        }}
-        itemContent={renderRow}
-        atBottomStateChange={(atBottom) => setIsAtBottom(autoScroll.onAtBottomChange(atBottom))}
-      />
+      <div className="pane-feed-area">
+      {listReady ? (
+        <PlainFeedList
+          ref={plainRef}
+          data={events}
+          rowKey={(event) => event.id}
+          renderRow={renderRow}
+          rowFlag={(event) => newestMechanicRows.get(mechanicKeyOf(event.payload) ?? '') === event.id}
+          rowVersion={rowVersion}
+          pane="ring"
+          ariaLabel="Ring events"
+          onPinnedChange={setIsAtBottom}
+          empty={
+            <ol className="event-feed-list">
+              <li className="event event-system event-feed-empty">
+                <p>No fight yet. A fight starts when two monsters are in the ring: send one of yours, or summon a boss.</p>
+              </li>
+            </ol>
+          }
+        />
       ) : (
         <div className="event-feed" role="log" aria-live="polite" aria-label="Ring events">
           <p className="event event-system event-feed-empty">Waiting for fight events…</p>

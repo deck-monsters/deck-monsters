@@ -13,11 +13,12 @@ import { feedTimings } from '../lib/feed-timings.js';
 
 /**
  * A feed as a plain list: every row in the window is in the DOM, the browser scrolls it, and
- * following the bottom is one rule. Roadmap 52's spike C1; the default since D2 (`feedImpl()`).
+ * following the bottom is one rule. Roadmap 52's spike C1, the only feed list since D3 (the
+ * `react-virtuoso` list, its height guesses and `useFeedAutoScroll` were deleted then; why: 10b #271).
  *
  * Why not a virtual list. A virtual list does not know a row's height until it has drawn it,
- * and feed rows run from one line to a card frame. `react-virtuoso` therefore needs a height
- * guess per row (`utils/feed-row-height.ts`), a remount whenever a theme changes the guess,
+ * and feed rows run from one line to a card frame. `react-virtuoso` needed a height
+ * guess per row, a remount whenever a theme changed the guess,
  * and a heuristic to tell "the reader scrolled" from "the bottom moved" (`useFeedAutoScroll`).
  * The baseline (docs/reference/feed-stability-baseline.md) traces S1 to S7 to those. Here
  * every height is real, so none of it is needed. The price is DOM size, bounded by `cap`: the
@@ -72,8 +73,7 @@ interface RowProps<T> {
 }
 
 function RowImpl<T>({ item, index, render }: RowProps<T>) {
-  // The wrapper mirrors the element Virtuoso puts around each row, so the feed's CSS and the
-  // browser suite's selectors (`[data-item-index]`) are the same for both lists.
+  // `data-item-index` is what the feed's CSS and the browser suite's selectors key on.
   return (
     <div data-index={index} data-item-index={index}>
       {render(index, item)}
@@ -273,7 +273,7 @@ function PlainFeedListInner<T>(
    * Go to the end and stay there for a moment.
    *
    * One `scrollTop = scrollHeight` is not enough on a phone. The owner's iPhone, on
-   * `?feed=plain`, landed near the end but not at it. An iOS momentum scroll keeps running
+   * the plain list, landed near the end but not at it. An iOS momentum scroll keeps running
    * after the assignment and writes its own next position over ours; the scroll event that
    * follows has a lower `scrollTop` and unchanged sizes, which is exactly what the reader
    * moving up looks like, so the list unpinned short of the end. No test browser reproduces
@@ -391,32 +391,3 @@ const PlainFeedList = forwardRef(PlainFeedListInner) as <T>(
 ) => ReactNode;
 
 export default PlainFeedList;
-
-/**
- * Which list the feeds use. `plain` is the default since roadmap 52 D2: it passed the scroll
- * suite in Chromium and WebKit and the owner's check on an iPhone. `virtuoso` is the old
- * virtual list, kept one release as a way back: `?feed=virtuoso` (or `plain`) sets the choice
- * for this browser and it sticks in localStorage. D3 deletes it.
- */
-export type FeedImpl = 'virtuoso' | 'plain';
-const FEED_IMPL_KEY = 'dm:feedImpl';
-let cachedImpl: FeedImpl | null = null;
-
-export function feedImpl(): FeedImpl {
-  if (cachedImpl) return cachedImpl;
-  let impl: FeedImpl = 'plain';
-  try {
-    const fromUrl = new URLSearchParams(window.location.search).get('feed');
-    if (fromUrl === 'plain' || fromUrl === 'virtuoso') window.localStorage.setItem(FEED_IMPL_KEY, fromUrl);
-    if (window.localStorage.getItem(FEED_IMPL_KEY) === 'virtuoso') impl = 'virtuoso';
-  } catch {
-    // Blocked storage: the default list.
-  }
-  cachedImpl = impl;
-  return impl;
-}
-
-/** For tests. */
-export function resetFeedImplCache(): void {
-  cachedImpl = null;
-}

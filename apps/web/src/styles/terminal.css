@@ -167,17 +167,13 @@
 
 /* Event feed — the scrollable list of game events.
 
-   NO PADDING HERE. This class lands on react-virtuoso's *scroller*, which it styles
-   `position: relative`, and the viewport it nests inside is `position: absolute;
-   width: 100%`. For an absolutely positioned box `width: 100%` resolves against the
-   containing block's *padding* box, so any horizontal padding here made the viewport
-   2x that padding wider than the visible area and `overflow-x: hidden` silently sliced
-   the right-hand edge off every line — losing a short word, or the level number in
-   "a level 6 Minotaur". Padding belongs on `.event-feed-list`, which is a normal-flow
-   child and measures against the content box. See 10b-bugs-fixed.md #98. */
+   NO PADDING HERE. This class is the scroller. The old virtual list nested an absolutely
+   positioned viewport in it, whose `width: 100%` resolved against the scroller's *padding*
+   box, so horizontal padding here sliced the right-hand edge off every line (10b #98).
+   That list is gone, but the rule stays: the gutters belong on `.event-feed-list`, so the
+   scroller's clientWidth is the visible width. */
 .event-feed {
-  /* The feed is monospace on every theme: rows are booked at JetBrains Mono's advance
-     (utils/feed-row-height.ts) and card frames are ASCII rules. */
+  /* The feed is monospace on every theme: card frames are ASCII rules. */
   font-family: var(--font-mono);
   font-size: var(--feed-font-size);
   line-height: var(--feed-line-height);
@@ -188,7 +184,7 @@
   overflow-x: hidden;
 }
 
-/* The <ol> Virtuoso renders inside the viewport. Carries the feed's gutters.
+/* The <ol> inside the scroller (PlainFeedList). Carries the feed's gutters.
    `list-style: none` must be set here, not only on `.event-feed`: the UA stylesheet gives
    every <ol> `list-style-type: decimal`, which beats the value inherited from the scroller,
    so each row drew an outside "1." marker that the feed's left edge clipped to a stray "."
@@ -337,11 +333,9 @@
 /* ── Structured feed lines (roadmap 46a) ───────────────────────────────────
    An event with `payload.lines` draws one block per line (components/FeedLines.tsx). The
    engine's blank lines, ASCII rules and fences are not in the lines, so every bit of
-   spacing here is CSS, and every vertical measure is one `readFeedMetrics` reads
-   (utils/feed-row-height.ts): the gap between lines (`--feed-line-gap`), a card's chrome, a
-   divider's margin. A layout change that is not in that probe moves every row estimate and
-   scroll-back with it (10b #196). Borders and rules below are drawn outside the box
-   (pseudo-elements in the row's padding, box-shadow) so they cost no height. */
+   spacing here is CSS: the gap between lines (`--feed-line-gap`), a card's chrome, a
+   divider's margin. Borders and rules below are drawn outside the box (pseudo-elements in
+   the row's padding, box-shadow) so they cost no height. */
 .feed-lines {
   position: relative;
   display: flex;

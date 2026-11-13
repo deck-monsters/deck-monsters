@@ -122,33 +122,6 @@ vi.mock('../lib/trpc.js', () => ({
   },
 }));
 
-vi.mock('react-virtuoso', () => {
-  const React = require('react');
-  return {
-    Virtuoso: React.forwardRef(
-      (
-        props: {
-          data?: Array<{ text?: string; id?: string; promptData?: unknown }>;
-          itemContent?: (index: number, item: { text?: string }) => React.ReactNode;
-          'aria-label'?: string;
-        },
-        ref: React.Ref<unknown>,
-      ) => {
-        React.useImperativeHandle(ref, () => ({
-          scrollToIndex: () => undefined,
-        }));
-        return (
-          <div aria-label={props['aria-label']}>
-            {(props.data ?? []).map((item, index) => (
-              <div key={item.id ?? index}>{props.itemContent?.(index, item) ?? item.text}</div>
-            ))}
-          </div>
-        );
-      },
-    ),
-  };
-});
-
 import Terminal from '../components/Terminal.js';
 import { resetMechanicClaimsForTests } from '../lib/mechanic-notes.js';
 

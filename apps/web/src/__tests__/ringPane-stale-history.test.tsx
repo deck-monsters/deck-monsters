@@ -32,27 +32,6 @@ vi.mock('../lib/trpc.js', () => ({
   },
 }));
 
-vi.mock('react-virtuoso', () => {
-  const React = require('react');
-  return {
-    Virtuoso: React.forwardRef(
-      (
-        props: { data?: Array<unknown>; itemContent?: (i: number, item: unknown) => React.ReactNode },
-        ref: React.Ref<unknown>
-      ) => {
-        React.useImperativeHandle(ref, () => ({ scrollToIndex: () => undefined }));
-        return (
-          <div>
-            {(props.data ?? []).map((item, index) => (
-              <div key={index}>{props.itemContent?.(index, item) ?? null}</div>
-            ))}
-          </div>
-        );
-      }
-    ),
-  };
-});
-
 function TestFeed({ children }: { children: ReactNode }) {
   const value: RingFeedApi = {
     connected: true,

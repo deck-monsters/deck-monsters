@@ -26,9 +26,7 @@
   --line-height: 1.4;
   --pane-padding: 0.75rem;
   --event-spacing: 0.4rem;
-  /* The feed's own type (.event-feed). A theme may set these; utils/feed-row-height.ts
-     reads the resolved values from the live CSS, so the virtual list's row estimates follow.
-     Defaults are the page type, i.e. what the feed drew before the tokens existed. */
+  /* The feed's own type (.event-feed). A theme may set these. Defaults are the page type, i.e. what the feed drew before the tokens existed. */
   --feed-font-size: var(--font-size);
   --feed-line-height: var(--line-height);
   --feed-letter-spacing: normal;
@@ -47,9 +45,8 @@
      --color-border/--color-bg/--color-hp-* flows into these defaults. Do not move a
      theme's colour overrides to a different element or that stops being true. */
   /* Type: chrome (buttons, tabs, forms, headers) reads --font-ui; the feed, Console and
-     transcripts read --font-mono. feed-row-height.ts books rows at JetBrains Mono's
-     advance, so a theme may change --font-ui freely but must keep --font-mono monospace
-     at a 0.6em advance. */
+     transcripts read --font-mono. a theme may change --font-ui freely but
+     must keep --font-mono monospace (card frames are ASCII art). */
   --font-ui: var(--font-family);
   --font-mono: var(--font-family);
   /* Shape and edges. */
