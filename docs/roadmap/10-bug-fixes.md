@@ -101,6 +101,12 @@ durable replay and its cap all hold. Left:
 - [ ] `startRealServer` in the test harness mirrors the server assembly in `index.ts`; share
   it so the two cannot drift.
 - [ ] Some feed frames are 12 to 75 KB (roadmap 52, D5).
+- [ ] **A first subscribe with no cursor replays only the last 100 events** (Codex review of
+  #436). If over 100 events this player can see arrive between the history fetch and the
+  first handshake, the ones in between are lost with no gap line. Bounded today: the 20 s
+  watchdog resubscribes with the history tail as its cursor, and fight pacing is about one
+  event a second. If pacing ever allows that, the fix belongs on the server: the handshake
+  carries the oldest replayed id so the pane can see a hole against its history tail.
 
 ### O. A deploy while someone is playing loses the ring
 
@@ -145,6 +151,22 @@ Root causes, two of them:
   ("The ring was rebuilt. Bosses left; your monster is still waiting."), and give back a
   summon whose boss was lost that way.
 - [ ] Check whether the lost summon was charged in this case.
+
+### P. Repository and CI upkeep
+
+**Owner:** Repository. Noticed while pushing and reading CI logs (2026-11-11 to 13).
+
+- [ ] **Dependabot reports 98 vulnerabilities on `main`** (3 critical, 48 high, 38 moderate,
+  9 low), printed by GitHub on every push. Not looked at. Triage which are in shipped code
+  rather than dev tooling, and update or pin.
+- [ ] **GitHub Actions warns that Node 20 actions are deprecated**: `actions/checkout@v4`,
+  `actions/setup-node@v4`, `actions/upload-artifact@v4` and `pnpm/action-setup@v4` are being
+  forced onto Node 24. Move to versions built for Node 24 before the forcing becomes failure.
+- [ ] **The browser job is reporting only** (`continue-on-error`). Make it a required check
+  once the flaky tests in M are fixed (roadmap 52, decision 6).
+- [ ] **CI runner network flakes**: one run lost its apt mirror and another the artifact
+  service. The browser job now has a 60 minute limit and a 15 minute install limit and
+  skips its tests if the browsers did not install; nothing more to do unless it recurs.
 
 ## Historical detail
 

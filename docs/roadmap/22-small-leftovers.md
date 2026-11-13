@@ -56,6 +56,11 @@ Loading a preset can now take cards from your other monsters, after a confirmati
   a phone. Do it at the next local test session.
 - [ ] **Wording.** The new lines are marked `DRAFT(39)` in the code and wait for the owner's
   wording pass under [39](39-in-game-help.md).
+- [ ] **Equipping or loading a preset onto a monster waiting in the ring.** The owner's rule
+  (2026-11-12) is that a monster in the ring keeps its hand, and taking cards off it is now
+  refused (#439). Equipping it or loading a preset onto it still replaces its hand, which can
+  leave it with fewer cards. Not asked about; check with the owner whether the same rule
+  should cover it.
 
 ## Items and monster identity
 

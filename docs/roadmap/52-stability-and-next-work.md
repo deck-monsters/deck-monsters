@@ -8,8 +8,12 @@ tags: [roadmap, planning, web, testing, feeds, reconnect]
 ---
 # 52 — Feed stability, proof systems, and the next passes
 
-**Status:** Accepted by the owner (2026-11-10). Pass A is done. Passes B and C are done (B3b moved to D4). Pass D is under way: the connection is rebuilt, and
-the plain feed list is the default (D2) and the real-transport suite is in (D4). Next: D3, delete the virtual list. Pass E has started: E1 (preset loading) is done. The decisions below are settled.
+**Status:** Accepted by the owner (2026-11-10). Passes A to C are done. Pass D: D1, D2 and D4
+are done and live (#436 to #439); D3, deleting the virtual list, is being built (2026-11-13);
+D5 is planned. Pass E: E1 (preset loading) is done and live; E2 (Lullaby and Mirror Shield)
+is being built in parallel, to ship as its own PR after D3. Owner decisions on 2026-11-12: the
+deploy handover bug is deferred (10 O), and a monster waiting in the ring keeps its hand
+(shipped in #439). The decisions below are settled.
 
 ## Why
 
@@ -256,9 +260,9 @@ the default.
 |---|---|---|---|
 | D1 | **The connection.** One subscription per page load; an 8 s heartbeat and a 20 s watchdog; a test of the connection when the page becomes visible or comes online; the banner when offline; backoff on failed resubscribes; dividers only for outages a reader lived through; no history refetch on focus; a loading line in the Console; tRPC's socket keep-alive | Done. Reviewed; fix round in (stale cached history, chat and the cursor, transport reconnects, pong wait). Connection suite 44 of 44 on both lists | 6fd862d, 68b8c0b |
 | D2 | **The plain list as the default.** `?feed=virtuoso` is the way back until D3 | **Done.** WebKit green in CI (158 passed), and the owner's iPhone check passed on 2026-11-12 ("very solid"). The Console's whole-list re-render is left for D3 | |
-| D3 | **Delete the virtual list:** `react-virtuoso`, `utils/feed-row-height.ts` and its probe, `useFeedAutoScroll`, the metrics remount, and the ten tests that stub the list. Rewrite the feed sections of [web workspace](../architecture/web-workspace.md) | After D2 | |
+| D3 | **Delete the virtual list:** `react-virtuoso`, `utils/feed-row-height.ts` and its probe, `useFeedAutoScroll`, the metrics remount, and the ten tests that stub the list. Rewrite the feed sections of [web workspace](../architecture/web-workspace.md) | **In progress** (2026-11-13). The owner OK'd removing it early: the plain list "has been working well". Also port the Console's prompt-out-of-view check off Virtuoso's rendered range | |
 | D4 | **B3b:** the connection faults against the real server and tRPC's WebSocket client through a proxy (CI has Postgres). The review of D1 named what only this can test: the socket keep-alive after a freeze, and both reconnect paths firing at once | **Done.** 13 tests over the real server and client, about 80 s, in the `Tests` job. Found and fixed 10b #270; what it left is 10 N | |
-| D5 | **Push, not poll:** the feed on the Fights and Leaders pages; events for the shop, the in-fight item list and summon charges; slimmer feed frames (some are 12 to 75 KB) | Planned | |
+| D5 | **Push, not poll:** the feed on the Fights and Leaders pages; events for the shop, the in-fight item list and summon charges; slimmer feed frames (some are 12 to 75 KB) | Planned. Also narrow the Console's whole-list re-render on every event (left from D2; the plain list re-renders every row's wrapper, which was cheap enough in the phone-CPU table but grows with the cap) | |
 
 ## Pass E — the next features
 
@@ -267,7 +271,7 @@ Each is its own PR and its own plan when it starts. The source file keeps the de
 | # | Work | Source | Size | Notes |
 |---|---|---|---|---|
 | E1 | Loading a preset can take cards from your other monsters | [22, Workshop](22-small-leftovers.md#workshop) | **Done** (f42edd4 and its fix round) | Built, independently reviewed (no blockers), fix round in. Leftovers are in 22 |
-| E2 | Counter cards: Lullaby and Mirror Shield | [12, Dragon follow-ups](12-new-content-backlog.md#dragon-follow-ups) | One content PR | The owner's pick for the next content PR. Neither exists in the code. Needs `sim:monster` evidence |
+| E2 | Counter cards: Lullaby and Mirror Shield | [12, Dragon follow-ups](12-new-content-backlog.md#dragon-follow-ups) | **In progress** (2026-11-13), in its own worktree; its own PR after D3 | The owner's pick for the next content PR. Neither exists in the code. Needs `sim:monster` evidence |
 | E3 | Small fixes: `help <word>` matching inside other words, chat metrics, the long room name on a phone | [42 E](42-next-proposals.md#e-seen-in-recent-sessions) | A line or two each | E3's first item was not re-checked against the code; check before briefing |
 | E4 | Balance Layer 1 (task 5), with 8a beside it | [34](34-balance-methodology.md) | Its own PR B and C | Measurement only. Runs under 34's plan, not this one |
 | E5 | The Discord connector re-subscribing to a replaced room | [10 J](10-bug-fixes.md) | One task | A real gap (`bot.ts` caches subscriptions and nothing tells it a room was replaced), but no connector is deployed. Take it before a deploy |
