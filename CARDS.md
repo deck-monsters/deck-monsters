@@ -77,6 +77,7 @@ Jump to: [Attacks](#attacks) · [Area attacks](#area-attacks) · [Healing](#heal
   - [Feline Companion](#feline-companion)
   - [Flee](#flee)
   - [Harden](#harden)
+  - [Mirror Shield](#mirror-shield)
   - [Mood Scales](#mood-scales)
   - [Take Wing](#take-wing)
   - [Thick Skin](#thick-skin)
@@ -92,6 +93,7 @@ Jump to: [Attacks](#attacks) · [Area attacks](#area-attacks) · [Healing](#heal
   - [Enchanted Faceswap](#enchanted-faceswap)
   - [Enthrall](#enthrall)
   - [Helm of Awe](#helm-of-awe)
+  - [Lullaby](#lullaby)
   - [Mesmerize](#mesmerize)
   - [Molasses](#molasses)
   - [Pick Pocket](#pick-pocket)
@@ -1479,6 +1481,34 @@ Cards that make your monster harder to hit, stronger for a while, or gone from s
 ==================================
 ```
 
+### Mirror Shield
+
+```text
+==================================
+ 🪞  Mirror Shield  ◆
+----------------------------------
+
+ A polished shield that turns an 
+ area attack back on the one who 
+ cast it.
+
+ Raise the shield. The next area 
+ attack aimed at you (Blast, Fire 
+ Breath, Sandstorm, Tsunami) 
+ turns back: you take half the 
+ damage, and half hits whoever 
+ cast it. Burns and confusion are 
+ turned away. Used up when it 
+ turns an attack; it waits until 
+ one comes.
+
+ Level: 1
+ Usable by: Fighter, Bard
+ MSRP: 30
+
+==================================
+```
+
 ### Mood Scales
 
 ```text
@@ -1952,6 +1982,45 @@ Cards that hold, curse, poison, confuse or rob an opponent instead of simply hit
 ==================================
 ```
 
+### Lullaby
+
+```text
+==================================
+ 🎶  Lullaby  ◆
+----------------------------------
+
+ A slow song to send an opponent 
+ to sleep. Dragons, guarding 
+ their hoards, are the easiest to 
+ lull.
+
+ Sing your opponent to sleep: 
+ 1d20 + int vs their int, +4 
+ against a Dragon. On a success 
+ they doze and lose their next 
+ card unless they wake first. No 
+ damage.
+ At the start of their turn they 
+ roll 1d20 + their int to wake, 
+ against your int (+4 for a 
+ Dragon). Each turn held makes it 
+ 3 easier. A natural 20 wakes 
+ them hard: you take 2.
+ Does nothing to a Weeping Angel, 
+ or to anyone already asleep. On 
+ a natural 1 you doze off 
+ instead: you lose your next 
+ card, and wake the same way.
+
+ Level: 1
+ Usable by: Bard, Unicorn
+ MSRP: 30
+ Targets: int
+ Class: Acoustic
+
+==================================
+```
+
 ### Mesmerize
 
 ```text
@@ -2123,7 +2192,7 @@ Signature cards: Battle Focus, Survival Knife.
 | Level | Cards that open up |
 |---|---|
 | Beginner | Battle Focus, Delayed Hit, Fight or Flight, Flee, Forked Stick, Heal, Hit, Pick Pocket, Random Play |
-| 1 | Camouflage Vest, Concussion, Fists of Villainy, Fists of Virtue, Harden, Molasses, Soften, Survival Knife, The Kalevala, Wooden Spear |
+| 1 | Camouflage Vest, Concussion, Fists of Villainy, Fists of Virtue, Harden, Mirror Shield, Molasses, Soften, Survival Knife, The Kalevala, Wooden Spear |
 | 2 | 1993-09-7202 18:58, Adrenaline Rush, Basic Shield, Calisthenics, Forked Metal Rod, Hit Harder, Lucky Strike, Rehit, Whiskey Shot |
 | 4 | Scotch |
 
@@ -2134,7 +2203,7 @@ Signature cards: Bad Batch, Sandstorm.
 | Level | Cards that open up |
 |---|---|
 | Beginner | Delayed Hit, Fight or Flight, Flee, Forked Stick, Heal, Hit, Pick Pocket, Random Play, Sandstorm |
-| 1 | Bad Batch, Brain Drain, Cloak of Invisibility, Dissonant Voice, Enchanted Faceswap, Fists of Villainy, Fists of Virtue, Harden, Iocane, Molasses, Soften, The Kalevala, Wooden Spear |
+| 1 | Bad Batch, Brain Drain, Cloak of Invisibility, Dissonant Voice, Enchanted Faceswap, Fists of Villainy, Fists of Virtue, Harden, Iocane, Lullaby, Mirror Shield, Molasses, Soften, The Kalevala, Wooden Spear |
 | 2 | 1993-09-7202 18:58, Basic Shield, Feline Companion, Lucky Strike, Whiskey Shot |
 | 3 | Pound |
 | 4 | Scotch |
@@ -2170,7 +2239,7 @@ Signature cards: Sticketh, Unconquerable Horn.
 | Level | Cards that open up |
 |---|---|
 | Beginner | Blast, Delayed Hit, Fight or Flight, Flee, Heal, Hit, Pick Pocket, Random Play, Sticketh |
-| 1 | Brain Drain, Cloak of Invisibility, Dissonant Voice, Enchanted Faceswap, Fists of Villainy, Fists of Virtue, Harden, Iocane, Molasses, Soften, The Kalevala, Unconquerable Horn |
+| 1 | Brain Drain, Cloak of Invisibility, Dissonant Voice, Enchanted Faceswap, Fists of Villainy, Fists of Virtue, Harden, Iocane, Lullaby, Molasses, Soften, The Kalevala, Unconquerable Horn |
 | 2 | 1993-09-7202 18:58, Blast II, Feline Companion, Horn of Proof, Lucky Strike, Rehit, Whiskey Shot |
 | 3 | Gloaming Rest |
 | 4 | Scotch |

@@ -5697,6 +5697,17 @@ up while nothing changed size. It passes the whole scroll suite in Chromium and 
 the owner's check on an iPhone. `?feed=virtuoso` is the way back until D3 deletes the old
 list.
 
+### 272. The burn-and-Heal turn-order test failed about once in a hundred runs — FIXED
+
+Seen while verifying roadmap 52 E2 (2026-11-13): "a burn put out by a Heal … takes no burn
+damage" failed with "expected 24 to be at least 28". Heal rolls 1 to 100 for its luck: a 7 is a
+Stroke of Luck and a 13 a Curse of Loki, which turns the heal into poison. The test checked
+that hp did not go down without pinning that roll, so one run in a hundred it drank poison.
+
+**Fixed** (`cards/turn-order.test.ts`): the test's Heal has its `checkSuccess` stubbed to a
+plain 3-point heal. What the test is about, the burn being put out under the Heal box, is
+unchanged.
+
 ## Closed without a fix
 
 These were open investigations the owner closed on 2026-09-28. Reopen with new evidence.

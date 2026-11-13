@@ -195,7 +195,9 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
 - [Iocane](#iocane)
 - [The Kalevala (1d4)](#the-kalevala-1d4)
 - [Lucky Strike](#lucky-strike)
+- [Lullaby](#lullaby)
 - [Mesmerize](#mesmerize)
+- [Mirror Shield](#mirror-shield)
 - [Molasses](#molasses)
 - [Mood Scales](#mood-scales)
 - [Pick Pocket](#pick-pocket)
@@ -1571,6 +1573,45 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
 ==================================
 ```
 
+### Lullaby
+
+```text
+==================================
+ 🎶  Lullaby  ◆
+----------------------------------
+
+ A slow song to send an opponent 
+ to sleep. Dragons, guarding 
+ their hoards, are the easiest to 
+ lull.
+
+ Sing your opponent to sleep: 
+ 1d20 + int vs their int, +4 
+ against a Dragon. On a success 
+ they doze and lose their next 
+ card unless they wake first. No 
+ damage.
+ At the start of their turn they 
+ roll 1d20 + their int to wake, 
+ against your int (+4 for a 
+ Dragon). Each turn held makes it 
+ 3 easier. A natural 20 wakes 
+ them hard: you take 2.
+ Does nothing to a Weeping Angel, 
+ or to anyone already asleep. On 
+ a natural 1 you doze off 
+ instead: you lose your next 
+ card, and wake the same way.
+
+ Level: 1
+ Usable by: Bard, Unicorn
+ MSRP: 30
+ Targets: int
+ Class: Acoustic
+
+==================================
+```
+
 ### Mesmerize
 
 ```text
@@ -1617,6 +1658,34 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  MSRP: 20
  Targets: int
  Class: AOE
+
+==================================
+```
+
+### Mirror Shield
+
+```text
+==================================
+ 🪞  Mirror Shield  ◆
+----------------------------------
+
+ A polished shield that turns an 
+ area attack back on the one who 
+ cast it.
+
+ Raise the shield. The next area 
+ attack aimed at you (Blast, Fire 
+ Breath, Sandstorm, Tsunami) 
+ turns back: you take half the 
+ damage, and half hits whoever 
+ cast it. Burns and confusion are 
+ turned away. Used up when it 
+ turns an attack; it waits until 
+ one comes.
+
+ Level: 1
+ Usable by: Fighter, Bard
+ MSRP: 30
 
 ==================================
 ```

@@ -41,7 +41,9 @@ import { HornSwipeCard } from '../horn-swipe.js';
 import { IocaneCard } from '../iocane.js';
 import { KalevalaCard } from '../kalevala.js';
 import { LuckyStrike } from '../lucky-strike.js';
+import { LullabyCard } from '../lullaby.js';
 import { MesmerizeCard } from '../mesmerize.js';
+import { MirrorShieldCard } from '../mirror-shield.js';
 import { MolassesCard } from '../molasses.js';
 import { MoodScalesCard } from '../mood-scales.js';
 import { PickPocketCard } from '../pick-pocket.js';
@@ -107,7 +109,9 @@ const all = [
 	IocaneCard,
 	KalevalaCard,
 	LuckyStrike,
+	LullabyCard,
 	MesmerizeCard,
+	MirrorShieldCard,
 	MolassesCard,
 	MoodScalesCard,
 	PickPocketCard,

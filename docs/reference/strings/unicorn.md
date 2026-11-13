@@ -169,6 +169,43 @@ Drink from the horn: remove one harm already on you (your worst stat penalty, or
 | `packages/engine/src/cards/helpers/control-ward.ts` controlWardNarration | `{"Will the unicorn be willing to serve thee?"  / —}{target} {refusal} Horn of Proof's ward is spent.` |
 | `packages/engine/src/cards/immobilize.ts` immobilize → narration | `{"Will the unicorn be willing to serve thee?"  / —}{target} will not be taken and held. {He} {refuses/refuse} to be {IMMOBILIZED}, and Horn of Proof's ward is spent.` |
 
+## Lullaby
+
+Source: `packages/engine/src/cards/lullaby.ts`.
+
+**Card description:** `A slow song to send an opponent to sleep. Dragons, guarding their hoards, are the easiest to lull.`
+
+**Rules text:**
+
+```text
+Sing your opponent to sleep: 1d20 + int vs their int, +4 against a Dragon. On a success they doze and lose their next card unless they wake first. No damage.
+At the start of their turn they roll 1d20 + their int to wake, against your int (+4 for a Dragon). Each turn held makes it 3 easier. A natural 20 wakes them hard: you take 2.
+Does nothing to a Weeping Angel, or to anyone already asleep. On a natural 1 you doze off instead: you lose your next card, and wake the same way.
+```
+
+**Narration and outcomes:**
+
+| Where | Template |
+|---|---|
+| actions → IMMOBILIZED | `lulled to sleep` |
+| immobilizeCheck → reason | `to lull {target} (int {int}).` |
+| immobilizeCheck → outcome | `{target}'s eyelids droop.` |
+| immobilizeCheck → outcome | `{player} yawns in the middle of the verse and nods off.` |
+| immobilizeCheck → outcome | `{target} hums along and stays awake.` |
+| emitImmobilizeNarrative → intro | `{player} 🎶 dozes off.` |
+| emitImmobilizeNarrative → intro | `{player} 🎶 lulls {target}.` |
+| emitImmobilizeNarrative → narration | `{intro} ⏎ At the beginning of {target}'s turn {he} will roll {freedomThresholdNarrative} to wake. {FREEDOM_FATIGUE_TEXT}` |
+| emitHeldEffect → narration | `🎶 {target} is still dozing.` |
+| freedomWording → freed | `{target} stirs and wakes.` |
+| freedomWording → held | `{target} sleeps on and will miss a turn.` |
+| getFreedomCommentary → returns | `{target} rolled a natural 20 and jolts awake.` |
+| getFreedomCommentary → returns | `{target} rolled a natural 20 and jolts awake, startling {player}.` |
+| getFreedomCommentary → returns | `{target} rolled a natural 1 and sinks into a deeper sleep.` |
+| getFreedomCommentary → returns | `Not quite awake... Tie goes to the sleeper.` |
+| effect → narration | `🎶 {player} sings to {target}, who is stone and does not doze.` |
+| effect → narration | `🎶 {target} is already out cold, and {player} lets {him} sleep.` |
+| effect → narration | `🎶 {target} is already held, and {player}'s song changes nothing.` |
+
 ## Sticketh
 
 Source: `packages/engine/src/cards/sticketh.ts`.

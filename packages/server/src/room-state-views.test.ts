@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -16,10 +16,21 @@ const VIEWS_MIGRATION = path.resolve(
 
 const sql = readFileSync(VIEWS_MIGRATION, 'utf8');
 
+const MIGRATIONS_DIR = path.dirname(VIEWS_MIGRATION);
+
+// Every migration's `insert into public.card_types` block, in file order, so a card added by a
+// later migration (Lullaby and Mirror Shield, roadmap 52 E2) counts and a re-seeded name wins.
 function seededCardTypes(): Map<string, string> {
-	const block = sql.match(/insert into public\.card_types[\s\S]*?on conflict/i)?.[0] ?? '';
-	const rows = [...block.matchAll(/\('((?:[^']|'')+)',\s*'((?:[^']|'')+)'\)/g)];
-	return new Map(rows.map((m) => [m[1]!.replace(/''/g, "'"), m[2]!.replace(/''/g, "'")]));
+	const seeded = new Map<string, string>();
+	for (const file of readdirSync(MIGRATIONS_DIR).filter((name) => name.endsWith('.sql')).sort()) {
+		const text = readFileSync(path.join(MIGRATIONS_DIR, file), 'utf8');
+		for (const block of text.match(/insert into public\.card_types[\s\S]*?on conflict/gi) ?? []) {
+			for (const m of block.matchAll(/\('((?:[^']|'')+)',\s*'((?:[^']|'')+)'\)/g)) {
+				seeded.set(m[1]!.replace(/''/g, "'"), m[2]!.replace(/''/g, "'"));
+			}
+		}
+	}
+	return seeded;
 }
 
 function migrationThresholds(): number[] {
