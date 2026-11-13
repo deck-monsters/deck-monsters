@@ -45,7 +45,7 @@
      --color-border/--color-bg/--color-hp-* flows into these defaults. Do not move a
      theme's colour overrides to a different element or that stops being true. */
   /* Type: chrome (buttons, tabs, forms, headers) reads --font-ui; the feed, Console and
-     transcripts read --font-mono. a theme may change --font-ui freely but
+     transcripts read --font-mono. A theme may change --font-ui freely but
      must keep --font-mono monospace (card frames are ASCII art). */
   --font-ui: var(--font-family);
   --font-mono: var(--font-family);

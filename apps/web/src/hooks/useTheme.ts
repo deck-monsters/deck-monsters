@@ -60,27 +60,8 @@ const LAZY_THEMES: Partial<Record<ThemeId, () => Promise<unknown>>> = {
   millefleur: () => import('../themes/millefleur.js'),
 };
 const lazyLoads = new Map<ThemeId, Promise<unknown>>();
-const settledLoads = new Set<ThemeId>();
 
-const assetListeners = new Set<(theme: ThemeId) => void>();
-
-/**
- * Called each time a lazy theme's chunk lands (the first success, or a later retry after a
- * failure). The Ring re-reads its feed metrics then: a chunk that was slow, or failed once,
- * arrives after the list was measured against the stub CSS.
- */
-export function subscribeThemeAssets(listener: (theme: ThemeId) => void): () => void {
-  assetListeners.add(listener);
-  return () => {
-    assetListeners.delete(listener);
-  };
-}
-
-/** True when the theme's stylesheet is in the page: no chunk to wait for, or it has landed. */
-export function themeAssetsReady(theme: ThemeId): boolean {
-  return !LAZY_THEMES[theme] || settledLoads.has(theme);
-}
-
+/** Starts a lazy theme's chunk (once); a failed load leaves the cache empty, so a later apply retries. */
 export function loadThemeAssets(theme: ThemeId): Promise<unknown> {
   const load = LAZY_THEMES[theme];
   if (!load) return Promise.resolve();
@@ -91,12 +72,6 @@ export function loadThemeAssets(theme: ThemeId): Promise<unknown> {
       console.error(`[theme] failed to load ${theme}`, error);
     });
     lazyLoads.set(theme, pending);
-    // A failed load leaves the cache empty (above) and is not "ready"; a later apply retries.
-    void pending.then(() => {
-      if (lazyLoads.get(theme) !== pending) return;
-      settledLoads.add(theme);
-      assetListeners.forEach((listener) => listener(theme));
-    });
   }
   return pending;
 }

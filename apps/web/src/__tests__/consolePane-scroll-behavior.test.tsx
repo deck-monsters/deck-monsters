@@ -32,9 +32,11 @@ function pushEvent(tracked: TrackedRingFeedEvent) {
 // The pane's side of the feed's contract: it hands the list rows, shows `↓ Latest` when the list
 // reports it is no longer following, and asks it to scroll through its handle. How the list
 // decides that is PlainFeedList's own business, proved in a real browser (e2e/scroll.spec.ts).
+const historyQuery = vi.hoisted(() => ({ data: undefined as unknown[] | undefined }));
 const feed = vi.hoisted(() => ({
   scrollToBottom: vi.fn(),
   onPinnedChange: undefined as undefined | ((pinned: boolean) => void),
+  pinned: true,
   rows: 0,
 }));
 
@@ -42,7 +44,7 @@ vi.mock('../components/PlainFeedList.js', () => {
   const React = require('react');
   return {
     default: React.forwardRef((props: any, ref: any) => {
-      React.useImperativeHandle(ref, () => ({ scrollToBottom: feed.scrollToBottom, isPinned: () => true }));
+      React.useImperativeHandle(ref, () => ({ scrollToBottom: feed.scrollToBottom, isPinned: () => feed.pinned }));
       feed.onPinnedChange = props.onPinnedChange;
       feed.rows = props.data?.length ?? 0;
       return <div data-testid="plain-feed">{props.data?.length === 0 ? props.empty : null}</div>;
@@ -91,7 +93,7 @@ vi.mock('../lib/trpc.js', () => ({
   trpc: {
     game: {
       consoleHistory: {
-        useQuery: () => ({ data: undefined }),
+        useQuery: () => ({ data: historyQuery.data }),
       },
       pendingPrompt: {
         useQuery: () => trpcMocks.pendingPromptQuery,
@@ -153,6 +155,7 @@ function TestFeed({ children }: { children: ReactNode }) {
 const ROOM = '11111111-1111-1111-1111-111111111111';
 
 function setPinned(pinned: boolean) {
+  feed.pinned = pinned;
   act(() => feed.onPinnedChange?.(pinned));
 }
 
@@ -160,6 +163,8 @@ describe('ConsolePane scroll behavior', () => {
   beforeEach(() => {
     feed.scrollToBottom.mockReset();
     feed.onPinnedChange = undefined;
+    feed.pinned = true;
+    historyQuery.data = undefined;
     listeners.clear();
     trpcMocks.pendingPromptQuery.data = null;
     trpcMocks.pendingPromptQuery.dataUpdatedAt = 0;
@@ -253,5 +258,33 @@ describe('ConsolePane scroll behavior', () => {
       </TestFeed>,
     );
     expect(feed.scrollToBottom).toHaveBeenCalled();
+  });
+
+  // The first fresh history result is applied once per mount, then the Console goes to the end.
+  it('scrolls to the end after history loads', () => {
+    historyQuery.data = [{ id: 'h1' }];
+    render(
+      <TestFeed>
+        <ConsolePane roomId={ROOM} isActive={false} />
+      </TestFeed>,
+    );
+    expect(feed.scrollToBottom).toHaveBeenCalled();
+  });
+
+  it('does not pull a reader who scrolled up back down when history lands late', () => {
+    const { rerender } = render(
+      <TestFeed>
+        <ConsolePane roomId={ROOM} isActive={false} />
+      </TestFeed>,
+    );
+    setPinned(false);
+    feed.scrollToBottom.mockClear();
+    historyQuery.data = [{ id: 'h1' }];
+    rerender(
+      <TestFeed>
+        <ConsolePane roomId={ROOM} isActive={false} />
+      </TestFeed>,
+    );
+    expect(feed.scrollToBottom).not.toHaveBeenCalled();
   });
 });

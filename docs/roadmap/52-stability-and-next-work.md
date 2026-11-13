@@ -9,7 +9,7 @@ tags: [roadmap, planning, web, testing, feeds, reconnect]
 # 52 — Feed stability, proof systems, and the next passes
 
 **Status:** Accepted by the owner (2026-11-10). Passes A to C are done. Pass D: D1, D2 and D4
-are done and live (#436 to #439); D3, deleting the virtual list, is being built (2026-11-13);
+are done and live (#436 to #439); D3 deleted the virtual list (2026-11-13);
 D5 is planned. Pass E: E1 (preset loading) is done and live; E2 (Lullaby and Mirror Shield)
 is being built in parallel, to ship as its own PR after D3. Owner decisions on 2026-11-12: the
 deploy handover bug is deferred (10 O), and a monster waiting in the ring keeps its hand
@@ -260,7 +260,7 @@ the default.
 |---|---|---|---|
 | D1 | **The connection.** One subscription per page load; an 8 s heartbeat and a 20 s watchdog; a test of the connection when the page becomes visible or comes online; the banner when offline; backoff on failed resubscribes; dividers only for outages a reader lived through; no history refetch on focus; a loading line in the Console; tRPC's socket keep-alive | Done. Reviewed; fix round in (stale cached history, chat and the cursor, transport reconnects, pong wait). Connection suite 44 of 44 on both lists | 6fd862d, 68b8c0b |
 | D2 | **The plain list as the default.** `?feed=virtuoso` is the way back until D3 | **Done.** WebKit green in CI (158 passed), and the owner's iPhone check passed on 2026-11-12 ("very solid"). The Console's whole-list re-render is left for D3 | |
-| D3 | **Delete the virtual list:** `react-virtuoso`, `utils/feed-row-height.ts` and its probe, `useFeedAutoScroll`, the metrics remount, and the ten tests that stub the list. Rewrite the feed sections of [web workspace](../architecture/web-workspace.md) | **In progress** (2026-11-13). The owner OK'd removing it early: the plain list "has been working well". Also port the Console's prompt-out-of-view check off Virtuoso's rendered range | |
+| D3 | **Delete the virtual list:** `react-virtuoso`, `utils/feed-row-height.ts` and its probe, `useFeedAutoScroll`, the metrics remount, and the ten tests that stub the list. Rewrite the feed sections of [web workspace](../architecture/web-workspace.md) | **Done** (2026-11-13). Reviewed (no blockers); fix round in. Main chunk 757.5 kB to 692.7 kB. Two pre-existing Console issues the review found are in 10 M | d172916 and its fix round |
 | D4 | **B3b:** the connection faults against the real server and tRPC's WebSocket client through a proxy (CI has Postgres). The review of D1 named what only this can test: the socket keep-alive after a freeze, and both reconnect paths firing at once | **Done.** 13 tests over the real server and client, about 80 s, in the `Tests` job. Found and fixed 10b #270; what it left is 10 N | |
 | D5 | **Push, not poll:** the feed on the Fights and Leaders pages; events for the shop, the in-fight item list and summon charges; slimmer feed frames (some are 12 to 75 KB) | Planned. Also narrow the Console's whole-list re-render on every event (left from D2; the plain list re-renders every row's wrapper, which was cheap enough in the phone-CPU table but grows with the cap) | |
 

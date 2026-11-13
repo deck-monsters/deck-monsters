@@ -118,9 +118,8 @@ before React runs, but the chunk arrives later. So:
   from the first frame. Its id-to-colour map duplicates `THEMES`; `theme-prepaint.test.ts`
   checks they agree.
 
-`themeAssetsReady(theme)` says whether a lazy theme's stylesheet has settled; the Ring waits
-for it before measuring the feed's type, and gives up waiting after a few seconds rather than
-leaving the feed empty.
+Nothing waits for the chunk: the feed is plain CSS (`--feed-*` tokens), so it restyles itself
+when the stylesheet lands, and `PlainFeedList` re-pins on the resulting resize.
 
 Those chunk files, the Nunito faces, and the watercolour textures are content-hashed under
 `assets/`. Production tells the browser to keep them; `index.html` stays revalidated so a

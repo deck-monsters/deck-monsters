@@ -52,8 +52,7 @@ import {
 const PANES: Pane[] = ['ring', 'console'];
 
 /*
- * Theme matrix. Millefleur is a lazy stylesheet with a different feed type, so it exercises the
- * metrics, estimate and remount paths: it runs for every test where those matter (opening,
+ * Theme matrix. Millefleur is a lazy stylesheet with a different feed type, so it runs for every test where those matter (opening,
  * following bursts and resizes, reading back, the history walk, returning via ↓ Latest, theme
  * switches). The rest run on Phosphor only to keep the default suite near four minutes on two
  * workers; `E2E_ALL_THEMES=1` runs the full matrix.
@@ -563,11 +562,6 @@ for (const theme of THEME_IDS) {
           await expectPinned(page, pane, `t1.switch${n}`);
           const c = await counters(page);
           measure(`t1.switch${n}.listMounts`, (c[`${listKey}.list.mount`] ?? 0) - (c0[`${listKey}.list.mount`] ?? 0), '');
-          measure(
-            `t1.switch${n}.metricsRemounts`,
-            (c[`${listKey}.list.remount.metrics`] ?? 0) - (c0[`${listKey}.list.remount.metrics`] ?? 0),
-            '',
-          );
         });
       }
     });
@@ -593,11 +587,6 @@ for (const theme of THEME_IDS) {
           measure(`t2.switch${n}.firstVisibleIndexAfter`, s.rows[0]?.i ?? -1, '');
           measure(`t2.switch${n}.gap`, s.gap);
           measure(`t2.switch${n}.listMounts`, (c[`${listKey}.list.mount`] ?? 0) - (c0[`${listKey}.list.mount`] ?? 0), '');
-          measure(
-            `t2.switch${n}.metricsRemounts`,
-            (c[`${listKey}.list.remount.metrics`] ?? 0) - (c0[`${listKey}.list.remount.metrics`] ?? 0),
-            '',
-          );
           expect(row, `the row the reader was on (index ${tracked.i}) is still on screen`).toBeDefined();
           expect(s.gap, 'still reading back (not yanked to the bottom)').toBeGreaterThan(FOLLOW_GAP_PX);
           expect(s.jump, '↓ Latest still offered').toBe(true);

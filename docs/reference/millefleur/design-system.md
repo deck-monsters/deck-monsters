@@ -285,10 +285,9 @@ Built in pass 46a of [roadmap 46](../../archive/roadmap/46-unicorn-theme.md) as
 `apps/web/src/styles/theme-millefleur.css`, a lazily loaded chunk with the Nunito faces. Where
 the real app differs from the samples above, this is what was built and why:
 
-- **The transcript uses the design's metrics.** The app now reads feed size, line height,
-  spacing and character advance from the drawn CSS, so Millefleur uses 12.5px on a 1.65
-  line. The renderer and row-height estimate share composed blocks; changes to a block's
-  layout must be reflected in the measured metrics (bugs 159 and 196).
+- **The transcript uses the design's metrics.** The feed's size, line height and spacing are
+  CSS tokens (`--feed-*`), so Millefleur uses 12.5px on a 1.65 line. The feed list measures
+  real row heights, so a block's layout can change freely (the old height guess is gone).
 - **A fifth card role.** The engine has a guard role (labelled DEFENCE) that the samples did not
   show. Its dot is woad sky `#5f93d6`. Every role dot sits beside its word; the role glyph
   (⚔ ✚ ✦) is hidden in this theme, because the dot and word already say it.

@@ -800,9 +800,12 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
       seedCursor(dedupedHistory[dedupedHistory.length - 1]!.id);
     }
 
-    // Jump to bottom after history loads (instant, no animation)
+    // Jump to bottom after history loads (instant, no animation), unless the reader has
+    // already scrolled up: a slow history fetch must not pull them back down. This runs once
+    // per mount (`historyApplied`), so a refetch can never reach it; only the first result
+    // can, and on a slow link the reader may have moved by then.
     requestAnimationFrame(() => {
-      plainRef.current?.scrollToBottom();
+      if (plainRef.current?.isPinned()) plainRef.current.scrollToBottom();
     });
   }, [history, historyFresh, seedCursor]);
 
