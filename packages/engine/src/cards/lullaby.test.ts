@@ -2,6 +2,7 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 
 import { LullabyCard, LULLABY_DRAGON_BONUS } from './lullaby.js';
+import { DissonantVoiceCard } from './dissonant-voice.js';
 import { HitCard } from './hit.js';
 import { armControlWard, getControlWard } from './helpers/control-ward.js';
 import { hydrateCard } from './helpers/hydrate.js';
@@ -61,6 +62,24 @@ describe('./cards/lullaby.ts Lullaby', () => {
 			const modifier = immobilizer.intModifier + this.getAttackModifier(immobilized);
 			return fakeRoll(natural, modifier) as any;
 		});
+
+	// Codex review of #441: the rattle was spent on Lullaby but its contest rolled one die.
+	it('a rattled singer sings at disadvantage: two dice, the lower kept, and the rattle is spent', async () => {
+		new DissonantVoiceCard().rattle(singer);
+		const naturals = [17, 4];
+		const stub = sinon.stub(LullabyCard.prototype, 'getImmobilizeRoll').callsFake(function (this: any, immobilizer: any, immobilized: any) {
+			const modifier = immobilizer.intModifier + this.getAttackModifier(immobilized);
+			return fakeRoll(naturals.shift()!, modifier) as any;
+		});
+		const seen: any[] = [];
+		const card = new LullabyCard();
+		card.on('rolled', (_c: string, _card: any, event: any) => seen.push(event));
+		await sing(foe, card);
+
+		expect(stub.callCount, 'two contest rolls').to.equal(2);
+		expect(seen[0].roll.naturalRoll.result, 'the lower die is kept').to.equal(4);
+		expect(DissonantVoiceCard.isRattled(singer), 'the rattle is spent').to.equal(false);
+	});
 
 	it('is an uncommon level 1 Bard and Unicorn card in the Acoustic class, beside Dissonant Voice', () => {
 		expect(LullabyCard.permittedClassesAndTypes).to.deep.equal([BARD, UNICORN]);

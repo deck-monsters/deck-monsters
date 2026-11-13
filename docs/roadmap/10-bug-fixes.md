@@ -177,6 +177,21 @@ Root causes, two of them:
   service. The browser job now has a 60 minute limit and a 15 minute install limit and
   skips its tests if the browsers did not install; nothing more to do unless it recurs.
 
+### Q. Hold cards spend a rattle without rolling at disadvantage
+
+**Owner:** Cards. Found by the Codex review of #441 (2026-11-13). Dissonant Voice's rattle
+waits for the rattled monster's next card that has an attack roll (`getAttackRoll`) and
+spends itself there, adding disadvantage through the roll-mode helper. But a hold's contest
+(`ImmobilizeCard.immobilizeCheck`, Forked Stick, Coil, Horn Gore, Sticketh and the rest)
+rolls through `getImmobilizeRoll`, which the helper does not wrap. So a rattled monster that
+plays a hold loses the rattle and rolls one die; a hold aimed at a pinned monster also gets
+no advantage. Lullaby was fixed in #441 by routing its contest through `rollWithModes`.
+
+- [ ] Decide whether every hold's contest should honour roll modes (rattle and pin), then
+  either wrap `getImmobilizeRoll` in `roll-mode.ts` `install()` as `getAttackRoll` is, or
+  stop a hold from spending the rattle. Either changes balance a little for every hold: check
+  with `sim:monster` before shipping.
+
 ## Historical detail
 
 The removed September incident diary was resolved work and duplicated

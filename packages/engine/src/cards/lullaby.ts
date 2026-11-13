@@ -5,6 +5,7 @@ import { DRAGON, UNICORN } from '../constants/creature-types.js';
 import { ACOUSTIC } from '../constants/card-classes.js';
 import { UNCOMMON } from '../helpers/probabilities.js';
 import { CHEAP } from '../helpers/costs.js';
+import { rollWithModes } from './helpers/roll-mode.js';
 
 /** The Dragon's bonus on the lullaby's contest (and, as with every hold matchup, on how hard the sleep is to shake off). */
 export const LULLABY_DRAGON_BONUS = 4;
@@ -77,7 +78,11 @@ Does nothing to a Weeping Angel, or to anyone already asleep. On a natural 1 you
 	private fumbled = false;
 
 	override immobilizeCheck(player: any, target: any): boolean {
-		const roll = this.getImmobilizeRoll(player, target);
+		// Through the roll-mode helper: a rattled singer (Dissonant Voice) sings at disadvantage,
+		// and a pinned target is lulled at advantage. A plain getImmobilizeRoll() let the rattle be
+		// spent on this card with one die rolled (Codex review of #441). Other holds share that
+		// gap; it is in the bug list (10 Q).
+		const roll = rollWithModes(this, player, target, () => this.getImmobilizeRoll(player, target));
 		const { success, curseOfLoki } = this.checkSuccess(roll, target.int);
 
 		this.emit('rolled', {
