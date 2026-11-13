@@ -363,6 +363,65 @@ why each variation was dropped are in the
 [Helm of Awe and Dissonant Voice study](../archive/studies/2026-09-helm-of-awe-and-dissonant-voice.md).
 Read it before designing a debuff, a fear effect, or a support card for team fights.
 
+## Counter cards: Lullaby and Mirror Shield
+
+The owner's pair of cards that answer a Dragon but are useful against anyone (roadmap 52 E2,
+spec in [12](../roadmap/12-new-content-backlog.md#dragon-follow-ups)). Neither is dead in a
+deck that never meets one.
+
+**Lullaby** (`cards/lullaby.ts`, Bard and Unicorn, uncommon, level 1, cost 30, front shop; an
+Acoustic card beside Dissonant Voice). It is a hold, so it inherits the whole family above
+rather than restating it.
+
+- **The contest.** 1d20 + the singer's int against the target's int (`immobilizeCheck`). A
+  tie goes to the target, a natural 20 always lands and a natural 1 always fails, as
+  `checkSuccess` does for every hold. A natural 1 only fails: no backfire.
+- **The doze.** A success goes through `ImmobilizeCard.immobilize()`: an `ImmobilizeEffect`
+  that costs the target's next card unless it wakes at the start of its turn (1d20 + its int
+  against the singer's int, 3 easier per turn asleep). Attackers roll with advantage against a
+  sleeper (the pin rule), and the singer's fall ends the spell.
+- **The ward.** An armed Horn of Proof ward cancels it after the contest roll, and is spent.
+  The owner's spec said "Unconquerable Horn ward"; that ward moved to Horn of Proof on
+  2026-09-29 (`cards/helpers/control-ward.ts`), and `immobilize()` is where it is checked.
+- **+4 against a Dragon** is the hold family's strong matchup (`strongAgainstCreatureTypes =
+  [DRAGON]`, `freedomThresholdModifier` 4), so it is +4 on the singer's roll *and* a threshold 4
+  higher for the dragon to wake. That is how every matchup in the family counts; a Dragon-only
+  rule beside the one every hold already has would have been a second mechanism.
+- **No damage, no "hit instead".** `immobilize()` hits a target that is already held or
+  immune, which is right for a pin and wrong for a song, so `effect()` answers those two cases
+  with a line first: an already dozing monster is left asleep, and a Weeping Angel (a statue,
+  the family's "ineffective" type) does not doze.
+
+**Mirror Shield** (`cards/mirror-shield.ts`, Fighter and Bard, uncommon, level 1, cost 30,
+front shop). A one-use `DEFENSE_PHASE` effect on its holder (`MIRROR_SHIELD_EFFECT`), built
+on Take Wing's pattern of wrapping the incoming card's `effect` for the holder only.
+
+- **What counts as an area attack.** A card with an `areaDamage(caster)` method: Blast (so
+  Blast II and Sandstorm, which extend it), Fire Breath and Tsunami, and nothing else. It is
+  not the `AOE` card class: that tag also marks Mesmerize (a hold) and Prion Disease (mostly a
+  heal), which are not attacks. A new area attack opts in by writing `areaDamage`.
+- **"Aimed at you"** means the holder is one of the card's targets (a cone that reaches it, a
+  Blast at everyone). Only the holder's share turns back; everyone else is hit as usual.
+- **The split.** The holder takes `max(1, floor(d / 2))`, the caster `ceil(d / 2)`. That is
+  Fire Breath's dodge rounding (the one place damage is halved), with the odd point going back
+  to the caster. A damage of 0 or less splits into nothing.
+- **Damage turns back, riders do not.** The holder skips Fire Breath's dodge roll, takes no
+  burn and is not confused by Sandstorm; the caster takes no rider either. Sending the burn
+  and the confusion back as well would make the card a coin-flip bomb.
+- **Edge cases.** The holder's own area attack (a confused Blast at itself) is not aimed at
+  it by someone else: the shield stays up. A caster already dead when the card reaches the
+  holder: the shield stays up and the engine resolves the card as before. An ally's Tsunami
+  turns back (the wave was coming for you; the card does not read teams). If the reflected
+  half kills the caster, the kill is credited to the holder and the caster's attack ends there:
+  targets it had not reached are spared. Both halves land even if the holder's own half fells
+  it.
+- **Stacking.** A second shield on a shielded monster does nothing (Dissonant Voice's and
+  Take Wing's rule): one shield absorbs one attack, never two.
+- **Lifetime.** It does not lapse. It waits for an area attack or the end of the fight
+  (encounter effects are never serialized).
+
+Balance evidence and the watch on Blast Clerics are in the 12 backlog's Dragon follow-ups.
+
 ## Ancient dragons
 
 A Dragon at level 10 or more is **ancient** (`cards/helpers/ancient-dragon.ts`). The owner

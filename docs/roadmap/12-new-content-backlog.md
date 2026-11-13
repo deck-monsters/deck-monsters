@@ -113,15 +113,34 @@ brief). Its current rules are in
 [cards and encounter effects](../architecture/cards-and-encounter-effects.md#ancient-dragons).
 Open work:
 
-- [ ] **Counter cards, the next content PR** (owner, 2026-09-27). Cards that answer a Dragon
-  but are useful against anyone, so neither is dead in a deck that never meets one:
+- [x] **Counter cards, the next content PR** (owner, 2026-09-27). Built as roadmap 52 E2:
+  Lullaby and Mirror Shield. The rules, edge cases and the reasons are in
+  [cards and encounter effects](../architecture/cards-and-encounter-effects.md#counter-cards-lullaby-and-mirror-shield).
+  Cards that answer a Dragon but are useful against anyone, so neither is dead in a deck that
+  never meets one:
   - **Lullaby** (Bard and Unicorn, beside Dissonant Voice): 1d20 + INT vs the target's
     INT; on a success the target dozes and loses its next card, through `immobilize()`, so
-    the Unconquerable Horn ward applies. +4 against a Dragon (old tales lull
-    treasure-guarding dragons to sleep with song).
+    the Horn of Proof ward applies. +4 against a Dragon.
   - **Mirror Shield** (Fighter and Bard): the next area attack aimed at you (Fire Breath,
     Blast, Sandstorm, Tsunami) turns back: you take half, and half hits its caster. Spent
-    on use. Watch in `sim:monster` that it does not become a hard counter to Blast Clerics.
+    on use.
+  - [ ] **Wording.** Every player-facing line of both cards is a `DRAFT(39)` placeholder for
+    the orchestrator to write (card descriptions, stats text, announcements).
+  - [ ] **Balance watch.** Measured 2026-11-13 with a one-off script (explicit likely decks
+    through `simulate()`, 400 fights a cell, one card swapped in, same seeds; not committed).
+    Mirror Shield is not a hard counter to Blast
+    Clerics: in a Jinn hand it is worth about a Hit against four-Blast Angels and Unicorns
+    (+0.9 points against a Hit in the same slot over six cells) and about 6 points better
+    than a Hit against a Dragon. In a Gladiator hand, in place of a Heal, it moved nothing
+    (71.9% to 71.5% over fifteen cells). Lullaby is fine in a Jinn hand (72.5% to 73.2%
+    over eighteen cells, in place of Bad Batch; +4.5 points against the Dragon against about 0
+    elsewhere) but **cost a Unicorn hand 7 points** (63.4% to 56.2% over eighteen cells, in place
+    of a Hit): a no-damage hold is a poor trade for the Unicorn's few attacks. Decide whether the
+    Unicorn should hold it at all, or cost less, before it ships. Re-measure after a cost or
+    class change. `sim:monster` alone cannot show either card: it draws random decks, where a
+    rare card barely appears.
+  - [ ] **Live check** of both announcements in a real fight (a Dragon against a Bard with
+    Lullaby, and a Cleric's Blast into a shield).
 - [ ] **More options for the first Wizard** (owner, 2026-09-29): the Wizard class holds only
   the Dragon's own cards plus Cloak and Revive, so a Dragon's hand leans on generic strikes.
   Widening the pool (existing spells opened to Wizards, or new Wizard cards) is task 8 of

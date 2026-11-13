@@ -171,8 +171,13 @@ An ancient dragon (level ${ANCIENT_DRAGON_LEVEL}+) breathes fire that cannot be 
 		];
 	}
 
+	/** The undodged fire damage, which Mirror Shield asks for (cards/mirror-shield.ts). */
+	areaDamage(caster: any): number {
+		return BREATH_BASE_DAMAGE + caster.level;
+	}
+
 	async effect(player: any, target: any, ring?: any): Promise<boolean> {
-		const full = BREATH_BASE_DAMAGE + player.level;
+		const full = this.areaDamage(player);
 		// Breathing on yourself in confusion leaves nowhere to dodge to, and an ancient
 		// dragon's fire cannot be dodged at all.
 		const dodged = target !== player && !isAncientDragon(player) && this.dodge(player, target);

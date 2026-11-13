@@ -85,9 +85,17 @@ export class BlastCard extends BaseCard<BlastCardOptions> {
 		}) as any[]).map(({ monster }: any) => monster);
 	}
 
+	/**
+	 * What this card deals to each target for `caster`. A method, not inline in `effect`, because
+	 * Mirror Shield asks for it: a card that has one is an area attack the shield can turn back
+	 * (cards/mirror-shield.ts).
+	 */
+	areaDamage(caster: any): number {
+		return this.damage + this.levelDamage * scaledCasterLevel(caster.level);
+	}
+
 	effect(player: any, target: any): any {
-		const damage = this.damage + this.levelDamage * scaledCasterLevel(player.level);
-		return target.hit(damage, player, this);
+		return target.hit(this.areaDamage(player), player, this);
 	}
 }
 
