@@ -167,9 +167,8 @@ node apps/web/e2e/summarize.mjs --failing                # the last run, as a ta
 
 `apps/web/playwright.config.ts` builds the app, serves it with `vite preview`, and runs
 Chromium at 390 × 844 (touch) and 1440 × 900. `E2E_WEBKIT=1` adds WebKit at both sizes; CI
-sets it. Agent containers ship Chromium only, so a WebKit result comes from CI. The suite runs
-against the plain feed list, the app's default; `E2E_FEED=virtuoso` runs it against the old
-virtual list while that still exists. Mobile WebKit refuses Playwright's mouse
+sets it. Agent containers ship Chromium only, so a WebKit result comes from CI.
+Mobile WebKit refuses Playwright's mouse
 wheel and has no touch-drag API, so on `webkit-phone` a scroll gesture is set in script after
 dispatched touch events (`wheelBy` in `e2e/lab.ts`). That proves layout and follow rules
 there, not momentum scrolling.

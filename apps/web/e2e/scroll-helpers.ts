@@ -14,7 +14,7 @@ export const THEME_IDS = ['phosphor', 'millefleur'] as const;
 export type ThemeId = (typeof THEME_IDS)[number];
 export type Pane = 'ring' | 'console';
 
-/** The app's own `AT_BOTTOM_THRESHOLD_PX` (hooks/useFeedAutoScroll.ts). */
+/** The app's own `PIN_THRESHOLD_PX` (components/PlainFeedList.tsx). */
 export const FOLLOW_GAP_PX = 8;
 /** A row the reader is looking at may move this much (sub-pixel layout, rounding). */
 export const ROW_DRIFT_PX = 2;
@@ -22,7 +22,7 @@ export const ROW_DRIFT_PX = 2;
 export const REVERSE_PX = 2;
 
 export interface RowBox {
-  /** Virtuoso's `data-item-index`. */
+  /** The row's `data-item-index`. */
   i: number;
   /** Pixels from the scroller's top edge (negative = above the viewport). */
   top: number;

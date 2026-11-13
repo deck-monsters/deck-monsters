@@ -24,22 +24,6 @@ const mocks = vi.hoisted(() => ({
   seeded: [] as string[],
 }));
 
-vi.mock('react-virtuoso', () => {
-  const React = require('react');
-  const Virtuoso = React.forwardRef((props: any, ref: any) => {
-    React.useImperativeHandle(ref, () => ({ scrollToIndex: () => undefined }));
-    const Empty = props.components?.EmptyPlaceholder;
-    return (
-      <div>
-        {props.data?.length ? props.data.map((ev: any, i: number) => (
-          <React.Fragment key={ev.id ?? i}>{props.itemContent(i, ev)}</React.Fragment>
-        )) : Empty ? <Empty /> : null}
-      </div>
-    );
-  });
-  return { Virtuoso };
-});
-
 vi.mock('../lib/auth-context.js', () => ({ useAuth: () => ({ user: { id: 'user-1' } }) }));
 vi.mock('../lib/command-insert-context.js', () => ({
   useCommandInsert: () => ({ registerInsertFn: () => undefined }),

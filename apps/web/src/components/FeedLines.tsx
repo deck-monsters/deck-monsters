@@ -4,9 +4,7 @@ import { feedBlocksOf, type FeedBlock, type FeedPart, type FeedStyle } from '../
 
 /**
  * Draws an event from its structured lines (roadmap 46a): one block per line, spacing from
- * CSS (`.feed-lines` gap), the engine's ASCII rules and fences gone. The blocks are the ones
- * `estimateFeedBlocksHeight` books, so a theme's styling here must not change a block's line
- * count or vertical chrome without going through `readFeedMetrics`.
+ * CSS (`.feed-lines` gap), the engine's ASCII rules and fences gone.
  *
  * Card frames keep the existing `.event-card-block` panel. Millefleur draws a title line, a CSS
  * rule, then the body; the terminal themes draw the engine's own ASCII frame (rules included,

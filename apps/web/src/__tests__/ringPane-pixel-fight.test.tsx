@@ -23,13 +23,6 @@ vi.mock('../utils/ring-feed-events.js', () => ({
   shouldRenderRingEvent: () => true,
 }));
 
-vi.mock('react-virtuoso', async () => {
-  const React = await import('react');
-  return {
-    Virtuoso: React.forwardRef((_props, _ref) => <div className="event-feed" />),
-  };
-});
-
 type StubProps = { children?: ReactNode };
 
 /** Stands in for PixelSprites: passes the roster through, marks that it mounted. */

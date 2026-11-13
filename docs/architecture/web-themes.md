@@ -57,14 +57,14 @@ The groups (see the comments in `theme-phosphor.css` for each one's reason):
   46a (their defaults are what the old fallbacks drew).
 - **Type:** `--font-ui` for the chrome (buttons, tabs, forms, headings) and `--font-mono` for
   the feed, the Console and transcripts. A theme may change `--font-ui` freely; `--font-mono`
-  must stay monospace, because the row-height guess still wraps by column and events
+  must stay monospace, because events
   without lines still draw the ASCII card frame. Events that carry `payload.lines` draw a
   card as a title, a CSS rule and the body. Millefleur also replaces some of those lines
   with composed sentences; every other theme draws the engine's words
   ([web workspace: Card frames](web-workspace.md#card-frames)). The feed's
   own size, line height and letter spacing are `--feed-font-size`, `--feed-line-height` and
-  `--feed-letter-spacing`; the Ring's row-height guess measures them from the live CSS
-  ([web workspace: Ring feed row heights](web-workspace.md#ring-feed-row-heights)).
+  `--feed-letter-spacing`, plain CSS on `.event-feed`
+  ([web workspace: Feed lists](web-workspace.md#feed-lists)).
 - **Shape:** `--radius-sm/-md/-lg/-pill`, `--border-width`, `--color-border-strong` (edges
   that identify a control), `--shadow-page`.
 - **Surfaces:** `--surface-page`, `--surface-texture`, `--surface-titlebar`, `--holo`, and the
@@ -118,9 +118,8 @@ before React runs, but the chunk arrives later. So:
   from the first frame. Its id-to-colour map duplicates `THEMES`; `theme-prepaint.test.ts`
   checks they agree.
 
-`themeAssetsReady(theme)` says whether a lazy theme's stylesheet has settled; the Ring waits
-for it before measuring the feed's type, and gives up waiting after a few seconds rather than
-leaving the feed empty.
+Nothing waits for the chunk: the feed is plain CSS (`--feed-*` tokens), so it restyles itself
+when the stylesheet lands, and `PlainFeedList` re-pins on the resulting resize.
 
 Those chunk files, the Nunito faces, and the watercolour textures are content-hashed under
 `assets/`. Production tells the browser to keep them; `index.html` stays revalidated so a

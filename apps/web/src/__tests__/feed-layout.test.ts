@@ -14,12 +14,11 @@ function ruleBody(selector: string): string {
   return match![2]!;
 }
 
-describe('feed layout: padding must not sit on the Virtuoso scroller (#98)', () => {
-  // `.event-feed` is the class handed to <Virtuoso>, so it lands on the library's
-  // scroller. The scroller is `position: relative` and the viewport inside it is
-  // `position: absolute; width: 100%` — which resolves against the *padding* box.
-  // Horizontal padding here therefore makes the viewport wider than the visible area
-  // and `overflow-x: hidden` slices the right edge off every line of the feed.
+describe('feed layout: padding sits on the list, not the scroller (#98)', () => {
+  // `.event-feed` is the scroller. The gutters live on `.event-feed-list` inside it. (The
+  // virtual list this was written for needed it because its viewport resolved
+  // `width: 100%` against the padding box; the plain list keeps the rule so the scroller's
+  // clientWidth, which the feed's pinning reads, stays the visible width.)
   it('.event-feed declares no padding', () => {
     expect(ruleBody('.event-feed')).not.toMatch(/(^|[\s;])padding/);
   });

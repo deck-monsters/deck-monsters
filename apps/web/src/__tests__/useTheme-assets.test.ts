@@ -1,9 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 /**
- * `themeAssetsReady` gates the Ring's first measurement on a lazy theme's stylesheet. It
- * must be false before the chunk lands, true after, and stay false (so a later apply
- * retries) when the import rejects or never settles.
+ * A lazy theme's chunk is imported once, shared by every caller, and retried by a later apply
+ * when the import fails (a failed import must not be cached as a success).
  */
 async function freshUseTheme(factory: () => unknown | Promise<unknown>) {
   vi.resetModules();
@@ -11,50 +10,39 @@ async function freshUseTheme(factory: () => unknown | Promise<unknown>) {
   return import('../hooks/useTheme.js');
 }
 
-describe('themeAssetsReady', () => {
+describe('loadThemeAssets', () => {
   beforeEach(() => {
     vi.spyOn(console, 'error').mockImplementation(() => undefined);
   });
 
-  it('is always ready for a theme with no chunk', async () => {
+  it('has nothing to load for a theme with no chunk', async () => {
     const mod = await freshUseTheme(() => ({}));
-    expect(mod.themeAssetsReady('amber')).toBe(true);
+    await expect(mod.loadThemeAssets('amber')).resolves.toBeUndefined();
   });
 
-  it('is not ready before the chunk loads, ready after, and tells subscribers', async () => {
-    const mod = await freshUseTheme(() => ({}));
-    const landed = vi.fn();
-    mod.subscribeThemeAssets(landed);
-    expect(mod.themeAssetsReady('millefleur')).toBe(false);
+  it('shares one import between callers', async () => {
+    let imports = 0;
+    const mod = await freshUseTheme(() => {
+      imports += 1;
+      return {};
+    });
+    await Promise.all([mod.loadThemeAssets('millefleur'), mod.loadThemeAssets('millefleur')]);
     await mod.loadThemeAssets('millefleur');
-    await Promise.resolve();
-    expect(mod.themeAssetsReady('millefleur')).toBe(true);
-    expect(landed).toHaveBeenCalledWith('millefleur');
+    expect(imports).toBe(1);
   });
 
-  it('stays not ready when the import rejects, and a later apply retries', async () => {
+  it('logs a failed import and retries on the next apply', async () => {
     let attempts = 0;
     const mod = await freshUseTheme(() => {
       attempts += 1;
       if (attempts === 1) throw new Error('offline');
       return {};
     });
-    const landed = vi.fn();
-    mod.subscribeThemeAssets(landed);
-    await mod.loadThemeAssets('millefleur'); // resolves after the failure is logged
-    await Promise.resolve();
-    expect(mod.themeAssetsReady('millefleur')).toBe(false);
-    expect(landed).not.toHaveBeenCalled();
     await mod.loadThemeAssets('millefleur');
-    await Promise.resolve();
-    expect(mod.themeAssetsReady('millefleur')).toBe(true);
-    expect(landed).toHaveBeenCalledTimes(1);
-  });
-
-  it('stays not ready while the import never settles', async () => {
-    const mod = await freshUseTheme(() => new Promise(() => undefined));
-    void mod.loadThemeAssets('millefleur');
-    await Promise.resolve();
-    expect(mod.themeAssetsReady('millefleur')).toBe(false);
+    expect(console.error).toHaveBeenCalled();
+    await mod.loadThemeAssets('millefleur');
+    expect(attempts).toBe(2);
+    await mod.loadThemeAssets('millefleur');
+    expect(attempts).toBe(2);
   });
 });

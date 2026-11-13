@@ -52,8 +52,7 @@ import {
 const PANES: Pane[] = ['ring', 'console'];
 
 /*
- * Theme matrix. Millefleur is a lazy stylesheet with a different feed type, so it exercises the
- * metrics, estimate and remount paths: it runs for every test where those matter (opening,
+ * Theme matrix. Millefleur is a lazy stylesheet with a different feed type, so it runs for every test where those matter (opening,
  * following bursts and resizes, reading back, the history walk, returning via ↓ Latest, theme
  * switches). The rest run on Phosphor only to keep the default suite near four minutes on two
  * workers; `E2E_ALL_THEMES=1` runs the full matrix.
@@ -431,8 +430,8 @@ for (const theme of THEME_IDS) {
         expect(w.reverseMax, 'scrollTop moved the opposite way between gestures (px)').toBeLessThanOrEqual(REVERSE_PX);
         expect(w.nonMonotonic, 'steps where scrollTop increased').toBe(0);
         expect(w.largestJump, 'tracked row moved by a different amount than the gesture (px)').toBeLessThanOrEqual(ROW_DRIFT_PX);
-        // largestJumpVsScrollTop is reported, not asserted: Virtuoso legitimately moves scrollTop
-        // to compensate for a measured height ABOVE the reader, which keeps the row where it is.
+        // largestJumpVsScrollTop is reported, not asserted: the list legitimately moves scrollTop
+        // to keep the reader's row where it is when content above it changes height.
       });
     }
   }
@@ -484,11 +483,10 @@ for (const theme of THEME_IDS) {
       await nextArrivalFollowed(page, pane, 'j.next');
     });
 
-    // The owner's iPhone, on the plain list: `↓ Latest` landed near the end, not at it. A
+    // The owner's iPhone, on iOS: `↓ Latest` landed near the end, not at it. A
     // momentum scroll keeps writing positions after the jump. No test browser has momentum, so
     // this writes those positions in script, with no input event, as a momentum frame would.
     test(`${pane} › returning › ↓ Latest holds the end against a momentum scroll [${theme}]`, async ({ page }) => {
-      test.skip(process.env['E2E_FEED'] === 'virtuoso', 'the plain list only: the virtual list has no hold');
       await setup(page, pane, theme);
       await toBottom(page, pane, 'm');
       await scrollUpBy(page, pane, far);
@@ -510,7 +508,6 @@ for (const theme of THEME_IDS) {
     });
 
     test(`${pane} › returning › a reader's scroll right after ↓ Latest still wins [${theme}]`, async ({ page }) => {
-      test.skip(process.env['E2E_FEED'] === 'virtuoso', 'the plain list only: the virtual list has no hold');
       await setup(page, pane, theme);
       await toBottom(page, pane, 'n');
       await scrollUpBy(page, pane, far);
@@ -565,11 +562,6 @@ for (const theme of THEME_IDS) {
           await expectPinned(page, pane, `t1.switch${n}`);
           const c = await counters(page);
           measure(`t1.switch${n}.listMounts`, (c[`${listKey}.list.mount`] ?? 0) - (c0[`${listKey}.list.mount`] ?? 0), '');
-          measure(
-            `t1.switch${n}.metricsRemounts`,
-            (c[`${listKey}.list.remount.metrics`] ?? 0) - (c0[`${listKey}.list.remount.metrics`] ?? 0),
-            '',
-          );
         });
       }
     });
@@ -595,11 +587,6 @@ for (const theme of THEME_IDS) {
           measure(`t2.switch${n}.firstVisibleIndexAfter`, s.rows[0]?.i ?? -1, '');
           measure(`t2.switch${n}.gap`, s.gap);
           measure(`t2.switch${n}.listMounts`, (c[`${listKey}.list.mount`] ?? 0) - (c0[`${listKey}.list.mount`] ?? 0), '');
-          measure(
-            `t2.switch${n}.metricsRemounts`,
-            (c[`${listKey}.list.remount.metrics`] ?? 0) - (c0[`${listKey}.list.remount.metrics`] ?? 0),
-            '',
-          );
           expect(row, `the row the reader was on (index ${tracked.i}) is still on screen`).toBeDefined();
           expect(s.gap, 'still reading back (not yanked to the bottom)').toBeGreaterThan(FOLLOW_GAP_PX);
           expect(s.jump, '↓ Latest still offered').toBe(true);

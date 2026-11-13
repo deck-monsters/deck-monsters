@@ -11,7 +11,7 @@ import { lab, openLab, showSurface, measure, ringScroller, wheelBy, type Fixture
  * Time. The 20 s watchdog (HEARTBEAT_TIMEOUT_MS in utils/ring-feed-connection.ts) and the lab's 8 s heartbeat
  * are in-page `setTimeout`/`setInterval`, so Playwright's clock (`page.clock`) drives both.
  * The clock is installed BEFORE navigation and left to flow naturally (never paused), so React,
- * Virtuoso's rAF and `performance.now` (which the timings module reads) all stay consistent.
+ * the feed's rAF and `performance.now` (which the timings module reads) all stay consistent.
  * `advance()` jumps it in small steps and yields to the page's real task queue between steps,
  * so a state change the watchdog causes is committed and observed within one step.
  */
@@ -239,8 +239,8 @@ export interface Audit {
 /**
  * Compare what the lab published with what the Ring renders.
  *
- * The Ring's list is virtualised, so the whole feed is read by sweeping the scroller from top
- * to bottom and collecting every row by Virtuoso's `data-index` (rows are keyed by timestamp +
+ * The whole feed is read by sweeping the scroller from top
+ * to bottom and collecting every row by its `data-index` (rows are keyed by timestamp +
  * type: the DOM carries no event ids). `ring.state` frames are excluded on both sides (the
  * pane uses them for timers and the lab's history contains them).
  */
@@ -278,7 +278,7 @@ export async function audit(page: Page, fixtureName: string): Promise<Audit> {
     rereads = 1;
     await page.waitForTimeout(300);
     const second = await sweep();
-    // Rows are keyed by Virtuoso's index and nothing is arriving, so the sweeps can be merged:
+    // Rows are keyed by `data-index` and nothing is arriving, so the sweeps can be merged:
     // a row either sweep saw is a row that was rendered.
     const merged = new Map<number, FeedRow>();
     for (const r of [...rows, ...second.rows]) merged.set(r.index, r);
@@ -338,8 +338,8 @@ export interface FeedRow {
 }
 
 /**
- * Every row of the visible Ring feed, in order, read by scrolling the virtualised list from the
- * top to the bottom with real mouse-wheel input (Virtuoso gives each rendered item a
+ * Every row of the visible Ring feed, in order, read by scrolling the list from the
+ * top to the bottom with real mouse-wheel input (each row carries a
  * `data-index`). Setting `scrollTop` from script does not work here: the pane's auto-follow
  * pins the list back to the bottom, because a script is not a gesture. Leaves the list at the
  * bottom, where a reader following the feed would be.
@@ -413,7 +413,7 @@ export interface ProbeEntry {
  * Watch the DOM from inside the page and timestamp (fake `performance.now`) every change a
  * reader would see: the Ring's "-- reconnecting --" banner, the "reconnecting…" header word in
  * Ring and Console, a new "connection lost"/"reconnected"/"joined" divider, and a new event
- * row at the end of the Ring feed (by Virtuoso's `data-index`). Observed with a
+ * row at the end of the Ring feed (by `data-index`). Observed with a
  * MutationObserver, so a state that lasts only a frame is still caught.
  */
 export async function installProbe(page: Page): Promise<void> {

@@ -3,9 +3,7 @@ import type { FeedLine } from '@deck-monsters/engine';
 /**
  * Turns an event's `payload.lines` (roadmap 46a) into the blocks the feed draws.
  *
- * The same blocks feed the renderer (`components/FeedLines.tsx`) and the row-height estimate
- * (`utils/feed-row-height.ts`), so what is booked and what is drawn cannot disagree: the
- * estimate sums these blocks' text, and the renderer draws exactly them. A line that is
+ * The renderer (`components/FeedLines.tsx`) draws exactly these blocks. A line that is
  * replaced (a Millefleur divider, a composed summary) is replaced here, once.
  *
  * Layout whitespace is not in the lines; spacing comes from CSS (`--feed-line-gap`, the row
@@ -29,7 +27,7 @@ export interface FeedBlock {
 	key: string;
 	/** The line's kind, or a composed block's own (`summary`, `roll-result`, `divider`). */
 	kind: string;
-	/** Columns of left indent (CSS `ch`); the estimate wraps that many columns earlier. */
+	/** Columns of left indent (CSS `ch`) */
 	indent: number;
 	parts: FeedPart[];
 	/** A card frame: the first line is the title, the rest the body. */
@@ -178,8 +176,7 @@ function plainBlock(line: FeedLine, key: string, style: FeedStyle): FeedBlock {
 		if (style === 'terminal') {
 			// The terminal themes keep the ASCII frame Discord shows (owner, 2026-10-06: "for the
 			// terminal interfaces … the ascii style render is preferred"). The engine's line drops
-			// the rules, so they are redrawn here at the frame's 34 columns; the frame is all body,
-			// so the row estimate counts every rule as the line it is.
+			// the rules, so they are redrawn here at the frame's 34 columns.
 			const body = [CARD_RULE_HEAVY, title, CARD_RULE_LIGHT, ...rest, CARD_RULE_HEAVY].join('\n');
 			return { key, kind: 'card', indent: 0, parts: [], card: { title: '', body } };
 		}
@@ -289,12 +286,6 @@ export function composeFeedBlocks(lines: readonly FeedLine[], style: FeedStyle):
 		blocks.push(plainBlock(line, key, style));
 	}
 	return blocks;
-}
-
-/** The text a block puts on screen, for the estimate: parts joined, a card's lines kept. */
-export function blockText(block: FeedBlock): string {
-	if (block.card) return [block.card.title, block.card.body].filter(Boolean).join('\n');
-	return block.parts.map((part) => part.text).join('');
 }
 
 /** The blocks an event draws, or null when it renders from `text`. */

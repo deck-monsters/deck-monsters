@@ -77,30 +77,6 @@ vi.mock('../utils/ring-feed-events.js', () => ({
   shouldRenderRingEvent: () => true,
 }));
 
-vi.mock('react-virtuoso', () => {
-  const React = require('react');
-  return {
-    Virtuoso: React.forwardRef(
-      (
-        props: {
-          data?: Array<unknown>;
-          itemContent?: (index: number, item: unknown) => React.ReactNode;
-        },
-        ref: React.Ref<{ scrollToIndex: () => void }>,
-      ) => {
-        React.useImperativeHandle(ref, () => ({ scrollToIndex: () => {} }));
-        return (
-          <div>
-            {(props.data ?? []).map((item, index) => (
-              <div key={index}>{props.itemContent?.(index, item) ?? null}</div>
-            ))}
-          </div>
-        );
-      },
-    ),
-  };
-});
-
 function TestFeed({ children }: { children: ReactNode }) {
   const value: RingFeedApi = {
     connected: true,
