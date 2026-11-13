@@ -83,6 +83,15 @@ are fixed: the plain list is the default
   `PlainFeedList.onScroll` puts the row back and the gesture is undone. If so it would show on
   a real phone as an occasional jump back while a fight is running.
 
+- [ ] **Sending a command while reading back does not bring the Console to the end.**
+  Found in review of D3 (2026-11-13); it was already so before, since the old list's
+  `enable()` had no caller. A player who scrolled up, types a command and sends it does not
+  see the answer arrive. Probably: on submit, jump to the end (`scrollToBottom`).
+- [ ] **The prompt banner can miss a question hidden under an overlay.** The "a question is
+  waiting" banner uses an `IntersectionObserver`, which counts the prompt row as visible
+  when something drawn over it (the command dock on a phone) hides it. Pre-existing; found
+  in the same review. Check on a phone before fixing.
+
 ### N. Connection: what the real-transport suite found and left
 
 **Owner:** Web feeds and transport. The suite (`ring-feed-transport.pg.test.ts`,
