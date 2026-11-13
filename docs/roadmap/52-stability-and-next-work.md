@@ -8,12 +8,13 @@ tags: [roadmap, planning, web, testing, feeds, reconnect]
 ---
 # 52 — Feed stability, proof systems, and the next passes
 
-**Status:** Accepted by the owner (2026-11-10). Passes A to C are done. Pass D: D1, D2 and D4
-are done and live (#436 to #439); D3 deleted the virtual list (2026-11-13);
-D5 is planned. Pass E: E1 (preset loading) is done and live; E2 (Lullaby and Mirror Shield)
-is being built in parallel, to ship as its own PR after D3. Owner decisions on 2026-11-12: the
-deploy handover bug is deferred (10 O), and a monster waiting in the ring keeps its hand
-(shipped in #439). The decisions below are settled.
+**Status:** Accepted by the owner (2026-11-10). Passes A to C are done. Pass D: D1 to D4 are
+done and live (#436 to #440; D3 deleted the virtual list on 2026-11-13); D5 is planned. Pass E:
+E1 (preset loading) is live; E2 (Lullaby and Mirror Shield) is built and reviewed, with a fix
+round in progress, and ships as its own PR. Owner decisions: the deploy handover bug is
+deferred (10 O); a monster waiting in the ring keeps its hand (#439); Lullaby stays on
+Unicorns, its Dragon +4 applies to the lull and the wake, and a natural 1 puts the singer to
+sleep (2026-11-13). The decisions below are settled.
 
 ## Why
 
@@ -271,7 +272,7 @@ Each is its own PR and its own plan when it starts. The source file keeps the de
 | # | Work | Source | Size | Notes |
 |---|---|---|---|---|
 | E1 | Loading a preset can take cards from your other monsters | [22, Workshop](22-small-leftovers.md#workshop) | **Done** (f42edd4 and its fix round) | Built, independently reviewed (no blockers), fix round in. Leftovers are in 22 |
-| E2 | Counter cards: Lullaby and Mirror Shield | [12, Dragon follow-ups](12-new-content-backlog.md#dragon-follow-ups) | **In progress** (2026-11-13), in its own worktree; its own PR after D3 | The owner's pick for the next content PR. Neither exists in the code. Needs `sim:monster` evidence |
+| E2 | Counter cards: Lullaby and Mirror Shield | [12, Dragon follow-ups](12-new-content-backlog.md#dragon-follow-ups) | **Built** (03135bf), reviewed: mechanics sound, one blocker (a migration count in a test). Fix round in progress with the owner's three decisions | Simulation: Mirror Shield is not a hard counter to Blast Clerics (about +1 point over a Hit); Lullaby helps a Bard against Dragons and costs a Unicorn about 7 points, kept by the owner as an optional shop card |
 | E3 | Small fixes: `help <word>` matching inside other words, chat metrics, the long room name on a phone | [42 E](42-next-proposals.md#e-seen-in-recent-sessions) | A line or two each | E3's first item was not re-checked against the code; check before briefing |
 | E4 | Balance Layer 1 (task 5), with 8a beside it | [34](34-balance-methodology.md) | Its own PR B and C | Measurement only. Runs under 34's plan, not this one |
 | E5 | The Discord connector re-subscribing to a replaced room | [10 J](10-bug-fixes.md) | One task | A real gap (`bot.ts` caches subscriptions and nothing tells it a room was replaced), but no connector is deployed. Take it before a deploy |
