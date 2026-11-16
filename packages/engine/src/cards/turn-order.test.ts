@@ -147,6 +147,15 @@ describe('turn order (cards/base.ts startTurn)', () => {
 		const heal = () => {
 			const card = new HealCard();
 			card.on('played', () => log.push('heal box'));
+			// Pin the heal: a 1-in-100 Curse of Loki turns it into poison, and this test failed
+			// about once a hundred runs on "hp went down" (10b #272). The burn is what is tested.
+			sinon.stub(card, 'checkSuccess').callsFake((healRoll: any) => ({
+				curseOfLoki: false,
+				healRoll: { ...healRoll, result: 3 },
+				result: 3,
+				strokeOfLuck: false,
+				success: true,
+			}));
 			return card;
 		};
 

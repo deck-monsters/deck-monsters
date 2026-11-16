@@ -114,3 +114,9 @@ Source: `packages/engine/src/cards/sandstorm.ts`.
 | effect → getTargets | `{sandstormTarget} keeps {his} wits about {him} and manages to target {formerTargetName}.` |
 | effect → getTargets | `While trying to target {formerTargetName}, {sandstormTarget} instead targets {newTargetName}.` |
 | effect → narration | `sees through the storm.` |
+
+**Lines elsewhere that name this card:**
+
+| Where | Template |
+|---|---|
+| `packages/engine/src/cards/mirror-shield.ts` stats → returns | `Raise the shield. The next area attack aimed at you (Blast, Fire Breath, Sandstorm, Tsunami) turns back: you take half the damage, and half hits whoever cast it. Burns and confusion are turned away. Used up when it turns an attack; it waits until one comes.` |

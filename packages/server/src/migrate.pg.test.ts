@@ -56,6 +56,14 @@ suite('runMigrations against Postgres', () => {
 		dbUrl = urlFor(dbName);
 	});
 	afterEach(async () => {
+		// Let the runner's own connections finish closing before the forced drop, or a client
+		// its pool already released can surface the termination as an uncaught error (see
+		// room-state-views.pg.test.ts, which failed that way in CI on #440).
+		for (let waited = 0; waited < 5_000; waited += 50) {
+			const { rows } = await admin.query(`select count(*)::int as n from pg_stat_activity where datname = $1`, [dbName]);
+			if (rows[0].n === 0) break;
+			await new Promise((resolve) => setTimeout(resolve, 50));
+		}
 		await admin.query(`drop database if exists ${dbName} with (force)`);
 		for (const d of tmp) rmSync(d, { recursive: true, force: true });
 		tmp = [];
@@ -85,7 +93,7 @@ suite('runMigrations against Postgres', () => {
 	it('applies all real repo migrations in order, records them, and a second run applies none', async () => {
 		await stubSupabase();
 		const files = readdirSync(repoMigrations).filter((f) => f.endsWith('.sql')).sort();
-		expect(files).to.have.length(18);
+		expect(files).to.have.length(19);
 
 		const first = await runMigrations({ connectionString: dbUrl, dir: repoMigrations, log: quiet });
 		expect(first.ok).to.equal(true);

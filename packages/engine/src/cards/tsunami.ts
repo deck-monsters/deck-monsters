@@ -65,6 +65,11 @@ You roll 1d20 + dex vs ${RIDE_THE_WAVE_DIFFICULTY} to ride your own wave and tak
 		return [...everyone, player];
 	}
 
+	/** The wave's damage, which Mirror Shield asks for (cards/mirror-shield.ts). */
+	areaDamage(): number {
+		return TSUNAMI_DAMAGE;
+	}
+
 	/** The Dragon's roll to ride its own wave: 1d20 + DEX vs 10. True means no damage. */
 	rideTheWave(player: any): boolean {
 		const rideRoll = roll({ primaryDice: '1d20', modifier: player.dexModifier, crit: true });

@@ -270,6 +270,18 @@ ${ongoingDamageText}`;
 		});
 	}
 
+	/**
+	 * The words of the held creature's freedom roll: what it is trying to do, and the plain
+	 * success and failure lines. A hook (Lullaby wakes from sleep rather than breaking free).
+	 */
+	freedomWording(target: any): { goal: string; freed: string; held: string } {
+		return {
+			goal: 'break free',
+			freed: `Success! ${target.givenName} is freed.`,
+			held: `${target.givenName} remains ${this.actions.IMMOBILIZED} and will miss a turn.`,
+		};
+	}
+
 	/** Commentary on a freedom roll's natural 20, natural 1, or tie. Hook for the same reason. */
 	getFreedomCommentary(
 		{ strokeOfLuck, curseOfLoki, tie }: { strokeOfLuck: boolean; curseOfLoki: boolean; tie: boolean },
@@ -305,6 +317,7 @@ ${ongoingDamageText}`;
 					if (curseOfLoki) {
 						target.encounterModifiers.immobilizedTurns = 0;
 					}
+					const wording = this.freedomWording(target);
 					const commentary = this.getFreedomCommentary(
 						{ strokeOfLuck, curseOfLoki, tie },
 						player,
@@ -313,14 +326,13 @@ ${ongoingDamageText}`;
 
 					this.emit('rolled', {
 						success: success,
-						reason: `and needs ${freedomThreshold + 1} or higher to break free.`,
+						reason: `and needs ${freedomThreshold + 1} or higher to ${wording.goal}.`,
 						card: this,
 						roll: freedomRoll,
 						who: target,
 						outcome: success
-							? commentary || `Success! ${target.givenName} is freed.`
-							: commentary ||
-							  `${target.givenName} remains ${this.actions.IMMOBILIZED} and will miss a turn.`,
+							? commentary || wording.freed
+							: commentary || wording.held,
 						vs: freedomThreshold,
 					});
 

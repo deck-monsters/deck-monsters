@@ -94,7 +94,11 @@ export const CARD_ROLE_BY_TYPE: Readonly<Record<string, CardRole>> = {
 	'Iocane': 'attack',
 	'The Kalevala': 'attack',
 	'Lucky Strike': 'attack',
+	// A hold that sleeps one opponent; no damage.
+	'Lullaby': 'trick',
 	'Mesmerize': 'trick',
+	// Raises a one-use defence against area attacks.
+	'Mirror Shield': 'guard',
 	'Molasses': 'trick',
 	// Hides the dragon when calm; the furious half only boosts its next hit.
 	'Mood Scales': 'guard',

@@ -26,9 +26,8 @@ export class Blast2Card extends BlastCard {
 		return `Blast II: ${this.damage} base damage + int bonus of caster`;
 	}
 
-	override effect(player: any, target: any): any {
-		const damage = this.damage + player.intModifier;
-		return target.hit(damage, player, this);
+	override areaDamage(caster: any): number {
+		return this.damage + caster.intModifier;
 	}
 }
 

@@ -137,6 +137,7 @@ An ancient dragon (level 10+) breathes fire that cannot be dodged and burns for 
 | Where | Template |
 |---|---|
 | `packages/engine/src/cards/helpers/signature.ts` [DRAGON] | `Fire Breath` |
+| `packages/engine/src/cards/mirror-shield.ts` stats → returns | `Raise the shield. The next area attack aimed at you (Blast, Fire Breath, Sandstorm, Tsunami) turns back: you take half the damage, and half hits whoever cast it. Burns and confusion are turned away. Used up when it turns an attack; it waits until one comes.` |
 
 ## Helm of Awe
 
@@ -274,3 +275,9 @@ You roll 1d20 + dex vs 10 to ride your own wave and take none of it.
 | rideTheWave → outcome | `{player} rides the crest, and the sea passes under {him}.` |
 | rideTheWave → outcome | `The wave comes back for {player}.` |
 | effect → flavorText | `{icon} 🌊  The wave comes back for {player} too: 5 damage.` |
+
+**Lines elsewhere that name this card:**
+
+| Where | Template |
+|---|---|
+| `packages/engine/src/cards/mirror-shield.ts` stats → returns | `Raise the shield. The next area attack aimed at you (Blast, Fire Breath, Sandstorm, Tsunami) turns back: you take half the damage, and half hits whoever cast it. Burns and confusion are turned away. Used up when it turns an attack; it waits until one comes.` |

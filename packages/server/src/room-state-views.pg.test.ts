@@ -117,6 +117,18 @@ suite('room_state_* views against Postgres', () => {
 
 	after(async () => {
 		await pool?.end();
+		/*
+		 * `pool.end()` resolves before Postgres has seen every backend go. A `with (force)` drop
+		 * in that gap terminates a client the pool already let go of, and its "terminating
+		 * connection due to administrator command" has no error listener left, so mocha failed
+		 * the hook as an uncaught error (CI on #440, 2026-11-13). Wait for the database's own
+		 * connections to close first; `force` stays as the backstop.
+		 */
+		for (let waited = 0; waited < 5_000; waited += 50) {
+			const { rows } = await admin.query(`select count(*)::int as n from pg_stat_activity where datname = $1`, [dbName]);
+			if (rows[0].n === 0) break;
+			await new Promise((resolve) => setTimeout(resolve, 50));
+		}
 		await admin.query(`drop database if exists ${dbName} with (force)`);
 		await admin.end();
 	});

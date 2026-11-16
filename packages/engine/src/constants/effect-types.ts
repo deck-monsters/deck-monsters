@@ -12,3 +12,4 @@ export const ANCIENT_DRAGON_EFFECT = 'Ancient Dragon Effect';
 export const EXPOSED_EFFECT = 'Exposed Effect';
 export const AWE_EFFECT = 'Awe Effect';
 export const TIPSY_EFFECT = 'Tipsy Effect';
+export const MIRROR_SHIELD_EFFECT = 'Mirror Shield Effect';
